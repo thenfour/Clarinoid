@@ -12,14 +12,16 @@ class CCOnOffSwitch : IUpdateObject
 {
   uint8_t mPin;
   CCThrottler mThrottle;
-  bool mState;
+  bool mIsPressed;
+  bool mIsDirty;
   Bounce mBounce;
 
 public:
-  CCOnOffSwitch(uint8_t pin, uint32_t updatePeriodMS, uint32_t bouncePeriodMS) :
+  explicit CCOnOffSwitch(uint8_t pin, uint32_t updatePeriodMS, uint32_t bouncePeriodMS) :
     mPin(pin),
     mThrottle(updatePeriodMS),
-    mState(false),
+    mIsPressed(false),
+    mIsDirty(false),
     mBounce(pin, bouncePeriodMS)
   {
     //
@@ -35,14 +37,21 @@ public:
     if (!mThrottle.IsReady())
       return;
     mBounce.update();
-    if (mBounce.fallingEdge())
-      mState = true;
-    if (mBounce.risingEdge())
-      mState = false;
+    if (mBounce.fallingEdge()) {
+      mIsPressed = true;
+      mIsDirty = true;
+    }
+    if (mBounce.risingEdge()) {
+      mIsPressed = false;
+      mIsDirty = true;
+    }
   }
 
-  bool State() const {
-    return mState;
+  bool IsPressed() const {
+    return mIsPressed;
+  }
+  bool IsDirty() const {
+    return mIsDirty;
   }
 };
 
