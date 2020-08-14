@@ -1,8 +1,8 @@
 // Teensy LC
 // 48mhz
 
-//#define LH
-#define RH
+#define LH
+//#define RH
 #define EWI_LHRH_VERSION_MAJOR 0
 #define EWI_LHRH_VERSION_MINOR 1
 
@@ -71,16 +71,6 @@ void setup() {
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
   SetupUpdateObjects();
-  //gPayload.payloadSize = sizeof(gPayload);
-  //gPayload.versionMajor = EWI_LHRH_VERSION_MAJOR;
-  //gPayload.versionMinor = EWI_LHRH_VERSION_MINOR;
-  /*gPayload.module =
-#ifdef LH
-    LHRHPAYLOAD_MODULE_LH;
-#else // RH
-    LHRHPAYLOAD_MODULE_RH;
-#endif // LH/RH
-*/
 }
 
 void loop() {
@@ -89,12 +79,12 @@ void loop() {
 
   // construct the payload & check if dirty / needs to be sent.
   // only unset "dirty" if we actually send the packet.
-//  CaptureButton(key1, gPayload.data.key1);
-//  CaptureButton(key2, gPayload.data.key2);
-//  CaptureButton(key3, gPayload.data.key3);
-//  CaptureButton(key4, gPayload.data.key4);
-//  CaptureButton(key5, gPayload.data.key5);
-//  CaptureButton(key6, gPayload.data.key6);
+  CaptureButton(key1, gPayload.data.key1);
+  CaptureButton(key2, gPayload.data.key2);
+  CaptureButton(key3, gPayload.data.key3);
+  CaptureButton(key4, gPayload.data.key4);
+  CaptureButton(key5, gPayload.data.key5);
+  CaptureButton(key6, gPayload.data.key6);
 #ifdef LH
   gDirty = true;
   gPayload.data.pressure1 = wind.Value01();
@@ -107,21 +97,15 @@ void loop() {
   CaptureButton(octave1, gPayload.data.octave4);
 #else // RH
   gDirty = true;
-  //gPayload.data.pressure1 = pitchDown.Value01();
+  gPayload.data.pressure1 = pitchDown.Value01();
 
-  //CaptureButton(oooButton1, gPayload.data.button1);
-  //CaptureButton(oooButton2, gPayload.data.button2);
+  CaptureButton(oooButton1, gPayload.data.button1);
+  CaptureButton(oooButton2, gPayload.data.button2);
 #endif // LH/RH
 
   if (gDirty) {
-    // collect remaining stats before sending
-    //gPayload.capGlobalMin = mTouchKeyGlobalMin;
-    //gPayload.capGlobalMax = mTouchKeyGlobalMax;
-    
     gTransmitter.Send(gPayload);
     gTXIndicator.Touch();
-    
-    Serial.println(String("sent ") + ToString(gPayload));
     gDirty = false;
   }
 
@@ -152,5 +136,5 @@ void loop() {
     leds.show();
   }
 
-  delay(300); // yield interrupts
+  delay(1); // yield interrupts
 }

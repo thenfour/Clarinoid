@@ -2,10 +2,12 @@
 #ifndef CCTRANSMIT_H
 #define CCTRANSMIT_H
 
-#include "CCUtil.h"
+#include <EasyTransfer.h>
 #include <FastCRC.h>
 
-#define CCEWI_BAUD 9600
+#include "CCUtil.h"
+
+#define CCEWI_BAUD 500000 // https://www.pjrc.com/teensy/td_uart.html // 
 
 // important to keep this well under HardwareSerial.cpp:RX_BUFFER_SIZE/2.
 // We want there ALWAYS to be a complete packet in the buffer, not split up.
@@ -30,21 +32,14 @@ struct ChecksummablePayload
   bool button1 : 1;
   bool button2 : 3; // pad for easier debugging
 
-  uint16_t pressure1 = 0;
-  uint16_t pressure2 = 0;
+  float pressure1;
+  float pressure2;
 };
 
-#define LHRHPAYLOAD_MODULE_LH 1
-#define LHRHPAYLOAD_MODULE_RH 2
 
 // payload is the same between both LH/RH modules.
 struct LHRHPayload
 {
-  // since i don't want to do some crazy 7-bit encoding or so, i want a marker that's
-  // long enough to never misfire because it could be mixed with any other data in this struct.
-  uint8_t beginMarker[7] = { 0xf1, 0x07, 0x6c, 0xee, 0x6f, 0x73, 0x43 }; // NOTE: to simplify the search algorithm, make sure these are all different bytes. that way i don't have to backtrack.
-  uint8_t payloadSize = sizeof(LHRHPayload); // for verification
-
   ChecksummablePayload data = {0};
   
   uint16_t framerate = 0;
@@ -52,15 +47,12 @@ struct LHRHPayload
   uint32_t dataChecksum = 0;
 };
 
+static_assert(sizeof(LHRHPayload) < (RX_BUFFER_SIZE / 2), "");
+
 inline String ToString(const LHRHPayload& p)
 {
   char format[800];
-  sprintf(format, "mk:[%02x %02x %02x %02x %02x %02x %02x] sz:[%d] #:[%d] chk:[%08x] d:[k%c%c%c%c%c%c o%c%c%c%c b%c%c p%04x p%04x]",
-    (int)p.beginMarker[0], (int)p.beginMarker[1],
-    (int)p.beginMarker[2], (int)p.beginMarker[3],
-    (int)p.beginMarker[4], (int)p.beginMarker[5],
-    (int)p.beginMarker[6],
-    (int)p.payloadSize,
+  sprintf(format, "s#:[%d] chk:[%08x] d:[k%c%c%c%c%c%c o%c%c%c%c b%c%c p:%d p:%d]",
     (int)p.serial,
     (int)p.dataChecksum,
     p.data.key1 ? '1' : '-',
@@ -78,8 +70,8 @@ inline String ToString(const LHRHPayload& p)
     p.data.button1 ? '1' : '-',
     p.data.button2 ? '2' : '-',
 
-    p.data.pressure1,
-    p.data.pressure2
+    int(p.data.pressure1 * 100),
+    int(p.data.pressure2 * 100)
     );
   return format;
 }
@@ -90,7 +82,6 @@ uint32_t CalcChecksum(const LHRHPayload& p)
   return CRC32.crc32((const uint8_t*)&p.data, sizeof(p.data));
 }
 
-static_assert(sizeof(LHRHPayload) < (RX_BUFFER_SIZE / 2), "");
 
 uint16_t gTXSerial = 0;
 
@@ -98,6 +89,8 @@ class CCTransmit : IUpdateObject
 {
   framerateCalculator mFramerate;
   HardwareSerial& mSerial;
+  EasyTransfer mET;
+  LHRHPayload mTxPayload;
   
 public:
   explicit CCTransmit(HardwareSerial& serial) :
@@ -107,6 +100,7 @@ public:
 
   virtual void setup() {
     mSerial.begin(CCEWI_BAUD);
+    mET.begin(details(mTxPayload), &mSerial);
   }
 
   virtual void loop() {
@@ -117,7 +111,9 @@ public:
     payload.dataChecksum = CalcChecksum(payload);
     payload.framerate = mFramerate.getFPS();
     payload.serial = gTXSerial;
-    mSerial.write((uint8_t*)&payload, sizeof(payload));
+    //mSerial.write((uint8_t*)&payload, sizeof(payload));
+    mTxPayload = payload;
+    mET.sendData();
     gTXSerial ++;
   }
 };

@@ -2,8 +2,8 @@
 // 600mhz
 // 
 
-#define EWI_MAIN_VERSION_NUMBER "0.1"
-#define EWI_LHRH_VERSION EWI_LHRH_VERSION_NUMBER "_LH" // only needed for size calculation
+//#define EWI_MAIN_VERSION_NUMBER "0.1"
+//#define EWI_LHRH_VERSION EWI_LHRH_VERSION_NUMBER "_LH" // only needed for size calculation
 
 //============================================================
 
@@ -28,11 +28,13 @@ TransientActivityLED gEncIndicator(60, 200);
 CCVolumePot gVolumePot(A8);
 TransientActivityLED gVolIndicator(40, 200);
 
-//CCReceiver gLHReceiver(Serial1);
+CCReceiver gLHReceiver(Serial1);
 ActivityLED gLHRXIndicator(60);
+TransientEventLED gLHRXErrorIndicator(3000);
 
 CCReceiver gRHReceiver(Serial4);
 ActivityLED gRHRXIndicator(60);
+TransientEventLED gRHRXErrorIndicator(3000);
 
 AsymmetricActivityLED gGeneralActivityIndicator(750, 250);
 CCDisplay gDisplay;
@@ -60,7 +62,21 @@ void loop() {
     gSynth.SetGain(gVolumePot.GetValue01());
   }
 
-  // gather up serial receive
+  // gather up serial receive (LH)
+  if (gLHReceiver.mHaveNewData) {
+    gLHRXIndicator.Touch();
+  }
+  if (gLHReceiver.mErrorsDirty) {
+    gLHRXErrorIndicator.Touch();
+  }
+
+  // gather up serial receive (RH)
+  if (gRHReceiver.mHaveNewData) {
+    gRHRXIndicator.Touch();
+  }
+  if (gRHReceiver.mErrorsDirty) {
+    gRHRXErrorIndicator.Touch();
+  }
 
   // now drive synth
 
@@ -70,8 +86,8 @@ void loop() {
   {
     auto activityColor = col(gGeneralActivityIndicator.GetState(), 1, 4);
     leds.setPixelColor(0, 0, activityColor, activityColor); // cyan = MAIN
-    leds.setPixelColor(1, 0, 0, col(gLHRXIndicator.GetState(), 0, 4)); // TODO: red = errors
-    leds.setPixelColor(2, 0, 0, col(gRHRXIndicator.GetState(), 0, 4)); // TODO: red = errors
+    leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 4), 0, col(gLHRXIndicator.GetState(), 0, 4));
+    leds.setPixelColor(2, col(gRHRXErrorIndicator.GetState(), 0, 4), 0, col(gRHRXIndicator.GetState(), 0, 4));
     // 3 midiTX
     // 4 (off)
     // 5 (off)
@@ -86,13 +102,14 @@ void loop() {
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setTextColor(WHITE);
     gDisplay.mDisplay.setCursor(0,0);
-    //gDisplay.mDisplay.println(String("fps:") + gFramerate.getFPS());
-    CCReceiver& rx = (gEncButton.IsPressed()) ? gRHReceiver : gRHReceiver;
-    gDisplay.mDisplay.println(String((gEncButton.IsPressed()) ? "LH" : "RH") + " ok: " + rx.mRxSuccess + " #" + rx.mLatestData.serial);
-    gDisplay.mDisplay.print(String("E:sz  ") + rx.mSizeErrors);
-    gDisplay.mDisplay.println(String("E:chk ") + rx.mChecksumErrors);
+    CCReceiver& rx = (gEncButton.IsPressed()) ? gLHReceiver : gRHReceiver;
+    gDisplay.mDisplay.println(String((gEncButton.IsPressed()) ? "LH" : "RH") + " ok:" + rx.mRxSuccess + " #" + rx.mData.serial);
+    gDisplay.mDisplay.print(String("Err:") + rx.mChecksumErrors);
+    gDisplay.mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
+    gDisplay.mDisplay.println(String("fps:") + (int)rx.mData.framerate);
+    gDisplay.mDisplay.println(String("myfps:") + (int)gFramerate.getFPS());
     gDisplay.mDisplay.display();
   }
 
-  delay(100); // yield for serial data
+  delay(1); // yield for serial data
 }

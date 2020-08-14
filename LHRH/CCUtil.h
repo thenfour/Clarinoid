@@ -196,6 +196,46 @@ public:
   }
 };
 
+
+
+//////////////////////////////////////////////////////////////////////
+// This one is off by default and you raise its flag when an event occurs.
+// so similar to TransientActivity, but it's an event, not "activity".
+// instant turn-on, delayed turn-off.
+class TransientEventLED : IUpdateObject
+{
+  bool mState;
+  CCThrottler mTurnOffTimeout;
+
+public:
+  TransientEventLED(uint32_t turnOffTimeoutMS) :
+    mState(false),
+    mTurnOffTimeout(turnOffTimeoutMS)
+  {
+  }
+
+  void Touch()
+  {
+    mState = true;
+    mTurnOffTimeout.Reset();
+  }
+
+  bool GetState() const
+  {
+    return mState;
+  }
+  
+  virtual void setup() {}
+  
+  virtual void loop() {
+    if (mTurnOffTimeout.IsReady()) {
+      mState = false;
+    }
+  }
+};
+
+
+
 //////////////////////////////////////////////////////////////////////
 // convert values to LED indication colorant values
 inline uint8_t col(bool b) { return b ? 8 : 0; }
