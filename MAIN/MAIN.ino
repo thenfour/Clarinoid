@@ -1,9 +1,10 @@
 // Teensy 4.0
 // 600mhz
-// 
 
-//#define EWI_MAIN_VERSION_NUMBER "0.1"
-//#define EWI_LHRH_VERSION EWI_LHRH_VERSION_NUMBER "_LH" // only needed for size calculation
+// Check synth & CCEWIControl for parameters
+
+// https://forum.pjrc.com/threads/57932-Latency-what-s-new
+//#define AUDIO_BLOCK_SAMPLES 1024 // this seems to have no effect; may need to fork
 
 //============================================================
 
@@ -19,6 +20,7 @@
 CCLeds leds(10, 2, 10, true);
 CCThrottler ledThrottle(20);
 
+CCEWIControl gEWIControl;
 CCSynth gSynth;
 
 CCOnOffSwitch gEncButton(3, 10, 5);
@@ -38,6 +40,7 @@ TransientEventLED gRHRXErrorIndicator(3000);
 
 AsymmetricActivityLED gGeneralActivityIndicator(750, 250);
 CCDisplay gDisplay;
+//CCMenu gMenu(gDisplay, gEnc, gEncButton, gEWIControl);
 
 framerateCalculator gFramerate;
 
@@ -78,9 +81,15 @@ void loop() {
     gRHRXErrorIndicator.Touch();
   }
 
-  // now drive synth
-
-  // drive MIDI
+  // combine the data to form the current state of things.
+  // this converts incoming data to overall state and musical paramaters
+  gEWIControl.Update(gLHReceiver.mData, gRHReceiver.mData);
+  
+  // convert state to MIDI events
+  gSynth.Update(gEWIControl.mMusicalState);
+  
+  // output MIDI
+  // output to synth
 
   if (ledThrottle.IsReady())
   {
@@ -98,18 +107,81 @@ void loop() {
     leds.show();
 
     // BEWARE: since this is not run every frame, you can miss events.
+    
     gDisplay.mDisplay.clearDisplay();
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setTextColor(WHITE);
     gDisplay.mDisplay.setCursor(0,0);
-    CCReceiver& rx = (gEncButton.IsPressed()) ? gLHReceiver : gRHReceiver;
-    gDisplay.mDisplay.println(String((gEncButton.IsPressed()) ? "LH" : "RH") + " ok:" + rx.mRxSuccess + " #" + rx.mData.serial);
-    gDisplay.mDisplay.print(String("Err:") + rx.mChecksumErrors);
-    gDisplay.mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
-    gDisplay.mDisplay.println(String("fps:") + (int)rx.mData.framerate);
-    gDisplay.mDisplay.println(String("myfps:") + (int)gFramerate.getFPS());
+
+    auto pageRX = [&](){
+      CCReceiver& rx = (gEncButton.IsPressed()) ? gLHReceiver : gRHReceiver;
+      gDisplay.mDisplay.println(String((gEncButton.IsPressed()) ? "LH" : "RH") + " ok:" + rx.mRxSuccess + " #" + rx.mData.serial);
+      gDisplay.mDisplay.print(String("Err:") + rx.mChecksumErrors);
+      gDisplay.mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
+      gDisplay.mDisplay.println(String("fps:") + (int)rx.mData.framerate);
+      gDisplay.mDisplay.println(String("myfps:") + (int)gFramerate.getFPS());
+    };
+    auto pageMusicalState = [&]() {
+      gDisplay.mDisplay.println(String("note: ") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") freq=" + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote));
+      gDisplay.mDisplay.println(String("wind:") + gEWIControl.mMusicalState.breath01);
+      gDisplay.mDisplay.println(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11);
+    };
+    auto pagePhysicalState = [&]() {
+      // LH: k:1234 o:1234 b:12
+      // RH: k:1234 b:12
+      // wind:0.455 // bite:0.11
+      // pitch:
+      gDisplay.mDisplay.println(String("LH k:") +
+        (gEWIControl.mPhysicalState.key_lh1 ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_lh2 ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_lh3 ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_lh4 ? "4" : "-") +
+        " o:" +
+        (gEWIControl.mPhysicalState.key_octave1 ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_octave2 ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_octave3 ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_octave4 ? "4" : "-") +
+        " b:" +
+        (gEWIControl.mPhysicalState.key_lhExtra1 ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_lhExtra2 ? "2" : "-"));
+
+      gDisplay.mDisplay.println(String("RH k:") +
+        (gEWIControl.mPhysicalState.key_rh1 ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_rh2 ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_rh3 ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_rh4 ? "4" : "-") +
+        "       " +
+        " b:" +
+        (gEWIControl.mPhysicalState.key_lhExtra1 ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_lhExtra2 ? "2" : "-"));
+      gDisplay.mDisplay.println(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
+        "bite: " + gEWIControl.mPhysicalState.bite01);
+      gDisplay.mDisplay.println(String("pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
+    };
+
+    auto pageDebugRX = [&]() {
+      gDisplay.mDisplay.println(String((gEncButton.IsPressed()) ? "LH" : "RH") + ToString((gEncButton.IsPressed()) ? gLHReceiver.mData : gLHReceiver.mData));
+    };
+
+    int page = gEnc.GetValue() / 4;
+    page = page % 4;
+    switch(page) {
+      case 0:
+        pageRX();
+        break;
+      case 1:
+        pageMusicalState();
+        break;
+      case 2:
+        pagePhysicalState();
+        break;
+      case 3:
+        pageDebugRX();
+        break;
+    }
+    
     gDisplay.mDisplay.display();
   }
 
-  delay(1); // yield for serial data
+  //delay(50);
 }

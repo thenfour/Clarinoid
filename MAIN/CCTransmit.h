@@ -23,17 +23,17 @@ struct ChecksummablePayload
   bool key3 : 1;
   bool key4 : 1;
   bool key5 : 1;
-  bool key6 : 3; // pad for easier debugging
+  bool key6 : 1;
 
   bool octave1 : 1;
   bool octave2 : 1;
   bool octave3 : 1;
   bool octave4 : 1;
   bool button1 : 1;
-  bool button2 : 3; // pad for easier debugging
+  bool button2 : 1;
 
-  float pressure1;
-  float pressure2;
+  uint16_t pressure1; // raw analog readings
+  uint16_t pressure2; // raw analog readings
 };
 
 
@@ -44,15 +44,16 @@ struct LHRHPayload
   
   uint16_t framerate = 0;
   uint16_t serial = 0;
-  uint32_t dataChecksum = 0;
+  uint16_t dataChecksum = 0;
 };
 
-static_assert(sizeof(LHRHPayload) < (RX_BUFFER_SIZE / 2), "");
+// 4 bytes is what EasyTransfer adds to the payload.
+static_assert((sizeof(LHRHPayload) + 4) < (RX_BUFFER_SIZE / 2), "");
 
 inline String ToString(const LHRHPayload& p)
 {
   char format[800];
-  sprintf(format, "s#:[%d] chk:[%08x] d:[k%c%c%c%c%c%c o%c%c%c%c b%c%c p:%d p:%d]",
+  sprintf(format, "s#:[%d] chk:[%04x] d:[k%c%c%c%c%c%c o%c%c%c%c b%c%c p:%d p:%d]",
     (int)p.serial,
     (int)p.dataChecksum,
     p.data.key1 ? '1' : '-',
@@ -70,16 +71,16 @@ inline String ToString(const LHRHPayload& p)
     p.data.button1 ? '1' : '-',
     p.data.button2 ? '2' : '-',
 
-    int(p.data.pressure1 * 100),
-    int(p.data.pressure2 * 100)
+    p.data.pressure1,
+    p.data.pressure2
     );
   return format;
 }
 
-uint32_t CalcChecksum(const LHRHPayload& p)
+uint16_t CalcChecksum(const LHRHPayload& p)
 {
-  static FastCRC32 CRC32;
-  return CRC32.crc32((const uint8_t*)&p.data, sizeof(p.data));
+  static FastCRC16 CRC16;
+  return CRC16.x25((const uint8_t*)&p.data, sizeof(p.data));
 }
 
 
