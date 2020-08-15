@@ -49,7 +49,7 @@ public:
     if (n < mMinValues[mIndex]) {
       mMinValues[mIndex] = n;
       mTouchablePins[mIndex]->initUntouched();
-      Serial.println(String("Updating pin ") + mTouchablePins[mIndex]->pinNumber + " with minvalue " + n);
+      //Serial.println(String("Updating pin ") + mTouchablePins[mIndex]->pinNumber + " with minvalue " + n);
     }
 
     mIndex = (mIndex + 1) % mPinCount;
