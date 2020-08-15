@@ -1,8 +1,9 @@
 
+// don't use a LUT because we want to support pitch bend and glides and stuff. using a LUT + interpolation would be asinine.
 #ifndef CCSYNTHUTILS_H
 #define CCSYNTHUTILS_H
 
-#include "CCUtil.h"
+#include "Shared_CCUtil.h"
 
 class MIDINotes
 {

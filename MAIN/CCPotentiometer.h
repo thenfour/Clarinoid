@@ -6,6 +6,8 @@
 #define VOLUMEPOT_MAX_READING 1022
 #define VOLUMEPOT_DIRTY_THRESH 0.02
 
+#include "Shared_CCUtil.h"
+
 class CCVolumePot : IUpdateObject
 {
   uint8_t mPin;

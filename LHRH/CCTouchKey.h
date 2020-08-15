@@ -1,7 +1,7 @@
 #ifndef CCTOUCHKEY_H
 #define CCTOUCHKEY_H
 
-#include "CCUtil.h"
+#include "Shared_CCUtil.h"
 
 // typical idle is 600-900, depends on the surface area.
 // for small washers, edge touch = about 800, normal = 2000, absolute max 3500 / thresh is around 1000 to avoid noise

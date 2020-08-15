@@ -3,7 +3,7 @@
 #define CCLEDS_H
 
 #include <Adafruit_NeoPixel.h>
-#include "CCUtil.h"
+#include "Shared_CCUtil.h"
 
 class CCLeds : IUpdateObject
 {

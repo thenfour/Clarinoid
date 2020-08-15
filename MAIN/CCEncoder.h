@@ -7,7 +7,7 @@
 
 #include <Encoder.h>
 
-#include "CCUtil.h"
+#include "Shared_CCUtil.h"
 
 class CCEncoder : IUpdateObject
 {

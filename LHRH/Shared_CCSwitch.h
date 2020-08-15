@@ -6,7 +6,7 @@
 #define CCSWITCH_H
 
 #include <Bounce.h>
-#include "CCUtil.h"
+#include "Shared_CCUtil.h"
 
 class CCOnOffSwitch : IUpdateObject
 {

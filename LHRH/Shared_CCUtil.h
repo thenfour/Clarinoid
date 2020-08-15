@@ -244,6 +244,10 @@ inline uint8_t col(bool b, uint8_t ledmin, uint8_t ledmax)
   return b ? ledmax : ledmin;
 }
 inline uint8_t col(float f01) { return (uint8_t)(f01 * 255); }
+inline uint8_t col(float f01, int x)
+{
+  return (uint8_t)(f01 * x);
+}
 
 
 //////////////////////////////////////////////////////////////////////

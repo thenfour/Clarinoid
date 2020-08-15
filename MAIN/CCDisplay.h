@@ -7,7 +7,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#include "CCUtil.h"
+#include "Shared_CCUtil.h"
 
 // CC: not sure why every example uses software SPI. is there a hardware SPI that would work together with the audio shield?
 // If using software SPI (the default case):

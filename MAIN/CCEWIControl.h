@@ -3,8 +3,8 @@
 #ifndef CCEWICONTROL_H
 #define CCEWICONTROL_H
 
-#include "CCUtil.h"
-#include "CCTransmit.h"
+#include "Shared_CCUtil.h"
+#include "Shared_CCTxRx.h"
 
 #define NOTE_ON_BREATH_THRESHOLD 0.1
 
