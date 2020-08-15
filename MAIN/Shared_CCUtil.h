@@ -405,9 +405,9 @@ class SimpleMovingAverage
             oldest = sample;
         }
         
-        if (TDebug && th.IsReady()) {
-          Serial.println(String("") + sample + "\t" + GetValue());
-        }
+        //if (TDebug && th.IsReady()) {
+        //  Serial.println(String("") + sample + "\t" + GetValue());
+        //}
     }
 
     float GetValue() const {

@@ -4,6 +4,9 @@
 #include <touchablePin.h>
 #include "Shared_CCUtil.h"
 
+// because we're optimizing the untouched state so much, we increase the max factor used to detect touches.
+const float CCEWI_TOUCHABLE_PIN_MAX_FACTOR = 1.8;
+
 // touchRead() is very slow because it waits to detect the full charge.
 // Fortunately touchablePin has been created which short circuits if "touched" is satisfied.
 // the drawback is that you must initialize it when you know the key is untouched.
@@ -67,7 +70,7 @@ class CCTouchKey : IUpdateObject
   int mFrameNumber = 0;
 public:
   explicit CCTouchKey(uint8_t pin) :
-    mTouchablePin(pin),
+    mTouchablePin(pin, CCEWI_TOUCHABLE_PIN_MAX_FACTOR),
     mPin(pin),
     mIsTouched(false),
     mIsDirty(false)

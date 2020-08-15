@@ -64,6 +64,35 @@ public:
   }
 };
 
+//////////////////////////////////////////////////////////////////////
+template<uint32_t TperiodMS>
+class CCThrottlerT
+{
+  uint32_t mPeriodStartMS;
+public:
+  CCThrottlerT()
+  {
+    mPeriodStartMS = millis();
+  }
+
+  void Reset() {
+    mPeriodStartMS = millis();
+  }
+
+  bool IsReady() {
+    return IsReady(TperiodMS);
+  }
+  
+  bool IsReady(uint32_t periodMS) {
+    auto m = millis();
+    if (m - mPeriodStartMS < periodMS) {
+      return false;
+    }
+    mPeriodStartMS = m; // note that overshoot will not be subtracted! so periods will often be longer than requested.
+    return true;
+  }
+};
+
 
 //////////////////////////////////////////////////////////////////////
 // you can't toggle LEDs at the fastest rate possible; it just looks constant.
@@ -314,6 +343,45 @@ private:
   int                     FramerateSecPerFrameIdx;
   float                   FramerateSecPerFrameAccum;
 };
+
+template <size_t N, bool TDebug = false>
+class SimpleMovingAverage
+{
+  CCThrottler th;
+  public:
+    SimpleMovingAverage() : th(20) {}
+
+    void Update(float sample)
+    {
+        if (num_samples_ < N)
+        {
+            samples_[num_samples_++] = sample;
+            total_ += sample;
+        }
+        else
+        {
+            float& oldest = samples_[num_samples_++ % N];
+            total_ += sample - oldest;
+            oldest = sample;
+        }
+        
+        //if (TDebug && th.IsReady()) {
+        //  Serial.println(String("") + sample + "\t" + GetValue());
+        //}
+    }
+
+    float GetValue() const {
+      return total_ / min(num_samples_, N);;
+    }
+    //operator double() const { return total_ / min(num_samples_, N); }
+
+  private:
+    float samples_[N];
+    size_t num_samples_{0};
+    float total_{0};
+};
+
+
 
 
 #endif
