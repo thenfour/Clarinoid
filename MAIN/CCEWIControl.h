@@ -107,7 +107,7 @@ struct CCEWIMusicalState
 
     // the rules are rather weird for keys. open is a C#
     // https://bretpimentel.com/flexible-ewi-fingerings/
-    this->MIDINote = 49; // C#3
+    this->MIDINote = 49-12; // C#2
     if (ps.key_lh1){
       this->MIDINote -= 2;
     }

@@ -8,43 +8,87 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
-#include "CCUtil.h"
+// https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
+#include <polyBlepOscillator.h>
+
+#include "Shared_CCUtil.h"
+
 #include "CCSynthUtils.h"
 #include "CCEWIControl.h"
-
-// oscillator sync: https://forum.pjrc.com/threads/55878-Waveform-sync-question
-// plenty more: https://www.google.com/search?q=waveform+sync+teensy&oq=waveform+sync+teensy&aqs=chrome..69i57.4186j0j7&sourceid=chrome&ie=UTF-8
-// https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/blob/master/polySynth/polyBlepOscillator.h
 namespace CCSynthGraph
 {
-
-
-
+/*
+https://www.pjrc.com/teensy/gui/index.html?info=AudioEffectDelay
+ replace blep osc with AudioInputTDM for guitool
 
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveformLeft2; //xy=343.9147186279297,322.9147148132324
-AudioSynthWaveform       waveformLeft1; //xy=355.9147186279297,276.9147434234619
-AudioSynthWaveform       waveformLeft;      //xy=365.88880920410156,233.99990701675415
-AudioMixer4              mixer1;         //xy=549.9147796630859,293.9147720336914
-AudioFilterBiquad        biquad1;        //xy=710.8238410949707,288.91475009918213
-AudioAmplifier           ampLeft;           //xy=902.9999580383301,328.999888420105
-AudioOutputI2S           i2s1;           //xy=1080.8889389038086,331.9999694824219
-AudioConnection          patchCord1(waveformLeft2, 0, mixer1, 2);
-AudioConnection          patchCord2(waveformLeft1, 0, mixer1, 1);
-AudioConnection          patchCord3(waveformLeft, 0, mixer1, 0);
-AudioConnection          patchCord4(mixer1, biquad1);
-AudioConnection          patchCord5(biquad1, ampLeft);
-AudioConnection          patchCord6(ampLeft, 0, i2s1, 0);
-AudioConnection          patchCord7(ampLeft, 0, i2s1, 1);
-AudioControlSGTL5000     audioShield;    //xy=1076.8887405395508,265.9998970031738
+AudioInputTDM            waveform;       //xy=107,244
+AudioInputTDM            waveform1; //xy=107,492
+AudioMixer4              waveMixer;      //xy=269,179
+AudioFilterStateVariable waveFilter;     //xy=436,185
+AudioEffectFreeverbStereo verb;           //xy=754.0000228881836,153.00002479553223
+AudioAmplifier           verbWetAmpLeft; //xy=935.000114440918,149.9090919494629
+AudioAmplifier           verbWetAmpRight; //xy=937.0000228881836,186.9090929031372
+AudioMixer4              postMixerLeft;  //xy=1100,338
+AudioMixer4              postMixerRight; //xy=1104,404
+AudioAmplifier           ampLeft;        //xy=1261,351
+AudioAmplifier           ampRight;       //xy=1263,386
+AudioOutputI2S           i2s1;           //xy=1406,369
+AudioConnection          patchCord1(waveform, 1, waveMixer, 0);
+AudioConnection          patchCord2(waveform, 2, waveMixer, 1);
+AudioConnection          patchCord3(waveform1, 0, waveMixer, 2);
+AudioConnection          patchCord4(waveform1, 1, waveMixer, 3);
+AudioConnection          patchCord5(waveMixer, 0, waveFilter, 0);
+AudioConnection          patchCord6(waveFilter, 0, verb, 0);
+AudioConnection          patchCord7(waveFilter, 0, postMixerLeft, 1);
+AudioConnection          patchCord8(waveFilter, 0, postMixerRight, 1);
+AudioConnection          patchCord9(verb, 0, verbWetAmpLeft, 0);
+AudioConnection          patchCord10(verb, 1, verbWetAmpRight, 0);
+AudioConnection          patchCord11(verbWetAmpLeft, 0, postMixerLeft, 0);
+AudioConnection          patchCord12(verbWetAmpRight, 0, postMixerRight, 0);
+AudioConnection          patchCord13(postMixerLeft, ampLeft);
+AudioConnection          patchCord14(postMixerRight, ampRight);
+AudioConnection          patchCord15(ampLeft, 0, i2s1, 0);
+AudioConnection          patchCord16(ampRight, 0, i2s1, 1);
+AudioControlSGTL5000     audioShield;    //xy=1373,299
 // GUItool: end automatically generated code
 
 
 
+*/
 
-
-
+// GUItool: begin automatically generated code
+AudioBandlimitedOsci            waveform;       //xy=107,244
+AudioBandlimitedOsci            waveform1; //xy=107,492
+AudioMixer4              waveMixer;      //xy=269,179
+AudioFilterStateVariable waveFilter;     //xy=436,185
+AudioEffectFreeverbStereo verb;           //xy=754.0000228881836,153.00002479553223
+AudioAmplifier           verbWetAmpLeft; //xy=935.000114440918,149.9090919494629
+AudioAmplifier           verbWetAmpRight; //xy=937.0000228881836,186.9090929031372
+AudioMixer4              postMixerLeft;  //xy=1100,338
+AudioMixer4              postMixerRight; //xy=1104,404
+AudioAmplifier           ampLeft;        //xy=1261,351
+AudioAmplifier           ampRight;       //xy=1263,386
+AudioOutputI2S           i2s1;           //xy=1406,369
+AudioConnection          patchCord1(waveform, 1, waveMixer, 0);
+AudioConnection          patchCord2(waveform, 2, waveMixer, 1);
+AudioConnection          patchCord3(waveform1, 0, waveMixer, 2);
+AudioConnection          patchCord4(waveform1, 1, waveMixer, 3);
+AudioConnection          patchCord5(waveMixer, 0, waveFilter, 0);
+AudioConnection          patchCord6(waveFilter, 0, verb, 0);
+AudioConnection          patchCord7(waveFilter, 0, postMixerLeft, 1);
+AudioConnection          patchCord8(waveFilter, 0, postMixerRight, 1);
+AudioConnection          patchCord9(verb, 0, verbWetAmpLeft, 0);
+AudioConnection          patchCord10(verb, 1, verbWetAmpRight, 0);
+AudioConnection          patchCord11(verbWetAmpLeft, 0, postMixerLeft, 0);
+AudioConnection          patchCord12(verbWetAmpRight, 0, postMixerRight, 0);
+AudioConnection          patchCord13(postMixerLeft, ampLeft);
+AudioConnection          patchCord14(postMixerRight, ampRight);
+AudioConnection          patchCord15(ampLeft, 0, i2s1, 0);
+AudioConnection          patchCord16(ampRight, 0, i2s1, 1);
+AudioControlSGTL5000     audioShield;    //xy=1373,299
+// GUItool: end automatically generated code
 
 
 }
@@ -58,9 +102,42 @@ public:
     CCSynthGraph::audioShield.volume(.7); // headphone vol
     delay(200); // why?
     CCSynthGraph::ampLeft.gain(.5);
-    CCSynthGraph::waveformLeft.begin(.3, 440, WAVEFORM_SAWTOOTH);
-    CCSynthGraph::waveformLeft1.begin(.3, 440, WAVEFORM_SAWTOOTH);
-    CCSynthGraph::waveformLeft2.begin(.3, 440, WAVEFORM_SAWTOOTH);
+
+    CCSynthGraph::waveform.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+    CCSynthGraph::waveform.waveform(2, 3);
+    CCSynthGraph::waveform.waveform(3, 1);
+  
+    CCSynthGraph::waveform.pulseWidth(1, 0.5);
+    CCSynthGraph::waveform.pulseWidth(2, 0.5);
+    CCSynthGraph::waveform.pulseWidth(3, 0.0);
+
+    CCSynthGraph::waveform.amplitude(1, 0.0);
+    CCSynthGraph::waveform.amplitude(2, 0.3);
+    CCSynthGraph::waveform.amplitude(3, 0.2);
+
+
+    CCSynthGraph::waveform1.waveform(1, 0); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+    CCSynthGraph::waveform1.waveform(2, 1);
+    CCSynthGraph::waveform1.waveform(3, 1);
+  
+    CCSynthGraph::waveform1.pulseWidth(1, 0.5);
+    CCSynthGraph::waveform1.pulseWidth(2, 0.0);
+    CCSynthGraph::waveform1.pulseWidth(3, 0.0);
+
+    CCSynthGraph::waveform1.amplitude(1, 0.3);
+    CCSynthGraph::waveform1.amplitude(2, 0.0);
+    CCSynthGraph::waveform1.amplitude(3, 0.0);
+
+    //CCSynthGraph::waveform.portamentoTime(1, 0.1);
+    //CCSynthGraph::waveform.portamentoTime(2, 0.1);
+    //CCSynthGraph::waveform.portamentoTime(3, 0.5);
+
+    CCSynthGraph::verb.roomsize(.6f);
+    CCSynthGraph::verb.damping(.7f);
+    CCSynthGraph::verbWetAmpLeft.gain(.3);
+    CCSynthGraph::verbWetAmpRight.gain(.3);
+    
+    CCSynthGraph::waveFilter.resonance(1.3);
   }
 
   virtual void loop() {
@@ -68,6 +145,7 @@ public:
 
   void SetGain(float f) {
     CCSynthGraph::ampLeft.gain(f);
+    CCSynthGraph::ampRight.gain(f);
   }
 
   void Update(const CCEWIMusicalState& state) {
@@ -75,11 +153,16 @@ public:
     AudioNoInterrupts();
 
     float freq = MIDINoteToFreq(state.MIDINote + state.pitchBendN11 * 0);
+    float freq2 = MIDINoteToFreq(state.MIDINote + 7 + state.pitchBendN11 * 0);
+    float freqSync = map(state.breath01, 0.0f, 1.0f, freq, freq * 5.5);
+  
+    CCSynthGraph::waveform.frequency(1, freq);
+    CCSynthGraph::waveform.frequency(2, freqSync);
+    CCSynthGraph::waveform.frequency(3, freq2);
+  
+    CCSynthGraph::waveform1.frequency(1, freq * 2);
 
-    CCSynthGraph::waveformLeft.frequency(freq * 1.005);
-    CCSynthGraph::waveformLeft1.frequency(freq);
-    CCSynthGraph::waveformLeft2.frequency(freq * .75);
-    CCSynthGraph::biquad1.setLowpass(0, map(state.breath01, .06, 1, 0, 10000), 1.5);
+    CCSynthGraph::waveFilter.frequency(map(state.breath01, .06, 1, 0, 20000));
     
     AudioInterrupts();
   }
