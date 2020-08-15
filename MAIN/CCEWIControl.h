@@ -6,7 +6,8 @@
 #include "Shared_CCUtil.h"
 #include "Shared_CCTxRx.h"
 
-#define NOTE_ON_BREATH_THRESHOLD 0.1
+const float BREATH_LOWER_DEADZONE = 0.03f;
+const float PITCHDOWN_DEADZONE = 0.8f;
 
 enum class Tristate
 {
@@ -89,25 +90,27 @@ struct CCEWIMusicalState
   bool isPlayingNote = false;
   uint8_t MIDINote = 0;
   // TODO: create a time-based smoother. throttling and taking samples like this is not very accurate. sounds fine today though.
-  SimpleMovingAverage<30, true> breath01;// 0-1
-  SimpleMovingAverage<30, false> pitchBendN11; // -1 to 1
+  SimpleMovingAverage<20, true> breath01;// 0-1
+  SimpleMovingAverage<120, false> pitchBendN11; // -1 to 1
   CCThrottlerT<1> mPressureSensingThrottle;
   int nUpdates = 0;
-  
+
   void Update(const CCEWIPhysicalState& ps)
   {
     // now convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
 
-    // the easy stuff
     if (nUpdates == 0 || mPressureSensingThrottle.IsReady()) {
-      this->breath01.Update(constrain(ps.breath01, 0, 1));
-      this->pitchBendN11.Update(constrain(ps.bite01 - ps.pitchDown01, -1, 1));
+
+      this->breath01.Update(constrain(map((float)ps.breath01, BREATH_LOWER_DEADZONE, 1.0f, 0.0f, 1.0f), 0.0f, 1.0f));
+      this->pitchBendN11.Update(constrain(map((float)ps.pitchDown01, 0, PITCHDOWN_DEADZONE, -1.0f, 0.0f), -1.0f, 0.0f));
+      this->isPlayingNote = this->breath01.GetValue() > 0.01;
     }
 
-    this->isPlayingNote = this->breath01.GetValue() > NOTE_ON_BREATH_THRESHOLD;
+    CCPlot(this->breath01.GetValue() * 100);
+    CCPlot(ps.breath01 * 100);
 
-    // the rules are rather weird for keys. open is a C#
+    // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
     this->MIDINote = 49-12; // C#2
     if (ps.key_lh1){

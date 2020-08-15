@@ -5,7 +5,7 @@
 #include "Shared_CCUtil.h"
 
 // because we're optimizing the untouched state so much, we increase the max factor used to detect touches.
-const float CCEWI_TOUCHABLE_PIN_MAX_FACTOR = 1.8;
+const float CCEWI_TOUCHABLE_PIN_MAX_FACTOR = 1.75;
 
 // touchRead() is very slow because it waits to detect the full charge.
 // Fortunately touchablePin has been created which short circuits if "touched" is satisfied.
@@ -16,14 +16,15 @@ const int MaxTouchKeys = 30;
 
 class CCTouchKeyCalibrator : IUpdateObject
 {
-  uint16_t mMinValues[MaxTouchKeys];
-  touchablePin* mTouchablePins[MaxTouchKeys];
-
   CCThrottler mThrottle;
   uint8_t mIndex = 0;
 
 public:
   uint8_t mPinCount = 0;
+  bool  mDebug[MaxTouchKeys];
+  uint16_t mMinValues[MaxTouchKeys];
+  touchablePin* mTouchablePins[MaxTouchKeys];
+
 
   CCTouchKeyCalibrator() : 
     mThrottle(20)
@@ -31,8 +32,9 @@ public:
   }
 
   // returns the index of this pin. it can be used to stagger reads within frames.
-  int Add(touchablePin* p) {
+  int Add(touchablePin* p, bool debug) {
     mTouchablePins[mPinCount] = p;
+    mDebug[mPinCount] = debug;
     mMinValues[mPinCount] = touchRead(p->pinNumber);
     int ret = mPinCount;
     mPinCount ++;
@@ -44,8 +46,8 @@ public:
     if (!mThrottle.IsReady()) {
       return;
     }
-    ;
     int n = touchRead(mTouchablePins[mIndex]->pinNumber);
+
     if (n < mMinValues[mIndex]) {
       mMinValues[mIndex] = n;
       mTouchablePins[mIndex]->initUntouched();
@@ -69,13 +71,16 @@ class CCTouchKey : IUpdateObject
   int mStaggerGroup;
   int mFrameNumber = 0;
 public:
-  explicit CCTouchKey(uint8_t pin) :
+  bool mDebug = false;
+
+  explicit CCTouchKey(uint8_t pin, bool debug = false) :
     mTouchablePin(pin, CCEWI_TOUCHABLE_PIN_MAX_FACTOR),
     mPin(pin),
     mIsTouched(false),
-    mIsDirty(false)
+    mIsDirty(false),
+    mDebug(debug)
   {
-    mStaggerGroup = gTouchKeyCalibrator.Add(&mTouchablePin) / KeysToSamplePerFrame;
+    mStaggerGroup = gTouchKeyCalibrator.Add(&mTouchablePin, debug) / KeysToSamplePerFrame;
   }
 
   bool IsPressed() const { return mIsTouched; }

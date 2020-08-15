@@ -16,8 +16,8 @@ public:
     UpdateObjects[UpdateObjectCount] = this;
     UpdateObjectCount ++;
   }
-  virtual void setup() = 0;
-  virtual void loop() = 0;
+  virtual void setup() {}
+  virtual void loop() {}
 };
 
 inline void SetupUpdateObjects() {
@@ -344,7 +344,7 @@ private:
   float                   FramerateSecPerFrameAccum;
 };
 
-template <size_t N, bool TDebug = false>
+template <size_t N, bool TDebug>
 class SimpleMovingAverage
 {
   CCThrottler th;
@@ -381,7 +381,36 @@ class SimpleMovingAverage
     float total_{0};
 };
 
+// allows throttled plotting to Serial.
+class PlotHelper : IUpdateObject
+{
+  CCThrottlerT<30> mThrot;
+  String mFields;
+public:
+  virtual void loop() {
+    if (mThrot.IsReady()) {
+      if (mFields.length() > 0) {
+        if (Serial) {
+          Serial.println(mFields);
+        }
+      }
+    }
+    mFields = "";
+  }
 
+  template<typename T>
+  void AppendField(const T& s) {
+    if (mFields.length() > 0) {
+      mFields.append("\t");
+    }
+    mFields.append(s);
+  }
+};
 
+PlotHelper gPlot;
+template<typename T>
+inline void CCPlot(const T& val) {
+  gPlot.AppendField(val);
+}
 
 #endif

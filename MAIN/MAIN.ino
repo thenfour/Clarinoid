@@ -16,6 +16,7 @@
 #include "CCDisplay.h"
 #include "CCEncoder.h"
 #include "CCSynth.h"
+#include "CCMIDI.h"
 
 //============================================================
 CCLeds leds(10, 2, 10, true);
@@ -30,6 +31,8 @@ TransientActivityLED gEncIndicator(60, 200);
 
 CCVolumePot gVolumePot(A8);
 TransientActivityLED gVolIndicator(40, 200);
+
+CCEWIMIDIOut gMidiOut();
 
 CCMainTxRx gLHSerial(Serial1);
 TransientActivityLED gLHRXIndicator(60, 500);
@@ -186,8 +189,12 @@ void loop() {
       gDisplay.mDisplay.println(String("pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
     };
 
-    auto pageDebugRX = [&]() {
-      gDisplay.mDisplay.println(String((gEncButton.IsPressed()) ? "LH" : "RH") + ToString((gEncButton.IsPressed()) ? gLHSerial.mReceivedData : gRHSerial.mReceivedData));
+    auto pageDebugLHRX = [&]() {
+      gDisplay.mDisplay.println(String("LH debug") + ToString(gLHSerial.mReceivedData));
+    };
+
+    auto pageDebugRHRX = [&]() {
+      gDisplay.mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
     };
 
     auto pageAudioStatus = [&]() {
@@ -198,7 +205,7 @@ void loop() {
     };
 
     int page = gEnc.GetValue() / 4;
-    page = page % 5;
+    page = page % 7;
     switch(page) {
       case 0:
         pageLHRX();
@@ -213,10 +220,13 @@ void loop() {
         pagePhysicalState();
         break;
       case 4:
-        pageDebugRX();
+        pageAudioStatus();
         break;
       case 5:
-        pageAudioStatus();
+        pageDebugLHRX();
+        break;
+      case 6:
+        pageDebugRHRX();
         break;
     }
     

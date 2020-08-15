@@ -156,8 +156,10 @@ public:
     // AudioNoInterrupts  https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
     AudioNoInterrupts();
 
-    float freq = MIDINoteToFreq(state.MIDINote + state.pitchBendN11.GetValue() * 0);
-    float freq2 = MIDINoteToFreq(state.MIDINote + 7 + state.pitchBendN11.GetValue() * 0);
+    float midiNote = state.MIDINote + state.pitchBendN11.GetValue() * 2;
+
+    float freq = MIDINoteToFreq(midiNote);
+    float freq2 = MIDINoteToFreq(midiNote + 7);
     float freqSync = map(state.breath01.GetValue(), 0.0f, 1.0f, freq * 2, freq * 7);
   
     CCSynthGraph::waveform.frequency(1, freq);

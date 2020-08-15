@@ -16,8 +16,8 @@ public:
     UpdateObjects[UpdateObjectCount] = this;
     UpdateObjectCount ++;
   }
-  virtual void setup() = 0;
-  virtual void loop() = 0;
+  virtual void setup() {}
+  virtual void loop() {}
 };
 
 inline void SetupUpdateObjects() {
@@ -344,46 +344,6 @@ private:
   float                   FramerateSecPerFrameAccum;
 };
 
-//
-//template <uint8_t N, bool TDebug>
-//class SimpleMovingAverage {
-//  CCThrottler th;
-//  bool mDebug = TDebug;
-//  public:
-//    explicit SimpleMovingAverage() : th(20) {}
-//    
-//    float Update(float input) {
-//
-////      currentValue = input;
-////      return input;
-//        sum -= previousInputs[index];
-//        sum += input;
-//        previousInputs[index] = input;
-//        if (++index == N)
-//            index = 0;
-//        //currentValue = (sum + (N / 2.0f)) / N;
-//        currentValue = 1.0f / (sum / N);
-//
-//        
-//        if (mDebug && th.IsReady()) {
-//          Serial.println(String("") + input + "\t" + currentValue);
-//        }
-//        
-//        return currentValue;
-//    }
-//
-//    float GetValue() const {
-//      return currentValue;
-//    }
-//
-//  private:
-//    float currentValue = 0;
-//    int index = 0;
-//    float previousInputs[N] = {0};
-//    float sum = 0;
-//};
-//
-
 template <size_t N, bool TDebug>
 class SimpleMovingAverage
 {
@@ -421,7 +381,36 @@ class SimpleMovingAverage
     float total_{0};
 };
 
+// allows throttled plotting to Serial.
+class PlotHelper : IUpdateObject
+{
+  CCThrottlerT<30> mThrot;
+  String mFields;
+public:
+  virtual void loop() {
+    if (mThrot.IsReady()) {
+      if (mFields.length() > 0) {
+        if (Serial) {
+          Serial.println(mFields);
+        }
+      }
+    }
+    mFields = "";
+  }
 
+  template<typename T>
+  void AppendField(const T& s) {
+    if (mFields.length() > 0) {
+      mFields.append("\t");
+    }
+    mFields.append(s);
+  }
+};
 
+PlotHelper gPlot;
+template<typename T>
+inline void CCPlot(const T& val) {
+  gPlot.AppendField(val);
+}
 
 #endif
