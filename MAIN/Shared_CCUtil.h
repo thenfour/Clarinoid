@@ -64,6 +64,35 @@ public:
   }
 };
 
+//////////////////////////////////////////////////////////////////////
+template<uint32_t TperiodMS>
+class CCThrottlerT
+{
+  uint32_t mPeriodStartMS;
+public:
+  CCThrottlerT()
+  {
+    mPeriodStartMS = millis();
+  }
+
+  void Reset() {
+    mPeriodStartMS = millis();
+  }
+
+  bool IsReady() {
+    return IsReady(TperiodMS);
+  }
+  
+  bool IsReady(uint32_t periodMS) {
+    auto m = millis();
+    if (m - mPeriodStartMS < periodMS) {
+      return false;
+    }
+    mPeriodStartMS = m; // note that overshoot will not be subtracted! so periods will often be longer than requested.
+    return true;
+  }
+};
+
 
 //////////////////////////////////////////////////////////////////////
 // you can't toggle LEDs at the fastest rate possible; it just looks constant.
@@ -314,6 +343,85 @@ private:
   int                     FramerateSecPerFrameIdx;
   float                   FramerateSecPerFrameAccum;
 };
+
+//
+//template <uint8_t N, bool TDebug>
+//class SimpleMovingAverage {
+//  CCThrottler th;
+//  bool mDebug = TDebug;
+//  public:
+//    explicit SimpleMovingAverage() : th(20) {}
+//    
+//    float Update(float input) {
+//
+////      currentValue = input;
+////      return input;
+//        sum -= previousInputs[index];
+//        sum += input;
+//        previousInputs[index] = input;
+//        if (++index == N)
+//            index = 0;
+//        //currentValue = (sum + (N / 2.0f)) / N;
+//        currentValue = 1.0f / (sum / N);
+//
+//        
+//        if (mDebug && th.IsReady()) {
+//          Serial.println(String("") + input + "\t" + currentValue);
+//        }
+//        
+//        return currentValue;
+//    }
+//
+//    float GetValue() const {
+//      return currentValue;
+//    }
+//
+//  private:
+//    float currentValue = 0;
+//    int index = 0;
+//    float previousInputs[N] = {0};
+//    float sum = 0;
+//};
+//
+
+template <size_t N, bool TDebug>
+class SimpleMovingAverage
+{
+  CCThrottler th;
+  public:
+    SimpleMovingAverage() : th(20) {}
+
+    void Update(float sample)
+    {
+        if (num_samples_ < N)
+        {
+            samples_[num_samples_++] = sample;
+            total_ += sample;
+        }
+        else
+        {
+            float& oldest = samples_[num_samples_++ % N];
+            total_ += sample - oldest;
+            oldest = sample;
+        }
+        
+        if (TDebug && th.IsReady()) {
+          Serial.println(String("") + sample + "\t" + GetValue());
+        }
+    }
+
+    float GetValue() const {
+      return total_ / min(num_samples_, N);;
+    }
+    //operator double() const { return total_ / min(num_samples_, N); }
+
+  private:
+    float samples_[N];
+    size_t num_samples_{0};
+    float total_{0};
+};
+
+
 
 
 #endif

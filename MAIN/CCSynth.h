@@ -109,35 +109,39 @@ public:
   
     CCSynthGraph::waveform.pulseWidth(1, 0.5);
     CCSynthGraph::waveform.pulseWidth(2, 0.5);
-    CCSynthGraph::waveform.pulseWidth(3, 0.0);
+    CCSynthGraph::waveform.pulseWidth(3, 0.5);
 
     CCSynthGraph::waveform.amplitude(1, 0.0);
     CCSynthGraph::waveform.amplitude(2, 0.3);
-    CCSynthGraph::waveform.amplitude(3, 0.2);
+    CCSynthGraph::waveform.amplitude(3, 0.3);
 
 
-    CCSynthGraph::waveform1.waveform(1, 0); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+    CCSynthGraph::waveform1.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync.
     CCSynthGraph::waveform1.waveform(2, 1);
-    CCSynthGraph::waveform1.waveform(3, 1);
-  
-    CCSynthGraph::waveform1.pulseWidth(1, 0.5);
-    CCSynthGraph::waveform1.pulseWidth(2, 0.0);
-    CCSynthGraph::waveform1.pulseWidth(3, 0.0);
+    //CCSynthGraph::waveform1.waveform(3, 1);
 
-    CCSynthGraph::waveform1.amplitude(1, 0.3);
-    CCSynthGraph::waveform1.amplitude(2, 0.0);
+    CCSynthGraph::waveform1.pulseWidth(1, 0.0);
+    CCSynthGraph::waveform1.pulseWidth(2, 0.0);
+    //CCSynthGraph::waveform1.pulseWidth(3, 0.0);
+
+    CCSynthGraph::waveform1.amplitude(1, 0.2);
+    CCSynthGraph::waveform1.amplitude(2, 0.2);
     CCSynthGraph::waveform1.amplitude(3, 0.0);
 
     //CCSynthGraph::waveform.portamentoTime(1, 0.1);
     //CCSynthGraph::waveform.portamentoTime(2, 0.1);
-    //CCSynthGraph::waveform.portamentoTime(3, 0.5);
+    //CCSynthGraph::waveform.portamentoTime(3, 0.1);
+
+    //CCSynthGraph::waveform1.portamentoTime(1, 0.1);
+    //CCSynthGraph::waveform1.portamentoTime(2, 0.1);
+    //CCSynthGraph::waveform1.portamentoTime(3, 0.1);
 
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);
     CCSynthGraph::verbWetAmpLeft.gain(.3);
     CCSynthGraph::verbWetAmpRight.gain(.3);
     
-    CCSynthGraph::waveFilter.resonance(1.3);
+    //CCSynthGraph::waveFilter.resonance(1.3);
   }
 
   virtual void loop() {
@@ -152,17 +156,18 @@ public:
     // AudioNoInterrupts  https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
     AudioNoInterrupts();
 
-    float freq = MIDINoteToFreq(state.MIDINote + state.pitchBendN11 * 0);
-    float freq2 = MIDINoteToFreq(state.MIDINote + 7 + state.pitchBendN11 * 0);
-    float freqSync = map(state.breath01, 0.0f, 1.0f, freq, freq * 5.5);
+    float freq = MIDINoteToFreq(state.MIDINote + state.pitchBendN11.GetValue() * 0);
+    float freq2 = MIDINoteToFreq(state.MIDINote + 7 + state.pitchBendN11.GetValue() * 0);
+    float freqSync = map(state.breath01.GetValue(), 0.0f, 1.0f, freq * 2, freq * 7);
   
     CCSynthGraph::waveform.frequency(1, freq);
     CCSynthGraph::waveform.frequency(2, freqSync);
     CCSynthGraph::waveform.frequency(3, freq2);
   
-    CCSynthGraph::waveform1.frequency(1, freq * 2);
+    CCSynthGraph::waveform1.frequency(1, freq * 1.005);
+    CCSynthGraph::waveform1.frequency(2, freq * .995);
 
-    CCSynthGraph::waveFilter.frequency(map(state.breath01, .06, 1, 0, 20000));
+    CCSynthGraph::waveFilter.frequency(map(state.breath01.GetValue(), .06, 1, 0, 20000));
     
     AudioInterrupts();
   }

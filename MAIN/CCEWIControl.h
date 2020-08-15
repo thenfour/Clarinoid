@@ -46,8 +46,7 @@ struct CCEWIPhysicalState
   bool key_back;
   Tristate key_triState; // same.
   
-  CCEWIPhysicalState() = default;
-  explicit CCEWIPhysicalState(const LHRHPayload& lh, const LHRHPayload& rh)
+  void Update(const LHRHPayload& lh, const LHRHPayload& rh)
   {
     this->key_lh1 = lh.data.key2;
     this->key_lh2 = lh.data.key3;
@@ -89,21 +88,24 @@ struct CCEWIMusicalState
 {
   bool isPlayingNote = false;
   uint8_t MIDINote = 0;
-  float pitchBendN11 = 0; // -1 to 1
-  float breath01 = 0;// 0-1
-
-  CCEWIMusicalState() = default;
+  // TODO: create a time-based smoother. throttling and taking samples like this is not very accurate. sounds fine today though.
+  SimpleMovingAverage<30, true> breath01;// 0-1
+  SimpleMovingAverage<30, false> pitchBendN11; // -1 to 1
+  CCThrottlerT<1> mPressureSensingThrottle;
+  int nUpdates = 0;
   
-  explicit CCEWIMusicalState(const CCEWIPhysicalState& ps)
+  void Update(const CCEWIPhysicalState& ps)
   {
     // now convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
 
     // the easy stuff
-    this->breath01 = constrain(ps.breath01, 0, 1);
-    this->pitchBendN11 = constrain(ps.bite01 - ps.pitchDown01, -1, 1);
+    if (nUpdates == 0 || mPressureSensingThrottle.IsReady()) {
+      this->breath01.Update(constrain(ps.breath01, 0, 1));
+      this->pitchBendN11.Update(constrain(ps.bite01 - ps.pitchDown01, -1, 1));
+    }
 
-    this->isPlayingNote = this->breath01 > NOTE_ON_BREATH_THRESHOLD;
+    this->isPlayingNote = this->breath01.GetValue() > NOTE_ON_BREATH_THRESHOLD;
 
     // the rules are rather weird for keys. open is a C#
     // https://bretpimentel.com/flexible-ewi-fingerings/
@@ -143,6 +145,8 @@ struct CCEWIMusicalState
     } else if (ps.key_octave1) {
       this->MIDINote += 12 * 1;
     }
+
+    nUpdates ++;
   }
 };
 
@@ -153,8 +157,8 @@ public:
   CCEWIMusicalState mMusicalState;
   
   void Update(const LHRHPayload& lh, const LHRHPayload& rh) {
-    mPhysicalState = CCEWIPhysicalState(lh, rh);
-    mMusicalState = CCEWIMusicalState(mPhysicalState);
+    mPhysicalState.Update(lh, rh);
+    mMusicalState.Update(mPhysicalState);
   }
 };
 

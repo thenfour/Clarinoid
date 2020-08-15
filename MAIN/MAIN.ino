@@ -130,19 +130,27 @@ void loop() {
     gDisplay.mDisplay.setTextColor(WHITE);
     gDisplay.mDisplay.setCursor(0,0);
 
-    auto pageRX = [&](){
-      CCMainTxRx& rx = (gEncButton.IsPressed()) ? gLHSerial : gRHSerial;
-      gDisplay.mDisplay.println(String((gEncButton.IsPressed()) ? "LH" : "RH") + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
+    auto pageRX = [&](CCMainTxRx& rx, const char *title){
+      //CCMainTxRx& rx = (gEncButton.IsPressed()) ? gLHSerial : gRHSerial;
+      gDisplay.mDisplay.println(String(title) + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
       gDisplay.mDisplay.print(String("Err:") + rx.mChecksumErrors);
       gDisplay.mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
       gDisplay.mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + "  tx:" + rx.mTXSerial);
       gDisplay.mDisplay.println(String("myfps:") + (int)gFramerate.getFPS());
     };
+
+    auto pageLHRX = [&](){
+      pageRX(gLHSerial, "LH");
+    };
+    
+    auto pageRHRX = [&](){
+      pageRX(gRHSerial, "RH");
+    };
     
     auto pageMusicalState = [&]() {
       gDisplay.mDisplay.println(String("note: ") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") freq=" + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote));
-      gDisplay.mDisplay.println(String("wind:") + gEWIControl.mMusicalState.breath01);
-      gDisplay.mDisplay.println(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11);
+      gDisplay.mDisplay.println(String("wind:") + gEWIControl.mMusicalState.breath01.GetValue());
+      gDisplay.mDisplay.println(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
     };
     
     auto pagePhysicalState = [&]() {
@@ -193,18 +201,21 @@ void loop() {
     page = page % 5;
     switch(page) {
       case 0:
-        pageRX();
+        pageLHRX();
         break;
       case 1:
-        pageMusicalState();
+        pageRHRX();
         break;
       case 2:
-        pagePhysicalState();
+        pageMusicalState();
         break;
       case 3:
-        pageDebugRX();
+        pagePhysicalState();
         break;
       case 4:
+        pageDebugRX();
+        break;
+      case 5:
         pageAudioStatus();
         break;
     }
