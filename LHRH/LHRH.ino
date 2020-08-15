@@ -22,27 +22,27 @@ CCLeds leds(10, 2, 10,
   );
 
 #ifdef LH
-CCTouchKey key1(15, 875);
-CCTouchKey key2(16, 1400);
-CCTouchKey key3(17, 1400);
-CCTouchKey key4(18, 1400);
-CCTouchKey key5(19, 1400);
-CCTouchKey key6(22, 1100);
+CCTouchKey key1(15);
+CCTouchKey key2(16);
+CCTouchKey key3(17);
+CCTouchKey key4(18);
+CCTouchKey key5(19);
+CCTouchKey key6(22);
 
 CCBreathSensor wind(A0);
 CCBiteSensor bite(A6);
 CCOnOffSwitch backButton(6, 10, 5);
-CCTouchKey octave1(0, 900);
-CCTouchKey octave2(1, 1400);
-CCTouchKey octave3(3, 1400);
-CCTouchKey octave4(4, 900);
+CCTouchKey octave1(0);
+CCTouchKey octave2(1);
+CCTouchKey octave3(3);
+CCTouchKey octave4(4);
 #else // RH
-CCTouchKey key1(22, 1250);
-CCTouchKey key2(15, 1400);
-CCTouchKey key3(16, 1400);
-CCTouchKey key4(17, 1400);
-CCTouchKey key5(18, 1160);
-CCTouchKey key6(19, 1080);
+CCTouchKey key1(22);
+CCTouchKey key2(15);
+CCTouchKey key3(16);
+CCTouchKey key4(17);
+CCTouchKey key5(18);
+CCTouchKey key6(19);
 CCPitchStripSensor pitchDown(A0);
 CCOnOffSwitch oooButton1(11, 10, 5);
 CCOnOffSwitch oooButton2(12, 10, 5);
@@ -76,8 +76,6 @@ void setup() {
 }
 
 void loop() {
-  //Serial.println(String("") + touchRead(16) + "\t" + touchRead(16));
-  
   UpdateUpdateObjects();
   gGeneralActivityIndicator.Touch();
 

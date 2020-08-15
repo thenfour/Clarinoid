@@ -1,36 +1,78 @@
 #ifndef CCTOUCHKEY_H
 #define CCTOUCHKEY_H
 
+#include <touchablePin.h>
 #include "Shared_CCUtil.h"
 
-// typical idle is 600-900, depends on the surface area.
-// for small washers, edge touch = about 800, normal = 2000, absolute max 3500 / thresh is around 1000 to avoid noise
-// for big washers, edge touch = about 1300, normal = 2500-3000, absolute max 6000
-// in order to save payload space
+// touchRead() is very slow because it waits to detect the full charge.
+// Fortunately touchablePin has been created which short circuits if "touched" is satisfied.
+// the drawback is that you must initialize it when you know the key is untouched.
+// so we periodically call the original touchread to detect if the value
+// is less than we've seen before. if so, we suspect it's untouched.
+const int MaxTouchKeys = 30;
 
-//uint16_t mTouchKeyGlobalMax = 0;
-//uint16_t mTouchKeyGlobalMin = ;
-//on a scale of 0-100, what is the theshold for "touched"
-//uint8_t mTouchKeyThreshold = 17;
+class CCTouchKeyCalibrator : IUpdateObject
+{
+  uint16_t mMinValues[MaxTouchKeys];
+  touchablePin* mTouchablePins[MaxTouchKeys];
+
+  CCThrottler mThrottle;
+  uint8_t mIndex = 0;
+
+public:
+  uint8_t mPinCount = 0;
+
+  CCTouchKeyCalibrator() : 
+    mThrottle(20)
+  {
+  }
+
+  // returns the index of this pin. it can be used to stagger reads within frames.
+  int Add(touchablePin* p) {
+    mTouchablePins[mPinCount] = p;
+    mMinValues[mPinCount] = touchRead(p->pinNumber);
+    int ret = mPinCount;
+    mPinCount ++;
+    return ret;
+  }
+
+  virtual void setup() { }
+  virtual void loop() {
+    if (!mThrottle.IsReady()) {
+      return;
+    }
+    ;
+    int n = touchRead(mTouchablePins[mIndex]->pinNumber);
+    if (n < mMinValues[mIndex]) {
+      mMinValues[mIndex] = n;
+      mTouchablePins[mIndex]->initUntouched();
+      Serial.println(String("Updating pin ") + mTouchablePins[mIndex]->pinNumber + " with minvalue " + n);
+    }
+
+    mIndex = (mIndex + 1) % mPinCount;
+  }
+};
+
+CCTouchKeyCalibrator gTouchKeyCalibrator;
+
+const int KeysToSamplePerFrame = 2;
 
 class CCTouchKey : IUpdateObject
 {
+  touchablePin mTouchablePin;
   uint8_t mPin;
-  //uint16_t mLocalMax;
-  //uint16_t mLocalMin;
-  uint32_t mTouchedThreshold;
   bool mIsTouched;
   bool mIsDirty;
+  int mStaggerGroup;
+  int mFrameNumber = 0;
 public:
-  explicit CCTouchKey(uint8_t pin, uint32_t touchedThreshold) :
+  explicit CCTouchKey(uint8_t pin) :
+    mTouchablePin(pin),
     mPin(pin),
-    //mUseLocal(false),
-    mTouchedThreshold(touchedThreshold),
-    //mLocalMax(mTouchKeyGlobalMax),
-    //mLocalMin(mTouchKeyGlobalMin),
     mIsTouched(false),
     mIsDirty(false)
   {
+    mStaggerGroup = gTouchKeyCalibrator.Add(&mTouchablePin) / KeysToSamplePerFrame;
   }
 
   bool IsPressed() const { return mIsTouched; }
@@ -43,49 +85,15 @@ public:
 
   virtual void loop()
   {
-    uint32_t raw = touchRead(mPin);
-    bool newState = raw > mTouchedThreshold;
-    mIsDirty = newState != mIsTouched;
-    mIsTouched = newState;
+    int totalGroups = gTouchKeyCalibrator.mPinCount / KeysToSamplePerFrame;
+    if (mFrameNumber % totalGroups == mStaggerGroup) {
+      bool newState = mTouchablePin.isTouched();
+      mIsDirty = newState != mIsTouched;
+      mIsTouched = newState;
+    }
+    mFrameNumber ++;
   }
-//    
-//    if (raw < mLocalMin) {
-//      mLocalMin = raw;
-//    }
-//    if (raw > mLocalMax) {
-//      mLocalMax = raw;
-//    }
-//    if (raw < mTouchKeyGlobalMin) {
-//      mTouchKeyGlobalMin = raw;
-//    }
-//    if (raw > mTouchKeyGlobalMax) {
-//      mTouchKeyGlobalMax = raw;
-//    }
-//
-//    if (mUseLocal) {
-//      raw -= mLocalMin;
-//      raw *= 100;
-//      raw /= mLocalMax - mLocalMin;
-//    } else {
-//      raw -= mTouchKeyGlobalMin;
-//      raw *= 100;
-//      raw /= mTouchKeyGlobalMax - mTouchKeyGlobalMin;
-//    }
-//
-//    // raw is now 0-100
-//    if (mIsTouched) {
-//      if (raw < mTouchKeyThreshold) {
-//        mIsTouched = false;
-//        mIsDirty = true;
-//      }
-//    } else {
-//      if (raw > mTouchKeyThreshold) {
-//        mIsTouched = true;
-//        mIsDirty = true;
-//        mUseLocal = true;// now we have local range so it's reliable.
-//      }
-//    }
-//  }
+
 };
 
 #endif
