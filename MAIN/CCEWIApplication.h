@@ -41,11 +41,17 @@ CCSynth gSynth;
 CCEWIMIDIOut gMidiOut(gMIDI);
 TransientActivityLED gMidiActivityIndicator(40, 200);
 
+// non-tactile keys ugh
+BoolKeyWithRepeat<500, 200> gLHButton1Key;
+BoolKeyWithRepeat<500, 200> gLHButton2Key;
+Tristate gOldTristateVal = Tristate::Null;
+
 // contains all non-GUI application stuff.
 class CCEWIApp : IUpdateObject
 {
 public:
   void loop() {
+   
     if (gEnc.IsDirty()) {
       gEncIndicator.Touch();
     }
@@ -53,6 +59,33 @@ public:
     if (gVolumePot.IsDirty()) {
       gVolIndicator.Touch();
       gSynth.SetGain(gVolumePot.GetValue01());
+    }
+
+    if (gOldTristateVal != gEWIControl.mPhysicalState.key_triState) {
+      // tristate will control harmonizer.
+      switch (gEWIControl.mPhysicalState.key_triState) {
+      case Tristate::Position2:
+      case Tristate::Position3:
+        gSynth.SetHarmonizer(true);
+        break;
+      default:
+        gSynth.SetHarmonizer(false);
+        break;
+      }
+    }
+    
+    gLHButton1Key.Update(gEWIControl.mPhysicalState.key_lhExtra1);
+    gLHButton2Key.Update(gEWIControl.mPhysicalState.key_lhExtra2);
+    
+    if (gLHButton1Key.IsTriggered()) {
+      // todo: this logic belongs elsewhere.
+      if (gEWIControl.mTranspose < 48)
+        gEWIControl.mTranspose += 12;
+    }
+    if (gLHButton2Key.IsTriggered()) {
+      // todo: this logic belongs elsewhere.
+      if (gEWIControl.mTranspose > -48)
+        gEWIControl.mTranspose -= 12;
     }
   
     // gather up serial receive (LH)

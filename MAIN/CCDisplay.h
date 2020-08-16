@@ -69,9 +69,10 @@ public:
     };
     
     auto pageMusicalState = [&]() {
-      mDisplay.println(String("note: ") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") freq=" + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote));
-      mDisplay.println(String("wind:") + gEWIControl.mMusicalState.breath01.GetValue());
-      mDisplay.println(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
+      mDisplay.println(String("#:") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote) + "hz");
+      mDisplay.println(String("transpose:") + gEWIControl.mTranspose);
+      mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
+      mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
     };
     
     auto pagePhysicalState = [&]() {
@@ -100,11 +101,13 @@ public:
         (gEWIControl.mPhysicalState.key_rh4 ? "4" : "-") +
         "       " +
         " b:" +
-        (gEWIControl.mPhysicalState.key_lhExtra1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_lhExtra2 ? "2" : "-"));
-      mDisplay.println(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
+        (gEWIControl.mPhysicalState.key_rhExtra1 ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_rhExtra2 ? "2" : "-"));
+      mDisplay.print(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
         "bite: " + gEWIControl.mPhysicalState.bite01);
-      mDisplay.println(String("pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
+      mDisplay.print(String("  pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
+      mDisplay.print(String("  tristate: ") + ToString(gEWIControl.mPhysicalState.key_triState));
+
     };
 
     auto pageDebugLHRX = [&]() {

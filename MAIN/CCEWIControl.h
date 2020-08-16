@@ -12,13 +12,6 @@ const float BREATH_NOTEON_THRESHOLD = 0.02;
 
 const float PITCHDOWN_DEADZONE = 0.8f;
 
-enum class Tristate
-{
-  Position1,
-  Position2,
-  Position3
-};
-
 struct CCEWIPhysicalState
 {
   bool key_lh1;
@@ -112,7 +105,7 @@ struct CCEWIMusicalState
   }
   
 
-  void Update(const CCEWIPhysicalState& ps)
+  void Update(const CCEWIPhysicalState& ps, int transpose)
   {
     uint8_t prevNote = MIDINote;
     bool wasPlayingNote = isPlayingNote;
@@ -139,42 +132,47 @@ struct CCEWIMusicalState
 
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
-    this->MIDINote = 49-12; // C#2
+    int newNote = 49-12; // C#2
     if (ps.key_lh1){
-      this->MIDINote -= 2;
+      newNote -= 2;
     }
     if (ps.key_lh2) {
-      this->MIDINote -= ps.key_lh1 ? 2 : 1;
+      newNote -= ps.key_lh1 ? 2 : 1;
     }
     if (ps.key_lh3) {
-      this->MIDINote -= 2;
+      newNote -= 2;
     }
     if (ps.key_lh4) {
-      this->MIDINote += 1;
+      newNote += 1;
     }
 
     if (ps.key_rh1) {
-      this->MIDINote -= ps.key_lh3 ? 2 : 1;
+      newNote -= ps.key_lh3 ? 2 : 1;
     }
     if (ps.key_rh2) {
-      this->MIDINote -= 1;
+      newNote -= 1;
     }
     if (ps.key_rh3) {
-      this->MIDINote -= 2;
+      newNote -= 2;
     }
     if (ps.key_rh4) {
-      this->MIDINote -= 2;
+      newNote -= 2;
     }
 
     if (ps.key_octave4) {
-      this->MIDINote += 12 * 4;  
+      newNote += 12 * 4;  
     } else if (ps.key_octave3) {
-      this->MIDINote += 12 * 3;
+      newNote += 12 * 3;
     } else if (ps.key_octave2) {
-      this->MIDINote += 12 * 2;
+      newNote += 12 * 2;
     } else if (ps.key_octave1) {
-      this->MIDINote += 12 * 1;
+      newNote += 12 * 1;
     }
+
+    // transpose
+    newNote += transpose;
+    newNote = constrain(newNote, 1, 127);
+    this->MIDINote = (uint8_t)newNote;
 
     needsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != MIDINote);
     // send note off in these cases:
@@ -200,10 +198,12 @@ class CCEWIControl
 public:
   CCEWIPhysicalState mPhysicalState;
   CCEWIMusicalState mMusicalState;
+
+  int mTranspose = 0;
   
   void Update(const LHRHPayload& lh, const LHRHPayload& rh) {
     mPhysicalState.Update(lh, rh);
-    mMusicalState.Update(mPhysicalState);
+    mMusicalState.Update(mPhysicalState, mTranspose);
   }
 };
 

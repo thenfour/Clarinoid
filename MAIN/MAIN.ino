@@ -23,9 +23,6 @@ CCDisplay gDisplay(gApp);
 CCLeds leds(10, 2, 10, true);
 CCThrottlerT<20> ledThrottle;
 
-//============================================================
-
-//============================================================
 
 void setup() {
   Serial.begin(9600);

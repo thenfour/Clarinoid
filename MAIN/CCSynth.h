@@ -154,7 +154,25 @@ class CCSynth : IUpdateObject
   AudioBandlimitedOsci voices[4] = { CCSynthGraph::voice1, CCSynthGraph::voice2, CCSynthGraph::voice3, CCSynthGraph::voice4 };
   const int voiceCount = SizeofStaticArray(voices);
 
+  bool mHarmonizerOn = false;
+
 public:
+
+  void SetHarmonizer(bool b) {
+    mHarmonizerOn = b;
+    if (mHarmonizerOn) {
+      CCSynthGraph::voice3.amplitude(1, 0.2);
+      CCSynthGraph::voice3.amplitude(2, 0.2);
+      CCSynthGraph::voice4.amplitude(1, 0.2);
+      CCSynthGraph::voice4.amplitude(2, 0.2);
+    } else {
+      CCSynthGraph::voice3.amplitude(1, 0.0);
+      CCSynthGraph::voice3.amplitude(2, 0.0);
+      CCSynthGraph::voice4.amplitude(1, 0.0);
+      CCSynthGraph::voice4.amplitude(2, 0.0);
+    }
+  }
+
   virtual void setup() {
     AudioMemory(15);
     CCSynthGraph::audioShield.enable();
@@ -217,8 +235,6 @@ public:
       CCSynthGraph::voice3.waveform(2, 1);
       CCSynthGraph::voice3.pulseWidth(1, 0.0);
       CCSynthGraph::voice3.pulseWidth(2, 0.0);
-      CCSynthGraph::voice3.amplitude(1, 0.2);
-      CCSynthGraph::voice3.amplitude(2, 0.2);
       CCSynthGraph::voice3.portamentoTime(1, .05);
       CCSynthGraph::voice3.portamentoTime(2, .05);
       CCSynthGraph::voice3.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
@@ -230,8 +246,6 @@ public:
       CCSynthGraph::voice4.waveform(2, 1);
       CCSynthGraph::voice4.pulseWidth(1, 0.0);
       CCSynthGraph::voice4.pulseWidth(2, 0.0);
-      CCSynthGraph::voice4.amplitude(1, 0.2);
-      CCSynthGraph::voice4.amplitude(2, 0.2);
       CCSynthGraph::voice4.portamentoTime(1, .01);
       CCSynthGraph::voice4.portamentoTime(2, .01);
       CCSynthGraph::voice4.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
@@ -289,7 +303,7 @@ public:
     }
 
     float filterFreq = map(breathAdj, 0.01, 1, 0, 15000);
-    CCPlot(filterFreq);
+    //CCPlot(filterFreq);
     CCSynthGraph::waveFilter.frequency(filterFreq);
 
     AudioInterrupts();
