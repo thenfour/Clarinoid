@@ -151,8 +151,8 @@ class CCSynth : IUpdateObject
 {
   bool isPlaying = false;
   uint8_t playingMidiNote = 0;
-  AudioBandlimitedOsci voices[4] = { CCSynthGraph::voice1, CCSynthGraph::voice2, CCSynthGraph::voice3, CCSynthGraph::voice4 };
-  const int voiceCount = SizeofStaticArray(voices);
+  static constexpr int voiceCount = 4;
+  AudioBandlimitedOsci* voices[voiceCount] = { &CCSynthGraph::voice1, &CCSynthGraph::voice2, &CCSynthGraph::voice3, &CCSynthGraph::voice4 };
 
   bool mHarmonizerOn = false;
 
@@ -183,9 +183,9 @@ public:
     CCSynthGraph::ampLeft.gain(.5);
 
     for (int i = 0; i < voiceCount; ++ i) {
-      voices[i].amplitude(1, 0);
-      voices[i].amplitude(2, 0);
-      voices[i].amplitude(3, 0);
+      voices[i]->amplitude(1, 0);
+      voices[i]->amplitude(2, 0);
+      voices[i]->amplitude(3, 0);
     }
 
     float p = 0.005;

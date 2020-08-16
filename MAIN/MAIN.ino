@@ -16,9 +16,13 @@
 
 #include "CCEWIApplication.h"
 #include "CCDisplay.h"
+#include "CCMenuDebug.h"
 
 CCEWIApp gApp;
 CCDisplay gDisplay(gApp);
+
+ScreensaverMenuApp gScreensaverApp(gDisplay, gApp);
+DebugMenuApp gDebugApp(gDisplay, gApp);
 
 CCLeds leds(10, 2, 10, true);
 CCThrottlerT<20> ledThrottle;
@@ -29,8 +33,19 @@ void setup() {
   SetupUpdateObjects();
 }
 
+bool firstLoop = true;
+uint32_t gLoopExitMicros = micros();
+
 void loop() {
   uint32_t m = micros();
+  if (firstLoop) {
+    firstLoop = false;
+  } else {
+    if (m > gLoopExitMicros && (m - gLoopExitMicros) > gLongestBetweenLoopMicros) {
+      gLongestBetweenLoopMicros = m - gLoopExitMicros;
+    }
+  }
+
   UpdateUpdateObjects();
 
   if (ledThrottle.IsReady())
@@ -56,5 +71,6 @@ void loop() {
   if (n > m && (n - m) > gLongestLoopMicros) {
     gLongestLoopMicros = n - m;
   }
-  //delay(50);
+  
+  gLoopExitMicros = micros();
 }

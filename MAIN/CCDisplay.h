@@ -18,20 +18,57 @@
 
 framerateCalculator gFramerate;
 
+//////////////////////////////////////////////////////////////////////
+class MenuAppBase
+{
+public:
+  virtual void OnSelected() {};
+  virtual void OnUnselected() {}
+  virtual void Update() = 0;
+};
+
+//////////////////////////////////////////////////////////////////////
 // really i guess this is the whole GUI
 class CCDisplay : IUpdateObject
 {
-  Adafruit_SSD1306 mDisplay;
   CCThrottlerT<20> mThrottle;
   CCEWIApp& mApp;
 
+  static constexpr int MAX_MENU_APPS = 20;
+  int mMenuAppCount = 0;
+  MenuAppBase* mMenuApps[MAX_MENU_APPS];
+  int mCurrentMenuAppIndex = 0;
+
 public:
+  Adafruit_SSD1306 mDisplay;
+
+  void AddMenuApp(MenuAppBase* p) {
+    mMenuApps[mMenuAppCount] = p;
+    mMenuAppCount ++;
+  }
 
   // display gets access to the whole app
   CCDisplay(CCEWIApp& app) : 
-    mDisplay(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS),
-    mApp(app)    
+    mApp(app),
+    mDisplay(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS)
   {
+  }
+
+  void SelectApp(int n) {
+    n %= mMenuAppCount;
+    while (n < 0)
+      n += mMenuAppCount;
+
+    mMenuApps[mCurrentMenuAppIndex]->OnUnselected();
+    mCurrentMenuAppIndex = n;
+    mMenuApps[mCurrentMenuAppIndex]->OnSelected();
+  }
+
+  void NextApp() {
+    SelectApp(mCurrentMenuAppIndex + 1);
+  }
+  void PreviousApp() {
+    SelectApp(mCurrentMenuAppIndex - 1);
   }
 
   virtual void setup() {
@@ -47,117 +84,9 @@ public:
       return;
 
     mDisplay.clearDisplay();
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
 
-    auto pageRX = [&](CCMainTxRx& rx, const char *title){
-      //CCMainTxRx& rx = (gEncButton.IsPressed()) ? gLHSerial : gRHSerial;
-      mDisplay.println(String(title) + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
-      mDisplay.print(String("Err:") + rx.mChecksumErrors);
-      mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
-      mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + "  tx:" + rx.mTXSerial);
-      mDisplay.println(String("myfps:") + (int)gFramerate.getFPS());
-    };
-
-    auto pageLHRX = [&](){
-      pageRX(gLHSerial, "LH");
-    };
-    
-    auto pageRHRX = [&](){
-      pageRX(gRHSerial, "RH");
-    };
-    
-    auto pageMusicalState = [&]() {
-      mDisplay.println(String("#:") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote) + "hz");
-      mDisplay.println(String("transpose:") + gEWIControl.mTranspose);
-      mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
-      mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
-    };
-    
-    auto pagePhysicalState = [&]() {
-      // LH: k:1234 o:1234 b:12
-      // RH: k:1234 b:12
-      // wind:0.455 // bite:0.11
-      // pitch:
-      mDisplay.println(String("LH k:") +
-        (gEWIControl.mPhysicalState.key_lh1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_lh2 ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_lh3 ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_lh4 ? "4" : "-") +
-        " o:" +
-        (gEWIControl.mPhysicalState.key_octave1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_octave2 ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_octave3 ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_octave4 ? "4" : "-") +
-        " b:" +
-        (gEWIControl.mPhysicalState.key_lhExtra1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_lhExtra2 ? "2" : "-"));
-
-      mDisplay.println(String("RH k:") +
-        (gEWIControl.mPhysicalState.key_rh1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_rh2 ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_rh3 ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_rh4 ? "4" : "-") +
-        "       " +
-        " b:" +
-        (gEWIControl.mPhysicalState.key_rhExtra1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_rhExtra2 ? "2" : "-"));
-      mDisplay.print(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
-        "bite: " + gEWIControl.mPhysicalState.bite01);
-      mDisplay.print(String("  pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
-      mDisplay.print(String("  tristate: ") + ToString(gEWIControl.mPhysicalState.key_triState));
-
-    };
-
-    auto pageDebugLHRX = [&]() {
-      mDisplay.println(String("LH debug") + ToString(gLHSerial.mReceivedData));
-    };
-
-    auto pageDebugRHRX = [&]() {
-      mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
-    };
-
-    auto pageDebugMain = [&]() {
-      mDisplay.println(String("Main debug"));
-      mDisplay.println(String("Longest loop MS:") + ((float)gLongestLoopMicros / 1000));
-    };
-    auto pageAudioStatus = [&]() {
-      mDisplay.println(String("Memory: ") + AudioMemoryUsage());
-      mDisplay.println(String("Memory Max: ") + AudioMemoryUsageMax());
-      mDisplay.println(String("CPU: ") + AudioProcessorUsage());
-      mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
-    };
-
-
-    int page = gEnc.GetValue() / 4;
-    page = page % 8;
-    switch(page) {
-      case 0:
-        pageLHRX();
-        break;
-      case 1:
-        pageRHRX();
-        break;
-      case 2:
-        pageMusicalState();
-        break;
-      case 3:
-        pagePhysicalState();
-        break;
-      case 4:
-        pageAudioStatus();
-        break;
-      case 5:
-        pageDebugLHRX();
-        break;
-      case 6:
-        pageDebugRHRX();
-        break;
-      case 7:
-        pageDebugMain();
-        break;
-    }
+    MenuAppBase* pMenuApp = mMenuApps[mCurrentMenuAppIndex];
+    pMenuApp->Update();
     
     mDisplay.display();
   }

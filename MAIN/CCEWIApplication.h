@@ -14,6 +14,7 @@
 #include "CCMIDI.h"
 
 uint32_t gLongestLoopMicros = 0;
+uint32_t gLongestBetweenLoopMicros = 0;
 
 // MIDI library is touchy about how you instantiate.
 // Simplest is to do it the way it's designed for: in the main sketch, global scope.
