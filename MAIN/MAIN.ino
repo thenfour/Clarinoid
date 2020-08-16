@@ -40,9 +40,11 @@ void loop() {
     leds.setPixelColor(2, 0, col(gLHTXIndicator.GetState(), 0, 4), 0);
     leds.setPixelColor(3, col(gRHRXErrorIndicator.GetState(), 0, 4), 0, col(gRHRXIndicator.GetState(), 0, 4));
     leds.setPixelColor(4, 0, col(gRHTXIndicator.GetState(), 0, 4), 0);
-    leds.setPixelColor(5, 0, col(gMidiActivityIndicator.GetState(), 0, 4), col(gMidiActivityIndicator.GetState(), 0, 4));
-    // 6 (off)
-    // 7 (off)
+    leds.setPixelColor(5, col(gSynth.IsHarmonizerEnabled(), 0, 4), col(gMidiActivityIndicator.GetState(), 0, 4), col(gMidiActivityIndicator.GetState(), 0, 4));
+    
+    leds.setPixelColor(6, col(gEWIControl.mTranspose > 0, 0, 16), col(gEWIControl.mTranspose > 0, 0, 16), 0);
+    leds.setPixelColor(7, col(gEWIControl.mTranspose < 0, 0, 16), col(gEWIControl.mTranspose < 0, 0, 16), 0);
+
     leds.setPixelColor(8, 0, gVolumePot.GetValue01() * 16, col(gVolIndicator.GetState(), 0, 32));
     leds.setPixelColor(9, col(gEncButton.IsPressed()), 0, col(gEncIndicator.GetState(), 0, 16));
     leds.show();

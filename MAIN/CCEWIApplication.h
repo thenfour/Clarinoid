@@ -42,8 +42,8 @@ CCEWIMIDIOut gMidiOut(gMIDI);
 TransientActivityLED gMidiActivityIndicator(40, 200);
 
 // non-tactile keys ugh
-BoolKeyWithRepeat<500, 200> gLHButton1Key;
-BoolKeyWithRepeat<500, 200> gLHButton2Key;
+BoolKeyWithRepeat<500, 200> gRHButton1Key;
+BoolKeyWithRepeat<500, 200> gRHButton2Key;
 Tristate gOldTristateVal = Tristate::Null;
 
 // contains all non-GUI application stuff.
@@ -74,15 +74,15 @@ public:
       }
     }
     
-    gLHButton1Key.Update(gEWIControl.mPhysicalState.key_lhExtra1);
-    gLHButton2Key.Update(gEWIControl.mPhysicalState.key_lhExtra2);
+    gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1);
+    gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2);
     
-    if (gLHButton1Key.IsTriggered()) {
+    if (gRHButton1Key.IsTriggered()) {
       // todo: this logic belongs elsewhere.
       if (gEWIControl.mTranspose < 48)
         gEWIControl.mTranspose += 12;
     }
-    if (gLHButton2Key.IsTriggered()) {
+    if (gRHButton2Key.IsTriggered()) {
       // todo: this logic belongs elsewhere.
       if (gEWIControl.mTranspose > -48)
         gEWIControl.mTranspose -= 12;

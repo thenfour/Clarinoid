@@ -173,6 +173,8 @@ public:
     }
   }
 
+  bool IsHarmonizerEnabled() const { return mHarmonizerOn; }
+
   virtual void setup() {
     AudioMemory(15);
     CCSynthGraph::audioShield.enable();
