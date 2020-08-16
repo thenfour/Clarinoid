@@ -30,6 +30,7 @@ void setup() {
 }
 
 void loop() {
+  uint32_t m = micros();
   UpdateUpdateObjects();
 
   if (ledThrottle.IsReady())
@@ -47,9 +48,13 @@ void loop() {
     // 7 = off
 
     leds.setPixelColor(8, col(gEncButton.IsPressed()), 0, col(gEncIndicator.GetState(), 0, 1));
-    leds.setPixelColor(9, 0, gVolumePot.GetValue01() * 16, col(gVolIndicator.GetState(), 0, 1));
+    leds.setPixelColor(9, 0, gVolumePot.GetValue01() * 6, col(gVolIndicator.GetState(), 0, 6));
     leds.show();
   }
 
+  uint32_t n = micros();
+  if (n > m && (n - m) > gLongestLoopMicros) {
+    gLongestLoopMicros = n - m;
+  }
   //delay(50);
 }

@@ -118,6 +118,10 @@ public:
       mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
     };
 
+    auto pageDebugMain = [&]() {
+      mDisplay.println(String("Main debug"));
+      mDisplay.println(String("Longest loop MS:") + ((float)gLongestLoopMicros / 1000));
+    };
     auto pageAudioStatus = [&]() {
       mDisplay.println(String("Memory: ") + AudioMemoryUsage());
       mDisplay.println(String("Memory Max: ") + AudioMemoryUsageMax());
@@ -125,8 +129,9 @@ public:
       mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
     };
 
+
     int page = gEnc.GetValue() / 4;
-    page = page % 7;
+    page = page % 8;
     switch(page) {
       case 0:
         pageLHRX();
@@ -148,6 +153,9 @@ public:
         break;
       case 6:
         pageDebugRHRX();
+        break;
+      case 7:
+        pageDebugMain();
         break;
     }
     

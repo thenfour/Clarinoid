@@ -13,6 +13,8 @@
 #include "CCSynth.h"
 #include "CCMIDI.h"
 
+uint32_t gLongestLoopMicros = 0;
+
 // MIDI library is touchy about how you instantiate.
 // Simplest is to do it the way it's designed for: in the main sketch, global scope.
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, gMIDI);
