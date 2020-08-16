@@ -178,8 +178,8 @@ public:
     CCSynthGraph::waveform1.frequency(1, freq * 1.005);
     CCSynthGraph::waveform1.frequency(2, freq * .995);
 
-    float filterFreq = map(breathAdj, 0, 1, 0, 15000);
-    CCPlot(filterFreq);
+    float filterFreq = map(breathAdj, 0.01, 1, 0, 15000);
+    //CCPlot(filterFreq);
     CCSynthGraph::waveFilter.frequency(filterFreq);
     
     AudioInterrupts();

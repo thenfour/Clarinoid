@@ -8,8 +8,9 @@
 
 const float BREATH_LOWER_DEADZONE = 0.07f;
 const float BREATH_UPPER_DEADZONE = 0.6f;
+const float BREATH_NOTEON_THRESHOLD = 0.02;
+
 const float PITCHDOWN_DEADZONE = 0.8f;
-const float BREATH_NOTEON_THRESHOLD = 0.25;
 
 enum class Tristate
 {
@@ -87,14 +88,6 @@ struct CCEWIPhysicalState
   }
 };
 
-enum class NoteTransitionType
-{
-  WasNeverPlaying, // nothing (isplaying=false)
-  NoteOff,// was playing note, no longer playing note. (isplaying = false)
-  Legato, // was playing note, now playing this different note (isplaying = true)
-  PlayingNewNote
-};
-
 struct CCEWIMusicalState
 {
   // stuff helpful for midi processing
@@ -139,7 +132,7 @@ struct CCEWIMusicalState
       this->isPlayingNote = this->breath01.GetValue() > BREATH_NOTEON_THRESHOLD;
     }
 
-    //CCPlot(this->breath01.GetValue() * 100);
+    CCPlot(this->breath01.GetValue() * 100);
     //CCPlot(ps.breath01 * 100);
     //CCPlot(this->pitchBendN11.GetValue() * 100);
     //CCPlot(ps.pitchDown01 * 100);
@@ -189,6 +182,7 @@ struct CCEWIMusicalState
     // - or, you are playing, but a different note than before.
     needsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != MIDINote));
     noteOffNote = prevNote;
+
 
 //    if (needsNoteOn) {
 //      Serial.println(String("note on: ") + MIDINote + " ; wasplaying=" + wasPlayingNote + " prevnote=" + prevNote + " isplaying=" + isPlayingNote + " currentnote=" + MIDINote);

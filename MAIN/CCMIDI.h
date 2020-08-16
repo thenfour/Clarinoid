@@ -36,6 +36,9 @@ class CCEWIMIDIOut : IUpdateObject
 
   MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial>>& mMidi;
 public:
+
+  bool activityHappened = false;
+
   CCEWIMIDIOut(MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial>>& _midi) :
     mMidi(_midi)
   {
@@ -46,19 +49,14 @@ public:
   }
 
   void Update(const CCEWIMusicalState& ms) {
+    activityHappened = false;
 
-    // important: send note on before note off, to make portamento work.
-    if (ms.needsNoteOn) {
-      mMidi.sendNoteOn(ms.MIDINote, 100, CCEWI_MIDICHANNEL);
-    }
-    if (ms.needsNoteOff) {
-      mMidi.sendNoteOff(ms.noteOffNote, 0, CCEWI_MIDICHANNEL);
-    }
-
+    // send pitchbend / breath BEFORE note ons, so the note starts with the correct state.
     if (gCCThrottle.IsReady()) {
       int pb = CalcRawPitchBend(ms.pitchBendN11.GetValue());
       if (pb != currentPitchBendRaw) {
         mMidi.sendPitchBend(pb, CCEWI_MIDICHANNEL);
+        activityHappened = true;
         currentPitchBendRaw = pb;
       }
       
@@ -69,14 +67,26 @@ public:
 
       //CCPlot(breath);
       //CCPlot(msb);
-      if (breath != currentBreathCC14Bit) {
+      if (breath != currentBreathCC14Bit && ms.isPlayingNote) {
         currentBreathCC14Bit = breath;
-        
+        activityHappened = true;
         mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController, msb, CCEWI_MIDICHANNEL);
         mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController + 32, lsb, CCEWI_MIDICHANNEL);
       }
 
     }
+
+    // important: send note on before note off, to make portamento work.
+    if (ms.needsNoteOn) {
+      mMidi.sendNoteOn(ms.MIDINote, 100, CCEWI_MIDICHANNEL);
+      activityHappened = true;
+      //Serial.println(String("note on?") + millis());
+    }
+    if (ms.needsNoteOff) {
+      mMidi.sendNoteOff(ms.noteOffNote, 0, CCEWI_MIDICHANNEL);
+      activityHappened = true;
+    }
+
   }
 };
 

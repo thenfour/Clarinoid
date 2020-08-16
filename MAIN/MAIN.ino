@@ -39,6 +39,7 @@ CCVolumePot gVolumePot(A8);
 TransientActivityLED gVolIndicator(40, 200);
 
 CCEWIMIDIOut gMidiOut(gMIDI);
+TransientActivityLED gMidiActivityIndicator(40, 200);
 
 CCMainTxRx gLHSerial(Serial1);
 TransientActivityLED gLHRXIndicator(60, 500);
@@ -113,6 +114,10 @@ void loop() {
   // convert state to MIDI events
   gMidiOut.Update(gEWIControl.mMusicalState);
   
+  if (gMidiOut.activityHappened) {
+    gMidiActivityIndicator.Touch();
+  }
+  
   // output to synth. this synth doesn't operate on the MIDI data because MIDI reduces precision a bit.
   // this can be realtime.
   gSynth.Update(gEWIControl.mMusicalState);
@@ -124,8 +129,8 @@ void loop() {
     leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 4), 0, col(gLHRXIndicator.GetState(), 0, 4));
     leds.setPixelColor(2, 0, col(gLHTXIndicator.GetState(), 0, 4), 0);
     leds.setPixelColor(3, col(gRHRXErrorIndicator.GetState(), 0, 4), 0, col(gRHRXIndicator.GetState(), 0, 4));
-    leds.setPixelColor(2, 0, col(gRHTXIndicator.GetState(), 0, 4), 0);
-    // 5 midiTX
+    leds.setPixelColor(4, 0, col(gRHTXIndicator.GetState(), 0, 4), 0);
+    leds.setPixelColor(5, 0, col(gMidiActivityIndicator.GetState(), 0, 4), col(gMidiActivityIndicator.GetState(), 0, 4));
     // 6 (off)
     // 7 (off)
     leds.setPixelColor(8, 0, gVolumePot.GetValue01() * 16, col(gVolIndicator.GetState(), 0, 32));
