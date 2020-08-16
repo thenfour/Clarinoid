@@ -8,6 +8,8 @@
 
 //============================================================
 
+#include <MIDI.h>
+
 #include "Shared_CCSwitch.h"
 #include "Shared_CCLeds.h"
 #include "Shared_CCTxRx.h"
@@ -17,6 +19,10 @@
 #include "CCEncoder.h"
 #include "CCSynth.h"
 #include "CCMIDI.h"
+
+// MIDI library is touchy about how you instantiate.
+// Simplest is to do it the way it's designed for: in the main sketch, global scope.
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, gMIDI);
 
 //============================================================
 CCLeds leds(10, 2, 10, true);
@@ -32,7 +38,7 @@ TransientActivityLED gEncIndicator(60, 200);
 CCVolumePot gVolumePot(A8);
 TransientActivityLED gVolIndicator(40, 200);
 
-CCEWIMIDIOut gMidiOut();
+CCEWIMIDIOut gMidiOut(gMIDI);
 
 CCMainTxRx gLHSerial(Serial1);
 TransientActivityLED gLHRXIndicator(60, 500);
@@ -44,7 +50,7 @@ ActivityLED gRHRXIndicator(60);
 TransientEventLED gRHRXErrorIndicator(3000);
 TransientActivityLED gRHTXIndicator(60, 500);
 
-AsymmetricActivityLED gGeneralActivityIndicator(750, 250);
+//AsymmetricActivityLED gGeneralActivityIndicator(750, 250);
 CCDisplay gDisplay;
 
 framerateCalculator gFramerate;
@@ -63,7 +69,7 @@ void loop() {
   UpdateUpdateObjects();
   gFramerate.onFrame();
   
-  gGeneralActivityIndicator.Touch();
+  //gGeneralActivityIndicator.Touch();
   if (gEnc.IsDirty()) {
     gEncIndicator.Touch();
   }
@@ -103,18 +109,18 @@ void loop() {
     gLHTXIndicator.Touch();
     gRHTXIndicator.Touch();    
   }
-
   
   // convert state to MIDI events
-  gSynth.Update(gEWIControl.mMusicalState);
+  gMidiOut.Update(gEWIControl.mMusicalState);
   
-  // output MIDI
-  // output to synth
+  // output to synth. this synth doesn't operate on the MIDI data because MIDI reduces precision a bit.
+  // this can be realtime.
+  gSynth.Update(gEWIControl.mMusicalState);
 
   if (ledThrottle.IsReady())
   {
-    auto activityColor = col(gGeneralActivityIndicator.GetState(), 1, 4);
-    leds.setPixelColor(0, 0, activityColor, activityColor); // cyan = MAIN
+    //auto activityColor = col(gGeneralActivityIndicator.GetState(), 1, 4);
+    leds.setPixelColor(0, 0, 0, 0);
     leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 4), 0, col(gLHRXIndicator.GetState(), 0, 4));
     leds.setPixelColor(2, 0, col(gLHTXIndicator.GetState(), 0, 4), 0);
     leds.setPixelColor(3, col(gRHRXErrorIndicator.GetState(), 0, 4), 0, col(gRHRXIndicator.GetState(), 0, 4));

@@ -95,6 +95,9 @@ AudioControlSGTL5000     audioShield;    //xy=1373,299
 
 class CCSynth : IUpdateObject
 {
+  bool isPlaying = false;
+  uint8_t playingMidiNote = 0;
+  
 public:
   virtual void setup() {
     AudioMemory(15);
@@ -128,13 +131,14 @@ public:
     CCSynthGraph::waveform1.amplitude(2, 0.2);
     CCSynthGraph::waveform1.amplitude(3, 0.0);
 
-    //CCSynthGraph::waveform.portamentoTime(1, 0.1);
-    //CCSynthGraph::waveform.portamentoTime(2, 0.1);
-    //CCSynthGraph::waveform.portamentoTime(3, 0.1);
+    float p = 0.005;
+    CCSynthGraph::waveform.portamentoTime(1, p);
+    CCSynthGraph::waveform.portamentoTime(2, p);
+    CCSynthGraph::waveform.portamentoTime(3, p);
 
-    //CCSynthGraph::waveform1.portamentoTime(1, 0.1);
-    //CCSynthGraph::waveform1.portamentoTime(2, 0.1);
-    //CCSynthGraph::waveform1.portamentoTime(3, 0.1);
+    CCSynthGraph::waveform1.portamentoTime(1, p);
+    CCSynthGraph::waveform1.portamentoTime(2, p);
+    CCSynthGraph::waveform1.portamentoTime(3, p);
 
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);
@@ -142,9 +146,10 @@ public:
     CCSynthGraph::verbWetAmpRight.gain(.3);
     
     //CCSynthGraph::waveFilter.resonance(1.3);
-  }
 
-  virtual void loop() {
+    // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
+    CCSynthGraph::waveform.addNote();
+    CCSynthGraph::waveform1.addNote();
   }
 
   void SetGain(float f) {
@@ -156,11 +161,15 @@ public:
     // AudioNoInterrupts  https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
     AudioNoInterrupts();
 
+    float breathAdj = state.breath01.GetValue();
+
     float midiNote = state.MIDINote + state.pitchBendN11.GetValue() * 2;
 
     float freq = MIDINoteToFreq(midiNote);
     float freq2 = MIDINoteToFreq(midiNote + 7);
-    float freqSync = map(state.breath01.GetValue(), 0.0f, 1.0f, freq * 2, freq * 7);
+    float freqSync = map(breathAdj, 0.0f, 1.0f, freq * 2, freq * 7);
+    //freqSync = constrain(freqSync, 0, 800);
+    //CCPlot(freqSync);
   
     CCSynthGraph::waveform.frequency(1, freq);
     CCSynthGraph::waveform.frequency(2, freqSync);
@@ -169,7 +178,9 @@ public:
     CCSynthGraph::waveform1.frequency(1, freq * 1.005);
     CCSynthGraph::waveform1.frequency(2, freq * .995);
 
-    CCSynthGraph::waveFilter.frequency(map(state.breath01.GetValue(), .06, 1, 0, 20000));
+    float filterFreq = map(breathAdj, 0, 1, 0, 15000);
+    CCPlot(filterFreq);
+    CCSynthGraph::waveFilter.frequency(filterFreq);
     
     AudioInterrupts();
   }

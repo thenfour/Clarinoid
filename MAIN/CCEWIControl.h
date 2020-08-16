@@ -6,8 +6,10 @@
 #include "Shared_CCUtil.h"
 #include "Shared_CCTxRx.h"
 
-const float BREATH_LOWER_DEADZONE = 0.03f;
+const float BREATH_LOWER_DEADZONE = 0.07f;
+const float BREATH_UPPER_DEADZONE = 0.6f;
 const float PITCHDOWN_DEADZONE = 0.8f;
+const float BREATH_NOTEON_THRESHOLD = 0.25;
 
 enum class Tristate
 {
@@ -85,30 +87,62 @@ struct CCEWIPhysicalState
   }
 };
 
+enum class NoteTransitionType
+{
+  WasNeverPlaying, // nothing (isplaying=false)
+  NoteOff,// was playing note, no longer playing note. (isplaying = false)
+  Legato, // was playing note, now playing this different note (isplaying = true)
+  PlayingNewNote
+};
+
 struct CCEWIMusicalState
 {
+  // stuff helpful for midi processing
   bool isPlayingNote = false;
+  
   uint8_t MIDINote = 0;
-  // TODO: create a time-based smoother. throttling and taking samples like this is not very accurate. sounds fine today though.
+  // TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
   SimpleMovingAverage<20, true> breath01;// 0-1
   SimpleMovingAverage<120, false> pitchBendN11; // -1 to 1
   CCThrottlerT<1> mPressureSensingThrottle;
   int nUpdates = 0;
 
+  // { valid for 1 frame only.
+  bool needsNoteOn = false;
+  bool needsNoteOff = false;
+  uint8_t noteOffNote = 0; // ignore this if needsNoteOff is false.
+  // } valid for 1 frame only.
+
+  CCEWIMusicalState() {
+    this->breath01.Update(0);
+    this->pitchBendN11.Update(0);
+  }
+  
+
   void Update(const CCEWIPhysicalState& ps)
   {
-    // now convert that to musical state. i guess this is where the 
+    uint8_t prevNote = MIDINote;
+    bool wasPlayingNote = isPlayingNote;
+
+    // convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
 
     if (nUpdates == 0 || mPressureSensingThrottle.IsReady()) {
 
-      this->breath01.Update(constrain(map((float)ps.breath01, BREATH_LOWER_DEADZONE, 1.0f, 0.0f, 1.0f), 0.0f, 1.0f));
-      this->pitchBendN11.Update(constrain(map((float)ps.pitchDown01, 0, PITCHDOWN_DEADZONE, -1.0f, 0.0f), -1.0f, 0.0f));
-      this->isPlayingNote = this->breath01.GetValue() > 0.01;
+      float breathAdj = map((float)ps.breath01, BREATH_LOWER_DEADZONE, BREATH_UPPER_DEADZONE, 0.0f, 1.0f);
+      breathAdj = constrain(breathAdj, 0.0f, 1.0f);
+      //breathAdj = powf(breathAdj, BREATH_CURVE);
+      //breathAdj = constrain(breathAdj, 0.0f, 1.0f);
+      this->breath01.Update(breathAdj);
+      
+      //this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), 0, PITCHDOWN_DEADZONE, -1.0f, 0.0f), -1.0f, 0.0f));
+      this->isPlayingNote = this->breath01.GetValue() > BREATH_NOTEON_THRESHOLD;
     }
 
-    CCPlot(this->breath01.GetValue() * 100);
-    CCPlot(ps.breath01 * 100);
+    //CCPlot(this->breath01.GetValue() * 100);
+    //CCPlot(ps.breath01 * 100);
+    //CCPlot(this->pitchBendN11.GetValue() * 100);
+    //CCPlot(ps.pitchDown01 * 100);
 
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
@@ -148,6 +182,20 @@ struct CCEWIMusicalState
     } else if (ps.key_octave1) {
       this->MIDINote += 12 * 1;
     }
+
+    needsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != MIDINote);
+    // send note off in these cases:
+    // - you are not playing but were
+    // - or, you are playing, but a different note than before.
+    needsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != MIDINote));
+    noteOffNote = prevNote;
+
+//    if (needsNoteOn) {
+//      Serial.println(String("note on: ") + MIDINote + " ; wasplaying=" + wasPlayingNote + " prevnote=" + prevNote + " isplaying=" + isPlayingNote + " currentnote=" + MIDINote);
+//    }
+//    if (needsNoteOff) {
+//      Serial.println(String("note off: ") + noteOffNote + " ; wasplaying=" + wasPlayingNote + " prevnote=" + prevNote + " isplaying=" + isPlayingNote + " currentnote=" + MIDINote);
+//    }
 
     nUpdates ++;
   }
