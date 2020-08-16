@@ -413,4 +413,95 @@ inline void CCPlot(const T& val) {
   gPlot.AppendField(val);
 }
 
+
+
+enum class Tristate
+{
+  Null,
+  Position1,
+  Position2,
+  Position3
+};
+
+const char *ToString(Tristate t) {
+  switch (t){
+    case Tristate::Position1:
+      return "Pos1";
+    case Tristate::Position2:
+      return "Pos1";
+    case Tristate::Position3:
+      return "Pos3";
+    default:
+      break;
+  }
+  return "null";
+}
+
+// helps interpreting touch keys like buttons. like a computer keyboard, starts repeating after an initial delay.
+// untouching the key will reset the delays
+template<int TrepeatInitialDelayMS, int TrepeatPeriodMS>
+class BoolKeyWithRepeat
+{
+  bool mPrevState = false;
+  CCThrottlerT<TrepeatInitialDelayMS> mInitialDelayTimer;
+  CCThrottlerT<TrepeatPeriodMS> mRepeatTimer;
+  bool mInitialDelayPassed = false;
+  bool mIsTriggered = false; // one-frame
+public:
+  void Update(bool pressed) { // call once a frame. each call to this will reset IsTriggered
+    
+    if (!mPrevState && !pressed) {
+      // typical idle state; nothing to do.
+      mIsTriggered = false;
+      return;
+    }
+    
+    if (mPrevState && pressed) {
+      // key repeat?
+      if (!mInitialDelayPassed) {
+        if (mInitialDelayTimer.IsReady()) {
+          mInitialDelayPassed = true;
+          mRepeatTimer.Reset();
+          // retrig.
+          mIsTriggered = true;
+          return;
+        }
+        // during initial delay; nothing to do.
+        mIsTriggered = false;
+        return;
+      }
+      // mInitialDelayPassed is satisfied. now we can check the normal key repeat timer.
+      if (mRepeatTimer.IsReady()) {
+        // trig!
+        mIsTriggered = true;
+        return;
+      }
+      // between key repeats
+      mIsTriggered = false;
+      return;
+    }
+    
+    if (!mPrevState && pressed) {
+      // newly pressed. reset initial repeat delay
+      mInitialDelayTimer.Reset();
+      mInitialDelayPassed = false;
+      mPrevState = true;
+      mIsTriggered = true;
+      return;      
+    }
+    
+    if (mPrevState && !pressed) {
+      // newly released.
+      mIsTriggered = false;
+      mPrevState = false;
+      return;
+    }
+  }
+
+  // valid during 1 frame.
+  bool IsTriggered() const {
+    return mIsTriggered;
+  }
+};
+
 #endif

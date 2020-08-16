@@ -36,17 +36,18 @@ void loop() {
   {
     //auto activityColor = col(gGeneralActivityIndicator.GetState(), 1, 4);
     leds.setPixelColor(0, 0, 0, 0);
-    leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 4), 0, col(gLHRXIndicator.GetState(), 0, 4));
-    leds.setPixelColor(2, 0, col(gLHTXIndicator.GetState(), 0, 4), 0);
-    leds.setPixelColor(3, col(gRHRXErrorIndicator.GetState(), 0, 4), 0, col(gRHRXIndicator.GetState(), 0, 4));
-    leds.setPixelColor(4, 0, col(gRHTXIndicator.GetState(), 0, 4), 0);
-    leds.setPixelColor(5, col(gSynth.IsHarmonizerEnabled(), 0, 4), col(gMidiActivityIndicator.GetState(), 0, 4), col(gMidiActivityIndicator.GetState(), 0, 4));
+    leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 1), col(gLHTXIndicator.GetState(), 0, 1), col(gLHRXIndicator.GetState(), 0, 1));
+    leds.setPixelColor(2, col(gRHRXErrorIndicator.GetState(), 0, 1), col(gRHTXIndicator.GetState(), 0, 1), col(gRHRXIndicator.GetState(), 0, 1));
+    leds.setPixelColor(3, col(gSynth.IsHarmonizerEnabled(), 0, 1), 0, col(gMidiActivityIndicator.GetState(), 0, 1));
     
-    leds.setPixelColor(6, col(gEWIControl.mTranspose > 0, 0, 16), col(gEWIControl.mTranspose > 0, 0, 16), 0);
-    leds.setPixelColor(7, col(gEWIControl.mTranspose < 0, 0, 16), col(gEWIControl.mTranspose < 0, 0, 16), 0);
+    leds.setPixelColor(4, col(gEWIControl.mTranspose != 0, 0, 1), 0, 0);
+    leds.setPixelColor(5, col(gEWIControl.mTranspose < 0, 0, 1), col(gEWIControl.mTranspose > 0, 0, 1), 0);
 
-    leds.setPixelColor(8, 0, gVolumePot.GetValue01() * 16, col(gVolIndicator.GetState(), 0, 32));
-    leds.setPixelColor(9, col(gEncButton.IsPressed()), 0, col(gEncIndicator.GetState(), 0, 16));
+    // 6 = off
+    // 7 = off
+
+    leds.setPixelColor(8, col(gEncButton.IsPressed()), 0, col(gEncIndicator.GetState(), 0, 1));
+    leds.setPixelColor(9, 0, gVolumePot.GetValue01() * 16, col(gVolIndicator.GetState(), 0, 1));
     leds.show();
   }
 

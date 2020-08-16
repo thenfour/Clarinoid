@@ -1,8 +1,8 @@
 // Teensy LC
 // 48mhz
 
-#define LH
-//#define RH
+//#define LH
+#define RH
 
 //============================================================
 
@@ -53,11 +53,8 @@ CCThrottler ledThrottle(20);
 CCLHRHTxRx gTxRx(Serial2);
 LHRHPayload gPayload;
 bool gDirty = false;
-TransientActivityLED gTXIndicator(60, 500);
-TransientActivityLED gRXIndicator(60, 500);
-
-AsymmetricActivityLED gGeneralActivityIndicator(750, 250);
-
+TransientActivityLED gTXIndicator(800, 800);
+TransientActivityLED gRXIndicator(800, 800);
 
 LHRHLEDMode gLEDMode = LHRHLEDMode::Debug;
 
@@ -77,7 +74,6 @@ void setup() {
 
 void loop() {
   UpdateUpdateObjects();
-  gGeneralActivityIndicator.Touch();
 
   // construct the payload & check if dirty / needs to be sent.
   // only unset "dirty" if we actually send the packet.
@@ -120,33 +116,33 @@ void loop() {
   {
     switch (gLEDMode) {
     case LHRHLEDMode::Off:
-      leds.setPixelColor(0, 0, 0, col(gGeneralActivityIndicator.GetState(), 0,1));
-      for (int i = 1; i < 10; ++ i) {
+      for (int i = 0; i < 10; ++ i) {
         leds.setPixelColor(i, 0, 0, 0);
       }
       break;
       case LHRHLEDMode::Debug:
 #ifdef LH
-      leds.setPixelColor(0, 0, col(gGeneralActivityIndicator.GetState(), 1, 4), 0); // green = LH
-      leds.setPixelColor(1, col(gRXIndicator.GetState(), 0, 1), 0, col(gTXIndicator.GetState(), 0, 1));
-      leds.setPixelColor(2, 0, col(bite.Value01Estimate(), 12), 0);
-      leds.setPixelColor(3, 0, col(wind.Value01Estimate(), 12), 0);
-      leds.setPixelColor(4, 0, 0, col(key1.IsPressed()));
-      leds.setPixelColor(5, 0, 0, col(key2.IsPressed()));
-      leds.setPixelColor(6, 0, col(octave4.IsPressed()), col(key3.IsPressed()));
-      leds.setPixelColor(7, 0, col(octave3.IsPressed()), col(key4.IsPressed()));
-      leds.setPixelColor(8, 0, col(octave2.IsPressed()), col(key5.IsPressed()));
-      leds.setPixelColor(9, col(backButton.IsPressed()), col(octave1.IsPressed()), col(key6.IsPressed()));
+      leds.setPixelColor(0, col(gTXIndicator.GetState(), 0, 1), col(gRXIndicator.GetState(), 0, 1), col(gRXIndicator.GetState(), 0, 1));
+      // 1 = off
+      leds.setPixelColor(2, 0, col(bite.Value01Estimate(), 8), 0);
+      leds.setPixelColor(3, 0, col(wind.Value01Estimate(), 8), 0);
+      leds.setPixelColor(4, 0, 0, col(key1.IsPressed(), 0, 1));
+      leds.setPixelColor(5, 0, 0, col(key2.IsPressed(), 0, 1));
+      leds.setPixelColor(6, 0, col(octave4.IsPressed(), 0, 1), col(key3.IsPressed(), 0, 1));
+      leds.setPixelColor(7, 0, col(octave3.IsPressed(), 0, 1), col(key4.IsPressed(), 0, 1));
+      leds.setPixelColor(8, 0, col(octave2.IsPressed(), 0, 1), col(key5.IsPressed(), 0, 1));
+      leds.setPixelColor(9, col(backButton.IsPressed(), 0, 12), col(octave1.IsPressed(), 0, 1), col(key6.IsPressed(), 0, 1));
 #else // RH
-      leds.setPixelColor(0, 0, 0, col(gGeneralActivityIndicator.GetState(), 1, 4)); // blue = RH
-      leds.setPixelColor(1, col(gTXIndicator.GetState(), 0, 1), 0, col(!gTXIndicator.GetState(), 0, 1));
-      leds.setPixelColor(3, 0, col(pitchDown.Value01Estimate(), 0, 10), 0);
-      leds.setPixelColor(4, 0, 0, col(key1.IsPressed()));
-      leds.setPixelColor(5, 0, 0, col(key2.IsPressed()));
-      leds.setPixelColor(6, 0, 0, col(key3.IsPressed()));
-      leds.setPixelColor(7, 0, 0, col(key4.IsPressed()));
-      leds.setPixelColor(8, 0, col(oooButton1.IsPressed()), col(key5.IsPressed()));
-      leds.setPixelColor(9, 0, col(oooButton2.IsPressed()), col(key6.IsPressed()));
+      leds.setPixelColor(0, col(gTXIndicator.GetState(), 0, 1), col(gRXIndicator.GetState(), 0, 1), col(gRXIndicator.GetState(), 0, 1));
+      // 1 = off
+      // 2 = off
+      leds.setPixelColor(3, 0, col(pitchDown.Value01Estimate(), 0, 8), 0);
+      leds.setPixelColor(4, 0, 0, col(key1.IsPressed(), 0, 1));
+      leds.setPixelColor(5, 0, 0, col(key2.IsPressed(), 0, 1));
+      leds.setPixelColor(6, 0, 0, col(key3.IsPressed(), 0, 1));
+      leds.setPixelColor(7, 0, 0, col(key4.IsPressed(), 0, 1));
+      leds.setPixelColor(8, 0, col(oooButton1.IsPressed(), 0, 1), col(key5.IsPressed(), 0, 1));
+      leds.setPixelColor(9, 0, col(oooButton2.IsPressed(), 0, 1), col(key6.IsPressed(), 0, 1));
 #endif // LH/RH
       break;
     }
