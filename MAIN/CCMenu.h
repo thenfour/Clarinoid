@@ -5,6 +5,14 @@
 #include "Shared_CCUtil.h"
 #include "CCEncoder.h"
 
-// control the menu. needs thought.
+
+
+
+
+
+
+
+
+
 
 #endif

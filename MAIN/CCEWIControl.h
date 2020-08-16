@@ -132,7 +132,7 @@ struct CCEWIMusicalState
       this->isPlayingNote = this->breath01.GetValue() > BREATH_NOTEON_THRESHOLD;
     }
 
-    CCPlot(this->breath01.GetValue() * 100);
+    //CCPlot(this->breath01.GetValue() * 100);
     //CCPlot(ps.breath01 * 100);
     //CCPlot(this->pitchBendN11.GetValue() * 100);
     //CCPlot(ps.pitchDown01 * 100);

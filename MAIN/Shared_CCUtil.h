@@ -413,4 +413,14 @@ inline void CCPlot(const T& val) {
   gPlot.AppendField(val);
 }
 
+//// where Tfunc is a function like
+//// void fn(T&, size_t index)
+//template<typename Tel, size_t N, typename Tfunc>
+//void for_each(T(&x)[N], Tfunc)
+//{
+//  for (size_t i = 0; i < N; ++ i) {
+//    Tfunc(x[i], i);
+//  }
+//}
+
 #endif
