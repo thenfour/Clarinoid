@@ -176,7 +176,7 @@ class CCSynth : IUpdateObject
 
 public:
 
-  float mMetronomeBPM = 100.0f;
+  float mMetronomeBPM = 38.0f;
 
   void SetHarmonizer(int n) {
     mHarmonizerOn = n;

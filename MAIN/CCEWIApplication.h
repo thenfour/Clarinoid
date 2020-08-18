@@ -21,7 +21,7 @@ uint32_t gLongestBetweenLoopMicros = 0;
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, gMIDI);
 
 CCOnOffSwitch gEncButton(3, 10, 5);
-CCEncoder gEnc(4, 5);
+CCEncoder<4> gEnc(4, 5);
 TransientActivityLED gEncIndicator(60, 200);
 
 CCVolumePot gVolumePot(A8);

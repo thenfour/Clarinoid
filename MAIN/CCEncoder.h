@@ -9,25 +9,31 @@
 
 #include "Shared_CCUtil.h"
 
+template<int TStep>
 class CCEncoder : IUpdateObject
 {
   Encoder mEnc;
 
   // valid during this loop iteration
   bool mIsDirty;
-  int mValue;
+  int mRawValue = 0;
+  float mFloatValue;
+
+  int mIntValue = 0; // divided by TStep
+  int mIntDelta = 0;
 
 public:
   CCEncoder(uint8_t pin1, uint8_t pin2) :
     mEnc(pin1, pin2),
-    mIsDirty(false),
-    mValue(0)
+    mIsDirty(false)
   {
     mEnc.write(0);
   }
 
   bool IsDirty() const { return mIsDirty; }
-  int GetValue() const { return mValue; }
+  int GetIntValue() const { return mIntValue; }
+  int GetFloatValue() const { return mFloatValue; }
+  int GetIntDelta() const { return mIntDelta; }
 
   virtual void setup()
   {
@@ -37,9 +43,15 @@ public:
   virtual void loop()
   {
     int32_t r = mEnc.read();
-    //mDelta = idiv_round(r, mIncrementAmt);
-    mIsDirty = mValue != r;
-    mValue = r;
+    mFloatValue = (float)r / TStep;
+    int newIntValue = idiv_round((int)r, TStep);
+    mIntDelta = newIntValue - mIntValue;
+    mIntValue = newIntValue;
+    mIsDirty = r != mRawValue;
+    if (mIsDirty) {
+      //Serial.println(String("encoder dirty; intval=") + mIntValue + " delta=" + mIntDelta );
+    }
+    mRawValue = r;
   }
 };
 

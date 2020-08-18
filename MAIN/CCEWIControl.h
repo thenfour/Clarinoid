@@ -41,7 +41,9 @@ struct CCEWIPhysicalState
   // yea these are sorta oddballs; not really sure they should be lumped in here
   // but it's convenient to do so because they come from the LHRH payloads.
   bool key_back;
+  bool key_back_is_dirty = false;
   Tristate key_triState; // same.
+  bool key_triState_is_dirty = false;
   
   void Update(const LHRHPayload& lh, const LHRHPayload& rh)
   {
@@ -70,7 +72,14 @@ struct CCEWIPhysicalState
     this->bite01 = (float)lh.data.pressure2 / 1024;
     this->pitchDown01 = (float)rh.data.pressure1 / 1024;
 
+    this->key_back_is_dirty = (this->key_back != lh.data.button1);
     this->key_back = lh.data.button1;
+
+    if (key_back_is_dirty) {
+      //Serial.println(String("key back dirty") + millis());
+    }
+
+    Tristate oldState = key_triState;
     if (rh.data.button1) {
       this->key_triState = Tristate::Position1;
     } else if (rh.data.button2) {
@@ -78,6 +87,7 @@ struct CCEWIPhysicalState
     } else {
       this->key_triState = Tristate::Position2;
     }
+    key_triState_is_dirty = oldState != key_triState;
   }
 };
 
@@ -92,6 +102,7 @@ struct CCEWIMusicalState
   SimpleMovingAverage<120, false> pitchBendN11; // -1 to 1
   CCThrottlerT<1> mPressureSensingThrottle;
   int nUpdates = 0;
+  int noteOns = 0;
 
   // { valid for 1 frame only.
   bool needsNoteOn = false;
@@ -182,9 +193,10 @@ struct CCEWIMusicalState
     noteOffNote = prevNote;
 
 
-//    if (needsNoteOn) {
+    if (needsNoteOn) {
+      noteOns ++;
 //      Serial.println(String("note on: ") + MIDINote + " ; wasplaying=" + wasPlayingNote + " prevnote=" + prevNote + " isplaying=" + isPlayingNote + " currentnote=" + MIDINote);
-//    }
+    }
 //    if (needsNoteOff) {
 //      Serial.println(String("note off: ") + noteOffNote + " ; wasplaying=" + wasPlayingNote + " prevnote=" + prevNote + " isplaying=" + isPlayingNote + " currentnote=" + MIDINote);
 //    }

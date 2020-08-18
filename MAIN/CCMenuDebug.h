@@ -5,93 +5,141 @@
 
 #include "Shared_CCUtil.h"
 
-
-class ScreensaverMenuApp : public MenuAppBase
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// provides utils for menu apps.
+// the system works like this: each app has a front page which you scroll through using the encoder. rendered using RenderFrontpage().
+// clicking the encoder will enter the app, rendered with Render().
+class MenuAppBaseWithUtils : public MenuAppBase
 {
+protected:
   CCDisplay& mCCDisplay;
   Adafruit_SSD1306& mDisplay;
   CCEWIApp& mApp;
 
-  int mEncoderVal = 0;
-  int mPage = 0; // 0 or 1
+  bool mShowingFrontPage = true;
   
-public:
-  ScreensaverMenuApp(CCDisplay& display, CCEWIApp& app) : mCCDisplay(display), mDisplay(display.mDisplay), mApp(app)
+  MenuAppBaseWithUtils(CCDisplay& display, CCEWIApp& app) :
+    mCCDisplay(display),
+    mDisplay(display.mDisplay),
+    mApp(app)
   {
     display.AddMenuApp(this);
-    mEncoderVal = gEnc.GetValue() / 4;
   }
+  
+public:
+  virtual void UpdateApp() = 0;
+  virtual void RenderApp() = 0;
+  virtual void RenderFrontPage() = 0;
+  
   virtual void OnSelected() {
-    mEncoderVal = gEnc.GetValue() / 4;
+    GoToFrontPage();
   }
+
+  void GoToFrontPage() {
+    mShowingFrontPage = true;
+  }
+
+  bool WasBackPressed() {
+    return gEWIControl.mPhysicalState.key_back_is_dirty && gEWIControl.mPhysicalState.key_back;
+  }
+  int EncoderIntDelta() {
+    return gEnc.GetIntDelta();
+  }
+  bool WasEncoderButtonPressed() {
+    return gEncButton.IsPressed() && gEncButton.IsDirty();
+  }
+
+  virtual void Render() {
+    if (!mShowingFrontPage) {
+      this->RenderApp();
+      return;
+    }
+
+    this->RenderFrontPage();
+  }
+
   virtual void Update()
+  {
+    if (!mShowingFrontPage) {
+      this->UpdateApp();
+      return;
+    }
+
+    mCCDisplay.ScrollApps(gEnc.GetIntDelta());
+
+    if (gEncButton.IsPressed()) {
+      mShowingFrontPage = false;
+    }
+  }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+class MetronomeMenuApp : public MenuAppBaseWithUtils
+{
+public:
+  MetronomeMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
+  {
+  }
+
+  virtual void RenderFrontPage() 
   {
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
 
-    if (mPage == 0) {
-      mDisplay.println(String("enc=next app, encbut=metron"));
-      mDisplay.println(String("BPM=") + gSynth.mMetronomeBPM);
-  
-      int val = gEnc.GetValue() / 4;
-      if (val < mEncoderVal) {
-        mCCDisplay.PreviousApp();
-        Serial.println("prev");
-        return;      
-      } else if (val > mEncoderVal) {
-        Serial.println("prev");
-        mCCDisplay.NextApp();
-        return;
-      }
+    mDisplay.println(String("Metronome"));
+    mDisplay.println(String("BPM=") + gSynth.mMetronomeBPM);
+  }
 
-      mEncoderVal = val;
-
-      if (gEncButton.IsPressed()) {
-        mPage = 1;
-        return;
-      }
-      
-    } else { // page 1
-      if (gEWIControl.mPhysicalState.key_back) {
-        mPage = 0;
-        return;
-      }
-      mDisplay.println(String("editing BPM=") + gSynth.mMetronomeBPM);
-      int val = gEnc.GetValue() / 4;
-      if (val < mEncoderVal) {
-        mEncoderVal = val;
-        gSynth.mMetronomeBPM -= 2;
-        return;      
-      } else if (val > mEncoderVal) {
-        mEncoderVal = val;
-        gSynth.mMetronomeBPM += 2;
-        return;      
-      }
-      
+  virtual void RenderApp()
+  {
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(WHITE);
+    mDisplay.setCursor(0,0);
+    mDisplay.println(String("editing BPM=") + gSynth.mMetronomeBPM);
+  }
+  virtual void UpdateApp()
+  {
+    if (gEnc.IsDirty()) {
+      gSynth.mMetronomeBPM += gEnc.GetIntDelta();
     }
+
+    if (WasBackPressed()) {
+      GoToFrontPage();
+      return;
+    }
+
   }
 };
 
 
-class DebugMenuApp : public MenuAppBase
+/////////////////////////////////////////////////////////////////////////////////////////////////
+class DebugMenuApp : public MenuAppBaseWithUtils
 {
-  CCDisplay& mCCDisplay;
-  Adafruit_SSD1306& mDisplay;
-  CCEWIApp& mApp;
 public:
-  DebugMenuApp(CCDisplay& display, CCEWIApp& app) : mCCDisplay(display), mDisplay(display.mDisplay), mApp(app)
+  DebugMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
   {
-    display.AddMenuApp(this);
   }
-  
-  virtual void Update()
+
+  virtual void RenderFrontPage() {
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(WHITE);
+    mDisplay.setCursor(0,0);
+    mDisplay.println("SYSTEM STATUS");
+    mDisplay.println(String("Uptime: ") + (int)((float)millis() / 1000) + " sec");
+    mDisplay.println(String("Notes played: ") + gEWIControl.mMusicalState.noteOns);
+  }
+
+  virtual void UpdateApp()
   {
-    if (gEWIControl.mPhysicalState.key_back) {
-      mCCDisplay.SelectApp(0);
+    if (WasBackPressed()) {
+      GoToFrontPage();
       return;
     }
-
+  }
+  
+  virtual void RenderApp()
+  {
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
@@ -175,7 +223,7 @@ public:
       mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
     };
 
-    int page = gEnc.GetValue() / 4;
+    int page = gEnc.GetIntValue();
     const int pageCount = 8;
     while (page < 0)
       page += pageCount; // makes the % operator work correctly. there's a mathematical optimized way to do this but whatev

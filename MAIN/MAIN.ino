@@ -21,7 +21,7 @@
 CCEWIApp gApp;
 CCDisplay gDisplay(gApp);
 
-ScreensaverMenuApp gScreensaverApp(gDisplay, gApp);
+MetronomeMenuApp gScreensaverApp(gDisplay, gApp);
 DebugMenuApp gDebugApp(gDisplay, gApp);
 
 CCLeds leds(10, 2, 10, true);

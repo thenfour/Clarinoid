@@ -37,6 +37,7 @@ class CCEWIMIDIOut : IUpdateObject
   MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial>>& mMidi;
 public:
 
+  int noteOns = 0;
   bool activityHappened = false;
 
   CCEWIMIDIOut(MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial>>& _midi) :

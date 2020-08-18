@@ -24,7 +24,8 @@ class MenuAppBase
 public:
   virtual void OnSelected() {};
   virtual void OnUnselected() {}
-  virtual void Update() = 0;
+  virtual void Update() = 0; // called each frame
+  virtual void Render() = 0; // called occasionally
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -59,17 +60,24 @@ public:
     while (n < 0)
       n += mMenuAppCount;
 
+    if (n == mCurrentMenuAppIndex)
+      return;
+
     mMenuApps[mCurrentMenuAppIndex]->OnUnselected();
     mCurrentMenuAppIndex = n;
     mMenuApps[mCurrentMenuAppIndex]->OnSelected();
   }
 
-  void NextApp() {
-    SelectApp(mCurrentMenuAppIndex + 1);
+  void ScrollApps(int delta) {
+    SelectApp(mCurrentMenuAppIndex + delta);
   }
-  void PreviousApp() {
-    SelectApp(mCurrentMenuAppIndex - 1);
-  }
+
+//  void NextApp() {
+//    SelectApp(mCurrentMenuAppIndex + 1);
+//  }
+//  void PreviousApp() {
+//    SelectApp(mCurrentMenuAppIndex - 1);
+//  }
 
   virtual void setup() {
     // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
@@ -80,13 +88,16 @@ public:
 
   virtual void loop() {
     gFramerate.onFrame();
+
+    MenuAppBase* pMenuApp = mMenuApps[mCurrentMenuAppIndex];
+    pMenuApp->Update();
+    
     if (!mThrottle.IsReady())
       return;
 
     mDisplay.clearDisplay();
 
-    MenuAppBase* pMenuApp = mMenuApps[mCurrentMenuAppIndex];
-    pMenuApp->Update();
+    pMenuApp->Render();
     
     mDisplay.display();
   }
