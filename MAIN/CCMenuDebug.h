@@ -13,6 +13,7 @@ class ScreensaverMenuApp : public MenuAppBase
   CCEWIApp& mApp;
 
   int mEncoderVal = 0;
+  int mPage = 0; // 0 or 1
   
 public:
   ScreensaverMenuApp(CCDisplay& display, CCEWIApp& app) : mCCDisplay(display), mDisplay(display.mDisplay), mApp(app)
@@ -28,19 +29,47 @@ public:
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
-    mDisplay.println(String("press butan"));
 
-    int val = gEnc.GetValue() / 4;
-    if (val < mEncoderVal) {
-      mCCDisplay.PreviousApp();
-      Serial.println("prev");
-      return;      
-    } else if (val > mEncoderVal) {
-      Serial.println("prev");
-      mCCDisplay.NextApp();
-      return;
+    if (mPage == 0) {
+      mDisplay.println(String("enc=next app, encbut=metron"));
+      mDisplay.println(String("BPM=") + gSynth.mMetronomeBPM);
+  
+      int val = gEnc.GetValue() / 4;
+      if (val < mEncoderVal) {
+        mCCDisplay.PreviousApp();
+        Serial.println("prev");
+        return;      
+      } else if (val > mEncoderVal) {
+        Serial.println("prev");
+        mCCDisplay.NextApp();
+        return;
+      }
+
+      mEncoderVal = val;
+
+      if (gEncButton.IsPressed()) {
+        mPage = 1;
+        return;
+      }
+      
+    } else { // page 1
+      if (gEWIControl.mPhysicalState.key_back) {
+        mPage = 0;
+        return;
+      }
+      mDisplay.println(String("editing BPM=") + gSynth.mMetronomeBPM);
+      int val = gEnc.GetValue() / 4;
+      if (val < mEncoderVal) {
+        mEncoderVal = val;
+        gSynth.mMetronomeBPM -= 2;
+        return;      
+      } else if (val > mEncoderVal) {
+        mEncoderVal = val;
+        gSynth.mMetronomeBPM += 2;
+        return;      
+      }
+      
     }
-    mEncoderVal = val;
   }
 };
 
@@ -58,6 +87,11 @@ public:
   
   virtual void Update()
   {
+    if (gEWIControl.mPhysicalState.key_back) {
+      mCCDisplay.SelectApp(0);
+      return;
+    }
+
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);

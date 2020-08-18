@@ -68,11 +68,13 @@ public:
       // tristate will control harmonizer.
       switch (gEWIControl.mPhysicalState.key_triState) {
       case Tristate::Position2:
+        gSynth.SetHarmonizer(1);
+        break;
       case Tristate::Position3:
-        gSynth.SetHarmonizer(true);
+        gSynth.SetHarmonizer(2);
         break;
       default:
-        gSynth.SetHarmonizer(false);
+        gSynth.SetHarmonizer(0);
         break;
       }
     }

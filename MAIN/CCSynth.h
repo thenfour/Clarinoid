@@ -21,7 +21,6 @@ namespace CCSynthGraph
 https://www.pjrc.com/teensy/gui/index.html?info=AudioEffectDelay
 // this is the after-oscillator processing.
 
-
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -38,15 +37,18 @@ AudioMixer4              voice4Mix;         //xy=643.7500190734863,538.750034332
 AudioMixer4              voice1Mix;         //xy=645.0000457763672,337.5000190734863
 AudioMixer4              voice2Mix;         //xy=645.0000228881836,407.5000190734863
 AudioMixer4              waveMixer;      //xy=840.0000114440918,416.25000762939453
+AudioSynthWaveformSine   metronomeOsc;          //xy=842.1818466186523,757.1818141937256
 AudioFilterStateVariable waveFilter;     //xy=1007.0000114440918,422.25000762939453
-AudioEffectFreeverbStereo verb;           //xy=1325.0000114440918,390.25000762939453
-AudioAmplifier           verbWetAmpLeft; //xy=1506.0000114440918,386.25000762939453
-AudioAmplifier           verbWetAmpRight; //xy=1508.0000114440918,423.25000762939453
+AudioEffectEnvelope      metronomeEnv;      //xy=1048.1818542480469,741.1818132400513
+AudioEffectFreeverbStereo verb;           //xy=1176.0000457763672,350.2500247955322
+AudioAmplifier           verbWetAmpLeft; //xy=1357.0000457763672,346.2500247955322
+AudioAmplifier           verbWetAmpRight; //xy=1359.0000457763672,383.2500247955322
 AudioMixer4              postMixerLeft;  //xy=1671.0000114440918,575.2500076293945
 AudioMixer4              postMixerRight; //xy=1675.0000114440918,641.2500076293945
-AudioAmplifier           ampLeft;        //xy=1832.0000114440918,588.2500076293945
-AudioAmplifier           ampRight;       //xy=1834.0000114440918,623.2500076293945
-AudioOutputI2S           i2s1;           //xy=1977.0000114440918,606.2500076293945
+AudioAmplifier           ampRight;       //xy=1877.0000839233398,623.2500238418579
+AudioAmplifier           ampLeft;        //xy=1878.000087738037,585.2500228881836
+AudioOutputI2S           i2s1;           //xy=2065.999969482422,580.2500228881836
+AudioOutputUSB           usb1;           //xy=2078.4545135498047,624.4546146392822
 AudioConnection          patchCord1(voice1, 0, voice1Mix, 0);
 AudioConnection          patchCord2(voice1, 1, voice1Mix, 1);
 AudioConnection          patchCord3(voice1, 2, voice1Mix, 2);
@@ -64,17 +66,22 @@ AudioConnection          patchCord14(voice4Mix, 0, waveMixer, 3);
 AudioConnection          patchCord15(voice1Mix, 0, waveMixer, 0);
 AudioConnection          patchCord16(voice2Mix, 0, waveMixer, 1);
 AudioConnection          patchCord17(waveMixer, 0, waveFilter, 0);
-AudioConnection          patchCord18(waveFilter, 0, verb, 0);
+AudioConnection          patchCord18(metronomeOsc, metronomeEnv);
 AudioConnection          patchCord19(waveFilter, 0, postMixerLeft, 1);
 AudioConnection          patchCord20(waveFilter, 0, postMixerRight, 1);
-AudioConnection          patchCord21(verb, 0, verbWetAmpLeft, 0);
-AudioConnection          patchCord22(verb, 1, verbWetAmpRight, 0);
-AudioConnection          patchCord23(verbWetAmpLeft, 0, postMixerLeft, 0);
-AudioConnection          patchCord24(verbWetAmpRight, 0, postMixerRight, 0);
-AudioConnection          patchCord25(postMixerLeft, ampLeft);
-AudioConnection          patchCord26(postMixerRight, ampRight);
-AudioConnection          patchCord27(ampLeft, 0, i2s1, 0);
-AudioConnection          patchCord28(ampRight, 0, i2s1, 1);
+AudioConnection          patchCord21(waveFilter, 0, verb, 0);
+AudioConnection          patchCord22(metronomeEnv, 0, postMixerLeft, 2);
+AudioConnection          patchCord23(metronomeEnv, 0, postMixerRight, 2);
+AudioConnection          patchCord24(verb, 0, verbWetAmpLeft, 0);
+AudioConnection          patchCord25(verb, 1, verbWetAmpRight, 0);
+AudioConnection          patchCord26(verbWetAmpLeft, 0, postMixerLeft, 0);
+AudioConnection          patchCord27(verbWetAmpRight, 0, postMixerRight, 0);
+AudioConnection          patchCord28(postMixerLeft, ampLeft);
+AudioConnection          patchCord29(postMixerRight, ampRight);
+AudioConnection          patchCord30(ampRight, 0, i2s1, 1);
+AudioConnection          patchCord31(ampRight, 0, usb1, 1);
+AudioConnection          patchCord32(ampLeft, 0, i2s1, 0);
+AudioConnection          patchCord33(ampLeft, 0, usb1, 0);
 AudioControlSGTL5000     audioShield;    //xy=1944.0000114440918,536.2500076293945
 // GUItool: end automatically generated code
 
@@ -93,15 +100,18 @@ AudioMixer4              voice4Mix;         //xy=643.7500190734863,538.750034332
 AudioMixer4              voice1Mix;         //xy=645.0000457763672,337.5000190734863
 AudioMixer4              voice2Mix;         //xy=645.0000228881836,407.5000190734863
 AudioMixer4              waveMixer;      //xy=840.0000114440918,416.25000762939453
+AudioSynthWaveformSine   metronomeOsc;          //xy=842.1818466186523,757.1818141937256
 AudioFilterStateVariable waveFilter;     //xy=1007.0000114440918,422.25000762939453
-AudioEffectFreeverbStereo verb;           //xy=1325.0000114440918,390.25000762939453
-AudioAmplifier           verbWetAmpLeft; //xy=1506.0000114440918,386.25000762939453
-AudioAmplifier           verbWetAmpRight; //xy=1508.0000114440918,423.25000762939453
+AudioEffectEnvelope      metronomeEnv;      //xy=1048.1818542480469,741.1818132400513
+AudioEffectFreeverbStereo verb;           //xy=1176.0000457763672,350.2500247955322
+AudioAmplifier           verbWetAmpLeft; //xy=1357.0000457763672,346.2500247955322
+AudioAmplifier           verbWetAmpRight; //xy=1359.0000457763672,383.2500247955322
 AudioMixer4              postMixerLeft;  //xy=1671.0000114440918,575.2500076293945
 AudioMixer4              postMixerRight; //xy=1675.0000114440918,641.2500076293945
-AudioAmplifier           ampLeft;        //xy=1832.0000114440918,588.2500076293945
-AudioAmplifier           ampRight;       //xy=1834.0000114440918,623.2500076293945
-AudioOutputI2S           i2s1;           //xy=1977.0000114440918,606.2500076293945
+AudioAmplifier           ampRight;       //xy=1877.0000839233398,623.2500238418579
+AudioAmplifier           ampLeft;        //xy=1878.000087738037,585.2500228881836
+AudioOutputI2S           i2s1;           //xy=2065.999969482422,580.2500228881836
+//AudioOutputUSB           usb1;           //xy=2078.4545135498047,624.4546146392822
 AudioConnection          patchCord1(voice1, 0, voice1Mix, 0);
 AudioConnection          patchCord2(voice1, 1, voice1Mix, 1);
 AudioConnection          patchCord3(voice1, 2, voice1Mix, 2);
@@ -119,19 +129,25 @@ AudioConnection          patchCord14(voice4Mix, 0, waveMixer, 3);
 AudioConnection          patchCord15(voice1Mix, 0, waveMixer, 0);
 AudioConnection          patchCord16(voice2Mix, 0, waveMixer, 1);
 AudioConnection          patchCord17(waveMixer, 0, waveFilter, 0);
-AudioConnection          patchCord18(waveFilter, 0, verb, 0);
+AudioConnection          patchCord18(metronomeOsc, metronomeEnv);
 AudioConnection          patchCord19(waveFilter, 0, postMixerLeft, 1);
 AudioConnection          patchCord20(waveFilter, 0, postMixerRight, 1);
-AudioConnection          patchCord21(verb, 0, verbWetAmpLeft, 0);
-AudioConnection          patchCord22(verb, 1, verbWetAmpRight, 0);
-AudioConnection          patchCord23(verbWetAmpLeft, 0, postMixerLeft, 0);
-AudioConnection          patchCord24(verbWetAmpRight, 0, postMixerRight, 0);
-AudioConnection          patchCord25(postMixerLeft, ampLeft);
-AudioConnection          patchCord26(postMixerRight, ampRight);
-AudioConnection          patchCord27(ampLeft, 0, i2s1, 0);
-AudioConnection          patchCord28(ampRight, 0, i2s1, 1);
+AudioConnection          patchCord21(waveFilter, 0, verb, 0);
+AudioConnection          patchCord22(metronomeEnv, 0, postMixerLeft, 2);
+AudioConnection          patchCord23(metronomeEnv, 0, postMixerRight, 2);
+AudioConnection          patchCord24(verb, 0, verbWetAmpLeft, 0);
+AudioConnection          patchCord25(verb, 1, verbWetAmpRight, 0);
+AudioConnection          patchCord26(verbWetAmpLeft, 0, postMixerLeft, 0);
+AudioConnection          patchCord27(verbWetAmpRight, 0, postMixerRight, 0);
+AudioConnection          patchCord28(postMixerLeft, ampLeft);
+AudioConnection          patchCord29(postMixerRight, ampRight);
+AudioConnection          patchCord30(ampRight, 0, i2s1, 1);
+//AudioConnection          patchCord31(ampRight, 0, usb1, 1);
+AudioConnection          patchCord32(ampLeft, 0, i2s1, 0);
+//AudioConnection          patchCord33(ampLeft, 0, usb1, 0);
 AudioControlSGTL5000     audioShield;    //xy=1944.0000114440918,536.2500076293945
 // GUItool: end automatically generated code
+
 
 }
 
@@ -154,13 +170,17 @@ class CCSynth : IUpdateObject
   static constexpr int voiceCount = 4;
   AudioBandlimitedOsci* voices[voiceCount] = { &CCSynthGraph::voice1, &CCSynthGraph::voice2, &CCSynthGraph::voice3, &CCSynthGraph::voice4 };
 
-  bool mHarmonizerOn = false;
+  int mHarmonizerOn = 0;
+  bool mMetronomeOn = true;
+  CCThrottlerT<500> mMetronomeTimer;
 
 public:
 
-  void SetHarmonizer(bool b) {
-    mHarmonizerOn = b;
-    if (mHarmonizerOn) {
+  float mMetronomeBPM = 100.0f;
+
+  void SetHarmonizer(int n) {
+    mHarmonizerOn = n;
+    if (n == 2) {
       CCSynthGraph::voice3.amplitude(1, 0.2);
       CCSynthGraph::voice3.amplitude(2, 0.2);
       CCSynthGraph::voice4.amplitude(1, 0.2);
@@ -173,7 +193,7 @@ public:
     }
   }
 
-  bool IsHarmonizerEnabled() const { return mHarmonizerOn; }
+  bool IsHarmonizerEnabled() const { return mHarmonizerOn > 0; }
 
   virtual void setup() {
     AudioMemory(15);
@@ -256,7 +276,18 @@ public:
     CCSynthGraph::verb.damping(.7f);
     CCSynthGraph::verbWetAmpLeft.gain(.3);
     CCSynthGraph::verbWetAmpRight.gain(.3);
-    
+
+
+    CCSynthGraph::metronomeOsc.frequency(880);
+    CCSynthGraph::metronomeOsc.amplitude(.8f);
+
+    CCSynthGraph::metronomeEnv.delay(0);
+    CCSynthGraph::metronomeEnv.attack(0);
+    CCSynthGraph::metronomeEnv.hold(0);
+    CCSynthGraph::metronomeEnv.decay(20);
+    CCSynthGraph::metronomeEnv.releaseNoteOn(0);
+    CCSynthGraph::metronomeEnv.sustain(0);
+
     //CCSynthGraph::waveFilter.resonance(1.3);
   }
 
@@ -275,7 +306,7 @@ public:
     // voice 1
     {
       float freq = MIDINoteToFreq(midiNote);
-      float freq2 = MIDINoteToFreq(midiNote + 7);
+      float freq2 = mHarmonizerOn > 0 ? MIDINoteToFreq(midiNote + 7) : freq;
       float freqSync = map(breathAdj, 0.0f, 1.0f, freq * 2, freq * 7);
     
       CCSynthGraph::voice1.frequency(1, freq);
@@ -307,6 +338,15 @@ public:
     float filterFreq = map(breathAdj, 0.01, 1, 0, 15000);
     //CCPlot(filterFreq);
     CCSynthGraph::waveFilter.frequency(filterFreq);
+
+    if (mMetronomeBPM < 40) {
+        CCSynthGraph::metronomeOsc.amplitude(0);      
+    } else {
+      CCSynthGraph::metronomeOsc.amplitude(0.8);
+      if (mMetronomeTimer.IsReady(60000.0f / mMetronomeBPM)) {
+        CCSynthGraph::metronomeEnv.noteOn();
+      }
+    }
 
     AudioInterrupts();
   }
