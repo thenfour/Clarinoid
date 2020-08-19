@@ -13,6 +13,8 @@
 #include "CCSynth.h"
 #include "CCMIDI.h"
 
+
+
 uint32_t gLongestLoopMicros = 0;
 uint32_t gLongestBetweenLoopMicros = 0;
 
@@ -84,13 +86,13 @@ public:
     
     if (gRHButton1Key.IsTriggered() && gEWIControl.mPhysicalState.key_back) {
       // todo: this logic belongs elsewhere.
-      if (gEWIControl.mTranspose < 48)
-        gEWIControl.mTranspose += 12;
+      if (gAppSettings.mTranspose < 48)
+        gAppSettings.mTranspose += 12;
     }
     if (gRHButton2Key.IsTriggered() && gEWIControl.mPhysicalState.key_back) {
       // todo: this logic belongs elsewhere.
-      if (gEWIControl.mTranspose > -48)
-        gEWIControl.mTranspose -= 12;
+      if (gAppSettings.mTranspose > -48)
+        gAppSettings.mTranspose -= 12;
     }
   
     // gather up serial receive (LH)

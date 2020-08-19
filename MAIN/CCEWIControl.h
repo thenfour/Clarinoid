@@ -116,7 +116,7 @@ struct CCEWIMusicalState
   }
   
 
-  void Update(const CCEWIPhysicalState& ps, int transpose)
+  void Update(const CCEWIPhysicalState& ps)
   {
     uint8_t prevNote = MIDINote;
     bool wasPlayingNote = isPlayingNote;
@@ -181,7 +181,7 @@ struct CCEWIMusicalState
     }
 
     // transpose
-    newNote += transpose;
+    newNote += gAppSettings.mTranspose;
     newNote = constrain(newNote, 1, 127);
     this->MIDINote = (uint8_t)newNote;
 
@@ -211,11 +211,9 @@ public:
   CCEWIPhysicalState mPhysicalState;
   CCEWIMusicalState mMusicalState;
 
-  int mTranspose = 0;
-  
   void Update(const LHRHPayload& lh, const LHRHPayload& rh) {
     mPhysicalState.Update(lh, rh);
-    mMusicalState.Update(mPhysicalState, mTranspose);
+    mMusicalState.Update(mPhysicalState);
   }
 };
 

@@ -5,6 +5,10 @@
 
 #include "Shared_CCUtil.h"
 
+static const int SETTINGS_STACK_MAX_DEPTH = 10;
+static const int MAX_SETTING_ITEMS_PER_LIST = 20;
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // provides utils for menu apps.
 // the system works like this: each app has a front page which you scroll through using the encoder. rendered using RenderFrontpage().
@@ -23,6 +27,7 @@ protected:
     mDisplay(display.mDisplay),
     mApp(app)
   {
+    //Serial.println("adding an app...");
     display.AddMenuApp(this);
   }
   
@@ -30,6 +35,8 @@ public:
   virtual void UpdateApp() = 0;
   virtual void RenderApp() = 0;
   virtual void RenderFrontPage() = 0;
+
+  bool IsShowingFrontPage() const { return mShowingFrontPage; }
   
   virtual void OnSelected() {
     GoToFrontPage();
@@ -51,6 +58,7 @@ public:
 
   virtual void Render() {
     if (!mShowingFrontPage) {
+      //Serial.println("calling RenderApp");
       this->RenderApp();
       return;
     }
@@ -68,17 +76,334 @@ public:
     mCCDisplay.ScrollApps(gEnc.GetIntDelta());
 
     if (gEncButton.IsPressed()) {
+      //Serial.println("pressed encoder; showing app");
       mShowingFrontPage = false;
     }
   }
 };
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
-class MetronomeMenuApp : public MenuAppBaseWithUtils
+// implemented by the settings app to provide an aPI to editors
+struct ISettingItemEditorActions
 {
-public:
-  MetronomeMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
+  virtual void CommitEditing() = 0;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+enum class SettingItemType
+{
+  Custom, // all values enter an "editing" state with their own editors.
+  Bool, // bool values don't have an editing state; they just toggle.
+  Submenu
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+struct ISettingItem
+{
+  virtual String GetName() = 0;
+  virtual String GetValueString() = 0;  
+  virtual SettingItemType GetType() = 0;
+
+  virtual void ToggleBool() {} // for bool types
+  virtual struct ISettingItemEditor* GetEditor() { return nullptr; } // for custom types
+  virtual struct SettingsList* GetSubmenu() { return nullptr; } // for submenu type
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+struct ISettingItemEditor
+{
+  virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) = 0;
+  virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta) = 0; // every frame.
+  virtual void Render(Adafruit_SSD1306& mDisplay) = 0; // not every frame.
+};
+
+
+template<typename T>
+struct NumericEditor : ISettingItemEditor
+{
+  ISettingItemEditorActions* mpApi;
+  int x;
+  int y;
+  T mMin;
+  T mMax;
+  T& mBinding;
+  T oldVal;
+
+  NumericEditor(T min_, T max_, T& binding) :
+    mMin(min_),
+    mMax(max_),
+    mBinding(binding)
+  {  
+  }
+
+  virtual T Add(T rhs, int encoderIntDelta) = 0;
+  virtual void DrawValue(T val, T oldVal, Adafruit_SSD1306& mDisplay) = 0;
+  
+  virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
+    mpApi = papi;
+    oldVal = mBinding;
+    this->x = x;
+    this->y = y;
+  }
+  virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
   {
+    mBinding = constrain(Add(mBinding, encIntDelta), mMin, mMax);
+    if (backWasPressed) {
+      mBinding = oldVal;
+      mpApi->CommitEditing();
+    }
+    if (encWasPressed) {
+      mpApi->CommitEditing();
+    }
+  }
+  virtual void Render(Adafruit_SSD1306& mDisplay)
+  {
+    mDisplay.setCursor(0,0);
+    mDisplay.fillRect(2, 2, mDisplay.width() - 2, mDisplay.height() - 2, SSD1306_BLACK);
+    mDisplay.drawRect(4, 4, mDisplay.width()-4, mDisplay.height()-4, SSD1306_WHITE);
+    mDisplay.setCursor(12,12);
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+    DrawValue(mBinding, oldVal, mDisplay);
+    //mDisplay.print(String("") + mBinding);
+    //int delta = mBinding - oldVal;
+    //mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+  }
+};
+
+struct IntEditor : NumericEditor<int>
+{
+  IntEditor(int min_, int max_, int& binding) :
+    NumericEditor(min_, max_, binding)
+  {  
+  }
+  virtual int Add(int n, int encDelta) {
+    return n + encDelta;
+  }
+  virtual void DrawValue(int n, int oldVal, Adafruit_SSD1306& mDisplay)
+  {
+    mDisplay.print(String("") + n);
+    int delta = n - oldVal;
+    mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+  }
+};
+
+struct FloatEditor : NumericEditor<float>
+{
+  FloatEditor(float min_, float max_, float& binding) :
+    NumericEditor(min_, max_, binding)
+  {  
+  }
+  virtual float Add(float n, int encDelta) {
+    return n + (float)encDelta * (mMax - mMin) / 100;
+  }
+  virtual void DrawValue(float n, float oldVal, Adafruit_SSD1306& mDisplay)
+  {
+    mDisplay.print(String("") + n);
+    float delta = n - oldVal;
+    mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+  }
+};
+
+
+template<typename T, typename TEditor>
+struct NumericSettingItem : public ISettingItem
+{
+  String mName;
+  T& mBinding;
+  TEditor mEditor;
+  
+  NumericSettingItem(const String& name, T min_, T max_, T& binding) :
+    mName(name),
+    mBinding(binding),
+    mEditor(min_, max_, binding)
+  {
+  }
+
+  virtual String GetName() { return mName; }
+  virtual String GetValueString() { return String(mBinding); }
+  virtual SettingItemType GetType() { return SettingItemType::Custom; }
+
+  virtual ISettingItemEditor* GetEditor() {
+    return &mEditor;
+  }
+};
+
+using IntSettingItem = NumericSettingItem<int, IntEditor>;
+using FloatSettingItem = NumericSettingItem<float, FloatEditor>;
+//struct IntSettingItem : public ISettingItem
+//{
+//  String mName;
+//  int& mBinding;
+//  IntEditor mEditor;
+//  
+//  IntSettingItem(const String& name, int min_, int max_, int& binding) :
+//    mName(name),
+//    mBinding(binding),
+//    mEditor(min_, max_, binding)
+//  {
+//  }
+//
+//  virtual String GetName() { return mName; }
+//  virtual String GetValueString() { return String(mBinding); }
+//  virtual SettingItemType GetType() { return SettingItemType::Custom; }
+//
+//  virtual ISettingItemEditor* GetEditor() {
+//    return &mEditor;
+//  }
+//};
+
+
+struct SettingsList
+{
+  int mItemCount;
+  ISettingItem* mItems[MAX_SETTING_ITEMS_PER_LIST];
+  
+  int Count() const { return mItemCount; }
+  ISettingItem* GetItem(int i) { return mItems[i]; }
+};
+
+struct SettingsMenuState
+{
+  SettingsList* pList;
+  int focusedItem;
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+class SettingsMenuApp : public MenuAppBaseWithUtils, public ISettingItemEditorActions
+{
+  SettingsMenuState mNav[SETTINGS_STACK_MAX_DEPTH];
+  int mNavDepth = 0;
+  ISettingItemEditor* mpCurrentEditor = nullptr;
+
+public:
+  SettingsMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
+  {
+    //Serial.println("SettingsMenuApp");
+  }
+
+  virtual void CommitEditing() {
+    mpCurrentEditor = nullptr;
+  }
+  
+  virtual void OnSelected() {
+    //Serial.println("settings menu app OnSelected");
+    mNavDepth = 0;
+    mNav[0].focusedItem = 0;
+    mNav[0].pList = GetRootSettingsList();
+    GoToFrontPage();
+  }
+
+  virtual SettingsList* GetRootSettingsList()  = 0;
+
+  // child is responsible for RenderFrontPage()
+
+  virtual void RenderApp()
+  {
+    //Serial.println(String("settings app renderApp() navdepth=") + mNavDepth);
+    //delay(20);
+    SettingsMenuState& state = mNav[mNavDepth];
+
+    //Serial.println(String("  => navdepth=") + mNavDepth + " focuseditem=" + state.focusedItem + " pList=" + (uintptr_t)state.pList + " count=" + state.pList->Count());
+
+    mDisplay.setTextSize(1);
+    mDisplay.setCursor(0,0);
+    mDisplay.setTextWrap(false);
+    int itemToRender = AddConstrained(state.focusedItem, -1, 0, state.pList->Count() - 1);
+    const int maxItemsToRender = 4;
+    const int itemsToRender = min(maxItemsToRender, state.pList->Count());
+    int i = 0;
+    for (; i < itemsToRender; ++ i) {
+      auto* item = state.pList->GetItem(itemToRender);
+      if (itemToRender == state.focusedItem) {
+        mDisplay.setTextSize(1);
+        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      } else {
+        mDisplay.setTextSize(1);
+        mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+      }
+      mDisplay.println(item->GetName() + " = " + item->GetValueString());
+      itemToRender = AddConstrained(itemToRender, 1, 0, state.pList->Count() - 1);
+    }
+
+    if (mpCurrentEditor) {
+      mpCurrentEditor->Render(mDisplay);
+    }
+  }
+  virtual void UpdateApp()
+  {
+    //CCPlot("settings app updateApp()");
+
+    SettingsMenuState& state = mNav[mNavDepth];
+
+    if (mpCurrentEditor) {
+      mpCurrentEditor->Update(WasBackPressed(), WasEncoderButtonPressed(), EncoderIntDelta());
+      return;
+    }
+
+    // scrolling
+    state.focusedItem = AddConstrained(state.focusedItem, EncoderIntDelta(), 0, state.pList->Count() - 1);
+    
+    // enter
+    if (WasEncoderButtonPressed()) 
+    {
+      auto* focusedItem = state.pList->GetItem(state.focusedItem);
+      
+      switch(focusedItem->GetType()) {
+        case SettingItemType::Bool:
+          break;
+        case SettingItemType::Custom:
+          mpCurrentEditor = focusedItem->GetEditor();
+          mpCurrentEditor->SetupEditing(this, 0, 0);
+          break;
+        case SettingItemType::Submenu:
+          mNavDepth ++;
+          mNav[mNavDepth].pList = focusedItem->GetSubmenu();
+          mNav[mNavDepth].focusedItem = 0;
+          break;
+      }
+    }
+
+    // back/up when not editing
+    if (WasBackPressed()) 
+    {
+      //Serial.println("back was pressed");
+      if (mNavDepth == 0) {
+        GoToFrontPage();
+      } else {
+        mNavDepth --;
+      }
+    }
+  }
+};
+
+class SynthSettingsApp : public SettingsMenuApp
+{
+  SettingsList mSynthSettingsList;
+  FloatSettingItem mPortamentoTime;
+  IntSettingItem mTranspose;
+  FloatSettingItem mReverbGain;
+  
+public:
+  SynthSettingsApp(CCDisplay& display, CCEWIApp& app) :
+    SettingsMenuApp(display, app),
+    mPortamentoTime("Portamento", 0.0f, 1.0f, gAppSettings.mPortamentoTime),
+    mTranspose("Transpose", -48, 48, gAppSettings.mTranspose),
+    mReverbGain("Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain)
+  {
+    mSynthSettingsList.mItemCount = 3;
+    mSynthSettingsList.mItems[0] = &mPortamentoTime;
+    mSynthSettingsList.mItems[1] = &mTranspose;
+    mSynthSettingsList.mItems[2] = &mReverbGain;
+  }
+
+  virtual SettingsList* GetRootSettingsList()
+  {
+    return &mSynthSettingsList;
   }
 
   virtual void RenderFrontPage() 
@@ -87,8 +412,33 @@ public:
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
 
-    mDisplay.println(String("Metronome"));
+    mDisplay.println(String("SYNTH SETTINGS"));
+    mDisplay.println(String(""));
+    mDisplay.println(String(""));
+    mDisplay.println(String("                  -->"));
+  }
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+class MetronomeMenuApp : public MenuAppBaseWithUtils
+{
+public:
+  MetronomeMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
+  {
+    //Serial.println("MetronomeMenuApp");
+  }
+
+  virtual void RenderFrontPage() 
+  {
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(WHITE);
+    mDisplay.setCursor(0,0);
+
+    mDisplay.println(String("METRONOME"));
     mDisplay.println(String("BPM=") + gSynth.mMetronomeBPM);
+    mDisplay.println(String(""));
+    mDisplay.println(String("                  -->"));
   }
 
   virtual void RenderApp()
@@ -128,6 +478,7 @@ public:
     mDisplay.println("SYSTEM STATUS");
     mDisplay.println(String("Uptime: ") + (int)((float)millis() / 1000) + " sec");
     mDisplay.println(String("Notes played: ") + gEWIControl.mMusicalState.noteOns);
+    mDisplay.println(String("                  -->"));
   }
 
   virtual void UpdateApp()
@@ -163,7 +514,7 @@ public:
     
     auto pageMusicalState = [&]() {
       mDisplay.println(String("#:") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote) + "hz");
-      mDisplay.println(String("transpose:") + gEWIControl.mTranspose);
+      mDisplay.println(String("transpose:") + gAppSettings.mTranspose);
       mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
       mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
     };

@@ -170,8 +170,6 @@ class CCSynth : IUpdateObject
   static constexpr int voiceCount = 4;
   AudioBandlimitedOsci* voices[voiceCount] = { &CCSynthGraph::voice1, &CCSynthGraph::voice2, &CCSynthGraph::voice3, &CCSynthGraph::voice4 };
 
-  int mHarmonizerOn = 0;
-  bool mMetronomeOn = true;
   CCThrottlerT<500> mMetronomeTimer;
 
 public:
@@ -179,7 +177,7 @@ public:
   float mMetronomeBPM = 38.0f;
 
   void SetHarmonizer(int n) {
-    mHarmonizerOn = n;
+    gAppSettings.mHarmonizerOn = n;
     if (n == 2) {
       CCSynthGraph::voice3.amplitude(1, 0.2);
       CCSynthGraph::voice3.amplitude(2, 0.2);
@@ -193,7 +191,7 @@ public:
     }
   }
 
-  bool IsHarmonizerEnabled() const { return mHarmonizerOn > 0; }
+//  bool IsHarmonizerEnabled() const { return HarmonizerOn > 0; }
 
   virtual void setup() {
     AudioMemory(15);
@@ -207,8 +205,6 @@ public:
       voices[i]->amplitude(2, 0);
       voices[i]->amplitude(3, 0);
     }
-
-    float p = 0.005;
 
     // voice 1 setup
     {
@@ -224,9 +220,6 @@ public:
       CCSynthGraph::voice1.amplitude(2, 0.3);
       CCSynthGraph::voice1.amplitude(3, 0.3);
       
-      CCSynthGraph::voice1.portamentoTime(1, p);
-      CCSynthGraph::voice1.portamentoTime(2, p);
-      CCSynthGraph::voice1.portamentoTime(3, p);  
       CCSynthGraph::voice1.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
     }
 
@@ -244,9 +237,6 @@ public:
       CCSynthGraph::voice2.amplitude(2, 0.2);
       CCSynthGraph::voice2.amplitude(3, 0.0);
   
-      CCSynthGraph::voice2.portamentoTime(1, p);
-      CCSynthGraph::voice2.portamentoTime(2, p);
-      CCSynthGraph::voice2.portamentoTime(3, p);
       CCSynthGraph::voice2.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
 
     }
@@ -257,8 +247,6 @@ public:
       CCSynthGraph::voice3.waveform(2, 1);
       CCSynthGraph::voice3.pulseWidth(1, 0.0);
       CCSynthGraph::voice3.pulseWidth(2, 0.0);
-      CCSynthGraph::voice3.portamentoTime(1, .05);
-      CCSynthGraph::voice3.portamentoTime(2, .05);
       CCSynthGraph::voice3.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
     }
 
@@ -268,23 +256,12 @@ public:
       CCSynthGraph::voice4.waveform(2, 1);
       CCSynthGraph::voice4.pulseWidth(1, 0.0);
       CCSynthGraph::voice4.pulseWidth(2, 0.0);
-      CCSynthGraph::voice4.portamentoTime(1, .01);
-      CCSynthGraph::voice4.portamentoTime(2, .01);
       CCSynthGraph::voice4.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
     }
-    CCSynthGraph::verb.roomsize(.6f);
-    CCSynthGraph::verb.damping(.7f);
-    CCSynthGraph::verbWetAmpLeft.gain(.3);
-    CCSynthGraph::verbWetAmpRight.gain(.3);
-
-
-    CCSynthGraph::metronomeOsc.frequency(880);
-    CCSynthGraph::metronomeOsc.amplitude(.8f);
 
     CCSynthGraph::metronomeEnv.delay(0);
     CCSynthGraph::metronomeEnv.attack(0);
     CCSynthGraph::metronomeEnv.hold(0);
-    CCSynthGraph::metronomeEnv.decay(20);
     CCSynthGraph::metronomeEnv.releaseNoteOn(0);
     CCSynthGraph::metronomeEnv.sustain(0);
 
@@ -303,10 +280,29 @@ public:
     float breathAdj = state.breath01.GetValue();
     float midiNote = state.MIDINote + state.pitchBendN11.GetValue() * 2;
 
+    CCSynthGraph::verb.roomsize(.6f);
+    CCSynthGraph::verb.damping(.7f);
+    CCSynthGraph::verbWetAmpLeft.gain(gAppSettings.mReverbGain);
+    CCSynthGraph::verbWetAmpRight.gain(gAppSettings.mReverbGain);
+    CCPlot(gAppSettings.mReverbGain);
+
+    CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
+    CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
+
+    CCSynthGraph::metronomeEnv.decay(gAppSettings.mMetronomeDecayTime);
+
+
+    for (int i = 0; i < voiceCount; ++ i) {
+      voices[i]->portamentoTime(1, gAppSettings.mPortamentoTime);
+      voices[i]->portamentoTime(2, gAppSettings.mPortamentoTime);
+      voices[i]->portamentoTime(3, gAppSettings.mPortamentoTime);
+    }
+
+
     // voice 1
     {
       float freq = MIDINoteToFreq(midiNote);
-      float freq2 = mHarmonizerOn > 0 ? MIDINoteToFreq(midiNote + 7) : freq;
+      float freq2 = gAppSettings.mHarmonizerOn > 0 ? MIDINoteToFreq(midiNote + 7) : freq;
       float freqSync = map(breathAdj, 0.0f, 1.0f, freq * 2, freq * 7);
     
       CCSynthGraph::voice1.frequency(1, freq);
@@ -343,7 +339,7 @@ public:
         CCSynthGraph::metronomeOsc.amplitude(0);      
     } else {
       CCSynthGraph::metronomeOsc.amplitude(0.8);
-      if (mMetronomeTimer.IsReady(60000.0f / mMetronomeBPM)) {
+      if (mMetronomeTimer.IsReady(60000.0f / gAppSettings.mMetronomeBPM)) {
         CCSynthGraph::metronomeEnv.noteOn();
       }
     }

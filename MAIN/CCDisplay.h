@@ -46,6 +46,10 @@ public:
   void AddMenuApp(MenuAppBase* p) {
     mMenuApps[mMenuAppCount] = p;
     mMenuAppCount ++;
+    if (mMenuAppCount == 1) {
+      // first app added; it's selected and needs to be notified of that.
+      mMenuApps[mCurrentMenuAppIndex]->OnSelected();
+    }
   }
 
   // display gets access to the whole app
@@ -65,6 +69,7 @@ public:
 
     mMenuApps[mCurrentMenuAppIndex]->OnUnselected();
     mCurrentMenuAppIndex = n;
+    //Serial.println(String("selecting app ") + n );
     mMenuApps[mCurrentMenuAppIndex]->OnSelected();
   }
 
@@ -72,12 +77,9 @@ public:
     SelectApp(mCurrentMenuAppIndex + delta);
   }
 
-//  void NextApp() {
-//    SelectApp(mCurrentMenuAppIndex + 1);
-//  }
-//  void PreviousApp() {
-//    SelectApp(mCurrentMenuAppIndex - 1);
-//  }
+  void DisplayToast(const String& s) {
+    // todo
+  }
 
   virtual void setup() {
     // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)

@@ -9,6 +9,26 @@
 //#define AUDIO_BLOCK_SAMPLES 1024 // this seems to have no effect; may need to fork
 
 //============================================================
+/////////////////////////////////////////////////////////////////////////////////////////////////
+class AppSettings
+{
+public:
+  // all user-configurable stuff goes here.
+  float mPortamentoTime = 0.005f;
+  int mHarmonizerOn = 0;
+  bool mMetronomeOn = true;
+  float mMetronomeBPM = 100.0f;
+  float mMetronomeGain = 0.8f;
+  int mMetronomeNote = 49;
+  int mMetronomeDecayTime= 20;
+  float mReverbGain = .2f;
+  int mTranspose = 0;
+};
+
+AppSettings gAppSettings;
+
+
+//#include "AppSettings.h"
 
 #include "Shared_CCSwitch.h"
 #include "Shared_CCLeds.h"
@@ -23,6 +43,7 @@ CCDisplay gDisplay(gApp);
 
 MetronomeMenuApp gScreensaverApp(gDisplay, gApp);
 DebugMenuApp gDebugApp(gDisplay, gApp);
+SynthSettingsApp gSynthSettingsApp(gDisplay, gApp);
 
 CCLeds leds(10, 2, 10, true);
 CCThrottlerT<20> ledThrottle;
@@ -54,10 +75,10 @@ void loop() {
     leds.setPixelColor(0, 0, 0, 0);
     leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 1), col(gLHTXIndicator.GetState(), 0, 1), col(gLHRXIndicator.GetState(), 0, 1));
     leds.setPixelColor(2, col(gRHRXErrorIndicator.GetState(), 0, 1), col(gRHTXIndicator.GetState(), 0, 1), col(gRHRXIndicator.GetState(), 0, 1));
-    leds.setPixelColor(3, col(gSynth.IsHarmonizerEnabled(), 0, 1), 0, col(gMidiActivityIndicator.GetState(), 0, 1));
+    leds.setPixelColor(3, col(gAppSettings.mHarmonizerOn > 0, 0, 1), 0, col(gMidiActivityIndicator.GetState(), 0, 1));
     
-    leds.setPixelColor(4, col(gEWIControl.mTranspose != 0, 0, 1), 0, 0);
-    leds.setPixelColor(5, col(gEWIControl.mTranspose < 0, 0, 1), col(gEWIControl.mTranspose > 0, 0, 1), 0);
+    leds.setPixelColor(4, col(gAppSettings.mTranspose != 0, 0, 1), 0, 0);
+    leds.setPixelColor(5, col(gAppSettings.mTranspose < 0, 0, 1), col(gAppSettings.mTranspose > 0, 0, 1), 0);
 
     // 6 = off
     // 7 = off
