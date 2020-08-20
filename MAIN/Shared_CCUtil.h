@@ -508,6 +508,8 @@ public:
 // todo: optimize
 static int AddConstrained(int orig, int delta, int min_, int max_) {
   //Serial.println(String("add constrained: ") + orig + " + " + delta + " [" + min_ + ", " + max_ + "]");
+  if (max_ <= min_)
+    return min_;
   int ret = orig + delta;
   int period = max_ - min_ + 1; // if [0,0], add 1 each time to reach 0. If [3,6], add 4.
   while (ret < min_)

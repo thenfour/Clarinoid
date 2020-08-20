@@ -46,10 +46,6 @@ public:
   void AddMenuApp(MenuAppBase* p) {
     mMenuApps[mMenuAppCount] = p;
     mMenuAppCount ++;
-    if (mMenuAppCount == 1) {
-      // first app added; it's selected and needs to be notified of that.
-      mMenuApps[mCurrentMenuAppIndex]->OnSelected();
-    }
   }
 
   // display gets access to the whole app
@@ -88,10 +84,18 @@ public:
     mDisplay.display();
   }
 
-  virtual void loop() {
+  bool first = true;
+
+  virtual void loop() {    
     gFramerate.onFrame();
 
     MenuAppBase* pMenuApp = mMenuApps[mCurrentMenuAppIndex];
+
+    if (first) {
+      first = false;
+      pMenuApp->OnSelected();
+    }
+
     pMenuApp->Update();
     
     if (!mThrottle.IsReady())

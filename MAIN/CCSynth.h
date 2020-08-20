@@ -174,8 +174,6 @@ class CCSynth : IUpdateObject
 
 public:
 
-  float mMetronomeBPM = 38.0f;
-
   void SetHarmonizer(int n) {
     gAppSettings.mHarmonizerOn = n;
     if (n == 2) {
@@ -284,12 +282,11 @@ public:
     CCSynthGraph::verb.damping(.7f);
     CCSynthGraph::verbWetAmpLeft.gain(gAppSettings.mReverbGain);
     CCSynthGraph::verbWetAmpRight.gain(gAppSettings.mReverbGain);
-    CCPlot(gAppSettings.mReverbGain);
+    //CCPlot(gAppSettings.mReverbGain);
 
-    CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
-    CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
+//    CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
+  //  CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
 
-    CCSynthGraph::metronomeEnv.decay(gAppSettings.mMetronomeDecayTime);
 
 
     for (int i = 0; i < voiceCount; ++ i) {
@@ -335,10 +332,12 @@ public:
     //CCPlot(filterFreq);
     CCSynthGraph::waveFilter.frequency(filterFreq);
 
-    if (mMetronomeBPM < 40) {
+    if (!gAppSettings.mMetronomeOn) {
         CCSynthGraph::metronomeOsc.amplitude(0);      
     } else {
-      CCSynthGraph::metronomeOsc.amplitude(0.8);
+      CCSynthGraph::metronomeEnv.decay(gAppSettings.mMetronomeDecayMS);
+      CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
+      CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
       if (mMetronomeTimer.IsReady(60000.0f / gAppSettings.mMetronomeBPM)) {
         CCSynthGraph::metronomeEnv.noteOn();
       }

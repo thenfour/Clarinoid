@@ -52,8 +52,12 @@ public:
   int EncoderIntDelta() {
     return gEnc.GetIntDelta();
   }
+  bool mPrevEncoderButtonPressed = false;
   bool WasEncoderButtonPressed() {
-    return gEncButton.IsPressed() && gEncButton.IsDirty();
+    bool isNowPressed = gEncButton.IsPressed();// && mPrevEncoderButtonPressed != gEngEncButton.IsDirty();
+    bool ret = (isNowPressed && !mPrevEncoderButtonPressed);
+    mPrevEncoderButtonPressed = isNowPressed;
+    return ret;
   }
 
   virtual void Render() {
@@ -167,9 +171,6 @@ struct NumericEditor : ISettingItemEditor
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
     DrawValue(mBinding, oldVal, mDisplay);
-    //mDisplay.print(String("") + mBinding);
-    //int delta = mBinding - oldVal;
-    //mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
   }
 };
 
@@ -227,33 +228,38 @@ struct NumericSettingItem : public ISettingItem
   virtual SettingItemType GetType() { return SettingItemType::Custom; }
 
   virtual ISettingItemEditor* GetEditor() {
+    //Serial.println(String("returning editor @ ") + (uintptr_t)&mEditor);
     return &mEditor;
   }
 };
 
 using IntSettingItem = NumericSettingItem<int, IntEditor>;
 using FloatSettingItem = NumericSettingItem<float, FloatEditor>;
-//struct IntSettingItem : public ISettingItem
-//{
-//  String mName;
-//  int& mBinding;
-//  IntEditor mEditor;
-//  
-//  IntSettingItem(const String& name, int min_, int max_, int& binding) :
-//    mName(name),
-//    mBinding(binding),
-//    mEditor(min_, max_, binding)
-//  {
-//  }
-//
-//  virtual String GetName() { return mName; }
-//  virtual String GetValueString() { return String(mBinding); }
-//  virtual SettingItemType GetType() { return SettingItemType::Custom; }
-//
-//  virtual ISettingItemEditor* GetEditor() {
-//    return &mEditor;
-//  }
-//};
+
+
+
+struct BoolSettingItem : public ISettingItem
+{
+  String mName;
+  bool& mBinding;
+  String mTrueCaption;
+  String mFalseCaption;
+  
+  BoolSettingItem(const String& name, const String& trueCaption, const String& falseCaption, bool& binding) :
+    mName(name),
+    mBinding(binding),
+    mTrueCaption(trueCaption),
+    mFalseCaption(falseCaption)
+  {
+  }
+
+  virtual String GetName() { return mName; }
+  virtual String GetValueString() { return mBinding ? mTrueCaption : mFalseCaption; }
+  virtual SettingItemType GetType() { return SettingItemType::Bool; }
+  virtual void ToggleBool() {
+    mBinding = !mBinding;
+  }
+};
 
 
 struct SettingsList
@@ -281,7 +287,8 @@ class SettingsMenuApp : public MenuAppBaseWithUtils, public ISettingItemEditorAc
   ISettingItemEditor* mpCurrentEditor = nullptr;
 
 public:
-  SettingsMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
+  SettingsMenuApp(CCDisplay& display, CCEWIApp& app) :
+    MenuAppBaseWithUtils(display, app)
   {
     //Serial.println("SettingsMenuApp");
   }
@@ -308,6 +315,7 @@ public:
     //delay(20);
     SettingsMenuState& state = mNav[mNavDepth];
 
+    //Serial.println(String("RenderSettingsApp  => navdepth=") + mNavDepth + " plist=" + (uintptr_t)state.pList + " focuseditem=" + state.focusedItem + " count=" + state.pList->Count());
     //Serial.println(String("  => navdepth=") + mNavDepth + " focuseditem=" + state.focusedItem + " pList=" + (uintptr_t)state.pList + " count=" + state.pList->Count());
 
     mDisplay.setTextSize(1);
@@ -336,8 +344,6 @@ public:
   }
   virtual void UpdateApp()
   {
-    //CCPlot("settings app updateApp()");
-
     SettingsMenuState& state = mNav[mNavDepth];
 
     if (mpCurrentEditor) {
@@ -351,12 +357,15 @@ public:
     // enter
     if (WasEncoderButtonPressed()) 
     {
+      //Serial.println(String("pressed encoder button; get item...") + state.focusedItem);
       auto* focusedItem = state.pList->GetItem(state.focusedItem);
       
       switch(focusedItem->GetType()) {
         case SettingItemType::Bool:
+          focusedItem->ToggleBool();
           break;
         case SettingItemType::Custom:
+          //Serial.println("custom item type; getting editor.");
           mpCurrentEditor = focusedItem->GetEditor();
           mpCurrentEditor->SetupEditing(this, 0, 0);
           break;
@@ -391,7 +400,7 @@ class SynthSettingsApp : public SettingsMenuApp
 public:
   SynthSettingsApp(CCDisplay& display, CCEWIApp& app) :
     SettingsMenuApp(display, app),
-    mPortamentoTime("Portamento", 0.0f, 1.0f, gAppSettings.mPortamentoTime),
+    mPortamentoTime("Portamento", 0.0f, 0.25f, gAppSettings.mPortamentoTime),
     mTranspose("Transpose", -48, 48, gAppSettings.mTranspose),
     mReverbGain("Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain)
   {
@@ -419,14 +428,37 @@ public:
   }
 };
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-class MetronomeMenuApp : public MenuAppBaseWithUtils
+class MetronomeSettingsApp : public SettingsMenuApp
 {
+  SettingsList mRootList;
+  
+  BoolSettingItem mOnOff;
+  FloatSettingItem mBPM;
+  FloatSettingItem mGain;
+  IntSettingItem mNote;
+  IntSettingItem mDecay;
+
 public:
-  MetronomeMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
+  MetronomeSettingsApp(CCDisplay& display, CCEWIApp& app) :
+    SettingsMenuApp(display, app),
+    mOnOff("Enabled?", "On", "Off", gAppSettings.mMetronomeOn),
+    mBPM("BPM", 30.0f, 200.0f, gAppSettings.mMetronomeBPM),
+    mGain("Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain),
+    mNote("Note", 20, 120, gAppSettings.mMetronomeNote),
+    mDecay("Decay", 1, 120, gAppSettings.mMetronomeDecayMS)
   {
-    //Serial.println("MetronomeMenuApp");
+    mRootList.mItemCount = 5;
+    mRootList.mItems[0] = &mOnOff;
+    mRootList.mItems[1] = &mBPM;
+    mRootList.mItems[2] = &mGain;
+    mRootList.mItems[3] = &mNote;
+    mRootList.mItems[4] = &mDecay;
+  }
+
+  virtual SettingsList* GetRootSettingsList()
+  {
+//    Serial.println(String("met app returning root list ") + (uintptr_t)&mRootList);
+    return &mRootList;
   }
 
   virtual void RenderFrontPage() 
@@ -435,30 +467,10 @@ public:
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
 
-    mDisplay.println(String("METRONOME"));
-    mDisplay.println(String("BPM=") + gSynth.mMetronomeBPM);
-    mDisplay.println(String(""));
+    mDisplay.println(String("METRONOME SETTINGS"));
+    mDisplay.println(gAppSettings.mMetronomeOn ? "ENABLED" : "disabled");
+    mDisplay.println(String("bpm=") + gAppSettings.mMetronomeBPM);
     mDisplay.println(String("                  -->"));
-  }
-
-  virtual void RenderApp()
-  {
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
-    mDisplay.println(String("editing BPM=") + gSynth.mMetronomeBPM);
-  }
-  virtual void UpdateApp()
-  {
-    if (gEnc.IsDirty()) {
-      gSynth.mMetronomeBPM += gEnc.GetIntDelta();
-    }
-
-    if (WasBackPressed()) {
-      GoToFrontPage();
-      return;
-    }
-
   }
 };
 

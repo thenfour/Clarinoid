@@ -15,12 +15,15 @@ class AppSettings
 public:
   // all user-configurable stuff goes here.
   float mPortamentoTime = 0.005f;
+  
   int mHarmonizerOn = 0;
+  
   bool mMetronomeOn = true;
   float mMetronomeBPM = 100.0f;
   float mMetronomeGain = 0.8f;
-  int mMetronomeNote = 49;
-  int mMetronomeDecayTime= 20;
+  int mMetronomeNote = 80;
+  int mMetronomeDecayMS= 20;
+  
   float mReverbGain = .2f;
   int mTranspose = 0;
 };
@@ -41,7 +44,7 @@ AppSettings gAppSettings;
 CCEWIApp gApp;
 CCDisplay gDisplay(gApp);
 
-MetronomeMenuApp gScreensaverApp(gDisplay, gApp);
+MetronomeSettingsApp gMetronomeApp(gDisplay, gApp);
 DebugMenuApp gDebugApp(gDisplay, gApp);
 SynthSettingsApp gSynthSettingsApp(gDisplay, gApp);
 
@@ -65,6 +68,10 @@ void loop() {
     if (m > gLoopExitMicros && (m - gLoopExitMicros) > gLongestBetweenLoopMicros) {
       gLongestBetweenLoopMicros = m - gLoopExitMicros;
     }
+  }
+
+  if (UpdateObjectCount > MaxUpdateObjects) {
+    CCPlot(String("Too many update objects!") + UpdateObjectCount);
   }
 
   UpdateUpdateObjects();
