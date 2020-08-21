@@ -310,9 +310,16 @@ public:
     GoToFrontPage();
   }
 
-  virtual SettingsList* GetRootSettingsList()  = 0;
+  virtual SettingsList* GetRootSettingsList() = 0;
+  virtual ISettingItemEditor* GetBackEditor() { return nullptr; }
 
-  // child is responsible for RenderFrontPage()
+  // children who override this must call this.
+  virtual void RenderFrontPage()
+  {
+    if (mpCurrentEditor) {
+      mpCurrentEditor->Render(mDisplay);
+    }
+  }
 
   virtual void RenderApp()
   {
@@ -347,6 +354,27 @@ public:
       mpCurrentEditor->Render(mDisplay);
     }
   }
+
+  // handle extra ui stuff for the front page to enable "back actions".
+  virtual void Update()
+  {
+    if (IsShowingFrontPage()) {
+      if (BackButton().IsNewlyPressed()) {
+        mpCurrentEditor = GetBackEditor();
+        if (mpCurrentEditor) {
+          mpCurrentEditor->SetupEditing(nullptr, 0, 0);
+        }
+        return;
+      } else if (BackButton().IsCurrentlyPressed() && mpCurrentEditor) {
+        mpCurrentEditor->UpdateMomentaryMode(EncoderIntDelta());
+        return;
+      }
+      mpCurrentEditor = nullptr;
+    }
+    MenuAppBaseWithUtils::Update();    
+  }
+
+  
   virtual void UpdateApp()
   {
     SettingsMenuState& state = mNav[mNavDepth];
@@ -430,6 +458,8 @@ public:
     mDisplay.println(String(""));
     mDisplay.println(String(""));
     mDisplay.println(String("                  -->"));
+
+    SettingsMenuApp::RenderFrontPage();
   }
 };
 
@@ -442,8 +472,6 @@ class MetronomeSettingsApp : public SettingsMenuApp
   FloatSettingItem mGain;
   IntSettingItem mNote;
   IntSettingItem mDecay;
-
-  ISettingItemEditor* mpCurrentEditor = nullptr;
 
 public:
   MetronomeSettingsApp(CCDisplay& display, CCEWIApp& app) :
@@ -479,26 +507,11 @@ public:
     mDisplay.println(String("bpm=") + gAppSettings.mPerfSettings.mBPM);
     mDisplay.println(String("                  -->"));
 
-    if (mpCurrentEditor) {
-      mpCurrentEditor->Render(mDisplay);
-    }
+    SettingsMenuApp::RenderFrontPage();
   }
-  
-  virtual void Update()
-  {
-    if (IsShowingFrontPage()) {
-//      //CCPlot(String("update app") + millis());
-      if (BackButton().IsNewlyPressed()) {
-        mpCurrentEditor = mBPM.GetEditor();
-        mpCurrentEditor->SetupEditing(nullptr, 0, 0);
-        return;
-      } else if (BackButton().IsCurrentlyPressed() && mpCurrentEditor) {
-        mpCurrentEditor->UpdateMomentaryMode(EncoderIntDelta());
-        return;
-      }
-      mpCurrentEditor = nullptr;
-    }
-    SettingsMenuApp::Update();    
+
+  virtual ISettingItemEditor* GetBackEditor() {
+    return mBPM.GetEditor();
   }
 };
 
