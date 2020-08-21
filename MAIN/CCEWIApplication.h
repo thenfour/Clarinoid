@@ -22,7 +22,7 @@ uint32_t gLongestBetweenLoopMicros = 0;
 // Simplest is to do it the way it's designed for: in the main sketch, global scope.
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, gMIDI);
 
-CCOnOffSwitch gEncButton(3, 10, 5);
+CCOnOffSwitch gEncButton(3, 5);
 CCEncoder<4> gEnc(4, 5);
 TransientActivityLED gEncIndicator(60, 200);
 
@@ -84,12 +84,12 @@ public:
     gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1);
     gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2);
     
-    if (gRHButton1Key.IsTriggered() && gEWIControl.mPhysicalState.key_back) {
+    if (gRHButton1Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
       // todo: this logic belongs elsewhere.
       if (gAppSettings.mTranspose < 48)
         gAppSettings.mTranspose += 12;
     }
-    if (gRHButton2Key.IsTriggered() && gEWIControl.mPhysicalState.key_back) {
+    if (gRHButton2Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
       // todo: this logic belongs elsewhere.
       if (gAppSettings.mTranspose > -48)
         gAppSettings.mTranspose -= 12;

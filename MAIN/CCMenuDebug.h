@@ -47,17 +47,18 @@ public:
   }
 
   bool WasBackPressed() {
-    return gEWIControl.mPhysicalState.key_back_is_dirty && gEWIControl.mPhysicalState.key_back;
+    return gEWIControl.mPhysicalState.key_back.IsNewlyPressed();
   }
   int EncoderIntDelta() {
     return gEnc.GetIntDelta();
   }
-  bool mPrevEncoderButtonPressed = false;
+  //bool mPrevEncoderButtonPressed = false;
   bool WasEncoderButtonPressed() {
-    bool isNowPressed = gEncButton.IsPressed();// && mPrevEncoderButtonPressed != gEngEncButton.IsDirty();
-    bool ret = (isNowPressed && !mPrevEncoderButtonPressed);
-    mPrevEncoderButtonPressed = isNowPressed;
-    return ret;
+    return gEncButton.IsNewlyPressed();
+//    bool isNowPressed = gEncButton.IsPressed();// && mPrevEncoderButtonPressed != gEngEncButton.IsDirty();
+//    bool ret = (isNowPressed && !mPrevEncoderButtonPressed);
+//    mPrevEncoderButtonPressed = isNowPressed;
+//    return ret;
   }
 
   virtual void Render() {
@@ -79,7 +80,7 @@ public:
 
     mCCDisplay.ScrollApps(gEnc.GetIntDelta());
 
-    if (gEncButton.IsPressed()) {
+    if (gEncButton.IsNewlyPressed()) {
       //Serial.println("pressed encoder; showing app");
       mShowingFrontPage = false;
     }

@@ -90,7 +90,7 @@ void loop() {
     // 6 = off
     // 7 = off
 
-    leds.setPixelColor(8, col(gEncButton.IsPressed()), 0, col(gEncIndicator.GetState(), 0, 1));
+    leds.setPixelColor(8, col(gEncButton.IsCurrentlyPressed()), 0, col(gEncIndicator.GetState(), 0, 1));
     leds.setPixelColor(9, 0, gVolumePot.GetValue01() * 6, col(gVolIndicator.GetState(), 0, 6));
     leds.show();
   }

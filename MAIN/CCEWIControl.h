@@ -40,8 +40,7 @@ struct CCEWIPhysicalState
 
   // yea these are sorta oddballs; not really sure they should be lumped in here
   // but it's convenient to do so because they come from the LHRH payloads.
-  bool key_back;
-  bool key_back_is_dirty = false;
+  CCVirtualSwitch key_back;
   Tristate key_triState; // same.
   bool key_triState_is_dirty = false;
   
@@ -72,12 +71,7 @@ struct CCEWIPhysicalState
     this->bite01 = (float)lh.data.pressure2 / 1024;
     this->pitchDown01 = (float)rh.data.pressure1 / 1024;
 
-    this->key_back_is_dirty = (this->key_back != lh.data.button1);
-    this->key_back = lh.data.button1;
-
-    if (key_back_is_dirty) {
-      //Serial.println(String("key back dirty") + millis());
-    }
+    this->key_back.Update(lh.data.button1);
 
     Tristate oldState = key_triState;
     if (rh.data.button1) {
