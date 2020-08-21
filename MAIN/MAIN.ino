@@ -11,6 +11,8 @@
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////
 static const size_t HARMONIZER_VOICES = 4;
+//static const size_t VOICES_PER_LAYER = HARMONIZER_VOICES;
+static const size_t MAX_VOICES = 12;
 
 class PresetName
 {
@@ -29,19 +31,18 @@ struct PerfSettings
   uint8_t mSynthPreset[HARMONIZER_VOICES] = {};
   int8_t mTranspose = 0;
   Scale mGlobalScale;
-  float mBPM;
+  float mBPM = 90.0f;
 };
 struct AppSettings
 {
-  // all user-configurable stuff goes here.
   float mPortamentoTime = 0.005f;
   
-  int mHarmonizerOn = 0;
+  //int mHarmonizerOn = 0;
   
   bool mMetronomeOn = true;
   float mMetronomeGain = 0.8f;
   int mMetronomeNote = 80;
-  int mMetronomeDecayMS= 20;
+  int mMetronomeDecayMS= 15;
   
   float mReverbGain = .2f;
   int mTranspose = 0;
@@ -103,7 +104,7 @@ void loop() {
     leds.setPixelColor(0, 0, 0, 0);
     leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 1), col(gLHTXIndicator.GetState(), 0, 1), col(gLHRXIndicator.GetState(), 0, 1));
     leds.setPixelColor(2, col(gRHRXErrorIndicator.GetState(), 0, 1), col(gRHTXIndicator.GetState(), 0, 1), col(gRHRXIndicator.GetState(), 0, 1));
-    leds.setPixelColor(3, col(gAppSettings.mHarmonizerOn > 0, 0, 1), 0, col(gMidiActivityIndicator.GetState(), 0, 1));
+    leds.setPixelColor(3, 0, 0, col(gMidiActivityIndicator.GetState(), 0, 1));
     
     leds.setPixelColor(4, col(gAppSettings.mTranspose != 0, 0, 1), 0, 0);
     leds.setPixelColor(5, col(gAppSettings.mTranspose < 0, 0, 1), col(gAppSettings.mTranspose > 0, 0, 1), 0);

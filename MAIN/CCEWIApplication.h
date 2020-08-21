@@ -66,34 +66,34 @@ public:
       gSynth.SetGain(gVolumePot.GetValue01());
     }
 
-    if (gOldTristateVal != gEWIControl.mPhysicalState.key_triState) {
-      // tristate will control harmonizer.
-      switch (gEWIControl.mPhysicalState.key_triState) {
-      case Tristate::Position2:
-        gSynth.SetHarmonizer(1);
-        break;
-      case Tristate::Position3:
-        gSynth.SetHarmonizer(2);
-        break;
-      default:
-        gSynth.SetHarmonizer(0);
-        break;
-      }
-    }
+//    if (gOldTristateVal != gEWIControl.mPhysicalState.key_triState) {
+//      // tristate will control harmonizer.
+//      switch (gEWIControl.mPhysicalState.key_triState) {
+//      case Tristate::Position2:
+//        gSynth.SetHarmonizer(1);
+//        break;
+//      case Tristate::Position3:
+//        gSynth.SetHarmonizer(2);
+//        break;
+//      default:
+//        gSynth.SetHarmonizer(0);
+//        break;
+//      }
+//    }
     
     gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1);
     gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2);
     
-    if (gRHButton1Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
-      // todo: this logic belongs elsewhere.
-      if (gAppSettings.mTranspose < 48)
-        gAppSettings.mTranspose += 12;
-    }
-    if (gRHButton2Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
-      // todo: this logic belongs elsewhere.
-      if (gAppSettings.mTranspose > -48)
-        gAppSettings.mTranspose -= 12;
-    }
+//    if (gRHButton1Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
+//      // todo: this logic belongs elsewhere.
+//      if (gAppSettings.mTranspose < 48)
+//        gAppSettings.mTranspose += 12;
+//    }
+//    if (gRHButton2Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
+//      // todo: this logic belongs elsewhere.
+//      if (gAppSettings.mTranspose > -48)
+//        gAppSettings.mTranspose -= 12;
+//    }
   
     // gather up serial receive (LH)
     if (gLHSerial.mHaveNewData) {
