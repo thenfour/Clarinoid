@@ -338,7 +338,7 @@ public:
       CCSynthGraph::metronomeEnv.decay(gAppSettings.mMetronomeDecayMS);
       CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
       CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
-      if (mMetronomeTimer.IsReady(60000.0f / gAppSettings.mMetronomeBPM)) {
+      if (mMetronomeTimer.IsReady(60000.0f / gAppSettings.mPerfSettings.mBPM)) {
         CCSynthGraph::metronomeEnv.noteOn();
       }
     }

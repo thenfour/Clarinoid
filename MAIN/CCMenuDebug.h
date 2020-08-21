@@ -37,6 +37,8 @@ public:
   virtual void RenderFrontPage() = 0;
 
   bool IsShowingFrontPage() const { return mShowingFrontPage; }
+
+  ICCSwitch& BackButton() const { return gEWIControl.mPhysicalState.key_back; }
   
   virtual void OnSelected() {
     GoToFrontPage();
@@ -46,19 +48,8 @@ public:
     mShowingFrontPage = true;
   }
 
-  bool WasBackPressed() {
-    return gEWIControl.mPhysicalState.key_back.IsNewlyPressed();
-  }
   int EncoderIntDelta() {
     return gEnc.GetIntDelta();
-  }
-  //bool mPrevEncoderButtonPressed = false;
-  bool WasEncoderButtonPressed() {
-    return gEncButton.IsNewlyPressed();
-//    bool isNowPressed = gEncButton.IsPressed();// && mPrevEncoderButtonPressed != gEngEncButton.IsDirty();
-//    bool ret = (isNowPressed && !mPrevEncoderButtonPressed);
-//    mPrevEncoderButtonPressed = isNowPressed;
-//    return ret;
   }
 
   virtual void Render() {
@@ -117,11 +108,15 @@ struct ISettingItem
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-struct ISettingItemEditor
+struct ISettingItemEditor : ISettingItemEditorActions
 {
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) = 0;
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta) = 0; // every frame.
   virtual void Render(Adafruit_SSD1306& mDisplay) = 0; // not every frame.
+  virtual void UpdateMomentaryMode(int encIntDelta) = 0;
+
+  // just for convenience.
+  virtual void CommitEditing() { }
 };
 
 
@@ -148,10 +143,19 @@ struct NumericEditor : ISettingItemEditor
   
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
     mpApi = papi;
+    if (!mpApi) mpApi = this;
     oldVal = mBinding;
     this->x = x;
     this->y = y;
   }
+
+  // for editing when holding back button. so back button is definitely pressed, and we don't want to bother
+  // with encoder button pressed here.
+  virtual void UpdateMomentaryMode(int encIntDelta)
+  {
+    mBinding = constrain(Add(mBinding, encIntDelta), mMin, mMax);
+  }
+  
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
   {
     mBinding = constrain(Add(mBinding, encIntDelta), mMin, mMax);
@@ -348,7 +352,7 @@ public:
     SettingsMenuState& state = mNav[mNavDepth];
 
     if (mpCurrentEditor) {
-      mpCurrentEditor->Update(WasBackPressed(), WasEncoderButtonPressed(), EncoderIntDelta());
+      mpCurrentEditor->Update(BackButton().IsNewlyPressed(), gEncButton.IsNewlyPressed(), EncoderIntDelta());
       return;
     }
 
@@ -356,7 +360,7 @@ public:
     state.focusedItem = AddConstrained(state.focusedItem, EncoderIntDelta(), 0, state.pList->Count() - 1);
     
     // enter
-    if (WasEncoderButtonPressed()) 
+    if (gEncButton.IsNewlyPressed()) 
     {
       //Serial.println(String("pressed encoder button; get item...") + state.focusedItem);
       auto* focusedItem = state.pList->GetItem(state.focusedItem);
@@ -379,7 +383,7 @@ public:
     }
 
     // back/up when not editing
-    if (WasBackPressed()) 
+    if (BackButton().IsNewlyPressed()) 
     {
       //Serial.println("back was pressed");
       if (mNavDepth == 0) {
@@ -439,11 +443,13 @@ class MetronomeSettingsApp : public SettingsMenuApp
   IntSettingItem mNote;
   IntSettingItem mDecay;
 
+  ISettingItemEditor* mpCurrentEditor = nullptr;
+
 public:
   MetronomeSettingsApp(CCDisplay& display, CCEWIApp& app) :
     SettingsMenuApp(display, app),
     mOnOff("Enabled?", "On", "Off", gAppSettings.mMetronomeOn),
-    mBPM("BPM", 30.0f, 200.0f, gAppSettings.mMetronomeBPM),
+    mBPM("BPM", 30.0f, 200.0f, gAppSettings.mPerfSettings.mBPM),
     mGain("Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain),
     mNote("Note", 20, 120, gAppSettings.mMetronomeNote),
     mDecay("Decay", 1, 120, gAppSettings.mMetronomeDecayMS)
@@ -470,8 +476,29 @@ public:
 
     mDisplay.println(String("METRONOME SETTINGS"));
     mDisplay.println(gAppSettings.mMetronomeOn ? "ENABLED" : "disabled");
-    mDisplay.println(String("bpm=") + gAppSettings.mMetronomeBPM);
+    mDisplay.println(String("bpm=") + gAppSettings.mPerfSettings.mBPM);
     mDisplay.println(String("                  -->"));
+
+    if (mpCurrentEditor) {
+      mpCurrentEditor->Render(mDisplay);
+    }
+  }
+  
+  virtual void Update()
+  {
+    if (IsShowingFrontPage()) {
+//      //CCPlot(String("update app") + millis());
+      if (BackButton().IsNewlyPressed()) {
+        mpCurrentEditor = mBPM.GetEditor();
+        mpCurrentEditor->SetupEditing(nullptr, 0, 0);
+        return;
+      } else if (BackButton().IsCurrentlyPressed() && mpCurrentEditor) {
+        mpCurrentEditor->UpdateMomentaryMode(EncoderIntDelta());
+        return;
+      }
+      mpCurrentEditor = nullptr;
+    }
+    SettingsMenuApp::Update();    
   }
 };
 
@@ -496,7 +523,7 @@ public:
 
   virtual void UpdateApp()
   {
-    if (WasBackPressed()) {
+    if (BackButton().IsNewlyPressed()) {
       GoToFrontPage();
       return;
     }

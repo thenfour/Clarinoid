@@ -10,22 +10,43 @@
 
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////
-class AppSettings
+static const size_t HARMONIZER_VOICES = 4;
+
+class PresetName
 {
-public:
+  char buf[16];
+};
+
+struct Scale
+{
+  // notes
+};
+
+struct PerfSettings
+{
+  PresetName mName;
+  uint8_t mHarmonizerPreset = 0;
+  uint8_t mSynthPreset[HARMONIZER_VOICES] = {};
+  int8_t mTranspose = 0;
+  Scale mGlobalScale;
+  float mBPM;
+};
+struct AppSettings
+{
   // all user-configurable stuff goes here.
   float mPortamentoTime = 0.005f;
   
   int mHarmonizerOn = 0;
   
   bool mMetronomeOn = true;
-  float mMetronomeBPM = 100.0f;
   float mMetronomeGain = 0.8f;
   int mMetronomeNote = 80;
   int mMetronomeDecayMS= 20;
   
   float mReverbGain = .2f;
   int mTranspose = 0;
+
+  PerfSettings mPerfSettings;
 };
 
 AppSettings gAppSettings;
