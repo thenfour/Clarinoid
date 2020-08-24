@@ -7,7 +7,6 @@
 // because we're optimizing the untouched state so much, we increase the max factor used to detect touches.
 const float CCEWI_TOUCHABLE_PIN_MAX_FACTOR = 1.3;
 
-
 // touchRead() is very slow because it waits to detect the full charge.
 // Fortunately touchablePin has been created which short circuits if "touched" is satisfied.
 // the drawback is that you must initialize it when you know the key is untouched.
@@ -106,23 +105,25 @@ public:
 
   virtual void loop()
   {
+    if (ki.mDebug) {
+      uint32_t m = micros();
+      int n = ki.mTouchablePin.touchRead();
+      uint32_t m2 = micros();
+      if (m < m2) {
+        CCPlot(m2 - m);
+        CCPlot(ki.mTouchablePin.untouchedTime);
+        CCPlot(ki.mTouchablePin.untouchedTime * CCEWI_TOUCHABLE_PIN_MAX_FACTOR);
+        // plot also the actual value.
+        CCPlot(n);
+      }
+    }
+
     if ((gFrameNumber % gTouchKeyCalibrator.mKeyCount) != mStaggerGroup)
       return;
       
     bool newState = ki.mTouchablePin.isTouched();
     mIsDirty = newState != mIsTouched;
     mIsTouched = newState;
-
-    if (ki.mDebug) {
-      uint32_t m = micros();
-      int n = touchRead(ki.mTouchablePin.pinNumber);
-      uint32_t m2 = micros();
-      if (m < m2) {
-        CCPlot(m2 - m);
-        CCPlot(ki.mTouchablePin.untouchedTime);
-        CCPlot(ki.mTouchablePin.untouchedTime * CCEWI_TOUCHABLE_PIN_MAX_FACTOR);
-      }
-    }
   }
 
 };
