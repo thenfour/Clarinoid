@@ -1,5 +1,6 @@
 // Teensy 4.0
 // 600mhz
+// "Faster"
 
 // Check synth & CCEWIControl for parameters
 
@@ -11,7 +12,6 @@
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////
 static const size_t HARMONIZER_VOICES = 4;
-//static const size_t VOICES_PER_LAYER = HARMONIZER_VOICES;
 static const size_t MAX_VOICES = 12;
 
 class PresetName
@@ -33,11 +33,13 @@ struct PerfSettings
   Scale mGlobalScale;
   float mBPM = 90.0f;
 };
+struct SystemSettings
+{
+  //
+};
 struct AppSettings
 {
   float mPortamentoTime = 0.005f;
-  
-  //int mHarmonizerOn = 0;
   
   bool mMetronomeOn = true;
   float mMetronomeGain = 0.8f;
@@ -100,20 +102,20 @@ void loop() {
 
   if (ledThrottle.IsReady())
   {
-    //auto activityColor = col(gGeneralActivityIndicator.GetState(), 1, 4);
-    leds.setPixelColor(0, 0, 0, 0);
-    leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState(), 0, 1), col(gLHTXIndicator.GetState(), 0, 1), col(gLHRXIndicator.GetState(), 0, 1));
-    leds.setPixelColor(2, col(gRHRXErrorIndicator.GetState(), 0, 1), col(gRHTXIndicator.GetState(), 0, 1), col(gRHRXIndicator.GetState(), 0, 1));
-    leds.setPixelColor(3, 0, 0, col(gMidiActivityIndicator.GetState(), 0, 1));
     
-    leds.setPixelColor(4, col(gAppSettings.mTranspose != 0, 0, 1), 0, 0);
-    leds.setPixelColor(5, col(gAppSettings.mTranspose < 0, 0, 1), col(gAppSettings.mTranspose > 0, 0, 1), 0);
+    leds.setPixelColor(0, 0, 0, 0);
+    leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState()), col(gLHTXIndicator.GetState()), col(gLHRXIndicator.GetState()));
+    leds.setPixelColor(2, col(gRHRXErrorIndicator.GetState()), col(gRHTXIndicator.GetState()), col(gRHRXIndicator.GetState()));
+    leds.setPixelColor(3, 0, 0, col(gMidiActivityIndicator.GetState()));
+    
+    leds.setPixelColor(4, col(gAppSettings.mTranspose != 0), 0, 0);
+    leds.setPixelColor(5, col(gAppSettings.mTranspose < 0), col(gAppSettings.mTranspose > 0), 0);
 
     // 6 = off
     // 7 = off
 
-    leds.setPixelColor(8, col(gEncButton.IsCurrentlyPressed()), 0, col(gEncIndicator.GetState(), 0, 1));
-    leds.setPixelColor(9, 0, gVolumePot.GetValue01() * 6, col(gVolIndicator.GetState(), 0, 6));
+    leds.setPixelColor(8, col(gEncButton.IsCurrentlyPressed()), 0, col(gEncIndicator.GetState()));
+    leds.setPixelColor(9, 0, gVolumePot.GetValue01() * 6, col(gVolIndicator.GetState()));
     leds.show();
   }
 

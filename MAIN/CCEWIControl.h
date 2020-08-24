@@ -14,25 +14,25 @@ const float PITCHDOWN_DEADZONE = 0.8f;
 
 struct CCEWIPhysicalState
 {
-  bool key_lh1;
-  bool key_lh2;
-  bool key_lh3;
-  bool key_lh4;
+  CapTouchKeyData key_lh1;
+  CapTouchKeyData key_lh2;
+  CapTouchKeyData key_lh3;
+  CapTouchKeyData key_lh4;
 
-  bool key_rh1;
-  bool key_rh2;
-  bool key_rh3;
-  bool key_rh4;
+  CapTouchKeyData key_rh1;
+  CapTouchKeyData key_rh2;
+  CapTouchKeyData key_rh3;
+  CapTouchKeyData key_rh4;
 
-  bool key_octave1;
-  bool key_octave2;
-  bool key_octave3;
-  bool key_octave4;
+  CapTouchKeyData key_octave1;
+  CapTouchKeyData key_octave2;
+  CapTouchKeyData key_octave3;
+  CapTouchKeyData key_octave4;
 
-  bool key_lhExtra1;
-  bool key_lhExtra2;
-  bool key_rhExtra1;
-  bool key_rhExtra2;
+  CapTouchKeyData key_lhExtra1;
+  CapTouchKeyData key_lhExtra2;
+  CapTouchKeyData key_rhExtra1;
+  CapTouchKeyData key_rhExtra2;
 
   float breath01;
   float bite01;
@@ -46,26 +46,26 @@ struct CCEWIPhysicalState
   
   void Update(const LHRHPayload& lh, const LHRHPayload& rh)
   {
-    this->key_lh1 = lh.data.key2;
-    this->key_lh2 = lh.data.key3;
-    this->key_lh3 = lh.data.key4;
-    this->key_lh4 = lh.data.key5;
+    this->key_lh1 = lh.data.keys[1];
+    this->key_lh2 = lh.data.keys[2];
+    this->key_lh3 = lh.data.keys[3];
+    this->key_lh4 = lh.data.keys[4];
 
-    this->key_octave1 = lh.data.octave1;
-    this->key_octave2 = lh.data.octave2;
-    this->key_octave3 = lh.data.octave3;
-    this->key_octave4 = lh.data.octave4;
+    this->key_octave1 = lh.data.octaveKeys[0];
+    this->key_octave2 = lh.data.octaveKeys[1];
+    this->key_octave3 = lh.data.octaveKeys[2];
+    this->key_octave4 = lh.data.octaveKeys[3];
 
-    this->key_lhExtra1 = lh.data.key1;
-    this->key_lhExtra2 = lh.data.key6;
+    this->key_lhExtra1 = lh.data.keys[0];
+    this->key_lhExtra2 = lh.data.keys[5];
     
-    this->key_rh1 = rh.data.key2;
-    this->key_rh2 = rh.data.key3;
-    this->key_rh3 = rh.data.key4;
-    this->key_rh4 = rh.data.key5;
+    this->key_rh1 = rh.data.keys[1];
+    this->key_rh2 = rh.data.keys[2];
+    this->key_rh3 = rh.data.keys[3];
+    this->key_rh4 = rh.data.keys[4];
 
-    this->key_rhExtra1 = rh.data.key1;
-    this->key_rhExtra2 = rh.data.key6;
+    this->key_rhExtra1 = rh.data.keys[0];
+    this->key_rhExtra2 = rh.data.keys[5];
 
     this->breath01 = (float)lh.data.pressure1 / 1024;
     this->bite01 = (float)lh.data.pressure2 / 1024;
@@ -92,8 +92,8 @@ struct CCEWIMusicalState
   
   uint8_t MIDINote = 0;
   // TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
-  SimpleMovingAverage<20, true> breath01;// 0-1
-  SimpleMovingAverage<120, false> pitchBendN11; // -1 to 1
+  SimpleMovingAverage<20> breath01;// 0-1
+  SimpleMovingAverage<120> pitchBendN11; // -1 to 1
   CCThrottlerT<1> mPressureSensingThrottle;
   int nUpdates = 0;
   int noteOns = 0;
@@ -138,39 +138,39 @@ struct CCEWIMusicalState
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
     int newNote = 49-12; // C#2
-    if (ps.key_lh1){
+    if (ps.key_lh1.IsPressed){
       newNote -= 2;
     }
-    if (ps.key_lh2) {
-      newNote -= ps.key_lh1 ? 2 : 1;
+    if (ps.key_lh2.IsPressed) {
+      newNote -= ps.key_lh1.IsPressed ? 2 : 1;
     }
-    if (ps.key_lh3) {
+    if (ps.key_lh3.IsPressed) {
       newNote -= 2;
     }
-    if (ps.key_lh4) {
+    if (ps.key_lh4.IsPressed) {
       newNote += 1;
     }
 
-    if (ps.key_rh1) {
-      newNote -= ps.key_lh3 ? 2 : 1;
+    if (ps.key_rh1.IsPressed) {
+      newNote -= ps.key_lh3.IsPressed ? 2 : 1;
     }
-    if (ps.key_rh2) {
+    if (ps.key_rh2.IsPressed) {
       newNote -= 1;
     }
-    if (ps.key_rh3) {
+    if (ps.key_rh3.IsPressed) {
       newNote -= 2;
     }
-    if (ps.key_rh4) {
+    if (ps.key_rh4.IsPressed) {
       newNote -= 2;
     }
 
-    if (ps.key_octave4) {
+    if (ps.key_octave4.IsPressed) {
       newNote += 12 * 4;  
-    } else if (ps.key_octave3) {
+    } else if (ps.key_octave3.IsPressed) {
       newNote += 12 * 3;
-    } else if (ps.key_octave2) {
+    } else if (ps.key_octave2.IsPressed) {
       newNote += 12 * 2;
-    } else if (ps.key_octave1) {
+    } else if (ps.key_octave1.IsPressed) {
       newNote += 12 * 1;
     }
 

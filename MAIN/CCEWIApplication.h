@@ -81,8 +81,8 @@ public:
 //      }
 //    }
     
-    gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1);
-    gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2);
+    gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1.IsPressed);
+    gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2.IsPressed);
     
 //    if (gRHButton1Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
 //      // todo: this logic belongs elsewhere.

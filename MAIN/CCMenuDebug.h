@@ -534,11 +534,25 @@ public:
     mDisplay.println(String("                  -->"));
   }
 
+  int mPage = 0;
+  const int pageCount = 8;
+
   virtual void UpdateApp()
   {
     if (BackButton().IsNewlyPressed()) {
       GoToFrontPage();
       return;
+    }
+    mPage = AddConstrained(mPage, gEnc.GetIntDelta(), 0, pageCount - 1);
+    if (mPage == 0 || mPage == 1) {
+      if (gEncButton.IsNewlyPressed()) {
+        gLHSerial.mRxSuccess = 0;
+        gLHSerial.mChecksumErrors = 0;
+        gLHSerial.mSkippedPayloads = 0;
+        gRHSerial.mRxSuccess = 0;
+        gRHSerial.mChecksumErrors = 0;
+        gRHSerial.mSkippedPayloads = 0;
+      }
     }
   }
   
@@ -553,8 +567,8 @@ public:
       mDisplay.println(String(title) + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
       mDisplay.print(String("Err:") + rx.mChecksumErrors);
       mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
-      mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + "  tx:" + rx.mTXSerial);
-      mDisplay.println(String("myfps:") + (int)gFramerate.getFPS());
+      mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + " skip%:" + (int)((float)rx.mSkippedPayloads * 100 / max(1,rx.mRxSuccess)));
+      mDisplay.println(String("rxfps:") + (int)rx.mRxRate.getFPS());
     };
 
     auto pageLHRX = [&](){
@@ -578,28 +592,28 @@ public:
       // wind:0.455 // bite:0.11
       // pitch:
       mDisplay.println(String("LH k:") +
-        (gEWIControl.mPhysicalState.key_lh1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_lh2 ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_lh3 ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_lh4 ? "4" : "-") +
+        (gEWIControl.mPhysicalState.key_lh1.IsPressed ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_lh2.IsPressed ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_lh3.IsPressed ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_lh4.IsPressed ? "4" : "-") +
         " o:" +
-        (gEWIControl.mPhysicalState.key_octave1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_octave2 ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_octave3 ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_octave4 ? "4" : "-") +
+        (gEWIControl.mPhysicalState.key_octave1.IsPressed ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_octave2.IsPressed ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_octave3.IsPressed ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_octave4.IsPressed ? "4" : "-") +
         " b:" +
-        (gEWIControl.mPhysicalState.key_lhExtra1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_lhExtra2 ? "2" : "-"));
+        (gEWIControl.mPhysicalState.key_lhExtra1.IsPressed ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_lhExtra2.IsPressed ? "2" : "-"));
 
       mDisplay.println(String("RH k:") +
-        (gEWIControl.mPhysicalState.key_rh1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_rh2 ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_rh3 ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_rh4 ? "4" : "-") +
+        (gEWIControl.mPhysicalState.key_rh1.IsPressed ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_rh2.IsPressed ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_rh3.IsPressed ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_rh4.IsPressed ? "4" : "-") +
         "       " +
         " b:" +
-        (gEWIControl.mPhysicalState.key_rhExtra1 ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_rhExtra2 ? "2" : "-"));
+        (gEWIControl.mPhysicalState.key_rhExtra1.IsPressed ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_rhExtra2.IsPressed ? "2" : "-"));
       mDisplay.print(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
         "bite: " + gEWIControl.mPhysicalState.bite01);
       mDisplay.print(String("  pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
@@ -627,12 +641,7 @@ public:
       mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
     };
 
-    int page = gEnc.GetIntValue();
-    const int pageCount = 8;
-    while (page < 0)
-      page += pageCount; // makes the % operator work correctly. there's a mathematical optimized way to do this but whatev
-    page = page % pageCount;
-    switch(page) {
+    switch(mPage) {
       case 0:
         pageLHRX();
         break;

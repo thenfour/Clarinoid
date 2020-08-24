@@ -113,7 +113,7 @@ struct VoiceList
     patch4(mix4, 0, mixOutp, 3),
     patchOut(mixOutp, 0, destMix, destPort)
   {
-    for (int i = 1; i < SizeofStaticArray(voices); ++ i) {
+    for (size_t i = 1; i < SizeofStaticArray(voices); ++ i) {
 //      // disable all but 1 layer
       voices[i].patchOut.disconnect();
     }

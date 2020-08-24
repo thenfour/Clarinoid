@@ -14,9 +14,11 @@
 # define RX_BUFFER_SIZE 64
 #endif
 
-enum class LHRHLEDMode {
-  Debug,
-  Off
+enum class LHRHLEDMode : uint8_t {
+  Debug = 0,
+  Minimal = 1,
+  MainControlled = 2,
+  Off = 3
 };
 
 
@@ -28,21 +30,21 @@ enum class LHRHLEDMode {
 // so it must be able to hold 2 packets. space is therefore a premium.
 
 ////////////////////////////////////////////////////////////////////////////////
+struct CapTouchKeyData
+{
+  bool IsPressed : 8;
+  uint32_t touchReadMicros;
+  uint32_t maxTouchReadMicros;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 struct LHRHChecksummablePayload
 {
-  bool key1 : 1;
-  bool key2 : 1;
-  bool key3 : 1;
-  bool key4 : 1;
-  bool key5 : 1;
-  bool key6 : 1;
-
-  bool octave1 : 1;
-  bool octave2 : 1;
-  bool octave3 : 1;
-  bool octave4 : 1;
-  bool button1 : 1;
-  bool button2 : 1;
+  CapTouchKeyData keys[6];
+  CapTouchKeyData octaveKeys[4];
+  
+  bool button1;
+  bool button2;
 
   uint16_t pressure1; // raw analog readings
   uint16_t pressure2; // raw analog readings
@@ -64,17 +66,23 @@ inline String ToString(const LHRHPayload& p)
   sprintf(format, "s#:[%d] chk:[%04x] d:[k%c%c%c%c%c%c o%c%c%c%c b%c%c p:%d p:%d]",
     (int)p.serial,
     (int)p.dataChecksum,
-    p.data.key1 ? '1' : '-',
-    p.data.key2 ? '2' : '-',
-    p.data.key3 ? '3' : '-',
-    p.data.key4 ? '4' : '-',
-    p.data.key5 ? '5' : '-',
-    p.data.key6 ? '6' : '-',
+//    p.data.keys[0] ? '0' : '-',
+//    p.data.keys[1] ? '1' : '-',
+//    p.data.keys[2] ? '2' : '-',
+//    p.data.keys[3] ? '3' : '-',
+//    p.data.keys[4] ? '4' : '-',
+//    p.data.keys[5] ? '5' : '-',
+    p.data.keys[0].IsPressed ? '0' : '-',
+    p.data.keys[1].IsPressed ? '1' : '-',
+    p.data.keys[2].IsPressed ? '2' : '-',
+    p.data.keys[3].IsPressed ? '3' : '-',
+    p.data.keys[4].IsPressed ? '4' : '-',
+    p.data.keys[5].IsPressed ? '5' : '-',
 
-    p.data.octave1 ? '1' : '-',
-    p.data.octave2 ? '2' : '-',
-    p.data.octave3 ? '3' : '-',
-    p.data.octave4 ? '4' : '-',
+    p.data.octaveKeys[0].IsPressed ? '0' : '-',
+    p.data.octaveKeys[1].IsPressed ? '1' : '-',
+    p.data.octaveKeys[2].IsPressed ? '2' : '-',
+    p.data.octaveKeys[3].IsPressed ? '3' : '-',
 
     p.data.button1 ? '1' : '-',
     p.data.button2 ? '2' : '-',
@@ -95,6 +103,7 @@ uint16_t CalcChecksum(const LHRHPayload& p)
 struct MainChecksummablePayload
 {
   LHRHLEDMode ledMode;
+  uint8_t leds[10][3];
 };
 
 // payload is the same between both LH/RH modules.
@@ -132,7 +141,8 @@ union BothPayloads
 };
 
 // 4 bytes is what EasyTransfer adds to the payload.
-static_assert((sizeof(BothPayloads) + 4) < (RX_BUFFER_SIZE / 2), "");
+// In theory this maximizes success of transfers. In practice it's just not necessary
+//static_assert((sizeof(BothPayloads) + 4) < (RX_BUFFER_SIZE / 2), "");
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -219,6 +229,7 @@ public:
   bool mHaveNewData = false;
   bool mErrorsDirty = false;
   LHRHPayload mReceivedData;
+  framerateCalculator mRxRate;
   
   // stats
   uint32_t mRxSuccess = 0;
@@ -255,6 +266,7 @@ public:
       }
       mReceivedData = mLivePayload.lhrhPayload;
       mRxSuccess ++;
+      mRxRate.onFrame();
     }
   }
 

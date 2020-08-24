@@ -8,23 +8,48 @@
 #include <Bounce.h>
 #include "Shared_CCUtil.h"
 
-class CCOnOffSwitch : IUpdateObject
+struct ICCSwitch
+{
+  virtual bool IsCurrentlyPressed() const = 0;
+  virtual bool IsNewlyPressed() const = 0;
+  virtual bool IsDirty() const = 0;
+};
+
+// like CCOnOffSwitch but you update it manually instead of using bounce library + physical pins
+struct CCVirtualSwitch : ICCSwitch
+{
+  bool mIsDirty = false;
+  bool mIsCurrentlyPressed = false;
+  bool mIsNewlyPressed = false;
+
+  void Update(bool isCurrentlyPressed)
+  {
+    mIsDirty = mIsCurrentlyPressed != isCurrentlyPressed;
+    mIsNewlyPressed = !mIsCurrentlyPressed && isCurrentlyPressed;
+    mIsCurrentlyPressed = isCurrentlyPressed;
+    if (mIsNewlyPressed) {
+      Serial.println(String("newly pressed: ") + millis());
+    }
+  }
+  
+  virtual bool IsDirty() const { return mIsDirty; }
+  virtual bool IsNewlyPressed() const { return mIsNewlyPressed; }
+  virtual bool IsCurrentlyPressed() const { return mIsCurrentlyPressed; }
+};
+
+class CCOnOffSwitch : IUpdateObject, ICCSwitch
 {
   uint8_t mPin;
-  CCThrottler mThrottle;
-  bool mIsPressed;
-  bool mIsDirty;
+  bool mIsCurrentlyPressed = false;
+  bool mIsNewlyPressed = false;
+  bool mIsDirty = false;
   Bounce mBounce;
 
 public:
-  explicit CCOnOffSwitch(uint8_t pin, uint32_t updatePeriodMS, uint32_t bouncePeriodMS) :
+  explicit CCOnOffSwitch(uint8_t pin, uint32_t bouncePeriodMS) :
     mPin(pin),
-    mThrottle(updatePeriodMS),
-    mIsPressed(false),
-    mIsDirty(false),
     mBounce(pin, bouncePeriodMS)
   {
-    //
   }
 
   virtual void setup()
@@ -35,21 +60,23 @@ public:
   virtual void loop()
   {
     mIsDirty = false;
-    if (!mThrottle.IsReady())
-      return;
+    mIsNewlyPressed = false;
     mBounce.update();
     if (mBounce.fallingEdge()) {
-      mIsPressed = true;
-      mIsDirty = true;
-    }
-    if (mBounce.risingEdge()) {
-      mIsPressed = false;
-      mIsDirty = true;
+      mIsDirty = !mIsCurrentlyPressed;
+      mIsNewlyPressed = !mIsCurrentlyPressed;
+      mIsCurrentlyPressed = true;
+    } else if (mBounce.risingEdge()) {
+      mIsDirty = mIsCurrentlyPressed;
+      mIsCurrentlyPressed = false;
     }
   }
 
-  bool IsPressed() const {
-    return mIsPressed;
+  bool IsCurrentlyPressed() const {
+    return mIsCurrentlyPressed;
+  }
+  bool IsNewlyPressed() const {
+    return mIsNewlyPressed;
   }
   bool IsDirty() const {
     return mIsDirty;

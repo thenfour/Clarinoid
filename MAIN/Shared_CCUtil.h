@@ -35,14 +35,18 @@ inline void UpdateUpdateObjects() {
 }
 
 //////////////////////////////////////////////////////////////////////
+int gThrottlerCount = 0;
 class CCThrottler
 {
+  uint32_t mPhase = 0;
   uint32_t mPeriodMS;
   uint32_t mPeriodStartMS;
 public:
   CCThrottler(uint32_t periodMS) :
-    mPeriodMS(periodMS)
+    mPeriodMS(periodMS),
+    mPhase(gThrottlerCount)
   {
+    gThrottlerCount ++;
     mPeriodStartMS = millis();
   }
 
@@ -55,7 +59,7 @@ public:
   }
   
   bool IsReady(uint32_t periodMS) {
-    auto m = millis();
+    auto m = millis() + mPhase; // minus is more theoretically accurate but this serves the purpose just as well.
     if (m - mPeriodStartMS < periodMS) {
       return false;
     }
@@ -267,7 +271,7 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 // convert values to LED indication colorant values
-inline uint8_t col(bool b) { return b ? 8 : 0; }
+inline uint8_t col(bool b) { return b ? 64 : 0; }
 inline uint8_t col(bool b, uint8_t ledmin, uint8_t ledmax)
 {
   return b ? ledmax : ledmin;
@@ -344,13 +348,10 @@ private:
   float                   FramerateSecPerFrameAccum;
 };
 
-template <size_t N, bool TDebug>
+template <size_t N>
 class SimpleMovingAverage
 {
-  CCThrottler th;
   public:
-    SimpleMovingAverage() : th(20) {}
-
     void Update(float sample)
     {
         if (num_samples_ < N)
@@ -364,27 +365,24 @@ class SimpleMovingAverage
             total_ += sample - oldest;
             oldest = sample;
         }
-        
-        //if (TDebug && th.IsReady()) {
-        //  Serial.println(String("") + sample + "\t" + GetValue());
-        //}
     }
 
     float GetValue() const {
-      return total_ / min(num_samples_, N);;
+      return total_ / min(num_samples_, N);
     }
-    //operator double() const { return total_ / min(num_samples_, N); }
+    size_t GetSampleCount() const { return num_samples_; }
 
   private:
     float samples_[N];
-    size_t num_samples_{0};
-    float total_{0};
+    size_t num_samples_ = 0;
+    float total_ = 0;
 };
+
 
 // allows throttled plotting to Serial.
 class PlotHelper : IUpdateObject
 {
-  CCThrottlerT<30> mThrot;
+  CCThrottlerT<5> mThrot;
   String mFields;
 public:
   virtual void loop() {

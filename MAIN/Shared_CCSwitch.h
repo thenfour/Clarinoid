@@ -70,10 +70,6 @@ public:
       mIsDirty = mIsCurrentlyPressed;
       mIsCurrentlyPressed = false;
     }
-
-//    if (mIsNewlyPressed) {
-//      Serial.println(String("newly pressed button ") + millis());
-//    }
   }
 
   bool IsCurrentlyPressed() const {
