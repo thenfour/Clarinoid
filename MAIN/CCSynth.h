@@ -83,14 +83,14 @@ struct VoiceList
     { mix1, 1 },
     { mix1, 2 },
     { mix1, 3 },
-    { mix2, 0 },
-    { mix2, 1 },
-    { mix2, 2 },
-    { mix2, 3 },
-    { mix3, 0 },
-    { mix3, 1 },
-    { mix3, 2 },
-    { mix3, 3 },
+//    { mix2, 0 },
+//    { mix2, 1 },
+//    { mix2, 2 },
+//    { mix2, 3 },
+//    { mix3, 0 },
+//    { mix3, 1 },
+//    { mix3, 2 },
+//    { mix3, 3 },
 //    { mix4, 0 },
 //    { mix4, 1 },
 //    { mix4, 2 },
@@ -129,12 +129,9 @@ VoiceList gVoices(CCSynthGraph::waveMixer, 1);
 
 class CCSynth : IUpdateObject
 {
-//  bool isPlaying = false;
-//  uint8_t playingMidiNote = 0;
+public:
 
   CCThrottlerT<500> mMetronomeTimer;
-
-public:
 
   virtual void setup() {
     AudioMemory(12);

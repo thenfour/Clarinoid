@@ -65,10 +65,22 @@ public:
     mPayload.data.ledMode = LHRHLEDMode::Debug;
   }
 
+  int8_t mLastKeyFocused = -33;// something you'll never send, so the 1st is always sent.
+
   // schedules notifying LHRH to send debug data for a cap touch key.
   void FocusKeyDebug(int8_t key /* index into gKeyDesc */) {
-    mTxScheduled = true;  
+    if (mLastKeyFocused == key)
+      return;
+    mLastKeyFocused = key;
+    mTxScheduled = true;
     mPayload.data.focusedTouchKey = key;
+    //Serial.println(String("key focus = ") + (int)key);
+  }
+
+  void SendCmd(CommandFromMain cmd) {
+    mPayload.data.cmd = cmd;
+    mTxScheduled = true;    
+    //Serial.println(String("send cmd ") + (int)cmd);
   }
 
   void loop() {
@@ -143,12 +155,22 @@ public:
 //    }
 //    
 
+    if (!gTouchKeyGraphsIsRunning) {
+      if (mPayload.data.focusedTouchKey != -1) {
+        FocusKeyDebug(-1);
+      }
+    }
+    gTouchKeyGraphsIsRunning = false; // between frames this gets set to true if it's running, so we can detect if it's not running like this.
+
+
     if (mTxScheduled) {
       mTxScheduled = false;
       gLHSerial.Send(mPayload);
       gRHSerial.Send(mPayload);
       gLHTXIndicator.Touch();
       gRHTXIndicator.Touch();    
+      // reset the payload.
+      mPayload.data.cmd = CommandFromMain::None;
     }
 
     // convert state to MIDI events

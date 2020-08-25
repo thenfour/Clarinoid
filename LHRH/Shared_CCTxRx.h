@@ -23,33 +23,38 @@ enum class LHRHLEDMode : uint8_t {
   Off = 3
 };
 
+// stagger groups are bitfields of 6 bits. each bit describes when to sample the key.
+// so B000000 will never sample.
+// B001001 will sample once every 3rd frame (no, no, yes, no, no, yes)
 struct KeyDesc {
-  KeyDesc(const char *name, bool lh) :
+  KeyDesc(const char *name, bool lh, uint8_t staggerGroup) :
     mName(name),
-    mLH(lh)
+    mLH(lh),
+    mStaggerGroup(staggerGroup)
   {
   }
   const char *mName;
   bool mLH;// lh/rh
+  bool mStaggerGroup;
 };
 
 KeyDesc gKeyDesc[16] = {
-  { "LH1", true },// 0
-  { "LH2", true },// 1
-  { "LH3", true },
-  { "LH4", true },
-  { "RH1", false },// 4
-  { "RH2", false },
-  { "RH3", false },
-  { "RH4", false },
-  { "O1", true }, // 8
-  { "O2", true },
-  { "O3", true },
-  { "O4", true },
-  { "LHx1", true }, // 12
-  { "LHx2", true },
-  { "RHx1", false }, // 14
-  { "RHx2", false },
+  { "LH1", true, B101010 },// 0
+  { "LH2", true, B010101 },// 1
+  { "LH3", true, B101010 },
+  { "LH4", true, B010101 },
+  { "RH1", false, B101010 },// 4
+  { "RH2", false, B010101 },
+  { "RH3", false, B101010 },
+  { "RH4", false, B010101 },
+  { "O1", true, B010101 }, // 8
+  { "O2", true, B101010 },
+  { "O3", true, B010101 },
+  { "O4", true, B101010 },
+  { "LHx1", true, B001001 }, // 12
+  { "LHx2", true, B010010 },
+  { "RHx1", false, B001001 }, // 14
+  { "RHx2", false, B010010 },
 };
 #define KEY_LH1 0
 #define KEY_LH2 1
@@ -151,8 +156,15 @@ uint16_t CalcChecksum(const LHRHPayload& p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+enum class CommandFromMain : uint8_t
+{
+  None = 0,
+  ResetTouchKeys = 1,
+};
+
 struct MainChecksummablePayload
 {
+  CommandFromMain cmd;
   LHRHLEDMode ledMode;
   uint8_t leds[10][3];
   int8_t focusedTouchKey; // index into gKeyDesc
@@ -237,6 +249,7 @@ public:
     mFramerate.onFrame();
 
     mErrorsDirty = false;
+    mHaveNewData = false;
     if (mET.receiveData())
     {
       auto checksum = CalcChecksum(mLivePayload.mainPayload);
@@ -303,6 +316,7 @@ public:
     mFramerate.onFrame();
 
     mErrorsDirty = false;
+    mHaveNewData = false;
     if (mET.receiveData())
     {
       auto checksum = CalcChecksum(mLivePayload.lhrhPayload);

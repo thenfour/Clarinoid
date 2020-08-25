@@ -27,9 +27,6 @@ struct CCVirtualSwitch : ICCSwitch
     mIsDirty = mIsCurrentlyPressed != isCurrentlyPressed;
     mIsNewlyPressed = !mIsCurrentlyPressed && isCurrentlyPressed;
     mIsCurrentlyPressed = isCurrentlyPressed;
-    if (mIsNewlyPressed) {
-      Serial.println(String("newly pressed: ") + millis());
-    }
   }
   
   virtual bool IsDirty() const { return mIsDirty; }

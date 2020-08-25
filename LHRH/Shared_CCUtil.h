@@ -74,28 +74,45 @@ class CCThrottlerT
 {
   uint32_t mPhase;
   uint32_t mPeriodStartMS;
+  uint32_t mFirstPeriodStartMS;
 public:
   CCThrottlerT() :
     mPhase(gThrottlerCount)
   {
     gThrottlerCount ++;
-    mPeriodStartMS = millis();
+    mPeriodStartMS = mFirstPeriodStartMS = millis();
   }
 
   void Reset() {
-    mPeriodStartMS = millis();
+    mPeriodStartMS = mFirstPeriodStartMS = millis();
   }
 
   bool IsReady() {
     return IsReady(TperiodMS);
   }
+
+  // TODO: THIS will get out of phase with the actual IsReady() triggers, because IsReady() resets
+  float GetBeatFloat(uint32_t periodMS) const {
+    auto now = millis() + mPhase; // minus is more theoretically accurate but this serves the purpose just as well.
+    float f = abs(float(now - mFirstPeriodStartMS) / periodMS);
+    return f;
+  }
+  // returns 0-1 the time since the last "beat".
+  float GetBeatFrac(uint32_t periodMS) const {
+    float f = GetBeatFloat(periodMS);
+    return f - floor(f); // fractional part only.
+  }
+  int GetBeatInt(uint32_t periodMS) const {
+    float f = GetBeatFloat(periodMS);
+    return (int)floor(f);
+  }
   
   bool IsReady(uint32_t periodMS) {
-    auto m = millis() + mPhase; // minus is more theoretically accurate but this serves the purpose just as well.
-    if (m - mPeriodStartMS < periodMS) {
+    auto now = millis() + mPhase; // minus is more theoretically accurate but this serves the purpose just as well.
+    if (now - mPeriodStartMS < periodMS) {
       return false;
     }
-    mPeriodStartMS = m; // note that overshoot will not be subtracted! so periods will often be longer than requested.
+    mPeriodStartMS += periodMS * ((now - mPeriodStartMS) / periodMS); // this potentially advances multiple periods if needed so we don't get backed up.
     return true;
   }
 };
@@ -374,6 +391,11 @@ class SimpleMovingAverage
       return total_ / min(num_samples_, N);
     }
     size_t GetSampleCount() const { return num_samples_; }
+
+    void Clear() {
+      total_ = 0;
+      num_samples_ = 0;
+    }
 
   private:
     float samples_[N];

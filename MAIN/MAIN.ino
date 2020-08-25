@@ -8,7 +8,7 @@
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////
 static const size_t HARMONIZER_VOICES = 4;
-static const size_t MAX_VOICES = 12;
+static const size_t MAX_VOICES = 4;
 
 class PresetName
 {
@@ -37,7 +37,7 @@ struct AppSettings
 {
   float mPortamentoTime = 0.005f;
   
-  bool mMetronomeOn = true;
+  bool mMetronomeOn = false;
   float mMetronomeGain = 0.8f;
   int mMetronomeNote = 80;
   int mMetronomeDecayMS= 15;
@@ -57,6 +57,8 @@ AppSettings gAppSettings;
 #include "Shared_CCLeds.h"
 #include "Shared_CCTxRx.h"
 
+bool gTouchKeyGraphsIsRunning = false;
+
 #include "CCEWIApplication.h"
 #include "CCDisplay.h"
 
@@ -65,7 +67,7 @@ CCDisplay gDisplay(gApp);
 
 #include "CCMenuDebug.h"
 
-
+SystemSettingsApp gSystemSettingsApp;
 TouchKeyGraphs gTouchKeyApp;
 MetronomeSettingsApp gMetronomeApp;
 DebugMenuApp gDebugApp;

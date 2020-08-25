@@ -97,6 +97,13 @@ void loop() {
     gRXIndicator.Touch();
     gLEDMode = gTxRx.mReceivedData.data.ledMode;
     gFocusedKeyIndex = gTxRx.mReceivedData.data.focusedTouchKey;
+    switch(gTxRx.mReceivedData.data.cmd) {
+    case CommandFromMain::None:
+      break;
+    case CommandFromMain::ResetTouchKeys:
+      gTouchKeyCalibrator.ResetAllKeys();
+      break;
+    }
   }
 
   if (gFocusedKeyIndex >= 0 && gFocusedKeyIndex < SizeofStaticArray(gKeyDesc)) {

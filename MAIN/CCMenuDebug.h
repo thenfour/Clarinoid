@@ -4,6 +4,7 @@
 
 
 #include "Shared_CCUtil.h"
+#include <functional>
 
 static const int SETTINGS_STACK_MAX_DEPTH = 10;
 static const int MAX_SETTING_ITEMS_PER_LIST = 20;
@@ -53,7 +54,6 @@ public:
 
   virtual void Render() {
     if (!mShowingFrontPage) {
-      //Serial.println("calling RenderApp");
       this->RenderApp();
       return;
     }
@@ -71,7 +71,6 @@ public:
     mCCDisplay.ScrollApps(gEnc.GetIntDelta());
 
     if (gEncButton.IsNewlyPressed()) {
-      //Serial.println("pressed encoder; showing app");
       mShowingFrontPage = false;
     }
   }
@@ -90,6 +89,7 @@ enum class SettingItemType
 {
   Custom, // all values enter an "editing" state with their own editors.
   Bool, // bool values don't have an editing state; they just toggle.
+  Trigger, // not a setting, but an action you trigger
   Submenu
 };
 
@@ -97,10 +97,11 @@ enum class SettingItemType
 struct ISettingItem
 {
   virtual String GetName() = 0;
-  virtual String GetValueString() = 0;  
+  virtual String GetValueString() { return ""; } // not used for trigger types 
   virtual SettingItemType GetType() = 0;
 
   virtual void ToggleBool() {} // for bool types
+  virtual void Trigger() {} // for trigger types
   virtual struct ISettingItemEditor* GetEditor() { return nullptr; } // for custom types
   virtual struct SettingsList* GetSubmenu() { return nullptr; } // for submenu type
 };
@@ -232,7 +233,6 @@ struct NumericSettingItem : public ISettingItem
   virtual SettingItemType GetType() { return SettingItemType::Custom; }
 
   virtual ISettingItemEditor* GetEditor() {
-    //Serial.println(String("returning editor @ ") + (uintptr_t)&mEditor);
     return &mEditor;
   }
 };
@@ -266,6 +266,25 @@ struct BoolSettingItem : public ISettingItem
 };
 
 
+struct TriggerSettingItem : public ISettingItem
+{
+  String mName;
+  std::function<void()> mAction;
+  
+  TriggerSettingItem(const String& name, std::function<void()> action) :
+    mName(name),
+    mAction(action)
+  {
+  }
+
+  virtual String GetName() { return mName; }
+  virtual SettingItemType GetType() { return SettingItemType::Trigger; }
+  virtual void Trigger() {
+    mAction();
+  }
+};
+
+
 struct SettingsList
 {
   int mItemCount;
@@ -290,6 +309,10 @@ class SettingsMenuApp : public MenuAppBaseWithUtils, public ISettingItemEditorAc
   int mNavDepth = 0;
   ISettingItemEditor* mpCurrentEditor = nullptr;
 
+  CCThrottlerT<2000> mToastTimer;
+  bool mIsShowingToast = false;
+  String mToastMsg;
+
 public:
 
   virtual void CommitEditing() {
@@ -297,11 +320,16 @@ public:
   }
   
   virtual void OnSelected() {
-    //Serial.println("settings menu app OnSelected");
     mNavDepth = 0;
     mNav[0].focusedItem = 0;
     mNav[0].pList = GetRootSettingsList();
     GoToFrontPage();
+  }
+
+  void ShowToast(const String& msg) {
+    mIsShowingToast = true;
+    mToastMsg = msg;
+    mToastTimer.Reset();
   }
 
   virtual SettingsList* GetRootSettingsList() = 0;
@@ -317,12 +345,7 @@ public:
 
   virtual void RenderApp()
   {
-    //Serial.println(String("settings app renderApp() navdepth=") + mNavDepth);
-    //delay(20);
     SettingsMenuState& state = mNav[mNavDepth];
-
-    //Serial.println(String("RenderSettingsApp  => navdepth=") + mNavDepth + " plist=" + (uintptr_t)state.pList + " focuseditem=" + state.focusedItem + " count=" + state.pList->Count());
-    //Serial.println(String("  => navdepth=") + mNavDepth + " focuseditem=" + state.focusedItem + " pList=" + (uintptr_t)state.pList + " count=" + state.pList->Count());
 
     mDisplay.setTextSize(1);
     mDisplay.setCursor(0,0);
@@ -340,12 +363,32 @@ public:
         mDisplay.setTextSize(1);
         mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
       }
-      mDisplay.println(item->GetName() + " = " + item->GetValueString());
+      if (item->GetType() == SettingItemType::Trigger) {
+        mDisplay.println(item->GetName());
+      } else {
+        mDisplay.println(item->GetName() + " = " + item->GetValueString());
+      }
+
       itemToRender = AddConstrained(itemToRender, 1, 0, state.pList->Count() - 1);
     }
 
     if (mpCurrentEditor) {
       mpCurrentEditor->Render(mDisplay);
+    }
+
+    if (mIsShowingToast) {
+      if (mToastTimer.IsReady()) {
+        mIsShowingToast = false;
+      } else {
+        // render toast.
+        mDisplay.setCursor(0,0);
+        mDisplay.fillRect(2, 2, mDisplay.width() - 2, mDisplay.height() - 2, SSD1306_BLACK);
+        mDisplay.drawRect(4, 4, mDisplay.width()-4, mDisplay.height()-4, SSD1306_WHITE);
+        mDisplay.setCursor(12,12);
+        mDisplay.setTextSize(1);
+        mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+        mDisplay.print(mToastMsg);
+      }
     }
   }
 
@@ -384,7 +427,6 @@ public:
     // enter
     if (gEncButton.IsNewlyPressed()) 
     {
-      //Serial.println(String("pressed encoder button; get item...") + state.focusedItem);
       auto* focusedItem = state.pList->GetItem(state.focusedItem);
       
       switch(focusedItem->GetType()) {
@@ -392,7 +434,6 @@ public:
           focusedItem->ToggleBool();
           break;
         case SettingItemType::Custom:
-          //Serial.println("custom item type; getting editor.");
           mpCurrentEditor = focusedItem->GetEditor();
           mpCurrentEditor->SetupEditing(this, 0, 0);
           break;
@@ -401,13 +442,15 @@ public:
           mNav[mNavDepth].pList = focusedItem->GetSubmenu();
           mNav[mNavDepth].focusedItem = 0;
           break;
+        case SettingItemType::Trigger:
+          focusedItem->Trigger();
+          break;
       }
     }
 
     // back/up when not editing
     if (BackButton().IsNewlyPressed()) 
     {
-      //Serial.println("back was pressed");
       if (mNavDepth == 0) {
         GoToFrontPage();
       } else {
@@ -484,7 +527,68 @@ public:
 
   virtual SettingsList* GetRootSettingsList()
   {
-//    Serial.println(String("met app returning root list ") + (uintptr_t)&mRootList);
+    return &mRootList;
+  }
+
+  virtual void RenderFrontPage() 
+  {
+    float beatFloat = gSynth.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mPerfSettings.mBPM);
+    float beatFrac = beatFloat - floor(beatFloat);
+    int beatInt = (int)floor(beatFloat);
+    CCPlot(beatInt);
+    bool altBeat = (beatInt & 1) != 0;
+
+    bool highlight = beatFrac < 0.1;
+    mDisplay.setTextSize(1);
+    if (highlight) {
+      mDisplay.fillScreen(WHITE);
+    }
+    mDisplay.setTextColor(highlight ? BLACK : WHITE);
+    mDisplay.setCursor(0,0);
+
+    mDisplay.println(String("METRONOME SETTINGS"));
+    mDisplay.print(gAppSettings.mMetronomeOn ? "ENABLED" : "disabled");
+    mDisplay.println(String(" bpm=") + gAppSettings.mPerfSettings.mBPM);
+
+    const int r = 4;
+    int x = beatFrac * (mDisplay.width() - r*2);
+    if (altBeat)
+      x = mDisplay.width() - x;
+    mDisplay.fillCircle(x, mDisplay.getCursorY() + r, r, highlight ? BLACK : WHITE);
+    
+    mDisplay.println(String(""));
+    mDisplay.println(String("                  -->"));
+
+    SettingsMenuApp::RenderFrontPage();
+  }
+
+  virtual ISettingItemEditor* GetBackEditor() {
+    return mBPM.GetEditor();
+  }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+class SystemSettingsApp : public SettingsMenuApp
+{
+  SettingsList mRootList;
+  
+  TriggerSettingItem mResetKeys;
+
+public:
+  SystemSettingsApp() :
+    mResetKeys("Reset all keys", [&](){ this->OnResetKeys(); })
+  {
+    mRootList.mItemCount = 1;
+    mRootList.mItems[0] = &mResetKeys;
+  }
+
+  void OnResetKeys() {
+    gApp.SendCmd(CommandFromMain::ResetTouchKeys);
+    ShowToast("Reset done");
+  }
+
+  virtual SettingsList* GetRootSettingsList()
+  {
     return &mRootList;
   }
 
@@ -494,16 +598,8 @@ public:
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
 
-    mDisplay.println(String("METRONOME SETTINGS"));
-    mDisplay.println(gAppSettings.mMetronomeOn ? "ENABLED" : "disabled");
-    mDisplay.println(String("bpm=") + gAppSettings.mPerfSettings.mBPM);
-    mDisplay.println(String("                  -->"));
-
+    mDisplay.println(String("SYSTEM SETTINGS"));
     SettingsMenuApp::RenderFrontPage();
-  }
-
-  virtual ISettingItemEditor* GetBackEditor() {
-    return mBPM.GetEditor();
   }
 };
 
@@ -516,7 +612,7 @@ public:
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
-    mDisplay.println("SYSTEM STATUS");
+    mDisplay.println("DEBUG PAGES");
     mDisplay.println(String("Uptime: ") + (int)((float)millis() / 1000) + " sec");
     mDisplay.println(String("Notes played: ") + gEWIControl.mMusicalState.noteOns);
     mDisplay.println(String("                  -->"));
@@ -555,7 +651,7 @@ public:
       mDisplay.println(String(title) + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
       mDisplay.print(String("Err:") + rx.mChecksumErrors);
       mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
-      mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + " skip%:" + (int)((float)rx.mSkippedPayloads * 100 / max(1,rx.mRxSuccess)));
+      mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + " skip%:" + (int)((float)rx.mSkippedPayloads * 100 / max(1,(int)rx.mRxSuccess)));
       mDisplay.println(String("rxfps:") + (int)rx.mRxRate.getFPS());
     };
 
@@ -661,12 +757,13 @@ public:
 // feed it data and it will plot.
 const int DisplayWidth = 128;
 const int DisplayHeight = 32;
-template<int TseriesCount>
+template<int TseriesCount, int Tspeed> // Tspeed is # of plots per column
 struct Plotter
 {
   size_t mCursor = 0;
   size_t mValid = 0;
-  int32_t vals[TseriesCount][DisplayWidth];
+  static constexpr size_t sampleCount = DisplayWidth * Tspeed;
+  int32_t vals[TseriesCount][sampleCount];
   
   void clear() {
     mValid = 0;
@@ -680,28 +777,35 @@ struct Plotter
     vals[2][mCursor] = val3;
     vals[3][mCursor] = val4;
     mValid = max(mValid, mCursor);
-    mCursor = (mCursor + 1) % DisplayWidth;
+    mCursor = (mCursor + 1) % sampleCount;
+  }
+  
+  void Plot1(uint32_t val1) {
+    if (TseriesCount != 1) return;
+    vals[0][mCursor] = val1;
+    mValid = max(mValid, mCursor);
+    mCursor = (mCursor + 1) % sampleCount;
   }
   
   void Render(Adafruit_SSD1306& mDisplay) {
     // determine min/max for scale.
     if (mValid == 0) return;
-    uint32_t min_ = vals[0][0];
-    uint32_t max_ = min_;
+    int32_t min_ = vals[0][0];
+    int32_t max_ = min_;
     for (size_t x = 0; x < mValid; ++ x) {
       for (size_t s = 0; s < TseriesCount; ++ s) {
         min_ = min(min_, vals[s][x]);
         max_ = max(max_, vals[s][x]);
       }
     }
-    if (min_ == max_) max_ ++; // div0
+    if (min_ == max_) max_ ++; // avoid div0
 
     // draw back from cursor.
-    for (int n = 0; n < mValid; ++ n) {
-      int x = DisplayWidth - n - 1;
+    for (int n = 0; n < (int)mValid; ++ n) {
+      int x = ((sampleCount - n) / Tspeed) - 1;
       int i = (int)mCursor - n - 1;
       if (i < 0)
-        i += DisplayWidth;
+        i += sampleCount;
       for (size_t s = 0; s < TseriesCount; ++ s) {
         uint32_t y = map(vals[s][i], min_, max_, DisplayHeight - 1, 0);
         mDisplay.drawPixel(x, y, WHITE);
@@ -714,15 +818,39 @@ struct Plotter
 class TouchKeyGraphs : public MenuAppBaseWithUtils
 {
   int mKeyIndex = 0;
-  Plotter<4> mPlotter;
-  CCThrottlerT<5> mThrottle;
+  Plotter<1, 2> mPlotter;
+  CCThrottlerT<7> mThrottle;
   bool isPlaying = true;
 
   virtual void RenderFrontPage() {
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(WHITE);
     mDisplay.setCursor(0,0);
-    mDisplay.println(String("touch keys fp"));
+    mDisplay.println(String("TOUCH KEYS STATE"));
+    mDisplay.println(String("LH k:") +
+      (gEWIControl.mPhysicalState.key_lh1.IsPressed ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_lh2.IsPressed ? "2" : "-") +
+      (gEWIControl.mPhysicalState.key_lh3.IsPressed ? "3" : "-") +
+      (gEWIControl.mPhysicalState.key_lh4.IsPressed ? "4" : "-") +
+      " o:" +
+      (gEWIControl.mPhysicalState.key_octave1.IsPressed ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_octave2.IsPressed ? "2" : "-") +
+      (gEWIControl.mPhysicalState.key_octave3.IsPressed ? "3" : "-") +
+      (gEWIControl.mPhysicalState.key_octave4.IsPressed ? "4" : "-") +
+      " b:" +
+      (gEWIControl.mPhysicalState.key_lhExtra1.IsPressed ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_lhExtra2.IsPressed ? "2" : "-"));
+
+    mDisplay.println(String("RH k:") +
+      (gEWIControl.mPhysicalState.key_rh1.IsPressed ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_rh2.IsPressed ? "2" : "-") +
+      (gEWIControl.mPhysicalState.key_rh3.IsPressed ? "3" : "-") +
+      (gEWIControl.mPhysicalState.key_rh4.IsPressed ? "4" : "-") +
+      "       " +
+      " b:" +
+      (gEWIControl.mPhysicalState.key_rhExtra1.IsPressed ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_rhExtra2.IsPressed ? "2" : "-"));
+
   }
   virtual void RenderApp() {
     mDisplay.setTextSize(1);
@@ -736,6 +864,9 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
       GoToFrontPage();
       return;
     }
+
+    gTouchKeyGraphsIsRunning = true;
+    
     if (gEncButton.IsNewlyPressed()) {
       isPlaying = !isPlaying;
     }
@@ -748,10 +879,10 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
         pData = &gLHSerial.mReceivedData.data;
       }
       if (pData) {
-        mPlotter.Plot4(pData->focusedTouchReadMicros,
-          pData->focusedTouchReadValue,
-          pData->focusedTouchReadUntouchedMicros,
-          pData->focusedTouchReadThresholdMicros);
+        mPlotter.Plot1(pData->focusedTouchReadMicros);//,
+//          pData->focusedTouchReadValue,
+//          pData->focusedTouchReadUntouchedMicros,
+//          pData->focusedTouchReadThresholdMicros);
       }
     }
 
