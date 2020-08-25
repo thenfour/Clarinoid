@@ -54,7 +54,23 @@ Tristate gOldTristateVal = Tristate::Null;
 // contains all non-GUI application stuff.
 class CCEWIApp : IUpdateObject
 {
+  bool mTxScheduled = false;
 public:
+
+  MainPayload mPayload;
+
+  CCEWIApp()
+  {
+    mPayload.data.focusedTouchKey = -1;
+    mPayload.data.ledMode = LHRHLEDMode::Debug;
+  }
+
+  // schedules notifying LHRH to send debug data for a cap touch key.
+  void FocusKeyDebug(int8_t key /* index into gKeyDesc */) {
+    mTxScheduled = true;  
+    mPayload.data.focusedTouchKey = key;
+  }
+
   void loop() {
    
     if (gEnc.IsDirty()) {
@@ -126,6 +142,15 @@ public:
 //      gRHTXIndicator.Touch();    
 //    }
 //    
+
+    if (mTxScheduled) {
+      mTxScheduled = false;
+      gLHSerial.Send(mPayload);
+      gRHSerial.Send(mPayload);
+      gLHTXIndicator.Touch();
+      gRHTXIndicator.Touch();    
+    }
+
     // convert state to MIDI events
     gMidiOut.Update(gEWIControl.mMusicalState);
     

@@ -17,8 +17,9 @@ const int TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES = 15; // how many samples
 const int TOUCH_KEY_CALIB_THROTTLE_MS = 20;
 
 struct TouchableKeyInfo {
-  TouchableKeyInfo(uint8_t pin) :
-    mTouchablePin(pin, CCEWI_TOUCHABLE_PIN_MAX_FACTOR)
+  TouchableKeyInfo(uint8_t pin, int keyDescIndex) :
+    mTouchablePin(pin, CCEWI_TOUCHABLE_PIN_MAX_FACTOR),
+    mKeyDescIndex(keyDescIndex)
   {
   }
   bool mDebug = false;
@@ -27,6 +28,7 @@ struct TouchableKeyInfo {
   float mMinValue; // we should set this as soon as we have enough moving avg samples.
   SimpleMovingAverage<TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES> mRunningValues;
   touchablePin mTouchablePin;
+  int mKeyDescIndex;
 };
 
 class CCTouchKeyCalibrator : IUpdateObject
@@ -76,6 +78,8 @@ public:
 
 CCTouchKeyCalibrator gTouchKeyCalibrator;
 
+class CCTouchKey* gTouchKeyLookup[SizeofStaticArray(gKeyDesc)] = {nullptr};
+
 class CCTouchKey : IUpdateObject
 {
   bool mIsTouched = false;
@@ -85,18 +89,18 @@ class CCTouchKey : IUpdateObject
 
 public:
 
-  explicit CCTouchKey(uint8_t pin, bool debug = false) :
-    ki(pin)
+  explicit CCTouchKey(uint8_t pin, int keyDescIndex, bool debug = false) :
+    ki(pin, keyDescIndex)
   {
     ki.mDebug = debug;
-    //gTouchKeyCalibrator.Add(&ki);
+    gTouchKeyLookup[keyDescIndex] = this;
     mStaggerGroup = gTouchKeyCalibrator.Add(&ki);// / KeysToSamplePerFrame;
   }
 
   bool IsPressed() const { return mIsTouched; }
   bool IsDirty() const { return mIsDirty; }
-  uint32_t GetTouchReadMicros() const { return ki.mTouchReadMicros; }
-  uint32_t GetTouchReadMaxMicros() const { return ki.mTouchReadMicros * CCEWI_TOUCHABLE_PIN_MAX_FACTOR; }
+//  uint32_t GetTouchReadMicros() const { return ki.mTouchReadMicros; }
+//  uint32_t GetTouchReadMaxMicros() const { return ki.mTouchReadMicros * CCEWI_TOUCHABLE_PIN_MAX_FACTOR; }
 
   virtual void setup()
   {
@@ -105,16 +109,23 @@ public:
 
   virtual void loop()
   {
-    if (ki.mDebug) {
+    if (ki.mKeyDescIndex == gFocusedKeyIndex) {
       uint32_t m = micros();
       int n = ki.mTouchablePin.touchRead();
       uint32_t m2 = micros();
       if (m < m2) {
-        CCPlot(m2 - m);
-        CCPlot(ki.mTouchablePin.untouchedTime);
-        CCPlot(ki.mTouchablePin.untouchedTime * CCEWI_TOUCHABLE_PIN_MAX_FACTOR);
+
+        gFocusedKeyData = ki.mKeyDescIndex;
+        gFocusedTouchReadMicros = m2 - m;
+        gFocusedTouchReadValue = n;
+        gFocusedTouchReadUntouchedMicros = ki.mTouchablePin.untouchedTime;
+        gFocusedTouchReadThresholdMicros = ki.mTouchablePin.untouchedTime * CCEWI_TOUCHABLE_PIN_MAX_FACTOR;
+        
+        //CCPlot(m2 - m);
+        //CCPlot(ki.mTouchablePin.untouchedTime);
+        //CCPlot(ki.mTouchablePin.untouchedTime * CCEWI_TOUCHABLE_PIN_MAX_FACTOR);
         // plot also the actual value.
-        CCPlot(n);
+        //CCPlot(n);
       }
     }
 

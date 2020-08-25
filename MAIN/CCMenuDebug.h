@@ -15,20 +15,19 @@ static const int MAX_SETTING_ITEMS_PER_LIST = 20;
 // clicking the encoder will enter the app, rendered with Render().
 class MenuAppBaseWithUtils : public MenuAppBase
 {
+  bool mShowingFrontPage = true;
+  
 protected:
   CCDisplay& mCCDisplay;
   Adafruit_SSD1306& mDisplay;
   CCEWIApp& mApp;
 
-  bool mShowingFrontPage = true;
-  
-  MenuAppBaseWithUtils(CCDisplay& display, CCEWIApp& app) :
-    mCCDisplay(display),
-    mDisplay(display.mDisplay),
-    mApp(app)
+  MenuAppBaseWithUtils() :
+    mCCDisplay(gDisplay),
+    mDisplay(gDisplay.mDisplay),
+    mApp(gApp)
   {
-    //Serial.println("adding an app...");
-    display.AddMenuApp(this);
+    mCCDisplay.AddMenuApp(this);
   }
   
 public:
@@ -292,11 +291,6 @@ class SettingsMenuApp : public MenuAppBaseWithUtils, public ISettingItemEditorAc
   ISettingItemEditor* mpCurrentEditor = nullptr;
 
 public:
-  SettingsMenuApp(CCDisplay& display, CCEWIApp& app) :
-    MenuAppBaseWithUtils(display, app)
-  {
-    //Serial.println("SettingsMenuApp");
-  }
 
   virtual void CommitEditing() {
     mpCurrentEditor = nullptr;
@@ -431,8 +425,7 @@ class SynthSettingsApp : public SettingsMenuApp
   FloatSettingItem mReverbGain;
   
 public:
-  SynthSettingsApp(CCDisplay& display, CCEWIApp& app) :
-    SettingsMenuApp(display, app),
+  SynthSettingsApp() :
     mPortamentoTime("Portamento", 0.0f, 0.25f, gAppSettings.mPortamentoTime),
     mTranspose("Transpose", -48, 48, gAppSettings.mTranspose),
     mReverbGain("Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain)
@@ -474,8 +467,7 @@ class MetronomeSettingsApp : public SettingsMenuApp
   IntSettingItem mDecay;
 
 public:
-  MetronomeSettingsApp(CCDisplay& display, CCEWIApp& app) :
-    SettingsMenuApp(display, app),
+  MetronomeSettingsApp() :
     mOnOff("Enabled?", "On", "Off", gAppSettings.mMetronomeOn),
     mBPM("BPM", 30.0f, 200.0f, gAppSettings.mPerfSettings.mBPM),
     mGain("Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain),
@@ -520,10 +512,6 @@ public:
 class DebugMenuApp : public MenuAppBaseWithUtils
 {
 public:
-  DebugMenuApp(CCDisplay& display, CCEWIApp& app) : MenuAppBaseWithUtils(display, app)
-  {
-  }
-
   virtual void RenderFrontPage() {
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(WHITE);
@@ -666,6 +654,112 @@ public:
       case 7:
         pageDebugMain();
         break;
+    }
+  }
+};
+
+// feed it data and it will plot.
+const int DisplayWidth = 128;
+const int DisplayHeight = 32;
+template<int TseriesCount>
+struct Plotter
+{
+  size_t mCursor = 0;
+  size_t mValid = 0;
+  int32_t vals[TseriesCount][DisplayWidth];
+  
+  void clear() {
+    mValid = 0;
+    mCursor = 0;
+  }
+  
+  void Plot4(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4) {
+    if (TseriesCount != 4) return;
+    vals[0][mCursor] = val1;
+    vals[1][mCursor] = val2;
+    vals[2][mCursor] = val3;
+    vals[3][mCursor] = val4;
+    mValid = max(mValid, mCursor);
+    mCursor = (mCursor + 1) % DisplayWidth;
+  }
+  
+  void Render(Adafruit_SSD1306& mDisplay) {
+    // determine min/max for scale.
+    if (mValid == 0) return;
+    uint32_t min_ = vals[0][0];
+    uint32_t max_ = min_;
+    for (size_t x = 0; x < mValid; ++ x) {
+      for (size_t s = 0; s < TseriesCount; ++ s) {
+        min_ = min(min_, vals[s][x]);
+        max_ = max(max_, vals[s][x]);
+      }
+    }
+    if (min_ == max_) max_ ++; // div0
+
+    // draw back from cursor.
+    for (int n = 0; n < mValid; ++ n) {
+      int x = DisplayWidth - n - 1;
+      int i = (int)mCursor - n - 1;
+      if (i < 0)
+        i += DisplayWidth;
+      for (size_t s = 0; s < TseriesCount; ++ s) {
+        uint32_t y = map(vals[s][i], min_, max_, DisplayHeight - 1, 0);
+        mDisplay.drawPixel(x, y, WHITE);
+      }
+    }
+    
+  }
+};
+
+class TouchKeyGraphs : public MenuAppBaseWithUtils
+{
+  int mKeyIndex = 0;
+  Plotter<4> mPlotter;
+  CCThrottlerT<5> mThrottle;
+  bool isPlaying = true;
+
+  virtual void RenderFrontPage() {
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(WHITE);
+    mDisplay.setCursor(0,0);
+    mDisplay.println(String("touch keys fp"));
+  }
+  virtual void RenderApp() {
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(WHITE);
+    mDisplay.setCursor(0,0);
+    mDisplay.println(gKeyDesc[mKeyIndex].mName);
+    mPlotter.Render(mDisplay);
+  }
+  virtual void UpdateApp() {
+    if (BackButton().IsNewlyPressed()) {
+      GoToFrontPage();
+      return;
+    }
+    if (gEncButton.IsNewlyPressed()) {
+      isPlaying = !isPlaying;
+    }
+
+    if (mThrottle.IsReady() && isPlaying) {
+      LHRHChecksummablePayload* pData = nullptr;
+      if (mKeyIndex == gRHSerial.mReceivedData.data.focusedKey) {
+        pData = &gRHSerial.mReceivedData.data;
+      } else if (mKeyIndex == gLHSerial.mReceivedData.data.focusedKey) {
+        pData = &gLHSerial.mReceivedData.data;
+      }
+      if (pData) {
+        mPlotter.Plot4(pData->focusedTouchReadMicros,
+          pData->focusedTouchReadValue,
+          pData->focusedTouchReadUntouchedMicros,
+          pData->focusedTouchReadThresholdMicros);
+      }
+    }
+
+    auto oldI = mKeyIndex;
+    mKeyIndex = AddConstrained(mKeyIndex, gEnc.GetIntDelta(), 0, SizeofStaticArray(gKeyDesc) - 1);
+    gApp.FocusKeyDebug(mKeyIndex);
+    if (mKeyIndex != oldI) {
+      mPlotter.clear();
     }
   }
 };

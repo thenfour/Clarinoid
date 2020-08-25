@@ -3,8 +3,8 @@
 // speed-optimizing for some reason causes problems i don't know why.
 // so choose smallest code
 
-#define LH
-//#define RH
+//#define LH
+#define RH
 
 //============================================================
 
@@ -13,6 +13,15 @@ uint32_t gFrameNumber = 0;
 #include "Shared_CCTxRx.h"
 #include "Shared_CCSwitch.h"
 #include "Shared_CCLeds.h"
+
+static int gFocusedKeyIndex = -1;
+
+int gFocusedKeyData = -1; // which key set the following data...
+uint32_t gFocusedTouchReadMicros;
+uint32_t gFocusedTouchReadValue;
+uint32_t gFocusedTouchReadUntouchedMicros;
+uint32_t gFocusedTouchReadThresholdMicros;
+
 #include "CCTouchKey.h"
 #include "CCPressure.h"
 
@@ -26,27 +35,27 @@ CCLeds leds(10, 2, 10,
   );
 
 #ifdef LH
-CCTouchKey key1(15);
-CCTouchKey key2(16);
-CCTouchKey key3(17);
-CCTouchKey key4(18);
-CCTouchKey key5(19);
-CCTouchKey key6(22);
+CCTouchKey key1(15, KEY_LHX1);
+CCTouchKey key2(16, KEY_LH1);
+CCTouchKey key3(17, KEY_LH2);
+CCTouchKey key4(18, KEY_LH3);
+CCTouchKey key5(19, KEY_LH4);
+CCTouchKey key6(22, KEY_LHX2);
 
 CCBreathSensor wind(A0);
 CCBiteSensor bite(A6);
 CCOnOffSwitch backButton(6, 5);
-CCTouchKey octave1(0);
-CCTouchKey octave2(1);
-CCTouchKey octave3(3);
-CCTouchKey octave4(4);
+CCTouchKey octave1(0, KEY_O1);
+CCTouchKey octave2(1, KEY_O2);
+CCTouchKey octave3(3, KEY_O3);
+CCTouchKey octave4(4, KEY_O4);
 #else // RH
-CCTouchKey key1(22);
-CCTouchKey key2(15);
-CCTouchKey key3(16);
-CCTouchKey key4(17);
-CCTouchKey key5(18);
-CCTouchKey key6(19);
+CCTouchKey key1(22, KEY_RHX1);
+CCTouchKey key2(15, KEY_RH1);
+CCTouchKey key3(16, KEY_RH2);
+CCTouchKey key4(17, KEY_RH3);
+CCTouchKey key5(18, KEY_RH4);
+CCTouchKey key6(19, KEY_RHX2);
 CCPitchStripSensor pitchDown(A0);
 CCOnOffSwitch oooButton1(11, 5);
 CCOnOffSwitch oooButton2(12, 5);
@@ -68,8 +77,8 @@ inline void CaptureButton(CCTouchKey& key, CapTouchKeyData& dest)
   // TODO: if you want to get more detailed data, we should implement some way to debug-focus a key
   // so we can capture in more real-time.
   dest.IsPressed = key.IsPressed();
-  dest.touchReadMicros = key.GetTouchReadMicros();
-  dest.maxTouchReadMicros = key.GetTouchReadMaxMicros();
+  //dest.touchReadMicros = key.GetTouchReadMicros();
+  //dest.maxTouchReadMicros = key.GetTouchReadMaxMicros();
 }
 
 void setup() {
@@ -80,8 +89,31 @@ void setup() {
 }
 
 void loop() {
+  gFocusedKeyData = -1;
   gFrameNumber ++;
   UpdateUpdateObjects();
+
+  if (gTxRx.mHaveNewData) {
+    gRXIndicator.Touch();
+    gLEDMode = gTxRx.mReceivedData.data.ledMode;
+    gFocusedKeyIndex = gTxRx.mReceivedData.data.focusedTouchKey;
+  }
+
+  if (gFocusedKeyIndex >= 0 && gFocusedKeyIndex < SizeofStaticArray(gKeyDesc)) {
+#ifdef LH
+    if (gKeyDesc[gFocusedKeyIndex].mLH) {
+#else // RH
+    if (!gKeyDesc[gFocusedKeyIndex].mLH) {
+#endif // LHRH
+      if (gFocusedKeyData == gFocusedKeyIndex) {
+        gPayload.data.focusedKey = gFocusedKeyData;
+        gPayload.data.focusedTouchReadMicros = gFocusedTouchReadMicros;
+        gPayload.data.focusedTouchReadValue = gFocusedTouchReadValue;
+        gPayload.data.focusedTouchReadUntouchedMicros = gFocusedTouchReadUntouchedMicros;
+        gPayload.data.focusedTouchReadThresholdMicros = gFocusedTouchReadThresholdMicros;
+      }
+    }
+  }
 
   // construct the payload & check if dirty / needs to be sent.
   // only unset "dirty" if we actually send the packet.
@@ -109,13 +141,10 @@ void loop() {
   gPayload.data.button2 = oooButton2.IsCurrentlyPressed();
 #endif // LH/RH
 
+
+
   gTxRx.Send(gPayload);
   gTXIndicator.Touch();
-
-  if (gTxRx.mHaveNewData) {
-    gRXIndicator.Touch();
-    gLEDMode = gTxRx.mReceivedData.data.ledMode;
-  }
 
   if (ledThrottle.IsReady())
   {

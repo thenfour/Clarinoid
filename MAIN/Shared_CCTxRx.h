@@ -14,12 +14,59 @@
 # define RX_BUFFER_SIZE 64
 #endif
 
+// some things are here that should probably not be ...
+// but basically the arduino is such a horrible primitive IDE that it feels more natural and fluent to do stuff like this than to properly structure things.
 enum class LHRHLEDMode : uint8_t {
   Debug = 0,
   Minimal = 1,
   MainControlled = 2,
   Off = 3
 };
+
+struct KeyDesc {
+  KeyDesc(const char *name, bool lh) :
+    mName(name),
+    mLH(lh)
+  {
+  }
+  const char *mName;
+  bool mLH;// lh/rh
+};
+
+KeyDesc gKeyDesc[16] = {
+  { "LH1", true },// 0
+  { "LH2", true },// 1
+  { "LH3", true },
+  { "LH4", true },
+  { "RH1", false },// 4
+  { "RH2", false },
+  { "RH3", false },
+  { "RH4", false },
+  { "O1", true }, // 8
+  { "O2", true },
+  { "O3", true },
+  { "O4", true },
+  { "LHx1", true }, // 12
+  { "LHx2", true },
+  { "RHx1", false }, // 14
+  { "RHx2", false },
+};
+#define KEY_LH1 0
+#define KEY_LH2 1
+#define KEY_LH3 2
+#define KEY_LH4 3
+#define KEY_RH1 4
+#define KEY_RH2 5
+#define KEY_RH3 6
+#define KEY_RH4 7
+#define KEY_O1 8
+#define KEY_O2 9
+#define KEY_O3 10
+#define KEY_O4 11
+#define KEY_LHX1 12
+#define KEY_LHX2 13
+#define KEY_RHX1 14
+#define KEY_RHX2 15
 
 
 // important to keep this well under HardwareSerial.cpp:RX_BUFFER_SIZE/2.
@@ -33,8 +80,6 @@ enum class LHRHLEDMode : uint8_t {
 struct CapTouchKeyData
 {
   bool IsPressed : 8;
-  uint32_t touchReadMicros;
-  uint32_t maxTouchReadMicros;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +87,12 @@ struct LHRHChecksummablePayload
 {
   CapTouchKeyData keys[6];
   CapTouchKeyData octaveKeys[4];
+
+  int8_t focusedKey; // index into gKeyDesc
+  uint32_t focusedTouchReadMicros;
+  uint32_t focusedTouchReadValue;
+  uint32_t focusedTouchReadUntouchedMicros;
+  uint32_t focusedTouchReadThresholdMicros;
   
   bool button1;
   bool button2;
@@ -104,6 +155,7 @@ struct MainChecksummablePayload
 {
   LHRHLEDMode ledMode;
   uint8_t leds[10][3];
+  int8_t focusedTouchKey; // index into gKeyDesc
 };
 
 // payload is the same between both LH/RH modules.

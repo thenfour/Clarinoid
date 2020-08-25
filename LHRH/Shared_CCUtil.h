@@ -38,8 +38,8 @@ inline void UpdateUpdateObjects() {
 int gThrottlerCount = 0;
 class CCThrottler
 {
-  uint32_t mPhase = 0;
   uint32_t mPeriodMS;
+  uint32_t mPhase;
   uint32_t mPeriodStartMS;
 public:
   CCThrottler(uint32_t periodMS) :
@@ -72,10 +72,13 @@ public:
 template<uint32_t TperiodMS>
 class CCThrottlerT
 {
+  uint32_t mPhase;
   uint32_t mPeriodStartMS;
 public:
-  CCThrottlerT()
+  CCThrottlerT() :
+    mPhase(gThrottlerCount)
   {
+    gThrottlerCount ++;
     mPeriodStartMS = millis();
   }
 
@@ -88,7 +91,7 @@ public:
   }
   
   bool IsReady(uint32_t periodMS) {
-    auto m = millis();
+    auto m = millis() + mPhase; // minus is more theoretically accurate but this serves the purpose just as well.
     if (m - mPeriodStartMS < periodMS) {
       return false;
     }
@@ -287,7 +290,7 @@ inline uint8_t col(float f01, int x)
 
 // random utility function
 template<typename T, size_t N>
-size_t SizeofStaticArray(const T(&x)[N])
+constexpr size_t SizeofStaticArray(const T(&x)[N])
 {
   return N;
 }

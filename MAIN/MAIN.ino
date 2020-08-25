@@ -2,10 +2,6 @@
 // 600mhz
 // "Faster"
 
-// Check synth & CCEWIControl for parameters
-
-// This main sketch pretty much just glues the application to the display & LEDs
-
 // https://forum.pjrc.com/threads/57932-Latency-what-s-new
 //#define AUDIO_BLOCK_SAMPLES 1024 // this seems to have no effect; may need to fork
 
@@ -63,14 +59,17 @@ AppSettings gAppSettings;
 
 #include "CCEWIApplication.h"
 #include "CCDisplay.h"
-#include "CCMenuDebug.h"
 
 CCEWIApp gApp;
 CCDisplay gDisplay(gApp);
 
-MetronomeSettingsApp gMetronomeApp(gDisplay, gApp);
-DebugMenuApp gDebugApp(gDisplay, gApp);
-SynthSettingsApp gSynthSettingsApp(gDisplay, gApp);
+#include "CCMenuDebug.h"
+
+
+TouchKeyGraphs gTouchKeyApp;
+MetronomeSettingsApp gMetronomeApp;
+DebugMenuApp gDebugApp;
+SynthSettingsApp gSynthSettingsApp;
 
 CCLeds leds(10, 2, 10, true);
 CCThrottlerT<20> ledThrottle;
