@@ -167,6 +167,8 @@ struct AppSettings
 {
   float mPortamentoTime = 0.005f;
   float mReverbGain = .2f;
+
+  bool mDisplayDim = true;
   
   bool mMetronomeOn = false;
   float mMetronomeGain = 0.8f;

@@ -14,15 +14,14 @@
 
 // scale setting item
 // scale editor
-// grayed
 
 struct HarmVoiceSettingsApp
 {
   HarmVoiceSettings* mpBinding = nullptr;
   SettingsList mList;
 
-  EnumSettingItem<HarmVoiceType> mVoiceType = { mList, "Voice Type", gHarmVoiceTypeInfo, mpBinding->mVoiceType };
-  IntSettingItem mInterval = { mList, "Interval", -48, 48, MakePropertyByCasting<int>(mpBinding->mSequence[0].mInterval) };
+  EnumSettingItem<HarmVoiceType> mVoiceType = { mList, "Voice Type", gHarmVoiceTypeInfo, mpBinding->mVoiceType, AlwaysEnabled };
+  IntSettingItem mInterval = { mList, "Interval", -48, 48, MakePropertyByCasting<int>(mpBinding->mSequence[0].mInterval), AlwaysEnabled };
 
 //  HarmVoiceSequenceEntry mSequence[HARM_SEQUENCE_LEN];
 //  GlobalLocal mSynthPresetRef = GlobalLocal::Global;
@@ -52,16 +51,14 @@ class HarmSettingsApp : public SettingsMenuApp
     { gAppSettings.mHarmSettings.mVoiceSettings[3] },
   };
   
-  BoolSettingItem mIsEnabled = { mRootList, "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled };
-  SubmenuSettingItem mVoiceSubmenu1 = { mRootList, "Voice1", &mVoiceSettings[0].mList };
-  SubmenuSettingItem mVoiceSubmenu2 = { mRootList, "Voice2", &mVoiceSettings[1].mList };
-  SubmenuSettingItem mVoiceSubmenu3 = { mRootList, "Voice3", &mVoiceSettings[2].mList };
-  SubmenuSettingItem mVoiceSubmenu4 = { mRootList, "Voice4", &mVoiceSettings[3].mList };
-  IntSettingItem mGlobalSynthPreset = { mRootList, "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset };
-  IntSettingItem mMinRotationTimeMS = { mRootList, "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS};
+  BoolSettingItem mIsEnabled = { mRootList, "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu1 = { mRootList, "Voice1", &mVoiceSettings[0].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu2 = { mRootList, "Voice2", &mVoiceSettings[1].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu3 = { mRootList, "Voice3", &mVoiceSettings[2].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu4 = { mRootList, "Voice4", &mVoiceSettings[3].mList, AlwaysEnabled };
+  IntSettingItem mGlobalSynthPreset = { mRootList, "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
+  IntSettingItem mMinRotationTimeMS = { mRootList, "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
 
-//  int mGlobalSynthPreset;
-//  int mMinRotationTimeMS;
 //  Scale mGlobalScale;
 
 public:

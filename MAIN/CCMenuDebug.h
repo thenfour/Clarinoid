@@ -9,21 +9,6 @@
 static const int SETTINGS_STACK_MAX_DEPTH = 10;
 static const int MAX_SETTING_ITEMS_PER_LIST = 20;
 
-// draws & prepares the screen for a modal message. after this just print text whatever.
-void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4) {
-  gDisplay.mDisplay.setCursor(0,0);
-  gDisplay.mDisplay.fillRect(pad, pad, gDisplay.mDisplay.width() - pad, gDisplay.mDisplay.height() - pad, SSD1306_BLACK);
-  gDisplay.mDisplay.drawRect(rectStart, rectStart, gDisplay.mDisplay.width() - rectStart, gDisplay.mDisplay.height() - rectStart, SSD1306_WHITE);
-  gDisplay.mDisplay.setTextSize(1);
-  gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-  gDisplay.mDisplay.mTextLeftMargin = textStart;
-  gDisplay.mDisplay.mClipLeft = textStart;
-  gDisplay.mDisplay.mClipRight = RESOLUTION_X - textStart;
-  gDisplay.mDisplay.mClipTop = textStart;
-  gDisplay.mDisplay.mClipBottom = RESOLUTION_Y - textStart;
-  gDisplay.mDisplay.setCursor(textStart, textStart);
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // provides utils for menu apps.
 // the system works like this: each app has a front page which you scroll through using the encoder. rendered using RenderFrontpage().
@@ -106,6 +91,7 @@ struct ISettingItem
   virtual String GetName() = 0;
   virtual String GetValueString() { return ""; } // not used for trigger types or submenu types
   virtual SettingItemType GetType() = 0;
+  virtual bool IsEnabled() const = 0; // grayed or not
 
   virtual void ToggleBool() {} // for bool types
   virtual void Trigger() {} // for trigger types
@@ -236,11 +222,13 @@ struct NumericSettingItem : public ISettingItem
   String mName;
   TEditor mEditor;
   Property<T> mBinding;
+  std::function<bool()> mIsEnabled;
   
-  NumericSettingItem(SettingsList& list, const String& name, T min_, T max_, const Property<T>& binding) :
+  NumericSettingItem(SettingsList& list, const String& name, T min_, T max_, const Property<T>& binding, const std::function<bool()>& isEnabled) :
     mName(name),
     mEditor(min_, max_, binding),
-    mBinding(binding)
+    mBinding(binding),
+    mIsEnabled(isEnabled)
   {
     list.Add(this);
   }
@@ -248,6 +236,7 @@ struct NumericSettingItem : public ISettingItem
   virtual String GetName() { return mName; }
   virtual String GetValueString() { return String(mBinding.GetValue()); }
   virtual SettingItemType GetType() { return SettingItemType::Custom; }
+  virtual bool IsEnabled() const { return mIsEnabled(); }
 
   virtual ISettingItemEditor* GetEditor() {
     return &mEditor;
@@ -263,18 +252,21 @@ struct BoolSettingItem : public ISettingItem
   Property<bool> mBinding;
   String mTrueCaption;
   String mFalseCaption;
+  std::function<bool()> mIsEnabled;
   
-  BoolSettingItem(SettingsList& list, const String& name, const String& trueCaption, const String& falseCaption, const Property<bool>& binding) :
+  BoolSettingItem(SettingsList& list, const String& name, const String& trueCaption, const String& falseCaption, const Property<bool>& binding, std::function<bool()> isEnabled) :
     mName(name),
     mBinding(binding),
     mTrueCaption(trueCaption),
-    mFalseCaption(falseCaption)
+    mFalseCaption(falseCaption),
+    mIsEnabled(isEnabled)
   {
     list.Add(this);
   }
 
   virtual String GetName() { return mName; }
   virtual String GetValueString() { return mBinding.GetValue() ? mTrueCaption : mFalseCaption; }
+  virtual bool IsEnabled() const { return mIsEnabled(); }
   virtual SettingItemType GetType() { return SettingItemType::Bool; }
   virtual void ToggleBool() {
     mBinding.SetValue(!mBinding.GetValue());
@@ -286,16 +278,19 @@ struct TriggerSettingItem : public ISettingItem
 {
   String mName;
   std::function<void()> mAction;
+  std::function<bool()> mIsEnabled;
   
-  TriggerSettingItem(SettingsList& list, const String& name, std::function<void()> action) :
+  TriggerSettingItem(SettingsList& list, const String& name, std::function<void()> action, const std::function<bool()>& isEnabled) :
     mName(name),
-    mAction(action)
+    mAction(action),
+    mIsEnabled(isEnabled)
   {
     list.Add(this);
   }
 
   virtual String GetName() { return mName; }
   virtual SettingItemType GetType() { return SettingItemType::Trigger; }
+  virtual bool IsEnabled() const { return mIsEnabled(); }
   virtual void Trigger() {
     mAction();
   }
@@ -306,16 +301,19 @@ struct SubmenuSettingItem : public ISettingItem
 {
   String mName;
   SettingsList* mSubmenu;
+  std::function<bool()> mIsEnabled;
   
-  SubmenuSettingItem(SettingsList& list, const String& name, SettingsList* pSubmenu) :
+  SubmenuSettingItem(SettingsList& list, const String& name, SettingsList* pSubmenu, const std::function<bool()>& isEnabled) :
     mName(name),
-    mSubmenu(pSubmenu)
+    mSubmenu(pSubmenu),
+    mIsEnabled(isEnabled)
   {
     list.Add(this);
   }
 
   virtual String GetName() { return mName; }
   virtual SettingItemType GetType() { return SettingItemType::Submenu; }
+  virtual bool IsEnabled() const { return mIsEnabled(); }
   virtual struct SettingsList* GetSubmenu()
   {
     return mSubmenu;
@@ -387,12 +385,14 @@ struct EnumSettingItem : public ISettingItem
   EnumEditor<T> mEditor;
   Property<T> mBinding;
   const EnumInfo<T>& mEnumInfo;
+  std::function<bool()> mIsEnabled;
 
-  EnumSettingItem(SettingsList& list, const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding) :
+  EnumSettingItem(SettingsList& list, const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, const std::function<bool()>& isEnabled) :
     mName(name),
     mEditor(enumInfo, binding),
     mBinding(binding),
-    mEnumInfo(enumInfo)
+    mEnumInfo(enumInfo),
+    mIsEnabled(isEnabled)
   {
     list.Add(this);
   }
@@ -400,6 +400,7 @@ struct EnumSettingItem : public ISettingItem
   virtual String GetName() { return mName; }
   virtual String GetValueString() { return mEnumInfo.GetValueString(mBinding.GetValue()); }
   virtual SettingItemType GetType() { return SettingItemType::Custom; }
+  virtual bool IsEnabled() const { return mIsEnabled(); }
   virtual ISettingItemEditor* GetEditor() {
     return &mEditor;
   }
@@ -477,6 +478,8 @@ public:
         gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
       }
 
+      gDisplay.mDisplay.mSolidText = item->IsEnabled();
+
       switch (item->GetType()) {
       case SettingItemType::Trigger:
         gDisplay.mDisplay.println(item->GetName());
@@ -543,23 +546,26 @@ public:
     if (gEncButton.IsNewlyPressed()) 
     {
       auto* focusedItem = state.pList->GetItem(state.focusedItem);
-      
-      switch(focusedItem->GetType()) {
-        case SettingItemType::Bool:
-          focusedItem->ToggleBool();
-          break;
-        case SettingItemType::Custom:
-          mpCurrentEditor = focusedItem->GetEditor();
-          mpCurrentEditor->SetupEditing(this, 0, 0);
-          break;
-        case SettingItemType::Submenu:
-          mNavDepth ++;
-          mNav[mNavDepth].pList = focusedItem->GetSubmenu();
-          mNav[mNavDepth].focusedItem = 0;
-          break;
-        case SettingItemType::Trigger:
-          focusedItem->Trigger();
-          break;
+      if (!focusedItem->IsEnabled()) {
+        // todo: show toast? or some flash or feedback for disabled items?
+      } else {      
+        switch(focusedItem->GetType()) {
+          case SettingItemType::Bool:
+            focusedItem->ToggleBool();
+            break;
+          case SettingItemType::Custom:
+            mpCurrentEditor = focusedItem->GetEditor();
+            mpCurrentEditor->SetupEditing(this, 0, 0);
+            break;
+          case SettingItemType::Submenu:
+            mNavDepth ++;
+            mNav[mNavDepth].pList = focusedItem->GetSubmenu();
+            mNav[mNavDepth].focusedItem = 0;
+            break;
+          case SettingItemType::Trigger:
+            focusedItem->Trigger();
+            break;
+        }
       }
     }
 
@@ -575,13 +581,24 @@ public:
   }
 };
 
+static bool AlwaysEnabled() { return true; }
+
+
+
+
+
+
+
+
+
+
 class SynthSettingsApp : public SettingsMenuApp
 {
   SettingsList mRootList;
   
-  FloatSettingItem mPortamentoTime = { mRootList, "Portamento", 0.0f, 0.25f, gAppSettings.mPortamentoTime };
-  IntSettingItem mTranspose = { mRootList, "Transpose", -48, 48, gAppSettings.mTranspose };
-  FloatSettingItem mReverbGain = { mRootList, "Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain };
+  FloatSettingItem mPortamentoTime = { mRootList, "Portamento", 0.0f, 0.25f, gAppSettings.mPortamentoTime, AlwaysEnabled };
+  IntSettingItem mTranspose = { mRootList, "Transpose", -48, 48, gAppSettings.mTranspose, AlwaysEnabled };
+  FloatSettingItem mReverbGain = { mRootList, "Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain, AlwaysEnabled };
   
 public:
   virtual SettingsList* GetRootSettingsList()
@@ -609,11 +626,11 @@ class MetronomeSettingsApp : public SettingsMenuApp
   SettingsList mRootList;
 
 public:
-  BoolSettingItem mOnOff = { mRootList, "Enabled?", "On", "Off", gAppSettings.mMetronomeOn };
-  FloatSettingItem mBPM = { mRootList, "BPM", 30.0f, 200.0f, gAppSettings.mBPM };
-  FloatSettingItem mGain = { mRootList, "Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain };
-  IntSettingItem mNote = { mRootList, "Note", 20, 120, gAppSettings.mMetronomeNote };
-  IntSettingItem mDecay = { mRootList, "Decay", 1, 120, gAppSettings.mMetronomeDecayMS };
+  BoolSettingItem mOnOff = { mRootList, "Enabled?", "On", "Off", gAppSettings.mMetronomeOn, AlwaysEnabled };
+  FloatSettingItem mBPM = { mRootList, "BPM", 30.0f, 200.0f, gAppSettings.mBPM, AlwaysEnabled };
+  FloatSettingItem mGain = { mRootList, "Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain, [&](){ return gAppSettings.mMetronomeOn; } };
+  IntSettingItem mNote = { mRootList, "Note", 20, 120, gAppSettings.mMetronomeNote, [&](){ return gAppSettings.mMetronomeOn; } };
+  IntSettingItem mDecay = { mRootList, "Decay", 1, 120, gAppSettings.mMetronomeDecayMS, [&](){ return gAppSettings.mMetronomeOn; } };
 
   virtual SettingsList* GetRootSettingsList()
   {
@@ -662,7 +679,9 @@ class SystemSettingsApp : public SettingsMenuApp
 {
   SettingsList mRootList;
   
-  TriggerSettingItem mResetKeys = { mRootList, "Reset all keys", [&](){ this->OnResetKeys(); } };
+  TriggerSettingItem mResetKeys = { mRootList, "Reset all keys", [&](){ this->OnResetKeys(); }, AlwaysEnabled };
+  BoolSettingItem mDimDisplay = { mRootList, "Display dim?", "Yes", "No", Property<bool>{ [&]() { return gAppSettings.mDisplayDim; },
+    [&](const bool& x) { gAppSettings.mDisplayDim = x; gDisplay.mDisplay.dim(x); }}, AlwaysEnabled };
 
 public:
 

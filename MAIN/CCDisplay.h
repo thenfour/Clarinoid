@@ -34,6 +34,7 @@ public:
 framerateCalculator gFramerate;
 
 
+// FROM Adafruit_GFX.cpp:
 
 // Many (but maybe not all) non-AVR board installs define macros
 // for compatibility with existing PROGMEM-reading AVR code.
@@ -82,15 +83,6 @@ inline uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont) {
 #endif //__AVR__
 }
 
-#ifndef _swap_int16_t
-#define _swap_int16_t(a, b)                                                    \
-  {                                                                            \
-    int16_t t = a;                                                             \
-    a = b;                                                                     \
-    b = t;                                                                     \
-  }
-#endif
-
 
 // i need to subclass in order to support some things:
 // text left margin (so println() new line doesn't set x=0)
@@ -111,122 +103,51 @@ public:
   int mClipTop = 0;
   int mClipBottom = RESOLUTION_Y;
 
-//  // Draw a character
-//  /**************************************************************************/
-//  /*!
-//     @brief   Draw a single character
-//      @param    x   Bottom left corner x coordinate
-//      @param    y   Bottom left corner y coordinate
-//      @param    c   The 8-bit font-indexed character (likely ascii)
-//      @param    color 16-bit 5-6-5 Color to draw chraracter with
-//      @param    bg 16-bit 5-6-5 Color to fill background with (if same as color,
-//     no background)
-//      @param    size_x  Font magnification level in X-axis, 1 is 'original' size
-//      @param    size_y  Font magnification level in Y-axis, 1 is 'original' size
-//  */
-//  /**************************************************************************/
-//  void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
-//                              uint16_t color, uint16_t bg, uint8_t size_x,
-//                              uint8_t size_y) {
-//  
-//    if (!gfxFont) { // 'Classic' built-in font
-//  
-//      if ((x >= _width) ||              // Clip right
-//          (y >= _height) ||             // Clip bottom
-//          ((x + 6 * size_x - 1) < 0) || // Clip left
-//          ((y + 8 * size_y - 1) < 0))   // Clip top
-//        return;
-//  
-//      if (!_cp437 && (c >= 176))
-//        c++; // Handle 'classic' charset behavior
-//  
-//      startWrite();
-//      for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
-//        uint8_t line = pgm_read_byte(&font[c * 5 + i]);
-//        for (int8_t j = 0; j < 8; j++, line >>= 1) {
-//          if (line & 1) {
-//            if (size_x == 1 && size_y == 1)
-//              writePixel(x + i, y + j, color);
-//            else
-//              writeFillRect(x + i * size_x, y + j * size_y, size_x, size_y,
-//                            color);
-//          } else if (bg != color) {
-//            if (size_x == 1 && size_y == 1)
-//              writePixel(x + i, y + j, bg);
-//            else
-//              writeFillRect(x + i * size_x, y + j * size_y, size_x, size_y, bg);
-//          }
-//        }
-//      }
-//      if (bg != color) { // If opaque, draw vertical line for last column
-//        if (size_x == 1 && size_y == 1)
-//          writeFastVLine(x + 5, y, 8, bg);
-//        else
-//          writeFillRect(x + 5 * size_x, y, size_x, 8 * size_y, bg);
-//      }
-//      endWrite();
-//  
-//    } else { // Custom font
-//  
-//      // Character is assumed previously filtered by write() to eliminate
-//      // newlines, returns, non-printable characters, etc.  Calling
-//      // drawChar() directly with 'bad' characters of font may cause mayhem!
-//  
-//      c -= (uint8_t)pgm_read_byte(&gfxFont->first);
-//      GFXglyph *glyph = pgm_read_glyph_ptr(gfxFont, c);
-//      uint8_t *bitmap = pgm_read_bitmap_ptr(gfxFont);
-//  
-//      uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
-//      uint8_t w = pgm_read_byte(&glyph->width), h = pgm_read_byte(&glyph->height);
-//      int8_t xo = pgm_read_byte(&glyph->xOffset),
-//             yo = pgm_read_byte(&glyph->yOffset);
-//      uint8_t xx, yy, bits = 0, bit = 0;
-//      int16_t xo16 = 0, yo16 = 0;
-//  
-//      if (size_x > 1 || size_y > 1) {
-//        xo16 = xo;
-//        yo16 = yo;
-//      }
-//  
-//      // Todo: Add character clipping here
-//  
-//      // NOTE: THERE IS NO 'BACKGROUND' COLOR OPTION ON CUSTOM FONTS.
-//      // THIS IS ON PURPOSE AND BY DESIGN.  The background color feature
-//      // has typically been used with the 'classic' font to overwrite old
-//      // screen contents with new data.  This ONLY works because the
-//      // characters are a uniform size; it's not a sensible thing to do with
-//      // proportionally-spaced fonts with glyphs of varying sizes (and that
-//      // may overlap).  To replace previously-drawn text when using a custom
-//      // font, use the getTextBounds() function to determine the smallest
-//      // rectangle encompassing a string, erase the area with fillRect(),
-//      // then draw new text.  This WILL infortunately 'blink' the text, but
-//      // is unavoidable.  Drawing 'background' pixels will NOT fix this,
-//      // only creates a new set of problems.  Have an idea to work around
-//      // this (a canvas object type for MCUs that can afford the RAM and
-//      // displays supporting setAddrWindow() and pushColors()), but haven't
-//      // implemented this yet.
-//  
-//      startWrite();
-//      for (yy = 0; yy < h; yy++) {
-//        for (xx = 0; xx < w; xx++) {
-//          if (!(bit++ & 7)) {
-//            bits = pgm_read_byte(&bitmap[bo++]);
-//          }
-//          if (bits & 0x80) {
-//            if (size_x == 1 && size_y == 1) {
-//              writePixel(x + xo + xx, y + yo + yy, color);
-//            } else {
-//              writeFillRect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y,
-//                            size_x, size_y, color);
-//            }
-//          }
-//          bits <<= 1;
-//        }
-//      }
-//      endWrite();
-//  
-//    } // End classic vs custom font
-//  }
+  // for checker-style bool checking
+  bool PixelParity(int16_t x, int16_t y) const {
+    return (x & 1) != (y & 1);
+  }
+
+  bool IsWithinClipRect(int16_t x, int16_t y) const {
+    if (x < mClipLeft) return false;
+    if (x >= mClipRight) return false;
+    if (y < mClipTop) return false;
+    if (y >= mClipBottom) return false;
+    return true;
+  }
+
+  // overriding Adafruit_GFX::writePixel. base forwards to drawPixel().
+  virtual void writePixel(int16_t x, int16_t y, uint16_t color) {
+    if (!IsWithinClipRect(x, y))
+      return;
+    if (!mSolidText) {
+      if (!PixelParity(x, y)) {
+        // there are probably much more legible ways of graying text. this sorta destroys background color info; we should probably instead set a bg/fg color before the text write op
+        return;
+      }
+    }
+    drawPixel(x, y, color);
+  }
+
+  //
+
+  // the text rendering routine calls these, so if you want clipped/checkered text you need to implement these too.
+  //  virtual void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+  //    // TODO: clip
+  //    // TODO: checker
+  //    fillRect(x, y, w, h, color);
+  //  }
+  //
+  //  void writeFastVLine(int16_t x, int16_t y, int16_t h,
+  //                                    uint16_t color) {
+  //    if (!mSolidText) {
+  //      writeFillRect(x, y, 1, h, color);
+  //      return;
+  //    }
+  //    // TODO: clip
+  //    drawFastVLine(x, y, h, color);
+  //  }
+
   /**************************************************************************/
   /*!
       @brief  Print one byte/character of data, used to support print()
@@ -330,9 +251,10 @@ public:
   virtual void setup() {
     // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
     mDisplay.begin(SSD1306_SWITCHCAPVCC);
+    mIsSetup = true;
     mDisplay.clearDisplay();
     mDisplay.display();
-    mIsSetup = true;
+    mDisplay.dim(gAppSettings.mDisplayDim);
   }
 
   bool first = true;
@@ -425,6 +347,22 @@ struct ListControl
   }
 };
 
+
+
+// draws & prepares the screen for a modal message. after this just print text whatever.
+static inline void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4) {
+  gDisplay.mDisplay.setCursor(0,0);
+  gDisplay.mDisplay.fillRect(pad, pad, gDisplay.mDisplay.width() - pad, gDisplay.mDisplay.height() - pad, SSD1306_BLACK);
+  gDisplay.mDisplay.drawRect(rectStart, rectStart, gDisplay.mDisplay.width() - rectStart, gDisplay.mDisplay.height() - rectStart, SSD1306_WHITE);
+  gDisplay.mDisplay.setTextSize(1);
+  gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+  gDisplay.mDisplay.mTextLeftMargin = textStart;
+  gDisplay.mDisplay.mClipLeft = textStart;
+  gDisplay.mDisplay.mClipRight = RESOLUTION_X - textStart;
+  gDisplay.mDisplay.mClipTop = textStart;
+  gDisplay.mDisplay.mClipBottom = RESOLUTION_Y - textStart;
+  gDisplay.mDisplay.setCursor(textStart, textStart);
+}
 
 
 #endif
