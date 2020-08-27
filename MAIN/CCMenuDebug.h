@@ -9,6 +9,20 @@
 static const int SETTINGS_STACK_MAX_DEPTH = 10;
 static const int MAX_SETTING_ITEMS_PER_LIST = 20;
 
+// draws & prepares the screen for a modal message. after this just print text whatever.
+void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4) {
+  gDisplay.mDisplay.setCursor(0,0);
+  gDisplay.mDisplay.fillRect(pad, pad, gDisplay.mDisplay.width() - pad, gDisplay.mDisplay.height() - pad, SSD1306_BLACK);
+  gDisplay.mDisplay.drawRect(rectStart, rectStart, gDisplay.mDisplay.width() - rectStart, gDisplay.mDisplay.height() - rectStart, SSD1306_WHITE);
+  gDisplay.mDisplay.setTextSize(1);
+  gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+  gDisplay.mDisplay.mTextLeftMargin = textStart;
+  gDisplay.mDisplay.mClipLeft = textStart;
+  gDisplay.mDisplay.mClipRight = RESOLUTION_X - textStart;
+  gDisplay.mDisplay.mClipTop = textStart;
+  gDisplay.mDisplay.mClipBottom = RESOLUTION_Y - textStart;
+  gDisplay.mDisplay.setCursor(textStart, textStart);
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // provides utils for menu apps.
@@ -19,16 +33,9 @@ class MenuAppBaseWithUtils : public MenuAppBase
   bool mShowingFrontPage = true;
   
 protected:
-  CCDisplay& mCCDisplay;
-  Adafruit_SSD1306& mDisplay;
-  CCEWIApp& mApp;
-
-  MenuAppBaseWithUtils() :
-    mCCDisplay(gDisplay),
-    mDisplay(gDisplay.mDisplay),
-    mApp(gApp)
+  MenuAppBaseWithUtils()
   {
-    mCCDisplay.AddMenuApp(this);
+    gDisplay.AddMenuApp(this);
   }
   
 public:
@@ -68,7 +75,7 @@ public:
       return;
     }
 
-    mCCDisplay.ScrollApps(gEnc.GetIntDelta());
+    gDisplay.ScrollApps(gEnc.GetIntDelta());
 
     if (gEncButton.IsNewlyPressed()) {
       mShowingFrontPage = false;
@@ -97,7 +104,7 @@ enum class SettingItemType
 struct ISettingItem
 {
   virtual String GetName() = 0;
-  virtual String GetValueString() { return ""; } // not used for trigger types 
+  virtual String GetValueString() { return ""; } // not used for trigger types or submenu types
   virtual SettingItemType GetType() = 0;
 
   virtual void ToggleBool() {} // for bool types
@@ -107,18 +114,32 @@ struct ISettingItem
 };
 
 
+
+struct SettingsList
+{
+  int mItemCount;
+  ISettingItem* mItems[MAX_SETTING_ITEMS_PER_LIST];
+  
+  int Count() const { return mItemCount; }
+  ISettingItem* GetItem(int i) { return mItems[i]; }
+  void Add(ISettingItem* p) {
+    mItems[mItemCount] = p;
+    mItemCount ++;
+  }
+};
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 struct ISettingItemEditor : ISettingItemEditorActions
 {
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) = 0;
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta) = 0; // every frame.
-  virtual void Render(Adafruit_SSD1306& mDisplay) = 0; // not every frame.
+  virtual void Render() = 0; // not every frame.
   virtual void UpdateMomentaryMode(int encIntDelta) = 0;
 
   // just for convenience.
   virtual void CommitEditing() { }
 };
-
 
 template<typename T>
 struct NumericEditor : ISettingItemEditor
@@ -128,23 +149,23 @@ struct NumericEditor : ISettingItemEditor
   int y;
   T mMin;
   T mMax;
-  T& mBinding;
+  Property<T> mBinding;
   T oldVal;
 
-  NumericEditor(T min_, T max_, T& binding) :
+  NumericEditor(T min_, T max_, const Property<T>& binding) :
     mMin(min_),
     mMax(max_),
     mBinding(binding)
-  {  
+  {
   }
 
   virtual T Add(T rhs, int encoderIntDelta) = 0;
-  virtual void DrawValue(T val, T oldVal, Adafruit_SSD1306& mDisplay) = 0;
+  virtual void DrawValue(T val, T oldVal) = 0;
   
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
     mpApi = papi;
     if (!mpApi) mpApi = this;
-    oldVal = mBinding;
+    oldVal = mBinding.GetValue();
     this->x = x;
     this->y = y;
   }
@@ -153,63 +174,58 @@ struct NumericEditor : ISettingItemEditor
   // with encoder button pressed here.
   virtual void UpdateMomentaryMode(int encIntDelta)
   {
-    mBinding = constrain(Add(mBinding, encIntDelta), mMin, mMax);
+    mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
   }
   
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
   {
-    mBinding = constrain(Add(mBinding, encIntDelta), mMin, mMax);
+    mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
     if (backWasPressed) {
-      mBinding = oldVal;
+      mBinding.SetValue(oldVal);
       mpApi->CommitEditing();
     }
     if (encWasPressed) {
       mpApi->CommitEditing();
     }
   }
-  virtual void Render(Adafruit_SSD1306& mDisplay)
+  virtual void Render()
   {
-    mDisplay.setCursor(0,0);
-    mDisplay.fillRect(2, 2, mDisplay.width() - 2, mDisplay.height() - 2, SSD1306_BLACK);
-    mDisplay.drawRect(4, 4, mDisplay.width()-4, mDisplay.height()-4, SSD1306_WHITE);
-    mDisplay.setCursor(12,12);
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-    DrawValue(mBinding, oldVal, mDisplay);
+    SetupModal();
+    DrawValue(mBinding.GetValue(), oldVal);
   }
 };
 
 struct IntEditor : NumericEditor<int>
 {
-  IntEditor(int min_, int max_, int& binding) :
+  IntEditor(int min_, int max_, const Property<int>& binding) :
     NumericEditor(min_, max_, binding)
   {  
   }
   virtual int Add(int n, int encDelta) {
     return n + encDelta;
   }
-  virtual void DrawValue(int n, int oldVal, Adafruit_SSD1306& mDisplay)
+  virtual void DrawValue(int n, int oldVal)
   {
-    mDisplay.print(String("") + n);
+    gDisplay.mDisplay.print(String("") + n);
     int delta = n - oldVal;
-    mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+    gDisplay.mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
   }
 };
 
 struct FloatEditor : NumericEditor<float>
 {
-  FloatEditor(float min_, float max_, float& binding) :
+  FloatEditor(float min_, float max_, const Property<float>& binding) :
     NumericEditor(min_, max_, binding)
   {  
   }
   virtual float Add(float n, int encDelta) {
     return n + (float)encDelta * (mMax - mMin) / 100;
   }
-  virtual void DrawValue(float n, float oldVal, Adafruit_SSD1306& mDisplay)
+  virtual void DrawValue(float n, float oldVal)
   {
-    mDisplay.print(String("") + n);
+    gDisplay.mDisplay.print(String("") + n);
     float delta = n - oldVal;
-    mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+    gDisplay.mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
   }
 };
 
@@ -218,18 +234,19 @@ template<typename T, typename TEditor>
 struct NumericSettingItem : public ISettingItem
 {
   String mName;
-  T& mBinding;
   TEditor mEditor;
+  Property<T> mBinding;
   
-  NumericSettingItem(const String& name, T min_, T max_, T& binding) :
+  NumericSettingItem(SettingsList& list, const String& name, T min_, T max_, const Property<T>& binding) :
     mName(name),
-    mBinding(binding),
-    mEditor(min_, max_, binding)
+    mEditor(min_, max_, binding),
+    mBinding(binding)
   {
+    list.Add(this);
   }
 
   virtual String GetName() { return mName; }
-  virtual String GetValueString() { return String(mBinding); }
+  virtual String GetValueString() { return String(mBinding.GetValue()); }
   virtual SettingItemType GetType() { return SettingItemType::Custom; }
 
   virtual ISettingItemEditor* GetEditor() {
@@ -240,28 +257,27 @@ struct NumericSettingItem : public ISettingItem
 using IntSettingItem = NumericSettingItem<int, IntEditor>;
 using FloatSettingItem = NumericSettingItem<float, FloatEditor>;
 
-
-
 struct BoolSettingItem : public ISettingItem
 {
   String mName;
-  bool& mBinding;
+  Property<bool> mBinding;
   String mTrueCaption;
   String mFalseCaption;
   
-  BoolSettingItem(const String& name, const String& trueCaption, const String& falseCaption, bool& binding) :
+  BoolSettingItem(SettingsList& list, const String& name, const String& trueCaption, const String& falseCaption, const Property<bool>& binding) :
     mName(name),
     mBinding(binding),
     mTrueCaption(trueCaption),
     mFalseCaption(falseCaption)
   {
+    list.Add(this);
   }
 
   virtual String GetName() { return mName; }
-  virtual String GetValueString() { return mBinding ? mTrueCaption : mFalseCaption; }
+  virtual String GetValueString() { return mBinding.GetValue() ? mTrueCaption : mFalseCaption; }
   virtual SettingItemType GetType() { return SettingItemType::Bool; }
   virtual void ToggleBool() {
-    mBinding = !mBinding;
+    mBinding.SetValue(!mBinding.GetValue());
   }
 };
 
@@ -271,10 +287,11 @@ struct TriggerSettingItem : public ISettingItem
   String mName;
   std::function<void()> mAction;
   
-  TriggerSettingItem(const String& name, std::function<void()> action) :
+  TriggerSettingItem(SettingsList& list, const String& name, std::function<void()> action) :
     mName(name),
     mAction(action)
   {
+    list.Add(this);
   }
 
   virtual String GetName() { return mName; }
@@ -285,14 +302,110 @@ struct TriggerSettingItem : public ISettingItem
 };
 
 
-struct SettingsList
+struct SubmenuSettingItem : public ISettingItem
 {
-  int mItemCount;
-  ISettingItem* mItems[MAX_SETTING_ITEMS_PER_LIST];
+  String mName;
+  SettingsList* mSubmenu;
   
-  int Count() const { return mItemCount; }
-  ISettingItem* GetItem(int i) { return mItems[i]; }
+  SubmenuSettingItem(SettingsList& list, const String& name, SettingsList* pSubmenu) :
+    mName(name),
+    mSubmenu(pSubmenu)
+  {
+    list.Add(this);
+  }
+
+  virtual String GetName() { return mName; }
+  virtual SettingItemType GetType() { return SettingItemType::Submenu; }
+  virtual struct SettingsList* GetSubmenu()
+  {
+    return mSubmenu;
+  }
 };
+
+
+template<typename T>
+struct EnumEditor : ISettingItemEditor
+{
+  // set on SetupEditing()
+  ISettingItemEditorActions* mpApi;
+  T mOldVal;
+
+  Property<T> mBinding;
+  const EnumInfo<T>& mEnumInfo;
+
+  Property<int> mListSelectedItem = {
+    [&]() { return (int)mBinding.GetValue(); },
+    [&](const int& val) { mBinding.SetValue((T)val); }
+  };
+
+  ListControl mListControl;
+
+  EnumEditor(const EnumInfo<T>&enumInfo, const Property<T>& binding) :
+    mBinding(binding),
+    mEnumInfo(enumInfo),
+    mListControl(&mEnumInfo, mListSelectedItem, 12, 12, 3)
+  {
+  }
+
+  virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
+    mpApi = papi;
+    if (!mpApi) mpApi = this;
+    mOldVal = mBinding.GetValue();
+  }
+
+  // for editing when holding back button. so back button is definitely pressed, and we don't want to bother
+  // with encoder button pressed here.
+  virtual void UpdateMomentaryMode(int encIntDelta)
+  {
+  }
+  
+  virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
+  {
+    CCASSERT(mpApi != nullptr);
+    //Serial.println(String("update enum editor ") + (int)(micros()));
+    mListControl.Update();
+    if (backWasPressed) {
+      mBinding.SetValue(mOldVal);
+      mpApi->CommitEditing();
+    }
+    if (encWasPressed) {
+      mpApi->CommitEditing();
+    }
+  }
+  virtual void Render()
+  {
+    SetupModal();
+    mListControl.Render();
+  }
+};
+
+
+template<typename T>
+struct EnumSettingItem : public ISettingItem
+{
+  String mName;
+  EnumEditor<T> mEditor;
+  Property<T> mBinding;
+  const EnumInfo<T>& mEnumInfo;
+
+  EnumSettingItem(SettingsList& list, const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding) :
+    mName(name),
+    mEditor(enumInfo, binding),
+    mBinding(binding),
+    mEnumInfo(enumInfo)
+  {
+    list.Add(this);
+  }
+
+  virtual String GetName() { return mName; }
+  virtual String GetValueString() { return mEnumInfo.GetValueString(mBinding.GetValue()); }
+  virtual SettingItemType GetType() { return SettingItemType::Custom; }
+  virtual ISettingItemEditor* GetEditor() {
+    return &mEditor;
+  }
+};
+
+
 
 struct SettingsMenuState
 {
@@ -339,7 +452,7 @@ public:
   virtual void RenderFrontPage()
   {
     if (mpCurrentEditor) {
-      mpCurrentEditor->Render(mDisplay);
+      mpCurrentEditor->Render();
     }
   }
 
@@ -347,9 +460,9 @@ public:
   {
     SettingsMenuState& state = mNav[mNavDepth];
 
-    mDisplay.setTextSize(1);
-    mDisplay.setCursor(0,0);
-    mDisplay.setTextWrap(false);
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.setTextWrap(false);
     int itemToRender = AddConstrained(state.focusedItem, -1, 0, state.pList->Count() - 1);
     const int maxItemsToRender = 4;
     const int itemsToRender = min(maxItemsToRender, state.pList->Count());
@@ -357,23 +470,30 @@ public:
     for (; i < itemsToRender; ++ i) {
       auto* item = state.pList->GetItem(itemToRender);
       if (itemToRender == state.focusedItem) {
-        mDisplay.setTextSize(1);
-        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+        gDisplay.mDisplay.setTextSize(1);
+        gDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       } else {
-        mDisplay.setTextSize(1);
-        mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+        gDisplay.mDisplay.setTextSize(1);
+        gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
       }
-      if (item->GetType() == SettingItemType::Trigger) {
-        mDisplay.println(item->GetName());
-      } else {
-        mDisplay.println(item->GetName() + " = " + item->GetValueString());
+
+      switch (item->GetType()) {
+      case SettingItemType::Trigger:
+        gDisplay.mDisplay.println(item->GetName());
+        break;
+      case SettingItemType::Submenu:
+        gDisplay.mDisplay.println(item->GetName() + " -->");
+        break;
+      default:
+        gDisplay.mDisplay.println(item->GetName() + " = " + item->GetValueString());
+        break;  
       }
 
       itemToRender = AddConstrained(itemToRender, 1, 0, state.pList->Count() - 1);
     }
 
     if (mpCurrentEditor) {
-      mpCurrentEditor->Render(mDisplay);
+      mpCurrentEditor->Render();
     }
 
     if (mIsShowingToast) {
@@ -381,13 +501,8 @@ public:
         mIsShowingToast = false;
       } else {
         // render toast.
-        mDisplay.setCursor(0,0);
-        mDisplay.fillRect(2, 2, mDisplay.width() - 2, mDisplay.height() - 2, SSD1306_BLACK);
-        mDisplay.drawRect(4, 4, mDisplay.width()-4, mDisplay.height()-4, SSD1306_WHITE);
-        mDisplay.setCursor(12,12);
-        mDisplay.setTextSize(1);
-        mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-        mDisplay.print(mToastMsg);
+        SetupModal();
+        gDisplay.mDisplay.print(mToastMsg);
       }
     }
   }
@@ -462,38 +577,28 @@ public:
 
 class SynthSettingsApp : public SettingsMenuApp
 {
-  SettingsList mSynthSettingsList;
-  FloatSettingItem mPortamentoTime;
-  IntSettingItem mTranspose;
-  FloatSettingItem mReverbGain;
+  SettingsList mRootList;
+  
+  FloatSettingItem mPortamentoTime = { mRootList, "Portamento", 0.0f, 0.25f, gAppSettings.mPortamentoTime };
+  IntSettingItem mTranspose = { mRootList, "Transpose", -48, 48, gAppSettings.mTranspose };
+  FloatSettingItem mReverbGain = { mRootList, "Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain };
   
 public:
-  SynthSettingsApp() :
-    mPortamentoTime("Portamento", 0.0f, 0.25f, gAppSettings.mPortamentoTime),
-    mTranspose("Transpose", -48, 48, gAppSettings.mTranspose),
-    mReverbGain("Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain)
-  {
-    mSynthSettingsList.mItemCount = 3;
-    mSynthSettingsList.mItems[0] = &mPortamentoTime;
-    mSynthSettingsList.mItems[1] = &mTranspose;
-    mSynthSettingsList.mItems[2] = &mReverbGain;
-  }
-
   virtual SettingsList* GetRootSettingsList()
   {
-    return &mSynthSettingsList;
+    return &mRootList;
   }
 
   virtual void RenderFrontPage() 
   {
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
 
-    mDisplay.println(String("SYNTH SETTINGS"));
-    mDisplay.println(String(""));
-    mDisplay.println(String(""));
-    mDisplay.println(String("                  -->"));
+    gDisplay.mDisplay.println(String("SYNTH SETTINGS"));
+    gDisplay.mDisplay.println(String(""));
+    gDisplay.mDisplay.println(String(""));
+    gDisplay.mDisplay.println(String("                  -->"));
 
     SettingsMenuApp::RenderFrontPage();
   }
@@ -502,28 +607,13 @@ public:
 class MetronomeSettingsApp : public SettingsMenuApp
 {
   SettingsList mRootList;
-  
-  BoolSettingItem mOnOff;
-  FloatSettingItem mBPM;
-  FloatSettingItem mGain;
-  IntSettingItem mNote;
-  IntSettingItem mDecay;
 
 public:
-  MetronomeSettingsApp() :
-    mOnOff("Enabled?", "On", "Off", gAppSettings.mMetronomeOn),
-    mBPM("BPM", 30.0f, 200.0f, gAppSettings.mPerfSettings.mBPM),
-    mGain("Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain),
-    mNote("Note", 20, 120, gAppSettings.mMetronomeNote),
-    mDecay("Decay", 1, 120, gAppSettings.mMetronomeDecayMS)
-  {
-    mRootList.mItemCount = 5;
-    mRootList.mItems[0] = &mOnOff;
-    mRootList.mItems[1] = &mBPM;
-    mRootList.mItems[2] = &mGain;
-    mRootList.mItems[3] = &mNote;
-    mRootList.mItems[4] = &mDecay;
-  }
+  BoolSettingItem mOnOff = { mRootList, "Enabled?", "On", "Off", gAppSettings.mMetronomeOn };
+  FloatSettingItem mBPM = { mRootList, "BPM", 30.0f, 200.0f, gAppSettings.mBPM };
+  FloatSettingItem mGain = { mRootList, "Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain };
+  IntSettingItem mNote = { mRootList, "Note", 20, 120, gAppSettings.mMetronomeNote };
+  IntSettingItem mDecay = { mRootList, "Decay", 1, 120, gAppSettings.mMetronomeDecayMS };
 
   virtual SettingsList* GetRootSettingsList()
   {
@@ -532,32 +622,32 @@ public:
 
   virtual void RenderFrontPage() 
   {
-    float beatFloat = gSynth.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mPerfSettings.mBPM);
+    float beatFloat = gSynth.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mBPM);
     float beatFrac = beatFloat - floor(beatFloat);
     int beatInt = (int)floor(beatFloat);
     CCPlot(beatInt);
     bool altBeat = (beatInt & 1) != 0;
 
     bool highlight = beatFrac < 0.1;
-    mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextSize(1);
     if (highlight) {
-      mDisplay.fillScreen(WHITE);
+      gDisplay.mDisplay.fillScreen(WHITE);
     }
-    mDisplay.setTextColor(highlight ? BLACK : WHITE);
-    mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.setTextColor(highlight ? BLACK : WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
 
-    mDisplay.println(String("METRONOME SETTINGS"));
-    mDisplay.print(gAppSettings.mMetronomeOn ? "ENABLED" : "disabled");
-    mDisplay.println(String(" bpm=") + gAppSettings.mPerfSettings.mBPM);
+    gDisplay.mDisplay.println(String("METRONOME SETTINGS"));
+    gDisplay.mDisplay.print(gAppSettings.mMetronomeOn ? "ENABLED" : "disabled");
+    gDisplay.mDisplay.println(String(" bpm=") + gAppSettings.mBPM);
 
     const int r = 4;
-    int x = beatFrac * (mDisplay.width() - r*2);
+    int x = beatFrac * (RESOLUTION_X - r*2);
     if (altBeat)
-      x = mDisplay.width() - x;
-    mDisplay.fillCircle(x, mDisplay.getCursorY() + r, r, highlight ? BLACK : WHITE);
+      x = gDisplay.mDisplay.width() - x;
+    gDisplay.mDisplay.fillCircle(x, gDisplay.mDisplay.getCursorY() + r, r, highlight ? BLACK : WHITE);
     
-    mDisplay.println(String(""));
-    mDisplay.println(String("                  -->"));
+    gDisplay.mDisplay.println(String(""));
+    gDisplay.mDisplay.println(String("                  -->"));
 
     SettingsMenuApp::RenderFrontPage();
   }
@@ -572,15 +662,9 @@ class SystemSettingsApp : public SettingsMenuApp
 {
   SettingsList mRootList;
   
-  TriggerSettingItem mResetKeys;
+  TriggerSettingItem mResetKeys = { mRootList, "Reset all keys", [&](){ this->OnResetKeys(); } };
 
 public:
-  SystemSettingsApp() :
-    mResetKeys("Reset all keys", [&](){ this->OnResetKeys(); })
-  {
-    mRootList.mItemCount = 1;
-    mRootList.mItems[0] = &mResetKeys;
-  }
 
   void OnResetKeys() {
     gApp.SendCmd(CommandFromMain::ResetTouchKeys);
@@ -594,11 +678,11 @@ public:
 
   virtual void RenderFrontPage() 
   {
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
 
-    mDisplay.println(String("SYSTEM SETTINGS"));
+    gDisplay.mDisplay.println(String("SYSTEM SETTINGS"));
     SettingsMenuApp::RenderFrontPage();
   }
 };
@@ -609,13 +693,13 @@ class DebugMenuApp : public MenuAppBaseWithUtils
 {
 public:
   virtual void RenderFrontPage() {
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
-    mDisplay.println("DEBUG PAGES");
-    mDisplay.println(String("Uptime: ") + (int)((float)millis() / 1000) + " sec");
-    mDisplay.println(String("Notes played: ") + gEWIControl.mMusicalState.noteOns);
-    mDisplay.println(String("                  -->"));
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.println("DEBUG PAGES");
+    gDisplay.mDisplay.println(String("Uptime: ") + (int)((float)millis() / 1000) + " sec");
+    gDisplay.mDisplay.println(String("Notes played: ") + gEWIControl.mMusicalState.noteOns);
+    gDisplay.mDisplay.println(String("                  -->"));
   }
 
   int mPage = 0;
@@ -642,17 +726,17 @@ public:
   
   virtual void RenderApp()
   {
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
 
     auto pageRX = [&](CCMainTxRx& rx, const char *title){
       //CCMainTxRx& rx = (gEncButton.IsPressed()) ? gLHSerial : gRHSerial;
-      mDisplay.println(String(title) + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
-      mDisplay.print(String("Err:") + rx.mChecksumErrors);
-      mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
-      mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + " skip%:" + (int)((float)rx.mSkippedPayloads * 100 / max(1,(int)rx.mRxSuccess)));
-      mDisplay.println(String("rxfps:") + (int)rx.mRxRate.getFPS());
+      gDisplay.mDisplay.println(String(title) + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
+      gDisplay.mDisplay.print(String("Err:") + rx.mChecksumErrors);
+      gDisplay.mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
+      gDisplay.mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + " skip%:" + (int)((float)rx.mSkippedPayloads * 100 / max(1,(int)rx.mRxSuccess)));
+      gDisplay.mDisplay.println(String("rxfps:") + (int)rx.mRxRate.getFPS());
     };
 
     auto pageLHRX = [&](){
@@ -664,10 +748,10 @@ public:
     };
     
     auto pageMusicalState = [&]() {
-      mDisplay.println(String("#:") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote) + "hz");
-      mDisplay.println(String("transpose:") + gAppSettings.mTranspose);
-      mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
-      mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
+      gDisplay.mDisplay.println(String("#:") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote) + "hz");
+      gDisplay.mDisplay.println(String("transpose:") + gAppSettings.mTranspose);
+      gDisplay.mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
+      gDisplay.mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
     };
     
     auto pagePhysicalState = [&]() {
@@ -675,7 +759,7 @@ public:
       // RH: k:1234 b:12
       // wind:0.455 // bite:0.11
       // pitch:
-      mDisplay.println(String("LH k:") +
+      gDisplay.mDisplay.println(String("LH k:") +
         (gEWIControl.mPhysicalState.key_lh1.IsPressed ? "1" : "-") +
         (gEWIControl.mPhysicalState.key_lh2.IsPressed ? "2" : "-") +
         (gEWIControl.mPhysicalState.key_lh3.IsPressed ? "3" : "-") +
@@ -689,7 +773,7 @@ public:
         (gEWIControl.mPhysicalState.key_lhExtra1.IsPressed ? "1" : "-") +
         (gEWIControl.mPhysicalState.key_lhExtra2.IsPressed ? "2" : "-"));
 
-      mDisplay.println(String("RH k:") +
+      gDisplay.mDisplay.println(String("RH k:") +
         (gEWIControl.mPhysicalState.key_rh1.IsPressed ? "1" : "-") +
         (gEWIControl.mPhysicalState.key_rh2.IsPressed ? "2" : "-") +
         (gEWIControl.mPhysicalState.key_rh3.IsPressed ? "3" : "-") +
@@ -698,31 +782,31 @@ public:
         " b:" +
         (gEWIControl.mPhysicalState.key_rhExtra1.IsPressed ? "1" : "-") +
         (gEWIControl.mPhysicalState.key_rhExtra2.IsPressed ? "2" : "-"));
-      mDisplay.print(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
+      gDisplay.mDisplay.print(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
         "bite: " + gEWIControl.mPhysicalState.bite01);
-      mDisplay.print(String("  pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
-      mDisplay.print(String("  tristate: ") + ToString(gEWIControl.mPhysicalState.key_triState));
+      gDisplay.mDisplay.print(String("  pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
+      gDisplay.mDisplay.print(String("  tristate: ") + ToString(gEWIControl.mPhysicalState.key_triState));
     };
 
     auto pageDebugLHRX = [&]() {
-      mDisplay.println(String("LH debug") + ToString(gLHSerial.mReceivedData));
+      gDisplay.mDisplay.println(String("LH debug") + ToString(gLHSerial.mReceivedData));
     };
 
     auto pageDebugRHRX = [&]() {
-      mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
+      gDisplay.mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
     };
 
     auto pageDebugMain = [&]() {
-      mDisplay.println(String("Main debug"));
-      mDisplay.println(String("Max frame ms: ") + ((float)gLongestLoopMicros / 1000));
-      mDisplay.println(String("Max idle ms:  ") + ((float)gLongestBetweenLoopMicros / 1000));
+      gDisplay.mDisplay.println(String("Main debug"));
+      gDisplay.mDisplay.println(String("Max frame ms: ") + ((float)gLongestLoopMicros / 1000));
+      gDisplay.mDisplay.println(String("Max idle ms:  ") + ((float)gLongestBetweenLoopMicros / 1000));
     };
     
     auto pageAudioStatus = [&]() {
-      mDisplay.println(String("Memory: ") + AudioMemoryUsage());
-      mDisplay.println(String("Memory Max: ") + AudioMemoryUsageMax());
-      mDisplay.println(String("CPU: ") + AudioProcessorUsage());
-      mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
+      gDisplay.mDisplay.println(String("Memory: ") + AudioMemoryUsage());
+      gDisplay.mDisplay.println(String("Memory Max: ") + AudioMemoryUsageMax());
+      gDisplay.mDisplay.println(String("CPU: ") + AudioProcessorUsage());
+      gDisplay.mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
     };
 
     switch(mPage) {
@@ -787,7 +871,7 @@ struct Plotter
     mCursor = (mCursor + 1) % sampleCount;
   }
   
-  void Render(Adafruit_SSD1306& mDisplay) {
+  void Render() {
     // determine min/max for scale.
     if (mValid == 0) return;
     int32_t min_ = vals[0][0];
@@ -808,7 +892,7 @@ struct Plotter
         i += sampleCount;
       for (size_t s = 0; s < TseriesCount; ++ s) {
         uint32_t y = map(vals[s][i], min_, max_, DisplayHeight - 1, 0);
-        mDisplay.drawPixel(x, y, WHITE);
+        gDisplay.mDisplay.drawPixel(x, y, WHITE);
       }
     }
     
@@ -823,11 +907,11 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
   bool isPlaying = true;
 
   virtual void RenderFrontPage() {
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
-    mDisplay.println(String("TOUCH KEYS STATE"));
-    mDisplay.println(String("LH k:") +
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.println(String("TOUCH KEYS STATE"));
+    gDisplay.mDisplay.println(String("LH k:") +
       (gEWIControl.mPhysicalState.key_lh1.IsPressed ? "1" : "-") +
       (gEWIControl.mPhysicalState.key_lh2.IsPressed ? "2" : "-") +
       (gEWIControl.mPhysicalState.key_lh3.IsPressed ? "3" : "-") +
@@ -841,7 +925,7 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
       (gEWIControl.mPhysicalState.key_lhExtra1.IsPressed ? "1" : "-") +
       (gEWIControl.mPhysicalState.key_lhExtra2.IsPressed ? "2" : "-"));
 
-    mDisplay.println(String("RH k:") +
+    gDisplay.mDisplay.println(String("RH k:") +
       (gEWIControl.mPhysicalState.key_rh1.IsPressed ? "1" : "-") +
       (gEWIControl.mPhysicalState.key_rh2.IsPressed ? "2" : "-") +
       (gEWIControl.mPhysicalState.key_rh3.IsPressed ? "3" : "-") +
@@ -853,11 +937,11 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
 
   }
   virtual void RenderApp() {
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(WHITE);
-    mDisplay.setCursor(0,0);
-    mDisplay.println(gKeyDesc[mKeyIndex].mName);
-    mPlotter.Render(mDisplay);
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.println(gKeyDesc[mKeyIndex].mName);
+    mPlotter.Render();
   }
   virtual void UpdateApp() {
     if (BackButton().IsNewlyPressed()) {

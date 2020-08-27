@@ -7,74 +7,39 @@
 
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////
-static const size_t HARMONIZER_VOICES = 4;
-static const size_t MAX_VOICES = 4;
 
-class PresetName
-{
-  char buf[16];
-};
+// a sort of exception display mechanism.
+bool gIsCrashed = false;
+String gCrashMessage;
 
-struct Scale
-{
-  // notes
-};
+static inline void Die(const String& msg) {
+  gCrashMessage = msg;
+  gIsCrashed = true;
+}
 
-struct PerfSettings
-{
-  PresetName mName;
-  uint8_t mHarmonizerPreset = 0;
-  uint8_t mSynthPreset[HARMONIZER_VOICES] = {};
-  int8_t mTranspose = 0;
-  Scale mGlobalScale;
-  float mBPM = 90.0f;
-};
-struct SystemSettings
-{
-  //
-};
-struct AppSettings
-{
-  float mPortamentoTime = 0.005f;
-  
-  bool mMetronomeOn = false;
-  float mMetronomeGain = 0.8f;
-  int mMetronomeNote = 80;
-  int mMetronomeDecayMS= 15;
-  
-  float mReverbGain = .2f;
-  int mTranspose = 0;
-
-  PerfSettings mPerfSettings;
-};
-
-AppSettings gAppSettings;
-
-
-//#include "AppSettings.h"
+#define CCASSERT(x) if (!(x)) { Die(String("!Assert! ") + __FILE__ + ":" + (int)__LINE__); }
 
 #include "Shared_CCSwitch.h"
 #include "Shared_CCLeds.h"
+
+#include "AppSettings.h"
+
 #include "Shared_CCTxRx.h"
 
-bool gTouchKeyGraphsIsRunning = false;
-
 #include "CCEWIApplication.h"
+CCEWIApp gApp;
+
 #include "CCDisplay.h"
 
-CCEWIApp gApp;
-CCDisplay gDisplay(gApp);
-
 #include "CCMenuDebug.h"
+#include "CCMenu.h"
 
+HarmSettingsApp gHarmSettingsApp;
 SystemSettingsApp gSystemSettingsApp;
 TouchKeyGraphs gTouchKeyApp;
 MetronomeSettingsApp gMetronomeApp;
 DebugMenuApp gDebugApp;
 SynthSettingsApp gSynthSettingsApp;
-
-CCLeds leds(10, 2, 10, true);
-CCThrottlerT<20> ledThrottle;
 
 
 void setup() {
@@ -86,6 +51,25 @@ bool firstLoop = true;
 uint32_t gLoopExitMicros = micros();
 
 void loop() {
+
+  if (gIsCrashed) {
+    if (!gDisplay.mIsSetup) {
+      gDisplay.setup();
+    }
+    gDisplay.mDisplay.clearDisplay();
+    gDisplay.mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+    Serial.println(gCrashMessage);
+    gDisplay.mDisplay.println("!EXCEPTION!");
+    gDisplay.mDisplay.println(gCrashMessage);
+    gDisplay.mDisplay.display();
+    while(true) {
+      delay(100);
+    }
+    return;
+  }
+  
   uint32_t m = micros();
   if (firstLoop) {
     firstLoop = false;
@@ -100,25 +84,6 @@ void loop() {
   }
 
   UpdateUpdateObjects();
-
-  if (ledThrottle.IsReady())
-  {
-    
-    leds.setPixelColor(0, 0, 0, 0);
-    leds.setPixelColor(1, col(gLHRXErrorIndicator.GetState()), col(gLHTXIndicator.GetState()), col(gLHRXIndicator.GetState()));
-    leds.setPixelColor(2, col(gRHRXErrorIndicator.GetState()), col(gRHTXIndicator.GetState()), col(gRHRXIndicator.GetState()));
-    leds.setPixelColor(3, 0, 0, col(gMidiActivityIndicator.GetState()));
-    
-    leds.setPixelColor(4, col(gAppSettings.mTranspose != 0), 0, 0);
-    leds.setPixelColor(5, col(gAppSettings.mTranspose < 0), col(gAppSettings.mTranspose > 0), 0);
-
-    // 6 = off
-    // 7 = off
-
-    leds.setPixelColor(8, col(gEncButton.IsCurrentlyPressed()), 0, col(gEncIndicator.GetState()));
-    leds.setPixelColor(9, 0, gVolumePot.GetValue01() * 6, col(gVolIndicator.GetState()));
-    leds.show();
-  }
 
   uint32_t n = micros();
   if (n > m && (n - m) > gLongestLoopMicros) {

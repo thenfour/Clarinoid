@@ -22,6 +22,9 @@ uint32_t gLongestBetweenLoopMicros = 0;
 // Simplest is to do it the way it's designed for: in the main sketch, global scope.
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, gMIDI);
 
+CCLeds gLeds(10, 2, true);
+CCThrottlerT<10> gLedThrottle;
+
 CCOnOffSwitch gEncButton(3, 5);
 CCEncoder<4> gEnc(4, 5);
 TransientActivityLED gEncIndicator(60, 200);
@@ -93,35 +96,9 @@ public:
       gVolIndicator.Touch();
       gSynth.SetGain(gVolumePot.GetValue01());
     }
-
-//    if (gOldTristateVal != gEWIControl.mPhysicalState.key_triState) {
-//      // tristate will control harmonizer.
-//      switch (gEWIControl.mPhysicalState.key_triState) {
-//      case Tristate::Position2:
-//        gSynth.SetHarmonizer(1);
-//        break;
-//      case Tristate::Position3:
-//        gSynth.SetHarmonizer(2);
-//        break;
-//      default:
-//        gSynth.SetHarmonizer(0);
-//        break;
-//      }
-//    }
     
     gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1.IsPressed);
     gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2.IsPressed);
-    
-//    if (gRHButton1Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
-//      // todo: this logic belongs elsewhere.
-//      if (gAppSettings.mTranspose < 48)
-//        gAppSettings.mTranspose += 12;
-//    }
-//    if (gRHButton2Key.IsTriggered() && gEWIControl.mPhysicalState.key_back.IsCurrentlyPressed()) {
-//      // todo: this logic belongs elsewhere.
-//      if (gAppSettings.mTranspose > -48)
-//        gAppSettings.mTranspose -= 12;
-//    }
   
     // gather up serial receive (LH)
     if (gLHSerial.mHaveNewData) {
@@ -142,18 +119,6 @@ public:
     // combine the data to form the current state of things.
     // this converts incoming data to overall state and musical paramaters
     gEWIControl.Update(gLHSerial.mReceivedData, gRHSerial.mReceivedData);
-  
-//    if (gEWIControl.mPhysicalState.key_back != prev_key_back) {
-//      // send a command to LHRH.
-//      prev_key_back = gEWIControl.mPhysicalState.key_back;
-//      MainPayload payload;
-//      payload.data.ledMode = gEWIControl.mPhysicalState.key_back ? LHRHLEDMode::Off : LHRHLEDMode::Debug;
-//      gLHSerial.Send(payload);
-//      gRHSerial.Send(payload);
-//      gLHTXIndicator.Touch();
-//      gRHTXIndicator.Touch();    
-//    }
-//    
 
     if (!gTouchKeyGraphsIsRunning) {
       if (mPayload.data.focusedTouchKey != -1) {
@@ -183,7 +148,26 @@ public:
     // output to synth. this synth doesn't operate on the MIDI data because MIDI reduces precision a bit.
     // this can be realtime.
     gSynth.Update(gEWIControl.mMusicalState);
-  }
+
+    if (gLedThrottle.IsReady())
+    {
+      gLeds.setPixelColor(0, 0, 0, 0);
+      gLeds.setPixelColor(1, col(gLHRXErrorIndicator.GetState()), col(gLHTXIndicator.GetState()), col(gLHRXIndicator.GetState()));
+      gLeds.setPixelColor(2, col(gRHRXErrorIndicator.GetState()), col(gRHTXIndicator.GetState()), col(gRHRXIndicator.GetState()));
+      gLeds.setPixelColor(3, 0, 0, col(gMidiActivityIndicator.GetState()));
+      
+      gLeds.setPixelColor(4, col(gAppSettings.mTranspose != 0), 0, 0);
+      gLeds.setPixelColor(5, col(gAppSettings.mTranspose < 0), col(gAppSettings.mTranspose > 0), 0);
+  
+      // 6 = off
+      // 7 = off
+  
+      gLeds.setPixelColor(8, col(gEncButton.IsCurrentlyPressed()), 0, col(gEncIndicator.GetState()));
+      gLeds.setPixelColor(9, 0, gVolumePot.GetValue01() * 6, col(gVolIndicator.GetState()));
+      gLeds.show();
+    }
+  
+  } // loop();
 };
 
 

@@ -82,15 +82,15 @@ struct VoiceList
     { mix1, 0 },
     { mix1, 1 },
     { mix1, 2 },
-    { mix1, 3 },
-//    { mix2, 0 },
-//    { mix2, 1 },
-//    { mix2, 2 },
-//    { mix2, 3 },
-//    { mix3, 0 },
-//    { mix3, 1 },
-//    { mix3, 2 },
-//    { mix3, 3 },
+    { mix1, 3 }, // 4
+    { mix2, 0 },
+    { mix2, 1 },
+    { mix2, 2 },
+    { mix2, 3 }, // 8
+    { mix3, 0 },
+    { mix3, 1 },
+    { mix3, 2 },
+    { mix3, 3 }, // 12
 //    { mix4, 0 },
 //    { mix4, 1 },
 //    { mix4, 2 },
@@ -282,7 +282,7 @@ public:
       CCSynthGraph::metronomeEnv.decay(gAppSettings.mMetronomeDecayMS);
       CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
       CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
-      if (mMetronomeTimer.IsReady(60000.0f / gAppSettings.mPerfSettings.mBPM)) {
+      if (mMetronomeTimer.IsReady(60000.0f / gAppSettings.mBPM)) {
         CCSynthGraph::metronomeEnv.noteOn();
       }
     }

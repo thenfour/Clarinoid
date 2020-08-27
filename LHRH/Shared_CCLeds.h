@@ -9,7 +9,7 @@ class CCLeds : IUpdateObject
 {
   int mCount;
   Adafruit_NeoPixel mStrip;
-  CCThrottler mThrottle;
+  //CCThrottler mThrottle;
   bool mReversed;
 
   // when brightness is 255, full brightness is unlocked.
@@ -17,10 +17,10 @@ class CCLeds : IUpdateObject
   uint8_t mBrightness = 16;
 
 public:
-  explicit CCLeds(uint8_t count, uint8_t pin, uint32_t updatePeriodMS, bool reversed) :
+  explicit CCLeds(uint8_t count, uint8_t pin, bool reversed) :
     mCount(count),
     mStrip(count, pin, NEO_GRB + NEO_KHZ800),
-    mThrottle(updatePeriodMS),
+    //mThrottle(updatePeriodMS),
     mReversed(reversed)
   {
   }
@@ -33,8 +33,6 @@ public:
 
   virtual void loop()
   {
-    if (!mThrottle.IsReady())
-      return;
   }
 
   void SetBrightness(uint8_t b) {

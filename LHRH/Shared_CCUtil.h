@@ -2,6 +2,8 @@
 #ifndef CCUTIL_H
 #define CCUTIL_H
 
+#include <functional>
+
 //////////////////////////////////////////////////////////////////////
 const int MaxUpdateObjects = 30;
 
@@ -460,6 +462,17 @@ const char *ToString(Tristate t) {
   return "null";
 }
 
+String ToString(void* p) {
+  static char x[20];
+  sprintf(x, "%p", p);
+  return String(x);
+}
+
+const char *ToString(bool p) {
+  if (p) return "true";
+  return "false";
+}
+
 // helps interpreting touch keys like buttons. like a computer keyboard, starts repeating after an initial delay.
 // untouching the key will reset the delays
 template<int TrepeatInitialDelayMS, int TrepeatPeriodMS>
@@ -527,10 +540,17 @@ public:
   }
 };
 
+static int RotateIntoRange(const int& val, const int& itemCount) {
+  CCASSERT(itemCount > 0);
+  int ret = val;
+  while(ret < 0) {
+    ret += itemCount; // todo: optimize
+  }
+  return ret % itemCount;
+}
 
-// todo: optimize
-static int AddConstrained(int orig, int delta, int min_, int max_) {
-  //Serial.println(String("add constrained: ") + orig + " + " + delta + " [" + min_ + ", " + max_ + "]");
+static inline int AddConstrained(int orig, int delta, int min_, int max_) {
+  CCASSERT(max_ >= min_);
   if (max_ <= min_)
     return min_;
   int ret = orig + delta;
@@ -541,5 +561,152 @@ static int AddConstrained(int orig, int delta, int min_, int max_) {
     ret -= period;
   return ret;
 }
+
+
+
+template<typename T>
+struct Property
+{
+  T mOwnValue;
+  T* mRefBinding = &mOwnValue;
+  std::function<T()> mGetter;
+  std::function<void(const T&)> mSetter;
+  std::function<void(const T& oldVal, const T& newVal)> mOnChange;
+
+  // copy
+  Property(const Property<T>& rhs) :
+    mOwnValue(rhs.mOwnValue),
+    mRefBinding(rhs.mRefBinding == &rhs.mOwnValue ? &mOwnValue : rhs.mRefBinding),
+    mGetter(rhs.mGetter),
+    mSetter(rhs.mSetter),
+    mOnChange(rhs.mOnChange)
+  {
+  }
+
+  Property(Property<T>&& rhs) :
+    mOwnValue(rhs.mOwnValue),
+    mRefBinding(rhs.mRefBinding == &rhs.mOwnValue ? &mOwnValue : rhs.mRefBinding),
+    mGetter(std::move(rhs.mGetter)),
+    mSetter(std::move(rhs.mSetter)),
+    mOnChange(std::move(rhs.mOnChange))
+  {
+  }
+
+  Property<T>& operator =(const Property<T>&) = delete;
+  Property<T>& operator =(Property<T>&&) = delete;
+  
+  Property(std::function<T()> getter, std::function<void(const T&)> setter) :
+    mGetter(getter),
+    mSetter(setter)
+  {}
+  Property(T& binding) :
+    mRefBinding(&binding)
+  {
+//    char x[100];
+//    sprintf(x, "ref binding to %p", (&binding));
+//    Serial.println(x);
+  }
+  Property(std::function<void(const T& oldVal, const T& newVal)> onChange) :
+    mOnChange(onChange)
+  {
+  }
+  Property() :
+    mRefBinding(&mOwnValue)
+  {
+  }
+  T GetValue() const
+  {
+    if (!!mGetter) {
+      return mGetter();
+    }
+    CCASSERT(!!mRefBinding);
+    return *mRefBinding;
+  }
+  void SetValue(const T& val)
+  {
+    T oldVal = GetValue();
+    if (mRefBinding) {
+      *mRefBinding = val;
+    }
+    if (mSetter) {
+      mSetter(val);
+    }
+    if (oldVal != val && mOnChange) {
+      mOnChange(oldVal, val);
+    }
+  }
+};
+
+template<typename Tprop, typename Tval>
+Property<Tprop> MakePropertyByCasting(Tval& x) {
+  return Property<Tprop>(
+    [&]() { return static_cast<Tprop>(x); },
+    [&](const Tprop& val) { x = static_cast<Tval>(val);
+  });
+}
+
+
+struct IList {
+  virtual int List_GetItemCount() const = 0;
+  virtual String List_GetItemCaption(int i) const = 0;
+};
+
+
+
+
+template<typename T>
+struct EnumItemInfo
+{
+  T mValue;
+  const char *mName;
+};
+
+// THIS REQUIRES THAT YOUR VALUES ARE SEQUENTIAL AND THE SAME AS LIST INDICES. Runtime checks performed.
+// otherwise i would need to add a bunch of inefficient 
+template<typename T>
+struct EnumInfo : IList {
+  const size_t mItemCount;
+  const EnumItemInfo<T>* mItems;
+  
+  template<size_t N>
+  EnumInfo(const EnumItemInfo<T>(&enumItems)[N]) :
+    mItemCount(N),
+    mItems(enumItems)
+  {
+    for (size_t i = 0; i < N; ++ i) {
+      if (static_cast<size_t>(mItems[i].mValue) != i) {
+        Die("Enum value did not correspond to list index");
+      }
+    }
+  }
+
+  int List_GetItemCount() const { return mItemCount; }
+  
+  String List_GetItemCaption(int n) const
+  {
+    CCASSERT(n >= 0 && n < (int)mItemCount);
+    return String(mItems[n].mName);
+  }
+  
+  const EnumItemInfo<T>* GetItem(size_t n) {
+    CCASSERT(n >0 && n <mItemCount);
+    return &mItems[n];
+  }
+
+  const char *GetValueString(const T& val) const {
+    return mItems[static_cast<size_t>(val)].mName;
+  }
+
+  T AddRotate(const T& val, int n) const {
+    int y = static_cast<int>(val) + n;
+    return static_cast<T>(RotateIntoRange(y, (int)mItemCount));
+  }
+
+  int ToInt(const T& val) const { return static_cast<int>(val); }
+  T ToValue(const int& val) const { return static_cast<T>(val); }
+};
+
+
+
 
 #endif
