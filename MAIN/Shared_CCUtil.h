@@ -4,6 +4,21 @@
 
 #include <functional>
 
+#ifndef CCASSERT // LHRH get this ------------------------------
+
+static inline void Die(const String& msg) {
+  Serial.begin(9600);
+  while(!Serial);
+  Serial.println(msg);
+  while(true) {
+    delay(500);
+  }
+}
+
+#define CCASSERT(x) if (!(x)) { Die(String("!Assert! ") + __FILE__ + ":" + (int)__LINE__); }
+  
+#endif // CCASSERT
+
 
 struct IList {
   virtual int List_GetItemCount() const = 0;
@@ -126,6 +141,9 @@ enum class ProfileObjectType
   PlotHelper,
   Switch,
   TxRx,
+  TouchKeyCalibration,
+  TouchKey,
+  BreathSensor,
   END
 };
 
@@ -142,7 +160,10 @@ EnumItemInfo<ProfileObjectType> gProfileObjectTypeItems[gProfileObjectTypeCount]
   { ProfileObjectType::Display, "Display" },
   { ProfileObjectType::PlotHelper, "PlotHelper" },
   { ProfileObjectType::Switch, "Switch" },
-  { ProfileObjectType::TxRx, "TxRx" }
+  { ProfileObjectType::TxRx, "TxRx" },
+  { ProfileObjectType::TouchKeyCalibration, "TouchKeyCalibration" },
+  { ProfileObjectType::TouchKey, "TouchKey" },
+  { ProfileObjectType::BreathSensor, "BreathSensor" },
 };
 
 EnumInfo<ProfileObjectType> gProfileObjectTypeInfo (gProfileObjectTypeItems);
@@ -310,7 +331,6 @@ public:
     return IsReady(TperiodMS);
   }
 
-  // TODO: THIS will get out of phase with the actual IsReady() triggers, because IsReady() resets
   float GetBeatFloat(uint32_t periodMS) const {
     auto now = millis() + mPhase; // minus is more theoretically accurate but this serves the purpose just as well.
     float f = abs(float(now - mFirstPeriodStartMS) / periodMS);

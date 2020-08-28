@@ -160,6 +160,8 @@ enum class CommandFromMain : uint8_t
 {
   None = 0,
   ResetTouchKeys = 1,
+  EnableOrangeLED = 2,
+  DisableOrangeLED = 3,
 };
 
 struct MainChecksummablePayload
@@ -212,7 +214,7 @@ union BothPayloads
 ////////////////////////////////////////////////////////////////////////////////
 
 // the LHRH serial handler
-class CCLHRHTxRx: IUpdateObject
+class CCLHRHTxRx: UpdateObjectT<ProfileObjectType::TxRx>
 {
   // { for TX
   framerateCalculator mFramerate;
@@ -279,7 +281,7 @@ public:
 };
 
 // the MAIN serial handler
-class CCMainTxRx: IUpdateObject
+class CCMainTxRx: UpdateObjectT<ProfileObjectType::TxRx>
 {
 public:
   // { for TX

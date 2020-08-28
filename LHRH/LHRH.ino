@@ -3,8 +3,8 @@
 // speed-optimizing for some reason causes problems i don't know why.
 // so choose smallest code
 
-//#define LH
-#define RH
+#define LH
+//#define RH
 
 //============================================================
 
@@ -26,7 +26,7 @@ uint32_t gFocusedTouchReadThresholdMicros;
 #include "CCPressure.h"
 
 // common
-CCLeds leds(10, 2, 10,
+CCLeds leds(10, 2,
 #ifdef LH
   false /* reversed */
 #else // RH
@@ -83,8 +83,8 @@ inline void CaptureButton(CCTouchKey& key, CapTouchKeyData& dest)
 
 void setup() {
   Serial.begin(9600);
+
   pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
   SetupUpdateObjects();
 }
 
@@ -100,13 +100,19 @@ void loop() {
     switch(gTxRx.mReceivedData.data.cmd) {
     case CommandFromMain::None:
       break;
+    case CommandFromMain::EnableOrangeLED:
+      digitalWrite(13, HIGH);
+      break;
+    case CommandFromMain::DisableOrangeLED:
+      digitalWrite(13, LOW);
+      break;
     case CommandFromMain::ResetTouchKeys:
       gTouchKeyCalibrator.ResetAllKeys();
       break;
     }
   }
 
-  if (gFocusedKeyIndex >= 0 && gFocusedKeyIndex < SizeofStaticArray(gKeyDesc)) {
+  if (gFocusedKeyIndex >= 0 && gFocusedKeyIndex < (int)SizeofStaticArray(gKeyDesc)) {
 #ifdef LH
     if (gKeyDesc[gFocusedKeyIndex].mLH) {
 #else // RH

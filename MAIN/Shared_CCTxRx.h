@@ -160,6 +160,8 @@ enum class CommandFromMain : uint8_t
 {
   None = 0,
   ResetTouchKeys = 1,
+  EnableOrangeLED = 2,
+  DisableOrangeLED = 3,
 };
 
 struct MainChecksummablePayload

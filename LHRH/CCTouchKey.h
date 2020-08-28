@@ -34,7 +34,7 @@ struct TouchableKeyInfo {
 
   void Reset() {
     int m1 = micros();
-    int n = mTouchablePin.touchRead();
+    /*int n = */mTouchablePin.touchRead();
     int m2 = micros();
     mMinValue = m2 - m1;
     mRunningValues.Clear();
@@ -42,7 +42,7 @@ struct TouchableKeyInfo {
   }
 };
 
-class CCTouchKeyCalibrator : IUpdateObject
+class CCTouchKeyCalibrator : UpdateObjectT<ProfileObjectType::TouchKeyCalibration>
 {
   CCThrottlerT<TOUCH_KEY_CALIB_THROTTLE_MS> mThrottle;
   uint8_t mIndex = 0;
@@ -101,7 +101,7 @@ CCTouchKeyCalibrator gTouchKeyCalibrator;
 
 class CCTouchKey* gTouchKeyLookup[SizeofStaticArray(gKeyDesc)] = {nullptr};
 
-class CCTouchKey : IUpdateObject
+class CCTouchKey : UpdateObjectT<ProfileObjectType::TouchKey>
 {
   bool mIsTouched = false;
   bool mIsDirty = false;
@@ -116,7 +116,7 @@ public:
   {
     ki.mDebug = debug;
     gTouchKeyLookup[keyDescIndex] = this;
-    int n = gTouchKeyCalibrator.Add(&ki);
+    /*int n = */gTouchKeyCalibrator.Add(&ki);
     //mStaggerGroup = n;
   }
 

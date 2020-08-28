@@ -29,7 +29,7 @@ public:
   }
 };
 
-class CCBreathSensor : IUpdateObject
+class CCBreathSensor : UpdateObjectT<ProfileObjectType::BreathSensor>
 {
   uint8_t mPin;
   uint16_t mRawValue = 0;

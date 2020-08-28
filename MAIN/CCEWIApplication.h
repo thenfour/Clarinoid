@@ -54,6 +54,8 @@ BoolKeyWithRepeat<1000, 1000> gRHButton1Key;
 BoolKeyWithRepeat<1000, 1000> gRHButton2Key;
 Tristate gOldTristateVal = Tristate::Null;
 
+bool gSettingsLoaded = false;
+
 // contains all non-GUI application stuff.
 class CCEWIApp : UpdateObjectT<ProfileObjectType::EWIApp>
 {
@@ -87,6 +89,12 @@ public:
   }
 
   void loop() {
+
+    if (!gSettingsLoaded) {
+      SendCmd(gAppSettings.mOrangeLEDs ? CommandFromMain::EnableOrangeLED : CommandFromMain::DisableOrangeLED);
+      gSettingsLoaded = true;
+    }
+
    
     if (gEnc.IsDirty()) {
       gEncIndicator.Touch();
@@ -154,7 +162,7 @@ public:
       gLeds.setPixelColor(0, 0, 0, 0);
       gLeds.setPixelColor(1, col(gLHRXErrorIndicator.GetState()), col(gLHTXIndicator.GetState()), col(gLHRXIndicator.GetState()));
       gLeds.setPixelColor(2, col(gRHRXErrorIndicator.GetState()), col(gRHTXIndicator.GetState()), col(gRHRXIndicator.GetState()));
-      gLeds.setPixelColor(3, 0, 0, col(gMidiActivityIndicator.GetState()));
+      gLeds.setPixelColor(3, 0, col(gMidiActivityIndicator.GetState()), col(gMidiActivityIndicator.GetState()));
       
       gLeds.setPixelColor(4, col(gAppSettings.mTranspose != 0), 0, 0);
       gLeds.setPixelColor(5, col(gAppSettings.mTranspose < 0), col(gAppSettings.mTranspose > 0), 0);
