@@ -3,7 +3,7 @@
 // "Faster"
 
 // https://forum.pjrc.com/threads/57932-Latency-what-s-new
-//#define AUDIO_BLOCK_SAMPLES 1024 // this seems to have no effect; may need to fork
+#define AUDIO_BLOCK_SAMPLES 32 // not sure if this is actually taking any effect.
 
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////

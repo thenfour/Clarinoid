@@ -234,7 +234,7 @@ public:
   CCThrottlerT<500> mMetronomeTimer;
 
   virtual void setup() {
-    AudioMemory(12);
+    AudioMemory(5 + (MAX_VOICES * 2)); // rough estimate
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.

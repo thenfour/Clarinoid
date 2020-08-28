@@ -97,8 +97,8 @@ public:
       gSynth.SetGain(gVolumePot.GetValue01());
     }
     
-    gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1.IsPressed);
-    gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2.IsPressed);
+    gRHButton1Key.Update(gEWIControl.mPhysicalState.key_rhExtra1.IsCurrentlyPressed());
+    gRHButton2Key.Update(gEWIControl.mPhysicalState.key_rhExtra2.IsCurrentlyPressed());
   
     // gather up serial receive (LH)
     if (gLHSerial.mHaveNewData) {

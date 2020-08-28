@@ -314,6 +314,12 @@ constexpr size_t SizeofStaticArray(const T(&x)[N])
   return N;
 }
 
+template<typename T, size_t N>
+constexpr const T* EndPtr(const T(&x)[N])
+{
+  return &x[N];
+}
+
 
 template<typename T>
 void set(T *dest, size_t elements, T val)

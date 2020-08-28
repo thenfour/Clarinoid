@@ -129,7 +129,13 @@ public:
     drawPixel(x, y, color);
   }
 
-  //
+  void DrawDottedRect(int16_t left, int16_t top, int16_t width, int16_t height, uint16_t color) {
+    for (int16_t y = top; y < top + height; ++ y) {
+      for (int16_t x = left + (y & 1); x < left + width; x += 2) {
+        drawPixel(x, y, color);
+      }
+    }
+  }
 
   // the text rendering routine calls these, so if you want clipped/checkered text you need to implement these too.
   //  virtual void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {

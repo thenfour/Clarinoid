@@ -172,9 +172,6 @@ struct HarmSettings
   int mGlobalSynthPreset;
   Scale mGlobalScale;
   int mMinRotationTimeMS;
-//  - allow switching on same note?
-//  - allow switching on different note?
-
 };
 
 struct AppSettings

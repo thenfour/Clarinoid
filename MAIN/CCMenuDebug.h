@@ -779,28 +779,28 @@ public:
       // wind:0.455 // bite:0.11
       // pitch:
       gDisplay.mDisplay.println(String("LH k:") +
-        (gEWIControl.mPhysicalState.key_lh1.IsPressed ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_lh2.IsPressed ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_lh3.IsPressed ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_lh4.IsPressed ? "4" : "-") +
+        (gEWIControl.mPhysicalState.key_lh1.IsCurrentlyPressed() ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_lh2.IsCurrentlyPressed() ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_lh3.IsCurrentlyPressed() ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_lh4.IsCurrentlyPressed() ? "4" : "-") +
         " o:" +
-        (gEWIControl.mPhysicalState.key_octave1.IsPressed ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_octave2.IsPressed ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_octave3.IsPressed ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_octave4.IsPressed ? "4" : "-") +
+        (gEWIControl.mPhysicalState.key_octave1.IsCurrentlyPressed() ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_octave2.IsCurrentlyPressed() ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_octave3.IsCurrentlyPressed() ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_octave4.IsCurrentlyPressed() ? "4" : "-") +
         " b:" +
-        (gEWIControl.mPhysicalState.key_lhExtra1.IsPressed ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_lhExtra2.IsPressed ? "2" : "-"));
+        (gEWIControl.mPhysicalState.key_lhExtra1.IsCurrentlyPressed() ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_lhExtra2.IsCurrentlyPressed() ? "2" : "-"));
 
       gDisplay.mDisplay.println(String("RH k:") +
-        (gEWIControl.mPhysicalState.key_rh1.IsPressed ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_rh2.IsPressed ? "2" : "-") +
-        (gEWIControl.mPhysicalState.key_rh3.IsPressed ? "3" : "-") +
-        (gEWIControl.mPhysicalState.key_rh4.IsPressed ? "4" : "-") +
+        (gEWIControl.mPhysicalState.key_rh1.IsCurrentlyPressed() ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_rh2.IsCurrentlyPressed() ? "2" : "-") +
+        (gEWIControl.mPhysicalState.key_rh3.IsCurrentlyPressed() ? "3" : "-") +
+        (gEWIControl.mPhysicalState.key_rh4.IsCurrentlyPressed() ? "4" : "-") +
         "       " +
         " b:" +
-        (gEWIControl.mPhysicalState.key_rhExtra1.IsPressed ? "1" : "-") +
-        (gEWIControl.mPhysicalState.key_rhExtra2.IsPressed ? "2" : "-"));
+        (gEWIControl.mPhysicalState.key_rhExtra1.IsCurrentlyPressed() ? "1" : "-") +
+        (gEWIControl.mPhysicalState.key_rhExtra2.IsCurrentlyPressed() ? "2" : "-"));
       gDisplay.mDisplay.print(String("breath: ") + gEWIControl.mPhysicalState.breath01 + "  " +
         "bite: " + gEWIControl.mPhysicalState.bite01);
       gDisplay.mDisplay.print(String("  pitch: ") + gEWIControl.mPhysicalState.pitchDown01);
@@ -858,6 +858,7 @@ public:
 };
 
 // feed it data and it will plot.
+// supports also 1 "boolean" series which plots solid when true, nothing when off.
 const int DisplayWidth = 128;
 const int DisplayHeight = 32;
 template<int TseriesCount, int Tspeed> // Tspeed is # of plots per column
@@ -867,6 +868,13 @@ struct Plotter
   size_t mValid = 0;
   static constexpr size_t sampleCount = DisplayWidth * Tspeed;
   int32_t vals[TseriesCount][sampleCount];
+  bool boolVals[sampleCount];
+
+  Plotter() {
+    for (auto& b : boolVals) {
+      b = false;      
+    }
+  }
   
   void clear() {
     mValid = 0;
@@ -883,11 +891,12 @@ struct Plotter
     mCursor = (mCursor + 1) % sampleCount;
   }
   
-  void Plot3(uint32_t val1, uint32_t val2, uint32_t val3) {
+  void Plot3b(uint32_t val1, uint32_t val2, uint32_t val3, bool boolVal) {
     CCASSERT(TseriesCount == 3);
     vals[0][mCursor] = val1;
     vals[1][mCursor] = val2;
     vals[2][mCursor] = val3;
+    boolVals[mCursor] = boolVal;
     mValid = max(mValid, mCursor);
     mCursor = (mCursor + 1) % sampleCount;
   }
@@ -922,6 +931,11 @@ struct Plotter
         uint32_t y = map(vals[s][i], min_, max_, DisplayHeight - 1, 0);
         gDisplay.mDisplay.drawPixel(x, y, WHITE);
       }
+
+      // plot bool val
+      if (boolVals[i]) {
+        gDisplay.mDisplay.DrawDottedRect(x, 0, 1, RESOLUTION_Y, WHITE);
+      }
     }
     
   }
@@ -940,28 +954,28 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
     gDisplay.mDisplay.setCursor(0,0);
     gDisplay.mDisplay.println(String("TOUCH KEYS STATE"));
     gDisplay.mDisplay.println(String("LH k:") +
-      (gEWIControl.mPhysicalState.key_lh1.IsPressed ? "1" : "-") +
-      (gEWIControl.mPhysicalState.key_lh2.IsPressed ? "2" : "-") +
-      (gEWIControl.mPhysicalState.key_lh3.IsPressed ? "3" : "-") +
-      (gEWIControl.mPhysicalState.key_lh4.IsPressed ? "4" : "-") +
+      (gEWIControl.mPhysicalState.key_lh1.IsCurrentlyPressed() ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_lh2.IsCurrentlyPressed() ? "2" : "-") +
+      (gEWIControl.mPhysicalState.key_lh3.IsCurrentlyPressed() ? "3" : "-") +
+      (gEWIControl.mPhysicalState.key_lh4.IsCurrentlyPressed() ? "4" : "-") +
       " o:" +
-      (gEWIControl.mPhysicalState.key_octave1.IsPressed ? "1" : "-") +
-      (gEWIControl.mPhysicalState.key_octave2.IsPressed ? "2" : "-") +
-      (gEWIControl.mPhysicalState.key_octave3.IsPressed ? "3" : "-") +
-      (gEWIControl.mPhysicalState.key_octave4.IsPressed ? "4" : "-") +
+      (gEWIControl.mPhysicalState.key_octave1.IsCurrentlyPressed() ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_octave2.IsCurrentlyPressed() ? "2" : "-") +
+      (gEWIControl.mPhysicalState.key_octave3.IsCurrentlyPressed() ? "3" : "-") +
+      (gEWIControl.mPhysicalState.key_octave4.IsCurrentlyPressed() ? "4" : "-") +
       " b:" +
-      (gEWIControl.mPhysicalState.key_lhExtra1.IsPressed ? "1" : "-") +
-      (gEWIControl.mPhysicalState.key_lhExtra2.IsPressed ? "2" : "-"));
+      (gEWIControl.mPhysicalState.key_lhExtra1.IsCurrentlyPressed() ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_lhExtra2.IsCurrentlyPressed() ? "2" : "-"));
 
     gDisplay.mDisplay.println(String("RH k:") +
-      (gEWIControl.mPhysicalState.key_rh1.IsPressed ? "1" : "-") +
-      (gEWIControl.mPhysicalState.key_rh2.IsPressed ? "2" : "-") +
-      (gEWIControl.mPhysicalState.key_rh3.IsPressed ? "3" : "-") +
-      (gEWIControl.mPhysicalState.key_rh4.IsPressed ? "4" : "-") +
+      (gEWIControl.mPhysicalState.key_rh1.IsCurrentlyPressed() ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_rh2.IsCurrentlyPressed() ? "2" : "-") +
+      (gEWIControl.mPhysicalState.key_rh3.IsCurrentlyPressed() ? "3" : "-") +
+      (gEWIControl.mPhysicalState.key_rh4.IsCurrentlyPressed() ? "4" : "-") +
       "       " +
       " b:" +
-      (gEWIControl.mPhysicalState.key_rhExtra1.IsPressed ? "1" : "-") +
-      (gEWIControl.mPhysicalState.key_rhExtra2.IsPressed ? "2" : "-"));
+      (gEWIControl.mPhysicalState.key_rhExtra1.IsCurrentlyPressed() ? "1" : "-") +
+      (gEWIControl.mPhysicalState.key_rhExtra2.IsCurrentlyPressed() ? "2" : "-"));
 
   }
   virtual void RenderApp() {
@@ -991,10 +1005,12 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
         pData = &gLHSerial.mReceivedData.data;
       }
       if (pData) {
-        mPlotter.Plot3(pData->focusedTouchReadMicros,
+        mPlotter.Plot3b(pData->focusedTouchReadMicros,
 //          pData->focusedTouchReadValue,
           pData->focusedTouchReadUntouchedMicros,
-          pData->focusedTouchReadThresholdMicros);
+          pData->focusedTouchReadThresholdMicros,
+          gEWIControl.mPhysicalState.mOrderedKeys[mKeyIndex]->IsCurrentlyPressed()
+          );
       }
     }
 
