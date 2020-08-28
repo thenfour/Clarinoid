@@ -3,7 +3,10 @@
 // "Faster"
 
 // https://forum.pjrc.com/threads/57932-Latency-what-s-new
-#define AUDIO_BLOCK_SAMPLES 32 // not sure if this is actually taking any effect.
+// This does have an effect, but you need to make sure you restart arduino to do a full rebuild (there's probably a way to do it in the IDE i dunno).
+// BUT, 128 is nice and stable. Anything less and I find random artifacts, sometimes things get ugly. When it comes to reducing latency, I prefer
+// to try and optimize elsewhere, because this is a bit unruly. I'd rather make changes to the more controlled code.
+#define AUDIO_BLOCK_SAMPLES 128
 
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////

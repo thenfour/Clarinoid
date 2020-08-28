@@ -16,12 +16,6 @@ static const size_t SYNTH_PRESET_COUNT = 10;
 bool gTouchKeyGraphsIsRunning = false;
 
 
-
-
-const float BREATH_LOWER_DEADZONE = 0.07f;
-const float BREATH_UPPER_DEADZONE = 0.6f;
-const float BREATH_NOTEON_THRESHOLD = 0.02;
-
 const float PITCHDOWN_DEADZONE = 0.8f;
 
 class PresetName
@@ -180,6 +174,10 @@ struct AppSettings
   float mReverbGain = .2f;
 
   bool mDisplayDim = true;
+
+  float mBreathLowerBound = 0.05f;
+  float mBreathUpperBound = 0.7f;
+  float mBreathNoteOnThreshold = 0.01;
   
   bool mMetronomeOn = false;
   float mMetronomeGain = 0.8f;

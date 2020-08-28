@@ -683,6 +683,10 @@ class SystemSettingsApp : public SettingsMenuApp
   BoolSettingItem mDimDisplay = { mRootList, "Display dim?", "Yes", "No", Property<bool>{ [&]() { return gAppSettings.mDisplayDim; },
     [&](const bool& x) { gAppSettings.mDisplayDim = x; gDisplay.mDisplay.dim(x); }}, AlwaysEnabled };
 
+  FloatSettingItem mBreathLowerBound = { mRootList, "Breath inp min", 0, 1, gAppSettings.mBreathLowerBound, AlwaysEnabled };
+  FloatSettingItem mBreathUpperBound = { mRootList, "Breath inp max", 0, 1, gAppSettings.mBreathUpperBound, AlwaysEnabled };
+  FloatSettingItem mBreathNoteOnThreshold = { mRootList, "Breath note on thresh", 0, 1, gAppSettings.mBreathNoteOnThreshold, AlwaysEnabled };
+
 public:
 
   void OnResetKeys() {

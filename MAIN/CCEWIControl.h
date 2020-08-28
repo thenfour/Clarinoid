@@ -207,12 +207,12 @@ struct CCEWIMusicalState
 
     if (nUpdates == 0 || mPressureSensingThrottle.IsReady()) {
 
-      float breathAdj = map((float)ps.breath01, BREATH_LOWER_DEADZONE, BREATH_UPPER_DEADZONE, 0.0f, 1.0f);
+      float breathAdj = map((float)ps.breath01, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound, 0.0f, 1.0f);
       breathAdj = constrain(breathAdj, 0.0f, 1.0f);
       this->breath01.Update(breathAdj);
       
       //this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), 0, PITCHDOWN_DEADZONE, -1.0f, 0.0f), -1.0f, 0.0f));
-      isPlayingNote = this->breath01.GetValue() > BREATH_NOTEON_THRESHOLD;
+      isPlayingNote = this->breath01.GetValue() > gAppSettings.mBreathNoteOnThreshold;
       mLiveVoice.mIsNoteCurrentlyOn = isPlayingNote;
       mLiveVoice.mVelocity = 100; // TODO
       mLiveVoice.mSynthPatch = 0; // TODO
@@ -220,7 +220,7 @@ struct CCEWIMusicalState
 
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
-    int newNote = 49-12; // C#2
+    int newNote = 49; // C#2
     if (ps.key_lh1.IsCurrentlyPressed()){
       newNote -= 2;
     }
