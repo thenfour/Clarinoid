@@ -874,7 +874,7 @@ struct Plotter
   }
   
   void Plot4(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4) {
-    if (TseriesCount != 4) return;
+    CCASSERT(TseriesCount == 4);
     vals[0][mCursor] = val1;
     vals[1][mCursor] = val2;
     vals[2][mCursor] = val3;
@@ -883,8 +883,17 @@ struct Plotter
     mCursor = (mCursor + 1) % sampleCount;
   }
   
+  void Plot3(uint32_t val1, uint32_t val2, uint32_t val3) {
+    CCASSERT(TseriesCount == 3);
+    vals[0][mCursor] = val1;
+    vals[1][mCursor] = val2;
+    vals[2][mCursor] = val3;
+    mValid = max(mValid, mCursor);
+    mCursor = (mCursor + 1) % sampleCount;
+  }
+  
   void Plot1(uint32_t val1) {
-    if (TseriesCount != 1) return;
+    CCASSERT(TseriesCount == 1);
     vals[0][mCursor] = val1;
     mValid = max(mValid, mCursor);
     mCursor = (mCursor + 1) % sampleCount;
@@ -921,7 +930,7 @@ struct Plotter
 class TouchKeyGraphs : public MenuAppBaseWithUtils
 {
   int mKeyIndex = 0;
-  Plotter<1, 2> mPlotter;
+  Plotter<3, 2> mPlotter;
   CCThrottlerT<7> mThrottle;
   bool isPlaying = true;
 
@@ -982,10 +991,10 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
         pData = &gLHSerial.mReceivedData.data;
       }
       if (pData) {
-        mPlotter.Plot1(pData->focusedTouchReadMicros);//,
+        mPlotter.Plot3(pData->focusedTouchReadMicros,
 //          pData->focusedTouchReadValue,
-//          pData->focusedTouchReadUntouchedMicros,
-//          pData->focusedTouchReadThresholdMicros);
+          pData->focusedTouchReadUntouchedMicros,
+          pData->focusedTouchReadThresholdMicros);
       }
     }
 

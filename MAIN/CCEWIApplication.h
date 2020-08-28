@@ -34,12 +34,12 @@ TransientActivityLED gVolIndicator(40, 200);
 
 CCMainTxRx gLHSerial(Serial1);
 TransientActivityLED gLHRXIndicator(60, 500);
-TransientEventLED gLHRXErrorIndicator(2000);
+TransientEventLED gLHRXErrorIndicator(700);
 TransientActivityLED gLHTXIndicator(60, 500);
 
 CCMainTxRx gRHSerial(Serial4);
 ActivityLED gRHRXIndicator(60);
-TransientEventLED gRHRXErrorIndicator(2000);
+TransientEventLED gRHRXErrorIndicator(700);
 TransientActivityLED gRHTXIndicator(60, 500);
 
 CCEWIControl gEWIControl;
