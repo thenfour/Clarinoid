@@ -2,16 +2,27 @@
 #ifndef CCAPPSETTINGS_H
 #define CCAPPSETTINGS_H
 
-static const size_t MAX_VOICES = 12;
+static const size_t MAX_VOICES = 8;
 
 static const size_t HARM_VOICES = 4;
 static const size_t HARM_SEQUENCE_LEN = 8;
+
+static const size_t LOOP_LAYERS = 4;
 
 static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 10;
 
 bool gTouchKeyGraphsIsRunning = false;
+
+
+
+
+const float BREATH_LOWER_DEADZONE = 0.07f;
+const float BREATH_UPPER_DEADZONE = 0.6f;
+const float BREATH_NOTEON_THRESHOLD = 0.02;
+
+const float PITCHDOWN_DEADZONE = 0.8f;
 
 class PresetName
 {
@@ -23,6 +34,7 @@ struct Note
   int mSequence;
   const char *mName;
 };
+
 Note gNotes[12] = {
   {0, "C"},
   {1, "C#"},
@@ -37,6 +49,7 @@ Note gNotes[12] = {
   {10, "A#"},
   {11, "B"},
 };
+
 struct ScaleFlavor
 {
   ScaleFlavor(int seq, const char *name, int8_t i1, int8_t i2 = -1, int8_t i3 = -1, int8_t i4 = -1, int8_t i5 = -1, int8_t i6 = -1, int8_t i7 = -1) :
@@ -63,6 +76,7 @@ struct ScaleFlavor
   uint8_t mIntervalCount;
   uint8_t mIntervals[7];
 };
+
 ScaleFlavor gScaleFlavors[5] = {
   {0, "Maj", 2,2,1,2,2,2,1},
   {0, "Who", 2},

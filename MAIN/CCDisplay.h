@@ -244,10 +244,6 @@ public:
     SelectApp(mCurrentMenuAppIndex + delta);
   }
 
-  void DisplayToast(const String& s) {
-    // todo
-  }
-
   virtual void setup() {
     // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
     mDisplay.begin(SSD1306_SWITCHCAPVCC);

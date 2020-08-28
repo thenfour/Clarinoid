@@ -707,6 +707,11 @@ struct EnumInfo : IList {
 };
 
 
+// TODO: implement this. used for synth voice rotation
+struct Stopwatch
+{
+  void Restart() { }
+};
 
 
 #endif

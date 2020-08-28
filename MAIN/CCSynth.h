@@ -56,45 +56,124 @@ AudioControlSGTL5000     audioShield;    //xy=1944.0000114440918,536.25000762939
 
 }
 
+struct CCPatch : public AudioConnection
+{
+  CCPatch(AudioStream &source, uint8_t sourceOutput, AudioStream &destination, uint8_t destinationInput) :
+    AudioConnection(source, sourceOutput, destination, destinationInput)
+  {
+  }
+  
+};
 
 struct Voice
 {
-  AudioBandlimitedOsci            osc;           //xy=106.25003051757812,135.00001525878906
-  AudioMixer4              oscMix;         //xy=645.0000457763672,337.5000190734863
-  AudioConnection patch1;
-  AudioConnection patch2;
-  AudioConnection patch3;
-  Voice(AudioMixer4& dest, int destPort) : 
+  AudioBandlimitedOsci osc;
+  AudioMixer4 oscMix;
+  CCPatch patch1;
+  CCPatch patch2;
+  CCPatch patch3;
+  CCPatch patchOut;
+
+  int16_t mVoiceId = -1;
+  int16_t mMusicalVoiceId = -1;
+  int16_t mSynthPatch = -1;
+  int16_t mNote = -1;// currently playing note.
+  Stopwatch mTimeSinceNoteOn;
+  bool mIsCurrentlyPlaying = false;
+  
+  void UpdateStopped()
+  {
+    mMusicalVoiceId = -1;
+    mSynthPatch = -1;
+    mNote = -1;
+    mIsCurrentlyPlaying = false;
+
+    Serial.println(String("voice stopped vid=") + mVoiceId);
+
+    osc.amplitude(1, 0.0);
+    osc.amplitude(2, 0.0);
+    osc.amplitude(3, 0.0);
+  }
+  
+  void UpdatePlaying(const CCEWIMusicalState& state, const MusicalVoice& mv)
+  {
+    float breathAdj = state.breath01.GetValue();
+
+    bool voiceOrPatchChanged = (mMusicalVoiceId != mv.mVoiceId) || (mSynthPatch != mv.mSynthPatch);
+    if (voiceOrPatchChanged) {
+      Serial.println(String("voice or patch changed for vid=") + mVoiceId + ", mvoice " + mMusicalVoiceId + "=" + mv.mVoiceId + ", patch " + mSynthPatch + "=" + mv.mSynthPatch + ", note=" + mv.mNote);
+      // init synth patch.
+      osc.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+      osc.waveform(2, 3);
+      osc.waveform(3, 1);
+    
+      osc.pulseWidth(1, 0.5);
+      osc.pulseWidth(2, 0.5);
+      osc.pulseWidth(3, 0.5);
+  
+      osc.amplitude(1, 0.0);
+      osc.amplitude(2, 0.3);
+      osc.amplitude(3, 0.3);
+      
+      osc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
+    }
+
+    // reset timer if pretty much anything changed.
+    if (!mIsCurrentlyPlaying || voiceOrPatchChanged || (mNote != mv.mNote)) {
+      mTimeSinceNoteOn.Restart();
+    }
+
+    mMusicalVoiceId = mv.mVoiceId;
+    mSynthPatch = mv.mSynthPatch;
+    mNote = mv.mNote;
+    mIsCurrentlyPlaying = true;
+
+    // update
+    float midiNote = (float)mv.mNote + state.pitchBendN11.GetValue() * 2;
+
+    osc.portamentoTime(1, gAppSettings.mPortamentoTime);
+    osc.portamentoTime(2, gAppSettings.mPortamentoTime);
+    osc.portamentoTime(3, gAppSettings.mPortamentoTime);
+
+    float freq = MIDINoteToFreq(midiNote);
+    float freqSync = map(breathAdj, 0.0f, 1.0f, freq * 2, freq * 7);
+  
+    osc.frequency(1, freq);
+    osc.frequency(2, freqSync);
+    osc.frequency(3, freq);
+  }
+
+  Voice(int16_t vid, AudioMixer4& dest, int destPort) : 
     patch1(osc, 0, oscMix, 0),
     patch2(osc, 1, oscMix, 1),
     patch3(osc, 2, oscMix, 2),
-    patchOut(oscMix, 0, dest, destPort)
+    patchOut(oscMix, 0, dest, destPort),
+    mVoiceId(vid)
   {
   }
-  AudioConnection patchOut;
 };
 
 
 struct VoiceList
 {
-  Voice voices[MAX_VOICES] =
+  Voice mVoices[MAX_VOICES] =
   { 
-    { mix1, 0 },
-    { mix1, 1 },
-    { mix1, 2 },
-    { mix1, 3 }, // 4
-    { mix2, 0 },
-    { mix2, 1 },
-    { mix2, 2 },
-    { mix2, 3 }, // 8
-    { mix3, 0 },
-    { mix3, 1 },
-    { mix3, 2 },
-    { mix3, 3 }, // 12
-//    { mix4, 0 },
-//    { mix4, 1 },
-//    { mix4, 2 },
-//    { mix4, 3 },
+    { 0, mix1, 0 },
+    { 1, mix1, 1 },
+    { 2, mix1, 2 },
+    { 3, mix1, 3 }, // 4
+    { 4, mix2, 0 },
+    { 5, mix2, 1 },
+    { 6, mix2, 2 },
+    { 7, mix2, 3 }, // 8
+//    { 8, mix3, 0 },
+//    { 9, mix3, 1 },
+//    { 10, mix3, 2 },
+//    { 11, mix3, 3 }, // 12
+//    { 12, mix4, 0 },
+//    { 13, mix4, 1 },
+//    { 14, mix4, 2 },
+//    { 15, mix4, 3 },
   };
 
   AudioMixer4 mix1;
@@ -113,19 +192,40 @@ struct VoiceList
     patch4(mix4, 0, mixOutp, 3),
     patchOut(mixOutp, 0, destMix, destPort)
   {
-    for (size_t i = 1; i < SizeofStaticArray(voices); ++ i) {
-//      // disable all but 1 layer
-      voices[i].patchOut.disconnect();
+  }
+
+  // returns a voice that's either already assigned to this voice, or the best one to free up for it.
+  Voice* FindAssignedOrAvailable(int16_t musicalVoiceId) {
+    Voice* firstFree = nullptr;
+    for (auto& v : mVoices) {
+      if (v.mMusicalVoiceId == musicalVoiceId) {
+        return &v; // already assigned to this voice.
+      }
+      if (!firstFree && (v.mMusicalVoiceId == -1)) {
+        firstFree = &v;
+      }
     }
+    if (firstFree) {
+      return firstFree;
+    }
+    // no free voices. in this case find the oldest.
+    // TODO.
+    return &mVoices[0];
+  }
+
+  // returns null if this voice isn't assigned.
+  Voice* FindAssigned(int16_t musicalVoiceId) {
+    for (auto& v : mVoices) {
+      if (v.mMusicalVoiceId == musicalVoiceId) {
+        return &v;
+      }
+    }
+    return nullptr;
   }
 };
 
 
 VoiceList gVoices(CCSynthGraph::waveMixer, 1);
-
-//AudioSynthWaveform   testOsc;
-//AudioConnection testPatchOut(testOsc, 0, CCSynthGraph::waveMixer, 3);
-
 
 class CCSynth : IUpdateObject
 {
@@ -135,84 +235,24 @@ public:
 
   virtual void setup() {
     AudioMemory(12);
+
+    // for some reason patches really don't like to connect unless they are
+    // last in the initialization order. Here's a workaround to force them to connect.
+    for (auto& v : gVoices.mVoices) {
+      v.patchOut.connect();
+    }
+    
     CCSynthGraph::audioShield.enable();
     CCSynthGraph::audioShield.volume(.7); // headphone vol
     CCSynthGraph::ampLeft.gain(.01);
     CCSynthGraph::ampRight.gain(.01);
     delay(200); // why?
 
-//    //testOsc.amplitude(.2);
-//    testOsc.begin(WAVEFORM_SAWTOOTH);
-//    testOsc.frequency(220);
-
-//    for (int i = 0; i < HARMONIZER_VOICES; ++ i) {
-//      gLayers.layers[0].voices[i].osc.amplitude(1, .3);
-//      gLayers.layers[0].voices[i].osc.amplitude(2, .3);
-//      gLayers.layers[0].voices[i].osc.amplitude(3, .3);
-//    }
-
-    auto& liveVoice = gVoices.voices[0];
-
-    // voice 1 setup
-    {
-      liveVoice.osc.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
-      liveVoice.osc.waveform(2, 3);
-      liveVoice.osc.waveform(3, 1);
-    
-      liveVoice.osc.pulseWidth(1, 0.5);
-      liveVoice.osc.pulseWidth(2, 0.5);
-      liveVoice.osc.pulseWidth(3, 0.5);
-  
-      liveVoice.osc.amplitude(1, 0.0);
-      liveVoice.osc.amplitude(2, 0.3);
-      liveVoice.osc.amplitude(3, 0.3);
-      
-      liveVoice.osc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
-    }
-//
-//    // voice 2 setup
-//    {
-//      CCSynthGraph::voice2.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync.
-//      CCSynthGraph::voice2.waveform(2, 1);
-//      //CCSynthGraph::voice2.waveform(3, 1);
-//  
-//      CCSynthGraph::voice2.pulseWidth(1, 0.0);
-//      CCSynthGraph::voice2.pulseWidth(2, 0.0);
-//      //CCSynthGraph::voice2.pulseWidth(3, 0.0);
-//  
-//      CCSynthGraph::voice2.amplitude(1, 0.2);
-//      CCSynthGraph::voice2.amplitude(2, 0.2);
-//      CCSynthGraph::voice2.amplitude(3, 0.0);
-//  
-//      CCSynthGraph::voice2.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
-//
-//    }
-//
-//    // voice 3 setup
-//    {
-//      CCSynthGraph::voice3.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync.
-//      CCSynthGraph::voice3.waveform(2, 1);
-//      CCSynthGraph::voice3.pulseWidth(1, 0.0);
-//      CCSynthGraph::voice3.pulseWidth(2, 0.0);
-//      CCSynthGraph::voice3.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
-//    }
-//
-//    // voice 4 setup
-//    {
-//      CCSynthGraph::voice4.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync.
-//      CCSynthGraph::voice4.waveform(2, 1);
-//      CCSynthGraph::voice4.pulseWidth(1, 0.0);
-//      CCSynthGraph::voice4.pulseWidth(2, 0.0);
-//      CCSynthGraph::voice4.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
-//    }
-
     CCSynthGraph::metronomeEnv.delay(0);
     CCSynthGraph::metronomeEnv.attack(0);
     CCSynthGraph::metronomeEnv.hold(0);
     CCSynthGraph::metronomeEnv.releaseNoteOn(0);
     CCSynthGraph::metronomeEnv.sustain(0);
-
-    //CCSynthGraph::waveFilter.resonance(1.3);
   }
 
   void SetGain(float f) {
@@ -224,56 +264,27 @@ public:
     // AudioNoInterrupts  https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
     AudioNoInterrupts();
 
+    for (auto& mv : state.mMusicalVoices) {
+      if (mv.mIsNoteCurrentlyOn) {
+        Voice* pv = gVoices.FindAssignedOrAvailable(mv.mVoiceId);
+        CCASSERT(!!pv);
+        pv->UpdatePlaying(state, mv);
+      } else {
+        Voice* pv = gVoices.FindAssigned(mv.mVoiceId);
+        if (pv) {
+          pv->UpdateStopped();
+        }
+      }
+    }
+
     float breathAdj = state.breath01.GetValue();
-    float midiNote = state.MIDINote + state.pitchBendN11.GetValue() * 2;
 
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);
     CCSynthGraph::verbWetAmpLeft.gain(gAppSettings.mReverbGain);
     CCSynthGraph::verbWetAmpRight.gain(gAppSettings.mReverbGain);
-    //CCPlot(gAppSettings.mReverbGain);
-
-    auto& liveVoice = gVoices.voices[0];
-
-    liveVoice.osc.portamentoTime(1, gAppSettings.mPortamentoTime);
-    liveVoice.osc.portamentoTime(2, gAppSettings.mPortamentoTime);
-    liveVoice.osc.portamentoTime(3, gAppSettings.mPortamentoTime);
-
-
-    // voice 1
-    {
-      float freq = MIDINoteToFreq(midiNote);
-      //float freq2 = gAppSettings.mHarmonizerOn > 0 ? MIDINoteToFreq(midiNote + 7) : freq;
-      float freqSync = map(breathAdj, 0.0f, 1.0f, freq * 2, freq * 7);
-    
-      liveVoice.osc.frequency(1, freq);
-      liveVoice.osc.frequency(2, freqSync);
-      liveVoice.osc.frequency(3, freq);
-    }
-//
-//    // voice 2
-//    {
-//      float freq = MIDINoteToFreq(midiNote);
-//      CCSynthGraph::voice2.frequency(1, freq);
-//      CCSynthGraph::voice2.frequency(2, freq * .995);
-//    }
-//
-//    // voice 3
-//    {
-//      float freq = MIDINoteToFreq(midiNote - 4);
-//      CCSynthGraph::voice3.frequency(1, freq);
-//      CCSynthGraph::voice3.frequency(2, freq);
-//    }
-//
-//    // voice 4
-//    {
-//      float freq = MIDINoteToFreq(midiNote - 11);
-//      CCSynthGraph::voice4.frequency(1, freq);
-//      CCSynthGraph::voice4.frequency(2, freq);
-//    }
 
     float filterFreq = map(breathAdj, 0.01, 1, 0, 15000);
-    //filterFreq = 1500;
     CCSynthGraph::waveFilter.frequency(filterFreq);
 
     if (!gAppSettings.mMetronomeOn) {

@@ -6,11 +6,7 @@
 #include "Shared_CCUtil.h"
 #include "Shared_CCTxRx.h"
 
-const float BREATH_LOWER_DEADZONE = 0.07f;
-const float BREATH_UPPER_DEADZONE = 0.6f;
-const float BREATH_NOTEON_THRESHOLD = 0.02;
-
-const float PITCHDOWN_DEADZONE = 0.8f;
+static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * HARM_VOICES;
 
 struct CCEWIPhysicalState
 {
@@ -85,12 +81,42 @@ struct CCEWIPhysicalState
   }
 };
 
+struct MusicalVoice
+{
+  MusicalVoice() = default;
+  MusicalVoice(const MusicalVoice& rhs) = delete; // no copy ctor.
+  MusicalVoice(MusicalVoice&&) = delete;// no move.
+  MusicalVoice& operator =(const MusicalVoice& rhs) // assignment is fine for an existing voice obj.
+  {
+    mIsNoteCurrentlyOn = rhs.mIsNoteCurrentlyOn;
+    mNote = rhs.mNote;
+    mVelocity = rhs.mVelocity;
+    mSynthPatch = rhs.mSynthPatch;
+    return *this;
+  }
+  MusicalVoice& operator =(MusicalVoice&&) = delete; // no move assignment because i want these objects to stay static.
+  
+  int16_t mVoiceId = -1;
+  bool mIsNoteCurrentlyOn = false;
+  uint8_t mNote = 0;
+  uint8_t mVelocity = 0;
+  int16_t mSynthPatch = -1;
+};
+
+struct Harmonizer
+{
+  // state & processing for harmonizer
+};
+
+struct Looper
+{
+};
+
 struct CCEWIMusicalState
 {
-  // stuff helpful for midi processing
-  bool isPlayingNote = false;
-  
-  uint8_t MIDINote = 0;
+  MusicalVoice mLiveVoice;
+  MusicalVoice mMusicalVoices[MAX_MUSICAL_VOICES]; // these are all the voices that WANT to be played. May be more than synth polyphony.
+
   // TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
   SimpleMovingAverage<20> breath01;// 0-1
   SimpleMovingAverage<120> pitchBendN11; // -1 to 1
@@ -107,13 +133,25 @@ struct CCEWIMusicalState
   CCEWIMusicalState() {
     this->breath01.Update(0);
     this->pitchBendN11.Update(0);
+
+    for (int16_t i = 0; i < (int16_t)SizeofStaticArray(mMusicalVoices); ++ i) {
+      mMusicalVoices[i].mVoiceId = i;
+    }
   }
-  
+
+  // Update() determines the mLiveVoice, converting physical to live musical state.
+  // but this function then takes the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.
+  void DistributeVoices() {
+    mMusicalVoices[0] = mLiveVoice;// TODO: the rest.
+    mMusicalVoices[1] = mLiveVoice;// TODO: the rest.
+    mMusicalVoices[1].mNote += 5;
+  }
 
   void Update(const CCEWIPhysicalState& ps)
   {
-    uint8_t prevNote = MIDINote;
-    bool wasPlayingNote = isPlayingNote;
+    uint8_t prevNote = mLiveVoice.mNote;
+    bool wasPlayingNote = mLiveVoice.mIsNoteCurrentlyOn;
+    bool isPlayingNote = wasPlayingNote;
 
     // convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
@@ -122,18 +160,14 @@ struct CCEWIMusicalState
 
       float breathAdj = map((float)ps.breath01, BREATH_LOWER_DEADZONE, BREATH_UPPER_DEADZONE, 0.0f, 1.0f);
       breathAdj = constrain(breathAdj, 0.0f, 1.0f);
-      //breathAdj = powf(breathAdj, BREATH_CURVE);
-      //breathAdj = constrain(breathAdj, 0.0f, 1.0f);
       this->breath01.Update(breathAdj);
       
       //this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), 0, PITCHDOWN_DEADZONE, -1.0f, 0.0f), -1.0f, 0.0f));
-      this->isPlayingNote = this->breath01.GetValue() > BREATH_NOTEON_THRESHOLD;
+      isPlayingNote = this->breath01.GetValue() > BREATH_NOTEON_THRESHOLD;
+      mLiveVoice.mIsNoteCurrentlyOn = isPlayingNote;
+      mLiveVoice.mVelocity = 100; // TODO
+      mLiveVoice.mSynthPatch = 0; // TODO
     }
-
-    //CCPlot(this->breath01.GetValue() * 100);
-    //CCPlot(ps.breath01 * 100);
-    //CCPlot(this->pitchBendN11.GetValue() * 100);
-    //CCPlot(ps.pitchDown01 * 100);
 
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
@@ -177,27 +211,25 @@ struct CCEWIMusicalState
     // transpose
     newNote += gAppSettings.mTranspose;
     newNote = constrain(newNote, 1, 127);
-    this->MIDINote = (uint8_t)newNote;
+    mLiveVoice.mNote = (uint8_t)newNote;
 
-    needsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != MIDINote);
+    needsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != newNote);
     // send note off in these cases:
     // - you are not playing but were
     // - or, you are playing, but a different note than before.
-    needsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != MIDINote));
+    needsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != newNote));
     noteOffNote = prevNote;
-
 
     if (needsNoteOn) {
       noteOns ++;
-//      Serial.println(String("note on: ") + MIDINote + " ; wasplaying=" + wasPlayingNote + " prevnote=" + prevNote + " isplaying=" + isPlayingNote + " currentnote=" + MIDINote);
     }
-//    if (needsNoteOff) {
-//      Serial.println(String("note off: ") + noteOffNote + " ; wasplaying=" + wasPlayingNote + " prevnote=" + prevNote + " isplaying=" + isPlayingNote + " currentnote=" + MIDINote);
-//    }
 
     nUpdates ++;
+
+    DistributeVoices();
   }
 };
+
 
 class CCEWIControl
 {

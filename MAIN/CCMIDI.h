@@ -66,9 +66,7 @@ public:
       uint8_t msb, lsb;
       Breath14BitToMSBLSB(breath, msb, lsb);
 
-      //CCPlot(breath);
-      //CCPlot(msb);
-      if (breath != currentBreathCC14Bit && ms.isPlayingNote) {
+      if (breath != currentBreathCC14Bit && ms.mLiveVoice.mIsNoteCurrentlyOn) {
         currentBreathCC14Bit = breath;
         activityHappened = true;
         mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController, msb, CCEWI_MIDICHANNEL);
@@ -79,7 +77,7 @@ public:
 
     // important: send note on before note off, to make portamento work.
     if (ms.needsNoteOn) {
-      mMidi.sendNoteOn(ms.MIDINote, 100, CCEWI_MIDICHANNEL);
+      mMidi.sendNoteOn(ms.mLiveVoice.mNote, ms.mLiveVoice.mVelocity, CCEWI_MIDICHANNEL);
       activityHappened = true;
       //Serial.println(String("note on?") + millis());
     }

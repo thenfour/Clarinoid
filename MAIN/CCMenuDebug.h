@@ -767,7 +767,7 @@ public:
     };
     
     auto pageMusicalState = [&]() {
-      gDisplay.mDisplay.println(String("#:") + gEWIControl.mMusicalState.MIDINote + " (" + (gEWIControl.mMusicalState.isPlayingNote ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.MIDINote) + "hz");
+      gDisplay.mDisplay.println(String("#:") + gEWIControl.mMusicalState.mLiveVoice.mNote + " (" + (gEWIControl.mMusicalState.mLiveVoice.mIsNoteCurrentlyOn ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.mLiveVoice.mNote) + "hz");
       gDisplay.mDisplay.println(String("transpose:") + gAppSettings.mTranspose);
       gDisplay.mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
       gDisplay.mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
