@@ -8,12 +8,13 @@
 
 #include "Shared_CCUtil.h"
 
-class CCVolumePot : IUpdateObject
+class CCVolumePot : UpdateObjectT<ProfileObjectType::Pot>
 {
   uint8_t mPin;
   float mValueWhenDirty = 0;
   float mValue01;
   bool mIsDirty;
+  CCThrottlerT<10> mThrottle;
 public:
   explicit CCVolumePot(uint8_t pin) :
     mPin(pin),
@@ -28,6 +29,8 @@ public:
   
   virtual void loop()
   {
+    if (!mThrottle.IsReady())
+      return;
     int32_t a = analogRead(mPin);
     a -= VOLUMEPOT_MIN_READING;
     float ret = ((float)a) / (VOLUMEPOT_MAX_READING - VOLUMEPOT_MIN_READING);

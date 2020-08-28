@@ -5,7 +5,7 @@
 #include <Adafruit_NeoPixel.h>
 #include "Shared_CCUtil.h"
 
-class CCLeds : IUpdateObject
+class CCLeds : UpdateObjectT<ProfileObjectType::LED>
 {
   int mCount;
   Adafruit_NeoPixel mStrip;

@@ -10,7 +10,7 @@
 #include "Shared_CCUtil.h"
 
 template<int TStep>
-class CCEncoder : IUpdateObject
+class CCEncoder : UpdateObjectT<ProfileObjectType::Encoder>
 {
   Encoder mEnc;
 

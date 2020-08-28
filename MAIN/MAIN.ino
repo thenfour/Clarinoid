@@ -37,6 +37,7 @@ CCEWIApp gApp;
 #include "CCMenuDebug.h"
 #include "CCMenu.h"
 
+ProfileMenuApp gProfileApp;
 HarmSettingsApp gHarmSettingsApp;
 SystemSettingsApp gSystemSettingsApp;
 TouchKeyGraphs gTouchKeyApp;
@@ -80,10 +81,6 @@ void loop() {
     if (m > gLoopExitMicros && (m - gLoopExitMicros) > gLongestBetweenLoopMicros) {
       gLongestBetweenLoopMicros = m - gLoopExitMicros;
     }
-  }
-
-  if (UpdateObjectCount > MaxUpdateObjects) {
-    CCPlot(String("Too many update objects!") + UpdateObjectCount);
   }
 
   UpdateUpdateObjects();

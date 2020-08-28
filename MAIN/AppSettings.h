@@ -174,6 +174,7 @@ struct AppSettings
   float mReverbGain = .2f;
 
   bool mDisplayDim = true;
+  bool mOrangeLEDs = false;
 
   float mBreathLowerBound = 0.05f;
   float mBreathUpperBound = 0.7f;

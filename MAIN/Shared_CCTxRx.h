@@ -212,7 +212,7 @@ union BothPayloads
 ////////////////////////////////////////////////////////////////////////////////
 
 // the LHRH serial handler
-class CCLHRHTxRx: IUpdateObject
+class CCLHRHTxRx: UpdateObjectT<ProfileObjectType::TxRx>
 {
   // { for TX
   framerateCalculator mFramerate;
@@ -279,7 +279,7 @@ public:
 };
 
 // the MAIN serial handler
-class CCMainTxRx: IUpdateObject
+class CCMainTxRx: UpdateObjectT<ProfileObjectType::TxRx>
 {
 public:
   // { for TX

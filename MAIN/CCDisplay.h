@@ -131,7 +131,10 @@ public:
 
   void DrawDottedRect(int16_t left, int16_t top, int16_t width, int16_t height, uint16_t color) {
     for (int16_t y = top; y < top + height; ++ y) {
-      for (int16_t x = left + (y & 1); x < left + width; x += 2) {
+      for (int16_t x = left; x < left + width; x += 2) {
+        if (PixelParity(x, y)) {
+          continue;
+        }
         drawPixel(x, y, color);
       }
     }
@@ -208,9 +211,9 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////
-class CCDisplay : IUpdateObject
+class CCDisplay : UpdateObjectT<ProfileObjectType::Display>
 {
-  CCThrottlerT<20> mThrottle;
+  CCThrottlerT<17> mThrottle;
   CCEWIApp& mApp;
 
   int mMenuAppCount = 0;
@@ -285,9 +288,49 @@ public:
     mDisplay.mClipBottom = RESOLUTION_Y;
 
     pMenuApp->Render();
-    
+
+    if (mIsShowingToast) {
+      if (mToastTimer.IsReady()) {
+        mIsShowingToast = false;
+      } else {
+        // render toast.
+        SetupModal();
+        mDisplay.print(mToastMsg);
+      }
+    }
+
     mDisplay.display();
   }
+
+
+
+  CCThrottlerT<2000> mToastTimer;
+  bool mIsShowingToast = false;
+  String mToastMsg;
+
+  void ShowToast(const String& msg) {
+    mIsShowingToast = true;
+    mToastMsg = msg;
+    mToastTimer.Reset();
+  }
+
+
+  
+  // draws & prepares the screen for a modal message. after this just print text whatever.
+  inline void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4) {
+    mDisplay.setCursor(0,0);
+    mDisplay.fillRect(pad, pad, mDisplay.width() - pad, mDisplay.height() - pad, SSD1306_BLACK);
+    mDisplay.drawRect(rectStart, rectStart, mDisplay.width() - rectStart, mDisplay.height() - rectStart, SSD1306_WHITE);
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+    mDisplay.mTextLeftMargin = textStart;
+    mDisplay.mClipLeft = textStart;
+    mDisplay.mClipRight = RESOLUTION_X - textStart;
+    mDisplay.mClipTop = textStart;
+    mDisplay.mClipBottom = RESOLUTION_Y - textStart;
+    mDisplay.setCursor(textStart, textStart);
+  }
+
 };
 
 CCDisplay gDisplay(gApp);
@@ -311,10 +354,10 @@ struct ListControl
     mY(y),
     mMaxItemsToRender(nVisibleItems)
   {
-    CCASSERT(!!selectedItemBinding.mGetter);
-    CCASSERT(!!selectedItemBinding.mSetter);
-    CCASSERT(!!mSelectedItem.mGetter);
-    CCASSERT(!!mSelectedItem.mSetter);
+//    CCASSERT(!!selectedItemBinding.mGetter);
+//    CCASSERT(!!selectedItemBinding.mSetter);
+//    CCASSERT(!!mSelectedItem.mGetter);
+//    CCASSERT(!!mSelectedItem.mSetter);
   }
   
   void Render()
@@ -349,22 +392,6 @@ struct ListControl
   }
 };
 
-
-
-// draws & prepares the screen for a modal message. after this just print text whatever.
-static inline void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4) {
-  gDisplay.mDisplay.setCursor(0,0);
-  gDisplay.mDisplay.fillRect(pad, pad, gDisplay.mDisplay.width() - pad, gDisplay.mDisplay.height() - pad, SSD1306_BLACK);
-  gDisplay.mDisplay.drawRect(rectStart, rectStart, gDisplay.mDisplay.width() - rectStart, gDisplay.mDisplay.height() - rectStart, SSD1306_WHITE);
-  gDisplay.mDisplay.setTextSize(1);
-  gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-  gDisplay.mDisplay.mTextLeftMargin = textStart;
-  gDisplay.mDisplay.mClipLeft = textStart;
-  gDisplay.mDisplay.mClipRight = RESOLUTION_X - textStart;
-  gDisplay.mDisplay.mClipTop = textStart;
-  gDisplay.mDisplay.mClipBottom = RESOLUTION_Y - textStart;
-  gDisplay.mDisplay.setCursor(textStart, textStart);
-}
 
 
 #endif

@@ -10,7 +10,7 @@ const int CCEWI_MIDICHANNEL = 1;
 
 const float MIDI_BREATH_CURVE = 0.3f; // pow() - if <1, increases values
 
-class CCEWIMIDIOut : IUpdateObject
+class CCEWIMIDIOut : UpdateObjectT<ProfileObjectType::MIDI>
 {
   CCThrottlerT<30> gCCThrottle;
   int currentPitchBendRaw = 0;

@@ -55,7 +55,7 @@ BoolKeyWithRepeat<1000, 1000> gRHButton2Key;
 Tristate gOldTristateVal = Tristate::Null;
 
 // contains all non-GUI application stuff.
-class CCEWIApp : IUpdateObject
+class CCEWIApp : UpdateObjectT<ProfileObjectType::EWIApp>
 {
   bool mTxScheduled = false;
 public:

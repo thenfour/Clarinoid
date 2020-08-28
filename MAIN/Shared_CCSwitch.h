@@ -34,7 +34,7 @@ struct CCVirtualSwitch : ICCSwitch
   virtual bool IsCurrentlyPressed() const { return mIsCurrentlyPressed; }
 };
 
-class CCOnOffSwitch : IUpdateObject, ICCSwitch
+class CCOnOffSwitch : UpdateObjectT<ProfileObjectType::Switch>, ICCSwitch
 {
   uint8_t mPin;
   bool mIsCurrentlyPressed = false;

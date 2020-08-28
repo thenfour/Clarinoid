@@ -34,6 +34,7 @@ struct HarmVoiceSettingsApp
 //  NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::Drop;
 //  IntSettingItem mMinOutpVel;
 //  IntSettingItem mMaxOutpVel;
+// midi channel
   
   HarmVoiceSettingsApp(HarmVoiceSettings& binding) :
     mpBinding(&binding)
@@ -72,7 +73,7 @@ public:
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setTextColor(WHITE);
     gDisplay.mDisplay.setCursor(0,0);
-    gDisplay.mDisplay.println(String("~~Harmonizer~~ [") + (gAppSettings.mHarmSettings.mIsEnabled ? "on" : "off") + "]");
+    gDisplay.mDisplay.println(String("Harmonizer [") + (gAppSettings.mHarmSettings.mIsEnabled ? "on" : "off") + "]");
     gDisplay.mDisplay.println(String("Scale: "));
     gDisplay.mDisplay.println(String("Preset: "));
     gDisplay.mDisplay.println(String("                  -->"));

@@ -88,8 +88,6 @@ struct Voice
     mNote = -1;
     mIsCurrentlyPlaying = false;
 
-    Serial.println(String("voice stopped vid=") + mVoiceId);
-
     osc.amplitude(1, 0.0);
     osc.amplitude(2, 0.0);
     osc.amplitude(3, 0.0);
@@ -101,7 +99,6 @@ struct Voice
 
     bool voiceOrPatchChanged = (mMusicalVoiceId != mv.mVoiceId) || (mSynthPatch != mv.mSynthPatch);
     if (voiceOrPatchChanged) {
-      Serial.println(String("voice or patch changed for vid=") + mVoiceId + ", mvoice " + mMusicalVoiceId + "=" + mv.mVoiceId + ", patch " + mSynthPatch + "=" + mv.mSynthPatch + ", note=" + mv.mNote);
       // init synth patch.
       osc.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
       osc.waveform(2, 3);
@@ -227,7 +224,7 @@ struct VoiceList
 
 VoiceList gVoices(CCSynthGraph::waveMixer, 1);
 
-class CCSynth : IUpdateObject
+class CCSynth : UpdateObjectT<ProfileObjectType::Synth>
 {
 public:
 

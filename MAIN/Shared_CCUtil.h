@@ -4,35 +4,252 @@
 
 #include <functional>
 
+
+struct IList {
+  virtual int List_GetItemCount() const = 0;
+  virtual String List_GetItemCaption(int i) const = 0;
+};
+
+
+static int RotateIntoRange(const int& val, const int& itemCount) {
+  CCASSERT(itemCount > 0);
+  int ret = val;
+  while(ret < 0) {
+    ret += itemCount; // todo: optimize
+  }
+  return ret % itemCount;
+}
+
+static inline int AddConstrained(int orig, int delta, int min_, int max_) {
+  CCASSERT(max_ >= min_);
+  if (max_ <= min_)
+    return min_;
+  int ret = orig + delta;
+  int period = max_ - min_ + 1; // if [0,0], add 1 each time to reach 0. If [3,6], add 4.
+  while (ret < min_)
+    ret += period;
+  while (ret > max_)
+    ret -= period;
+  return ret;
+}
+
+
+template<typename T>
+struct EnumItemInfo
+{
+  T mValue;
+  const char *mName;
+};
+
+// THIS REQUIRES THAT YOUR VALUES ARE SEQUENTIAL AND THE SAME AS LIST INDICES. Runtime checks performed.
+// otherwise i would need to add a bunch of inefficient 
+template<typename T>
+struct EnumInfo : IList {
+  const size_t mItemCount;
+  const EnumItemInfo<T>* mItems;
+  
+  template<size_t N>
+  EnumInfo(const EnumItemInfo<T>(&enumItems)[N]) :
+    mItemCount(N),
+    mItems(enumItems)
+  {
+    for (size_t i = 0; i < N; ++ i) {
+      if (static_cast<size_t>(mItems[i].mValue) != i) {
+        Die("Enum value did not correspond to list index");
+      }
+    }
+  }
+
+  int List_GetItemCount() const { return mItemCount; }
+  
+  String List_GetItemCaption(int n) const
+  {
+    CCASSERT(n >= 0 && n < (int)mItemCount);
+    return String(mItems[n].mName);
+  }
+  
+  const EnumItemInfo<T>* GetItem(size_t n) {
+    CCASSERT(n >0 && n <mItemCount);
+    return &mItems[n];
+  }
+
+  const char *GetValueString(const T& val) const {
+    return mItems[static_cast<size_t>(val)].mName;
+  }
+
+  T AddRotate(const T& val, int n) const {
+    int y = static_cast<int>(val) + n;
+    return static_cast<T>(RotateIntoRange(y, (int)mItemCount));
+  }
+
+  int ToInt(const T& val) const { return static_cast<int>(val); }
+  T ToValue(const int& val) const { return static_cast<T>(val); }
+};
+
+
+
 //////////////////////////////////////////////////////////////////////
-const int MaxUpdateObjects = 30;
+struct Stopwatch
+{
+  uint32_t mExtra = 0; // store overflow here. yes there's still overflow but this helps
+  uint32_t mStartTime = 0;
+  Stopwatch() {
+    Restart();
+  }
+  void Restart()
+  {
+    mExtra = 0;
+    mStartTime = micros();
+  }
+  uint32_t ElapsedMicros() {
+    uint32_t now = micros();
+    if (now < mStartTime) {
+      mExtra += 0xffffffff - mStartTime;
+      mStartTime = 0;
+    }
+    return (now - mStartTime) + mExtra;
+  }
+};
+
+
+//////////////////////////////////////////////////////////////////////
+enum class ProfileObjectType
+{
+  Total,
+  LED,
+  Pot,
+  Encoder,
+  MIDI,
+  Synth,
+  EWIApp,
+  Display,
+  PlotHelper,
+  Switch,
+  TxRx,
+  END
+};
+
+static constexpr size_t gProfileObjectTypeCount = (size_t)(ProfileObjectType::END);
+
+EnumItemInfo<ProfileObjectType> gProfileObjectTypeItems[gProfileObjectTypeCount] = {
+  { ProfileObjectType::Total, "Total" },
+  { ProfileObjectType::LED, "LED" },
+  { ProfileObjectType::Pot, "Pot" },
+  { ProfileObjectType::Encoder, "Encoder" },
+  { ProfileObjectType::MIDI, "MIDI" },
+  { ProfileObjectType::Synth, "Synth" },
+  { ProfileObjectType::EWIApp, "EWIApp" },
+  { ProfileObjectType::Display, "Display" },
+  { ProfileObjectType::PlotHelper, "PlotHelper" },
+  { ProfileObjectType::Switch, "Switch" },
+  { ProfileObjectType::TxRx, "TxRx" }
+};
+
+EnumInfo<ProfileObjectType> gProfileObjectTypeInfo (gProfileObjectTypeItems);
+
+
+struct ProfileTiming
+{
+  ProfileObjectType mType;
+  uint32_t mUpdateMillis = 0;
+  uint32_t mRenderMillis = 0;
+  uint32_t mLoopMillis = 0;
+};
+
+
+struct Profiler
+{
+  ProfileTiming mTimings[gProfileObjectTypeCount];
+
+  Profiler() {
+    for (size_t i = 0; i < gProfileObjectTypeCount; ++ i) {
+      mTimings[i].mType = (ProfileObjectType)i;  
+    }
+  }
+};
+
+Profiler gProfiler;
+
+struct ProfileTimer
+{
+  Stopwatch mStopwatch;
+  ProfileObjectType mType;
+  std::function<uint32_t*(ProfileTiming&)> mSelector;
+  ProfileTimer(ProfileObjectType type, std::function<uint32_t*(ProfileTiming&)> selector) :
+    mType(type),
+    mSelector(selector)
+  { }
+  ~ProfileTimer()
+  {
+    uint32_t elapsed = mStopwatch.ElapsedMicros();
+    *(mSelector(gProfiler.mTimings[(size_t)mType])) += elapsed;
+    *(mSelector(gProfiler.mTimings[(size_t)ProfileObjectType::Total])) += elapsed;
+  }
+};
+
+
+//////////////////////////////////////////////////////////////////////
+static constexpr size_t MAX_UPDATE_OBJECTS = 30;
 
 // allows globally-created objects to sign up for updates
-uint8_t UpdateObjectCount = 0;
-class IUpdateObject* UpdateObjects[MaxUpdateObjects];
+size_t gUpdateObjectCount = 0;
+struct UpdateObject* gUpdateObjects[MAX_UPDATE_OBJECTS];
 
-class IUpdateObject
+struct UpdateObject
 {
-public:
-  IUpdateObject() {
-    UpdateObjects[UpdateObjectCount] = this;
-    UpdateObjectCount ++;
+  ProfileObjectType mProfileObjectType;
+  UpdateObject(ProfileObjectType profileObjectType) :
+    mProfileObjectType(profileObjectType)
+  {
+    CCASSERT(gUpdateObjectCount < MAX_UPDATE_OBJECTS);
+    gUpdateObjects[gUpdateObjectCount] = this;
+    gUpdateObjectCount ++;
   }
   virtual void setup() {}
   virtual void loop() {}
 };
 
+
+struct LoopTimer : ProfileTimer
+{
+  LoopTimer(UpdateObject* p) :
+    ProfileTimer(p->mProfileObjectType, [](ProfileTiming& p) { return &p.mLoopMillis ;})
+  {}
+};
+
+struct UpdateTimer : ProfileTimer
+{
+  UpdateTimer(UpdateObject* p) :
+    ProfileTimer(p->mProfileObjectType, [](ProfileTiming& p) { return &p.mUpdateMillis ;})
+  {}
+};
+
+struct RenderTimer : ProfileTimer
+{
+  RenderTimer(UpdateObject* p) :
+    ProfileTimer(p->mProfileObjectType, [](ProfileTiming& p) { return &p.mRenderMillis ;})
+  {}
+};
+
+
+template<ProfileObjectType TprofileObjectType>
+struct UpdateObjectT : public UpdateObject
+{
+  UpdateObjectT() : UpdateObject(TprofileObjectType) {}  
+};
+
 inline void SetupUpdateObjects() {
-  for (uint8_t i = 0; i < UpdateObjectCount; ++ i)
+  for (uint8_t i = 0; i < gUpdateObjectCount; ++ i)
   {
-    UpdateObjects[i]->setup();
+    gUpdateObjects[i]->setup();
   }
 }
 
 inline void UpdateUpdateObjects() {
-  for (uint8_t i = 0; i < UpdateObjectCount; ++ i)
+  for (uint8_t i = 0; i < gUpdateObjectCount; ++ i)
   {
-    UpdateObjects[i]->loop();
+    LoopTimer lt(gUpdateObjects[i]);
+    gUpdateObjects[i]->loop();
   }
 }
 
@@ -125,7 +342,7 @@ public:
 // but you can't just change state every X frames, because you'll catch phase and won't see both phases equally.
 // for example if you blink every 10ms, but update every 20ms, then you just never see activity.
 // to solve that, ANY changes during the minperiod will toggle the LED. so it can't double-toggle and reset.
-class ActivityLED : IUpdateObject
+class ActivityLED : UpdateObjectT<ProfileObjectType::LED>
 {
   bool mState;
   bool mNeedsToggle;
@@ -164,7 +381,7 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 // same but different timeout values depending on whether we're on or off. allows different pulse for on/off
-class AsymmetricActivityLED : IUpdateObject
+class AsymmetricActivityLED : UpdateObjectT<ProfileObjectType::LED>
 {
   bool mState;
   bool mNeedsToggle;
@@ -209,7 +426,7 @@ public:
 //////////////////////////////////////////////////////////////////////
 // Same as ActivityLED, but this tries to always return to an OFF state after a timeout.
 // prevents the LED from just staying bright ON depending on phase. Use for encoder activity for example.
-class TransientActivityLED : IUpdateObject
+class TransientActivityLED : UpdateObjectT<ProfileObjectType::LED>
 {
   bool mState;
   bool mNeedsToggle;
@@ -257,7 +474,7 @@ public:
 // This one is off by default and you raise its flag when an event occurs.
 // so similar to TransientActivity, but it's an event, not "activity".
 // instant turn-on, delayed turn-off.
-class TransientEventLED : IUpdateObject
+class TransientEventLED : UpdateObjectT<ProfileObjectType::LED>
 {
   bool mState;
   CCThrottler mTurnOffTimeout;
@@ -413,7 +630,7 @@ class SimpleMovingAverage
 
 
 // allows throttled plotting to Serial.
-class PlotHelper : IUpdateObject
+class PlotHelper : UpdateObjectT<ProfileObjectType::PlotHelper>
 {
   CCThrottlerT<5> mThrot;
   String mFields;
@@ -546,27 +763,6 @@ public:
   }
 };
 
-static int RotateIntoRange(const int& val, const int& itemCount) {
-  CCASSERT(itemCount > 0);
-  int ret = val;
-  while(ret < 0) {
-    ret += itemCount; // todo: optimize
-  }
-  return ret % itemCount;
-}
-
-static inline int AddConstrained(int orig, int delta, int min_, int max_) {
-  CCASSERT(max_ >= min_);
-  if (max_ <= min_)
-    return min_;
-  int ret = orig + delta;
-  int period = max_ - min_ + 1; // if [0,0], add 1 each time to reach 0. If [3,6], add 4.
-  while (ret < min_)
-    ret += period;
-  while (ret > max_)
-    ret -= period;
-  return ret;
-}
 
 
 
@@ -652,72 +848,8 @@ Property<Tprop> MakePropertyByCasting(Tval& x) {
 }
 
 
-struct IList {
-  virtual int List_GetItemCount() const = 0;
-  virtual String List_GetItemCaption(int i) const = 0;
-};
 
 
-
-
-template<typename T>
-struct EnumItemInfo
-{
-  T mValue;
-  const char *mName;
-};
-
-// THIS REQUIRES THAT YOUR VALUES ARE SEQUENTIAL AND THE SAME AS LIST INDICES. Runtime checks performed.
-// otherwise i would need to add a bunch of inefficient 
-template<typename T>
-struct EnumInfo : IList {
-  const size_t mItemCount;
-  const EnumItemInfo<T>* mItems;
-  
-  template<size_t N>
-  EnumInfo(const EnumItemInfo<T>(&enumItems)[N]) :
-    mItemCount(N),
-    mItems(enumItems)
-  {
-    for (size_t i = 0; i < N; ++ i) {
-      if (static_cast<size_t>(mItems[i].mValue) != i) {
-        Die("Enum value did not correspond to list index");
-      }
-    }
-  }
-
-  int List_GetItemCount() const { return mItemCount; }
-  
-  String List_GetItemCaption(int n) const
-  {
-    CCASSERT(n >= 0 && n < (int)mItemCount);
-    return String(mItems[n].mName);
-  }
-  
-  const EnumItemInfo<T>* GetItem(size_t n) {
-    CCASSERT(n >0 && n <mItemCount);
-    return &mItems[n];
-  }
-
-  const char *GetValueString(const T& val) const {
-    return mItems[static_cast<size_t>(val)].mName;
-  }
-
-  T AddRotate(const T& val, int n) const {
-    int y = static_cast<int>(val) + n;
-    return static_cast<T>(RotateIntoRange(y, (int)mItemCount));
-  }
-
-  int ToInt(const T& val) const { return static_cast<int>(val); }
-  T ToValue(const int& val) const { return static_cast<T>(val); }
-};
-
-
-// TODO: implement this. used for synth voice rotation
-struct Stopwatch
-{
-  void Restart() { }
-};
 
 
 #endif

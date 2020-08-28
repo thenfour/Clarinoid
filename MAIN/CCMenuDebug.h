@@ -176,7 +176,7 @@ struct NumericEditor : ISettingItemEditor
   }
   virtual void Render()
   {
-    SetupModal();
+    gDisplay.SetupModal();
     DrawValue(mBinding.GetValue(), oldVal);
   }
 };
@@ -372,7 +372,7 @@ struct EnumEditor : ISettingItemEditor
   }
   virtual void Render()
   {
-    SetupModal();
+    gDisplay.SetupModal();
     mListControl.Render();
   }
 };
@@ -422,10 +422,10 @@ class SettingsMenuApp : public MenuAppBaseWithUtils, public ISettingItemEditorAc
   SettingsMenuState mNav[SETTINGS_STACK_MAX_DEPTH];
   int mNavDepth = 0;
   ISettingItemEditor* mpCurrentEditor = nullptr;
-
-  CCThrottlerT<2000> mToastTimer;
-  bool mIsShowingToast = false;
-  String mToastMsg;
+//
+//  CCThrottlerT<2000> mToastTimer;
+//  bool mIsShowingToast = false;
+//  String mToastMsg;
 
 public:
 
@@ -439,12 +439,12 @@ public:
     mNav[0].pList = GetRootSettingsList();
     GoToFrontPage();
   }
-
-  void ShowToast(const String& msg) {
-    mIsShowingToast = true;
-    mToastMsg = msg;
-    mToastTimer.Reset();
-  }
+//
+//  void ShowToast(const String& msg) {
+//    mIsShowingToast = true;
+//    mToastMsg = msg;
+//    mToastTimer.Reset();
+//  }
 
   virtual SettingsList* GetRootSettingsList() = 0;
   virtual ISettingItemEditor* GetBackEditor() { return nullptr; }
@@ -499,15 +499,15 @@ public:
       mpCurrentEditor->Render();
     }
 
-    if (mIsShowingToast) {
-      if (mToastTimer.IsReady()) {
-        mIsShowingToast = false;
-      } else {
-        // render toast.
-        SetupModal();
-        gDisplay.mDisplay.print(mToastMsg);
-      }
-    }
+//    if (mIsShowingToast) {
+//      if (mToastTimer.IsReady()) {
+//        mIsShowingToast = false;
+//      } else {
+//        // render toast.
+//        SetupModal();
+//        gDisplay.mDisplay.print(mToastMsg);
+//      }
+//    }
   }
 
   // handle extra ui stuff for the front page to enable "back actions".
@@ -691,7 +691,7 @@ public:
 
   void OnResetKeys() {
     gApp.SendCmd(CommandFromMain::ResetTouchKeys);
-    ShowToast("Reset done");
+    gDisplay.ShowToast("Reset done");
   }
 
   virtual SettingsList* GetRootSettingsList()
@@ -726,7 +726,7 @@ public:
   }
 
   int mPage = 0;
-  const int pageCount = 8;
+  const int pageCount = 6;
 
   virtual void UpdateApp()
   {
@@ -811,18 +811,19 @@ public:
       gDisplay.mDisplay.print(String("  tristate: ") + ToString(gEWIControl.mPhysicalState.key_triState));
     };
 
-    auto pageDebugLHRX = [&]() {
-      gDisplay.mDisplay.println(String("LH debug") + ToString(gLHSerial.mReceivedData));
-    };
-
-    auto pageDebugRHRX = [&]() {
-      gDisplay.mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
-    };
+//    auto pageDebugLHRX = [&]() {
+//      gDisplay.mDisplay.println(String("LH debug") + ToString(gLHSerial.mReceivedData));
+//    };
+//
+//    auto pageDebugRHRX = [&]() {
+//      gDisplay.mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
+//    };
 
     auto pageDebugMain = [&]() {
-      gDisplay.mDisplay.println(String("Main debug"));
       gDisplay.mDisplay.println(String("Max frame ms: ") + ((float)gLongestLoopMicros / 1000));
       gDisplay.mDisplay.println(String("Max idle ms:  ") + ((float)gLongestBetweenLoopMicros / 1000));
+      gDisplay.mDisplay.println(String("Framerate: ") + (int)gFramerate.getFPS());
+      gDisplay.mDisplay.println(String("UpdateObjects:") + gUpdateObjectCount);
     };
     
     auto pageAudioStatus = [&]() {
@@ -848,13 +849,13 @@ public:
       case 4:
         pageAudioStatus();
         break;
+//      case 5:
+//        pageDebugLHRX();
+//        break;
+//      case 6:
+//        pageDebugRHRX();
+//        break;
       case 5:
-        pageDebugLHRX();
-        break;
-      case 6:
-        pageDebugRHRX();
-        break;
-      case 7:
         pageDebugMain();
         break;
     }
@@ -949,7 +950,7 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
 {
   int mKeyIndex = 0;
   Plotter<3, 2> mPlotter;
-  CCThrottlerT<7> mThrottle;
+  CCThrottlerT<5> mThrottle;
   bool isPlaying = true;
 
   virtual void RenderFrontPage() {
@@ -1010,7 +1011,6 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
       }
       if (pData) {
         mPlotter.Plot3b(pData->focusedTouchReadMicros,
-//          pData->focusedTouchReadValue,
           pData->focusedTouchReadUntouchedMicros,
           pData->focusedTouchReadThresholdMicros,
           gEWIControl.mPhysicalState.mOrderedKeys[mKeyIndex]->IsCurrentlyPressed()
@@ -1026,6 +1026,113 @@ class TouchKeyGraphs : public MenuAppBaseWithUtils
     }
   }
 };
+
+
+enum class ProfileMenuMode
+{
+  Loop,
+  Render,
+  Update,
+  Total
+};
+struct ProfileTimingsMenuList : IList
+{
+  ProfileMenuMode mMode = ProfileMenuMode::Total;
+  
+  virtual int List_GetItemCount() const {
+    return gProfileObjectTypeCount;
+  }
+  virtual String List_GetItemCaption(int i) const {
+    CCASSERT(i >= 0 && i < (int)gProfileObjectTypeCount);
+    String ret = gProfileObjectTypeItems[i].mName;
+    ret += " ";
+
+    auto& total = gProfiler.mTimings[(size_t)(ProfileObjectType::Total)];
+    auto& my = gProfiler.mTimings[(size_t)i];
+
+    uint64_t t = 1, m = 0; // total timing & my timing
+    switch(mMode) {
+    case ProfileMenuMode::Loop: // show as % of total
+      t = total.mLoopMillis;
+      m = my.mLoopMillis;
+      break;
+    case ProfileMenuMode::Render: // show as % of total
+      t = total.mRenderMillis;
+      m = my.mRenderMillis;
+      break;
+    case ProfileMenuMode::Update: // show as % of total
+      t = total.mUpdateMillis;
+      m = my.mUpdateMillis;
+      break;
+    case ProfileMenuMode::Total: // show as % of total
+      t = total.mLoopMillis + total.mRenderMillis + total.mUpdateMillis;
+      m = my.mLoopMillis + my.mRenderMillis + my.mUpdateMillis;
+      break;
+    }
+
+    double d = m;
+    d /= t;
+    d *= 100;// percent
+
+    ret += d;
+    ret += "%";
+
+    return ret;
+  }
+};
+
+struct ProfileMenuApp : public MenuAppBaseWithUtils
+{
+  ProfileTimingsMenuList mListAdapter;
+  ListControl mList;
+  int mSelectedItem = 0;
+
+  ProfileMenuApp() :
+    mList(&mListAdapter, mSelectedItem, 0, 0, 4)
+  {}
+  
+  virtual void RenderFrontPage() {
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.println("Profiler -->");
+  }
+  virtual void RenderApp() {
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
+    mList.Render();
+  }
+  virtual void UpdateApp() {
+    if (BackButton().IsNewlyPressed()) {
+      GoToFrontPage();
+      return;
+    }
+    if (gEncButton.IsNewlyPressed()) {
+      // cycle mode
+      switch(mListAdapter.mMode) {
+      case ProfileMenuMode::Total:
+        mListAdapter.mMode = ProfileMenuMode::Loop;
+        gDisplay.ShowToast("Loop");
+        break;
+      case ProfileMenuMode::Loop:
+        mListAdapter.mMode = ProfileMenuMode::Render;
+        gDisplay.ShowToast("Render");
+        break;
+      case ProfileMenuMode::Render:
+        mListAdapter.mMode = ProfileMenuMode::Update;
+        gDisplay.ShowToast("Update");
+        break;
+      case ProfileMenuMode::Update:
+        mListAdapter.mMode = ProfileMenuMode::Total;
+        gDisplay.ShowToast("Total");
+        break;
+      }
+    }
+    mList.Update();
+  }
+};
+
 
 
 #endif
