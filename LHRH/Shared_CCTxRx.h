@@ -162,11 +162,13 @@ enum class CommandFromMain : uint8_t
   ResetTouchKeys = 1,
   EnableOrangeLED = 2,
   DisableOrangeLED = 3,
+  SetTouchMaxFactor = 4,
 };
 
 struct MainChecksummablePayload
 {
   CommandFromMain cmd;
+  float cmdFloatParam1;
   LHRHLEDMode ledMode;
   uint8_t leds[10][3];
   int8_t focusedTouchKey; // index into gKeyDesc

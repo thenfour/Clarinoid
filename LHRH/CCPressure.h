@@ -43,6 +43,7 @@ public:
 
   virtual void setup()
   {
+    pinMode(mPin, INPUT_PULLDOWN);
   }
   
   virtual void loop()
@@ -61,7 +62,41 @@ public:
 };
 
 using CCBiteSensor = CCBreathSensor;
-using CCPitchStripSensor = CCBreathSensor;
+
+
+
+class CCPitchStripSensor : UpdateObjectT<ProfileObjectType::BreathSensor>
+{
+  uint8_t mPin;
+  uint16_t mRawValue = 0;
+  Analog01Estimator mValue01Estimate;
+  
+public:
+  explicit CCPitchStripSensor(uint8_t pin) :
+    mPin(pin)
+  {
+  }
+
+  virtual void setup()
+  {
+    pinMode(mPin, INPUT_PULLDOWN); // this makes 0 the untouched state.
+  }
+  
+  virtual void loop()
+  {
+    uint16_t a = analogRead(mPin);
+    mRawValue = a;
+    mValue01Estimate.Update(a);
+  }
+
+  uint16_t GetRawValue() const { return mRawValue; }
+
+  // return 0-1
+  float Value01Estimate() const {
+    return mValue01Estimate.mValue01;
+  }
+};
+
 
 
 

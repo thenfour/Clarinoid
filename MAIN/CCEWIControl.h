@@ -210,8 +210,10 @@ struct CCEWIMusicalState
       float breathAdj = map((float)ps.breath01, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound, 0.0f, 1.0f);
       breathAdj = constrain(breathAdj, 0.0f, 1.0f);
       this->breath01.Update(breathAdj);
+
+      //Serial.println(ps.pitchDown01 * 100);
       
-      //this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), 0, PITCHDOWN_DEADZONE, -1.0f, 0.0f), -1.0f, 0.0f));
+      this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax, 0.0f, -1.0f), -1.0f, 0.0f));
       isPlayingNote = this->breath01.GetValue() > gAppSettings.mBreathNoteOnThreshold;
       mLiveVoice.mIsNoteCurrentlyOn = isPlayingNote;
       mLiveVoice.mVelocity = 100; // TODO

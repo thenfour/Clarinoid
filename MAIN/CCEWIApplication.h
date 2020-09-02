@@ -79,13 +79,19 @@ public:
     mLastKeyFocused = key;
     mTxScheduled = true;
     mPayload.data.focusedTouchKey = key;
-    //Serial.println(String("key focus = ") + (int)key);
   }
 
   void SendCmd(CommandFromMain cmd) {
     mPayload.data.cmd = cmd;
     mTxScheduled = true;    
-    //Serial.println(String("send cmd ") + (int)cmd);
+    //Serial.println("Sendingcmd");
+  }
+
+  void SendCmd(CommandFromMain cmd, float param1) {
+    mPayload.data.cmd = cmd;
+    mPayload.data.cmdFloatParam1 = param1;
+    mTxScheduled = true;    
+    //Serial.println("Sendingcmd2");
   }
 
   void loop() {

@@ -109,6 +109,9 @@ void loop() {
     case CommandFromMain::ResetTouchKeys:
       gTouchKeyCalibrator.ResetAllKeys();
       break;
+    case CommandFromMain::SetTouchMaxFactor:
+      gTouchKeyCalibrator.SetMaxFactorOfAllKeys(gTxRx.mReceivedData.data.cmdFloatParam1);
+      break;
     }
   }
 

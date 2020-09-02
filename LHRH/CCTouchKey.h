@@ -40,6 +40,13 @@ struct TouchableKeyInfo {
     mRunningValues.Clear();
     mTouchablePin.initUntouched();
   }
+
+  void SetMaxFactor(float newMaxFactor) {
+    // for some reason touchablePin doesn't have a method to change this. so we have to re-construct the object.
+    auto pinNumber = mTouchablePin.pinNumber; // save for re-construction
+    mTouchablePin.~touchablePin();
+    new (&mTouchablePin) touchablePin(pinNumber, newMaxFactor);
+  }
 };
 
 class CCTouchKeyCalibrator : UpdateObjectT<ProfileObjectType::TouchKeyCalibration>
@@ -66,34 +73,40 @@ public:
     }
   }
 
+  void SetMaxFactorOfAllKeys(float newMaxFactor) {
+    for (int i = 0; i < mKeyCount; ++ i) {
+      mKeys[i]->SetMaxFactor(newMaxFactor);
+    }
+  }
+
   virtual void loop() {
-    if (!mThrottle.IsReady()) {
-      return;
-    }
-
-//      Serial.println(String("sampling for calib...") + millis());
-    int m1 = micros();
-    int n = mKeys[mIndex]->mTouchablePin.touchRead();
-    int m2 = micros();
-    auto& k = *mKeys[mIndex];
-    k.mRunningValues.Update((float)n);
-
-    if (m2 > m1) {
-      k.mTouchReadMicros = m2 - m1;
-    }
-    k.mTouchReadValue = n;
-
-    if (k.mRunningValues.GetSampleCount() == TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
-      k.mMinValue = k.mRunningValues.GetValue();
-    } else if (k.mRunningValues.GetSampleCount() > TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
-      float av = k.mRunningValues.GetValue();
-      if (av < k.mMinValue) {
-        k.mMinValue = av;
-        k.mTouchablePin.initUntouched();      
-      }
-    }
-
-    mIndex = (mIndex + 1) % mKeyCount;
+//    if (!mThrottle.IsReady()) {
+//      return;
+//    }
+//
+////      Serial.println(String("sampling for calib...") + millis());
+//    int m1 = micros();
+//    int n = mKeys[mIndex]->mTouchablePin.touchRead();
+//    int m2 = micros();
+//    auto& k = *mKeys[mIndex];
+//    k.mRunningValues.Update((float)n);
+//
+//    if (m2 > m1) {
+//      k.mTouchReadMicros = m2 - m1;
+//    }
+//    k.mTouchReadValue = n;
+//
+//    if (k.mRunningValues.GetSampleCount() == TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
+//      k.mMinValue = k.mRunningValues.GetValue();
+//    } else if (k.mRunningValues.GetSampleCount() > TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
+//      float av = k.mRunningValues.GetValue();
+//      if (av < k.mMinValue) {
+//        k.mMinValue = av;
+//        k.mTouchablePin.initUntouched();      
+//      }
+//    }
+//
+//    mIndex = (mIndex + 1) % mKeyCount;
   }
 };
 
@@ -131,7 +144,7 @@ public:
   virtual void loop()
   {
     if (ki.mKeyDescIndex == gFocusedKeyIndex && mDebugThrottle.IsReady()) {
-      Serial.println(String("sampling debug...") + millis());
+      //Serial.println(String("sampling debug...") + millis());
       uint32_t m = micros();
       int n = ki.mTouchablePin.touchRead();
       uint32_t m2 = micros();

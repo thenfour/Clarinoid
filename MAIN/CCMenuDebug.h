@@ -680,18 +680,33 @@ class SystemSettingsApp : public SettingsMenuApp
   SettingsList mRootList;
   
   TriggerSettingItem mResetKeys = { mRootList, "Reset all keys", [&](){ this->OnResetKeys(); }, AlwaysEnabled };
+  FloatSettingItem mTouchMaxFactor = { mRootList, "Touch max fact", 1, 2, Property<float> {
+    [&]() { return gAppSettings.mTouchMaxFactor; },
+    [&](const float& f)
+      {
+        gAppSettings.mTouchMaxFactor = f;
+        gApp.SendCmd(CommandFromMain::SetTouchMaxFactor, f);
+      }
+  }, AlwaysEnabled };
+  
+  FloatSettingItem mPitchDownMin = { mRootList, "Pitchdown min", 0, 1, gAppSettings.mPitchDownMin, AlwaysEnabled };
+  FloatSettingItem mPitchDownMax = { mRootList, "Pitchdown max", 0, 1, gAppSettings.mPitchDownMax, AlwaysEnabled };
+
+  FloatSettingItem mBreathLowerBound = { mRootList, "Breath inp min", 0, 1, gAppSettings.mBreathLowerBound, AlwaysEnabled };
+  FloatSettingItem mBreathUpperBound = { mRootList, "Breath inp max", 0, 1, gAppSettings.mBreathUpperBound, AlwaysEnabled };
+  FloatSettingItem mBreathNoteOnThreshold = { mRootList, "Breath note on thresh", 0, 1, gAppSettings.mBreathNoteOnThreshold, AlwaysEnabled };
+
   BoolSettingItem mDimDisplay = { mRootList, "Display dim?", "Yes", "No", Property<bool>{ [&]() { return gAppSettings.mDisplayDim; },
     [&](const bool& x) { gAppSettings.mDisplayDim = x; gDisplay.mDisplay.dim(x); }}, AlwaysEnabled };
 
   BoolSettingItem mOrangeLEDs = { mRootList, "Orange LEDs?", "On", "Off", Property<bool>{
     [&]() { return gAppSettings.mOrangeLEDs; },
-    [&](const bool& x) { gAppSettings.mOrangeLEDs = x;
-    gApp.SendCmd(x ? CommandFromMain::EnableOrangeLED : CommandFromMain::DisableOrangeLED);
-    }}, AlwaysEnabled };
-
-  FloatSettingItem mBreathLowerBound = { mRootList, "Breath inp min", 0, 1, gAppSettings.mBreathLowerBound, AlwaysEnabled };
-  FloatSettingItem mBreathUpperBound = { mRootList, "Breath inp max", 0, 1, gAppSettings.mBreathUpperBound, AlwaysEnabled };
-  FloatSettingItem mBreathNoteOnThreshold = { mRootList, "Breath note on thresh", 0, 1, gAppSettings.mBreathNoteOnThreshold, AlwaysEnabled };
+    [&](const bool& x)
+      {
+        gAppSettings.mOrangeLEDs = x;
+        gApp.SendCmd(x ? CommandFromMain::EnableOrangeLED : CommandFromMain::DisableOrangeLED);
+      }
+    }, AlwaysEnabled };
 
 public:
 

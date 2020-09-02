@@ -15,9 +15,6 @@ static const size_t SYNTH_PRESET_COUNT = 10;
 
 bool gTouchKeyGraphsIsRunning = false;
 
-
-const float PITCHDOWN_DEADZONE = 0.8f;
-
 class PresetName
 {
   char buf[PRESET_NAME_LEN];
@@ -190,6 +187,10 @@ struct AppSettings
   float mBPM = 90.0f;
   
   HarmSettings mHarmSettings;
+
+  float mTouchMaxFactor = 1.5f;
+  float mPitchDownMin = 0.15f;
+  float mPitchDownMax = 0.6f;
 };
 
 AppSettings gAppSettings;
