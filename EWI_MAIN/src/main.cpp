@@ -11,6 +11,8 @@
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <Arduino.h>
+
 // a sort of exception display mechanism.
 bool gIsCrashed = false;
 String gCrashMessage;
@@ -22,12 +24,12 @@ static inline void Die(const String& msg) {
 
 #define CCASSERT(x) if (!(x)) { Die(String("!Assert! ") + __FILE__ + ":" + (int)__LINE__); }
 
-#include "Shared_CCSwitch.h"
-#include "Shared_CCLeds.h"
+#include <Shared_CCSwitch.h>
+#include <Shared_CCLeds.h>
 
 #include "AppSettings.h"
 
-#include "Shared_CCTxRx.h"
+#include <Shared_CCTxRx.h>
 
 #include "CCEWIApplication.h"
 CCEWIApp gApp;
@@ -37,13 +39,13 @@ CCEWIApp gApp;
 #include "CCMenuDebug.h"
 #include "CCMenu.h"
 
-ProfileMenuApp gProfileApp;
 HarmSettingsApp gHarmSettingsApp;
 SystemSettingsApp gSystemSettingsApp;
 TouchKeyGraphs gTouchKeyApp;
 MetronomeSettingsApp gMetronomeApp;
 DebugMenuApp gDebugApp;
 SynthSettingsApp gSynthSettingsApp;
+ProfileMenuApp gProfileApp;
 
 
 void setup() {

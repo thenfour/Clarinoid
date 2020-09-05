@@ -8,11 +8,13 @@
 
 //============================================================
 
+#include <stdint.h>
+
 uint32_t gFrameNumber = 0;
 
-#include "Shared_CCTxRx.h"
-#include "Shared_CCSwitch.h"
-#include "Shared_CCLeds.h"
+#include <Shared_CCTxRx.h>
+#include <Shared_CCSwitch.h>
+#include <Shared_CCLeds.h>
 
 static int gFocusedKeyIndex = -1;
 
