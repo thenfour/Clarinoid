@@ -8,6 +8,9 @@
 // to try and optimize elsewhere, because this is a bit unruly. I'd rather make changes to the more controlled code.
 #define AUDIO_BLOCK_SAMPLES 128
 
+static constexpr int RESOLUTION_X = 128;
+static constexpr int RESOLUTION_Y = 32;
+
 //============================================================
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,27 +29,12 @@ static inline void Die(const String& msg) {
 
 #include <Shared_CCSwitch.h>
 #include <Shared_CCLeds.h>
-
-#include "AppSettings.h"
-
 #include <Shared_CCTxRx.h>
 
+#include "AppSettings.h"
 #include "CCEWIApplication.h"
-CCEWIApp gApp;
-
 #include "CCDisplay.h"
-
-#include "CCMenuDebug.h"
-#include "CCMenu.h"
-
-HarmSettingsApp gHarmSettingsApp;
-SystemSettingsApp gSystemSettingsApp;
-TouchKeyGraphs gTouchKeyApp;
-MetronomeSettingsApp gMetronomeApp;
-DebugMenuApp gDebugApp;
-SynthSettingsApp gSynthSettingsApp;
-ProfileMenuApp gProfileApp;
-
+#include "MenuApps.hpp"
 
 void setup() {
   Serial.begin(9600);

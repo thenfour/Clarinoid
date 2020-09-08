@@ -184,5 +184,6 @@ public:
   } // loop();
 };
 
+CCEWIApp gApp;
 
 #endif

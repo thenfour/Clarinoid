@@ -1,6 +1,5 @@
 
-#ifndef CCLEDS_H
-#define CCLEDS_H
+#pragma once
 
 #include <Adafruit_NeoPixel.h>
 #include "Shared_CCUtil.h"
@@ -61,4 +60,17 @@ public:
   }
 };
 
-#endif
+
+
+//////////////////////////////////////////////////////////////////////
+// convert values to LED indication colorant values
+inline uint8_t col(bool b) { return b ? 64 : 0; }
+inline uint8_t col(bool b, uint8_t ledmin, uint8_t ledmax)
+{
+  return b ? ledmax : ledmin;
+}
+inline uint8_t col(float f01) { return (uint8_t)(f01 * 255); }
+inline uint8_t col(float f01, int x)
+{
+  return (uint8_t)(f01 * x);
+}
