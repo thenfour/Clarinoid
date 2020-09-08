@@ -607,6 +607,8 @@ class HarmSettingsApp : public SettingsMenuApp
     { gAppSettings.mHarmSettings.mVoiceSettings[1] },
     { gAppSettings.mHarmSettings.mVoiceSettings[2] },
     { gAppSettings.mHarmSettings.mVoiceSettings[3] },
+    { gAppSettings.mHarmSettings.mVoiceSettings[4] },
+    { gAppSettings.mHarmSettings.mVoiceSettings[5] },
   };
   
   BoolSettingItem mIsEnabled = { mRootList, "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
@@ -614,6 +616,8 @@ class HarmSettingsApp : public SettingsMenuApp
   SubmenuSettingItem mVoiceSubmenu2 = { mRootList, "Voice2", &mVoiceSettings[1].mList, AlwaysEnabled };
   SubmenuSettingItem mVoiceSubmenu3 = { mRootList, "Voice3", &mVoiceSettings[2].mList, AlwaysEnabled };
   SubmenuSettingItem mVoiceSubmenu4 = { mRootList, "Voice4", &mVoiceSettings[3].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu5 = { mRootList, "Voice5", &mVoiceSettings[4].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu6 = { mRootList, "Voice6", &mVoiceSettings[5].mList, AlwaysEnabled };
   IntSettingItem mGlobalSynthPreset = { mRootList, "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
   IntSettingItem mMinRotationTimeMS = { mRootList, "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
 

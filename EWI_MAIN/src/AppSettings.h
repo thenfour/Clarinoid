@@ -2,12 +2,13 @@
 #ifndef CCAPPSETTINGS_H
 #define CCAPPSETTINGS_H
 
-static const size_t MAX_VOICES = 8;
+static const size_t MAX_SYNTH_VOICES = 8;
 
-static const size_t HARM_VOICES = 4;
+static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;
 
-static const size_t LOOP_LAYERS = 4;
+static const size_t LOOP_LAYERS = 8;
+static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * HARM_VOICES;
 
 static const size_t PRESET_NAME_LEN = 16;
 

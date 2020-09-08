@@ -1,0 +1,135 @@
+#pragma once
+
+#include <Shared_CCUtil.h>
+#include <Shared_CCTxRx.h>
+
+#include "Harmonizer.hpp"
+#include "Loopstation.hpp"
+#include "PhysicalState.hpp"
+
+struct CCEWIMusicalState
+{
+  MusicalVoice mLiveVoice; // the voice you're literally physically playing.
+  MusicalVoice mMusicalVoices[MAX_MUSICAL_VOICES]; // these are all the voices that WANT to be played (after transpose, harmonize, looping, etc). May be more than synth polyphony.
+  size_t mVoiceCount = 0;
+
+  LooperAndHarmonizer mLooper;
+
+  // TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
+  SimpleMovingAverage<20> breath01;// 0-1
+  SimpleMovingAverage<120> pitchBendN11; // -1 to 1
+  CCThrottlerT<1> mPressureSensingThrottle;
+  int nUpdates = 0;
+  int noteOns = 0;
+
+  // { valid for 1 frame only.
+  bool needsNoteOn = false;
+  bool needsNoteOff = false;
+  uint8_t noteOffNote = 0; // ignore this if needsNoteOff is false.
+  // } valid for 1 frame only.
+
+  CCEWIMusicalState() {
+    this->breath01.Update(0);
+    this->pitchBendN11.Update(0);
+  }
+
+  void Update(const CCEWIPhysicalState& ps)
+  {
+    uint8_t prevNote = mLiveVoice.mNote;
+    bool wasPlayingNote = mLiveVoice.mIsNoteCurrentlyOn;
+    bool isPlayingNote = wasPlayingNote;
+
+    // convert that to musical state. i guess this is where the 
+    // most interesting EWI-ish logic is.
+
+    if (nUpdates == 0 || mPressureSensingThrottle.IsReady()) {
+
+      float breathAdj = map((float)ps.breath01, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound, 0.0f, 1.0f);
+      breathAdj = constrain(breathAdj, 0.0f, 1.0f);
+      this->breath01.Update(breathAdj);
+
+      //Serial.println(ps.pitchDown01 * 100);
+      
+      this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax, 0.0f, -1.0f), -1.0f, 0.0f));
+      isPlayingNote = this->breath01.GetValue() > gAppSettings.mBreathNoteOnThreshold;
+      mLiveVoice.mIsNoteCurrentlyOn = isPlayingNote;
+      mLiveVoice.mVelocity = 100; // TODO
+      mLiveVoice.mSynthPatch = 0; // TODO
+    }
+
+    // the rules are rather weird for keys. open is a C#...
+    // https://bretpimentel.com/flexible-ewi-fingerings/
+    int newNote = 49; // C#2
+    if (ps.key_lh1.IsCurrentlyPressed()){
+      newNote -= 2;
+    }
+    if (ps.key_lh2.IsCurrentlyPressed()) {
+      newNote -= ps.key_lh1.IsCurrentlyPressed() ? 2 : 1;
+    }
+    if (ps.key_lh3.IsCurrentlyPressed()) {
+      newNote -= 2;
+    }
+    if (ps.key_lh4.IsCurrentlyPressed()) {
+      newNote += 1;
+    }
+
+    if (ps.key_rh1.IsCurrentlyPressed()) {
+      newNote -= ps.key_lh3.IsCurrentlyPressed() ? 2 : 1;
+    }
+    if (ps.key_rh2.IsCurrentlyPressed()) {
+      newNote -= 1;
+    }
+    if (ps.key_rh3.IsCurrentlyPressed()) {
+      newNote -= 2;
+    }
+    if (ps.key_rh4.IsCurrentlyPressed()) {
+      newNote -= 2;
+    }
+
+    if (ps.key_octave4.IsCurrentlyPressed()) {
+      newNote += 12 * 4;  
+    } else if (ps.key_octave3.IsCurrentlyPressed()) {
+      newNote += 12 * 3;
+    } else if (ps.key_octave2.IsCurrentlyPressed()) {
+      newNote += 12 * 2;
+    } else if (ps.key_octave1.IsCurrentlyPressed()) {
+      newNote += 12 * 1;
+    }
+
+    // transpose
+    newNote += gAppSettings.mTranspose;
+    newNote = constrain(newNote, 1, 127);
+    mLiveVoice.mNote = (uint8_t)newNote;
+
+    needsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != newNote);
+    // send note off in these cases:
+    // - you are not playing but were
+    // - or, you are playing, but a different note than before.
+    needsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != newNote));
+    noteOffNote = prevNote;
+
+    if (needsNoteOn) {
+      noteOns ++;
+    }
+
+    nUpdates ++;
+
+    // we have calculated mLiveVoice, converting physical to live musical state.
+    // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.
+    mVoiceCount = mLooper.Update(mLiveVoice, mMusicalVoices, EndPtr(mMusicalVoices));
+  }
+};
+
+
+class CCEWIControl
+{
+public:
+  CCEWIPhysicalState mPhysicalState;
+  CCEWIMusicalState mMusicalState;
+
+  void Update(const LHRHPayload& lh, const LHRHPayload& rh) {
+    mPhysicalState.Update(lh, rh);
+    mMusicalState.Update(mPhysicalState);
+  }
+};
+

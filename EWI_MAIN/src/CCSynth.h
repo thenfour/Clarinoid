@@ -14,7 +14,7 @@
 #include "Shared_CCUtil.h"
 
 #include "CCSynthUtils.h"
-#include "CCEWIControl.h"
+#include "MusicalState.hpp"
 namespace CCSynthGraph
 {
 /*
@@ -153,7 +153,7 @@ struct Voice
 
 struct VoiceList
 {
-  Voice mVoices[MAX_VOICES] =
+  Voice mVoices[MAX_SYNTH_VOICES] =
   { 
     { 0, mix1, 0 },
     { 1, mix1, 1 },
@@ -231,7 +231,7 @@ public:
   CCThrottlerT<500> mMetronomeTimer;
 
   virtual void setup() {
-    AudioMemory(5 + (MAX_VOICES * 2)); // rough estimate
+    AudioMemory(5 + (MAX_SYNTH_VOICES * 2)); // rough estimate
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.
@@ -261,7 +261,8 @@ public:
     // AudioNoInterrupts  https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
     AudioNoInterrupts();
 
-    for (auto& mv : state.mMusicalVoices) {
+    for (size_t imv = 0; imv < state.mVoiceCount; ++ imv) {
+      auto& mv = state.mMusicalVoices[imv];
       if (mv.mIsNoteCurrentlyOn) {
         Voice* pv = gVoices.FindAssignedOrAvailable(mv.mVoiceId);
         CCASSERT(!!pv);
