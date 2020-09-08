@@ -14,7 +14,7 @@ const float CCEWI_TOUCHABLE_PIN_MAX_FACTOR = 1.5;
 // is less than we've seen before. if so, we suspect it's untouched.
 const int MaxTouchKeys = 15;
 const int TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES = 3; // how many samples do we average together
-const int TOUCH_KEY_CALIB_THROTTLE_MS = 100;
+const int TOUCH_KEY_CALIB_THROTTLE_MS = 30;
 
 struct TouchableKeyInfo {
   TouchableKeyInfo(uint8_t pin, int keyDescIndex) :
@@ -80,33 +80,33 @@ public:
   }
 
   virtual void loop() {
-//    if (!mThrottle.IsReady()) {
-//      return;
-//    }
-//
-////      Serial.println(String("sampling for calib...") + millis());
-//    int m1 = micros();
-//    int n = mKeys[mIndex]->mTouchablePin.touchRead();
-//    int m2 = micros();
-//    auto& k = *mKeys[mIndex];
-//    k.mRunningValues.Update((float)n);
-//
-//    if (m2 > m1) {
-//      k.mTouchReadMicros = m2 - m1;
-//    }
-//    k.mTouchReadValue = n;
-//
-//    if (k.mRunningValues.GetSampleCount() == TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
-//      k.mMinValue = k.mRunningValues.GetValue();
-//    } else if (k.mRunningValues.GetSampleCount() > TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
-//      float av = k.mRunningValues.GetValue();
-//      if (av < k.mMinValue) {
-//        k.mMinValue = av;
-//        k.mTouchablePin.initUntouched();      
-//      }
-//    }
-//
-//    mIndex = (mIndex + 1) % mKeyCount;
+   if (!mThrottle.IsReady()) {
+     return;
+   }
+
+   int m1 = micros();
+   int n = mKeys[mIndex]->mTouchablePin.touchRead();
+   int m2 = micros();
+   auto& k = *mKeys[mIndex];
+   k.mRunningValues.Update((float)n);
+
+   if (m2 > m1) {
+     k.mTouchReadMicros = m2 - m1;
+   }
+   k.mTouchReadValue = n;
+
+   if (k.mRunningValues.GetSampleCount() == TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
+     k.mMinValue = k.mRunningValues.GetValue();
+   } else if (k.mRunningValues.GetSampleCount() > TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
+     float av = k.mRunningValues.GetValue();
+     if (av < (k.mMinValue / CCEWI_TOUCHABLE_PIN_MAX_FACTOR)) {
+       //Serial.println(String("Re-calibrating touch key ") + k.mDesc.mName);
+       k.mMinValue = av;
+       k.mTouchablePin.initUntouched();      
+     }
+   }
+
+   mIndex = (mIndex + 1) % mKeyCount;
   }
 };
 

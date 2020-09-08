@@ -1,10 +1,8 @@
 // Teensy LC
 // 48mhz
-// speed-optimizing for some reason causes problems i don't know why.
-// so choose smallest code
 
-#define LH
-//#define RH
+//#define LH
+#define RH
 
 //============================================================
 
