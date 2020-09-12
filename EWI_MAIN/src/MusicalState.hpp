@@ -22,12 +22,6 @@ struct CCEWIMusicalState
   int nUpdates = 0;
   int noteOns = 0;
 
-  // { valid for 1 frame only.
-  bool needsNoteOn = false;
-  bool needsNoteOff = false;
-  uint8_t noteOffNote = 0; // ignore this if needsNoteOff is false.
-  // } valid for 1 frame only.
-
   CCEWIMusicalState() {
     this->breath01.Update(0);
     this->pitchBendN11.Update(0);
@@ -35,7 +29,7 @@ struct CCEWIMusicalState
 
   void Update(const CCEWIPhysicalState& ps)
   {
-    uint8_t prevNote = mLiveVoice.mNote;
+    uint8_t prevNote = mLiveVoice.mMidiNote;
     bool wasPlayingNote = mLiveVoice.mIsNoteCurrentlyOn;
     bool isPlayingNote = wasPlayingNote;
 
@@ -48,14 +42,17 @@ struct CCEWIMusicalState
       breathAdj = constrain(breathAdj, 0.0f, 1.0f);
       this->breath01.Update(breathAdj);
 
-      //Serial.println(ps.pitchDown01 * 100);
-      
       this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax, 0.0f, -1.0f), -1.0f, 0.0f));
-      isPlayingNote = this->breath01.GetValue() > gAppSettings.mBreathNoteOnThreshold;
-      mLiveVoice.mIsNoteCurrentlyOn = isPlayingNote;
-      mLiveVoice.mVelocity = 100; // TODO
-      mLiveVoice.mSynthPatch = 0; // TODO
     }
+
+    mLiveVoice.mBreath01 = this->breath01.GetValue();
+    isPlayingNote = mLiveVoice.mBreath01 > gAppSettings.mBreathNoteOnThreshold;
+    mLiveVoice.mIsNoteCurrentlyOn = isPlayingNote;
+
+    mLiveVoice.mPitchBendN11 = this->pitchBendN11.GetValue();
+    mLiveVoice.mVelocity = 100; // TODO
+    mLiveVoice.mSynthPatch = 0; // TODO
+    mLiveVoice.mHarmPatch = 0;// todo
 
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
@@ -99,17 +96,18 @@ struct CCEWIMusicalState
     // transpose
     newNote += gAppSettings.mTranspose;
     newNote = constrain(newNote, 1, 127);
-    mLiveVoice.mNote = (uint8_t)newNote;
+    mLiveVoice.mMidiNote = (uint8_t)newNote;
 
-    needsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != newNote);
+    mLiveVoice.mNeedsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != newNote);
     // send note off in these cases:
     // - you are not playing but were
     // - or, you are playing, but a different note than before.
-    needsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != newNote));
-    noteOffNote = prevNote;
+    mLiveVoice.mNeedsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != newNote));
+    mLiveVoice.mNoteOffNote = prevNote;
 
-    if (needsNoteOn) {
+    if (mLiveVoice.mNeedsNoteOn) {
       noteOns ++;
+      mLiveVoice.mDuration.Restart();
     }
 
     nUpdates ++;

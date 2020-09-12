@@ -50,17 +50,26 @@ static inline int AddConstrained(int orig, int delta, int min_, int max_) {
 //////////////////////////////////////////////////////////////////////
 struct Stopwatch
 {
-  uint32_t mExtra = 0; // store overflow here. yes there's still overflow but this helps
+  uint64_t mExtra = 0; // store overflow here. yes there's still overflow but this helps
   uint32_t mStartTime = 0;
+
   Stopwatch() {
     Restart();
   }
-  void Restart()
+
+  // behave essentially like POD
+  Stopwatch(const Stopwatch& rhs) = default;
+  Stopwatch(Stopwatch&&) = default;
+  Stopwatch& operator =(const Stopwatch& rhs) = default;
+  Stopwatch& operator =(Stopwatch&&) = default;
+
+  void Restart(uint64_t newTime = 0)
   {
-    mExtra = 0;
+    mExtra = newTime;
     mStartTime = micros();
   }
-  uint32_t ElapsedMicros() {
+
+  uint64_t ElapsedMicros() {
     uint32_t now = micros();
     if (now < mStartTime) {
       mExtra += 0xffffffff - mStartTime;
@@ -82,6 +91,12 @@ constexpr size_t SizeofStaticArray(const T(&x)[N])
 
 template<typename T, size_t N>
 constexpr const T* EndPtr(const T(&x)[N])
+{
+  return &x[N];
+}
+
+template<typename T, size_t N>
+constexpr T* EndPtr(T(&x)[N])
 {
   return &x[N];
 }

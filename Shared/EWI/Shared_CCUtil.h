@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "Taskman.hpp"
 #include "FPS.hpp"
 #include "Basic.hpp"

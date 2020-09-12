@@ -2,103 +2,60 @@
 #ifndef CCAPPSETTINGS_H
 #define CCAPPSETTINGS_H
 
+#include "Music.hpp"
+
 static const size_t MAX_SYNTH_VOICES = 8;
 
+static const size_t HARM_PRESET_COUNT = 16;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;
 
 static const size_t LOOP_LAYERS = 8;
-static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * HARM_VOICES;
+static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
 
 static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 10;
 
-bool gTouchKeyGraphsIsRunning = false;
+bool gTouchKeyGraphsIsRunning = false; // todo: this is a hack
 
 class PresetName
 {
   char buf[PRESET_NAME_LEN];
 };
 
-struct Note
-{
-  int mSequence;
-  const char *mName;
-};
-
-Note gNotes[12] = {
-  {0, "C"},
-  {1, "C#"},
-  {2, "D"},
-  {3, "D#"},
-  {4, "E"},
-  {5, "F"},
-  {6, "F#"},
-  {7, "G"},
-  {8, "G#"},
-  {9, "A"},
-  {10, "A#"},
-  {11, "B"},
-};
-
-struct ScaleFlavor
-{
-  ScaleFlavor(int seq, const char *name, int8_t i1, int8_t i2 = -1, int8_t i3 = -1, int8_t i4 = -1, int8_t i5 = -1, int8_t i6 = -1, int8_t i7 = -1) :
-    mSequence(seq),
-    mName(name)
-  {
-    mIntervals[0] = i1;
-    mIntervals[1] = i2;
-    mIntervals[2] = i3;
-    mIntervals[3] = i4;
-    mIntervals[4] = i5;
-    mIntervals[5] = i6;
-    mIntervals[6] = i7;
-    for (size_t i = 0; i < SizeofStaticArray(mIntervals); ++ i) {
-      if (mIntervals[i] == -1) {
-        mIntervalCount = i;
-        break;
-      }
-    }
-  }
-  int mSequence;
-  const char *mName;
-  // list of intervals in the scale?
-  uint8_t mIntervalCount;
-  uint8_t mIntervals[7];
-};
-
-ScaleFlavor gScaleFlavors[5] = {
-  {0, "Maj", 2,2,1,2,2,2,1},
-  {0, "Who", 2},
-  {0, "Chr", 1},
-  {0, "hwd", 1,2},
-  {1, "Alt", 1,2,1,2,2,2,2}
-//  {0, "Maj", B10, B10, B1, B10, B10, B10, B1},
-//  {1, "Alt", B11, B01, B1, B01, B01, B01, B0}
-};
-struct Scale
-{
-  int mFlavor = 0;
-  int mRoot = 0;
-};
-
-
-enum class GlobalLocal : uint8_t
+///////////////////////////////////////////////////////////////////
+enum class SynthPresetRefType : uint8_t
 {
   Global,
   Local
 };
 
-EnumItemInfo<GlobalLocal> gGlobalLocalItems[2] = {
-  { GlobalLocal::Global, "Global" },
-  { GlobalLocal::Local, "Local" },
+EnumItemInfo<SynthPresetRefType> gSynthPresetRefTypeItems[2] = {
+  { SynthPresetRefType::Global, "Global" },
+  { SynthPresetRefType::Local, "Local" },
 };
 
-EnumInfo<GlobalLocal> gGlobalLocalInfo (gGlobalLocalItems);
+EnumInfo<SynthPresetRefType> gSynthPresetRefTypeInfo (gSynthPresetRefTypeItems);
+
+///////////////////////////////////////////////////////////////////
+enum class ScaleRefType : uint8_t
+{
+  Global,
+  Deduced,
+  Local
+};
+
+EnumItemInfo<ScaleRefType> gScaleRefTypeItems[3] = {
+  { ScaleRefType::Global, "Global" },
+  { ScaleRefType::Deduced, "Deduced" },
+  { ScaleRefType::Local, "Local" },
+};
+
+EnumInfo<ScaleRefType> gScaleRefTypeInfo (gScaleRefTypeItems);
 
 
+///////////////////////////////////////////////////////////////////
 struct HarmVoiceSequenceEntry
 {
   bool mEnd = true;
@@ -143,23 +100,31 @@ struct HarmVoiceSettings
 {
   HarmVoiceType mVoiceType = HarmVoiceType::Off;
   HarmVoiceSequenceEntry mSequence[HARM_SEQUENCE_LEN];
-  GlobalLocal mSynthPresetRef = GlobalLocal::Global;
+
+  SynthPresetRefType mSynthPresetRef = SynthPresetRefType::Global;
   int mLocalSynthPreset = 0;
-  GlobalLocal mScaleRef = GlobalLocal::Global;
+
+  ScaleRefType mScaleRef = ScaleRefType::Global;
   Scale mLocalScale;
   int mMinOutpNote = 0;
-  int mMaxOutpNote = 0;
+  int mMaxOutpNote = 127;
   NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::Drop;
   NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::Drop;
   int mMinOutpVel = 0;
   int mMaxOutpVel = 127;
 };
 
+struct HarmPreset
+{
+  PresetName mName;
+  bool mEmitLiveNote = true;
+  HarmVoiceSettings mVoiceSettings[HARM_VOICES];
+};
+
 struct HarmSettings
 {
   bool mIsEnabled = false;
-  PresetName mName;
-  HarmVoiceSettings mVoiceSettings[HARM_VOICES];
+  HarmPreset mPresets[HARM_PRESET_COUNT];
 
   int mGlobalSynthPreset;
   Scale mGlobalScale;
@@ -184,7 +149,8 @@ struct AppSettings
   int mMetronomeDecayMS= 15;
 
   int mTranspose = 0;
-  Scale mGlobalScale;
+  Scale mGlobalScale; // you can set this
+  Scale mDeducedScale; // this is automatically populated always
   float mBPM = 90.0f;
   
   HarmSettings mHarmSettings;
@@ -195,5 +161,26 @@ struct AppSettings
 };
 
 AppSettings gAppSettings;
+
+// default values = not POD.
+//static_assert(std::is_pod<AppSettings>::value, "Settings must be a POD to be reliably serializable");
+
+
+HarmPreset& FindHarmPreset(bool enabled, size_t id) {
+  static bool defaultInitialized = false;
+  static HarmPreset defaultHarmPreset;
+  if (!defaultInitialized) {
+    defaultHarmPreset.mVoiceSettings[0].mVoiceType = HarmVoiceType::Interval;
+    defaultHarmPreset.mVoiceSettings[0].mSequence[0].mInterval = 0;
+    defaultHarmPreset.mVoiceSettings[0].mSequence[0].mEnd = true;
+    defaultHarmPreset.mVoiceSettings[0].mScaleRef = ScaleRefType::Local;
+    defaultHarmPreset.mVoiceSettings[0].mLocalScale = Scale { ScaleFlavorIndex::Chromatic, 0 };
+  }
+  if (!enabled) {
+    return defaultHarmPreset;
+  }
+  CCASSERT(id > 0 && id <= SizeofStaticArray(gAppSettings.mHarmSettings.mPresets));
+  return gAppSettings.mHarmSettings.mPresets[id];
+}
 
 #endif

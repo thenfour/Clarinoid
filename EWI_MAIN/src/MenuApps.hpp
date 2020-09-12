@@ -204,7 +204,7 @@ public:
     };
     
     auto pageMusicalState = [&]() {
-      gDisplay.mDisplay.println(String("#:") + gEWIControl.mMusicalState.mLiveVoice.mNote + " (" + (gEWIControl.mMusicalState.mLiveVoice.mIsNoteCurrentlyOn ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.mLiveVoice.mNote) + "hz");
+      gDisplay.mDisplay.println(String("#:") + gEWIControl.mMusicalState.mLiveVoice.mMidiNote + " (" + (gEWIControl.mMusicalState.mLiveVoice.mIsNoteCurrentlyOn ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.mLiveVoice.mMidiNote) + "hz");
       gDisplay.mDisplay.println(String("transpose:") + gAppSettings.mTranspose);
       gDisplay.mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
       gDisplay.mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
@@ -569,8 +569,6 @@ struct ProfileMenuApp : public MenuAppBaseWithUtils
 
 
 
-// scale setting item
-// scale editor
 
 struct HarmVoiceSettingsApp
 {
@@ -599,27 +597,83 @@ struct HarmVoiceSettingsApp
   }
 };
 
+struct HarmPatchSettingsApp
+{
+  HarmPreset* mpBinding = nullptr;
+  HarmPatchSettingsApp(HarmPreset& binding) :
+    mpBinding(&binding)
+  {
+  }
+
+  SettingsList mList;
+  HarmVoiceSettingsApp mVoiceSettings[HARM_VOICES] = {
+    { mpBinding->mVoiceSettings[0] },
+    { mpBinding->mVoiceSettings[1] },
+    { mpBinding->mVoiceSettings[2] },
+    { mpBinding->mVoiceSettings[3] },
+    { mpBinding->mVoiceSettings[4] },
+    { mpBinding->mVoiceSettings[5] },
+  };
+  
+  BoolSettingItem mIsEnabled = { mList, "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu1 = { mList, "Voice1", &mVoiceSettings[0].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu2 = { mList, "Voice2", &mVoiceSettings[1].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu3 = { mList, "Voice3", &mVoiceSettings[2].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu4 = { mList, "Voice4", &mVoiceSettings[3].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu5 = { mList, "Voice5", &mVoiceSettings[4].mList, AlwaysEnabled };
+  SubmenuSettingItem mVoiceSubmenu6 = { mList, "Voice6", &mVoiceSettings[5].mList, AlwaysEnabled };
+  IntSettingItem mGlobalSynthPreset = { mList, "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
+  IntSettingItem mMinRotationTimeMS = { mList, "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
+
+//  Scale mGlobalScale;
+
+};
+
+
+
 class HarmSettingsApp : public SettingsMenuApp
 {
   SettingsList mRootList;
-  HarmVoiceSettingsApp mVoiceSettings[HARM_VOICES] = {
-    { gAppSettings.mHarmSettings.mVoiceSettings[0] },
-    { gAppSettings.mHarmSettings.mVoiceSettings[1] },
-    { gAppSettings.mHarmSettings.mVoiceSettings[2] },
-    { gAppSettings.mHarmSettings.mVoiceSettings[3] },
-    { gAppSettings.mHarmSettings.mVoiceSettings[4] },
-    { gAppSettings.mHarmSettings.mVoiceSettings[5] },
+  HarmPatchSettingsApp mPatchSettings[HARM_PRESET_COUNT] = {
+    { gAppSettings.mHarmSettings.mPresets[0] },
+    { gAppSettings.mHarmSettings.mPresets[1] },
+    { gAppSettings.mHarmSettings.mPresets[2] },
+    { gAppSettings.mHarmSettings.mPresets[3] },
+    { gAppSettings.mHarmSettings.mPresets[4] },
+    { gAppSettings.mHarmSettings.mPresets[5] },
+    { gAppSettings.mHarmSettings.mPresets[6] },
+    { gAppSettings.mHarmSettings.mPresets[7] },
+    { gAppSettings.mHarmSettings.mPresets[8] },
+    { gAppSettings.mHarmSettings.mPresets[9] },
+    { gAppSettings.mHarmSettings.mPresets[10] },
+    { gAppSettings.mHarmSettings.mPresets[11] },
+    { gAppSettings.mHarmSettings.mPresets[12] },
+    { gAppSettings.mHarmSettings.mPresets[13] },
+    { gAppSettings.mHarmSettings.mPresets[14] },
+    { gAppSettings.mHarmSettings.mPresets[15] },
   };
   
   BoolSettingItem mIsEnabled = { mRootList, "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
-  SubmenuSettingItem mVoiceSubmenu1 = { mRootList, "Voice1", &mVoiceSettings[0].mList, AlwaysEnabled };
-  SubmenuSettingItem mVoiceSubmenu2 = { mRootList, "Voice2", &mVoiceSettings[1].mList, AlwaysEnabled };
-  SubmenuSettingItem mVoiceSubmenu3 = { mRootList, "Voice3", &mVoiceSettings[2].mList, AlwaysEnabled };
-  SubmenuSettingItem mVoiceSubmenu4 = { mRootList, "Voice4", &mVoiceSettings[3].mList, AlwaysEnabled };
-  SubmenuSettingItem mVoiceSubmenu5 = { mRootList, "Voice5", &mVoiceSettings[4].mList, AlwaysEnabled };
-  SubmenuSettingItem mVoiceSubmenu6 = { mRootList, "Voice6", &mVoiceSettings[5].mList, AlwaysEnabled };
   IntSettingItem mGlobalSynthPreset = { mRootList, "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
+  //Scale mGlobalScale;
   IntSettingItem mMinRotationTimeMS = { mRootList, "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
+
+  SubmenuSettingItem mPatchSubmenu00 = { mRootList, "Preset 00", &mPatchSettings[0].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu01 = { mRootList, "Preset 01", &mPatchSettings[1].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu02 = { mRootList, "Preset 02", &mPatchSettings[2].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu03 = { mRootList, "Preset 03", &mPatchSettings[3].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu04 = { mRootList, "Preset 04", &mPatchSettings[4].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu05 = { mRootList, "Preset 05", &mPatchSettings[5].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu06 = { mRootList, "Preset 06", &mPatchSettings[6].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu07 = { mRootList, "Preset 07", &mPatchSettings[7].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu08 = { mRootList, "Preset 08", &mPatchSettings[8].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu09 = { mRootList, "Preset 09", &mPatchSettings[9].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu10 = { mRootList, "Preset 10", &mPatchSettings[10].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu11 = { mRootList, "Preset 11", &mPatchSettings[11].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu12 = { mRootList, "Preset 12", &mPatchSettings[12].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu13 = { mRootList, "Preset 13", &mPatchSettings[13].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu14 = { mRootList, "Preset 14", &mPatchSettings[14].mList, AlwaysEnabled };
+  SubmenuSettingItem mPatchSubmenu15 = { mRootList, "Preset 15", &mPatchSettings[15].mList, AlwaysEnabled };
 
 //  Scale mGlobalScale;
 
@@ -642,15 +696,49 @@ public:
     SettingsMenuApp::RenderFrontPage();
   }
 
-//  virtual ISettingItemEditor* GetBackEditor() {
-//    return mBPM.GetEditor();
-//  }
 };
 
 
 
 
 
+
+
+
+
+
+class LoopSettingsApp : public SettingsMenuApp
+{
+  SettingsList mRootList;
+
+  TriggerSettingItem mClearAll = { mRootList, "Clear All", [&](){ gEWIControl.mMusicalState.mLooper.Clear(); }, AlwaysEnabled };
+  TriggerSettingItem mLoopIt = { mRootList, "Loop it", [&](){ gEWIControl.mMusicalState.mLooper.LoopIt(); }, AlwaysEnabled };
+
+public:
+  virtual SettingsList* GetRootSettingsList()
+  {
+    return &mRootList;
+  }
+
+  virtual void RenderFrontPage() 
+  {
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
+    gDisplay.mDisplay.println(String("Looper [") + (gAppSettings.mHarmSettings.mIsEnabled ? "on" : "off") + "]");
+    gDisplay.mDisplay.println(String("Scale: "));
+    gDisplay.mDisplay.println(String("Preset: "));
+    gDisplay.mDisplay.println(String("                  -->"));
+
+    SettingsMenuApp::RenderFrontPage();
+  }
+
+};
+
+
+
+
+LoopSettingsApp gLoopSettingsApp;
 HarmSettingsApp gHarmSettingsApp;
 SystemSettingsApp gSystemSettingsApp;
 TouchKeyGraphs gTouchKeyApp;

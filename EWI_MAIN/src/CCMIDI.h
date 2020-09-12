@@ -1,10 +1,9 @@
 
-#ifndef CCCCEWIMIDIOut_H
-#define CCCCEWIMIDIOut_H
+#pragma once
 
 #include <MIDI.h>
 
-#include "Shared_CCUtil.h"
+#include <Shared_CCUtil.h>
 
 const int CCEWI_MIDICHANNEL = 1;
 
@@ -76,13 +75,13 @@ public:
     }
 
     // important: send note on before note off, to make portamento work.
-    if (ms.needsNoteOn) {
-      mMidi.sendNoteOn(ms.mLiveVoice.mNote, ms.mLiveVoice.mVelocity, CCEWI_MIDICHANNEL);
+    if (ms.mLiveVoice.mNeedsNoteOn) {
+      mMidi.sendNoteOn(ms.mLiveVoice.mMidiNote, ms.mLiveVoice.mVelocity, CCEWI_MIDICHANNEL);
       activityHappened = true;
       //Serial.println(String("note on?") + millis());
     }
-    if (ms.needsNoteOff) {
-      mMidi.sendNoteOff(ms.noteOffNote, 0, CCEWI_MIDICHANNEL);
+    if (ms.mLiveVoice.mNeedsNoteOff) {
+      mMidi.sendNoteOff(ms.mLiveVoice.mNoteOffNote, 0, CCEWI_MIDICHANNEL);
       activityHappened = true;
     }
 
@@ -90,4 +89,3 @@ public:
 };
 
 
-#endif

@@ -10,11 +10,11 @@
 
 // https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
 #include <polyBlepOscillator.h>
+#include <Shared_CCUtil.h>
 
-#include "Shared_CCUtil.h"
-
-#include "CCSynthUtils.h"
+#include "Music.hpp"
 #include "MusicalState.hpp"
+
 namespace CCSynthGraph
 {
 /*
@@ -26,7 +26,6 @@ https://www.pjrc.com/teensy/gui/index.html?info=AudioEffectDelay
 // GUItool: begin automatically generated code
 AudioMixer4              waveMixer;      //xy=840.0000114440918,416.25000762939453
 AudioSynthWaveformSine   metronomeOsc;          //xy=842.1818466186523,757.1818141937256
-AudioFilterStateVariable waveFilter;     //xy=1007.0000114440918,422.25000762939453
 AudioEffectEnvelope      metronomeEnv;      //xy=1048.1818542480469,741.1818132400513
 AudioEffectFreeverbStereo verb;           //xy=1176.0000457763672,350.2500247955322
 AudioAmplifier           verbWetAmpLeft; //xy=1357.0000457763672,346.2500247955322
@@ -37,10 +36,9 @@ AudioAmplifier           ampRight;       //xy=1877.0000839233398,623.25002384185
 AudioAmplifier           ampLeft;        //xy=1878.000087738037,585.2500228881836
 AudioOutputI2S           i2s1;           //xy=2065.999969482422,580.2500228881836
 AudioConnection          patchCord18(metronomeOsc, metronomeEnv);
-AudioConnection          patchCord17(waveMixer, 0, waveFilter, 0);
-AudioConnection          patchCord19(waveFilter, 0, postMixerLeft, 1);
-AudioConnection          patchCord20(waveFilter, 0, postMixerRight, 1);
-AudioConnection          patchCord21(waveFilter, 0, verb, 0);
+AudioConnection          patchCord19(waveMixer, 0, postMixerLeft, 1);
+AudioConnection          patchCord20(waveMixer, 0, postMixerRight, 1);
+AudioConnection          patchCord21(waveMixer, 0, verb, 0);
 AudioConnection          patchCord22(metronomeEnv, 0, postMixerLeft, 2);
 AudioConnection          patchCord23(metronomeEnv, 0, postMixerRight, 2);
 AudioConnection          patchCord24(verb, 0, verbWetAmpLeft, 0);
@@ -67,12 +65,14 @@ struct CCPatch : public AudioConnection
 
 struct Voice
 {
-  AudioBandlimitedOsci osc;
-  AudioMixer4 oscMix;
-  CCPatch patch1;
-  CCPatch patch2;
-  CCPatch patch3;
-  CCPatch patchOut;
+  AudioBandlimitedOsci mOsc;
+  CCPatch mPatchOsc1ToMix;
+  CCPatch mPatchOsc2ToMix;
+  CCPatch mPatchOsc3ToMix;
+  AudioMixer4 mOscMixer; // mixes down the 3 oscillators
+  CCPatch mPatchMixToFilter; // then into filter.
+  AudioFilterStateVariable mFilter;
+  CCPatch mPatchOut;
 
   int16_t mVoiceId = -1;
   int16_t mMusicalVoiceId = -1;
@@ -80,6 +80,15 @@ struct Voice
   int16_t mNote = -1;// currently playing note.
   Stopwatch mTimeSinceNoteOn;
   bool mIsCurrentlyPlaying = false;
+
+  void EnsurePatchConnections()
+  {
+    mPatchOsc1ToMix.connect();
+    mPatchOsc2ToMix.connect();
+    mPatchOsc3ToMix.connect();
+    mPatchMixToFilter.connect();
+    mPatchOut.connect();
+  }
   
   void UpdateStopped()
   {
@@ -88,63 +97,65 @@ struct Voice
     mNote = -1;
     mIsCurrentlyPlaying = false;
 
-    osc.amplitude(1, 0.0);
-    osc.amplitude(2, 0.0);
-    osc.amplitude(3, 0.0);
+    mOsc.amplitude(1, 0.0);
+    mOsc.amplitude(2, 0.0);
+    mOsc.amplitude(3, 0.0);
   }
   
-  void UpdatePlaying(const CCEWIMusicalState& state, const MusicalVoice& mv)
+  void UpdatePlaying(const CCEWIMusicalState& /*state*/, const MusicalVoice& mv)
   {
-    float breathAdj = state.breath01.GetValue();
-
     bool voiceOrPatchChanged = (mMusicalVoiceId != mv.mVoiceId) || (mSynthPatch != mv.mSynthPatch);
     if (voiceOrPatchChanged) {
       // init synth patch.
-      osc.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
-      osc.waveform(2, 3);
-      osc.waveform(3, 1);
+      mOsc.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+      mOsc.waveform(2, 3);
+      mOsc.waveform(3, 1);
     
-      osc.pulseWidth(1, 0.5);
-      osc.pulseWidth(2, 0.5);
-      osc.pulseWidth(3, 0.5);
+      mOsc.pulseWidth(1, 0.5);
+      mOsc.pulseWidth(2, 0.5);
+      mOsc.pulseWidth(3, 0.5);
   
-      osc.amplitude(1, 0.0);
-      osc.amplitude(2, 0.3);
-      osc.amplitude(3, 0.3);
+      mOsc.amplitude(1, 0.0);
+      mOsc.amplitude(2, 0.3);
+      mOsc.amplitude(3, 0.3);
       
-      osc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
+      mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
     }
 
     // reset timer if pretty much anything changed.
-    if (!mIsCurrentlyPlaying || voiceOrPatchChanged || (mNote != mv.mNote)) {
+    if (!mIsCurrentlyPlaying || voiceOrPatchChanged || (mNote != mv.mMidiNote)) {
       mTimeSinceNoteOn.Restart();
     }
 
     mMusicalVoiceId = mv.mVoiceId;
     mSynthPatch = mv.mSynthPatch;
-    mNote = mv.mNote;
+    mNote = mv.mMidiNote;
     mIsCurrentlyPlaying = true;
 
     // update
-    float midiNote = (float)mv.mNote + state.pitchBendN11.GetValue() * 2;
+    float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11 * 2;
 
-    osc.portamentoTime(1, gAppSettings.mPortamentoTime);
-    osc.portamentoTime(2, gAppSettings.mPortamentoTime);
-    osc.portamentoTime(3, gAppSettings.mPortamentoTime);
+    mOsc.portamentoTime(1, gAppSettings.mPortamentoTime);
+    mOsc.portamentoTime(2, gAppSettings.mPortamentoTime);
+    mOsc.portamentoTime(3, gAppSettings.mPortamentoTime);
 
     float freq = MIDINoteToFreq(midiNote);
-    float freqSync = map(breathAdj, 0.0f, 1.0f, freq * 2, freq * 7);
+    float freqSync = map(mv.mBreath01, 0.0f, 1.0f, freq * 2, freq * 7);
   
-    osc.frequency(1, freq);
-    osc.frequency(2, freqSync);
-    osc.frequency(3, freq);
+    mOsc.frequency(1, freq);
+    mOsc.frequency(2, freqSync);
+    mOsc.frequency(3, freq);
+
+    float filterFreq = map(mv.mBreath01, 0.01, 1, 0, 15000);
+    mFilter.frequency(filterFreq);
   }
 
   Voice(int16_t vid, AudioMixer4& dest, int destPort) : 
-    patch1(osc, 0, oscMix, 0),
-    patch2(osc, 1, oscMix, 1),
-    patch3(osc, 2, oscMix, 2),
-    patchOut(oscMix, 0, dest, destPort),
+    mPatchOsc1ToMix(mOsc, 0, mOscMixer, 0),
+    mPatchOsc2ToMix(mOsc, 1, mOscMixer, 1),
+    mPatchOsc3ToMix(mOsc, 2, mOscMixer, 2),
+    mPatchMixToFilter(mOscMixer, 0, mFilter, 0),
+    mPatchOut(mFilter, 0, dest, destPort),
     mVoiceId(vid)
   {
   }
@@ -236,7 +247,7 @@ public:
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.
     for (auto& v : gVoices.mVoices) {
-      v.patchOut.connect();
+      v.EnsurePatchConnections();
     }
     
     CCSynthGraph::audioShield.enable();
@@ -275,15 +286,10 @@ public:
       }
     }
 
-    float breathAdj = state.breath01.GetValue();
-
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);
     CCSynthGraph::verbWetAmpLeft.gain(gAppSettings.mReverbGain);
     CCSynthGraph::verbWetAmpRight.gain(gAppSettings.mReverbGain);
-
-    float filterFreq = map(breathAdj, 0.01, 1, 0, 15000);
-    CCSynthGraph::waveFilter.frequency(filterFreq);
 
     if (!gAppSettings.mMetronomeOn) {
         CCSynthGraph::metronomeOsc.amplitude(0);      
