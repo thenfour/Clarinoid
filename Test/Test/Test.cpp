@@ -233,6 +233,7 @@ void TestReadingEmptyBuffer()
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
   stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.Dump();
   stream.WrapUpRecording();
 
   status.mCurrentLoopTimeMS = 60;
@@ -290,12 +291,12 @@ void TestEndRecordingWithFullLoopSimple()
   status.mCurrentLoopTimeMS = 100;
   mv.mBreath01 = 4;
   Test(stream.mWritePrevCursor.mP == nullptr);
-  Test(stream.mWriteZeroTimeCursor == stream.mEventsBegin.mP);
+  Test(stream.mWriteZeroTimeCursor == stream.mBufferBegin.mP);
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.
   stream.Write(mv); // this one makes the recording longer than 1 loop.
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.
   Test(stream.mWritePrevCursor.mP != nullptr);
-  Test(stream.mWriteZeroTimeCursor > stream.mEventsBegin.mP);
+  Test(stream.mWriteZeroTimeCursor > stream.mBufferBegin.mP);
 
   // test aligning on a loop boundary (EOL nops)
   auto eventList = stream.DebugGetStream();
@@ -364,7 +365,7 @@ void TestScenarioEPZ()
   // |xxE---PxxxxZxx (epz)
   MusicalVoice mv;
   MusicalVoice mvout;
-  uint8_t buf[150];
+  uint8_t buf[300];
   LoopEventStream stream;
 
   LoopStatus status;
@@ -377,20 +378,88 @@ void TestScenarioEPZ()
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 100; ++i) {
-    status.mCurrentLoopTimeMS += 400;
+    status.mCurrentLoopTimeMS += 125;
     status.mCurrentLoopTimeMS %= status.mLoopDurationMS;
     mv.mBreath01 = (float)(i + 1);
     stream.Dump();
     stream.Write(mv);
-    stream.Dump();
+    // if we hit EPZ break out.
+    if (stream.GetLayoutSituation() == LayoutSituation::EPZ) {
+      break;
+    }
   }
 
-
+  stream.Dump();
+  stream.WrapUpRecording();
+  stream.Dump();
+  // [5ac:29e4]     [0135FB08 (+0) t=250: dly=125, type=Breath, params=11]
+  // [5ac:29e4]     [0135FB18 (+16) t=375: dly=125, type=Breath, params=12]
+  // [5ac:29e4]     [0135FB28 (+32) t=500: dly=125, type=Breath, params=13]
+  // [5ac:29e4]     [0135FB38 (+48) t=625: dly=125, type=Breath, params=14]
+  // [5ac:29e4]     [0135FB48 (+64) t=750: dly=125, type=Breath, params=15]
+  // [5ac:29e4]     [0135FB58 (+80) t=875: dly=125, type=Nop, params=]
+  // [5ac:29e4] Z   [0135FB64 (+92) t=0: dly=0, type=Breath, params=16]
+  // [5ac:29e4]     [0135FB74 (+108) t=0: dly=125, type=Breath, params=17]
+  // [5ac:29e4]  E  [0135FB84 (+124) t=125: dly=125, type=Breath, params=2]
+  // [5ac:29e4]     buf used: 140, event count: 9 , validEnd:0135FB94, bufend:0135FB94
+  status.mCurrentLoopTimeMS = 250;
+  size_t ec = stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
+  // we have to read the events above
+  Test(ec == 1);
+  Test(mvout.mBreath01 == 2);
+  status.mCurrentLoopTimeMS = 0;
+  ec = stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
+  // we have to read the events above
+  Test(ec == 7);
+  Test(mvout.mBreath01 == 16);
 }
 
 void TestScenarioZEP()
 {
   // |xxZxxxxE---Pxx (zep)
+  MusicalVoice mv;
+  MusicalVoice mvout;
+  uint8_t buf[600];
+  LoopEventStream stream;
+
+  LoopStatus status;
+  status.mState = LooperState::DurationSet;
+  status.mLoopDurationMS = 1000; // we want each event to be 5 secs long,
+  // and in order to actually trigger this scenario we need to capture prev
+  // cursor. so we must cross a loop within the buffer. so make loop small enough.
+
+  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+
+  status.mCurrentLoopTimeMS = 0;
+  for (int i = 0; i < 1000; ++i) {
+    status.mCurrentLoopTimeMS += 167;
+    status.mCurrentLoopTimeMS %= status.mLoopDurationMS;
+    mv.mBreath01 = (float)(i + 1);
+    stream.Dump();
+    stream.Write(mv);
+    // if we hit ZEP break out.
+    if (stream.GetLayoutSituation() == LayoutSituation::ZEP) {
+      break;
+    }
+  }
+
+  stream.Dump();
+  stream.WrapUpRecording();
+  stream.Dump();
+  status.mCurrentLoopTimeMS = 250;
+  size_t ec = stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
+  // we have to read the events above
+  Test(ec == 1);
+  Test(mvout.mBreath01 == 2);
+  status.mCurrentLoopTimeMS = 0;
+  ec = stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
+  // we have to read the events above
+  Test(ec == 7);
+  Test(mvout.mBreath01 == 16);
 }
 
 
@@ -404,8 +473,9 @@ int main()
 
   TestScenarioOOM_PartialLoop();
 
-  TestEndRecordingWithFullLoopSimple();
+  TestEndRecordingWithFullLoopSimple(); // PZE
   TestScenarioEPZ();
+  TestScenarioZEP();
 
   //LooperAndHarmonizer l;
   //MusicalVoice mv;
