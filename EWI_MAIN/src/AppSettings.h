@@ -10,7 +10,7 @@ static const size_t HARM_PRESET_COUNT = 16;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;
 
-static const size_t LOOP_LAYERS = 8;
+static const size_t LOOP_LAYERS = 3;
 static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
 
 static const size_t PRESET_NAME_LEN = 16;

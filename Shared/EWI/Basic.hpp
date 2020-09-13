@@ -1,6 +1,9 @@
 #pragma once
 
+#ifndef EWI_UNIT_TESTS
+// Unit test project must emulate arduino stuff.
 #include <Arduino.h>
+#endif
 
 #ifndef CCASSERT // LHRH get this ------------------------------
 
@@ -154,3 +157,19 @@ const char *ToString(Tristate t) {
   }
   return "null";
 }
+
+struct ScopeLog
+{
+  String mMsg;
+  ScopeLog(const String& msg) : mMsg(msg)
+  {
+    Serial.print("{ ");
+    Serial.println(msg);
+  }
+  ~ScopeLog()
+  {
+    Serial.print("} ");
+    Serial.println(mMsg);
+  }
+};
+

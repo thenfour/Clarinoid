@@ -1,7 +1,12 @@
 #pragma once
 
+#ifndef EWI_UNIT_TESTS
 #include <Shared_CCUtil.h>
 #include "AppSettings.h"
+#else
+static const size_t HARM_VOICES = 6;
+#endif // EWI_UNIT_TESTS
+
 
 // musical voices have unique IDs which are a bitfield of
 // low 8 bits = 
@@ -74,10 +79,12 @@ struct MusicalVoice
     mNeedsNoteOff = false;
   }
 
+#ifndef EWI_UNIT_TESTS
   HarmPreset& GetHarmPreset()
   {
     return FindHarmPreset(mHarmPatch != -1, mHarmPatch);
   }
+#endif // EWI_UNIT_TESTS
 
   MusicalVoiceID_t mVoiceId = -1;
 
@@ -122,7 +129,9 @@ struct Harmonizer
     liveVoice->mIsNoteCurrentlyMuted = false;
     liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, 0);
 
-    // - we will basically need a "midi note to scale degree + enharmonic" function, and reverse.
+    if (outp >= end) {
+      return 1;
+    }
 
     outp[0].CloneForHarmonizationStream(*liveVoice);
     outp[0].mMidiNote += 7;
