@@ -18,9 +18,17 @@ static const uint32_t LOOP_BREATH_PITCH_RESOLUTION_MS = 5; // record only every 
 static const float LOOP_BREATH_PITCH_EPSILON = 1.0f / 1024; // resolution to track.
 static const uint32_t LOOP_MIN_DURATION = 100;
 
+// for moving left, we can go forward order.
+// for moving right, we should go backwards.
 static void OrderedMemcpy(uint8_t* dest, uint8_t *src, size_t bytes)
 {
-  for (size_t i = 0; i < bytes; ++i) {
+  if (dest < src) {
+    for (size_t i = 0; i < bytes; ++i) {
+      dest[i] = src[i];
+    }
+    return;
+  }
+  for (int32_t i = bytes - 1; i >= 0; --i) {
     dest[i] = src[i];
   }
 }
@@ -36,6 +44,42 @@ static void SwapMem(uint8_t* begin, uint8_t* end, uint8_t* dest)
   }
 }
 
+// copies memory from p1 to p2, but then puts memory from p2 to p3.
+// |AaaaaBbb--aaa|
+//            ^ p1
+//       ^ p2 
+//          ^ p3
+static void MemCpyTriple(uint8_t *p1begin, uint8_t *p1end, uint8_t *p2begin, uint8_t *p2SourceEnd, uint8_t *p3)
+{
+  // p3 cannot be inside p1 or p2.
+  //CCASSERT(p3 >= p1end);
+  CCASSERT(p3 < p1begin); // you cannot output into source territory.
+  CCASSERT(p3 >= p2SourceEnd);
+  CCASSERT(p2begin < p3); // you will overwrite your dest with other dest.
+  //for (size_t i = 0; i < n; ++i) {
+  uint8_t *p1 = p1begin;
+  uint8_t *p2 = p2begin;
+  while (true) {
+    uint8_t temp = 0;
+    if (p2 < p2SourceEnd) {
+      temp = *p2;
+    }
+    else if (p1 > p1end) {
+      // both past end; bail.
+      return;
+    }
+    if (p1 < p1end) {
+      *p2 = *p1;
+    }
+    if (p2 < p2SourceEnd) {
+      *p3 = temp;
+    }
+    ++p1;
+    ++p2;
+    ++p3;
+  }
+}
+
 // shift a split circular buffer into place without using some temp buffer. avoids OOM.
 // returns the total size of the resulting buffer which will start at segmentBBegin.
 // |Bbbb----Aaaa|  => |AaaaBbbb----|
@@ -45,29 +89,79 @@ static size_t UnifyCircularBuffer(uint8_t* segmentABegin, uint8_t* segmentAEnd, 
   CCASSERT(segmentABegin > segmentBEnd);
   CCASSERT(segmentAEnd > segmentABegin);
 
-  // if A is bigger than B.
+  // |Bbb--Aaaaaaaa| => |AaaaaaaaBbb--|
+  // |Bbbbbbbb--Aaa| => |AaaBbbbbbbb--|
+
   size_t sizeA = segmentAEnd - segmentABegin;
   size_t sizeB = segmentBEnd - segmentBBegin;
+  size_t len = segmentABegin - segmentBBegin;
 
-  if (sizeA > sizeB) {
-    // 1. swap
-    // |Bb----Aaaa|  => |Aaaa--Bb--|
-    SwapMem(segmentABegin, segmentAEnd, segmentBBegin);
-    // 2. slide B into position.
-    // |Aaaa--Bb--|  => |AaaaBb----|
-    OrderedMemcpy(segmentBBegin + sizeA, segmentABegin + sizeB, sizeB);
+  if (sizeA >= sizeB) {
+    if (len >= sizeA) {
+      // there's enough empty space to copy all of A in one shot.
+      // |Bbb------Aaaaaaaa|
+      // =>
+      // |AaaaaaaaBbb------|
+      MemCpyTriple(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd, segmentBBegin + sizeA);
+      return sizeA + sizeB;
+    }
+
+    // |Bbb--Aaaaaaaaaaa|
+    // =>
+    // |AaaaaBbb--aaaaaa|
+    SwapMem(segmentBBegin, segmentABegin, segmentABegin);
+
+    // |AaaaaBbb--aaaaaa|
+    // =>
+    // |AaaaaaaaaaBbb--a|
+    // swap mem in len-sized chunks.
+    int32_t remaining = sizeA - len; // signed!
+    uint8_t *p1 = segmentABegin;
+    uint8_t *p2 = segmentABegin + len;
+    int32_t gap = 0;
+    // convoluted as fuck.
+    while (remaining > 0) {
+      if (remaining < (int32_t)len) {
+        // if you swapped a smaller segment in order to not go OOB, it means there's
+        // now a gap because B still got placed on len boundary. move it back.
+        gap = len - remaining;
+        len = remaining;
+        MemCpyTriple(p2, segmentAEnd, p1, p1 + sizeB, p2 - gap);
+        break;
+      }
+      SwapMem(p1, p1 + len, p2);
+      remaining -= len;
+      p1 += len;
+      p2 += len;
+    }
+
+    return sizeA + sizeB;
   }
-  else {
-    // 1. swap
-    // |Bbbb----Aa|  => |Aabb----Bb|
-    SwapMem(segmentABegin, segmentAEnd, segmentBBegin);
-    // 2. swap the end and begin segments of B
-    // |Aabb----Bb|  => |AaBb----bb|
-    SwapMem(segmentBBegin + sizeA, segmentBEnd, segmentABegin);
-    // 3. slide the second part of B into place.
-    // |AaBb----bb|  => |AaBbbb----|
-    OrderedMemcpy(segmentBBegin + sizeA, segmentABegin, sizeB - sizeA);
+
+  if (len >= (sizeA + sizeB)) {
+    // enough space to make sure nothing overlaps while writing.
+    //    |Bbbbbbbb------Aaa|
+    // => |AaaBbbbbbbb------|
+    OrderedMemcpy(segmentBBegin + sizeA, segmentBBegin, sizeB); // move B right
+    OrderedMemcpy(segmentBBegin, segmentABegin, sizeA);// move A into place.
+    return sizeA + sizeB;
   }
+
+  // here we have to swap chunks using our own buffer as a temp buffer
+  //    |Bbbbbbbb--Aaa|
+  // first just get A into place.
+  SwapMem(segmentABegin, segmentAEnd, segmentBBegin);
+  // => |Aaabbbbb--Bbb|
+  // now we have sizeA-sized chunks to swap.
+  int32_t left = sizeB - sizeA; // signed!
+  uint8_t *p = segmentBBegin + sizeA;
+  while (left) {
+    SwapMem(segmentABegin, segmentAEnd, p);
+    left -= sizeA;
+    p += sizeA;
+  }
+  // and move B into place.
+  OrderedMemcpy(segmentBBegin + sizeB, segmentABegin, sizeB);
   return sizeA + sizeB;
 }
 
@@ -387,12 +481,21 @@ struct LoopEventStream
       } while (mCursor.PeekLoopTimeWrapSensitive(GetStatus()) > GetStatus().mCurrentLoopTimeMS);
     }
 
-    while (mCursor.PeekLoopTimeWrapSensitive(GetStatus()) <= GetStatus().mCurrentLoopTimeMS) {
-      ++ret;
-      if (ConsumeSingleEvent(outp)) {
-        // if we wrapped, break out. basically we just don't have events this far into the loop.
+    // if our cursor loop time loops, bail out. basically we just don't have events this far into the loop.
+    // to detect that condition, keep track of the prev time.
+    uint32_t prevTime = 0;
+    while(true) {
+      uint32_t t = mCursor.PeekLoopTimeWrapSensitive(GetStatus());
+      if (t > GetStatus().mCurrentLoopTimeMS) {
         break;
       }
+      if (t < prevTime) {
+        // bail like i said.
+        break;
+      }
+      ConsumeSingleEvent(outp);
+      prevTime = t;
+      ++ret;
     }
     return ret;
   }
@@ -675,9 +778,19 @@ struct LoopEventStream
       uint8_t *segmentAEnd = mEventsValidEnd;
       uint8_t *segmentBBegin = mBufferBegin.mP;
       uint8_t *segmentBEnd = mCursor.mP;
+
+      // make a temp copy of our buffer, just for checking.
+      size_t bbytes = (segmentBEnd - segmentBBegin);
+      size_t abytes = (segmentAEnd - segmentABegin);
+      std::unique_ptr<uint8_t[]> tempCopy(new uint8_t[abytes + bbytes]);
+      memcpy(tempCopy.get() + abytes, segmentBBegin, bbytes);
+      memcpy(tempCopy.get(), segmentABegin, abytes);
+
       size_t buflen = UnifyCircularBuffer(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd);
       // now the buffer is
       // |PxxxxZxxxxE---
+
+      CCASSERT(0 == memcmp(mBufferBegin.mP, tempCopy.get(), abytes + bbytes));
 
       size_t pBytes = mEventsValidEnd - mWritePrevCursor.mP;
 

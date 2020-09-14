@@ -407,7 +407,7 @@ void TestScenarioEPZ()
   stream.Dump();
   // we have to read the events above
   Test(ec == 1);
-  Test(mvout.mBreath01 == 2);
+  Test(mvout.mBreath01 == 18);
   status.mCurrentLoopTimeMS = 0;
   ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
@@ -448,23 +448,56 @@ void TestScenarioZEP()
   stream.Dump();
   stream.WrapUpRecording();
   stream.Dump();
-  status.mCurrentLoopTimeMS = 250;
-  size_t ec = stream.ReadUntilLoopTime(mvout);
-  stream.Dump();
-  // we have to read the events above
-  Test(ec == 1);
-  Test(mvout.mBreath01 == 2);
   status.mCurrentLoopTimeMS = 0;
+  size_t ec = stream.ReadUntilLoopTime(mvout);
+  status.mCurrentLoopTimeMS = 800;
   ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
   // we have to read the events above
-  Test(ec == 7);
-  Test(mvout.mBreath01 == 16);
+  Test(ec == 5);
+  Test(mvout.mBreath01 == 34);
+  status.mCurrentLoopTimeMS = 100;
+  ec = stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
+  // we have to read the events above
+  Test(ec == 3);
+  Test(mvout.mBreath01 == 36);
 }
 
 
 int main()
 {
+  {
+    uint8_t b[] = "34..12";
+    UnifyCircularBuffer(b + 4, EndPtr(b) - 1, b, b + 2);
+    Test(strncmp("1234", (const char*)b, 4) == 0);
+  }
+  {
+    uint8_t b[] = "3..12";
+    UnifyCircularBuffer(b + 3, EndPtr(b) - 1, b, b + 1);
+    Test(strncmp("123", (const char*)b, 3) == 0);
+  }
+  {
+    uint8_t b[] = "23..1";
+    UnifyCircularBuffer(b + 4, EndPtr(b) - 1, b, b + 2);
+    Test(strncmp("123", (const char*)b, 3) == 0);
+  }
+  {
+    uint8_t b[] = "9..12345678";
+    UnifyCircularBuffer(b + 3, EndPtr(b) - 1, b, b + 1);
+    Test(strncmp("123456789", (const char*)b, 9) == 0);
+  }
+  {
+    uint8_t b[] = "23456789..1";
+    UnifyCircularBuffer(b + 10, EndPtr(b) - 1, b, b + 8);
+    Test(strncmp("123456789", (const char*)b, 9) == 0);
+  }
+  {
+    uint8_t b[] = "456789.123";
+    UnifyCircularBuffer(b + 7, EndPtr(b) - 1, b, b + 6);
+    Test(strncmp("123456789", (const char*)b, 9) == 0);
+  }
+
   TestHappyFlow();
   TestConsumeMultipleEvents();
   TestMuted();
