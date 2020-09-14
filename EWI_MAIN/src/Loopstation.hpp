@@ -22,6 +22,8 @@ static const uint32_t LOOP_MIN_DURATION = 100;
 // for moving right, we should go backwards.
 static void OrderedMemcpy(uint8_t* dest, uint8_t *src, size_t bytes)
 {
+  if (dest == src)
+    return;
   if (dest < src) {
     for (size_t i = 0; i < bytes; ++i) {
       dest[i] = src[i];
@@ -35,6 +37,8 @@ static void OrderedMemcpy(uint8_t* dest, uint8_t *src, size_t bytes)
 
 static void SwapMem(uint8_t* begin, uint8_t* end, uint8_t* dest)
 {
+  if (begin == dest)
+    return;
   uint8_t temp;
   size_t bytes = end - begin;
   for (size_t i = 0; i < bytes; ++i) {
@@ -85,15 +89,28 @@ static void MemCpyTriple(uint8_t *p1begin, uint8_t *p1end, uint8_t *p2begin, uin
 // |Bbbb----Aaaa|  => |AaaaBbbb----|
 static size_t UnifyCircularBuffer(uint8_t* segmentABegin, uint8_t* segmentAEnd, uint8_t* segmentBBegin, uint8_t* segmentBEnd)
 {
-  CCASSERT(segmentBEnd > segmentBBegin);
-  CCASSERT(segmentABegin > segmentBEnd);
-  CCASSERT(segmentAEnd > segmentABegin);
+  CCASSERT(segmentBEnd >= segmentBBegin);
+  CCASSERT(segmentABegin >= segmentBEnd);
+  CCASSERT(segmentAEnd >= segmentABegin);
 
   // |Bbb--Aaaaaaaa| => |AaaaaaaaBbb--|
   // |Bbbbbbbb--Aaa| => |AaaBbbbbbbb--|
 
   size_t sizeA = segmentAEnd - segmentABegin;
   size_t sizeB = segmentBEnd - segmentBBegin;
+
+  if (sizeA == 0) {
+    // nothing to do; B already in place and A doesn't exist.
+    return sizeB;
+  }
+
+  if (sizeB == 0)
+  {
+    // slide A into place
+    OrderedMemcpy(segmentBBegin, segmentABegin, sizeA);
+    return sizeA;
+  }
+
   size_t len = segmentABegin - segmentBBegin;
 
   if (sizeA >= sizeB) {
@@ -161,7 +178,7 @@ static size_t UnifyCircularBuffer(uint8_t* segmentABegin, uint8_t* segmentAEnd, 
     p += sizeA;
   }
   // and move B into place.
-  OrderedMemcpy(segmentBBegin + sizeB, segmentABegin, sizeB);
+  OrderedMemcpy(p, segmentABegin, sizeA);
   return sizeA + sizeB;
 }
 
@@ -780,17 +797,20 @@ struct LoopEventStream
       uint8_t *segmentBEnd = mCursor.mP;
 
       // make a temp copy of our buffer, just for checking.
+#ifdef EWI_UNIT_TESTS
       size_t bbytes = (segmentBEnd - segmentBBegin);
       size_t abytes = (segmentAEnd - segmentABegin);
       std::unique_ptr<uint8_t[]> tempCopy(new uint8_t[abytes + bbytes]);
       memcpy(tempCopy.get() + abytes, segmentBBegin, bbytes);
       memcpy(tempCopy.get(), segmentABegin, abytes);
-
+#endif // EWI_UNIT_TESTS
       size_t buflen = UnifyCircularBuffer(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd);
       // now the buffer is
       // |PxxxxZxxxxE---
 
+#ifdef EWI_UNIT_TESTS
       CCASSERT(0 == memcmp(mBufferBegin.mP, tempCopy.get(), abytes + bbytes));
+#endif // EWI_UNIT_TESTS
 
       size_t pBytes = mEventsValidEnd - mWritePrevCursor.mP;
 
@@ -862,9 +882,7 @@ struct LoopEventStream
       //mEventsValidEnd = mCursor.mP;
       mCursor.mP = mBufferBegin.mP;
       mBufferBegin.mLoopTimeMS = mCursor.mLoopTimeMS;
-      cc::log("Wrapping buffer, entering EPZ layout.");
       Dump();
-      cc::log("}]]]]]]");
       return true;
     case LayoutSituation::EPZ:// |xxE---PxxxxZxx (epz)
     case LayoutSituation::ZEP:// |xxZxxxxE---Pxx (zep)
@@ -883,7 +901,6 @@ struct LoopEventStream
   // of all the changing cursors and intermediate states.
   uint32_t MeasureRecordedDurationPE()
   {
-    Dump();
     LoopCursor p = mWritePrevCursor;
     uint32_t ret = 0;
     while (p.mP != mCursor.mP) {
@@ -901,7 +918,6 @@ struct LoopEventStream
 
   bool WriteEventRaw(LoopEventType eventType, const void* params)
   {
-    cc::log("WRITE EVENT");
     if (mOOM)
       return false;
     const auto& eventInfo = GetLoopEventTypeItemInfo(eventType);
@@ -994,8 +1010,6 @@ struct LoopEventStream
       while (recordedDuration > GetStatus().mLoopDurationMS) {
         // advance & shrink duration
         uint32_t less = mWritePrevCursor.PeekEvent().mHeader.mTimeSinceLastEventMS;
-        Dump();
-        cc::log("Advancing P");
         if (mWritePrevCursor.MoveNext(GetStatus(), mBufferBegin, mEventsValidEnd)) {
           // in order to maintain correct mEventsValidEnd, when P wraps, we need to reset it to E.
           // (transition from ZEP to PZE)
@@ -1006,8 +1020,6 @@ struct LoopEventStream
         }
         recordedDuration -= less;
       }
-      Dump();
-      cc::log("^ that's after i advanced P.");
     }
 
     return true;

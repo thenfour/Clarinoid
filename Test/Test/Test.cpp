@@ -356,6 +356,7 @@ void TestScenarioOOM_PartialLoop()
   // Note: if we did not LOCK out recording, then some events could make it into
   // the buffer if they're small enough.
   Test(stream.DebugGetStream().size() == 2);
+  Test(stream.mOOM);
 }
 
 // also tests that we can start writing from beginning again by wrapping, if we have
@@ -471,32 +472,58 @@ int main()
     uint8_t b[] = "34..12";
     UnifyCircularBuffer(b + 4, EndPtr(b) - 1, b, b + 2);
     Test(strncmp("1234", (const char*)b, 4) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "3..12";
     UnifyCircularBuffer(b + 3, EndPtr(b) - 1, b, b + 1);
     Test(strncmp("123", (const char*)b, 3) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "23..1";
     UnifyCircularBuffer(b + 4, EndPtr(b) - 1, b, b + 2);
     Test(strncmp("123", (const char*)b, 3) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "9..12345678";
     UnifyCircularBuffer(b + 3, EndPtr(b) - 1, b, b + 1);
     Test(strncmp("123456789", (const char*)b, 9) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "23456789..1";
     UnifyCircularBuffer(b + 10, EndPtr(b) - 1, b, b + 8);
     Test(strncmp("123456789", (const char*)b, 9) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "456789.123";
     UnifyCircularBuffer(b + 7, EndPtr(b) - 1, b, b + 6);
     Test(strncmp("123456789", (const char*)b, 9) == 0);
+    Test(*(EndPtr(b) - 1) == 0); // no overruns.
   }
+
+  // test 0-sized segments.
+  {
+    uint8_t b[] = "123";
+    UnifyCircularBuffer(b, EndPtr(b) - 1, b, b);
+    Test(strncmp("123", (const char*)b, 3) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "123";
+    UnifyCircularBuffer(EndPtr(b) - 1, EndPtr(b) - 1, b, EndPtr(b) - 1);
+    Test(strncmp("123", (const char*)b, 3) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "";
+    UnifyCircularBuffer(b, EndPtr(b) - 1, 0, 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+
 
   TestHappyFlow();
   TestConsumeMultipleEvents();
