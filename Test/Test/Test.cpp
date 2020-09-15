@@ -3,7 +3,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define EWI_UNIT_TESTS
 
-#include "ArduinoEmu.hpp"
+#include "..\..\Shared_x86\ArduinoEmu.hpp"
 #include "..\..\EWI_MAIN\src\Loopstation.hpp"
 
 inline void Test_(bool b, const char *str) {
@@ -32,8 +32,8 @@ void TestHappyFlow()
 
   // some events at 0, 100ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 0;
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
   mv.mBreath01 = 0.5f;
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
@@ -94,7 +94,7 @@ void TestConsumeMultipleEvents()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
@@ -153,7 +153,7 @@ void TestMuted()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
@@ -182,7 +182,7 @@ void TestReadingAfterLooped()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
@@ -232,7 +232,7 @@ void TestReadingEmptyBuffer()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
   stream.Dump();
   stream.WrapUpRecording();
 
@@ -269,8 +269,9 @@ void TestEndRecordingWithFullLoopSimple()
   LoopStatus status;
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
+  status.mCurrentLoopTimeMS = 0;
 
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
 
   status.mCurrentLoopTimeMS = 0;
   mv.mBreath01 = 0;
@@ -291,12 +292,12 @@ void TestEndRecordingWithFullLoopSimple()
   status.mCurrentLoopTimeMS = 100;
   mv.mBreath01 = 4;
   Test(stream.mWritePrevCursor.mP == nullptr);
-  Test(stream.mWriteZeroTimeCursor == stream.mBufferBegin.mP);
+  Test(stream.mWriteZeroTimeCursor.mP == stream.mBufferBegin.mP);
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.
   stream.Write(mv); // this one makes the recording longer than 1 loop.
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.
   Test(stream.mWritePrevCursor.mP != nullptr);
-  Test(stream.mWriteZeroTimeCursor > stream.mBufferBegin.mP);
+  Test(stream.mWriteZeroTimeCursor.mP > stream.mBufferBegin.mP);
 
   // test aligning on a loop boundary (EOL nops)
   auto eventList = stream.DebugGetStream();
@@ -306,7 +307,7 @@ void TestEndRecordingWithFullLoopSimple()
   // and if we examine what's going on at the new zero cursor, we should see 100ms breath=4.
   LoopCursor cz;
   cz.mLoopTimeMS = 0;
-  cz.mP = stream.mWriteZeroTimeCursor;
+  cz.mP = stream.mWriteZeroTimeCursor.mP;
   auto ze = cz.PeekEvent();
   Test(ze.mHeader.mTimeSinceLastEventMS = 100);
   Test(ze.mHeader.mEventType == LoopEventType::Breath);
@@ -342,7 +343,7 @@ void TestScenarioOOM_PartialLoop()
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 40000;
 
-  stream.ResetBufferForRecording(status, buf, buf + 50);
+  stream.ResetBufferForRecording(status, mv, buf, buf + 50);
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 10; ++i) {
@@ -375,7 +376,7 @@ void TestScenarioEPZ()
   // and in order to actually trigger this scenario we need to capture prev
   // cursor. so we must cross a loop within the buffer. so make loop small enough.
 
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 100; ++i) {
@@ -431,7 +432,7 @@ void TestScenarioZEP()
   // and in order to actually trigger this scenario we need to capture prev
   // cursor. so we must cross a loop within the buffer. so make loop small enough.
 
-  stream.ResetBufferForRecording(status, buf, EndPtr(buf));
+  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 1000; ++i) {
@@ -469,38 +470,64 @@ void TestScenarioZEP()
 int main()
 {
   {
+    uint8_t b[] = "4567123";
+    auto s = UnifyCircularBuffer_Left(b + 4, EndPtr(b) - 1, b, b + 4);
+    Test(strncmp("1234567", (const char*)b, 7) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "456123";
+    UnifyCircularBuffer_Left(b + 3, EndPtr(b) - 1, b, b + 3);
+    Test(strncmp("123456", (const char*)b, 6) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "45123";
+    UnifyCircularBuffer_Left(b + 2, EndPtr(b) - 1, b, b + 2);
+    Test(strncmp("12345", (const char*)b, 5) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "4123";
+    UnifyCircularBuffer_Left(b + 1, EndPtr(b) - 1, b, b + 1);
+    Test(strncmp("1234", (const char*)b, 4) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+
+
+  {
     uint8_t b[] = "34..12";
-    UnifyCircularBuffer(b + 4, EndPtr(b) - 1, b, b + 2);
+    UnifyCircularBuffer_Left(b + 4, EndPtr(b) - 1, b, b + 2);
     Test(strncmp("1234", (const char*)b, 4) == 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "3..12";
-    UnifyCircularBuffer(b + 3, EndPtr(b) - 1, b, b + 1);
+    UnifyCircularBuffer_Left(b + 3, EndPtr(b) - 1, b, b + 1);
     Test(strncmp("123", (const char*)b, 3) == 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "23..1";
-    UnifyCircularBuffer(b + 4, EndPtr(b) - 1, b, b + 2);
+    UnifyCircularBuffer_Left(b + 4, EndPtr(b) - 1, b, b + 2);
     Test(strncmp("123", (const char*)b, 3) == 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "9..12345678";
-    UnifyCircularBuffer(b + 3, EndPtr(b) - 1, b, b + 1);
+    UnifyCircularBuffer_Left(b + 3, EndPtr(b) - 1, b, b + 1);
     Test(strncmp("123456789", (const char*)b, 9) == 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "23456789..1";
-    UnifyCircularBuffer(b + 10, EndPtr(b) - 1, b, b + 8);
+    UnifyCircularBuffer_Left(b + 10, EndPtr(b) - 1, b, b + 8);
     Test(strncmp("123456789", (const char*)b, 9) == 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "456789.123";
-    UnifyCircularBuffer(b + 7, EndPtr(b) - 1, b, b + 6);
+    UnifyCircularBuffer_Left(b + 7, EndPtr(b) - 1, b, b + 6);
     Test(strncmp("123456789", (const char*)b, 9) == 0);
     Test(*(EndPtr(b) - 1) == 0); // no overruns.
   }
@@ -508,21 +535,86 @@ int main()
   // test 0-sized segments.
   {
     uint8_t b[] = "123";
-    UnifyCircularBuffer(b, EndPtr(b) - 1, b, b);
+    UnifyCircularBuffer_Left(b, EndPtr(b) - 1, b, b);
     Test(strncmp("123", (const char*)b, 3) == 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "123";
-    UnifyCircularBuffer(EndPtr(b) - 1, EndPtr(b) - 1, b, EndPtr(b) - 1);
+    UnifyCircularBuffer_Left(EndPtr(b) - 1, EndPtr(b) - 1, b, EndPtr(b) - 1);
     Test(strncmp("123", (const char*)b, 3) == 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
   {
     uint8_t b[] = "";
-    UnifyCircularBuffer(b, EndPtr(b) - 1, 0, 0);
+    UnifyCircularBuffer_Left(b, EndPtr(b) - 1, 0, 0);
     Test(*(EndPtr(b) - 1) == 0);
   }
+
+
+  // test UnifyCircularBuffer_Right versions....
+  {
+    uint8_t b[] = "34..12";
+    auto ret = UnifyCircularBuffer_Right(b + 4, EndPtr(b) - 1, b, b + 2);
+    Test(strncmp("1234", (const char*)ret.begin, 4) == 0);
+    Test((ret.end - ret.begin) == 4);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "3..12";
+    auto ret = UnifyCircularBuffer_Right(b + 3, EndPtr(b) - 1, b, b + 1);
+    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
+    Test((ret.end - ret.begin) == 3);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "23..1";
+    auto ret = UnifyCircularBuffer_Right(b + 4, EndPtr(b) - 1, b, b + 2);
+    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
+    Test((ret.end - ret.begin) == 3);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "9..12345678";
+    auto ret = UnifyCircularBuffer_Right(b + 3, EndPtr(b) - 1, b, b + 1);
+    Test(strncmp("123456789", (const char*)ret.begin, 9) == 0);
+    Test((ret.end - ret.begin) == 9);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "23456789..1";
+    auto ret = UnifyCircularBuffer_Right(b + 10, EndPtr(b) - 1, b, b + 8);
+    Test(strncmp("123456789", (const char*)ret.begin, 9) == 0);
+    Test((ret.end - ret.begin) == 9);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "456789.123";
+    auto ret = UnifyCircularBuffer_Right(b + 7, EndPtr(b) - 1, b, b + 6);
+    Test(strncmp("123456789", (const char*)ret.begin, 9) == 0);
+    Test((ret.end - ret.begin) == 9);
+    Test(*(EndPtr(b) - 1) == 0); // no overruns.
+  }
+
+  // test 0-sized segments.
+  {
+    uint8_t b[] = "123";
+    auto ret = UnifyCircularBuffer_Right(b, EndPtr(b) - 1, b, b);
+    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "123";
+    auto ret = UnifyCircularBuffer_Right(EndPtr(b) - 1, EndPtr(b) - 1, b, EndPtr(b) - 1);
+    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+  {
+    uint8_t b[] = "";
+    auto ret = UnifyCircularBuffer_Right(b, EndPtr(b) - 1, 0, 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
+
 
 
   TestHappyFlow();

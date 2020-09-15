@@ -1,6 +1,10 @@
 
 #pragma once
 
+
+#ifndef EWI_UNIT_TESTS
+#include <Shared_CCUtil.h>
+#endif // EWI_UNIT_TESTS
 #include "Basic.hpp"
 
 template<typename T>

@@ -6,7 +6,7 @@
 #else
 static const size_t HARM_VOICES = 6;
 #endif // EWI_UNIT_TESTS
-
+#include "../../Shared/EWI/Basic.hpp"
 
 // musical voices have unique IDs which are a bitfield of
 // low 8 bits = 
@@ -132,6 +132,10 @@ struct Harmonizer
     if (outp >= end) {
       return 1;
     }
+
+    // todo: support intervals that are more complex. like "at least a m3rd away" which helps keep consistent voices between scales
+    // of various densities
+    // between
 
     outp[0].CloneForHarmonizationStream(*liveVoice);
     outp[0].mMidiNote += 7;

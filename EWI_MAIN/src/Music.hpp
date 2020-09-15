@@ -1,7 +1,10 @@
 
 #pragma once
 
+#ifndef EWI_UNIT_TESTS
 #include <Shared_CCUtil.h>
+#endif // EWI_UNIT_TESTS
+#include "../../Shared/EWI/Enum.hpp"
 
 struct NoteDesc
 {
@@ -46,7 +49,7 @@ struct ScaleFlavor
     mIntervals[4] = i5;
     mIntervals[5] = i6;
     mIntervals[6] = i7;
-    for (size_t i = 0; i < SizeofStaticArray(mIntervals); ++ i) {
+    for (uint8_t i = 0; i < SizeofStaticArray(mIntervals); ++ i) {
       if (mIntervals[i] == -1) {
         mIntervalCount = i;
         break;
