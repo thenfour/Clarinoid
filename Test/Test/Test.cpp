@@ -364,7 +364,7 @@ void TestScenarioOOM_PartialLoop()
 
   // Note: if we did not LOCK out recording, then some events could make it into
   // the buffer if they're small enough.
-  Test(stream.DebugGetStream().size() == 2);
+  Test(stream.DebugGetStream().size() == 6);
   Test(stream.mOOM);
 }
 
@@ -416,13 +416,13 @@ void TestScenarioEP()
   size_t ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
   // we have to read the events above
-  Test(mvout.mBreath01 == 18);
+  Test(mvout.mBreath01 == 34);
   status.mCurrentLoopTimeMS = 0;
   ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
   // we have to read the events above
   Test(ec == 7);
-  Test(mvout.mBreath01 == 16);
+  Test(mvout.mBreath01 == 32);
 }
 
 

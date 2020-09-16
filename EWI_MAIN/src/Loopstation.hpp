@@ -1,4 +1,3 @@
-// pretty sure now bufferbegin no longer needs to have voice.
 
 #pragma once
 
@@ -13,12 +12,19 @@ static const size_t LOOP_LAYERS = 3;
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 131072;
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;// a smaller buffer that's just used for intermediate copy ops
-static const size_t LOOPEVENTTYPE_BITS = 4;
-static const size_t LOOPEVENTTIME_BITS = 12; // 12 bits of milliseconds is 4 seconds; pretty reasonable
-static const uint32_t LOOPEVENTTIME_MAX = (1 << LOOPEVENTTIME_BITS) - 1;
+using LOOP_EVENT_DELAY = uint16_t;
+static constexpr size_t LOOP_EVENT_DELAY_BITS = sizeof(LOOP_EVENT_DELAY) * 8;
+static constexpr uint16_t LOOP_EVENT_DELAY_MAX = std::numeric_limits<LOOP_EVENT_DELAY>::max();
 static const uint32_t LOOP_BREATH_PITCH_RESOLUTION_MS = 5; // record only every N milliseconds max. This should probably be coordinated with the similar throttler in MusicalState, to make sure it plays well together
 static const float LOOP_BREATH_PITCH_EPSILON = 1.0f / 1024; // resolution to track.
 static const uint32_t LOOP_MIN_DURATION = 100;
+
+template<size_t divBits, typename Tval, typename Tremainder>
+void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)
+{
+  wholeParts = val >> divBits;
+  remainder = val & (1 << divBits) - 1;
+}
 
 static inline size_t PointerDistanceBytes(const void* a_, const void* b_)
 {
@@ -251,7 +257,7 @@ static BufferExtents UnifyCircularBuffer_Right(void* segmentABegin_, void* segme
   return BufferExtents{ segmentABegin - sizeB, segmentAEnd };
 }
 
-enum class LoopEventType
+enum class LoopEventType : uint8_t
 {
   Nop = 0, // {  } supports long time rests
   NoteOff = 1, // { }
@@ -282,7 +288,7 @@ struct LoopEventHeader
   uint8_t mMarker = LOOP_EVENT_MARKER;
 #endif // EWI_UNIT_TESTS
   LoopEventType mEventType;// : LOOPEVENTTYPE_BITS;
-  uint16_t mTimeSinceLastEventMS;// : LOOPEVENTTIME_BITS;
+  LOOP_EVENT_DELAY mTimeSinceLastEventMS;// : LOOPEVENTTIME_BITS;
 };
 
 struct LoopEvent_NoteOnParams
@@ -806,8 +812,9 @@ struct LoopEventStream
     uint8_t *p = (uint8_t*)p_;
     if (mOOM)
       return p;
-    size_t fullNops = duration / LOOPEVENTTIME_MAX;
-    uint32_t remainderTime = duration - (fullNops * LOOPEVENTTIME_MAX);
+    size_t fullNops;
+    LOOP_EVENT_DELAY remainderTime;
+    DivRemBitwise<LOOP_EVENT_DELAY_BITS>(duration, fullNops, remainderTime);
     size_t bytesNeeded = fullNops + (remainderTime ? 1 : 0);
     bytesNeeded *= sizeof(LoopEventHeader);
     if (p + bytesNeeded >= mBufferEnd) {
@@ -818,7 +825,7 @@ struct LoopEventStream
     for (size_t i = 0; i < fullNops; ++i) {
       ph->mMarker = LOOP_EVENT_MARKER;
       ph->mEventType = LoopEventType::Nop;
-      ph->mTimeSinceLastEventMS = LOOPEVENTTIME_MAX;
+      ph->mTimeSinceLastEventMS = LOOP_EVENT_DELAY_MAX;
       ++ph;
     }
     if (remainderTime) {
@@ -969,11 +976,12 @@ struct LoopEventStream
 
     // calculate a boundary to rec time, not 0.
     uint32_t delayTime = loopTimeElapsedSinceLastWrite;// -perfectLoopFillerTime;
-    size_t fullNops = delayTime / LOOPEVENTTIME_MAX;
-    uint32_t eventDelayTime = delayTime - (fullNops * LOOPEVENTTIME_MAX);
+    size_t fullNops;// = delayTime / LOOP_EVENT_DELAY_MAX;
+    LOOP_EVENT_DELAY eventDelayTime;// = delayTime - (fullNops * LOOP_EVENT_DELAY_MAX);
+    DivRemBitwise<LOOP_EVENT_DELAY_BITS>(delayTime, fullNops, eventDelayTime);
     if (eventDelayTime == 0 && fullNops > 0) {
       --fullNops;
-      eventDelayTime = LOOPEVENTTIME_MAX;
+      eventDelayTime = LOOP_EVENT_DELAY_MAX;
     }
     size_t bytesNeeded = (sizeof(LoopEventHeader) * (fullNops + 1)) + eventInfo.mParamsSize;// +1 because THIS event has a header too.
 
@@ -994,7 +1002,7 @@ struct LoopEventStream
     for (size_t i = 0; i < fullNops; ++i) {
       WRITE_LOOP_EVENT_HEADER_MARKER;
       ph->mEventType = LoopEventType::Nop;
-      ph->mTimeSinceLastEventMS = LOOPEVENTTIME_MAX;
+      ph->mTimeSinceLastEventMS = LOOP_EVENT_DELAY_MAX;
       ++ph;
     }
 
