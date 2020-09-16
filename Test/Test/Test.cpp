@@ -649,6 +649,7 @@ int main()
 
   while (true) {
     //mv.mBreath01 = ((float)(rand() % 100)) / 100;
+    Sleep(1);
     mv.mBreath01 += 0.01f;
     mv.mBreath01 -= floorf(mv.mBreath01);
     l.Update(mv, outp, EndPtr(outp));

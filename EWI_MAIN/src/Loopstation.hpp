@@ -577,6 +577,8 @@ struct LoopEventStream
   // returns # of events read.
   size_t ReadUntilLoopTime(MusicalVoice& outp)
   {
+    if (mOOM)
+      return 0; // there are ways to sorta work with a OOM situation, but it's not necessary to add the complexity for a shoddy solution.
     if (!mIsPlaying)
       return 0; // muted.
     CCASSERT(!!mCursor.mP);
