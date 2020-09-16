@@ -297,8 +297,8 @@ void TestEndRecordingWithFullLoopSimple()
 
   status.mCurrentLoopTimeMS = 100;
   mv.mBreath01 = 4;
-  Test(stream.mPrevCursor.mP == nullptr);
-  Test(stream.mRecStartCursor.mP == stream.mBufferBegin.mP);
+  //Test(stream.mPrevCursor.mP == nullptr);
+  //Test(stream.mRecStartCursor.mP == stream.mBufferBegin.mP);
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.
   stream.Write(mv); // this one makes the recording longer than 1 loop.
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.

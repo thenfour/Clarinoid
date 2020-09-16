@@ -1,4 +1,3 @@
-// TODO: we NEED a small buffer to limit the # of recursions of UnifyCircularBuffer_Left
 
 #pragma once
 
@@ -383,12 +382,10 @@ struct LoopStatus
   uint32_t mLoopDurationMS = 0;
 };
 
-// |ZxxxxE-------- (ze)
 // |---PxxxxxxxxxE (pe)
 // |xxE---Pxxxxxxx (ep)
 enum class LayoutSituation
 {
-  ZE,
   PE,
   EP,
 };
@@ -581,9 +578,6 @@ struct LoopEventStream
   // this way when we stop recording, we can accurately piece together a complete loop of events in sequence.
   LoopCursor mPrevCursor;
 
-  // track a point in the loop where we started recording. only valid when prevcursor is null.
-  LoopCursor mRecStartCursor;
-
 #ifndef EWI_UNIT_TESTS
   CCThrottlerT<LOOP_BREATH_PITCH_RESOLUTION_MS> mBreathPitchThrottler;
 #endif // EWI_UNIT_TESTS
@@ -650,20 +644,13 @@ struct LoopEventStream
     mpStatus = &status;
     mBufferBegin.Set(begin, status.mCurrentLoopTimeMS, musicalStatus);
     mEventsValidEnd = begin;
-    mRecStartCursor.Assign(mBufferBegin);
+    mPrevCursor.Assign(mBufferBegin);
     mBufferEnd = end;
     mCursor.Assign(mBufferBegin);
-    mPrevCursor.SetNull();
   }
 
   LayoutSituation GetLayoutSituation() const
   {
-    if (mPrevCursor.mP == nullptr) {
-      CCASSERT(mRecStartCursor.mP == mBufferBegin.mP);
-      CCASSERT(mRecStartCursor.mP <= mCursor.mP);
-      return LayoutSituation::ZE;
-    }
-    CCASSERT(!mRecStartCursor.mP);
     if (mPrevCursor.mP <= mCursor.mP) {
       return LayoutSituation::PE;
     }
@@ -676,13 +663,10 @@ struct LoopEventStream
   {
     cc::log("----");
     auto events = DebugGetStream();
-    auto layout = mIsRecording ? GetLayoutSituation() : LayoutSituation::ZE;
+    auto layout = mIsRecording ? GetLayoutSituation() : LayoutSituation::PE;
 
     if (mIsRecording) {
       switch (layout) {
-      case LayoutSituation::ZE:// |ZxxxxE-------- (ze)
-        cc::log("|ZxxxxE-------- (ZE)");
-        break;
       case LayoutSituation::PE:// |---PxxxxZxxxxE (pze)
         cc::log("|---PxxxxxxxxxE (PE)");
         break;
@@ -714,8 +698,7 @@ struct LoopEventStream
 
       CCASSERT(e.mHeader.mMarker == LOOP_EVENT_MARKER);
       String sParams = GetLoopEventTypeItemInfo(e.mHeader.mEventType).mParamsToString(e);
-      cc::log("%s%s%s [%p (+%d) t=%d: dly=%d, type=%s, params=%s]",
-        e.mP == mRecStartCursor.mP ? "Z" : " ",
+      cc::log("%s%s [%p (+%d) t=%d: dly=%d, type=%s, params=%s]",
         e.mP == mCursor.mP ? "E" : " ",
         e.mP == mPrevCursor.mP ? "P" : " ",
         e.mP,
@@ -756,16 +739,6 @@ struct LoopEventStream
       return ret;
     }
     switch (GetLayoutSituation()) {
-    case LayoutSituation::ZE:// |ZxxxxE-------- (ze)
-    {
-      LoopCursor c; c.Assign(mBufferBegin);
-      while (c.mP < mEventsValidEnd) {
-        ret.push_back(c.PeekEvent());
-        if (c.ConsumeSingleEvent(GetStatus(), mBufferBegin, mBufferEnd))
-          break;
-      };
-      return ret;
-    }
     case LayoutSituation::PE:// |---PxxxxxxxxE (pe)
     {
       LoopCursor c; c.Assign(mPrevCursor);
@@ -837,18 +810,6 @@ struct LoopEventStream
   // we want the resulting buffer to start at the earliest known material, and end at mCursor.
   void* WrapUpRecording() {
     auto layout = GetLayoutSituation();
-    if (layout == LayoutSituation::ZE) {// |ZxxxxE-------- (ze)
-      // so you haven't yet seen a loop crossing; no blitting necessary.
-      //mEventsValidEnd = mCursor.mP;
-      uint32_t recordedDuration = Duration(mBufferBegin.mLoopTimeMS, mCursor.mLoopTimeMS);// pzMS + zeMS;
-      mEventsValidEnd = WriteSeamNops(mEventsValidEnd, GetStatus().mLoopDurationMS - recordedDuration);
-      mBufferEnd = mEventsValidEnd;
-      mRecStartCursor.SetNull();
-      mIsPlaying = true;
-      mIsRecording = false;
-      mCursor.Assign(mBufferBegin);
-      return mEventsValidEnd;
-    }
 
     uint32_t recordedDuration = Duration(mPrevCursor.mLoopTimeMS, mCursor.mLoopTimeMS);// pzMS + zeMS;
 
@@ -882,7 +843,6 @@ struct LoopEventStream
 
     mBufferEnd = mEventsValidEnd;
     mPrevCursor.SetNull(); // no longer valid.
-    mRecStartCursor.SetNull();
     mIsPlaying = true;
     mIsRecording = false;
     Dump();
@@ -896,22 +856,6 @@ struct LoopEventStream
     // ZE, PZE check for end of buffer
     // EPZ and ZEP check f or P
     switch (GetLayoutSituation()) {
-    case LayoutSituation::ZE:// |ZxxxxE-------- (ze)
-      if (AddPointerBytes(mCursor.mP, bytesNeeded) < mBufferEnd) {
-        return true;// we're already set.
-      }
-      if (GetStatus().mState == LooperState::StartSet) {
-        // - No duration set (1st loop layer), but you're recording. so you're just trying to make a loop layer too big.
-        mOOM = true;
-        return false;
-      }
-      if (GetStatus().mState == LooperState::DurationSet && mPrevCursor.mP == nullptr) {
-        // - Duration set, but we haven't recorded a full loop. So you're recording a 2nd layer that just doesn't have enough mem left to complete.
-        mOOM = true;
-        return false;
-      }
-      CCASSERT(false); // not possible to land here
-      return false;
     case LayoutSituation::PE:// |---PxxxxZxxxxE (pze)
       if (AddPointerBytes(mCursor.mP, bytesNeeded) < mBufferEnd) {
         return true;// we're already set.
@@ -923,7 +867,6 @@ struct LoopEventStream
         return false;
       }
       // safe to use beginning of buffer, transition to EPZ
-      //mEventsValidEnd = mCursor.mP;
       mCursor.mP = mBufferBegin.mP;
       mBufferBegin.mLoopTimeMS = mCursor.mLoopTimeMS;
       Dump();
@@ -954,26 +897,10 @@ struct LoopEventStream
 
     // not "has looped". we want to know if you've passed rec start time.
     uint32_t loopTimeElapsedSinceLastWrite = Duration(mCursor.mLoopTimeMS, GetStatus().mCurrentLoopTimeMS);
-    bool havePassedRecStart = false;
-    if ((mPrevCursor.mP == nullptr) && (GetStatus().mState == LooperState::DurationSet) && !IsEmpty()) /* if empty, it screws our distance calclations */
-    {
-        uint32_t timeLeftToRecStart = Duration(mCursor.mLoopTimeMS, mRecStartCursor.mLoopTimeMS);
-        havePassedRecStart = loopTimeElapsedSinceLastWrite >= timeLeftToRecStart; // the >= is important
-        if (havePassedRecStart) {
-          // because we've looped back, and we haven't yet tracked a full loop of material, it means this is the point to prepare the "prev write" cursor for tracking.
-          // one loop ago was exactly at the beginning of the buffer.
-          CCASSERT(mBufferBegin.mP == mRecStartCursor.mP);
-          mPrevCursor.Assign(mBufferBegin);
-          mRecStartCursor.SetNull();
-        }
-    }
 
     // this is a useful calculation to do NOW, because we know it's always less than 1 loop duration in length which simplifies math.
-    int32_t peMS = 0;
-    if (mPrevCursor.mP) {
-      peMS = (int32_t)Duration(mPrevCursor.mLoopTimeMS, mCursor.mLoopTimeMS);
-      peMS += loopTimeElapsedSinceLastWrite; // and now it can be longer than a loop. handle this scenario later.
-    }
+    int32_t peMS = (int32_t)Duration(mPrevCursor.mLoopTimeMS, mCursor.mLoopTimeMS);
+    peMS += loopTimeElapsedSinceLastWrite; // and now it can be longer than a loop. handle this scenario later.
 
     // calculate a boundary to rec time, not 0.
     uint32_t delayTime = loopTimeElapsedSinceLastWrite;// -perfectLoopFillerTime;
@@ -1021,7 +948,7 @@ struct LoopEventStream
     mEventsValidEnd = std::max(mEventsValidEnd, (void*)mCursor.mP); // one of the only times you actually need to cast to void*
 
     // advance the "prev" write cursor if it exists. do this before checking the OOB conditions below, to make a bit of room and squeeze out a few more bytes.
-    if (mPrevCursor.mP) {
+    if (GetStatus().mState == LooperState::DurationSet) {
       // fast-forward P so it's just under 1 loop's worth of material.
       while (peMS >= (int32_t)GetStatus().mLoopDurationMS) {
         uint32_t less = mPrevCursor.mP->mTimeSinceLastEventMS;
