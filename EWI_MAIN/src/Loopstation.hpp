@@ -1,3 +1,5 @@
+// TODO: we NEED a small buffer to limit the # of recursions of UnifyCircularBuffer_Left
+
 #pragma once
 
 #ifndef EWI_UNIT_TESTS
@@ -100,11 +102,26 @@ static void MemCpyTriple(uint8_t *p1begin, uint8_t *p1end, uint8_t *p2begin, uin
   }
 }
 
+size_t gDepth = 0;
+size_t gMaxDepth = 0;
+struct DepthCheck
+{
+  DepthCheck() {
+    ++gDepth;
+    gMaxDepth = std::max(gMaxDepth, gDepth);
+  }
+  ~DepthCheck() {
+    --gDepth;
+  }
+};
+
 // shift a split circular buffer into place without using some temp buffer. avoids OOM.
 // returns the total size of the resulting buffer which will start at segmentBBegin.
 // |Bbbb----Aaaa|  => |AaaaBbbb----|
-static size_t UnifyCircularBuffer_Left(void* segmentABegin_, void* segmentAEnd_, void* segmentBBegin_, void* segmentBEnd_)
+template<size_t tempBufferBytes = 1>
+static size_t UnifyCircularBuffer_Left(void* segmentABegin_, void* segmentAEnd_, void* segmentBBegin_, void* segmentBEnd_/*, uint8_t(&tempBuffer)[tempBufferBytes]*/)
 {
+  DepthCheck dc;
   uint8_t* segmentABegin = (uint8_t*)segmentABegin_;
   uint8_t* segmentAEnd = (uint8_t*)segmentAEnd_;
   uint8_t* segmentBBegin = (uint8_t*)segmentBBegin_;
@@ -141,6 +158,21 @@ static size_t UnifyCircularBuffer_Left(void* segmentABegin_, void* segmentAEnd_,
       // =>
       // |AaaaaaaaBbb------|
       MemCpyTriple(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd, segmentBBegin + sizeA);
+      return sizeA + sizeB;
+    }
+
+    // |Bbb--Aaaaaaaaaaa|
+
+    // without a temp buffer, this scenario can get messy fast, recursing for every len bytes, and len could be 1.
+    if (tempBufferBytes > len) {
+      CCASSERT(len >= sizeB);
+      // so the temp buffer can hold entire B.
+      uint8_t tempBuffer[tempBufferBytes];
+      memcpy(tempBuffer, segmentBBegin, sizeB);
+      // shift A over
+      OrderedMemcpy(segmentBBegin, segmentABegin, sizeA);
+      // and place B.
+      memcpy(segmentBBegin + sizeA, tempBuffer, sizeB);
       return sizeA + sizeB;
     }
 
@@ -541,7 +573,7 @@ struct LoopEventStream
   void* mBufferEnd = nullptr;
   void* mEventsValidEnd = nullptr;// when writing, this can be before the end of the raw buffer.
 
-  // for writing,  generally points to free area for writing (don't read).
+  // for writing, points to free area for writing (don't read).
   // for reading, points to the next unread event
   LoopCursor mCursor;
 
@@ -549,10 +581,8 @@ struct LoopEventStream
   // this way when we stop recording, we can accurately piece together a complete loop of events in sequence.
   LoopCursor mPrevCursor;
 
-  // track a point in the loop where we started recording. it's useful to track this because we ALWAYS have it; it's
-  // set when recording starts.
+  // track a point in the loop where we started recording. only valid when prevcursor is null.
   LoopCursor mRecStartCursor;
-
 
 #ifndef EWI_UNIT_TESTS
   CCThrottlerT<LOOP_BREATH_PITCH_RESOLUTION_MS> mBreathPitchThrottler;
@@ -560,7 +590,6 @@ struct LoopEventStream
 
   const LoopStatus* mpStatus = nullptr;
   const LoopStatus& GetStatus() const { return *mpStatus; }
-
 
   bool IsEmpty() const {
     return mBufferBegin.mP == mEventsValidEnd;
@@ -918,7 +947,6 @@ struct LoopEventStream
     if (mOOM)
       return false;
     const auto& eventInfo = GetLoopEventTypeItemInfo(eventType);
-    //uint32_t perfectLoopFillerTime = 0;
 
     if (GetStatus().mState == LooperState::DurationSet) {
       CCASSERT(GetStatus().mCurrentLoopTimeMS < GetStatus().mLoopDurationMS);
@@ -948,8 +976,6 @@ struct LoopEventStream
     }
 
     // calculate a boundary to rec time, not 0.
-    //size_t perfectLoopFullNops = perfectLoopFillerTime / LOOPEVENTTIME_MAX;
-    //uint32_t perfectLoopPartialNopTime = perfectLoopFillerTime - (perfectLoopFullNops * LOOPEVENTTIME_MAX);
     uint32_t delayTime = loopTimeElapsedSinceLastWrite;// -perfectLoopFillerTime;
     size_t fullNops = delayTime / LOOPEVENTTIME_MAX;
     uint32_t eventDelayTime = delayTime - (fullNops * LOOPEVENTTIME_MAX);

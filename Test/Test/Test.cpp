@@ -425,60 +425,15 @@ void TestScenarioEP()
   Test(mvout.mBreath01 == 16);
 }
 
-//void TestScenarioZEP()
-//{
-//  // |xxZxxxxE---Pxx (zep)
-//  MusicalVoice mv;
-//  MusicalVoice mvout;
-//  uint8_t buf[600];
-//  LoopEventStream stream;
-//
-//  LoopStatus status;
-//  status.mState = LooperState::DurationSet;
-//  status.mLoopDurationMS = 1000; // we want each event to be 5 secs long,
-//  // and in order to actually trigger this scenario we need to capture prev
-//  // cursor. so we must cross a loop within the buffer. so make loop small enough.
-//
-//  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
-//
-//  status.mCurrentLoopTimeMS = 0;
-//  for (int i = 0; i < 1000; ++i) {
-//    status.mCurrentLoopTimeMS += 167;
-//    status.mCurrentLoopTimeMS %= status.mLoopDurationMS;
-//    mv.mBreath01 = (float)(i + 1);
-//    stream.Dump();
-//    if (i == 35) {
-//      int a = 0;
-//    }
-//    stream.Write(mv);
-//    // if we hit ZEP break out.
-//    if (stream.GetLayoutSituation() == LayoutSituation::ZEP) {
-//      break;
-//    }
-//  }
-//
-//  stream.Dump();
-//  stream.WrapUpRecording();
-//  stream.Dump();
-//  status.mCurrentLoopTimeMS = 0;
-//  size_t ec = stream.ReadUntilLoopTime(mvout);
-//  status.mCurrentLoopTimeMS = 800;
-//  ec = stream.ReadUntilLoopTime(mvout);
-//  stream.Dump();
-//  // we have to read the events above
-//  Test(ec == 5);
-//  Test(mvout.mBreath01 == 34);
-//  status.mCurrentLoopTimeMS = 100;
-//  ec = stream.ReadUntilLoopTime(mvout);
-//  stream.Dump();
-//  // we have to read the events above
-//  Test(ec == 3);
-//  Test(mvout.mBreath01 == 36);
-//}
-
 
 int main()
 {
+  {
+    uint8_t b[] = "Zabcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789";
+    auto s = UnifyCircularBuffer_Left<10>(b + 1, EndPtr(b) - 1, b, b + 1);
+    Test(strcmp("abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789Z", (const char*)b) == 0);
+    Test(*(EndPtr(b) - 1) == 0);
+  }
   {
     uint8_t b[] = "4567123";
     auto s = UnifyCircularBuffer_Left(b + 4, EndPtr(b) - 1, b, b + 4);
