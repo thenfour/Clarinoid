@@ -60,7 +60,7 @@ void TestHappyFlow()
   stream.WrapUpRecording();
   stream.Dump();
 
-  Test(stream.DebugGetStream().size() == 5);
+  Test(stream.DebugGetStream().size() == 6);
 
   status.mCurrentLoopTimeMS = 0;
   MusicalVoice mvout;
@@ -132,7 +132,7 @@ void TestConsumeMultipleEvents()
   cc::log("---");
   stream.Dump();
 
-  Test(stream.DebugGetStream().size() == 6);
+  Test(stream.DebugGetStream().size() == 7);
 
   status.mCurrentLoopTimeMS = 0;
   stream.ReadUntilLoopTime(mvout);
@@ -421,7 +421,7 @@ void TestScenarioEP()
   ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
   // we have to read the events above
-  Test(ec == 6);
+  Test(ec == 7);
   Test(mvout.mBreath01 == 16);
 }
 

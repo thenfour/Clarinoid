@@ -1,3 +1,4 @@
+// pretty sure now bufferbegin no longer needs to have voice.
 
 #pragma once
 
@@ -10,7 +11,8 @@ static const size_t LOOP_LAYERS = 3;
 #endif // EWI_UNIT_TESTS
 #include "Harmonizer.hpp"
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 10000;
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 131072;
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;// a smaller buffer that's just used for intermediate copy ops
 static const size_t LOOPEVENTTYPE_BITS = 4;
 static const size_t LOOPEVENTTIME_BITS = 12; // 12 bits of milliseconds is 4 seconds; pretty reasonable
 static const uint32_t LOOPEVENTTIME_MAX = (1 << LOOPEVENTTIME_BITS) - 1;
@@ -118,7 +120,7 @@ struct DepthCheck
 // returns the total size of the resulting buffer which will start at segmentBBegin.
 // |Bbbb----Aaaa|  => |AaaaBbbb----|
 template<size_t tempBufferBytes = 1>
-static size_t UnifyCircularBuffer_Left(void* segmentABegin_, void* segmentAEnd_, void* segmentBBegin_, void* segmentBEnd_/*, uint8_t(&tempBuffer)[tempBufferBytes]*/)
+static size_t UnifyCircularBuffer_Left(void* segmentABegin_, void* segmentAEnd_, void* segmentBBegin_, void* segmentBEnd_)
 {
   DepthCheck dc;
   uint8_t* segmentABegin = (uint8_t*)segmentABegin_;
@@ -185,7 +187,7 @@ static size_t UnifyCircularBuffer_Left(void* segmentABegin_, void* segmentAEnd_,
     // |AaaaaBbb--aaaaaa|
     //      |Bbb--aaaaaa|
     // =>   |aaaaaaBbb--|
-    UnifyCircularBuffer_Left(segmentABegin + len, segmentAEnd, segmentBBegin + len, segmentBBegin + len + sizeB);
+    UnifyCircularBuffer_Left<tempBufferBytes>(segmentABegin + len, segmentAEnd, segmentBBegin + len, segmentBBegin + len + sizeB);
 
     return sizeA + sizeB;
   }
@@ -206,7 +208,7 @@ static size_t UnifyCircularBuffer_Left(void* segmentABegin_, void* segmentAEnd_,
 
   // => |Aaabbbbb--Bbb|
   // now we need to piece back together B. in fact it's just a mini-version of the big buffer. recurse.
-  UnifyCircularBuffer_Left(segmentABegin, segmentAEnd, segmentBBegin + sizeA, segmentBEnd);
+  UnifyCircularBuffer_Left<tempBufferBytes>(segmentABegin, segmentAEnd, segmentBBegin + sizeA, segmentBEnd);
   return sizeA + sizeB;
 }
 
@@ -221,6 +223,7 @@ struct BufferExtents
 // unused data between A and B. but as a quick-and-dirty fix for that, if there's
 // enough space in there to store everything then do it the simple way.
 // returns the extents of the new buffer.
+template<size_t tempBufferBytes = 1>
 static BufferExtents UnifyCircularBuffer_Right(void* segmentABegin_, void* segmentAEnd_, void* segmentBBegin_, void* segmentBEnd_)
 {
   uint8_t* segmentABegin = (uint8_t*)segmentABegin_;
@@ -243,7 +246,7 @@ static BufferExtents UnifyCircularBuffer_Right(void* segmentABegin_, void* segme
     return BufferExtents{ segmentABegin - sizeB, segmentAEnd };
   }
 
-  size_t r = UnifyCircularBuffer_Left(segmentBEnd, segmentAEnd, segmentBBegin, segmentBEnd);
+  size_t r = UnifyCircularBuffer_Left<tempBufferBytes>(segmentBEnd, segmentAEnd, segmentBBegin, segmentBEnd);
   CCASSERT(r == (segmentAEnd - segmentBBegin));
   return BufferExtents{ segmentABegin - sizeB, segmentAEnd };
 }
@@ -258,7 +261,8 @@ enum class LoopEventType
   BreathAndPitch = 5, // { float breath, float pitch }
   SynthPatchChange = 6, // { uint8_t patchid }
   HarmPatchChange = 7, // { uint8_t patchid }
-  LOOP_EVENT_TYPE_COUNT_ = 8
+  FullState = 8,
+  LOOP_EVENT_TYPE_COUNT_ = 9
   // reserve some additional CC here.
   // - expr
   // - modwheel
@@ -313,6 +317,15 @@ struct LoopEvent_HarmPatchChangeParams
   int16_t mHarmPatchId;
 };
 
+struct LoopEvent_FullStateParams
+{
+  float mBreath01;
+  float mPitchN11;
+  int16_t mSynthPatchId;
+  int16_t mHarmPatchId;
+};
+
+
 // NOT 100% stream-friendly layout.
 struct LoopEvent_Unified
 {
@@ -324,6 +337,7 @@ struct LoopEvent_Unified
     LoopEvent_BreathAndPitchParams mBreathAndPitchParams;
     LoopEvent_SynthPatchChangeParams mSynthPatchChangeParams;
     LoopEvent_HarmPatchChangeParams mHarmPatchChangeParams;
+    LoopEvent_FullStateParams mFullStateParams;
   } mParams;
 
   uint32_t mLoopTimeMS; // debugging convenience
@@ -342,9 +356,10 @@ String LoopBlankParamToString(const LoopEvent_Unified&) { return String(); }
 String LoopNoteOnParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mNoteOnParams.mMidiNote); }
 String LoopBreathParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mBreathParams.mBreath01); }
 String LoopPitchParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mPitchParams.mPitchN11); }
-String LoopBreathAndPitchParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mBreathAndPitchParams.mBreath01); }
+String LoopBreathAndPitchParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mBreathAndPitchParams.mBreath01); } // todo
 String LoopSynthPatchChangeParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mSynthPatchChangeParams.mSynthPatchId); }
 String LoopHarmPatchChangeParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mHarmPatchChangeParams.mHarmPatchId); }
+String LoopFullStateParamToString(const LoopEvent_Unified& e) { return String(e.mParams.mFullStateParams.mBreath01); } // todo
 
 const LoopEventTypeItemInfo gLoopEventTypeItemInfo_[LOOP_EVENT_TYPE_COUNT] =
 {
@@ -356,6 +371,7 @@ const LoopEventTypeItemInfo gLoopEventTypeItemInfo_[LOOP_EVENT_TYPE_COUNT] =
   { LoopEventType::BreathAndPitch, "BreathAndPitch", sizeof(LoopEvent_BreathAndPitchParams), LoopBreathAndPitchParamToString },
   { LoopEventType::SynthPatchChange, "SynthPatchChange", sizeof(LoopEvent_SynthPatchChangeParams), LoopSynthPatchChangeParamToString },
   { LoopEventType::HarmPatchChange, "HarmPatchChange", sizeof(LoopEvent_HarmPatchChangeParams), LoopHarmPatchChangeParamToString },
+  { LoopEventType::FullState, "FullState", sizeof(LoopEvent_FullStateParams), LoopFullStateParamToString },
 };
 
 const LoopEventTypeItemInfo& GetLoopEventTypeItemInfo(size_t i) {
@@ -550,6 +566,18 @@ struct LoopCursor
         additionalVoice->mHarmPatch = event.mParams.mHarmPatchChangeParams.mHarmPatchId;
       }
       break;
+    case LoopEventType::FullState:
+      mRunningVoice.mBreath01 = event.mParams.mBreathAndPitchParams.mBreath01;
+      mRunningVoice.mPitchBendN11 = event.mParams.mBreathAndPitchParams.mPitchN11;
+      mRunningVoice.mSynthPatch = event.mParams.mSynthPatchChangeParams.mSynthPatchId;
+      mRunningVoice.mHarmPatch = event.mParams.mHarmPatchChangeParams.mHarmPatchId;
+      if (additionalVoice) {
+        additionalVoice->mBreath01 = event.mParams.mBreathAndPitchParams.mBreath01;
+        additionalVoice->mPitchBendN11 = event.mParams.mBreathAndPitchParams.mPitchN11;
+        additionalVoice->mSynthPatch = event.mParams.mSynthPatchChangeParams.mSynthPatchId;
+        additionalVoice->mHarmPatch = event.mParams.mHarmPatchChangeParams.mHarmPatchId;
+      }
+      break;
     default:
       CCASSERT(false);
       break;
@@ -732,7 +760,6 @@ struct LoopEventStream
       LoopCursor c; c.Assign(mBufferBegin);
       while (c.mP < mEventsValidEnd) {
         ret.push_back(c.PeekEvent());
-        //c.MoveNextNaive(GetStatus());
         if (c.ConsumeSingleEvent(GetStatus(), mBufferBegin, mBufferEnd))
           break;
       };
@@ -809,34 +836,73 @@ struct LoopEventStream
   // point cursor at the time in status.
   // we want the resulting buffer to start at the earliest known material, and end at mCursor.
   void* WrapUpRecording() {
-    auto layout = GetLayoutSituation();
+    // if we didn't record any events, this buffer is basically transparent; nothing needs to be done at all. nothing will be played.
+    if (IsEmpty() || mOOM) {
+      mIsPlaying = true;
+      mIsRecording = false;
+      mPrevCursor.SetNull(); // no longer valid.
+      mEventsValidEnd = mBufferBegin.mP;
+      mBufferEnd = mEventsValidEnd;
+      return mEventsValidEnd;
+    }
 
     uint32_t recordedDuration = Duration(mPrevCursor.mLoopTimeMS, mCursor.mLoopTimeMS);// pzMS + zeMS;
 
     // Get the buffer arranged with hopefully room at the end for seam.
-    switch (layout) {
-    case LayoutSituation::PE:// |---PxxxxZxxxxE (pe)
-    {
-      size_t peBytes = PointerDistanceBytes(mCursor.mP, mPrevCursor.mP);// pzBytes + zeBytes;
-      OrderedMemcpy(mBufferBegin.mP, mPrevCursor.mP, peBytes); // invalidates all our cursors locations.
-      mEventsValidEnd = AddPointerBytes(mBufferBegin.mP, peBytes);
-      break;
+    void* segmentABegin = mPrevCursor.mP;
+    void* segmentAEnd = mEventsValidEnd;
+    void* segmentBBegin = mBufferBegin.mP;
+    void* segmentBEnd = mBufferBegin.mP;// |---PxxxxZxxxxE (pe)
+
+    size_t mainBufferValidBytes = PointerDistanceBytes(segmentAEnd, segmentABegin);
+
+    if (GetLayoutSituation() == LayoutSituation::EP) {// |xxE---PxxxxZxx (ep)
+      segmentBEnd = mCursor.mP;
+      mainBufferValidBytes += PointerDistanceBytes(segmentBEnd, segmentBBegin);
     }
 
-    case LayoutSituation::EP:// |xxE---PxxxxZxx (ep)
+    LoopEventHeader hdr;
+    LoopEvent_FullStateParams params;
+
+    // check for OOM.
+    size_t bytesNeeded = sizeof(hdr) + sizeof(params);
+    if (mainBufferValidBytes + bytesNeeded > PointerDistanceBytes(mBufferEnd, mBufferBegin.mP))
     {
-      size_t buflen = UnifyCircularBuffer_Left(mPrevCursor.mP, mEventsValidEnd, mBufferBegin.mP, mCursor.mP);
-      mEventsValidEnd = AddPointerBytes(mBufferBegin.mP, buflen);
-      break;
+      mOOM = true;
+      mIsPlaying = true;
+      mIsRecording = false;
+      mPrevCursor.SetNull(); // no longer valid.
+      mEventsValidEnd = mBufferBegin.mP;
+      mBufferEnd = mEventsValidEnd;
+      return mEventsValidEnd;
     }
 
-    default:
-      CCASSERT(false);
-      return nullptr;
-    }
+    hdr.mEventType = LoopEventType::FullState;
+    hdr.mMarker = LOOP_EVENT_MARKER;
+    hdr.mTimeSinceLastEventMS = mPrevCursor.mP->mTimeSinceLastEventMS; // easy to insert an event; just steal the other time and set its to 0.
+    mPrevCursor.mP->mTimeSinceLastEventMS = 0;
+
+    params.mBreath01 = mPrevCursor.mRunningVoice.mBreath01;
+    params.mPitchN11 = mPrevCursor.mRunningVoice.mPitchBendN11;
+    params.mHarmPatchId = mPrevCursor.mRunningVoice.mHarmPatch;
+    params.mSynthPatchId = mPrevCursor.mRunningVoice.mSynthPatch;
 
     mBufferBegin.mLoopTimeMS = mPrevCursor.mLoopTimeMS;
     mBufferBegin.mRunningVoice.AssignFromLoopStream(mPrevCursor.mRunningVoice);
+
+    // get our buffer conjoined.
+    UnifyCircularBuffer_Left<LOOPER_TEMP_BUFFER_BYTES>(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd);
+    // slide it over to make room
+    OrderedMemcpy(AddPointerBytes(mBufferBegin.mP, bytesNeeded), segmentBBegin, mainBufferValidBytes);
+    // write our full state
+    LoopEventHeader* phdr = mBufferBegin.mP;
+    *phdr = hdr;
+    ++phdr;
+    LoopEvent_FullStateParams* pparams = (LoopEvent_FullStateParams*)phdr;
+    *pparams = params;
+    ++pparams;
+
+    mEventsValidEnd = AddPointerBytes(pparams, mainBufferValidBytes);
 
     // write a "seam" at the end of the buffer to make our recorded material exactly 1 loop in duration.
     mEventsValidEnd = WriteSeamNops(mEventsValidEnd, GetStatus().mLoopDurationMS - recordedDuration);
@@ -845,7 +911,6 @@ struct LoopEventStream
     mPrevCursor.SetNull(); // no longer valid.
     mIsPlaying = true;
     mIsRecording = false;
-    Dump();
     mCursor.Assign(mBufferBegin);
     return mEventsValidEnd;
   }
