@@ -1,5 +1,3 @@
-// TODO: i don't think we need the zero cursor at all. it's barely useful ever.
-
 #pragma once
 
 #ifndef EWI_UNIT_TESTS
@@ -354,15 +352,13 @@ struct LoopStatus
 };
 
 // |ZxxxxE-------- (ze)
-// |---PxxxxZxxxxE (pze)
-// |xxE---PxxxxZxx (epz)
-// |xxZxxxxE---Pxx (zep)
+// |---PxxxxxxxxxE (pe)
+// |xxE---Pxxxxxxx (ep)
 enum class LayoutSituation
 {
   ZE,
-  PZE,
-  EPZ,
-  ZEP
+  PE,
+  EP,
 };
 
 struct LoopCursor
@@ -393,7 +389,7 @@ struct LoopCursor
 
   // returns the absolute loop time that the currently-pointed-to-event should occur.
   // NOTE: can be past the loop duration!
-  uint32_t PeekLoopTime()
+  uint32_t PeekLoopTimeNotNormalized()
   {
 #ifdef EWI_UNIT_TESTS
     CCASSERT(mP->mMarker == LOOP_EVENT_MARKER);
@@ -406,8 +402,8 @@ struct LoopCursor
   uint32_t PeekLoopTimeWrapSensitive(const LoopStatus& status)
   {
     CCASSERT(status.mState == LooperState::DurationSet);
-    uint32_t ret = PeekLoopTime();
-    while (ret > status.mLoopDurationMS)
+    uint32_t ret = PeekLoopTimeNotNormalized();
+    while (ret >= status.mLoopDurationMS)
       ret -= status.mLoopDurationMS;
     return ret;
   }
@@ -421,6 +417,29 @@ struct LoopCursor
     ret.mP = mP;
     ret.mLoopTimeMS = mLoopTimeMS;
     return ret;
+  }
+
+  // does this event contain the given loop time? if our event starts at L-50 with duration 150, then 0 is contained for example.
+  bool TouchesTime(const LoopStatus& status, uint32_t r) {
+    uint32_t dnEventTimeWithDelay = mLoopTimeMS + mP->mTimeSinceLastEventMS;
+    if (dnEventTimeWithDelay < status.mLoopDurationMS) {
+      // simple case where no boundaries are crossed.
+      if (r < mLoopTimeMS)
+        return false;
+      if (r > dnEventTimeWithDelay)
+        return false;
+      return true;
+    }
+    uint32_t normEventTimeWithDelay = dnEventTimeWithDelay - status.mLoopDurationMS;
+    // this event crosses zero boundary.
+    // 0ms|-------E=r=Z|===D---|
+    // 0ms|---r---E===Z|===D---|
+    // 0ms|-------E===Z|===D-r-|
+    if (r >= mLoopTimeMS)
+      return true;
+    if (r <= normEventTimeWithDelay)
+      return true;
+    return false;
   }
 
   // return true if we wrapped in the buffer (not time though!).
@@ -566,33 +585,30 @@ struct LoopEventStream
 
     size_t ret = 0;
 
-    // a helpful visualization. this is an LOOP TIME, not buffer layout:
-    // 0ms|----------E===D-----------|
-    //         ^ if req is here, we need to read until time loops
-    //                 ^ if req is here, don't do anything. but that would be handled automatically later.
-    //                       ^ if req is here, then it's just like above but without the extra loop.
+    // assumption: current cursor is AT or BEFORE the requested time.
+    // so if the next event would be TOO far, stop reading. otherwise just go.
     uint32_t reqTime = GetStatus().mCurrentLoopTimeMS;
-    while (reqTime < mCursor.mLoopTimeMS) {
-      mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd);
+
+    // there are no gaps. so we should *encounter* the cursor time.
+    while (!mCursor.TouchesTime(GetStatus(), reqTime)) {
+      mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd, &outp);
       ++ret;
     }
 
-    // if our cursor loop time loops, bail out. basically we just don't have events this far into the loop.
-    // to detect that condition, keep track of the prev time.
-    uint32_t prevTime = 0;
-    while(true) {
-      uint32_t t = mCursor.PeekLoopTimeWrapSensitive(GetStatus());
-      if (t > GetStatus().mCurrentLoopTimeMS) {
-        break;
+    // if this event is after reqtime, bail. we know it's touching reqtime too, so
+    // the only passing condition is if r is exactly equal to the event time post-delay
+    // r-------| <-- only pass if dly=0
+    // |---r---| <-- dly
+    // |-------r <-- r is exactly on the event time. also pass.
+    uint32_t t = mCursor.PeekLoopTimeWrapSensitive(GetStatus());
+    if (t == reqTime) {
+      while (mCursor.PeekLoopTimeWrapSensitive(GetStatus()) == t) {
+        mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd, &outp);
+        ++ret;
       }
-      if (t < prevTime) {
-        // bail like i said.
-        break;
-      }
-      mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mBufferEnd, &outp);
-      prevTime = t;
-      ++ret;
     }
+
+
     return ret;
   }
 
@@ -616,19 +632,11 @@ struct LoopEventStream
       CCASSERT(mRecStartCursor.mP <= mCursor.mP);
       return LayoutSituation::ZE;
     }
-    if (mRecStartCursor.mP <= mCursor.mP) {
-      CCASSERT(mPrevCursor.mP < mCursor.mP);
-      CCASSERT(mPrevCursor.mP <= mRecStartCursor.mP);
-      return LayoutSituation::PZE;
+    CCASSERT(!mRecStartCursor.mP);
+    if (mPrevCursor.mP <= mCursor.mP) {
+      return LayoutSituation::PE;
     }
-    if (mCursor.mP <= mRecStartCursor.mP) {
-      CCASSERT(mCursor.mP < mPrevCursor.mP);
-      CCASSERT(mPrevCursor.mP <= mRecStartCursor.mP);
-      return LayoutSituation::EPZ;
-    }
-    CCASSERT(mRecStartCursor.mP < mCursor.mP);
-    CCASSERT(mCursor.mP < mPrevCursor.mP);
-    return LayoutSituation::ZEP;
+    return LayoutSituation::EP;
   }
 
 #ifdef EWI_UNIT_TESTS
@@ -644,23 +652,20 @@ struct LoopEventStream
       case LayoutSituation::ZE:// |ZxxxxE-------- (ze)
         cc::log("|ZxxxxE-------- (ZE)");
         break;
-      case LayoutSituation::PZE:// |---PxxxxZxxxxE (pze)
-        cc::log("|---PxxxxZxxxxE (PZE)");
+      case LayoutSituation::PE:// |---PxxxxZxxxxE (pze)
+        cc::log("|---PxxxxxxxxxE (PE)");
         break;
-      case LayoutSituation::EPZ:// |xxE---PxxxxZxx (epz)
-        cc::log("|xxE---PxxxxZxx (EPZ)");
-        break;
-      case LayoutSituation::ZEP:// |xxZxxxxE---Pxx (zep)
-        cc::log("|xxZxxxxE---Pxx (ZEP)");
+      case LayoutSituation::EP:// |xxE---PxxxxZxx (epz)
+        cc::log("|xxE---Pxxxxxxx (EP)");
         break;
       }
 
-      if (layout == LayoutSituation::PZE) {
-        cc::log("    -- [ %p pze padding %d bytes ] --", mBufferBegin.mP, PointerDistanceBytes(mPrevCursor.mP, mBufferBegin.mP));
+      if (layout == LayoutSituation::PE) {
+        cc::log("    -- [ %p pe padding %d bytes ] --", mBufferBegin.mP, PointerDistanceBytes(mPrevCursor.mP, mBufferBegin.mP));
       }
     }
     else {
-      cc::log("not recording; no layout is really relevant.");
+      cc::log("not recording; layout not relevant.");
     }
 
     bool encounteredPadding = false;
@@ -669,13 +674,9 @@ struct LoopEventStream
 
       if (mIsRecording && !encounteredPadding && (e.mP >= mCursor.mP)) {
         switch (layout) {
-        case LayoutSituation::EPZ:
+        case LayoutSituation::EP:
           encounteredPadding = true;
-          cc::log(" E  -- [ %p EPZ padding %d bytes ] --", mCursor.mP, PointerDistanceBytes(mPrevCursor.mP, mCursor.mP));
-          break;
-        case LayoutSituation::ZEP:
-          encounteredPadding = true;
-          cc::log(" E  -- [ %p ZEP padding %d bytes ] --", mCursor.mP, PointerDistanceBytes(mPrevCursor.mP, mCursor.mP));
+          cc::log(" E  -- [ %p t=%d EP padding %d bytes ] --", mCursor.mP, mCursor.mLoopTimeMS, PointerDistanceBytes(mPrevCursor.mP, mCursor.mP));
           break;
         }
       }
@@ -734,7 +735,7 @@ struct LoopEventStream
       };
       return ret;
     }
-    case LayoutSituation::PZE:// |---PxxxxZxxxxE (pze)
+    case LayoutSituation::PE:// |---PxxxxxxxxE (pe)
     {
       LoopCursor c; c.Assign(mPrevCursor);
       while (c.mP < mEventsValidEnd) {
@@ -744,8 +745,7 @@ struct LoopEventStream
       };
       return ret;
     }
-    case LayoutSituation::EPZ:// |xxE---PxxxxZxx (epz)
-    case LayoutSituation::ZEP:// |xxZxxxxE---Pxx (zep)
+    case LayoutSituation::EP:// |xxE---PxxxxZxx (ep)
     {
       LoopCursor c; c.Assign(mBufferBegin);
       while (c.mP < mCursor.mP) {
@@ -808,7 +808,9 @@ struct LoopEventStream
     auto layout = GetLayoutSituation();
     if (layout == LayoutSituation::ZE) {// |ZxxxxE-------- (ze)
       // so you haven't yet seen a loop crossing; no blitting necessary.
-      mEventsValidEnd = mCursor.mP;
+      //mEventsValidEnd = mCursor.mP;
+      uint32_t recordedDuration = Duration(mBufferBegin.mLoopTimeMS, mCursor.mLoopTimeMS);// pzMS + zeMS;
+      mEventsValidEnd = WriteSeamNops(mEventsValidEnd, GetStatus().mLoopDurationMS - recordedDuration);
       mBufferEnd = mEventsValidEnd;
       mRecStartCursor.SetNull();
       mIsPlaying = true;
@@ -821,7 +823,7 @@ struct LoopEventStream
 
     // Get the buffer arranged with hopefully room at the end for seam.
     switch (layout) {
-    case LayoutSituation::PZE:// |---PxxxxZxxxxE (pze)
+    case LayoutSituation::PE:// |---PxxxxZxxxxE (pe)
     {
       size_t peBytes = PointerDistanceBytes(mCursor.mP, mPrevCursor.mP);// pzBytes + zeBytes;
       OrderedMemcpy(mBufferBegin.mP, mPrevCursor.mP, peBytes); // invalidates all our cursors locations.
@@ -829,8 +831,7 @@ struct LoopEventStream
       break;
     }
 
-    case LayoutSituation::EPZ:// |xxE---PxxxxZxx (epz)
-    case LayoutSituation::ZEP:// |xxZxxxxE---Pxx (zep)
+    case LayoutSituation::EP:// |xxE---PxxxxZxx (ep)
     {
       size_t buflen = UnifyCircularBuffer_Left(mPrevCursor.mP, mEventsValidEnd, mBufferBegin.mP, mCursor.mP);
       mEventsValidEnd = AddPointerBytes(mBufferBegin.mP, buflen);
@@ -880,7 +881,7 @@ struct LoopEventStream
       }
       CCASSERT(false); // not possible to land here
       return false;
-    case LayoutSituation::PZE:// |---PxxxxZxxxxE (pze)
+    case LayoutSituation::PE:// |---PxxxxZxxxxE (pze)
       if (AddPointerBytes(mCursor.mP, bytesNeeded) < mBufferEnd) {
         return true;// we're already set.
       }
@@ -896,8 +897,7 @@ struct LoopEventStream
       mBufferBegin.mLoopTimeMS = mCursor.mLoopTimeMS;
       Dump();
       return true;
-    case LayoutSituation::EPZ:// |xxE---PxxxxZxx (epz)
-    case LayoutSituation::ZEP:// |xxZxxxxE---Pxx (zep)
+    case LayoutSituation::EP:// |xxE---PxxxxZxx (epz)
       if (AddPointerBytes(mCursor.mP, bytesNeeded) < mPrevCursor.mP) {
         return true;// we're already set.
       }
@@ -916,7 +916,7 @@ struct LoopEventStream
     if (mOOM)
       return false;
     const auto& eventInfo = GetLoopEventTypeItemInfo(eventType);
-    uint32_t perfectLoopFillerTime = 0;
+    //uint32_t perfectLoopFillerTime = 0;
 
     if (GetStatus().mState == LooperState::DurationSet) {
       CCASSERT(GetStatus().mCurrentLoopTimeMS < GetStatus().mLoopDurationMS);
@@ -925,21 +925,17 @@ struct LoopEventStream
     // not "has looped". we want to know if you've passed rec start time.
     uint32_t loopTimeElapsedSinceLastWrite = Duration(mCursor.mLoopTimeMS, GetStatus().mCurrentLoopTimeMS);
     bool havePassedRecStart = false;
-    if (GetStatus().mState == LooperState::DurationSet && !IsEmpty()) /* if empty, it screws our distance calclations */
+    if ((mPrevCursor.mP == nullptr) && (GetStatus().mState == LooperState::DurationSet) && !IsEmpty()) /* if empty, it screws our distance calclations */
     {
-      uint32_t timeLeftToRecStart = Duration(mCursor.mLoopTimeMS, mRecStartCursor.mLoopTimeMS);
-      havePassedRecStart = loopTimeElapsedSinceLastWrite >= timeLeftToRecStart; // the >= is important
-      if (havePassedRecStart) {
-        if (mPrevCursor.mP == nullptr) {
+        uint32_t timeLeftToRecStart = Duration(mCursor.mLoopTimeMS, mRecStartCursor.mLoopTimeMS);
+        havePassedRecStart = loopTimeElapsedSinceLastWrite >= timeLeftToRecStart; // the >= is important
+        if (havePassedRecStart) {
           // because we've looped back, and we haven't yet tracked a full loop of material, it means this is the point to prepare the "prev write" cursor for tracking.
           // one loop ago was exactly at the beginning of the buffer.
           CCASSERT(mBufferBegin.mP == mRecStartCursor.mP);
           mPrevCursor.Assign(mBufferBegin);
+          mRecStartCursor.SetNull();
         }
-        // in order to keep perfect loop boundaries, NOPs are written to complete the loop timing. it's needed because all times are
-        // relative so they must all add up to the loop duration.
-        perfectLoopFillerTime = timeLeftToRecStart;// GetStatus().mLoopDurationMS - mCursor.mLoopTimeMS;
-      }
     }
 
     // this is a useful calculation to do NOW, because we know it's always less than 1 loop duration in length which simplifies math.
@@ -950,19 +946,16 @@ struct LoopEventStream
     }
 
     // calculate a boundary to rec time, not 0.
-    size_t perfectLoopFullNops = perfectLoopFillerTime / LOOPEVENTTIME_MAX;
-    uint32_t perfectLoopPartialNopTime = perfectLoopFillerTime - (perfectLoopFullNops * LOOPEVENTTIME_MAX);
-    uint32_t afterPerfectLoopDelayTime = loopTimeElapsedSinceLastWrite - perfectLoopFillerTime;
-    size_t afterPerfectLoopFullNops = afterPerfectLoopDelayTime / LOOPEVENTTIME_MAX;
-    uint32_t eventDelayTime = afterPerfectLoopDelayTime - (afterPerfectLoopFullNops * LOOPEVENTTIME_MAX);
-    if (eventDelayTime == 0 && afterPerfectLoopFullNops > 0) {
-      --afterPerfectLoopFullNops;
+    //size_t perfectLoopFullNops = perfectLoopFillerTime / LOOPEVENTTIME_MAX;
+    //uint32_t perfectLoopPartialNopTime = perfectLoopFillerTime - (perfectLoopFullNops * LOOPEVENTTIME_MAX);
+    uint32_t delayTime = loopTimeElapsedSinceLastWrite;// -perfectLoopFillerTime;
+    size_t fullNops = delayTime / LOOPEVENTTIME_MAX;
+    uint32_t eventDelayTime = delayTime - (fullNops * LOOPEVENTTIME_MAX);
+    if (eventDelayTime == 0 && fullNops > 0) {
+      --fullNops;
       eventDelayTime = LOOPEVENTTIME_MAX;
     }
-    size_t totalHeadersCount = perfectLoopFullNops + afterPerfectLoopFullNops;
-    if (perfectLoopPartialNopTime)
-      ++totalHeadersCount;
-    size_t bytesNeeded = (sizeof(LoopEventHeader) * (totalHeadersCount + 1)) + eventInfo.mParamsSize;// +1 because THIS event has a header too.
+    size_t bytesNeeded = (sizeof(LoopEventHeader) * (fullNops + 1)) + eventInfo.mParamsSize;// +1 because THIS event has a header too.
 
     // CHECK for OOM, deal with wrapping buffer.
     if (!FindMemoryOrOOM(bytesNeeded)) {
@@ -978,27 +971,7 @@ struct LoopEventStream
 #define WRITE_LOOP_EVENT_HEADER_MARKER
 #endif // EWI_UNIT_TESTS
 
-    // fill out remainder of loop
-    for (size_t i = 0; i < perfectLoopFullNops; ++i) {
-      WRITE_LOOP_EVENT_HEADER_MARKER;
-      ph->mEventType = LoopEventType::Nop;
-      ph->mTimeSinceLastEventMS = LOOPEVENTTIME_MAX;
-      ++ph;
-    }
-    if (perfectLoopPartialNopTime) {
-      WRITE_LOOP_EVENT_HEADER_MARKER;
-      ph->mEventType = LoopEventType::Nop;
-      ph->mTimeSinceLastEventMS = perfectLoopPartialNopTime;
-      ++ph;
-    }
-
-    if (havePassedRecStart) {
-      // this right here is exactly the point where loop time is the same as RecStartTime.
-      mRecStartCursor.mRunningVoice.AssignFromLoopStream(mCursor.mRunningVoice);
-      mRecStartCursor.mP = ph;
-    }
-
-    for (size_t i = 0; i < afterPerfectLoopFullNops; ++i) {
+    for (size_t i = 0; i < fullNops; ++i) {
       WRITE_LOOP_EVENT_HEADER_MARKER;
       ph->mEventType = LoopEventType::Nop;
       ph->mTimeSinceLastEventMS = LOOPEVENTTIME_MAX;
