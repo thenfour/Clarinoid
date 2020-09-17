@@ -5,6 +5,7 @@
 #include "AppSettings.h"
 #else
 static const size_t HARM_VOICES = 6;
+static const size_t ANALOG_RESOLUTION_BITS = 12;
 #endif // EWI_UNIT_TESTS
 #include "../../Shared/EWI/Basic.hpp"
 
@@ -18,6 +19,86 @@ static inline MusicalVoiceID_t MakeMusicalVoiceID(uint8_t loopLayerID, uint8_t h
   static_assert(LOOP_LAYERS < 256, "loop layer ids must fit into a byte");
   return loopLayerID << 8 | harmVoice;
 }
+
+template<size_t BitsResolution = ANALOG_RESOLUTION_BITS>
+struct AnalogValue01
+{
+  using this_t = AnalogValue01<BitsResolution>;
+  void SetFloat(float v)
+  {
+    mFloatVal = v;
+    mIntVal = (uint16_t)(v * (1 << BitsResolution));
+  }
+  void SetInt(uint16_t v) {
+    mIntVal = v;
+    mFloatVal = (float)v / (1 << BitsResolution);
+  }
+  uint16_t GetIntVal() const { return mIntVal; }
+  float GetFloatVal() const { return mFloatVal; }
+  bool operator ==(const this_t& rhs) const {
+    return mIntVal == rhs.mIntVal;
+  }
+  bool operator ==(float rhs) const {
+    return mFloatVal == rhs;
+  }
+  bool operator ==(int rhs) const {
+    return mIntVal == rhs;
+  }
+  bool operator !=(const this_t& rhs) const {
+    return !(*this == rhs);
+  }
+  bool operator !=(float rhs) const {
+    return mFloatVal != rhs;
+  }
+  bool operator !=(int rhs) const {
+    return mIntVal != rhs;
+  }
+  this_t& operator =(int v) { SetInt(v); return *this; }
+  this_t& operator =(float v) { SetFloat(v); return *this; }
+private:
+  uint16_t mIntVal = 0;
+  float mFloatVal = 0;
+};
+
+template<size_t BitsResolution = ANALOG_RESOLUTION_BITS>
+struct AnalogValueN11
+{
+  using this_t = AnalogValueN11<BitsResolution>;
+  void SetFloat(float v)
+  {
+    mFloatVal = v;
+    mIntVal = (uint16_t)(v * (1 << BitsResolution));
+  }
+  void SetInt(uint16_t v) {
+    mIntVal = v;
+    mFloatVal = (float)v / (1 << BitsResolution);
+  }
+  uint16_t GetIntVal() const { return mIntVal; }
+  float GetFloatVal() const { return mFloatVal; }
+  bool operator ==(const this_t& rhs) const {
+    return mIntVal == rhs.mIntVal;
+  }
+  bool operator ==(float rhs) const {
+    return mFloatVal == rhs;
+  }
+  bool operator ==(int rhs) const {
+    return mIntVal == rhs;
+  }
+  bool operator !=(float rhs) const {
+    return mFloatVal != rhs;
+  }
+  bool operator !=(int rhs) const {
+    return mIntVal != rhs;
+  }
+  bool operator !=(const AnalogValueN11<BitsResolution>& rhs) const {
+    return !(*this == rhs);
+  }
+  this_t& operator =(int v) { SetInt(v); return *this; }
+  this_t& operator =(float v) { SetFloat(v); return *this; }
+private:
+  uint16_t mIntVal = 0;
+  float mFloatVal = 0;
+};
 
 struct MusicalVoice
 {
@@ -52,7 +133,7 @@ struct MusicalVoice
     mIsNoteCurrentlyMuted = rhs.mIsNoteCurrentlyMuted;
     mMidiNote = rhs.mMidiNote;
     mBreath01 = rhs.mBreath01;
-    mPitchBendN11 = 0.0f;
+    mPitchBendN11 = rhs.mPitchBendN11;
     mVelocity = rhs.mVelocity;
     mSynthPatch = rhs.mSynthPatch;
     mHarmPatch = rhs.mHarmPatch;
@@ -69,8 +150,8 @@ struct MusicalVoice
     mIsNoteCurrentlyOn = false;
     mIsNoteCurrentlyMuted = false;
     mMidiNote = 0;
-    mBreath01 = 0.0f;
-    mPitchBendN11 = 0.0f;
+    mBreath01.SetFloat(0.0f);
+    mPitchBendN11.SetFloat(0.0f);
     //mDuration.Restart(); not needed
     mVelocity = 0;
     mSynthPatch = -1;
@@ -91,8 +172,8 @@ struct MusicalVoice
   bool mIsNoteCurrentlyOn = false;
   bool mIsNoteCurrentlyMuted = false; // this is needed when this is the "live" voice that has been physically played, but the harmonizer demands we not output it.
   uint8_t mMidiNote = 0;
-  float mBreath01 = 0.0f;
-  float mPitchBendN11 = 0.0f;
+  AnalogValue01<> mBreath01;
+  AnalogValueN11<> mPitchBendN11;
   uint8_t mVelocity = 0;
   int16_t mSynthPatch = -1;
   int16_t mHarmPatch = -1;
@@ -136,6 +217,8 @@ struct Harmonizer
     // todo: support intervals that are more complex. like "at least a m3rd away" which helps keep consistent voices between scales
     // of various densities
     // between
+
+    // TODO: arpeggiator mode where instead of playing polyphonic, it cycles between notes with breath.
 
     outp[0].CloneForHarmonizationStream(*liveVoice);
     outp[0].mMidiNote += 7;

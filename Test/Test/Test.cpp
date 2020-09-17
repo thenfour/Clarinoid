@@ -3,6 +3,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define EWI_UNIT_TESTS
 
+//#define EWI_LOOP_USE_MARKER
+
 #include "..\..\Shared_x86\ArduinoEmu.hpp"
 #include "..\..\EWI_MAIN\src\Loopstation.hpp"
 
@@ -37,11 +39,11 @@ void TestHappyFlow()
 
   // some events at 0, 100ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 0;
-  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
   mv.mBreath01 = 0.5f;
   stream.Write(mv);
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 1);
+  Test(stream.DebugGetStream().size() == 2);
 
   status.mCurrentLoopTimeMS = 100;
   mv.mBreath01 = 0.0f;
@@ -50,7 +52,7 @@ void TestHappyFlow()
   mv.mMidiNote = 20;
   stream.Write(mv);
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 4);
+  Test(stream.DebugGetStream().size() == 5);
 
   // simulate pressing LoopIt again at 1sec.
   status.mState = LooperState::DurationSet;
@@ -60,7 +62,7 @@ void TestHappyFlow()
   stream.WrapUpRecording();
   stream.Dump();
 
-  Test(stream.DebugGetStream().size() == 6);
+  Test(stream.DebugGetStream().size() == 7);
 
   status.mCurrentLoopTimeMS = 0;
   MusicalVoice mvout;
@@ -100,7 +102,7 @@ void TestConsumeMultipleEvents()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
@@ -108,14 +110,14 @@ void TestConsumeMultipleEvents()
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 1);
+  Test(stream.DebugGetStream().size() == 2);
 
   status.mCurrentLoopTimeMS = 20;
   mv.mPitchBendN11 = 2;
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 2);
+  Test(stream.DebugGetStream().size() == 3);
 
   status.mCurrentLoopTimeMS = 50;
   mv.mHarmPatch = 5;
@@ -124,7 +126,7 @@ void TestConsumeMultipleEvents()
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 5);
+  Test(stream.DebugGetStream().size() == 6);
 
   // simulate pressing LoopIt again at 1sec.
   status.mCurrentLoopTimeMS = 0;
@@ -132,7 +134,7 @@ void TestConsumeMultipleEvents()
   cc::log("---");
   stream.Dump();
 
-  Test(stream.DebugGetStream().size() == 7);
+  Test(stream.DebugGetStream().size() == 8);
 
   status.mCurrentLoopTimeMS = 0;
   stream.ReadUntilLoopTime(mvout);
@@ -159,7 +161,7 @@ void TestMuted()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
@@ -167,7 +169,7 @@ void TestMuted()
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 1);
+  Test(stream.DebugGetStream().size() == 2);
 
   // simulate pressing LoopIt again at 1sec.
   status.mCurrentLoopTimeMS = 0;
@@ -188,20 +190,20 @@ void TestReadingAfterLooped()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
   mv.mBreath01 = 1;
   stream.Write(mv);
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 1);
+  Test(stream.DebugGetStream().size() == 2);
 
   status.mCurrentLoopTimeMS = 20;
   mv.mPitchBendN11 = 2;
   stream.Write(mv);
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 2);
+  Test(stream.DebugGetStream().size() == 3);
 
   status.mCurrentLoopTimeMS = 50;
   mv.mHarmPatch = 5;
@@ -209,7 +211,7 @@ void TestReadingAfterLooped()
   mv.mBreath01 = 5;
   stream.Write(mv);
   stream.Dump();
-  Test(stream.DebugGetStream().size() == 5);
+  Test(stream.DebugGetStream().size() == 6);
 
   // simulate pressing LoopIt again at 1sec.
   stream.WrapUpRecording();
@@ -238,7 +240,7 @@ void TestReadingEmptyBuffer()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
   stream.Dump();
   stream.WrapUpRecording();
 
@@ -277,7 +279,7 @@ void TestEndRecordingWithFullLoopSimple()
   status.mLoopDurationMS = 1000;
   status.mCurrentLoopTimeMS = 0;
 
-  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
 
   status.mCurrentLoopTimeMS = 0;
   mv.mBreath01 = 0;
@@ -351,7 +353,7 @@ void TestScenarioOOM_PartialLoop()
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 40000;
 
-  stream.ResetBufferForRecording(status, mv, buf, buf + 50);
+  stream.StartRecording(status, mv, buf, buf + 50);
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 10; ++i) {
@@ -364,7 +366,7 @@ void TestScenarioOOM_PartialLoop()
 
   // Note: if we did not LOCK out recording, then some events could make it into
   // the buffer if they're small enough.
-  Test(stream.DebugGetStream().size() == 6);
+  //Test(stream.DebugGetStream().size() == 5);
   Test(stream.mOOM);
 }
 
@@ -384,7 +386,7 @@ void TestScenarioEP()
   // and in order to actually trigger this scenario we need to capture prev
   // cursor. so we must cross a loop within the buffer. so make loop small enough.
 
-  stream.ResetBufferForRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 100; ++i) {
@@ -425,6 +427,129 @@ void TestScenarioEP()
   Test(mvout.mBreath01 == 32);
 }
 
+
+void TestFullMusicalState1()
+{
+  // |xxE---PxxxxZxx (epz)
+  MusicalVoice mv;
+  MusicalVoice mvout;
+  uint8_t buf[300];
+  LoopEventStream stream;
+
+  LoopStatus status;
+  status.mState = LooperState::DurationSet;
+  status.mLoopDurationMS = 60000;
+
+  // start with some state @ 1000ms.
+  status.mCurrentLoopTimeMS = 1000;
+  mv.mBreath01 = 1001.0f;
+  mv.mPitchBendN11 = 1002.0f;
+  mv.mSynthPatch = 1003;
+  mv.mHarmPatch = 1004;
+
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.Dump();
+
+  // we somehow wrap all the way around to t=3 with totalyl new state.
+  // |-n             nnn-----------------|
+  status.mCurrentLoopTimeMS = 3;
+  mv.mBreath01 = 1;
+  mv.mPitchBendN11 = 2;
+  mv.mSynthPatch = 3;
+  mv.mHarmPatch = 4;
+  stream.Write(mv);
+  stream.Dump();
+
+  // and at t=50ms with different state.
+  // |-n---nn        nnn-----------------|
+  status.mCurrentLoopTimeMS = 50;
+  mv.mPitchBendN11 = 52;
+  mv.mSynthPatch = 53;
+  stream.Write(mv);
+  stream.Dump();
+
+  stream.WrapUpRecording();
+  stream.Dump();
+
+  // check musical state against what we wrote.
+  status.mCurrentLoopTimeMS = 1000;
+  stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
+  Test(mvout.mBreath01 == 1001.0f);
+  Test(mvout.mPitchBendN11 == 1002.0f);
+  Test(mvout.mSynthPatch == 1003);
+  Test(mvout.mHarmPatch == 1004);
+
+  //// and then end of buffer. THIS overwrites the initial state recorded!
+  //// |-n---nn-----------------------nn----|
+  //status.mCurrentLoopTimeMS = 59000;
+  //mv.mBreath01 = 880;
+  //mv.mPitchBendN11 = 881;
+  //mv.mSynthPatch = 882;
+  //mv.mHarmPatch = 883;
+  //stream.Write(mv);
+  //stream.Dump();
+}
+
+void TestFullMusicalState2()
+{
+  // |xxE---PxxxxZxx (epz)
+  MusicalVoice mv;
+  MusicalVoice mvout;
+  uint8_t buf[300];
+  LoopEventStream stream;
+
+  LoopStatus status;
+  status.mState = LooperState::DurationSet;
+  status.mLoopDurationMS = 60000;
+
+  // start with some state @ 1000ms.
+  status.mCurrentLoopTimeMS = 1000;
+  mv.mBreath01 = 1001.0f;
+  mv.mPitchBendN11 = 1002.0f;
+  mv.mSynthPatch = 1003;
+  mv.mHarmPatch = 1004;
+
+  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.Dump();
+
+  // we somehow wrap all the way around to t=3 with totalyl new state.
+  status.mCurrentLoopTimeMS = 3;
+  mv.mBreath01 = 1;
+  mv.mPitchBendN11 = 2;
+  mv.mSynthPatch = 3;
+  mv.mHarmPatch = 4;
+  stream.Write(mv);
+  stream.Dump();
+
+  // and at t=50ms with different state.
+  status.mCurrentLoopTimeMS = 50;
+  mv.mPitchBendN11 = 52;
+  mv.mSynthPatch = 53;
+  stream.Write(mv);
+  stream.Dump();
+
+  // and then for fun
+  status.mCurrentLoopTimeMS = 59000;
+  mv.mBreath01 = 880;
+  mv.mPitchBendN11 = 881;
+  mv.mSynthPatch = 882;
+  mv.mHarmPatch = 883;
+  stream.Write(mv);
+  stream.Dump();
+
+  stream.WrapUpRecording();
+  stream.Dump();
+
+  // check musical state against what we wrote.
+  status.mCurrentLoopTimeMS = 1000;
+  stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
+  Test(mvout.mBreath01 == 1);
+  Test(mvout.mPitchBendN11 == 52);
+  Test(mvout.mSynthPatch == 53);
+  Test(mvout.mHarmPatch == 4);
+}
 
 int main()
 {
@@ -517,70 +642,6 @@ int main()
   }
 
 
-  // test UnifyCircularBuffer_Right versions....
-  {
-    uint8_t b[] = "34..12";
-    auto ret = UnifyCircularBuffer_Right(b + 4, EndPtr(b) - 1, b, b + 2);
-    Test(strncmp("1234", (const char*)ret.begin, 4) == 0);
-    Test(PointerDistanceBytes(ret.end, ret.begin) == 4);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-  {
-    uint8_t b[] = "3..12";
-    auto ret = UnifyCircularBuffer_Right(b + 3, EndPtr(b) - 1, b, b + 1);
-    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
-    Test(PointerDistanceBytes(ret.end, ret.begin) == 3);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-  {
-    uint8_t b[] = "23..1";
-    auto ret = UnifyCircularBuffer_Right(b + 4, EndPtr(b) - 1, b, b + 2);
-    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
-    Test(PointerDistanceBytes(ret.end, ret.begin) == 3);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-  {
-    uint8_t b[] = "9..12345678";
-    auto ret = UnifyCircularBuffer_Right(b + 3, EndPtr(b) - 1, b, b + 1);
-    Test(strncmp("123456789", (const char*)ret.begin, 9) == 0);
-    Test(PointerDistanceBytes(ret.end, ret.begin) == 9);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-  {
-    uint8_t b[] = "23456789..1";
-    auto ret = UnifyCircularBuffer_Right(b + 10, EndPtr(b) - 1, b, b + 8);
-    Test(strncmp("123456789", (const char*)ret.begin, 9) == 0);
-    Test(PointerDistanceBytes(ret.end, ret.begin) == 9);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-  {
-    uint8_t b[] = "456789.123";
-    auto ret = UnifyCircularBuffer_Right(b + 7, EndPtr(b) - 1, b, b + 6);
-    Test(strncmp("123456789", (const char*)ret.begin, 9) == 0);
-    Test(PointerDistanceBytes(ret.end, ret.begin) == 9);
-    Test(*(EndPtr(b) - 1) == 0); // no overruns.
-  }
-
-  // test 0-sized segments.
-  {
-    uint8_t b[] = "123";
-    auto ret = UnifyCircularBuffer_Right(b, EndPtr(b) - 1, b, b);
-    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-  {
-    uint8_t b[] = "123";
-    auto ret = UnifyCircularBuffer_Right(EndPtr(b) - 1, EndPtr(b) - 1, b, EndPtr(b) - 1);
-    Test(strncmp("123", (const char*)ret.begin, 3) == 0);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-  {
-    uint8_t b[] = "";
-    auto ret = UnifyCircularBuffer_Right(b, EndPtr(b) - 1, 0, 0);
-    Test(*(EndPtr(b) - 1) == 0);
-  }
-
-
 
   TestHappyFlow();
   TestConsumeMultipleEvents();
@@ -592,36 +653,9 @@ int main()
 
   TestEndRecordingWithFullLoopSimple(); // PZE
   TestScenarioEP();
-  //TestScenarioZEP();
 
-
-  LooperAndHarmonizer l;
-  MusicalVoice mv;
-  MusicalVoice outp[8];
-  srand(GetTickCount());
-  LoopEventStream stream;
-  LoopStatus status;
-
-  while (true) {
-    //mv.mBreath01 = ((float)(rand() % 100)) / 100;
-    Sleep(1);
-    mv.mBreath01 += 0.01f;
-    mv.mBreath01 -= floorf(mv.mBreath01);
-    l.Update(mv, outp, EndPtr(outp));
-
-    HANDLE handle = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD events;
-    INPUT_RECORD buffer;
-    PeekConsoleInput(handle, &buffer, 1, &events);
-    if (events > 0) {
-      ReadConsoleInput(handle, &buffer, 1, &events);
-      if (buffer.EventType == KEY_EVENT) {
-        if (buffer.Event.KeyEvent.bKeyDown) {
-          l.LoopIt(mv);
-        }
-      }
-    }
-  }
+  TestFullMusicalState1();
+  TestFullMusicalState2();
 
   return 0;
 }
