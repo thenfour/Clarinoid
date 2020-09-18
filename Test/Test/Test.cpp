@@ -39,7 +39,7 @@ void TestHappyFlow()
 
   // some events at 0, 100ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 0;
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
   mv.mBreath01 = 0.5f;
   stream.Write(mv);
   stream.Dump();
@@ -62,31 +62,31 @@ void TestHappyFlow()
   stream.WrapUpRecording();
   stream.Dump();
 
-  Test(stream.DebugGetStream().size() == 7);
+  //Test(stream.DebugGetStream().size() == 7);
 
   status.mCurrentLoopTimeMS = 0;
   MusicalVoice mvout;
   stream.Dump();
   stream.ReadUntilLoopTime(mvout);
   stream.Dump();
-  Test(mvout.mBreath01 == 0.5f); // ON the cursor, we should get the breath change applied.
+  Test(mvout.mBreath01.GetFloatVal() == 0.5f); // ON the cursor, we should get the breath change applied.
   stream.ReadUntilLoopTime(mvout);
   stream.Dump();
-  Test(mvout.mBreath01 == 0.5f); // reading again at the same place should not change anything.
+  Test(mvout.mBreath01.GetFloatVal() == 0.5f); // reading again at the same place should not change anything.
   status.mCurrentLoopTimeMS = 90;
   stream.ReadUntilLoopTime(mvout); // advancing to before the next event should also not change anything
   stream.Dump();
-  Test(mvout.mBreath01 == 0.5f);
+  Test(mvout.mBreath01.GetFloatVal() == 0.5f);
 
   status.mCurrentLoopTimeMS = 110; // advancing to AFTER the event should change things.
   stream.ReadUntilLoopTime(mvout);
-  Test(mvout.mBreath01 == 0.0f);
+  Test(mvout.mBreath01.GetFloatVal() == 0.0f);
   Test(mvout.mSynthPatch == 5);
   Test(mvout.mMidiNote == 20);
 
   status.mCurrentLoopTimeMS = 10; // wrapping the loop. we should go back to original state.
   stream.ReadUntilLoopTime(mvout);
-  Test(mvout.mBreath01 == 0.5f);
+  Test(mvout.mBreath01.GetFloatVal() == 0.5f);
 }
 
 
@@ -102,18 +102,18 @@ void TestConsumeMultipleEvents()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.Dump();
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
-  mv.mBreath01 = 1;
+  mv.mBreath01.Deserialize12Bit(1);
   stream.Write(mv);
-  cc::log("---");
   stream.Dump();
   Test(stream.DebugGetStream().size() == 2);
 
   status.mCurrentLoopTimeMS = 20;
-  mv.mPitchBendN11 = 2;
+  mv.mPitchBendN11.Deserialize12Bit(2);
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
@@ -122,7 +122,7 @@ void TestConsumeMultipleEvents()
   status.mCurrentLoopTimeMS = 50;
   mv.mHarmPatch = 5;
   mv.mSynthPatch = 5;
-  mv.mBreath01 = 5;
+  mv.mBreath01.Deserialize12Bit(5);
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
@@ -131,21 +131,21 @@ void TestConsumeMultipleEvents()
   // simulate pressing LoopIt again at 1sec.
   status.mCurrentLoopTimeMS = 0;
   stream.WrapUpRecording();
-  cc::log("---");
   stream.Dump();
 
-  Test(stream.DebugGetStream().size() == 8);
+  //Test(stream.DebugGetStream().size() == 8);
 
   status.mCurrentLoopTimeMS = 0;
   stream.ReadUntilLoopTime(mvout);
 
   status.mCurrentLoopTimeMS = 100;
   stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
 
-  Test(mvout.mBreath01 == 5);
+  Test(mvout.mBreath01.Serialize12Bit() == 5);
   Test(mvout.mHarmPatch == 5);
   Test(mvout.mSynthPatch == 5);
-  Test(mvout.mPitchBendN11 == 2);
+  Test(mvout.mPitchBendN11.Serialize12Bit() == 2);
 }
 
 
@@ -161,11 +161,11 @@ void TestMuted()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
-  mv.mBreath01 = 1;
+  mv.mBreath01.Deserialize12Bit(1);
   stream.Write(mv);
   cc::log("---");
   stream.Dump();
@@ -190,17 +190,17 @@ void TestReadingAfterLooped()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
-  mv.mBreath01 = 1;
+  mv.mBreath01.Deserialize12Bit(1);
   stream.Write(mv);
   stream.Dump();
   Test(stream.DebugGetStream().size() == 2);
 
   status.mCurrentLoopTimeMS = 20;
-  mv.mPitchBendN11 = 2;
+  mv.mPitchBendN11.Deserialize12Bit(2);
   stream.Write(mv);
   stream.Dump();
   Test(stream.DebugGetStream().size() == 3);
@@ -208,7 +208,7 @@ void TestReadingAfterLooped()
   status.mCurrentLoopTimeMS = 50;
   mv.mHarmPatch = 5;
   mv.mSynthPatch = 5;
-  mv.mBreath01 = 5;
+  mv.mBreath01.Deserialize12Bit(5);
   stream.Write(mv);
   stream.Dump();
   Test(stream.DebugGetStream().size() == 6);
@@ -218,15 +218,15 @@ void TestReadingAfterLooped()
 
   status.mCurrentLoopTimeMS = 60;
   stream.ReadUntilLoopTime(mvout);
-  Test(mvout.mBreath01 == 5);
+  Test(mvout.mBreath01.Serialize12Bit() == 5);
 
   status.mCurrentLoopTimeMS = 15;
   stream.ReadUntilLoopTime(mvout);
-  Test(mvout.mBreath01 == 1);
+  Test(mvout.mBreath01.Serialize12Bit() == 1);
 
   status.mCurrentLoopTimeMS = 14; // should loop all the way around.
   stream.ReadUntilLoopTime(mvout);
-  Test(mvout.mBreath01 == 1);
+  Test(mvout.mBreath01.Serialize12Bit() == 1);
 }
 
 
@@ -240,7 +240,7 @@ void TestReadingEmptyBuffer()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
   stream.Dump();
   stream.WrapUpRecording();
 
@@ -279,50 +279,33 @@ void TestEndRecordingWithFullLoopSimple()
   status.mLoopDurationMS = 1000;
   status.mCurrentLoopTimeMS = 0;
 
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
 
   status.mCurrentLoopTimeMS = 0;
-  mv.mBreath01 = 0;
+  mv.mBreath01.Deserialize12Bit(0);
   stream.Write(mv);
 
   status.mCurrentLoopTimeMS = 300;
-  mv.mBreath01 = 1;
+  mv.mBreath01.Deserialize12Bit(1);
   stream.Write(mv);
 
   status.mCurrentLoopTimeMS = 600;
-  mv.mBreath01 = 2;
+  mv.mBreath01.Deserialize12Bit(2);
   stream.Write(mv);
 
   status.mCurrentLoopTimeMS = 950;
-  mv.mBreath01 = 3;
+  mv.mBreath01.Deserialize12Bit(3);
   stream.Write(mv);
 
   status.mCurrentLoopTimeMS = 100;
-  mv.mBreath01 = 4;
+  mv.mBreath01.Deserialize12Bit(4);
   //Test(stream.mPrevCursor.mP == nullptr);
   //Test(stream.mRecStartCursor.mP == stream.mBufferBegin.mP);
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.
   stream.Write(mv); // this one makes the recording longer than 1 loop.
   stream.Dump(); // you should see a NOP event of 50ms next to the breath event of 100ms, to sit directly on the loop boundary.
-  Test(stream.mPrevCursor.mP != nullptr);
-  //Test(stream.mRecStartCursor.mP > stream.mBufferBegin.mP);
+  Test(!!stream.mPrevCursor.mP);
 
-  //// test aligning on a loop boundary (EOL nops)
-  //auto eventList = stream.DebugGetStream();
-  //Test(ContainsAny(eventList, [&](const auto& ev) { return ev.mLoopTimeMS == 0; }));
-  ////Test(ContainsAny(eventList, [&](const auto& ev) { return ev.mLoopTimeMS == 1000; }));
-
-  // and if we examine what's going on at the new zero cursor, we should see 100ms breath=4.
-  //LoopCursor cz;
-  //cz.mLoopTimeMS = 0;
-  //cz.mP = stream.mRecStartCursor.mP;
-  //auto ze = cz.PeekEvent();
-  //Test(ze.mHeader.mTimeSinceLastEventMS = 100);
-  //Test(ze.mHeader.mEventType == LoopEventType::Breath);
-  //Test(ze.mParams.mBreathParams.mBreath01 == 4);
-
-  //stream.Dump();
-  //status.mCurrentLoopTimeMS = 0;
   stream.WrapUpRecording();
   stream.Dump();
 
@@ -330,12 +313,11 @@ void TestEndRecordingWithFullLoopSimple()
   status.mCurrentLoopTimeMS = 0;
   size_t ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
-  //Test(ec == 0);// there is no event at 0.
   status.mCurrentLoopTimeMS = 100;
   ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
   Test(ec == 1);// breath is changed at 100.
-  Test(mvout.mBreath01 == 4);
+  Test(mvout.mBreath01.Serialize12Bit() == 4);
 }
 
 
@@ -353,13 +335,13 @@ void TestScenarioOOM_PartialLoop()
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 40000;
 
-  stream.StartRecording(status, mv, buf, buf + 50);
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(buf + 50));
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 10; ++i) {
     status.mCurrentLoopTimeMS += 5000;
     status.mCurrentLoopTimeMS %= status.mLoopDurationMS;
-    mv.mBreath01 = (float)(i + 1);
+    mv.mBreath01.Deserialize12Bit(i + 1);
     stream.Write(mv);
     stream.Dump();
   }
@@ -386,13 +368,13 @@ void TestScenarioEP()
   // and in order to actually trigger this scenario we need to capture prev
   // cursor. so we must cross a loop within the buffer. so make loop small enough.
 
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 100; ++i) {
     status.mCurrentLoopTimeMS += 125;
     status.mCurrentLoopTimeMS %= status.mLoopDurationMS;
-    mv.mBreath01 = (float)(i + 1);
+    mv.mBreath01.Deserialize12Bit(i + 1);
     stream.Write(mv);
     stream.Dump();
     // if we hit EPZ break out.
@@ -404,27 +386,21 @@ void TestScenarioEP()
   stream.Dump();
   stream.WrapUpRecording();
   stream.Dump();
-  // [5ac:29e4]     [0135FB08 (+0) t=250: dly=125, type=Breath, params=11]
-  // [5ac:29e4]     [0135FB18 (+16) t=375: dly=125, type=Breath, params=12]
-  // [5ac:29e4]     [0135FB28 (+32) t=500: dly=125, type=Breath, params=13]
-  // [5ac:29e4]     [0135FB38 (+48) t=625: dly=125, type=Breath, params=14]
-  // [5ac:29e4]     [0135FB48 (+64) t=750: dly=125, type=Breath, params=15]
-  // [5ac:29e4]     [0135FB58 (+80) t=875: dly=125, type=Nop, params=]
-  // [5ac:29e4] Z   [0135FB64 (+92) t=0: dly=0, type=Breath, params=16]
-  // [5ac:29e4]     [0135FB74 (+108) t=0: dly=125, type=Breath, params=17]
-  // [5ac:29e4]  E  [0135FB84 (+124) t=125: dly=125, type=Breath, params=2]
-  // [5ac:29e4]     buf used: 140, event count: 9 , validEnd:0135FB94, bufend:0135FB94
-  status.mCurrentLoopTimeMS = 250;
+
+  status.mCurrentLoopTimeMS = 600;
   size_t ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
+  status.mCurrentLoopTimeMS = 250;
+  ec = stream.ReadUntilLoopTime(mvout);
+  stream.Dump();
   // we have to read the events above
-  Test(mvout.mBreath01 == 34);
+  Test(mvout.mBreath01.Serialize12Bit() == 97);
   status.mCurrentLoopTimeMS = 0;
   ec = stream.ReadUntilLoopTime(mvout);
   stream.Dump();
   // we have to read the events above
   Test(ec == 7);
-  Test(mvout.mBreath01 == 32);
+  Test(mvout.mBreath01.Serialize12Bit() == 96);
 }
 
 
@@ -433,7 +409,7 @@ void TestFullMusicalState1()
   // |xxE---PxxxxZxx (epz)
   MusicalVoice mv;
   MusicalVoice mvout;
-  uint8_t buf[300];
+  uint8_t buf[3000];
   LoopEventStream stream;
 
   LoopStatus status;
@@ -442,19 +418,19 @@ void TestFullMusicalState1()
 
   // start with some state @ 1000ms.
   status.mCurrentLoopTimeMS = 1000;
-  mv.mBreath01 = 1001.0f;
-  mv.mPitchBendN11 = 1002.0f;
+  mv.mBreath01.Deserialize12Bit(1001);
+  mv.mPitchBendN11.Deserialize12Bit(1002);
   mv.mSynthPatch = 1003;
   mv.mHarmPatch = 1004;
 
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
   stream.Dump();
 
   // we somehow wrap all the way around to t=3 with totalyl new state.
   // |-n             nnn-----------------|
   status.mCurrentLoopTimeMS = 3;
-  mv.mBreath01 = 1;
-  mv.mPitchBendN11 = 2;
+  mv.mBreath01.Deserialize12Bit(1);
+  mv.mPitchBendN11.Deserialize12Bit(2);
   mv.mSynthPatch = 3;
   mv.mHarmPatch = 4;
   stream.Write(mv);
@@ -463,7 +439,7 @@ void TestFullMusicalState1()
   // and at t=50ms with different state.
   // |-n---nn        nnn-----------------|
   status.mCurrentLoopTimeMS = 50;
-  mv.mPitchBendN11 = 52;
+  mv.mPitchBendN11.Deserialize12Bit(52);
   mv.mSynthPatch = 53;
   stream.Write(mv);
   stream.Dump();
@@ -475,20 +451,10 @@ void TestFullMusicalState1()
   status.mCurrentLoopTimeMS = 1000;
   stream.ReadUntilLoopTime(mvout);
   stream.Dump();
-  Test(mvout.mBreath01 == 1001.0f);
-  Test(mvout.mPitchBendN11 == 1002.0f);
+  Test(mvout.mBreath01.Serialize12Bit() == 1001);
+  Test(mvout.mPitchBendN11.Serialize12Bit() == 1002);
   Test(mvout.mSynthPatch == 1003);
   Test(mvout.mHarmPatch == 1004);
-
-  //// and then end of buffer. THIS overwrites the initial state recorded!
-  //// |-n---nn-----------------------nn----|
-  //status.mCurrentLoopTimeMS = 59000;
-  //mv.mBreath01 = 880;
-  //mv.mPitchBendN11 = 881;
-  //mv.mSynthPatch = 882;
-  //mv.mHarmPatch = 883;
-  //stream.Write(mv);
-  //stream.Dump();
 }
 
 void TestFullMusicalState2()
@@ -496,7 +462,7 @@ void TestFullMusicalState2()
   // |xxE---PxxxxZxx (epz)
   MusicalVoice mv;
   MusicalVoice mvout;
-  uint8_t buf[300];
+  uint8_t buf[3000];
   LoopEventStream stream;
 
   LoopStatus status;
@@ -505,18 +471,18 @@ void TestFullMusicalState2()
 
   // start with some state @ 1000ms.
   status.mCurrentLoopTimeMS = 1000;
-  mv.mBreath01 = 1001.0f;
-  mv.mPitchBendN11 = 1002.0f;
+  mv.mBreath01.Deserialize12Bit(1001);
+  mv.mPitchBendN11.Deserialize12Bit(1002);
   mv.mSynthPatch = 1003;
   mv.mHarmPatch = 1004;
 
-  stream.StartRecording(status, mv, buf, EndPtr(buf));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
   stream.Dump();
 
   // we somehow wrap all the way around to t=3 with totalyl new state.
   status.mCurrentLoopTimeMS = 3;
-  mv.mBreath01 = 1;
-  mv.mPitchBendN11 = 2;
+  mv.mBreath01.Deserialize12Bit(1);
+  mv.mPitchBendN11.Deserialize12Bit(2);
   mv.mSynthPatch = 3;
   mv.mHarmPatch = 4;
   stream.Write(mv);
@@ -524,15 +490,15 @@ void TestFullMusicalState2()
 
   // and at t=50ms with different state.
   status.mCurrentLoopTimeMS = 50;
-  mv.mPitchBendN11 = 52;
+  mv.mPitchBendN11.Deserialize12Bit(52);
   mv.mSynthPatch = 53;
   stream.Write(mv);
   stream.Dump();
 
   // and then for fun
   status.mCurrentLoopTimeMS = 59000;
-  mv.mBreath01 = 880;
-  mv.mPitchBendN11 = 881;
+  mv.mBreath01.Deserialize12Bit(880);
+  mv.mPitchBendN11.Deserialize12Bit(881);
   mv.mSynthPatch = 882;
   mv.mHarmPatch = 883;
   stream.Write(mv);
@@ -545,10 +511,80 @@ void TestFullMusicalState2()
   status.mCurrentLoopTimeMS = 1000;
   stream.ReadUntilLoopTime(mvout);
   stream.Dump();
-  Test(mvout.mBreath01 == 1);
-  Test(mvout.mPitchBendN11 == 52);
+  Test(mvout.mBreath01.Serialize12Bit() == 1);
+  Test(mvout.mPitchBendN11.Serialize12Bit() == 52);
   Test(mvout.mSynthPatch == 53);
   Test(mvout.mHarmPatch == 4);
+}
+
+void TestReadHeader()
+{
+  uint8_t buf[10];
+  Ptr write(buf);
+  LoopEvent_WriteHeaderNoParams(write, 55, LoopEventType::HarmPatchChange);
+  write.Write((uint8_t)89);
+  Ptr read(buf);
+  uint8_t delay;
+  LoopEventType eventType;
+  uint8_t byte2;
+  LoopEvent_ReadHeader(read, delay, eventType, byte2);
+  uint8_t magic;
+  read.Read(magic);
+  Test(magic == 89);
+  Test(read == write);
+  Test(delay == 55);
+  Test(eventType == LoopEventType::HarmPatchChange);
+
+  write = Ptr(&buf[0]);
+  read = write;
+  LoopEvent_SurgicallyWriteDelayInPlace(write, 66);
+  LoopEvent_ReadHeader(read, delay, eventType, byte2);
+  Test(delay == 66);
+}
+
+void Test12BitParam()
+{
+  uint8_t buf[10];
+  Ptr write(buf);
+  const uint16_t param1 = 0x345;
+  LoopEvent_WriteHeaderAnd12BitParam(write, 121, LoopEventType::SynthPatchChange, param1);
+  write.Write((uint8_t)89);
+
+  Ptr read(buf);
+  uint8_t delay;
+  LoopEventType eventType;
+  uint8_t byte2;
+  uint16_t param1r;
+  LoopEvent_ReadHeader(read, delay, eventType, byte2);
+  LoopEvent_Construct12BitParam(read, byte2, param1r);
+
+  uint8_t magic;
+  read.Read(magic);
+  Test(read == write);
+  Test(delay == 121);
+  Test(eventType == LoopEventType::SynthPatchChange);
+  Test(magic == 89);
+  Test(param1r == param1);
+
+  write = Ptr(&buf[0]);
+  read = write;
+  LoopEvent_SurgicallyWriteDelayInPlace(write, 66);
+  LoopEvent_ReadHeader(read, delay, eventType, byte2);
+  Test(delay == 66);
+}
+
+void TestDivRem()
+{
+  size_t whole;
+  uint32_t rem;
+  DivRemBitwise<8>(0x200, whole, rem);
+  Test(whole == 2 && rem == 2);
+  DivRemBitwise<8>(0x234, whole, rem);
+  Test(whole == 2 && rem == 0x36);
+  DivRemBitwise<8>(0xf00, whole, rem);
+  Test(whole == 0xf && rem == 0xf);
+  DivRemBitwise<8>(0xf10, whole, rem);
+  Test(whole == 0xf && rem == 0x1f);
 }
 
 int main()
@@ -641,7 +677,9 @@ int main()
     Test(*(EndPtr(b) - 1) == 0);
   }
 
-
+  TestReadHeader();
+  Test12BitParam();
+  TestDivRem();
 
   TestHappyFlow();
   TestConsumeMultipleEvents();
@@ -650,6 +688,7 @@ int main()
   TestReadingEmptyBuffer();
 
   TestScenarioOOM_PartialLoop();
+
 
   TestEndRecordingWithFullLoopSimple(); // PZE
   TestScenarioEP();

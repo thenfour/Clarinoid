@@ -27,73 +27,41 @@ struct AnalogValue01
   void SetFloat(float v)
   {
     mFloatVal = v;
-    mIntVal = (uint16_t)(v * (1 << BitsResolution));
+    if (v >= 1.0f) {
+      mIntVal = (1 << BitsResolution) - 1;
+    }
+    else if (v <= 0) {
+      mIntVal = 0;
+    }
+    else {
+      mIntVal = (uint16_t)(v * (1 << BitsResolution));
+    }
   }
-  void SetInt(uint16_t v) {
+  void Deserialize12Bit(uint16_t v) {
     mIntVal = v;
     mFloatVal = (float)v / (1 << BitsResolution);
   }
-  uint16_t GetIntVal() const { return mIntVal; }
+  uint16_t Serialize12Bit() const { return mIntVal; }
   float GetFloatVal() const { return mFloatVal; }
   bool operator ==(const this_t& rhs) const {
     return mIntVal == rhs.mIntVal;
   }
-  bool operator ==(float rhs) const {
-    return mFloatVal == rhs;
-  }
-  bool operator ==(int rhs) const {
-    return mIntVal == rhs;
-  }
+  //bool operator ==(float rhs) const {
+  //  return mFloatVal == rhs;
+  //}
+  //bool operator ==(int rhs) const {
+  //  return mIntVal == rhs;
+  //}
   bool operator !=(const this_t& rhs) const {
     return !(*this == rhs);
   }
   bool operator !=(float rhs) const {
     return mFloatVal != rhs;
   }
-  bool operator !=(int rhs) const {
-    return mIntVal != rhs;
-  }
-  this_t& operator =(int v) { SetInt(v); return *this; }
-  this_t& operator =(float v) { SetFloat(v); return *this; }
-private:
-  uint16_t mIntVal = 0;
-  float mFloatVal = 0;
-};
-
-template<size_t BitsResolution = ANALOG_RESOLUTION_BITS>
-struct AnalogValueN11
-{
-  using this_t = AnalogValueN11<BitsResolution>;
-  void SetFloat(float v)
-  {
-    mFloatVal = v;
-    mIntVal = (uint16_t)(v * (1 << BitsResolution));
-  }
-  void SetInt(uint16_t v) {
-    mIntVal = v;
-    mFloatVal = (float)v / (1 << BitsResolution);
-  }
-  uint16_t GetIntVal() const { return mIntVal; }
-  float GetFloatVal() const { return mFloatVal; }
-  bool operator ==(const this_t& rhs) const {
-    return mIntVal == rhs.mIntVal;
-  }
-  bool operator ==(float rhs) const {
-    return mFloatVal == rhs;
-  }
-  bool operator ==(int rhs) const {
-    return mIntVal == rhs;
-  }
-  bool operator !=(float rhs) const {
-    return mFloatVal != rhs;
-  }
-  bool operator !=(int rhs) const {
-    return mIntVal != rhs;
-  }
-  bool operator !=(const AnalogValueN11<BitsResolution>& rhs) const {
-    return !(*this == rhs);
-  }
-  this_t& operator =(int v) { SetInt(v); return *this; }
+  //bool operator !=(int rhs) const {
+  //  return mIntVal != rhs;
+  //}
+  //this_t& operator =(int v) { SetInt(v); return *this; }
   this_t& operator =(float v) { SetFloat(v); return *this; }
 private:
   uint16_t mIntVal = 0;
@@ -108,19 +76,6 @@ struct MusicalVoice
   MusicalVoice& operator =(const MusicalVoice& rhs) = delete;
   MusicalVoice& operator =(MusicalVoice&&) = delete; // no move assignment because i want these objects to stay static.
 
-  // void NoteOnLikeThis(const MusicalVoice& rhs)
-  // {
-  //   // don't change own voice ID!
-  //   mIsNoteCurrentlyOn = rhs.mIsNoteCurrentlyOn;
-  //   mIsNoteCurrentlyMuted = rhs.mIsNoteCurrentlyMuted;
-  //   mMidiNote = rhs.mMidiNote;
-  //   mBreath01 = rhs.mBreath01;
-  //   mPitchBendN11 = 0.0f;
-  //   mDuration.Restart();
-  //   mVelocity = rhs.mVelocity;
-  //   mSynthPatch = rhs.mSynthPatch;
-  //   mNeedsNoteOn = true;
-  // }
   void AssignFromLoopStream(const MusicalVoice& rhs)
   {
     CloneForHarmonizationStream(rhs);
@@ -154,8 +109,8 @@ struct MusicalVoice
     mPitchBendN11.SetFloat(0.0f);
     //mDuration.Restart(); not needed
     mVelocity = 0;
-    mSynthPatch = -1;
-    mHarmPatch = -1;
+    mSynthPatch = 0;
+    mHarmPatch = 0;
     mNeedsNoteOn = false;
     mNeedsNoteOff = false;
   }
@@ -173,10 +128,10 @@ struct MusicalVoice
   bool mIsNoteCurrentlyMuted = false; // this is needed when this is the "live" voice that has been physically played, but the harmonizer demands we not output it.
   uint8_t mMidiNote = 0;
   AnalogValue01<> mBreath01;
-  AnalogValueN11<> mPitchBendN11;
+  AnalogValue01<> mPitchBendN11;
   uint8_t mVelocity = 0;
-  int16_t mSynthPatch = -1;
-  int16_t mHarmPatch = -1;
+  int16_t mSynthPatch = 0;
+  int16_t mHarmPatch = 0;
 
   Stopwatch mDuration;
 
