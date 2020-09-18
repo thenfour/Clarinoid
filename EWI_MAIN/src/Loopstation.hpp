@@ -22,142 +22,12 @@ static const size_t LOOP_LAYERS = 3;
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 131072;
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;// a smaller buffer that's just used for intermediate copy ops
-using LOOP_EVENT_DELAY = uint8_t;
-static constexpr size_t LOOP_EVENT_DELAY_BITS = sizeof(LOOP_EVENT_DELAY) * 8;
-static constexpr uint16_t LOOP_EVENT_DELAY_MAX = std::numeric_limits<LOOP_EVENT_DELAY>::max();
+using event_delay_t = uint8_t;
+static constexpr size_t LOOP_EVENT_DELAY_BITS = sizeof(event_delay_t) * 8;
+static constexpr uint16_t LOOP_EVENT_DELAY_MAX = std::numeric_limits<event_delay_t>::max();
 static const uint32_t LOOP_BREATH_PITCH_RESOLUTION_MS = 5; // record only every N milliseconds max. This should probably be coordinated with the similar throttler in MusicalState, to make sure it plays well together
-static const uint32_t LOOP_MIN_DURATION = 100;
+static const uint32_t LOOP_MIN_DURATION = 100; // minimum length in MS of a loop layer
 
-
-// copies memory from p1 to p2, but then puts memory from p2 to p3.
-// |AaaaaBbb--aaa|
-//            ^ p1
-//       ^ p2 
-//          ^ p3
-static void MemCpyTriple(const Ptr& p1begin, const Ptr& p1end, const Ptr& p2begin, const Ptr& p2SourceEnd, Ptr p3)
-{
-  // p3 cannot be inside p1 or p2.
-  CCASSERT(p3 <= p1begin); // you cannot output into unread source territory.
-  CCASSERT(p3 >= p2SourceEnd);
-  CCASSERT(p2begin < p3); // you will overwrite your dest with other dest.
-  Ptr p1 = p1begin;
-  Ptr p2 = p2begin;
-  while (true) {
-    uint8_t temp = 0;
-    if (p2 < p2SourceEnd) {
-      p2.Peek(temp);
-    }
-    else if (p1 > p1end) {
-      // both past end; bail.
-      return;
-    }
-    if (p1 < p1end) {
-      p2.WriteInPlace<uint8_t>(p1.Peek<uint8_t>());
-    }
-    if (p2 < p2SourceEnd) {
-      p3.WriteInPlace(temp);
-    }
-    p1.AdvanceBytes(1);
-    p2.AdvanceBytes(1);
-    p3.AdvanceBytes(1);
-  }
-}
-
-// shift a split circular buffer into place without using some temp buffer. avoids OOM.
-// returns the total size of the resulting buffer which will start at segmentBBegin.
-// |Bbbb----Aaaa|  => |AaaaBbbb----|
-template<size_t tempBufferBytes = 1>
-static size_t UnifyCircularBuffer_Left(const Ptr& segmentABegin, const Ptr& segmentAEnd, const Ptr& segmentBBegin, const Ptr& segmentBEnd)
-{
-  CCASSERT(segmentBEnd >= segmentBBegin);
-  CCASSERT(segmentABegin >= segmentBEnd);
-  CCASSERT(segmentAEnd >= segmentABegin);
-
-  // |Bbb--Aaaaaaaa| => |AaaaaaaaBbb--|
-  // |Bbbbbbbb--Aaa| => |AaaBbbbbbbb--|
-
-  size_t sizeA = segmentAEnd.mP - segmentABegin.mP;
-  size_t sizeB = segmentBEnd.mP - segmentBBegin.mP;
-
-  if (sizeA == 0) {
-    // nothing to do; B already in place and A doesn't exist.
-    return sizeB;
-  }
-
-  if (sizeB == 0)
-  {
-    // slide A into place
-    OrderedMemcpy(segmentBBegin, segmentABegin, sizeA);
-    return sizeA;
-  }
-
-  size_t len = segmentABegin.mP - segmentBBegin.mP;
-
-  if (sizeA >= sizeB) {
-    if (len >= sizeA) {
-      // there's enough empty space to copy all of A in one shot.
-      // |Bbb------Aaaaaaaa|
-      // =>
-      // |AaaaaaaaBbb------|
-      MemCpyTriple(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd, segmentBBegin.PlusBytes(sizeA));
-      return sizeA + sizeB;
-    }
-
-    // |Bbb--Aaaaaaaaaaa|
-
-    // without a temp buffer, this scenario can get messy fast, recursing for every len bytes, and len could be 1.
-    if (tempBufferBytes > len) {
-      CCASSERT(len >= sizeB);
-      // so the temp buffer can hold entire B.
-      uint8_t tempBuffer[tempBufferBytes];
-      memcpy(tempBuffer, (void*)segmentBBegin.mP, sizeB);
-      // shift A over
-      OrderedMemcpy(segmentBBegin, segmentABegin, sizeA);
-      // and place B.
-      memcpy((void*)segmentBBegin.PlusBytes(sizeA).mP, tempBuffer, sizeB);
-      return sizeA + sizeB;
-    }
-
-    // copy a len-sized chunk of A to the front.
-    // |Bbb--Aaaaaaaaaaa|
-    // =>
-    // |AaaaaBbb--aaaaaa|
-    SwapMem(segmentABegin, segmentABegin.PlusBytes(len), segmentBBegin);
-
-    // recurse because what we have left is a mini version of this buffer.
-    // |AaaaaBbb--aaaaaa|
-    //      |Bbb--aaaaaa|
-    // =>   |aaaaaaBbb--|
-    UnifyCircularBuffer_Left<tempBufferBytes>(segmentABegin.PlusBytes(len), segmentAEnd, segmentBBegin.PlusBytes(len), segmentBBegin.PlusBytes(len + sizeB));
-
-    return sizeA + sizeB;
-  }
-
-  if (len >= (sizeA + sizeB)) {
-    // enough space to make sure nothing overlaps while writing.
-    //    |Bbbbbbbb------Aaa|
-    // => |AaaBbbbbbbb------|
-    OrderedMemcpy(segmentBBegin.PlusBytes(sizeA), segmentBBegin, sizeB); // move B right
-    OrderedMemcpy(segmentBBegin, segmentABegin, sizeA);// move A into place.
-    return sizeA + sizeB;
-  }
-
-  // here we have to swap chunks using our own buffer as a temp buffer
-  //    |Bbbbbbbb--Aaa|
-  // first just get A into place.
-  SwapMem(segmentABegin, segmentAEnd, segmentBBegin);
-
-  // => |Aaabbbbb--Bbb|
-  // now we need to piece back together B. in fact it's just a mini-version of the big buffer. recurse.
-  UnifyCircularBuffer_Left<tempBufferBytes>(segmentABegin, segmentAEnd, segmentBBegin.PlusBytes(sizeA), segmentBEnd);
-  return sizeA + sizeB;
-}
-
-template<size_t tempBufferBytes = 1>
-static size_t UnifyCircularBuffer_Left(void* segmentABegin, void* segmentAEnd, void* segmentBBegin, void* segmentBEnd)
-{
-  return UnifyCircularBuffer_Left(Ptr(segmentABegin), Ptr(segmentAEnd), Ptr(segmentBBegin), Ptr(segmentBEnd));
-}
 
 enum class LoopEventType : uint8_t
 {
@@ -178,17 +48,11 @@ enum class LoopEventType : uint8_t
   // we sample breath / pitch / nop at known intervals. they will always be the same, so don't bother specifying.
 };
 
-static const size_t LOOP_EVENT_TYPE_COUNT = 9;
-
-#ifdef EWI_LOOP_USE_MARKER
-static const uint8_t LOOP_EVENT_MARKER = 0x6D;
-#endif // EWI_LOOP_USE_MARKER
-
 // event params have a 2-byte header (sorta; part can be used for params)
 // delay 8 bits
 // type 4 bits
 // additional 4 bits. some events this is thrown away, some it's the high-ish bits of a 12-bit param.
-void LoopEvent_ReadHeader(Ptr& ptr, uint8_t& delayMS, LoopEventType& type, uint8_t& byte2)
+void LoopEvent_ReadHeader(Ptr& ptr, event_delay_t& delayMS, LoopEventType& type, uint8_t& byte2)
 {
   ptr.Read(delayMS);
   ptr.Read(byte2);
@@ -201,7 +65,7 @@ void LoopEvent_Construct12BitParam(Ptr& ptr, uint8_t byte2, uint16_t& param)
   ptr.Read(byte3);
   param = (uint16_t)byte3 | (((uint16_t)byte2 & 0xf) << 8); // 2222xxxxxxxxxxxx
 }
-void LoopEvent_WriteHeaderAnd12BitParam(Ptr& ptr, uint8_t delayMS, LoopEventType type, uint16_t param)
+void LoopEvent_WriteHeaderAnd12BitParam(Ptr& ptr, event_delay_t delayMS, LoopEventType type, uint16_t param)
 {
   CCASSERT(!(param & 0xf000));
   ptr.Write(delayMS);
@@ -229,18 +93,18 @@ void LoopEvent_ReadTwo12BitValues(Ptr& p, uint16_t& val1, uint16_t& val2)
   val2 = (((uint16_t)(bytes[1] & 0x0f)) << 8) | bytes[2];
 }
 // a header with no params has 4 bytes dangling. No params fills them with 0s.
-void LoopEvent_WriteHeaderNoParams(Ptr& ptr, uint8_t delayMS, LoopEventType type)
+void LoopEvent_WriteHeaderNoParams(Ptr& ptr, event_delay_t delayMS, LoopEventType type)
 {
   ptr.Write(delayMS);
   uint8_t byte2 = ((uint8_t)type << 4);
   ptr.Write(byte2);
 }
-void LoopEvent_SurgicallyWriteDelayInPlace(const Ptr& ptr, uint8_t delayMS)
+void LoopEvent_SurgicallyWriteDelayInPlace(const Ptr& ptr, event_delay_t delayMS)
 {
   uint8_t* p = (uint8_t*)ptr.mP;
   p[0] = delayMS;// thankfully this is simple.
 }
-uint8_t LoopEvent_PeekDelay(const Ptr& p) {
+event_delay_t LoopEvent_PeekDelay(const Ptr& p) {
   return p.Peek<uint8_t>();
 }
 
@@ -253,7 +117,7 @@ struct LoopEvent_Nop
   static constexpr LoopEventType EventType = LoopEventType::Nop;
   static constexpr const char *Name = "Nop";
 
-  static void Write(Ptr& p, uint8_t delay) {
+  static void Write(Ptr& p, event_delay_t delay) {
     LoopEvent_WriteHeaderNoParams(p, delay, LoopEventType::Nop);
   }
   String ToString() { return String(); }
@@ -267,7 +131,7 @@ struct LoopEvent_NoteOff
 
   LoopEvent_NoteOff() = default;
 
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderNoParams(p, delay, LoopEventType::NoteOff);
   }
   void ApplyToVoice(MusicalVoice& mv) const
@@ -299,7 +163,7 @@ struct LoopEvent_NoteOn
     mMidiNote(mv.mMidiNote),
     mVelocity(mv.mVelocity)
   {}
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderNoParams(p, delay, LoopEventType::NoteOn);
     p.Write(mMidiNote);
     p.Write(mVelocity);
@@ -329,7 +193,7 @@ struct LoopEvent_Breath
   explicit LoopEvent_Breath(const MusicalVoice& mv) :
     mBreath01(mv.mBreath01.Serialize12Bit())
   {}
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::Breath, mBreath01);
   }
   void ApplyToVoice(MusicalVoice& mv) const
@@ -356,7 +220,7 @@ struct LoopEvent_Pitch
   explicit LoopEvent_Pitch(const MusicalVoice& mv) :
     mPitchN11(mv.mPitchBendN11.Serialize12Bit())
   {}
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::Pitch, mPitchN11);
   }
   void ApplyToVoice(MusicalVoice& mv) const
@@ -386,7 +250,7 @@ struct LoopEvent_BreathAndPitch
     mBreath01(mv.mBreath01.Serialize12Bit()),
     mPitchN11(mv.mPitchBendN11.Serialize12Bit())
   {}
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::BreathAndPitch, mBreath01);
     p.Write(mPitchN11);
   }
@@ -415,7 +279,7 @@ struct LoopEvent_SynthPatchChange
   explicit LoopEvent_SynthPatchChange(const MusicalVoice& mv) :
     mSynthPatchId(mv.mSynthPatch)
   {}
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::SynthPatchChange, mSynthPatchId);
   }
   void ApplyToVoice(MusicalVoice& mv) const
@@ -442,7 +306,7 @@ struct LoopEvent_HarmPatchChange
   explicit LoopEvent_HarmPatchChange(const MusicalVoice& mv) :
     mHarmPatchId(mv.mHarmPatch)
   {}
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::HarmPatchChange, mHarmPatchId);
   }
   void ApplyToVoice(MusicalVoice& mv) const
@@ -490,7 +354,7 @@ struct LoopEvent_FullState
     p.Read(mMidiNote);
     p.Read(mVelocity);
   }
-  void Write(Ptr& p, uint8_t delay) const {
+  void Write(Ptr& p, event_delay_t delay) const {
     LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::FullState, mBreath01);
     p.Write(mPitchN11);
     LoopEvent_WriteTwo12BitValues(p, mSynthPatchId, mHarmPatchId);
@@ -576,7 +440,7 @@ struct LoopCursor
   uint32_t PeekLoopTimeWrapSensitive(const LoopStatus& status)
   {
     CCASSERT(status.mState == LooperState::DurationSet);
-    uint8_t delay = LoopEvent_PeekDelay(mP);
+    event_delay_t delay = LoopEvent_PeekDelay(mP);
     uint32_t ret = mLoopTimeMS + delay;
     while (ret >= status.mLoopDurationMS)
       ret -= status.mLoopDurationMS;
@@ -585,7 +449,7 @@ struct LoopCursor
 
   // does this event contain the given loop time? if our event starts at L-50 with duration 150, then 0 is contained for example.
   bool TouchesTime(const LoopStatus& status, uint32_t r) {
-    uint8_t delay = LoopEvent_PeekDelay(mP);
+    event_delay_t delay = LoopEvent_PeekDelay(mP);
 
     uint32_t dnEventTimeWithDelay = mLoopTimeMS + delay;
     if (dnEventTimeWithDelay < status.mLoopDurationMS) {
@@ -613,8 +477,7 @@ struct LoopCursor
   // returns true if the cursor wrapped.
   bool ConsumeSingleEvent(const LoopStatus& status, const LoopCursor& bufferBegin, const Ptr& bufferEnd, MusicalVoice* additionalVoice = nullptr)
   {
-    //LoopEvent_Unified& event = *((LoopEvent_Unified*)mP);
-    uint8_t delay;
+    event_delay_t delay;
     LoopEventType eventType;
     uint8_t byte2;
     LoopEvent_ReadHeader(mP, delay, eventType, byte2);
@@ -715,13 +578,12 @@ struct LoopCursor
 
 };
 
-
 // NOT stream-friendly.
 struct LoopEvent_DebugUnified
 {
   Ptr mP;
   uint32_t mLoopTimeMS;
-  uint8_t mDelayMS;
+  event_delay_t mDelayMS;
   LoopEventType mEventType;
   const char *mName;
   uint8_t mPayloadSize;
@@ -1036,7 +898,7 @@ struct LoopEventStream
     if (mOOM)
       return;
     size_t fullNops;
-    LOOP_EVENT_DELAY remainderTime;
+    event_delay_t remainderTime;
     DivRemBitwise<LOOP_EVENT_DELAY_BITS>(duration, fullNops, remainderTime);
     size_t bytesNeeded = fullNops + (remainderTime ? 1 : 0);
     bytesNeeded *= LoopEvent_Nop::PayloadSizeBytes;
@@ -1095,7 +957,7 @@ struct LoopEventStream
       return mEventsValidEnd;
     }
 
-    uint8_t firstEventDelay;
+    event_delay_t firstEventDelay;
     LoopEventType firstEventType;
     uint8_t throwaway;
     Ptr tempCursor(mPrevCursor.mP);
@@ -1184,7 +1046,7 @@ struct LoopEventStream
     // calculate a boundary to rec time, not 0.
     uint32_t delayTime = loopTimeElapsedSinceLastWrite;
     size_t fullNops;
-    LOOP_EVENT_DELAY eventDelayTime;
+    event_delay_t eventDelayTime;
     DivRemBitwise<LOOP_EVENT_DELAY_BITS>(delayTime, fullNops, eventDelayTime);
     if (eventDelayTime == 0 && fullNops > 0) {
       --fullNops;
