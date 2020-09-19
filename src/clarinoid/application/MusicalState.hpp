@@ -1,7 +1,7 @@
 #pragma once
 
 #include <clarinoid/harmonizer/harmonizer.hpp>
-#include <clarinoid/loopstation/Loopstation.hpp>
+#include <clarinoid/loopstation/LooperHarmonizer.hpp>
 #include "PhysicalState.hpp"
 
 struct CCEWIMusicalState
@@ -35,11 +35,17 @@ struct CCEWIMusicalState
 
     if (nUpdates == 0 || mPressureSensingThrottle.IsReady()) {
 
-      float breathAdj = map((float)ps.breath01, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound, 0.0f, 1.0f);
+      float breathAdj = (float)ps.breath01;
+      breathAdj = constrain(breathAdj, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound);
+      breathAdj = map(breathAdj, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound, 0.0f, 1.0f);
       breathAdj = constrain(breathAdj, 0.0f, 1.0f);
       this->breath01.Update(breathAdj);
 
-      this->pitchBendN11.Update(constrain(map((float)(ps.pitchDown01), gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax, 0.0f, -1.0f), -1.0f, 0.0f));
+      float pitchDownAdj = (float)ps.pitchDown01;
+      pitchDownAdj = constrain(pitchDownAdj, gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax);
+      pitchDownAdj = map(pitchDownAdj, gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax, 0.0f, -1.0f);
+      pitchDownAdj = constrain(pitchDownAdj, -1.0f, 0.0f);
+      this->pitchBendN11.Update(pitchDownAdj);
     }
 
     mLiveVoice.mBreath01 = this->breath01.GetValue();

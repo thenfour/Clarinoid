@@ -82,7 +82,7 @@ struct Plotter
 
       // plot bool val
       if (boolVals[i]) {
-        gDisplay.mDisplay.DrawDottedRect(x, 0, 1, RESOLUTION_Y, WHITE);
+        gDisplay.mDisplay.DrawDottedRect(x, DisplayHeight - 4, 1, RESOLUTION_Y, WHITE);
       }
     }
     

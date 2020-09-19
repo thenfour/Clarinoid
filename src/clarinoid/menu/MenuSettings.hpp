@@ -5,7 +5,6 @@
 #include "MenuListControl.hpp"
 
 static const int SETTINGS_STACK_MAX_DEPTH = 10;
-static const int MAX_SETTING_ITEMS_PER_LIST = 10;
 
 static bool AlwaysEnabled() { return true; }
 
@@ -347,6 +346,31 @@ struct EnumSettingItem : public ISettingItem
 
 
 
+
+struct LabelSettingItem : public ISettingItem
+{
+  std::function<String()> mText;
+  std::function<bool()> mIsEnabled;
+
+  LabelSettingItem(const std::function<String()>& text, const std::function<bool()>& isEnabled) :
+    mText(text),
+    mIsEnabled(isEnabled)
+  {
+  }
+
+  virtual String GetName() { return mText(); }
+  virtual String GetValueString() { return ""; }
+  virtual SettingItemType GetType() { return SettingItemType::Custom; }
+  virtual bool IsEnabled() const { return mIsEnabled(); }
+  virtual ISettingItemEditor* GetEditor() {
+    return nullptr;
+  }
+};
+
+
+
+
+
 struct SettingsMenuState
 {
   SettingsList* pList;
@@ -354,17 +378,19 @@ struct SettingsMenuState
 };
 
 
+// glabal because:
+// - we don't want to use dynamic memory for this (so static array)
+// - but we need enough space for a max stack scenario
+// - we never actually need to track multiple stacks.
+// - so this prevents a big redundant array being duplicated for every settings menu
+SettingsMenuState gSettingsMenuNavStack[SETTINGS_STACK_MAX_DEPTH];
+int gSettingsMenuNavDepth = 0;
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 class SettingsMenuApp : public MenuAppBaseWithUtils, public ISettingItemEditorActions
 {
-  SettingsMenuState mNav[SETTINGS_STACK_MAX_DEPTH];
-  int mNavDepth = 0;
   ISettingItemEditor* mpCurrentEditor = nullptr;
-//
-//  CCThrottlerT<2000> mToastTimer;
-//  bool mIsShowingToast = false;
-//  String mToastMsg;
 
 public:
 
@@ -373,17 +399,11 @@ public:
   }
   
   virtual void OnSelected() {
-    mNavDepth = 0;
-    mNav[0].focusedItem = 0;
-    mNav[0].pList = GetRootSettingsList();
+    gSettingsMenuNavDepth = 0;
+    gSettingsMenuNavStack[0].focusedItem = 0;
+    gSettingsMenuNavStack[0].pList = GetRootSettingsList();
     GoToFrontPage();
   }
-//
-//  void ShowToast(const String& msg) {
-//    mIsShowingToast = true;
-//    mToastMsg = msg;
-//    mToastTimer.Reset();
-//  }
 
   virtual SettingsList* GetRootSettingsList() = 0;
   virtual ISettingItemEditor* GetBackEditor() { return nullptr; }
@@ -398,7 +418,7 @@ public:
 
   virtual void RenderApp()
   {
-    SettingsMenuState& state = mNav[mNavDepth];
+    SettingsMenuState& state = gSettingsMenuNavStack[gSettingsMenuNavDepth];
 
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setCursor(0,0);
@@ -437,16 +457,6 @@ public:
     if (mpCurrentEditor) {
       mpCurrentEditor->Render();
     }
-
-//    if (mIsShowingToast) {
-//      if (mToastTimer.IsReady()) {
-//        mIsShowingToast = false;
-//      } else {
-//        // render toast.
-//        SetupModal();
-//        gDisplay.mDisplay.print(mToastMsg);
-//      }
-//    }
   }
 
   // handle extra ui stuff for the front page to enable "back actions".
@@ -471,7 +481,7 @@ public:
   
   virtual void UpdateApp()
   {
-    SettingsMenuState& state = mNav[mNavDepth];
+    SettingsMenuState& state = gSettingsMenuNavStack[gSettingsMenuNavDepth];
 
     if (mpCurrentEditor) {
       mpCurrentEditor->Update(BackButton().IsNewlyPressed(), gEncButton.IsNewlyPressed(), EncoderIntDelta());
@@ -494,12 +504,14 @@ public:
             break;
           case SettingItemType::Custom:
             mpCurrentEditor = focusedItem->GetEditor();
-            mpCurrentEditor->SetupEditing(this, 0, 0);
+            if (mpCurrentEditor) {
+              mpCurrentEditor->SetupEditing(this, 0, 0);
+            }
             break;
           case SettingItemType::Submenu:
-            mNavDepth ++;
-            mNav[mNavDepth].pList = focusedItem->GetSubmenu();
-            mNav[mNavDepth].focusedItem = 0;
+            gSettingsMenuNavDepth ++;
+            gSettingsMenuNavStack[gSettingsMenuNavDepth].pList = focusedItem->GetSubmenu();
+            gSettingsMenuNavStack[gSettingsMenuNavDepth].focusedItem = 0;
             break;
           case SettingItemType::Trigger:
             focusedItem->Trigger();
@@ -511,11 +523,12 @@ public:
     // back/up when not editing
     if (BackButton().IsNewlyPressed()) 
     {
-      if (mNavDepth == 0) {
+      if (gSettingsMenuNavDepth == 0) {
         GoToFrontPage();
       } else {
-        mNavDepth --;
+        gSettingsMenuNavDepth --;
       }
     }
   }
 };
+

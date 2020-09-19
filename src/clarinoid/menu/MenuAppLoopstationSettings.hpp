@@ -8,12 +8,19 @@
 
 struct LoopSettingsApp : public SettingsMenuApp
 {
-  TriggerSettingItem mClearAll = { "Clear All", [&](){ gEWIControl.mMusicalState.mLooper.Clear(); }, AlwaysEnabled };
-  TriggerSettingItem mLoopIt = { "Loop it", [&](){ gEWIControl.mMusicalState.mLooper.LoopIt(gEWIControl.mMusicalState.mLiveVoice); }, AlwaysEnabled };
+  TriggerSettingItem mClearAll = { "Clear All", [](){ gEWIControl.mMusicalState.mLooper.Clear(); }, AlwaysEnabled };
+  TriggerSettingItem mLoopIt = { "Loop it", [](){ gEWIControl.mMusicalState.mLooper.LoopIt(gEWIControl.mMusicalState.mLiveVoice); }, AlwaysEnabled };
 
-  ISettingItem* mArray[2] =
+  LabelSettingItem mStatus = { []() {return String("Status:") + (int)gEWIControl.mMusicalState.mLooper.mStatus.mState; }, AlwaysEnabled };
+  LabelSettingItem mLayer = { []() {return String("Layer:") + gEWIControl.mMusicalState.mLooper.mCurrentlyWritingLayer; }, AlwaysEnabled };
+  LabelSettingItem mLoopTime = { []() {return String("LoopTimeMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mCurrentLoopTimeMS; }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::StartSet; } };
+  LabelSettingItem mLoopLen = { []() {return String("LoopLengthMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mLoopDurationMS; }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::DurationSet; } };
+  LabelSettingItem mLoopPolyphony = { []() {return String("LoopPoly :") + gEWIControl.mMusicalState.mLooper.mCurrentPolyphony; }, AlwaysEnabled };
+  LabelSettingItem mSynthPolyphony = { []() {return String("SynthPoly:") + gSynth.mCurrentPolyphony; }, AlwaysEnabled };
+
+  ISettingItem* mArray[8] =
   {
-    &mClearAll, &mLoopIt
+    &mClearAll, &mLoopIt, &mStatus, &mLayer, &mLoopTime, &mLoopLen, &mLoopPolyphony, &mSynthPolyphony
   };
   SettingsList mRootList = { mArray };
 
@@ -36,3 +43,4 @@ struct LoopSettingsApp : public SettingsMenuApp
   }
 
 };
+

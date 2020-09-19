@@ -4,6 +4,8 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/application/MusicalState.hpp>
 
+static constexpr float pitchBendRange = 0.0f;
+
 namespace CCSynthGraph
 {
 /*
@@ -122,7 +124,7 @@ struct Voice
     mIsCurrentlyPlaying = true;
 
     // update
-    float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * 2;
+    float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * pitchBendRange;
 
     mOsc.portamentoTime(1, gAppSettings.mPortamentoTime);
     mOsc.portamentoTime(2, gAppSettings.mPortamentoTime);
@@ -229,9 +231,12 @@ class CCSynth : UpdateObjectT<ProfileObjectType::Synth>
 public:
 
   CCThrottlerT<500> mMetronomeTimer;
+  size_t mCurrentPolyphony = 0;
+  size_t mCurrentRejected = 0;
 
   virtual void setup() {
-    AudioMemory(5 + (MAX_SYNTH_VOICES * 2)); // rough estimate
+    //AudioMemory(5 + (MAX_SYNTH_VOICES * 2)); // rough estimate
+    AudioMemory(6); // rough estimate
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.
@@ -243,7 +248,7 @@ public:
     CCSynthGraph::audioShield.volume(.7); // headphone vol
     CCSynthGraph::ampLeft.gain(.01);
     CCSynthGraph::ampRight.gain(.01);
-    delay(200); // why?
+    delay(100); // why?
 
     CCSynthGraph::metronomeEnv.delay(0);
     CCSynthGraph::metronomeEnv.attack(0);
@@ -260,14 +265,18 @@ public:
   void Update(const CCEWIMusicalState& state) {
     // AudioNoInterrupts  https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
     AudioNoInterrupts();
+    mCurrentPolyphony = 0;
+    mCurrentRejected = 0;
 
     for (size_t imv = 0; imv < state.mVoiceCount; ++ imv) {
       auto& mv = state.mMusicalVoices[imv];
       if (mv.mIsNoteCurrentlyOn) {
+        mCurrentPolyphony ++;
         Voice* pv = gVoices.FindAssignedOrAvailable(mv.mVoiceId);
         CCASSERT(!!pv);
         pv->UpdatePlaying(state, mv);
       } else {
+        mCurrentRejected++;
         Voice* pv = gVoices.FindAssigned(mv.mVoiceId);
         if (pv) {
           pv->UpdateStopped();
