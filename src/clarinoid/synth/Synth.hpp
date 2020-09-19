@@ -269,7 +269,7 @@ public:
 
     for (size_t imv = 0; imv < state.mVoiceCount; ++ imv) {
       auto& mv = state.mMusicalVoices[imv];
-      if (mv.mIsNoteCurrentlyOn) {
+      if (mv.mIsNoteCurrentlyOn || mv.mNeedsNoteOff) {
         mCurrentPolyphony ++;
         Voice* pv = gVoices.FindAssignedOrAvailable(mv.mVoiceId);
         CCASSERT(!!pv);
