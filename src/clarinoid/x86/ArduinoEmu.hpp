@@ -1,0 +1,112 @@
+
+#pragma once
+
+#ifndef CLARINOID_PLATFORM_X86
+#error This is only for x86 unit test stuff.
+#endif
+
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <iostream>
+#include <stdio.h>
+#include <Windows.h>
+#undef MIN
+#undef MAX
+#undef min
+#undef max
+
+#include <stdint.h>
+#include <string>
+#include <sstream>
+#include <algorithm>
+
+struct String
+{
+  std::stringstream mStr;
+  String() {}
+  String(const char * s) : mStr(s) {}
+  String(const String& rhs) { mStr << rhs.mStr.str(); }
+  template<typename T>
+  String(const T& rhs) { mStr << rhs; }
+  size_t length() const { return mStr.str().length(); }
+  template<typename T>
+  String& operator +=(const T& rhs) {
+    append(rhs);
+    return *this;
+  }
+  template<typename T>
+  String operator +(const T& rhs) {
+    String ret(*this);
+    ret += rhs;
+    return ret;
+  }
+  template<typename T>
+  String& append(const T& n) {
+    mStr << n;
+    return *this;
+  }
+  String& append(const String& n) {
+    mStr << n.mStr.str();
+    return *this;
+  }
+  String& operator =(const String& s) {
+    mStr.clear();
+    mStr << s.mStr.str();
+    return *this;
+  }
+};
+
+struct
+{
+  void println(const String& str)
+  {
+    print(str);
+    print("\r\n");
+  }
+  void print(const String& str)
+  {
+    ::OutputDebugStringA(str.mStr.str().c_str());
+  }
+  void begin(uint32_t baud) {}
+  bool operator !() const { return true; }
+  operator bool() const { return true; }
+} Serial;
+
+void delay(uint32_t ms) {
+  ::Sleep(ms);
+}
+
+uint32_t millis() {
+  return GetTickCount();
+}
+
+uint32_t micros() {
+  return GetTickCount() * 1000;
+}
+
+// from core_pins.h
+#define HIGH		1
+#define LOW		0
+#define INPUT		0
+#define OUTPUT		1
+#define INPUT_PULLUP	2
+#define INPUT_PULLDOWN   3
+#define OUTPUT_OPENDRAIN 4
+#define INPUT_DISABLE   5
+#define LSBFIRST	0
+#define MSBFIRST	1
+#define _BV(n)		(1<<(n))
+#define CHANGE		4
+#define FALLING		2
+#define RISING		3
+
+
+
+void pinMode(uint8_t pin, uint8_t mode) { }
+void init_pins(void) { }
+void analogWrite(uint8_t pin, int val) { }
+uint32_t analogWriteRes(uint32_t bits) { return 0; }
+static inline uint32_t analogWriteResolution(uint32_t bits) { return analogWriteRes(bits); }
+
+void digitalWrite(uint8_t pin, uint8_t val) {}
+

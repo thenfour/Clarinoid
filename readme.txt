@@ -1,3 +1,6 @@
-(coming soon)
 
-the bizarro ewi project 2020.
+Clarinoid.
+
+VS Code + platformio for teensy
+(GCC)
+https://code.visualstudio.com/docs/cpp/config-mingw

@@ -1,0 +1,15 @@
+{
+	"folders": [
+    {
+      "path": "projects\\MAIN"
+    },
+		{
+			"path": "src"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"cstdio": "cpp"
+		}
+	}
+}
