@@ -235,8 +235,7 @@ public:
   size_t mCurrentRejected = 0;
 
   virtual void setup() {
-    //AudioMemory(5 + (MAX_SYNTH_VOICES * 2)); // rough estimate
-    AudioMemory(6); // rough estimate
+    AudioMemory(6); // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.
