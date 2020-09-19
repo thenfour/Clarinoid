@@ -138,7 +138,7 @@ struct AppSettings
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
 
-  float mBreathLowerBound = 0.05f;
+  float mBreathLowerBound = 0.1f;
   float mBreathUpperBound = 0.7f;
   float mBreathNoteOnThreshold = 0.01f;
   

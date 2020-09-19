@@ -4,9 +4,6 @@
 #include <stdio.h>
 
 
-
-
-
 String ToString(void* p) {
   static char x[20];
   sprintf(x, "%p", p);
@@ -18,6 +15,7 @@ const char *ToString(bool p) {
   return "false";
 }
 
+#ifdef CLARINOID_PLATFORM_X86 // for some reason snprintf() is not available in teensyduino
  namespace cc
  {
    template <typename ...Args>
@@ -32,6 +30,7 @@ const char *ToString(bool p) {
      Serial.print(output.c_str());
    }
 }
+#endif
 
 struct ScopeLog
 {

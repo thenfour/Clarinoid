@@ -13,8 +13,8 @@ struct CCEWIMusicalState
   LooperAndHarmonizer mLooper;
 
   // TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
-  SimpleMovingAverage<20> breath01;// 0-1
-  SimpleMovingAverage<120> pitchBendN11; // -1 to 1
+  SimpleMovingAverage<15> breath01;// 0-1
+  SimpleMovingAverage<60> pitchBendN11; // -1 to 1
   CCThrottlerT<1> mPressureSensingThrottle;
   int nUpdates = 0;
   int noteOns = 0;

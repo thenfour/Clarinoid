@@ -79,29 +79,71 @@ KeyDesc gKeyDesc[16] = {
 // so it must be able to hold 2 packets. space is therefore a premium.
 
 ////////////////////////////////////////////////////////////////////////////////
-struct CapTouchKeyData
+// struct CapTouchKeyData
+// {
+//   bool IsPressed : 8;
+// };
+
+struct BigKeyData
 {
-  bool IsPressed : 8;
+  uint8_t keys[6] = {0}; // 0 or 1
+  uint8_t oct[6] = {0}; // 0 or 1; 4 octave keys, b1 and b2
+
+  bool GetButton1() const { return oct[4];}
+  void SetButton1(bool b) { oct[4] = (b ? 1 : 0);}
+
+  bool GetButton2() const { return oct[5];}
+  void SetButton2(bool b) { oct[5] = (b ? 1 : 0);}
+
+  bool GetOctave(size_t n) const { return oct[n];}
+  void SetOctave(size_t n, bool b) { oct[n] = (b ? 1 : 0);}
+
+  bool GetKey(size_t n) const { return keys[n];}
+  void SetKey(size_t n, bool b) { keys[n] = (b ? 1 : 0);}
+
+  uint16_t Serialize() {
+    uint16_t b1 = keys[0] | (keys[1] << 1) | (keys[2] << 2) | (keys[3] << 3) | (keys[4] << 4) | (keys[5] << 5);
+    uint16_t b2 = oct[0] | (oct[1] << 1) | (oct[2] << 2) | (oct[3] << 3) | (oct[4] << 4) | (oct[5] << 5);
+    return (b1 << 8) | b2;
+  }
+  static BigKeyData Deserialize(uint16_t d) {
+    BigKeyData ret;
+    uint16_t b1 = d >> 8;
+    ret.keys[0] = b1 & 1;
+    ret.keys[1] = b1 & 2;
+    ret.keys[2] = b1 & 4;
+    ret.keys[3] = b1 & 8;
+    ret.keys[4] = b1 & 16;
+    ret.keys[5] = b1 & 32;
+    uint16_t b2 = d & 0xff;
+    ret.oct[0] = b2 & 1;
+    ret.oct[1] = b2 & 2;
+    ret.oct[2] = b2 & 4;
+    ret.oct[3] = b2 & 8;
+    ret.oct[4] = b2 & 16;
+    ret.oct[5] = b2 & 32;
+    return ret;
+  }
 };
+
+//static constexpr size_t gsaou = sizeof(BigKeyData);
 
 ////////////////////////////////////////////////////////////////////////////////
 struct LHRHChecksummablePayload
 {
-  CapTouchKeyData keys[6];
-  CapTouchKeyData octaveKeys[4];
+  uint16_t packedKeys; // serialized version of BigKeyData
 
   int8_t focusedKey; // index into gKeyDesc
-  uint32_t focusedTouchReadMicros;
-  uint32_t focusedTouchReadValue;
-  uint32_t focusedTouchReadUntouchedMicros;
-  uint32_t focusedTouchReadThresholdMicros;
-  
-  bool button1;
-  bool button2;
+  uint16_t focusedTouchReadMicros;
+  uint16_t focusedTouchReadValue;
+  uint16_t focusedTouchReadUntouchedMicros;
+  uint16_t focusedTouchReadThresholdMicros;
 
   uint16_t pressure1; // raw analog readings
   uint16_t pressure2; // raw analog readings
 };
+
+//static constexpr size_t gsaou =  sizeof(LHRHChecksummablePayload);
 
 // payload is the same between both LH/RH modules.
 struct LHRHPayload
@@ -116,29 +158,24 @@ struct LHRHPayload
 inline String ToString(const LHRHPayload& p)
 {
   char format[800];
+  BigKeyData keys = BigKeyData::Deserialize(p.data.packedKeys);
   sprintf(format, "s#:[%d] chk:[%04x] d:[k%c%c%c%c%c%c o%c%c%c%c b%c%c p:%d p:%d]",
     (int)p.serial,
     (int)p.dataChecksum,
-//    p.data.keys[0] ? '0' : '-',
-//    p.data.keys[1] ? '1' : '-',
-//    p.data.keys[2] ? '2' : '-',
-//    p.data.keys[3] ? '3' : '-',
-//    p.data.keys[4] ? '4' : '-',
-//    p.data.keys[5] ? '5' : '-',
-    p.data.keys[0].IsPressed ? '0' : '-',
-    p.data.keys[1].IsPressed ? '1' : '-',
-    p.data.keys[2].IsPressed ? '2' : '-',
-    p.data.keys[3].IsPressed ? '3' : '-',
-    p.data.keys[4].IsPressed ? '4' : '-',
-    p.data.keys[5].IsPressed ? '5' : '-',
+    keys.keys[0] ? '0' : '-',
+    keys.keys[1] ? '1' : '-',
+    keys.keys[2] ? '2' : '-',
+    keys.keys[3] ? '3' : '-',
+    keys.keys[4] ? '4' : '-',
+    keys.keys[5] ? '5' : '-',
 
-    p.data.octaveKeys[0].IsPressed ? '0' : '-',
-    p.data.octaveKeys[1].IsPressed ? '1' : '-',
-    p.data.octaveKeys[2].IsPressed ? '2' : '-',
-    p.data.octaveKeys[3].IsPressed ? '3' : '-',
+    keys.oct[0] ? '0' : '-',
+    keys.oct[1] ? '1' : '-',
+    keys.oct[2] ? '2' : '-',
+    keys.oct[3] ? '3' : '-',
 
-    p.data.button1 ? '1' : '-',
-    p.data.button2 ? '2' : '-',
+    keys.oct[4] ? '1' : '-',
+    keys.oct[5] ? '2' : '-',
 
     p.data.pressure1,
     p.data.pressure2

@@ -5,8 +5,6 @@
 
 #include "AdafruitSSD1366Wrapper.hpp"
 
-//static constexpr int MAX_MENU_APPS = 20;
-
 //////////////////////////////////////////////////////////////////////
 class MenuAppBase
 {
@@ -18,49 +16,6 @@ public:
 };
 
 framerateCalculator gFramerate;
-
-
-//   virtual void loop() {    
-//     gFramerate.onFrame();
-
-//     MenuAppBase* pMenuApp = mMenuApps[mCurrentMenuAppIndex];
-
-//     if (first) {
-//       first = false;
-//       pMenuApp->OnSelected();
-//     }
-
-//     pMenuApp->Update();
-    
-//     if (!mThrottle.IsReady())
-//       return;
-
-//     mDisplay.clearDisplay();
-//     mDisplay.mSolidText = true;
-//     mDisplay.mTextLeftMargin = 0;
-//     mDisplay.mClipLeft = 0;
-//     mDisplay.mClipRight = RESOLUTION_X;
-//     mDisplay.mClipTop = 0;
-//     mDisplay.mClipBottom = RESOLUTION_Y;
-
-//     pMenuApp->Render();
-
-//     if (mIsShowingToast) {
-//       if (mToastTimer.IsReady()) {
-//         mIsShowingToast = false;
-//       } else {
-//         // render toast.
-//         SetupModal();
-//         mDisplay.print(mToastMsg);
-//       }
-//     }
-
-//     mDisplay.display();
-//   }
-
-
-
-
 
 //////////////////////////////////////////////////////////////////////
 struct CCDisplay : UpdateObjectT<ProfileObjectType::Display>

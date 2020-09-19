@@ -174,7 +174,7 @@ public:
   }
 
   int mPage = 0;
-  const int pageCount = 6;
+  const int pageCount = 7;
 
   virtual void UpdateApp()
   {
@@ -270,8 +270,8 @@ public:
     auto pageDebugMain = [&]() {
       gDisplay.mDisplay.println(String("Max frame ms: ") + ((float)gLongestLoopMicros / 1000));
       gDisplay.mDisplay.println(String("Max idle ms:  ") + ((float)gLongestBetweenLoopMicros / 1000));
-      gDisplay.mDisplay.println(String("Framerate: ") + (int)gFramerate.getFPS());
-      gDisplay.mDisplay.println(String("UpdateObjects:") + gUpdateObjectCount);
+      gDisplay.mDisplay.println(String("") + (int)gFramerate.getFPS() + "fps szRx=" + sizeof(LHRHPayload));
+      gDisplay.mDisplay.println(String("nUO:") + gUpdateObjectCount + " szTx=" + sizeof(MainChecksummablePayload));
     };
     
     auto pageAudioStatus = [&]() {
@@ -279,6 +279,23 @@ public:
       gDisplay.mDisplay.println(String("Memory Max: ") + AudioMemoryUsageMax());
       gDisplay.mDisplay.println(String("CPU: ") + AudioProcessorUsage());
       gDisplay.mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
+    };
+    
+    auto pageMemStatus = [&]() {
+      // https://forum.pjrc.com/threads/58839-Teensy-4-0-memory-allocation
+      // there are 2 locations we care about:
+      // [......zeroed variables][local variables / stack][DMAMEM][ram2.........]0x20280000
+      //                         ^^^^^^^^^^^^^^^^^^^^^^^^^        ^^^^^^^^^^^^^^^
+      // the end of RAM is always 0x20280000, so if we assume that the memory allocator always returns the top location...
+      // but these values look pretty garbage so ...
+      uintptr_t n = (uintptr_t)malloc(1);
+      free((void*)n);
+      uintptr_t ram2End = 0x20280000;
+      uintptr_t ram1End = ram2End - 524288;
+      uintptr_t stackPtr = (uintptr_t)__builtin_frame_address(0);
+
+      gDisplay.mDisplay.println(String("DMAfree:   ") + (ram2End - n));
+      gDisplay.mDisplay.println(String("StackFree: ") + (ram1End - stackPtr));
     };
 
     switch(mPage) {
@@ -305,6 +322,9 @@ public:
 //        break;
       case 5:
         pageDebugMain();
+        break;
+      case 6:
+        pageMemStatus();
         break;
     }
   }

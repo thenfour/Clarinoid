@@ -1,8 +1,6 @@
 
 #pragma once
 
-//#pragma pack(push,1)
-
 #include "Memory.hpp"
 #include "Util.hpp"
 #include "Enum.hpp"

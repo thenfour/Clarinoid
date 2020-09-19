@@ -17,6 +17,12 @@ struct StaticInit
   }
 };
 
+uint16_t ClampUint32ToUint16(uint32_t a) {
+  if (a > std::numeric_limits<uint16_t>::max())
+    return std::numeric_limits<uint16_t>::max();
+  return (uint16_t)a;
+}
+
 namespace cc
 {
   template<typename T>

@@ -12,8 +12,8 @@ const float CCEWI_TOUCHABLE_PIN_MAX_FACTOR = 1.5;
 // so we periodically call the original touchread to detect if the value
 // is less than we've seen before. if so, we suspect it's untouched.
 const int MaxTouchKeys = 15;
-const int TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES = 3; // how many samples do we average together
-const int TOUCH_KEY_CALIB_THROTTLE_MS = 30;
+const int TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES = 5; // how many samples do we average together. helps avoid transients, but adds a teeny tiny delay
+const int TOUCH_KEY_CALIB_THROTTLE_MS = 30; // how often to check for recalibration.
 
 struct TouchableKeyInfo {
   TouchableKeyInfo(uint8_t pin, int keyDescIndex) :
@@ -32,10 +32,10 @@ struct TouchableKeyInfo {
   KeyDesc& mDesc;
 
   void Reset() {
-    int m1 = micros();
+    //int m1 = micros();
     /*int n = */mTouchablePin.touchRead();
-    int m2 = micros();
-    mMinValue = m2 - m1;
+    //int m2 = micros();
+    //mMinValue = 0; // will be re-set later.
     mRunningValues.Clear();
     mTouchablePin.initUntouched();
   }

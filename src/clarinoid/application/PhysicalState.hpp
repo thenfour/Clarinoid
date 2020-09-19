@@ -57,37 +57,39 @@ struct CCEWIPhysicalState
   
   void Update(const LHRHPayload& lh, const LHRHPayload& rh)
   {
-    this->key_lh1.Update(lh.data.keys[1].IsPressed);
-    this->key_lh2.Update(lh.data.keys[2].IsPressed);
-    this->key_lh3.Update(lh.data.keys[3].IsPressed);
-    this->key_lh4.Update(lh.data.keys[4].IsPressed);
+    BigKeyData lhKeyData = BigKeyData::Deserialize(lh.data.packedKeys);
+    BigKeyData rhKeyData = BigKeyData::Deserialize(rh.data.packedKeys);
+    this->key_lh1.Update(lhKeyData.keys[1]);
+    this->key_lh2.Update(lhKeyData.keys[2]);
+    this->key_lh3.Update(lhKeyData.keys[3]);
+    this->key_lh4.Update(lhKeyData.keys[4]);
 
-    this->key_octave1.Update(lh.data.octaveKeys[0].IsPressed);
-    this->key_octave2.Update(lh.data.octaveKeys[1].IsPressed);
-    this->key_octave3.Update(lh.data.octaveKeys[2].IsPressed);
-    this->key_octave4.Update(lh.data.octaveKeys[3].IsPressed);
+    this->key_octave1.Update(lhKeyData.oct[0]);
+    this->key_octave2.Update(lhKeyData.oct[1]);
+    this->key_octave3.Update(lhKeyData.oct[2]);
+    this->key_octave4.Update(lhKeyData.oct[3]);
 
-    this->key_lhExtra1.Update(lh.data.keys[0].IsPressed);
-    this->key_lhExtra2.Update(lh.data.keys[5].IsPressed);
+    this->key_lhExtra1.Update(lhKeyData.keys[0]);
+    this->key_lhExtra2.Update(lhKeyData.keys[5]);
     
-    this->key_rh1.Update(rh.data.keys[1].IsPressed);
-    this->key_rh2.Update(rh.data.keys[2].IsPressed);
-    this->key_rh3.Update(rh.data.keys[3].IsPressed);
-    this->key_rh4.Update(rh.data.keys[4].IsPressed);
+    this->key_rh1.Update(rhKeyData.keys[1]);
+    this->key_rh2.Update(rhKeyData.keys[2]);
+    this->key_rh3.Update(rhKeyData.keys[3]);
+    this->key_rh4.Update(rhKeyData.keys[4]);
 
-    this->key_rhExtra1.Update(rh.data.keys[0].IsPressed);
-    this->key_rhExtra2.Update(rh.data.keys[5].IsPressed);
+    this->key_rhExtra1.Update(rhKeyData.keys[0]);
+    this->key_rhExtra2.Update(rhKeyData.keys[5]);
 
     this->breath01 = (float)lh.data.pressure1 / 1024;
     this->bite01 = (float)lh.data.pressure2 / 1024;
     this->pitchDown01 = (float)rh.data.pressure1 / 1024;
 
-    this->key_back.Update(lh.data.button1);
+    this->key_back.Update(lhKeyData.GetButton1());
 
     Tristate oldState = key_triState;
-    if (rh.data.button1) {
+    if (rhKeyData.GetButton1()) {
       this->key_triState = Tristate::Position1;
-    } else if (rh.data.button2) {
+    } else if (rhKeyData.GetButton2()) {
       this->key_triState = Tristate::Position3;
     } else {
       this->key_triState = Tristate::Position2;

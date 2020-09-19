@@ -3,8 +3,8 @@
 
 #define CLARINOID_PLATFORM_TEENSY
 #define CLARINOID_MODULE_LHRH
-#define LH
-//#define RH
+//#define LH
+#define RH
 
 //============================================================
 
@@ -81,13 +81,9 @@ TransientActivityLED gRXIndicator(250, 250);
 LHRHLEDMode gLEDMode = LHRHLEDMode::Debug;
 
 // this cannot be a templated function, because you cannot bind bitfields like that.
-inline void CaptureButton(CCTouchKey& key, CapTouchKeyData& dest)
+inline void CaptureButton(CCTouchKey& key, uint8_t& dest)
 {
-  // TODO: if you want to get more detailed data, we should implement some way to debug-focus a key
-  // so we can capture in more real-time.
-  dest.IsPressed = key.IsPressed();
-  //dest.touchReadMicros = key.GetTouchReadMicros();
-  //dest.maxTouchReadMicros = key.GetTouchReadMaxMicros();
+  dest = key.IsPressed() ? 1 : 0;
 }
 
 void setup() {
@@ -132,39 +128,44 @@ void loop() {
 #endif // LHRH
       if (gFocusedKeyData == gFocusedKeyIndex) {
         gPayload.data.focusedKey = gFocusedKeyData;
-        gPayload.data.focusedTouchReadMicros = gFocusedTouchReadMicros;
-        gPayload.data.focusedTouchReadValue = gFocusedTouchReadValue;
-        gPayload.data.focusedTouchReadUntouchedMicros = gFocusedTouchReadUntouchedMicros;
-        gPayload.data.focusedTouchReadThresholdMicros = gFocusedTouchReadThresholdMicros;
+        gPayload.data.focusedTouchReadMicros = ClampUint32ToUint16(gFocusedTouchReadMicros);
+        gPayload.data.focusedTouchReadValue = ClampUint32ToUint16(gFocusedTouchReadValue);
+        gPayload.data.focusedTouchReadUntouchedMicros = ClampUint32ToUint16(gFocusedTouchReadUntouchedMicros);
+        gPayload.data.focusedTouchReadThresholdMicros = ClampUint32ToUint16(gFocusedTouchReadThresholdMicros);
       }
     }
   }
 
   // construct the payload & check if dirty / needs to be sent.
   // only unset "dirty" if we actually send the packet.
-  CaptureButton(key1, gPayload.data.keys[0]);
-  CaptureButton(key2, gPayload.data.keys[1]);
-  CaptureButton(key3, gPayload.data.keys[2]);
-  CaptureButton(key4, gPayload.data.keys[3]);
-  CaptureButton(key5, gPayload.data.keys[4]);
-  CaptureButton(key6, gPayload.data.keys[5]);
+  BigKeyData keyData;
+  CaptureButton(key1, keyData.keys[0]);
+  CaptureButton(key2, keyData.keys[1]);
+  CaptureButton(key3, keyData.keys[2]);
+  CaptureButton(key4, keyData.keys[3]);
+  CaptureButton(key5, keyData.keys[4]);
+  CaptureButton(key6, keyData.keys[5]);
 #ifdef LH
 //  gDirty = true;
   gPayload.data.pressure1 = wind.GetRawValue();
   gPayload.data.pressure2 = bite.GetRawValue();
 
-  gPayload.data.button1 = backButton.IsCurrentlyPressed();
-  CaptureButton(octave1, gPayload.data.octaveKeys[0]);
-  CaptureButton(octave2, gPayload.data.octaveKeys[1]);
-  CaptureButton(octave3, gPayload.data.octaveKeys[2]);
-  CaptureButton(octave4, gPayload.data.octaveKeys[3]);
+  keyData.SetButton1(backButton.IsCurrentlyPressed());
+  CaptureButton(octave1, keyData.oct[0]);
+  CaptureButton(octave2, keyData.oct[1]);
+  CaptureButton(octave3, keyData.oct[2]);
+  CaptureButton(octave4, keyData.oct[3]);
 #else // RH
 //  gDirty = true;
   gPayload.data.pressure1 = pitchDown.GetRawValue();
 
-  gPayload.data.button1 = oooButton1.IsCurrentlyPressed();
-  gPayload.data.button2 = oooButton2.IsCurrentlyPressed();
+  keyData.SetButton1(oooButton1.IsCurrentlyPressed());
+  keyData.SetButton2(oooButton2.IsCurrentlyPressed());
+  //gPayload.data.button1 = oooButton1.IsCurrentlyPressed();
+  //gPayload.data.button2 = oooButton2.IsCurrentlyPressed();
 #endif // LH/RH
+
+  gPayload.data.packedKeys = keyData.Serialize();
 
   if (gCommThrottle.IsReady()) {
     gTxRx.Send(gPayload);
