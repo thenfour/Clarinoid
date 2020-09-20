@@ -26,10 +26,10 @@ struct MetronomeSettingsApp : public SettingsMenuApp
 
   virtual void RenderFrontPage() 
   {
-    float beatFloat = gSynth.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mBPM);
+    float beatFloat = gSynthGraphControl.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mBPM);
     float beatFrac = beatFloat - floor(beatFloat);
     int beatInt = (int)floor(beatFloat);
-    CCPlot(beatInt);
+    //CCPlot(beatInt);
     bool altBeat = (beatInt & 1) != 0;
 
     bool highlight = beatFrac < 0.1;

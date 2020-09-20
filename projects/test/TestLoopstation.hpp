@@ -6,6 +6,8 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/loopstation/Loopstation.hpp>
 #include <clarinoid/loopstation/LooperHarmonizer.hpp>
+#include <clarinoid/synth/Synth.hpp>
+
 
 // write a loop, read it back.
 void TestHappyFlow()
@@ -596,5 +598,12 @@ void TestVoiceID()
   Test(outp[0].mVoiceId == MakeMusicalVoiceID(0, 0));
   Test(outp[0].mMidiNote == 30);
   Test(outp[1].mVoiceId == MakeMusicalVoiceID(1, 0));
+}
+
+
+// test that voice IDs are mapped to real synth output
+void TestLoopstationSynth()
+{
+  //
 }
 

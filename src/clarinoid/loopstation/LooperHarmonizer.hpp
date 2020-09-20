@@ -134,10 +134,7 @@ struct LooperAndHarmonizer
         }
       }
       else {
-        if (l.mIsPlaying) {
-          l.ReadUntilLoopTime(*pout);// consume events sequentially
-          layerIsUsed = true;
-        }
+        layerIsUsed = 0 != l.ReadUntilLoopTime(*pout);// consume events sequentially. even if the layer is not playing, it may send a note off. "use" the layer in this case.
       }
       if (layerIsUsed) {
         pLiveVoices[iLayer] = pout;// save this musicalvoice for later harmonizing (key=layer!)
