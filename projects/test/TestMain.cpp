@@ -32,5 +32,7 @@ int main()
   TestFullMusicalState1();
   TestFullMusicalState2();
 
+  TestVoiceID();
+
   return 0;
 }

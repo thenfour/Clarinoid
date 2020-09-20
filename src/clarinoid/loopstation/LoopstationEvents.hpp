@@ -371,6 +371,15 @@ struct LoopEvent_FullState
     mv.mIsNoteCurrentlyMuted = false;// mIsNoteCurrentlyMuted;
     mv.mMidiNote = mMidiNote;
     mv.mVelocity = mVelocity;
+    // full state must try to reconstruct the "needs noteon" and off flags
+    // this will ensure loops begin with the corresponding note on, and end with a note off
+    // so notes don't hang over. BUT, it also means that you can't have a scientifically-perfect
+    // loop where for example it overhangs a note across its boundary. I don't think it's
+    // a problem though; we already have a compromise that you can end loop recordings at any
+    // place within the loop.
+    mv.mNeedsNoteOff = (mv.mMidiNote == 0) || (mv.mVelocity == 0);
+    mv.mNeedsNoteOn = !mv.mNeedsNoteOff;
+    mv.mNoteOffNote = mv.mMidiNote;
   }
 };
 

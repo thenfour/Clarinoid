@@ -3,8 +3,6 @@
 
 #include "Loopstation.hpp"
 
-#define DISABLE_PITCH_BEND_ON_LOOPSTATION // because i need to correct serialization first.
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct LooperAndHarmonizer
@@ -41,10 +39,11 @@ struct LooperAndHarmonizer
       UpdateCurrentLoopTimeMS();
       mStatus.mLoopDurationMS = mStatus.mCurrentLoopTimeMS;
       mStatus.mState = LooperState::DurationSet;
-      mStatus.mCurrentLoopTimeMS = 0;
+      //mStatus.mCurrentLoopTimeMS = 0;
       // FALL-THROUGH
     case LooperState::DurationSet:
       // tell the currently-writing layer it's over.
+      UpdateCurrentLoopTimeMS();
       if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
         Ptr buf = mLayers[mCurrentlyWritingLayer].WrapUpRecording();
         mLayers[mCurrentlyWritingLayer].mIsPlaying = true;
@@ -81,7 +80,10 @@ struct LooperAndHarmonizer
   size_t mCurrentPolyphony = 0;
 
   // here you can record a loop or insert notes.
-  // return the # of notes recorded.
+  // return the polyphony recorded.
+  // important to actually pay attention to that value: we could have written plausible voice data in other voices
+  // but exclude it for whatever reason. don't use voices past the polyphony returned!
+
   size_t Update(const MusicalVoice& liveVoice, MusicalVoice* outp, MusicalVoice* outpEnd) {
     /*
     1. record state
@@ -103,13 +105,8 @@ struct LooperAndHarmonizer
 
     */
 
-    // Calculate the loop time for this event. Don't repeat millis() calls.
+    // Calculate the loop time for this event. Don't repeat millis() calls, and ensure the time doesn't change through this processing.
     UpdateCurrentLoopTimeMS();
-
-    // if you have exhausted layers, don't write.
-    if (mStatus.mState != LooperState::Idle && (mCurrentlyWritingLayer < SizeofStaticArray(mLayers))) {
-      mLayers[mCurrentlyWritingLayer].Write(liveVoice);
-    }
 
     // in order to feed the scale follower with a single buffer for both "live" (may not be played!) and harmonized voices,
     // go through all looper layers & harmonizer voices, and if we know the note then put it. if there are 0 notes output,
@@ -119,22 +116,31 @@ struct LooperAndHarmonizer
     MusicalVoice* pLiveVoices[LOOP_LAYERS]; // keep track of where i read layer state into, for later when deduced voices are filled in.
 
     // output the live actually-playing voice.
-    if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
-      pout->AssignFromLoopStream(liveVoice);
-      pout += mHarmonizer.Harmonize(mCurrentlyWritingLayer, pout, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
-    }
+    //if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
+    //  pout->AssignFromLoopStream(liveVoice);
+    //  pout += mHarmonizer.Harmonize(mCurrentlyWritingLayer, pout, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
+    //}
 
     // do the same for other layers; they're read from stream.
     for (uint8_t iLayer = 0; iLayer < SizeofStaticArray(mLayers); ++iLayer) {
-      if (iLayer == mCurrentlyWritingLayer)
-        continue;
       auto& l = mLayers[iLayer];
-      if (l.mIsPlaying) {
-        l.ReadUntilLoopTime(*pout);
-#ifdef DISABLE_PITCH_BEND_ON_LOOPSTATION
-        pout->mPitchBendN11.SetFloat(0.0f);
-#endif
-        pLiveVoices[iLayer] = pout;
+      bool layerIsUsed = false;
+      if (iLayer == mCurrentlyWritingLayer) {
+        // deal with live voice.
+        layerIsUsed = true;
+        pout->AssignFromLoopStream(liveVoice); // copy it straight from live
+        if (mStatus.mState != LooperState::Idle) {
+          l.Write(liveVoice); // record it if that's what we're doing.
+        }
+      }
+      else {
+        if (l.mIsPlaying) {
+          l.ReadUntilLoopTime(*pout);// consume events sequentially
+          layerIsUsed = true;
+        }
+      }
+      if (layerIsUsed) {
+        pLiveVoices[iLayer] = pout;// save this musicalvoice for later harmonizing (key=layer!)
         pout += mHarmonizer.Harmonize(iLayer, pout, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
       }
     }

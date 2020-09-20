@@ -72,10 +72,33 @@ struct
   operator bool() const { return true; }
 } Serial;
 
+
+
+#ifdef CLARINOID_MODULE_TEST
+
+static uint64_t gTestClockMicros = 0;
+
+void SetTestClockMillis(uint32_t ms) {
+  gTestClockMicros = ms;
+  gTestClockMicros *= 1000;
+}
+
+void delay(uint32_t ms) {
+  gTestClockMicros += ((uint64_t)ms) * 1000;
+}
+uint32_t millis() {
+  return (uint32_t)(gTestClockMicros / 1000);
+}
+
+uint32_t micros() {
+  return (uint32_t)(gTestClockMicros);
+}
+
+#else
+#error huh
 void delay(uint32_t ms) {
   ::Sleep(ms);
 }
-
 uint32_t millis() {
   return GetTickCount();
 }
@@ -83,6 +106,8 @@ uint32_t millis() {
 uint32_t micros() {
   return GetTickCount() * 1000;
 }
+#endif
+
 
 // from core_pins.h
 #define HIGH		1

@@ -347,7 +347,7 @@ struct LoopEventStream
   void Stop()
   {
     if (mOOM)
-      return 0; // there are ways to sorta work with a OOM situation, but it's not necessary to add the complexity for a shoddy solution.
+      return; // there are ways to sorta work with a OOM situation, but it's not necessary to add the complexity for a shoddy solution.
     if (!mIsPlaying)
       return;
     mIsPlaying = false;

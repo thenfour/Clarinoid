@@ -131,6 +131,14 @@ public:
   void Update(const LHRHPayload& lh, const LHRHPayload& rh) {
     mPhysicalState.Update(lh, rh);
     mMusicalState.Update(mPhysicalState);
+
+    // in addition to converting physical state to musical state, we interpret assignable controls here.
+    if (mPhysicalState.key_rhExtra1.IsNewlyPressed()) {
+      mMusicalState.mLooper.LoopIt(mMusicalState.mLiveVoice);
+    }
+    if (mPhysicalState.key_rhExtra2.IsNewlyPressed()) {
+      mMusicalState.mLooper.Clear();
+    }
   }
 };
 

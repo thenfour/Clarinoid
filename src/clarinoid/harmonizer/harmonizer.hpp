@@ -23,6 +23,13 @@ struct Harmonizer
   size_t Harmonize(uint8_t loopLayerID, MusicalVoice* liveVoice, MusicalVoice* outp, MusicalVoice* end, VoiceFilterOptions voiceFilter) {
     //HarmPreset& preset = liveVoice->GetHarmPreset();
 
+    switch (voiceFilter) {
+    case Harmonizer::VoiceFilterOptions::OnlyDeducedVoices:
+      return 0;
+    case Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices:
+      break;
+    }
+
     // harmonizing should always output the live note; if it's not part of the real harmonized output,
     // then mark it as muted. it needs to be there so the scale deducer can use it.
     liveVoice->mIsNoteCurrentlyMuted = false;

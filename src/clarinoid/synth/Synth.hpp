@@ -5,6 +5,7 @@
 #include <clarinoid/application/MusicalState.hpp>
 
 static constexpr float pitchBendRange = 0.0f;
+static constexpr int16_t MAGIC_VOICE_ID_UNASSIGNED = -1; // used as a voice ID for voices that aren't assigned to any musical voice.
 
 namespace CCSynthGraph
 {
@@ -65,12 +66,13 @@ struct Voice
   AudioFilterStateVariable mFilter;
   CCPatch mPatchOut;
 
-  int16_t mVoiceId = -1;
-  int16_t mMusicalVoiceId = -1;
+  const int16_t mVoiceId = -1;
+  int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
   int16_t mSynthPatch = -1;
   int16_t mNote = -1;// currently playing note.
   Stopwatch mTimeSinceNoteOn;
   bool mIsCurrentlyPlaying = false;
+  bool mTouched = false; // helps understand when to mark a voice unassigned.
 
   void EnsurePatchConnections()
   {
@@ -83,7 +85,7 @@ struct Voice
   
   void UpdateStopped()
   {
-    mMusicalVoiceId = -1;
+    mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
     mSynthPatch = -1;
     mNote = -1;
     mIsCurrentlyPlaying = false;
@@ -200,7 +202,7 @@ struct VoiceList
       if (v.mMusicalVoiceId == musicalVoiceId) {
         return &v; // already assigned to this voice.
       }
-      if (!firstFree && (v.mMusicalVoiceId == -1)) {
+      if (!firstFree && (v.mMusicalVoiceId == MAGIC_VOICE_ID_UNASSIGNED)) {
         firstFree = &v;
       }
     }
@@ -220,6 +222,17 @@ struct VoiceList
       }
     }
     return nullptr;
+  }
+
+  void SetVoicesUntouched() {
+    for (auto& v : mVoices) {
+      v.mTouched = false;
+    }
+  }
+  void UnassignUntouchedVoices() {
+    for (auto& v : mVoices) {
+      v.mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+    }
   }
 };
 
@@ -267,6 +280,8 @@ public:
     mCurrentPolyphony = 0;
     mCurrentRejected = 0;
 
+    gVoices.SetVoicesUntouched();
+
     for (size_t imv = 0; imv < state.mVoiceCount; ++ imv) {
       auto& mv = state.mMusicalVoices[imv];
       if (mv.mIsNoteCurrentlyOn || mv.mNeedsNoteOff) {
@@ -274,14 +289,18 @@ public:
         Voice* pv = gVoices.FindAssignedOrAvailable(mv.mVoiceId);
         CCASSERT(!!pv);
         pv->UpdatePlaying(state, mv);
+        pv->mTouched = true;
       } else {
         mCurrentRejected++;
         Voice* pv = gVoices.FindAssigned(mv.mVoiceId);
         if (pv) {
           pv->UpdateStopped();
+          pv->mTouched = true;
         }
       }
     }
+
+    gVoices.UnassignUntouchedVoices();
 
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);

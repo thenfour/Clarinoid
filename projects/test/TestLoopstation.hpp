@@ -5,6 +5,7 @@
 
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/loopstation/Loopstation.hpp>
+#include <clarinoid/loopstation/LooperHarmonizer.hpp>
 
 // write a loop, read it back.
 void TestHappyFlow()
@@ -543,3 +544,57 @@ void Test12BitParam()
   LoopEvent_ReadHeader(read, delay, eventType, byte2);
   Test(delay == 66);
 }
+
+
+// test that voice IDs are constructed well
+void TestVoiceID()
+{
+  LooperAndHarmonizer lh;
+  MusicalVoice lv;
+
+  SetTestClockMillis(1000);
+  lv.mHarmPatch = 4;
+  lv.mSynthPatch = 5;
+  lv.mVoiceId = 0x666;
+  lh.LoopIt(lv); // start recording.
+
+  MusicalVoice outp[10];
+
+  SetTestClockMillis(2000); // play note
+  lv.mIsNoteCurrentlyOn = true;
+  lv.mNeedsNoteOn = true;
+  lv.mMidiNote = 30;
+  lv.mVelocity = 31;
+
+  size_t vc = lh.Update(lv, outp, EndPtr(outp));
+  Test(vc == 1);
+  Test(outp[0].mNeedsNoteOn);
+  Test(outp[0].mMidiNote == 30);
+  Test(outp[0].mHarmPatch == 4);
+  Test(outp[0].mSynthPatch == 5);
+
+  SetTestClockMillis(3000); // stop playing note.
+  lv.ResetOneFrameState();
+  lv.mNeedsNoteOff = true;
+  lv.mNoteOffNote = 30;
+  lv.mIsNoteCurrentlyOn = false;
+
+  vc = lh.Update(lv, outp, EndPtr(outp));
+
+  SetTestClockMillis(4000); // commit recording
+  lv.ResetOneFrameState();
+  lh.LoopIt(lv);
+
+  SetTestClockMillis(5000); // test playback.
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  Test(vc == 2);
+  Test(lh.mStatus.mCurrentLoopTimeMS == 1000);
+  Test(lh.mStatus.mLoopDurationMS == 3000);
+  Test(lh.mStatus.mState == LooperState::DurationSet);
+  Test(lh.mCurrentPolyphony == 2);
+  Test(lh.mCurrentlyWritingLayer == 1);
+  Test(outp[0].mVoiceId == MakeMusicalVoiceID(0, 0));
+  Test(outp[0].mMidiNote == 30);
+  Test(outp[1].mVoiceId == MakeMusicalVoiceID(1, 0));
+}
+

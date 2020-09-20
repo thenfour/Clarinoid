@@ -79,7 +79,7 @@ struct MusicalVoice
   bool mIsNoteCurrentlyMuted = false; // this is needed when this is the "live" voice that has been physically played, but the harmonizer demands we not output it.
   uint8_t mMidiNote = 0;
   AnalogValue01<> mBreath01;
-  AnalogValue01<> mPitchBendN11;
+  AnalogValueN11<> mPitchBendN11;
   uint8_t mVelocity = 0;
   int16_t mSynthPatch = 0;
   int16_t mHarmPatch = 0;
