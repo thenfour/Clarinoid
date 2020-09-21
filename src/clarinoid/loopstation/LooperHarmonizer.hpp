@@ -61,7 +61,7 @@ struct LooperAndHarmonizer
   {
     mCurrentlyWritingLayer = 0;
     mStatus.mState = LooperState::Idle;
-    mLoopTimer.Restart();
+    //mLoopTimer.Restart();
     for (auto& l : mLayers) {
       l.Stop();
     }
@@ -76,7 +76,7 @@ struct LooperAndHarmonizer
     mStatus.mCurrentLoopTimeMS = ret;
   }
 
-  size_t mCurrentPolyphony = 0;
+  //size_t mCurrentPolyphony = 0;
 
   // here you can record a loop or insert notes.
   // return the polyphony recorded.
@@ -149,7 +149,7 @@ struct LooperAndHarmonizer
       }
     }
 
-    mCurrentPolyphony = (size_t)(pout - outp);
+    //mCurrentPolyphony = (size_t)(pout - outp);
 
     return pout - outp;
   }

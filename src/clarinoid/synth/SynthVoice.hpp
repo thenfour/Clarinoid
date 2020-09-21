@@ -5,6 +5,9 @@
 #error not for x86 tests
 #endif
 
+ // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
+ static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 5 + (2 * MAX_SYNTH_VOICES);
+
 #include <clarinoid/basic/Basic.hpp>
 #include "Patch.hpp"
 
@@ -185,7 +188,7 @@ struct SynthGraphControl
 
   void Setup()
   {
-    AudioMemory(5 + MAX_SYNTH_VOICES); // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
+    AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.

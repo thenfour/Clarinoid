@@ -344,6 +344,7 @@ struct LoopEventStream
       LoopEvent_NoteOff e;
       e.ApplyToVoice(mCursor.mRunningVoice);
       outp = mCursor.mRunningVoice;
+      mNeedsNoteOff = false;
       return true;
     }
     if (!mIsPlaying)
@@ -751,9 +752,9 @@ struct LoopEventStream
       mCursor.mRunningVoice.mMidiNote = liveVoice.mMidiNote;
       mCursor.mRunningVoice.mVelocity = liveVoice.mVelocity;
       WriteEventRaw(LoopEvent_NoteOn(liveVoice));
-    }
-
-    if (transitionState.mNeedsNoteOff) {
+    } else if (transitionState.mNeedsNoteOff) {
+      // ELSE because for legato notes, you'll get note on + note off at the same time.
+      // if we actually write the note off in this case, you'll note off the new note. we don't store the note off note so just skip that.
       mCursor.mRunningVoice.mMidiNote = liveVoice.mMidiNote;
       mCursor.mRunningVoice.mVelocity = liveVoice.mVelocity;
       WriteEventRaw(LoopEvent_NoteOff());

@@ -121,8 +121,8 @@ public:
     };
     
     auto pageAudioStatus = [&]() {
-      gDisplay.mDisplay.println(String("Memory: ") + AudioMemoryUsage());
-      gDisplay.mDisplay.println(String("Memory Max: ") + AudioMemoryUsageMax());
+      gDisplay.mDisplay.println(String("AM Curr: ") + AudioMemoryUsage());
+      gDisplay.mDisplay.println(String("AM Max: ") + AudioMemoryUsageMax() + " ALLOC:" + AUDIO_MEMORY_TO_ALLOCATE);
       gDisplay.mDisplay.println(String("CPU: ") + AudioProcessorUsage());
       gDisplay.mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
     };

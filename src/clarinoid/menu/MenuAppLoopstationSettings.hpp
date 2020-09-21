@@ -15,12 +15,12 @@ struct LoopSettingsApp : public SettingsMenuApp
   LabelSettingItem mLayer = { []() {return String("Layer:") + gEWIControl.mMusicalState.mLooper.mCurrentlyWritingLayer; }, AlwaysEnabled };
   LabelSettingItem mLoopTime = { []() {return String("LoopTimeMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mCurrentLoopTimeMS; }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::StartSet; } };
   LabelSettingItem mLoopLen = { []() {return String("LoopLengthMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mLoopDurationMS; }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::DurationSet; } };
-  LabelSettingItem mLoopPolyphony = { []() {return String("LoopPoly :") + gEWIControl.mMusicalState.mLooper.mCurrentPolyphony; }, AlwaysEnabled };
+  //LabelSettingItem mLoopPolyphony = { []() {return String("LoopPoly :") + gEWIControl.mMusicalState.mLooper.mCurrentPolyphony; }, AlwaysEnabled };
   LabelSettingItem mSynthPolyphony = { []() {return String("SynthPoly:") + gSynth.mCurrentPolyphony; }, AlwaysEnabled };
 
-  ISettingItem* mArray[8] =
+  ISettingItem* mArray[7] =
   {
-    &mClearAll, &mLoopIt, &mStatus, &mLayer, &mLoopTime, &mLoopLen, &mLoopPolyphony, &mSynthPolyphony
+    &mClearAll, &mLoopIt, &mStatus, &mLayer, &mLoopTime, &mLoopLen, &mSynthPolyphony
   };
   SettingsList mRootList = { mArray };
 
