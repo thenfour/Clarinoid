@@ -2,7 +2,6 @@
 #pragma once
 
 #include <clarinoid/basic/Basic.hpp>
-//#include <clarinoid/application/MusicalState.hpp>
 
 static constexpr float pitchBendRange = 0.0f;
 
@@ -16,7 +15,6 @@ static constexpr float pitchBendRange = 0.0f;
 struct CCSynth : UpdateObjectT<ProfileObjectType::Synth>
 {
   size_t mCurrentPolyphony = 0;
-  //size_t mCurrentRejected = 0;
 
   // returns a voice that's either already assigned to this voice, or the best one to free up for it.
   Voice* FindAssignedOrAvailable(int16_t musicalVoiceId) {
@@ -49,13 +47,7 @@ struct CCSynth : UpdateObjectT<ProfileObjectType::Synth>
   void Update(const MusicalVoice* pVoicesBegin, const MusicalVoice* pVoicesEnd) {
     gSynthGraphControl.BeginUpdate();
     mCurrentPolyphony = 0;
-    //mCurrentRejected = 0;
 
-    //SetVoicesUntouched();
-    //size_t voiceCount = pVoicesEnd - pVoicesBegin;
-    //for (size_t imv = 0; imv < voiceCount; ++ imv) {
-//      auto& mv = state.mMusicalVoices[imv];
-    
     for (const MusicalVoice* pvoice = pVoicesBegin; pvoice != pVoicesEnd; ++ pvoice)
     {
       auto& mv = *pvoice;
@@ -72,8 +64,6 @@ struct CCSynth : UpdateObjectT<ProfileObjectType::Synth>
         v.Unassign();
       }
     }
-
-    //UnassignUntouchedVoices();
 
     gSynthGraphControl.UpdatePostFx();
     gSynthGraphControl.EndUpdate();

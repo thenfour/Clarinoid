@@ -160,7 +160,7 @@ struct LoopEvent_NoteOn
     mv.mMidiNote = mMidiNote;
     mv.mVelocity = mVelocity;
   }
-  String ToString() const { return String(mMidiNote); }
+  String ToString() const { return String("note:") + (int)mMidiNote + "v:" + (int)mVelocity; }
 };
 
 struct LoopEvent_Breath
@@ -186,7 +186,7 @@ struct LoopEvent_Breath
   {
     mv.mBreath01.Deserialize12Bit(mBreath01);
   }
-  String ToString() const { return String(mBreath01); }
+  String ToString() const { return String("") + (int)mBreath01; }
 };
 
 struct LoopEvent_Pitch
@@ -213,7 +213,7 @@ struct LoopEvent_Pitch
   {
     mv.mPitchBendN11.Deserialize12Bit(mPitchN11);
   }
-  String ToString() const { return String(mPitchN11); }
+  String ToString() const { return String("") + (int)mPitchN11; }
 };
 
 struct LoopEvent_BreathAndPitch
@@ -272,7 +272,7 @@ struct LoopEvent_SynthPatchChange
   {
     mv.mSynthPatch = mSynthPatchId;
   }
-  String ToString() const { return String(mSynthPatchId); }
+  String ToString() const { return String("") + (int)mSynthPatchId; }
 };
 
 struct LoopEvent_HarmPatchChange
@@ -299,7 +299,7 @@ struct LoopEvent_HarmPatchChange
   {
     mv.mHarmPatch = mHarmPatchId;
   }
-  String ToString() const { return String(mHarmPatchId); }
+  String ToString() const { return String("") + (int)mHarmPatchId; }
 };
 
 struct LoopEvent_FullState
@@ -346,11 +346,11 @@ struct LoopEvent_FullState
   String ToString() const
   {
     return String(
-      "b:") + mBreath01 +
-      ", p:" + mPitchN11 +
-      ", s:" + mSynthPatchId +
-      ", h:" + mHarmPatchId +
-      ", note:" + mMidiNote + ",v:" + mVelocity
+      "b:") + (int)mBreath01 +
+      ", p:" + (int)mPitchN11 +
+      ", s:" + (int)mSynthPatchId +
+      ", h:" + (int)mHarmPatchId +
+      ", note:" + (int)mMidiNote + ",v:" + (int)mVelocity
       ;
   }
   void ApplyToVoice(MusicalVoice& mv) const

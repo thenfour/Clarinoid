@@ -611,62 +611,215 @@ void TestVoiceID()
 }
 
 
+inline bool SynthIsPlayingNote(uint16_t voiceID, uint8_t midiNote)
+{
+  for (auto& l : gVoices) {
+    if (l.mRunningVoice.mVoiceId != voiceID)
+      continue;
+    if (l.mRunningVoice.mMidiNote != midiNote)
+      continue;
+    return true;
+  }
+  return false;
+}
+
 // test that voice IDs are mapped to real synth output
 void TestLoopstationSynth()
 {
   LooperAndHarmonizer lh;
   MusicalVoice lv;
+  CCSynth s;
+  s.setup();
 
   SetTestClockMillis(1000);
   lv.mHarmPatch = 4;
   lv.mSynthPatch = 5;
-  lv.mVoiceId = 0x666;
   lh.LoopIt(lv); // start recording. 1000 = start recording (looptime 0)
 
   MusicalVoice outp[10];
 
   SetTestClockMillis(2000); // 2000 = note on (looptime 1000)
-  //lv.mIsNoteCurrentlyOn = true;
-  //lv.mNeedsNoteOn = true;
   lv.mMidiNote = 30;
   lv.mVelocity = 31;
 
   size_t vc = lh.Update(lv, outp, EndPtr(outp));
   Test(vc == 1);
-  //Test(outp[0].mNeedsNoteOn);
   Test(outp[0].mMidiNote == 30);
   Test(outp[0].mHarmPatch == 4);
   Test(outp[0].mSynthPatch == 5);
 
   SetTestClockMillis(3000); // 3000 stop playing note. (looptime 2000)
-  //lv.ResetOneFrameState();
-  //lv.mNeedsNoteOff = true;
-  //lv.mNoteOffNote = 30;
-  //lv.mIsNoteCurrentlyOn = false;
   lv.mMidiNote = 0;
-
   vc = lh.Update(lv, outp, EndPtr(outp));
 
-  SetTestClockMillis(4000); // commit recording (loop duration 3000) - layer0 has a note.
-  //lv.ResetOneFrameState();
+  SetTestClockMillis(4000); // commit recording (loop duration 3000) - layer0 has a note, layer1 recording.
   lh.LoopIt(lv);
 
   SetTestClockMillis(5000 /* loop time 1000 */); // test playback.
   lh.mLayers[0].Dump();
   vc = lh.Update(lv, outp, EndPtr(outp));
-  Test(vc == 2);
+  Test(vc == 2); // playback note + live note (which is not playing)
   Test(lh.mStatus.mCurrentLoopTimeMS == 1000);
+  Test(lh.mCurrentlyWritingLayer == 1);
   Test(lh.mStatus.mLoopDurationMS == 3000);
   Test(lh.mStatus.mState == LooperState::DurationSet);
   Test(lh.mCurrentPolyphony == 2);
-  Test(lh.mCurrentlyWritingLayer == 1);
   Test(outp[0].mVoiceId == MakeMusicalVoiceID(0, 0));
   Test(outp[0].mMidiNote == 30);
   Test(outp[1].mVoiceId == MakeMusicalVoiceID(1, 0));
 
-  CCSynth s;
-  s.setup();
-  s.loop();
+  s.Update(outp, outp + vc); // update synth @ loop time 1000; now we should see layer0 note. live voice is not playing.
+  Test(s.mCurrentPolyphony == 1);
+  Test(gVoices[0].mRunningVoice.mVoiceId == 0x0000);
+  Test(gVoices[0].mRunningVoice.mMidiNote == 30);
+  Test(gVoices[0].mRunningVoice.mVelocity == 31);
+
+  SetTestClockMillis(5001 /* loop time 1001 */);
+  // play a live voice, check that 2 notes are playing with correct ids
+  lv.mMidiNote = 45;
+  lv.mVelocity = 1;
+  lh.mLayers[0].Dump();
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  Test(vc == 2); // loop layer 0 is playing note, live voice is playing
+  Test(lh.mStatus.mCurrentLoopTimeMS == 1001);
+
+  // check that when nothing changes, nothing changes.
+  SetTestClockMillis(5002 /* loop time 1002 */);
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  Test(vc == 2); // loop layer 0 is playing note, live voice is playing
+  Test(lh.mStatus.mCurrentLoopTimeMS == 1002);
+
+  // do similar test to @1001 but include the live playing voice.
   s.Update(outp, outp + vc);
+  Test(s.mCurrentPolyphony == 2);
+  Test(gVoices[0].mRunningVoice.mVoiceId == 0x0000);
+  Test(gVoices[0].mRunningVoice.mMidiNote == 30);
+  Test(gVoices[0].mRunningVoice.mVelocity == 31);
+
+  Test(gVoices[1].mRunningVoice.mVoiceId == 0x0100);
+  Test(gVoices[1].mRunningVoice.mMidiNote == 45);
+  Test(gVoices[1].mRunningVoice.mVelocity == 1);
+
+  SetTestClockMillis(6000 /* loop time 2000 */); // note off should happen now.
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  Test(vc == 2); // layer0 note off, livevoice which is still playing.
+  Test(outp[0].mMidiNote == 0);
+  Test(outp[1].mMidiNote == 45);
+
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 1);
+  Test(gVoices[0].mRunningVoice.mVoiceId == 0xffff);
+  Test(gVoices[0].mRunningVoice.mMidiNote == 0);
+  Test(gVoices[0].mRunningVoice.mVelocity == 0);
+  Test(gVoices[1].mRunningVoice.mVoiceId == 0x0100);
+  Test(gVoices[1].mRunningVoice.mMidiNote == 45);
+  Test(gVoices[1].mRunningVoice.mVelocity == 1);
+
+  SetTestClockMillis(6001 /* loop time 2001 */); // no activity.
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  Test(vc == 1); // layer0 is not playing and already did note off, livevoice which is still playing.
+  Test(outp[0].mMidiNote == 45);
+
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 1);
+  Test(gVoices[0].mRunningVoice.mVoiceId == 0xffff);
+  Test(gVoices[0].mRunningVoice.mMidiNote == 0);
+  Test(gVoices[0].mRunningVoice.mVelocity == 0);
+  Test(gVoices[1].mRunningVoice.mVoiceId == 0x0100);
+  Test(gVoices[1].mRunningVoice.mMidiNote == 45);
+  Test(gVoices[1].mRunningVoice.mVelocity == 1);
+
+  
+  lv.mMidiNote = 0;
+  lv.mVelocity = 0;
+  SetTestClockMillis(6002 /* loop time 2002 */);// stop playing live note.
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  Test(lh.mStatus.mCurrentLoopTimeMS == 2002);
+  Test(vc == 1); // layer0 is not playing and already did note off, livevoice which is still playing.
+  Test(outp[0].mMidiNote == 0);
+
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 0);
+  Test(gVoices[1].mRunningVoice.mVoiceId == 0xffff);
+
+  // commit recording again
+  // the loop is 3 seconds long.
+  // we have just recorded
+  // 1001: note on (45), 2002: note off.
+  // but to test the mid-loop stuff, let's advance time and record a layer that looks like:
+  // 500: note on, 2500: note off
+  SetTestClockMillis(1000 + 3000 + 3000 + 3000 + 500/* loop time 1500 */);
+  lv.mMidiNote = 55;
+  lv.mVelocity = 55;
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  lh.mLayers[1].Dump();
+
+  SetTestClockMillis(1000 + 3000 + 3000 + 3000 + 1500/* loop time 1500 */);
+  lv.mMidiNote = 0;
+  lv.mVelocity = 0;
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  lh.mLayers[1].Dump();
+
+  // now update again at 1700 stop recording
+  SetTestClockMillis(1000 + 3000 + 3000 + 3000 + 1700/* loop time 1700 */);
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  lh.mLayers[1].Dump();
+
+  // commit recording (current layer now 2)
+  SetTestClockMillis(1000 + 3000 + 3000 + 3000 + 1701/* loop time 1701 */);
+  lh.LoopIt(lv);
+  lh.mLayers[1].Dump();
+
+  // layer1:   |      |noteon(55)--------------|xxxxx|yyyyy|..                  |
+  // oldlayer1:|                   |noteon(45)------------------|               |
+
+  // test playing both layers
+  // T:        0     500        1000         1500  1700  2000         2500    3000
+  // layer0:   |                  |noteon(30)--------------|                    |
+  // layer1:   |      |noteon(55)--------------|     |noteon(45)|               |
+  // so let's sample at:
+  //             ^      ^            ^            ^    ^         ^
+  // this is tricky; at 'x', we have explicitly recorded silence.
+  // but at y, we haven't yet recorded anything so it will contain material from the previous loop.
+
+  lv.Reset(); // stop playing live note.
+
+  SetTestClockMillis(1000 + (4 * 3000) + 50/* loop time 0 */);
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 0);
+
+  SetTestClockMillis(1000 + (4 * 3000) + 600);
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 1);
+  Test(SynthIsPlayingNote(0x0100, 55));
+
+  SetTestClockMillis(1000 + (4 * 3000) + 1100);
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 2);
+  Test(SynthIsPlayingNote(0x0100, 55));
+  Test(SynthIsPlayingNote(0x0000, 30));
+
+  SetTestClockMillis(1000 + (4 * 3000) + 1600); // in 'x'
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 1);
+
+  SetTestClockMillis(1000 + (4 * 3000) + 1800); // in 'y'
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 2);
+  Test(SynthIsPlayingNote(0x0100, 45));
+  Test(SynthIsPlayingNote(0x0000, 30));
+
+  SetTestClockMillis(1000 + (4 * 3000) + 2100);
+  vc = lh.Update(lv, outp, EndPtr(outp));
+  s.Update(outp, outp + vc); // just playing live voice
+  Test(s.mCurrentPolyphony == 0);
+
+
+  // and play a live voice again
 }
 

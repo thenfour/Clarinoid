@@ -39,7 +39,6 @@ struct LooperAndHarmonizer
       UpdateCurrentLoopTimeMS();
       mStatus.mLoopDurationMS = mStatus.mCurrentLoopTimeMS;
       mStatus.mState = LooperState::DurationSet;
-      //mStatus.mCurrentLoopTimeMS = 0;
       // FALL-THROUGH
     case LooperState::DurationSet:
       // tell the currently-writing layer it's over.
@@ -64,7 +63,7 @@ struct LooperAndHarmonizer
     mStatus.mState = LooperState::Idle;
     mLoopTimer.Restart();
     for (auto& l : mLayers) {
-      l.Stop();//mIsPlaying = false;
+      l.Stop();
     }
   }
 
@@ -115,12 +114,6 @@ struct LooperAndHarmonizer
     MusicalVoice* pout = outp;
     MusicalVoice* pLiveVoices[LOOP_LAYERS]; // keep track of where i read layer state into, for later when deduced voices are filled in.
 
-    // output the live actually-playing voice.
-    //if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
-    //  pout->AssignFromLoopStream(liveVoice);
-    //  pout += mHarmonizer.Harmonize(mCurrentlyWritingLayer, pout, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
-    //}
-
     // do the same for other layers; they're read from stream.
     for (uint8_t iLayer = 0; iLayer < SizeofStaticArray(mLayers); ++iLayer) {
       auto& l = mLayers[iLayer];
@@ -134,7 +127,11 @@ struct LooperAndHarmonizer
         }
       }
       else {
-        layerIsUsed = 0 != l.ReadUntilLoopTime(*pout);// consume events sequentially. even if the layer is not playing, it may send a note off. "use" the layer in this case.
+        // consume events sequentially. even if the layer is not playing, it may send a note off. "use" the layer in this case.
+        // here's a dilemma: imagine a note has a release envelope after a note-off. In otherd words we cannot tell from note offs whether
+        // a voice should be active or not. in that case, the synth should really be responsible for "holding" these voices on.
+        // here we just want to track whether a voice is ON or has events.
+        layerIsUsed = l.ReadUntilLoopTime(*pout);
       }
       if (layerIsUsed) {
         pLiveVoices[iLayer] = pout;// save this musicalvoice for later harmonizing (key=layer!)

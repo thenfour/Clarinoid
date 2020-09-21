@@ -28,7 +28,7 @@ struct MusicalVoice
   }
 
   bool IsPlaying() const {
-    return !!mMidiNote || !!mVelocity;
+    return !!mMidiNote && !!mVelocity;
   }
 
   MusicalVoiceID_t mVoiceId = MAGIC_VOICE_ID_UNASSIGNED; // this is really an outlier member; it's NOT musical state but useful to keep here anyway even if it makes thinsg confusing.

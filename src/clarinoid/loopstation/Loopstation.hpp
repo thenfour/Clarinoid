@@ -331,29 +331,27 @@ struct LoopEventStream
     mIsPlaying = false;
   }
 
-  // returns # of events APPLIED. not technically the # of events read because we may have to fix up things.
+  // returns true if this layer either:
+  // 1. has a note playing currently,
+  // 2. or, has any events applied/read. including note offs when the voice is not playing.
   // outputs a new copy of musical state to outp.
-  size_t ReadUntilLoopTime(MusicalVoice& outp)
+  bool ReadUntilLoopTime(MusicalVoice& outp)
   {
-    // the "one-frame" attributes like "needs note on" should be reset.
-    //outp.ResetOneFrameState();
-
     if (mOOM)
-      return 0; // there are ways to sorta work with a OOM situation, but it's not necessary to add the complexity for a shoddy solution.
+      return false; // there are ways to sorta work with a OOM situation, but it's not necessary to add the complexity for a shoddy solution.
 
     if (mNeedsNoteOff) {
       LoopEvent_NoteOff e;
       e.ApplyToVoice(mCursor.mRunningVoice);
-      //e.ApplyToVoice(outp);
       outp = mCursor.mRunningVoice;
-      return 1;
+      return true;
     }
     if (!mIsPlaying)
-      return 0; // muted.
+      return false; // muted.
     if (mBufferBegin.mP == mEventsValidEnd)
-      return 0;
+      return false;
 
-    size_t ret = 0;
+    bool eventsApplied = false;
 
     // assumption: current cursor is AT or BEFORE the requested time.
     // so if the next event would be TOO far, stop reading. otherwise just go.
@@ -362,7 +360,7 @@ struct LoopEventStream
     // there are no gaps. so we should *encounter* the cursor time.
     while (!mCursor.TouchesTime(GetStatus(), reqTime)) {
       mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd);
-      ++ret;
+      eventsApplied = true;
     }
 
     // if this event is after reqtime, bail. we know it's touching reqtime too, so
@@ -374,15 +372,12 @@ struct LoopEventStream
     if (t == reqTime) {
       while (mCursor.PeekLoopTimeWrapSensitive(GetStatus()) == t) {
         mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd);
-        ++ret;
+        eventsApplied = true;
       }
     }
 
-    if (ret) {
-      outp = mCursor.mRunningVoice;
-    }
-
-    return ret;
+    outp = mCursor.mRunningVoice;
+    return eventsApplied || mCursor.mRunningVoice.IsPlaying();
   }
 
   void StartRecording(const LoopStatus& status, const MusicalVoice& musicalStatus, const Ptr& begin, const Ptr& end)
