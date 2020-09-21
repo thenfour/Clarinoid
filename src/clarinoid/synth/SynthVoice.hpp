@@ -6,7 +6,6 @@
 #endif
 
 #include <clarinoid/basic/Basic.hpp>
-//#include <clarinoid/application/MusicalState.hpp>
 #include "Patch.hpp"
 
 namespace CCSynthGraph
@@ -69,14 +68,6 @@ struct Voice
   AudioFilterStateVariable mFilter;
   CCPatch mPatchOut;
 
-  //const int16_t mVoiceId = -1;
-  //int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-  //int16_t mSynthPatch = -1;
-  //int16_t mNote = -1;// currently playing note.
-  //Stopwatch mTimeSinceNoteOn;
-  //bool mIsCurrentlyPlaying = false;
-  //bool mTouched = false; // helps understand when to mark a voice unassigned.
-
   MusicalVoice mRunningVoice;
 
   void EnsurePatchConnections()
@@ -87,18 +78,6 @@ struct Voice
     mPatchMixToFilter.connect();
     mPatchOut.connect();
   }
-  
-  // void UpdateStopped()
-  // {
-  //   mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-  //   mSynthPatch = -1;
-  //   mNote = -1;
-  //   mIsCurrentlyPlaying = false;
-
-  //   mOsc.amplitude(1, 0.0);
-  //   mOsc.amplitude(2, 0.0);
-  //   mOsc.amplitude(3, 0.0);
-  // }
   
   void Update(const MusicalVoice& mv)
   {
@@ -135,16 +114,6 @@ struct Voice
       mOsc.removeNote();
     }
 
-    // reset timer if pretty much anything changed.
-    // if (!transition.mNeedsNoteOn || voiceOrPatchChanged) {
-    //   mTimeSinceNoteOn.Restart();
-    // }
-
-    //mMusicalVoiceId = mv.mVoiceId;
-    //mSynthPatch = mv.mSynthPatch;
-    //mNote = mv.mMidiNote;
-    //mIsCurrentlyPlaying = true;
-
     // update
     float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * pitchBendRange;
 
@@ -180,7 +149,6 @@ struct Voice
     mPatchOsc3ToMix(mOsc, 2, mOscMixer, 2),
     mPatchMixToFilter(mOscMixer, 0, mFilter, 0),
     mPatchOut(mFilter, 0, dest, destPort)//,
-    //mVoiceId(vid)
   {
   }
 };
@@ -217,7 +185,7 @@ struct SynthGraphControl
 
   void Setup()
   {
-    AudioMemory(8); // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
+    AudioMemory(5 + MAX_SYNTH_VOICES); // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.

@@ -2,7 +2,6 @@
 // datatypes for durations, which means longer payloads for silence, but optimal
 // for many consecutive events.
 
-// todo: when reading state back, track note ons, duration, etc.
 // todo: post-processing: pruning out
 // - breath & pitch during no note on
 // - transient notes
@@ -127,8 +126,6 @@ struct LoopCursor
         mLoopTimeMS -= status.mLoopDurationMS;
     }
     if (mP >= bufferEnd) {
-      //mP = bufferBegin.mP;
-      //mLoopTimeMS -= status.mLoopDurationMS;// rhs.mLoopTimeMS;
       Assign(bufferBegin);
       ret = true;
     }
@@ -756,14 +753,12 @@ struct LoopEventStream
 
     MusicalVoiceTransitionEvents transitionState = CalculateTransitionEvents(mCursor.mRunningVoice, liveVoice);
     if (transitionState.mNeedsNoteOn) {
-      //mCursor.mRunningVoice.mIsNoteCurrentlyOn = true;
       mCursor.mRunningVoice.mMidiNote = liveVoice.mMidiNote;
       mCursor.mRunningVoice.mVelocity = liveVoice.mVelocity;
       WriteEventRaw(LoopEvent_NoteOn(liveVoice));
     }
 
     if (transitionState.mNeedsNoteOff) {
-      //mCursor.mRunningVoice.mIsNoteCurrentlyOn = false;
       mCursor.mRunningVoice.mMidiNote = liveVoice.mMidiNote;
       mCursor.mRunningVoice.mVelocity = liveVoice.mVelocity;
       WriteEventRaw(LoopEvent_NoteOff());

@@ -126,9 +126,6 @@ struct LoopEvent_NoteOff
   {
     mv.mMidiNote = 0;
     mv.mVelocity = 0;
-    // mv.mNeedsNoteOff = true;
-    // mv.mIsNoteCurrentlyOn = false;
-    // mv.mNoteOffNote = mv.mMidiNote;
   }
   String ToString() { return String(); }
 };
@@ -160,8 +157,6 @@ struct LoopEvent_NoteOn
   }
   void ApplyToVoice(MusicalVoice& mv) const
   {
-    //mv.mNeedsNoteOn = true;
-    //mv.mIsNoteCurrentlyOn = true;
     mv.mMidiNote = mMidiNote;
     mv.mVelocity = mVelocity;
   }
@@ -315,7 +310,6 @@ struct LoopEvent_FullState
 
   uint16_t mBreath01; // 12 // 3
   uint16_t mPitchN11; // 16
-  //bool mIsNoteCurrentlyOn; <-- implicit from note/velocity.
   uint16_t mSynthPatchId; // 12
   uint16_t mHarmPatchId; // 12
   uint8_t mMidiNote; // 8 
@@ -331,10 +325,6 @@ struct LoopEvent_FullState
     mMidiNote(mv.mMidiNote),
     mVelocity(mv.mVelocity)
   {
-    // if (mv.mIsNoteCurrentlyMuted || !mv.mIsNoteCurrentlyOn) {
-    //   mMidiNote = 0;
-    //   mVelocity = 0;
-    // }
   }
 
   LoopEvent_FullState(Ptr& p, uint8_t byte2)
@@ -369,19 +359,9 @@ struct LoopEvent_FullState
     mv.mPitchBendN11.Deserialize12Bit(mPitchN11);
     mv.mSynthPatch = mSynthPatchId;
     mv.mHarmPatch = mHarmPatchId;
-    //mv.mIsNoteCurrentlyOn = !!mMidiNote && !!mVelocity;
-    mv.mIsNoteCurrentlyMuted = false;// mIsNoteCurrentlyMuted;
+    mv.mIsNoteCurrentlyMuted = false;
     mv.mMidiNote = mMidiNote;
     mv.mVelocity = mVelocity;
-    // full state must try to reconstruct the "needs noteon" and off flags
-    // this will ensure loops begin with the corresponding note on, and end with a note off
-    // so notes don't hang over. BUT, it also means that you can't have a scientifically-perfect
-    // loop where for example it overhangs a note across its boundary. I don't think it's
-    // a problem though; we already have a compromise that you can end loop recordings at any
-    // place within the loop.
-    // mv.mNeedsNoteOff = (mv.mMidiNote == 0) || (mv.mVelocity == 0);
-    // mv.mNeedsNoteOn = !mv.mNeedsNoteOff;
-    // mv.mNoteOffNote = mv.mMidiNote;
   }
 };
 
