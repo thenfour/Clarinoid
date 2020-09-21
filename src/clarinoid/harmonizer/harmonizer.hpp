@@ -48,7 +48,7 @@ struct Harmonizer
 
     // TODO: arpeggiator mode where instead of playing polyphonic, it cycles between notes with breath.
 
-    outp[0].CloneForHarmonizationStream(*liveVoice);
+    outp[0] = *liveVoice;
     outp[0].mMidiNote += 7;
     outp[0].mVoiceId = MakeMusicalVoiceID(loopLayerID, 1);
     

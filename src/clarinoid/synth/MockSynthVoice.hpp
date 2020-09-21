@@ -7,19 +7,25 @@
 
 struct Voice
 {
-  int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-  bool mTouched = false;
+  //int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+  //bool mTouched = false;
+
+  MusicalVoice mRunningVoice;
 
   void EnsurePatchConnections()
   {
   }
   
-  void UpdateStopped()
+  void Update(const MusicalVoice& mv)
   {
+    mRunningVoice = mv;
   }
-  
-  void UpdatePlaying(const MusicalVoice& mv)
-  {
+
+  bool IsPlaying() const {
+    return mRunningVoice.IsPlaying();
+  }
+  void Unassign() {
+    mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
   }
 };
 

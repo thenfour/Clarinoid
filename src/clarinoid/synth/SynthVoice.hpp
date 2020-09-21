@@ -70,12 +70,14 @@ struct Voice
   CCPatch mPatchOut;
 
   //const int16_t mVoiceId = -1;
-  int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-  int16_t mSynthPatch = -1;
-  int16_t mNote = -1;// currently playing note.
-  Stopwatch mTimeSinceNoteOn;
-  bool mIsCurrentlyPlaying = false;
-  bool mTouched = false; // helps understand when to mark a voice unassigned.
+  //int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+  //int16_t mSynthPatch = -1;
+  //int16_t mNote = -1;// currently playing note.
+  //Stopwatch mTimeSinceNoteOn;
+  //bool mIsCurrentlyPlaying = false;
+  //bool mTouched = false; // helps understand when to mark a voice unassigned.
+
+  MusicalVoice mRunningVoice;
 
   void EnsurePatchConnections()
   {
@@ -86,21 +88,21 @@ struct Voice
     mPatchOut.connect();
   }
   
-  void UpdateStopped()
-  {
-    mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-    mSynthPatch = -1;
-    mNote = -1;
-    mIsCurrentlyPlaying = false;
+  // void UpdateStopped()
+  // {
+  //   mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+  //   mSynthPatch = -1;
+  //   mNote = -1;
+  //   mIsCurrentlyPlaying = false;
 
-    mOsc.amplitude(1, 0.0);
-    mOsc.amplitude(2, 0.0);
-    mOsc.amplitude(3, 0.0);
-  }
+  //   mOsc.amplitude(1, 0.0);
+  //   mOsc.amplitude(2, 0.0);
+  //   mOsc.amplitude(3, 0.0);
+  // }
   
-  void UpdatePlaying(const MusicalVoice& mv)
+  void Update(const MusicalVoice& mv)
   {
-    bool voiceOrPatchChanged = (mMusicalVoiceId != mv.mVoiceId) || (mSynthPatch != mv.mSynthPatch);
+    bool voiceOrPatchChanged = (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatch != mv.mSynthPatch);
     if (voiceOrPatchChanged) {
       // init synth patch.
       mOsc.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
@@ -111,22 +113,37 @@ struct Voice
       mOsc.pulseWidth(2, 0.5);
       mOsc.pulseWidth(3, 0.5);
   
-      mOsc.amplitude(1, 0.0);
-      mOsc.amplitude(2, 0.3);
-      mOsc.amplitude(3, 0.3);
-      
+      mOsc.removeNote();
       mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
     }
 
-    // reset timer if pretty much anything changed.
-    if (!mIsCurrentlyPlaying || voiceOrPatchChanged || (mNote != mv.mMidiNote)) {
-      mTimeSinceNoteOn.Restart();
+    if (mv.IsPlaying()) {
+      mOsc.amplitude(1, 0.0);
+      mOsc.amplitude(2, 0.3);
+      mOsc.amplitude(3, 0.3);
+    } else {
+      mOsc.amplitude(1, 0.0);
+      mOsc.amplitude(2, 0.0);
+      mOsc.amplitude(3, 0.0);
     }
 
-    mMusicalVoiceId = mv.mVoiceId;
-    mSynthPatch = mv.mSynthPatch;
-    mNote = mv.mMidiNote;
-    mIsCurrentlyPlaying = true;
+    auto transition = CalculateTransitionEvents(mRunningVoice, mv);
+    if (transition.mNeedsNoteOn) {
+      mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
+    }
+    else if (transition.mNeedsNoteOff) {
+      mOsc.removeNote();
+    }
+
+    // reset timer if pretty much anything changed.
+    // if (!transition.mNeedsNoteOn || voiceOrPatchChanged) {
+    //   mTimeSinceNoteOn.Restart();
+    // }
+
+    //mMusicalVoiceId = mv.mVoiceId;
+    //mSynthPatch = mv.mSynthPatch;
+    //mNote = mv.mMidiNote;
+    //mIsCurrentlyPlaying = true;
 
     // update
     float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * pitchBendRange;
@@ -144,6 +161,17 @@ struct Voice
 
     float filterFreq = map(mv.mBreath01.GetFloatVal(), 0.01, 1, 0, 15000);
     mFilter.frequency(filterFreq);
+
+    mRunningVoice = mv;
+  }
+
+  bool IsPlaying() const {
+    // this function lets us delay for example, if there's a release stage (theoretically)
+    return mRunningVoice.IsPlaying();
+  }
+
+  void Unassign() { 
+    mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
   }
 
   Voice(int16_t vid, AudioMixer4& dest, int destPort) : 
@@ -189,7 +217,7 @@ struct SynthGraphControl
 
   void Setup()
   {
-    AudioMemory(7); // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
+    AudioMemory(8); // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.

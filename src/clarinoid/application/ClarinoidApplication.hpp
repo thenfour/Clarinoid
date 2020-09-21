@@ -148,7 +148,7 @@ public:
     
     // output to synth. this synth doesn't operate on the MIDI data because MIDI reduces precision a bit.
     // this can be realtime.
-    gSynth.Update(gEWIControl.mMusicalState);
+    gSynth.Update(gEWIControl.mMusicalState.mMusicalVoices, gEWIControl.mMusicalState.mMusicalVoices + gEWIControl.mMusicalState.mVoiceCount);
 
     if (gLedThrottle.IsReady())
     {

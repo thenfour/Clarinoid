@@ -26,9 +26,11 @@ struct CCEWIMusicalState
 
   void Update(const CCEWIPhysicalState& ps)
   {
-    uint8_t prevNote = mLiveVoice.mMidiNote;
-    bool wasPlayingNote = mLiveVoice.mIsNoteCurrentlyOn;
-    bool isPlayingNote = wasPlayingNote;
+    MusicalVoice mNewState(mLiveVoice);
+
+    //uint8_t prevNote = mLiveVoice.mMidiNote;
+    //bool wasPlayingNote = mLiveVoice.mIsNoteCurrentlyOn;
+    //bool isPlayingNote = wasPlayingNote;
 
     // convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
@@ -48,14 +50,14 @@ struct CCEWIMusicalState
       this->pitchBendN11.Update(pitchDownAdj);
     }
 
-    mLiveVoice.mBreath01 = this->breath01.GetValue();
-    isPlayingNote = mLiveVoice.mBreath01.GetFloatVal() > gAppSettings.mBreathNoteOnThreshold;
-    mLiveVoice.mIsNoteCurrentlyOn = isPlayingNote;
+    mNewState.mBreath01 = this->breath01.GetValue();
+    bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > gAppSettings.mBreathNoteOnThreshold;
+    //mNewState.mIsNoteCurrentlyOn = isPlayingNote;
 
-    mLiveVoice.mPitchBendN11 = this->pitchBendN11.GetValue();
-    mLiveVoice.mVelocity = 100; // TODO
-    mLiveVoice.mSynthPatch = 0; // TODO
-    mLiveVoice.mHarmPatch = 0;// todo
+    mNewState.mPitchBendN11 = this->pitchBendN11.GetValue();
+    mNewState.mVelocity = 100; // TODO
+    mNewState.mSynthPatch = 0; // TODO
+    mNewState.mHarmPatch = 0;// todo
 
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
@@ -99,21 +101,28 @@ struct CCEWIMusicalState
     // transpose
     newNote += gAppSettings.mTranspose;
     newNote = constrain(newNote, 1, 127);
-    mLiveVoice.mMidiNote = (uint8_t)newNote;
+    mNewState.mMidiNote = (uint8_t)newNote;
 
-    mLiveVoice.mNeedsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != newNote);
+    //mLiveVoice.mNeedsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != newNote);
     // send note off in these cases:
     // - you are not playing but were
     // - or, you are playing, but a different note than before.
-    mLiveVoice.mNeedsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != newNote));
-    mLiveVoice.mNoteOffNote = prevNote;
+    //mLiveVoice.mNeedsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != newNote));
+    //mLiveVoice.mNoteOffNote = prevNote;
 
-    if (mLiveVoice.mNeedsNoteOn) {
-      noteOns ++;
-      mLiveVoice.mDuration.Restart();
+    // if (mLiveVoice.mNeedsNoteOn) {
+    //   noteOns ++;
+    //   mLiveVoice.mDuration.Restart();
+    // }
+
+    // nUpdates ++;
+
+    if (!isPlayingNote) {
+      mNewState.mVelocity = 0;
+      mNewState.mMidiNote = 0;
     }
 
-    nUpdates ++;
+    mLiveVoice = mNewState;
 
     // we have calculated mLiveVoice, converting physical to live musical state.
     // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.

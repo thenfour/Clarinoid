@@ -49,41 +49,45 @@ public:
   }
 
   void Update(const CCEWIMusicalState& ms) {
-    activityHappened = false;
 
-    // send pitchbend / breath BEFORE note ons, so the note starts with the correct state.
-    if (gCCThrottle.IsReady()) {
-      int pb = CalcRawPitchBend(ms.pitchBendN11.GetValue());
-      if (pb != currentPitchBendRaw) {
-        mMidi.sendPitchBend(pb, CCEWI_MIDICHANNEL);
-        activityHappened = true;
-        currentPitchBendRaw = pb;
-      }
+    // TODO: get this working again after getting our own synth together.
+    // we should keep a MusicalVoice here and do diffs to determine note ons & offs.
+
+    // activityHappened = false;
+
+    // // send pitchbend / breath BEFORE note ons, so the note starts with the correct state.
+    // if (gCCThrottle.IsReady()) {
+    //   int pb = CalcRawPitchBend(ms.pitchBendN11.GetValue());
+    //   if (pb != currentPitchBendRaw) {
+    //     mMidi.sendPitchBend(pb, CCEWI_MIDICHANNEL);
+    //     activityHappened = true;
+    //     currentPitchBendRaw = pb;
+    //   }
       
-      float breathAdj = powf(ms.breath01.GetValue(), MIDI_BREATH_CURVE);
-      int breath = Calc14BitBreath(breathAdj);
-      uint8_t msb, lsb;
-      Breath14BitToMSBLSB(breath, msb, lsb);
+    //   float breathAdj = powf(ms.breath01.GetValue(), MIDI_BREATH_CURVE);
+    //   int breath = Calc14BitBreath(breathAdj);
+    //   uint8_t msb, lsb;
+    //   Breath14BitToMSBLSB(breath, msb, lsb);
 
-      if (breath != currentBreathCC14Bit && ms.mLiveVoice.mIsNoteCurrentlyOn) {
-        currentBreathCC14Bit = breath;
-        activityHappened = true;
-        mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController, msb, CCEWI_MIDICHANNEL);
-        mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController + 32, lsb, CCEWI_MIDICHANNEL);
-      }
+    //   if (breath != currentBreathCC14Bit && ms.mLiveVoice.IsPlaying()) {
+    //     currentBreathCC14Bit = breath;
+    //     activityHappened = true;
+    //     mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController, msb, CCEWI_MIDICHANNEL);
+    //     mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController + 32, lsb, CCEWI_MIDICHANNEL);
+    //   }
 
-    }
+    // }
 
-    // important: send note on before note off, to make portamento work.
-    if (ms.mLiveVoice.mNeedsNoteOn) {
-      mMidi.sendNoteOn(ms.mLiveVoice.mMidiNote, ms.mLiveVoice.mVelocity, CCEWI_MIDICHANNEL);
-      activityHappened = true;
-      //Serial.println(String("note on?") + millis());
-    }
-    if (ms.mLiveVoice.mNeedsNoteOff) {
-      mMidi.sendNoteOff(ms.mLiveVoice.mNoteOffNote, 0, CCEWI_MIDICHANNEL);
-      activityHappened = true;
-    }
+    // // important: send note on before note off, to make portamento work.
+    // if (ms.mLiveVoice.mNeedsNoteOn) {
+    //   mMidi.sendNoteOn(ms.mLiveVoice.mMidiNote, ms.mLiveVoice.mVelocity, CCEWI_MIDICHANNEL);
+    //   activityHappened = true;
+    //   //Serial.println(String("note on?") + millis());
+    // }
+    // if (ms.mLiveVoice.mNeedsNoteOff) {
+    //   mMidi.sendNoteOff(ms.mLiveVoice.mNoteOffNote, 0, CCEWI_MIDICHANNEL);
+    //   activityHappened = true;
+    // }
 
   }
 };

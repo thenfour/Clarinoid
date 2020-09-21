@@ -59,13 +59,13 @@ struct LoopCursor
   void Set(Ptr p, uint32_t loopTime, const MusicalVoice& mv) {
     mP = p;
     mLoopTimeMS = loopTime;
-    mRunningVoice.AssignFromLoopStream(mv);
+    mRunningVoice = mv;
   }
 
   void Assign(const LoopCursor& rhs) {
     mP = rhs.mP;
     mLoopTimeMS = rhs.mLoopTimeMS;
-    mRunningVoice.AssignFromLoopStream(rhs.mRunningVoice);
+    mRunningVoice = rhs.mRunningVoice;
   }
 
   void SetNull() {
@@ -113,7 +113,7 @@ struct LoopCursor
   // read next event in the stream and integrate to outp.
   // advances cursors.
   // returns true if the cursor wrapped.
-  bool ConsumeSingleEvent(const LoopStatus& status, const LoopCursor& bufferBegin, const Ptr& bufferEnd, MusicalVoice* additionalVoice = nullptr)
+  bool ConsumeSingleEvent(const LoopStatus& status, const LoopCursor& bufferBegin, const Ptr& bufferEnd)
   {
     event_delay_t delay;
     LoopEventType eventType;
@@ -127,6 +127,8 @@ struct LoopCursor
         mLoopTimeMS -= status.mLoopDurationMS;
     }
     if (mP >= bufferEnd) {
+      //mP = bufferBegin.mP;
+      //mLoopTimeMS -= status.mLoopDurationMS;// rhs.mLoopTimeMS;
       Assign(bufferBegin);
       ret = true;
     }
@@ -139,72 +141,48 @@ struct LoopCursor
     {
       LoopEvent_NoteOff e;// = LoopEvent_NoteOff(mP);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     case LoopEventType::NoteOn: // { uint8_t note, uint8_t velocity }
     {
       LoopEvent_NoteOn e(mP);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     case LoopEventType::Breath: // { breath }
     {
       LoopEvent_Breath e(mP, byte2);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     case LoopEventType::Pitch: // { float pitch }
     {
       LoopEvent_Pitch e(mP, byte2);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     case LoopEventType::BreathAndPitch: // { float breath, float pitch }
     {
       LoopEvent_BreathAndPitch e(mP, byte2);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     case LoopEventType::SynthPatchChange: // { uint8_t patchid }
     {
       LoopEvent_SynthPatchChange e(mP, byte2);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     case LoopEventType::HarmPatchChange: // { uint8_t patchid }
     {
       LoopEvent_HarmPatchChange e(mP, byte2);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     case LoopEventType::FullState:
     {
       LoopEvent_FullState e(mP, byte2);
       e.ApplyToVoice(mRunningVoice);
-      if (additionalVoice) {
-        e.ApplyToVoice(*additionalVoice);
-      }
       break;
     }
     default:
@@ -350,17 +328,18 @@ struct LoopEventStream
       return; // there are ways to sorta work with a OOM situation, but it's not necessary to add the complexity for a shoddy solution.
     if (!mIsPlaying)
       return;
-    mIsPlaying = false;
-    if (mCursor.mRunningVoice.mIsNoteCurrentlyOn) {
+    if (mCursor.mRunningVoice.IsPlaying()) {
       mNeedsNoteOff = true;
     }
+    mIsPlaying = false;
   }
 
   // returns # of events APPLIED. not technically the # of events read because we may have to fix up things.
+  // outputs a new copy of musical state to outp.
   size_t ReadUntilLoopTime(MusicalVoice& outp)
   {
     // the "one-frame" attributes like "needs note on" should be reset.
-    outp.ResetOneFrameState();
+    //outp.ResetOneFrameState();
 
     if (mOOM)
       return 0; // there are ways to sorta work with a OOM situation, but it's not necessary to add the complexity for a shoddy solution.
@@ -368,7 +347,8 @@ struct LoopEventStream
     if (mNeedsNoteOff) {
       LoopEvent_NoteOff e;
       e.ApplyToVoice(mCursor.mRunningVoice);
-      e.ApplyToVoice(outp);
+      //e.ApplyToVoice(outp);
+      outp = mCursor.mRunningVoice;
       return 1;
     }
     if (!mIsPlaying)
@@ -384,7 +364,7 @@ struct LoopEventStream
 
     // there are no gaps. so we should *encounter* the cursor time.
     while (!mCursor.TouchesTime(GetStatus(), reqTime)) {
-      mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd, &outp);
+      mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd);
       ++ret;
     }
 
@@ -396,9 +376,13 @@ struct LoopEventStream
     uint32_t t = mCursor.PeekLoopTimeWrapSensitive(GetStatus());
     if (t == reqTime) {
       while (mCursor.PeekLoopTimeWrapSensitive(GetStatus()) == t) {
-        mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd, &outp);
+        mCursor.ConsumeSingleEvent(GetStatus(), mBufferBegin, mEventsValidEnd);
         ++ret;
       }
+    }
+
+    if (ret) {
+      outp = mCursor.mRunningVoice;
     }
 
     return ret;
@@ -466,7 +450,7 @@ struct LoopEventStream
         }
       }
 
-      cc::log("%s%s%s [%p (+%d) t=%d: dly=%d, type=%s, params=%s]",
+      cc::log("%s%s%s [%p (+%d) t=%d: dly=%d <looptime=%d> type=%s, params=%s]",
         e.mP == mBufferBegin.mP ? "B" : " ",
         e.mP == mCursor.mP ? "E" : " ",
         e.mP == mPrevCursor.mP ? "P" : " ",
@@ -474,6 +458,7 @@ struct LoopEventStream
         e.mP.DistanceBytes(mBufferBegin.mP),
         loopTime,
         (int)e.mDelayMS,
+        loopTime + (int)e.mDelayMS,
         e.mName,
         e.mParamString.mStr.str().c_str());
     } // for()
@@ -628,7 +613,7 @@ struct LoopEventStream
     if (shouldWriteFullState) {
       LoopEvent_SurgicallyWriteDelayInPlace(Ptr(segmentBBegin), 0);
       mBufferBegin.mLoopTimeMS = mPrevCursor.mLoopTimeMS;
-      mBufferBegin.mRunningVoice.AssignFromLoopStream(mPrevCursor.mRunningVoice);
+      mBufferBegin.mRunningVoice = mPrevCursor.mRunningVoice;
 
       // slide it over to make room
       OrderedMemcpy(mBufferBegin.mP.PlusBytes(bytesNeeded), segmentBBegin, mainBufferValidBytes);
@@ -769,15 +754,18 @@ struct LoopEventStream
       }
     }
 
-    if (liveVoice.mNeedsNoteOn) {
-      mCursor.mRunningVoice.mIsNoteCurrentlyOn = true;
+    MusicalVoiceTransitionEvents transitionState = CalculateTransitionEvents(mCursor.mRunningVoice, liveVoice);
+    if (transitionState.mNeedsNoteOn) {
+      //mCursor.mRunningVoice.mIsNoteCurrentlyOn = true;
       mCursor.mRunningVoice.mMidiNote = liveVoice.mMidiNote;
       mCursor.mRunningVoice.mVelocity = liveVoice.mVelocity;
       WriteEventRaw(LoopEvent_NoteOn(liveVoice));
     }
 
-    if (liveVoice.mNeedsNoteOff) {
-      mCursor.mRunningVoice.mIsNoteCurrentlyOn = false;
+    if (transitionState.mNeedsNoteOff) {
+      //mCursor.mRunningVoice.mIsNoteCurrentlyOn = false;
+      mCursor.mRunningVoice.mMidiNote = liveVoice.mMidiNote;
+      mCursor.mRunningVoice.mVelocity = liveVoice.mVelocity;
       WriteEventRaw(LoopEvent_NoteOff());
     }
 

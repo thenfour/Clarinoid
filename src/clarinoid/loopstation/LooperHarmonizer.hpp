@@ -128,7 +128,7 @@ struct LooperAndHarmonizer
       if (iLayer == mCurrentlyWritingLayer) {
         // deal with live voice.
         layerIsUsed = true;
-        pout->AssignFromLoopStream(liveVoice); // copy it straight from live
+        *pout = liveVoice; // copy it straight from live
         if (mStatus.mState != LooperState::Idle) {
           l.Write(liveVoice); // record it if that's what we're doing.
         }

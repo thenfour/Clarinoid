@@ -33,6 +33,7 @@ int main()
   TestFullMusicalState2();
 
   TestVoiceID();
+  TestLoopstationSynth();
 
   return 0;
 }
