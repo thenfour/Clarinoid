@@ -80,7 +80,7 @@ struct LooperAndHarmonizer
     case LooperState::DurationSet:
       // tell the currently-writing layer it's over.
       UpdateCurrentLoopTimeMS();
-      if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
+      if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers) - 1) { // -1 because you always need one "live" layer playing
         Ptr buf = mLayers[mCurrentlyWritingLayer].WrapUpRecording();
         mLayers[mCurrentlyWritingLayer].mIsPlaying = true;
 
@@ -197,7 +197,7 @@ struct LooperAndHarmonizer
 
       if (layerIsUsed) {
         pLiveVoices[iLayer] = pout;// save this musicalvoice for later harmonizing (key=layer!)
-        pout += mHarmonizer.Harmonize(iLayer, pout, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
+        pout += mHarmonizer.Harmonize(iLayer, pout, transitionEvents, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
       }
     }
 
@@ -207,7 +207,7 @@ struct LooperAndHarmonizer
     for (uint8_t iLayer = 0; iLayer < SizeofStaticArray(mLayers); ++iLayer) {
       auto& l = mLayers[iLayer];
       if (l.mIsPlaying) {
-        pout += mHarmonizer.Harmonize(iLayer, pLiveVoices[iLayer], pout, outpEnd, Harmonizer::VoiceFilterOptions::OnlyDeducedVoices);
+        pout += mHarmonizer.Harmonize(iLayer, pLiveVoices[iLayer], transitionEvents, pout, outpEnd, Harmonizer::VoiceFilterOptions::OnlyDeducedVoices);
       }
     }
 

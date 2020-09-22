@@ -40,26 +40,25 @@ struct HarmPatchSettingsApp
     { mpBinding->mVoiceSettings[5] },
   };
   
-  BoolSettingItem mIsEnabled = { "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
+  //BoolSettingItem mIsEnabled = { "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
+  IntSettingItem mMinRotationTimeMS = { "Min Rotation MS", 0, 10000, MakePropertyByCasting<int>(mpBinding->mMinRotationTimeMS), AlwaysEnabled };
+  BoolSettingItem mEmitLiveNote = { "Emit live note?", "Yes", "No", mpBinding->mEmitLiveNote, AlwaysEnabled };
+
   SubmenuSettingItem mVoiceSubmenu1 = { "Voice1", &mVoiceSettings[0].mRootList, AlwaysEnabled };
   SubmenuSettingItem mVoiceSubmenu2 = { "Voice2", &mVoiceSettings[1].mRootList, AlwaysEnabled };
   SubmenuSettingItem mVoiceSubmenu3 = { "Voice3", &mVoiceSettings[2].mRootList, AlwaysEnabled };
   SubmenuSettingItem mVoiceSubmenu4 = { "Voice4", &mVoiceSettings[3].mRootList, AlwaysEnabled };
   SubmenuSettingItem mVoiceSubmenu5 = { "Voice5", &mVoiceSettings[4].mRootList, AlwaysEnabled };
   SubmenuSettingItem mVoiceSubmenu6 = { "Voice6", &mVoiceSettings[5].mRootList, AlwaysEnabled };
-  IntSettingItem mGlobalSynthPreset = { "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
-  IntSettingItem mMinRotationTimeMS = { "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
 
   ISettingItem* mArray[9] =
   {
-    &mIsEnabled, &mVoiceSubmenu1, &mVoiceSubmenu2,
+    &mMinRotationTimeMS, &mEmitLiveNote, &mVoiceSubmenu1, &mVoiceSubmenu2,
      &mVoiceSubmenu3, &mVoiceSubmenu4, &mVoiceSubmenu5,
-      &mVoiceSubmenu6, &mGlobalSynthPreset, &mMinRotationTimeMS
+      &mVoiceSubmenu6, &mMinRotationTimeMS
   };
   SettingsList mRootList = { mArray };
 
-
-//  Scale mGlobalScale;
 
 };
 
@@ -87,9 +86,9 @@ struct HarmSettingsApp : public SettingsMenuApp
   };
   
   BoolSettingItem mIsEnabled = { "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
-  IntSettingItem mGlobalSynthPreset = { "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
+  //IntSettingItem mGlobalSynthPreset = { "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
   //Scale mGlobalScale;
-  IntSettingItem mMinRotationTimeMS = { "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
+  //IntSettingItem mMinRotationTimeMS = { "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
 
   SubmenuSettingItem mPatchSubmenu00 = { "Preset 00", &mPatchSettings[0].mRootList, AlwaysEnabled };
   SubmenuSettingItem mPatchSubmenu01 = { "Preset 01", &mPatchSettings[1].mRootList, AlwaysEnabled };
@@ -108,9 +107,9 @@ struct HarmSettingsApp : public SettingsMenuApp
   SubmenuSettingItem mPatchSubmenu14 = { "Preset 14", &mPatchSettings[14].mRootList, AlwaysEnabled };
   SubmenuSettingItem mPatchSubmenu15 = { "Preset 15", &mPatchSettings[15].mRootList, AlwaysEnabled };
 
-  ISettingItem* mArray[19] =
+  ISettingItem* mArray[17] =
   {
-    &mIsEnabled, &mGlobalSynthPreset, &mMinRotationTimeMS,
+    &mIsEnabled,// &mGlobalSynthPreset, &mMinRotationTimeMS,
     &mPatchSubmenu00,
     &mPatchSubmenu01,
     &mPatchSubmenu02,

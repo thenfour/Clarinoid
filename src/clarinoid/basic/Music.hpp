@@ -3,6 +3,20 @@
 
 #include "Enum.hpp"
 
+
+////////////////////////////////////////////////////
+enum class NonDiatonicBehavior : uint8_t
+{
+  NextDiatonicNote,
+  PrevDiatonicNote,
+  FollowMelodyFromBelow, // so this voice plays a nondiatonic note too, based on distance from lower note
+  FollowMelodyFromAbove, // so this voice plays a nondiatonic note too, based on distance from lower note
+  Drop,
+  DontMove,
+  TryAlternateScale, // could be interesting to have a list of alternative scales to try.
+};
+
+
 struct NoteDesc
 {
   uint8_t mIndex;
@@ -72,6 +86,12 @@ struct Scale
 {
   ScaleFlavorIndex mFlavorIndex = (ScaleFlavorIndex)0; // index into gScaleFlavors
   uint8_t mRootNoteIndex = 0; // note index gNotes
+
+  // return false if result is invalid
+  bool AdjustNoteByInterval(uint8_t note, int8_t interval, NonDiatonicBehavior nonDiatonicBehavior)
+  {
+    return false;
+  }
 };
 
 // don't use a LUT because we want to support pitch bend and glides and stuff. using a LUT + interpolation would be asinine.

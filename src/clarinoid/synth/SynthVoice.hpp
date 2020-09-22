@@ -71,6 +71,7 @@ struct Voice
   CCPatch mPatchOut;
 
   MusicalVoice mRunningVoice;
+  SynthPreset* mPreset = nullptr;
 
   void EnsurePatchConnections()
   {
@@ -83,25 +84,27 @@ struct Voice
   
   void Update(const MusicalVoice& mv)
   {
+    mPreset = &FindSynthPreset(mv.mSynthPatch);
     bool voiceOrPatchChanged = (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatch != mv.mSynthPatch);
-    if (voiceOrPatchChanged) {
+    if (voiceOrPatchChanged)
+    {
       // init synth patch.
-      mOsc.waveform(1, 1); // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
-      mOsc.waveform(2, 3);
-      mOsc.waveform(3, 1);
+      mOsc.waveform(1, mPreset->mOsc1Waveform);
+      mOsc.waveform(2, mPreset->mOsc2Waveform);
+      mOsc.waveform(3, mPreset->mOsc3Waveform);
     
-      mOsc.pulseWidth(1, 0.5);
-      mOsc.pulseWidth(2, 0.5);
-      mOsc.pulseWidth(3, 0.5);
+      mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
+      mOsc.pulseWidth(2, mPreset->mOsc1PulseWidth);
+      mOsc.pulseWidth(3, mPreset->mOsc1PulseWidth);
   
       mOsc.removeNote();
       mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
     }
 
     if (mv.IsPlaying()) {
-      mOsc.amplitude(1, 0.0);
-      mOsc.amplitude(2, 0.3);
-      mOsc.amplitude(3, 0.3);
+      mOsc.amplitude(1, mPreset->mOsc1Gain);
+      mOsc.amplitude(2, mPreset->mOsc1Gain);
+      mOsc.amplitude(3, mPreset->mOsc1Gain);
     } else {
       mOsc.amplitude(1, 0.0);
       mOsc.amplitude(2, 0.0);
@@ -119,16 +122,21 @@ struct Voice
     // update
     float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * pitchBendRange;
 
-    mOsc.portamentoTime(1, gAppSettings.mPortamentoTime);
-    mOsc.portamentoTime(2, gAppSettings.mPortamentoTime);
-    mOsc.portamentoTime(3, gAppSettings.mPortamentoTime);
+    mOsc.portamentoTime(1, mPreset->mPortamentoTime);
+    mOsc.portamentoTime(2, mPreset->mPortamentoTime);
+    mOsc.portamentoTime(3, mPreset->mPortamentoTime);
 
     float freq = MIDINoteToFreq(midiNote);
-    float freqSync = map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * 2, freq * 7);
   
     mOsc.frequency(1, freq);
-    mOsc.frequency(2, freqSync);
     mOsc.frequency(3, freq);
+
+    if (mPreset->mSync) {
+      float freqSync = map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * 2, freq * 7);
+      mOsc.frequency(2, freqSync);
+    } else {
+      mOsc.frequency(2, freq);
+    }
 
     float filterFreq = map(mv.mBreath01.GetFloatVal(), 0.01, 1, 0, 15000);
     mFilter.frequency(filterFreq);

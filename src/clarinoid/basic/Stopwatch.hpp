@@ -22,6 +22,10 @@ struct Stopwatch
     mStartTime = micros();
   }
 
+  uint32_t ElapsedMillis() {
+    return (uint32_t) ElapsedMicros() / 1000;
+  }
+
   uint64_t ElapsedMicros() {
     uint32_t now = micros();
     if (now < mStartTime) {

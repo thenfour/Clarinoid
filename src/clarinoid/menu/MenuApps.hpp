@@ -13,24 +13,24 @@
 #include "MenuAppTouchKeyGraphs.hpp"
 
 
+SynthSettingsApp gSynthSettingsApp;
 LoopSettingsApp gLoopSettingsApp;
 HarmSettingsApp gHarmSettingsApp;
 SystemSettingsApp gSystemSettingsApp;
 TouchKeyGraphs gTouchKeyApp;
 MetronomeSettingsApp gMetronomeApp;
 DebugMenuApp gDebugApp;
-SynthSettingsApp gSynthSettingsApp;
 ProfileMenuApp gProfileApp;
 
 MenuAppBase* gMenuAppArray[] = 
 {
+  &gSynthSettingsApp,
   &gLoopSettingsApp,
   &gHarmSettingsApp,
   &gSystemSettingsApp,
   &gTouchKeyApp,
   &gMetronomeApp,
   &gDebugApp,
-  &gSynthSettingsApp,
   &gProfileApp,
 };
 

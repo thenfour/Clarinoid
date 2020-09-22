@@ -186,6 +186,7 @@ struct NumericSettingItem : public ISettingItem
 };
 
 using IntSettingItem = NumericSettingItem<int, IntEditor>;
+//using UInt16SettingItem = NumericSettingItem<uint16_t, IntEditor>;
 using FloatSettingItem = NumericSettingItem<float, FloatEditor>;
 
 struct BoolSettingItem : public ISettingItem

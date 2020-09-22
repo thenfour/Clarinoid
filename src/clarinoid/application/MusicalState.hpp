@@ -12,7 +12,7 @@ struct CCEWIMusicalState
 
   LooperAndHarmonizer mLooper;
 
-  // TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
+  // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
   SimpleMovingAverage<15> breath01;// 0-1
   SimpleMovingAverage<60> pitchBendN11; // -1 to 1
   CCThrottlerT<1> mPressureSensingThrottle;
@@ -27,10 +27,6 @@ struct CCEWIMusicalState
   void Update(const CCEWIPhysicalState& ps)
   {
     MusicalVoice mNewState(mLiveVoice);
-
-    //uint8_t prevNote = mLiveVoice.mMidiNote;
-    //bool wasPlayingNote = mLiveVoice.mIsNoteCurrentlyOn;
-    //bool isPlayingNote = wasPlayingNote;
 
     // convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
@@ -52,12 +48,12 @@ struct CCEWIMusicalState
 
     mNewState.mBreath01 = this->breath01.GetValue();
     bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > gAppSettings.mBreathNoteOnThreshold;
-    //mNewState.mIsNoteCurrentlyOn = isPlayingNote;
 
     mNewState.mPitchBendN11 = this->pitchBendN11.GetValue();
     mNewState.mVelocity = 100; // TODO
-    mNewState.mSynthPatch = 0; // TODO
-    mNewState.mHarmPatch = 0;// todo
+
+    mNewState.mHarmPatch = gAppSettings.mSelectedHarmPreset;
+    mNewState.mSynthPatch = gAppSettings.mGlobalSynthPreset; 
 
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
@@ -102,20 +98,6 @@ struct CCEWIMusicalState
     newNote += gAppSettings.mTranspose;
     newNote = constrain(newNote, 1, 127);
     mNewState.mMidiNote = (uint8_t)newNote;
-
-    //mLiveVoice.mNeedsNoteOn = isPlayingNote && (!wasPlayingNote || prevNote != newNote);
-    // send note off in these cases:
-    // - you are not playing but were
-    // - or, you are playing, but a different note than before.
-    //mLiveVoice.mNeedsNoteOff = (!isPlayingNote && wasPlayingNote) || (isPlayingNote && (prevNote != newNote));
-    //mLiveVoice.mNoteOffNote = prevNote;
-
-    // if (mLiveVoice.mNeedsNoteOn) {
-    //   noteOns ++;
-    //   mLiveVoice.mDuration.Restart();
-    // }
-
-    // nUpdates ++;
 
     if (!isPlayingNote) {
       mNewState.mVelocity = 0;

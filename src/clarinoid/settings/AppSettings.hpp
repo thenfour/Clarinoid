@@ -23,21 +23,6 @@ class PresetName
   char buf[PRESET_NAME_LEN];
 };
 
-///////////////////////////////////////////////////////////////////
-enum class SynthPresetRefType : uint8_t
-{
-  Global,
-  Local
-};
-
-EnumItemInfo<SynthPresetRefType> gSynthPresetRefTypeItems[2] = {
-  { SynthPresetRefType::Global, "Global" },
-  { SynthPresetRefType::Local, "Local" },
-};
-
-EnumInfo<SynthPresetRefType> gSynthPresetRefTypeInfo (gSynthPresetRefTypeItems);
-
-///////////////////////////////////////////////////////////////////
 enum class ScaleRefType : uint8_t
 {
   Global,
@@ -54,121 +39,18 @@ EnumItemInfo<ScaleRefType> gScaleRefTypeItems[3] = {
 EnumInfo<ScaleRefType> gScaleRefTypeInfo (gScaleRefTypeItems);
 
 
-///////////////////////////////////////////////////////////////////
-struct HarmVoiceSequenceEntry
-{
-  bool mEnd = true;
-  int8_t mInterval = 0;
-};
-
-enum class NoteOOBBehavior : uint8_t
-{
-  Drop,
-  TransposeOctave
-};
-
-enum class NonDiatonicBehavior : uint8_t
-{
-  NextDiatonicNote,
-  PrevDiatonicNote,
-  FollowMelodyFromBelow, // so this voice plays a nondiatonic note too, based on distance from lower note
-  FollowMelodyFromAbove, // so this voice plays a nondiatonic note too, based on distance from lower note
-  Drop,
-  DontMove,
-  TryAlternateScale, // could be interesting to have a list of alternative scales to try.
-};
-
-enum class HarmVoiceType : uint8_t
-{
-  Off,
-  Interval,
-  Sequence
-};
-
-EnumItemInfo<HarmVoiceType> gHarmVoiceTypeItems[3] = {
-  { HarmVoiceType::Off, "Off" },
-  { HarmVoiceType::Interval, "Interval" },
-  { HarmVoiceType::Sequence, "Sequence" },
-};
-
-EnumInfo<HarmVoiceType> gHarmVoiceTypeInfo (gHarmVoiceTypeItems);
-
-
-
-struct HarmVoiceSettings
-{
-  HarmVoiceType mVoiceType = HarmVoiceType::Off;
-  HarmVoiceSequenceEntry mSequence[HARM_SEQUENCE_LEN];
-
-  SynthPresetRefType mSynthPresetRef = SynthPresetRefType::Global;
-  int mLocalSynthPreset = 0;
-
-  ScaleRefType mScaleRef = ScaleRefType::Global;
-  Scale mLocalScale;
-  int mMinOutpNote = 0;
-  int mMaxOutpNote = 127;
-  NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::Drop;
-  NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::Drop;
-
-// max octaves distance from live?
-
-  int mMinOutpVel = 0;
-  int mMaxOutpVel = 127;
-};
-
-struct HarmPreset
-{
-  PresetName mName;
-  bool mEmitLiveNote = true;
-  HarmVoiceSettings mVoiceSettings[HARM_VOICES];
-};
-
-struct HarmSettings
-{
-  bool mIsEnabled = false;
-  HarmPreset mPresets[HARM_PRESET_COUNT];
-
-  int mGlobalSynthPreset;
-  Scale mGlobalScale;
-  int mMinRotationTimeMS;
-};
-
-enum class LooperTrigger : uint8_t
-{
-  Immediate,
-  NoteOn,
-  NoteOff,
-  Beat1,
-  Beat2,
-  Beat4,
-  Beat8,
-};
-
-EnumItemInfo<LooperTrigger> gLooperTriggerTypeItems[7] = {
-  { LooperTrigger::Immediate, "Immediate" },
-  { LooperTrigger::NoteOn, "NoteOn" },
-  { LooperTrigger::NoteOff, "NoteOff" },
-  { LooperTrigger::Beat1, "Beat1" },
-  { LooperTrigger::Beat2, "Beat2" },
-  { LooperTrigger::Beat4, "Beat4" },
-  { LooperTrigger::Beat8, "Beat8" },
-};
-
-EnumInfo<LooperTrigger> gLooperTriggerTypeInfo (gLooperTriggerTypeItems);
 
 
 
 
+#include "HarmonizerSettings.hpp"
+#include "SynthSettings.hpp"
+#include "LoopstationSettings.hpp"
 
-struct LooperSettings
-{
-  LooperTrigger mTrigger = LooperTrigger::NoteOn;
-};
 
 struct AppSettings
 {
-  float mPortamentoTime = 0.005f;
-  float mReverbGain = .2f;
+  float mReverbGain = 0.2f;
 
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
@@ -183,12 +65,18 @@ struct AppSettings
   int mMetronomeDecayMS= 15;
 
   int mTranspose = 0;
+  ScaleRefType mGlobalScaleRef;
   Scale mGlobalScale; // you can set this
   Scale mDeducedScale; // this is automatically populated always
   float mBPM = 90.0f;
   
   HarmSettings mHarmSettings;
   LooperSettings mLooperSettings;
+  SynthSettings mSynthSettings;
+
+  // these are for the live playing voice. a harmonizer's voices can override the synth preset though.
+  uint16_t mGlobalSynthPreset = 0;
+  uint16_t mSelectedHarmPreset = 0;
 
   float mTouchMaxFactor = 1.5f;
   float mPitchDownMin = 0.15f;
@@ -197,20 +85,33 @@ struct AppSettings
 
 AppSettings gAppSettings;
 
-HarmPreset& FindHarmPreset(bool enabled, size_t id) {
+HarmPreset& FindHarmPreset(uint16_t id) {
   static bool defaultInitialized = false;
   static HarmPreset defaultHarmPreset;
   if (!defaultInitialized) {
-    defaultHarmPreset.mVoiceSettings[0].mVoiceType = HarmVoiceType::Interval;
+    defaultHarmPreset.mVoiceSettings[0].mVoiceType = HarmVoiceType::Sequence;
     defaultHarmPreset.mVoiceSettings[0].mSequence[0].mInterval = 0;
     defaultHarmPreset.mVoiceSettings[0].mSequence[0].mEnd = true;
     defaultHarmPreset.mVoiceSettings[0].mScaleRef = ScaleRefType::Local;
     defaultHarmPreset.mVoiceSettings[0].mLocalScale = Scale { ScaleFlavorIndex::Chromatic, 0 };
   }
-  if (!enabled) {
+  // if (!enabled) {
+  //   return defaultHarmPreset;
+  // }
+  if (id < 0) {
     return defaultHarmPreset;
   }
-  CCASSERT(id > 0 && id <= SizeofStaticArray(gAppSettings.mHarmSettings.mPresets));
+  if (id >= SYNTH_PRESET_COUNT) {
+    return defaultHarmPreset;
+  }
   return gAppSettings.mHarmSettings.mPresets[id];
+}
+
+
+SynthPreset& FindSynthPreset(uint16_t id)
+{
+  if (id < 0) id = 0;
+  if (id >= SYNTH_PRESET_COUNT) id = 0;
+  return gAppSettings.mSynthSettings.mPresets[id];
 }
 

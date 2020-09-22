@@ -4,11 +4,11 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 384000; // 384 kb should be enough right?
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 256000; // 384 kb should be enough right?
 static const size_t LOOPER_TEMP_BUFFER_BYTES = (1 << 11);// a smaller buffer that's just used for intermediate copy ops
 
  // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
- static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 5 + (2 * MAX_SYNTH_VOICES);
+ static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15;
 
 // .../AudioStream.h:107:30: error: data causes a section type conflict with gLoopStationBuffer
 // https://stackoverflow.com/questions/30076949/gcc-error-variable-causes-a-section-type-conflict
@@ -20,6 +20,3 @@ struct dmaloopmem
   audio_block_t gAudioMemory[AUDIO_MEMORY_TO_ALLOCATE];
 };
 static DMAMEM dmaloopmem gLoopstationMemory;
-
-// #define DMAMEM __attribute__ ((section(".dmabuffers"), used))
-
