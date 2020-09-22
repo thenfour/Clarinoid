@@ -122,11 +122,13 @@ struct CCEWIMusicalState
       mNewState.mMidiNote = 0;
     }
 
+    auto transitionEvents = CalculateTransitionEvents(mLiveVoice, mNewState);
+
     mLiveVoice = mNewState;
 
     // we have calculated mLiveVoice, converting physical to live musical state.
     // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.
-    mVoiceCount = mLooper.Update(mLiveVoice, mMusicalVoices, EndPtr(mMusicalVoices));
+    mVoiceCount = mLooper.Update(mLiveVoice, transitionEvents, mMusicalVoices, EndPtr(mMusicalVoices));
   }
 };
 

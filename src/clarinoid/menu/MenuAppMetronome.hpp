@@ -26,7 +26,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
 
   virtual void RenderFrontPage() 
   {
-    float beatFloat = gSynthGraphControl.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mBPM);
+    float beatFloat = gMetronome.GetBeatFloat();// gSynthGraphControl.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mBPM);
     float beatFrac = beatFloat - floor(beatFloat);
     int beatInt = (int)floor(beatFloat);
     //CCPlot(beatInt);

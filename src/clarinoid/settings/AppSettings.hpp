@@ -109,6 +109,9 @@ struct HarmVoiceSettings
   int mMaxOutpNote = 127;
   NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::Drop;
   NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::Drop;
+
+// max octaves distance from live?
+
   int mMinOutpVel = 0;
   int mMaxOutpVel = 127;
 };
@@ -128,6 +131,38 @@ struct HarmSettings
   int mGlobalSynthPreset;
   Scale mGlobalScale;
   int mMinRotationTimeMS;
+};
+
+enum class LooperTrigger : uint8_t
+{
+  Immediate,
+  NoteOn,
+  NoteOff,
+  Beat1,
+  Beat2,
+  Beat4,
+  Beat8,
+};
+
+EnumItemInfo<LooperTrigger> gLooperTriggerTypeItems[7] = {
+  { LooperTrigger::Immediate, "Immediate" },
+  { LooperTrigger::NoteOn, "NoteOn" },
+  { LooperTrigger::NoteOff, "NoteOff" },
+  { LooperTrigger::Beat1, "Beat1" },
+  { LooperTrigger::Beat2, "Beat2" },
+  { LooperTrigger::Beat4, "Beat4" },
+  { LooperTrigger::Beat8, "Beat8" },
+};
+
+EnumInfo<LooperTrigger> gLooperTriggerTypeInfo (gLooperTriggerTypeItems);
+
+
+
+
+
+struct LooperSettings
+{
+  LooperTrigger mTrigger = LooperTrigger::NoteOn;
 };
 
 struct AppSettings
@@ -153,6 +188,7 @@ struct AppSettings
   float mBPM = 90.0f;
   
   HarmSettings mHarmSettings;
+  LooperSettings mLooperSettings;
 
   float mTouchMaxFactor = 1.5f;
   float mPitchDownMin = 0.15f;

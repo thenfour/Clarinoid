@@ -1,8 +1,10 @@
 
 #pragma once
 
-#include "Loopstation.hpp"
+#include <clarinoid/application/Metronome.hpp>
 
+#include "LoopstationMemory.hpp"
+#include "Loopstation.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct LooperAndHarmonizer
@@ -15,6 +17,21 @@ struct LooperAndHarmonizer
 
   Harmonizer mHarmonizer;
 
+  bool mArmed = false;
+  float mBeatTimeToStartRecording = 0;
+
+  // after the trigger fires (or immediately for LooperTrigger::Immediate, this is what starts loop recording.)
+  void TriggerSetStart(const MusicalVoice& liveVoice)
+  {
+    mArmed = false;
+    // reset the loop start, set loop time now.
+    mLoopTimer.Restart();
+    mCurrentlyWritingLayer = 0;
+    mStatus.mState = LooperState::StartSet;
+    mStatus.mCurrentLoopTimeMS = 0;
+    mLayers[0].StartRecording(mStatus, liveVoice, Ptr(gLoopstationMemory.gLoopStationBuffer), Ptr(EndPtr(gLoopstationMemory.gLoopStationBuffer)));
+  }
+
   // UI actions.
   void LoopIt(const MusicalVoice& mv)
   {
@@ -24,12 +41,32 @@ struct LooperAndHarmonizer
     // if the loop length is set, just commit to next layer.
     switch (mStatus.mState) {
     case LooperState::Idle:
-      // reset the loop start, set loop time now.
-      mLoopTimer.Restart();
-      mCurrentlyWritingLayer = 0;
-      mStatus.mState = LooperState::StartSet;
-      mStatus.mCurrentLoopTimeMS = 0;
-      mLayers[0].StartRecording(mStatus, mv, Ptr(gLoopStationBuffer), Ptr(EndPtr(gLoopStationBuffer)));
+      switch (gAppSettings.mLooperSettings.mTrigger) {
+        case LooperTrigger::Immediate:
+          TriggerSetStart(mv);
+          break;
+        default:
+        case LooperTrigger::NoteOn:
+        case LooperTrigger::NoteOff:
+          mArmed = true; // triggering happens on update.
+          break;
+        case LooperTrigger::Beat1:
+          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 1);
+          mArmed = true;
+          break;
+        case LooperTrigger::Beat2:
+          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 2);
+          mArmed = true;
+          break;
+        case LooperTrigger::Beat4:
+          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 4);
+          mArmed = true;
+          break;
+        case LooperTrigger::Beat8:
+          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 8);
+          mArmed = true;
+          break;
+      }
       break;
     case LooperState::StartSet:
       // set loop duration, set up next loop layer.
@@ -49,7 +86,7 @@ struct LooperAndHarmonizer
 
         mCurrentlyWritingLayer++; // can go out of bounds!
         if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
-          mLayers[mCurrentlyWritingLayer].StartRecording(mStatus, mv, buf, Ptr(EndPtr(gLoopStationBuffer)));// prepare the next layer for recording.
+          mLayers[mCurrentlyWritingLayer].StartRecording(mStatus, mv, buf, Ptr(EndPtr(gLoopstationMemory.gLoopStationBuffer)));// prepare the next layer for recording.
         }
       }
 
@@ -59,6 +96,7 @@ struct LooperAndHarmonizer
 
   void Clear()
   {
+    mArmed = false;
     mCurrentlyWritingLayer = 0;
     mStatus.mState = LooperState::Idle;
     //mLoopTimer.Restart();
@@ -76,14 +114,7 @@ struct LooperAndHarmonizer
     mStatus.mCurrentLoopTimeMS = ret;
   }
 
-  //size_t mCurrentPolyphony = 0;
-
-  // here you can record a loop or insert notes.
-  // return the polyphony recorded.
-  // important to actually pay attention to that value: we could have written plausible voice data in other voices
-  // but exclude it for whatever reason. don't use voices past the polyphony returned!
-
-  size_t Update(const MusicalVoice& liveVoice, MusicalVoice* outp, MusicalVoice* outpEnd) {
+  size_t Update(const MusicalVoice& liveVoice, const MusicalVoiceTransitionEvents& transitionEvents, MusicalVoice* outp, MusicalVoice* outpEnd) {
     /*
     1. record state
     2. for each layer, each harmonizer layer, if it can already be filled in, do it.
@@ -104,6 +135,34 @@ struct LooperAndHarmonizer
 
     */
 
+    if (mArmed) {
+      switch (gAppSettings.mLooperSettings.mTrigger) {
+        default:
+        case LooperTrigger::Immediate:
+          CCASSERT(false);
+          break;
+        case LooperTrigger::NoteOn:
+          if (transitionEvents.mNeedsNoteOn) {
+            TriggerSetStart(liveVoice);
+          }
+          break;
+        case LooperTrigger::NoteOff:
+          if (transitionEvents.mNeedsNoteOff) {
+            TriggerSetStart(liveVoice);
+          }
+          break;
+        case LooperTrigger::Beat1:
+        case LooperTrigger::Beat2:
+        case LooperTrigger::Beat4:
+        case LooperTrigger::Beat8:
+          // ask metronome if we crossed a beat, countdown.
+          if (gMetronome.GetBeatFloat() >= mBeatTimeToStartRecording) {
+            TriggerSetStart(liveVoice);
+          }
+          break;
+      }
+    }
+
     // Calculate the loop time for this event. Don't repeat millis() calls, and ensure the time doesn't change through this processing.
     UpdateCurrentLoopTimeMS();
 
@@ -119,20 +178,23 @@ struct LooperAndHarmonizer
       auto& l = mLayers[iLayer];
       bool layerIsUsed = false;
       if (iLayer == mCurrentlyWritingLayer) {
-        // deal with live voice.
+        // LIVE voice.
         layerIsUsed = true;
         *pout = liveVoice; // copy it straight from live
         if (mStatus.mState != LooperState::Idle) {
           l.Write(liveVoice); // record it if that's what we're doing.
         }
       }
-      else {
+      else
+      {
+        // recorded layer voice.
         // consume events sequentially. even if the layer is not playing, it may send a note off. "use" the layer in this case.
         // here's a dilemma: imagine a note has a release envelope after a note-off. In otherd words we cannot tell from note offs whether
         // a voice should be active or not. in that case, the synth should really be responsible for "holding" these voices on.
         // here we just want to track whether a voice is ON or has events.
         layerIsUsed = l.ReadUntilLoopTime(*pout);
       }
+
       if (layerIsUsed) {
         pLiveVoices[iLayer] = pout;// save this musicalvoice for later harmonizing (key=layer!)
         pout += mHarmonizer.Harmonize(iLayer, pout, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
@@ -148,8 +210,6 @@ struct LooperAndHarmonizer
         pout += mHarmonizer.Harmonize(iLayer, pLiveVoices[iLayer], pout, outpEnd, Harmonizer::VoiceFilterOptions::OnlyDeducedVoices);
       }
     }
-
-    //mCurrentPolyphony = (size_t)(pout - outp);
 
     return pout - outp;
   }

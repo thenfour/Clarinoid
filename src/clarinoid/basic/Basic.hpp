@@ -14,5 +14,3 @@
 #include "log.hpp"
 #include "assert.hpp"
 
-
-

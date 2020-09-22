@@ -5,10 +5,9 @@
 #error not for x86 tests
 #endif
 
- // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
- static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 5 + (2 * MAX_SYNTH_VOICES);
-
 #include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/loopstation/LoopstationMemory.hpp>
+
 #include "Patch.hpp"
 
 namespace CCSynthGraph
@@ -184,11 +183,12 @@ struct Voice
 
 struct SynthGraphControl
 {
-  CCThrottlerT<500> mMetronomeTimer;
+  float mPrevMetronomeBeatFrac = 0;
 
   void Setup()
   {
-    AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
+    //AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
+    AudioStream::initialize_memory(gLoopstationMemory.gAudioMemory, SizeofStaticArray(gLoopstationMemory.gAudioMemory));
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.
@@ -200,7 +200,7 @@ struct SynthGraphControl
     CCSynthGraph::audioShield.volume(.7); // headphone vol
     CCSynthGraph::ampLeft.gain(.01);
     CCSynthGraph::ampRight.gain(.01);
-    delay(300); // why?
+    delay(100); // why?
 
     CCSynthGraph::metronomeEnv.delay(0);
     CCSynthGraph::metronomeEnv.attack(0);
@@ -234,9 +234,12 @@ struct SynthGraphControl
       CCSynthGraph::metronomeEnv.decay(gAppSettings.mMetronomeDecayMS);
       CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
       CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
-      if (mMetronomeTimer.IsReady(60000.0f / gAppSettings.mBPM)) {
+
+      float metronomeBeatFrac = gMetronome.GetBeatFrac();
+      if (metronomeBeatFrac < mPrevMetronomeBeatFrac) {// beat boundary is when the frac drops back to 0
         CCSynthGraph::metronomeEnv.noteOn();
       }
+      mPrevMetronomeBeatFrac = metronomeBeatFrac;
     }
   }
 };

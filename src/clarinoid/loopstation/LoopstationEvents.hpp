@@ -5,12 +5,6 @@
 #include <clarinoid/scale_follower/ScaleFollower.hpp>
 #include <clarinoid/harmonizer/harmonizer.hpp>
 
-// .../AudioStream.h:107:30: error: data causes a section type conflict with gLoopStationBuffer
-// https://stackoverflow.com/questions/30076949/gcc-error-variable-causes-a-section-type-conflict
-// TODO: use DMAMEM.
-static /*DMAMEM*/ uint8_t gLoopStationBuffer[LOOPER_MEMORY_TOTAL_BYTES];
-static /*DMAMEM*/ uint8_t gLoopStationTempBuffer[LOOPER_TEMP_BUFFER_BYTES];
-// #define DMAMEM __attribute__ ((section(".dmabuffers"), used))
 
 using event_delay_t = uint8_t;
 static constexpr size_t LOOP_EVENT_DELAY_BITS = sizeof(event_delay_t) * 8;

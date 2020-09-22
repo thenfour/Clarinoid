@@ -16,11 +16,10 @@
 #include <clarinoid/scale_follower/ScaleFollower.hpp>
 #include <clarinoid/harmonizer/harmonizer.hpp>
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = (1 << 17);
-static const size_t LOOPER_TEMP_BUFFER_BYTES = (1 << 11);// a smaller buffer that's just used for intermediate copy ops
 static const uint32_t LOOP_BREATH_PITCH_RESOLUTION_MS = 5; // record only every N milliseconds max. This should probably be coordinated with the similar throttler in MusicalState, to make sure it plays well together
 static const uint32_t LOOP_MIN_DURATION = 100; // minimum length in MS of a loop layer
 
+#include "LoopstationMemory.hpp"
 #include "LoopstationEvents.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,14 +279,21 @@ struct LoopEvent_DebugUnified
 };
 
 
-
+// enum class LoopEventStreamState : uint8_t
+// {
+//   Inactive,
+//   Recording,
+//   Playing
+// }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct LoopEventStream
 {
+  //LoopEventStreamState mStreamState = LoopEventStreamState::Inactive;
   bool mIsPlaying = false;// Mute function
-  bool mOOM = false; // Out of memory condition. Set this flag to stop recording.
   bool mIsRecording = false; // necessary for checking cursor conditions & states.
+
+  bool mOOM = false; // Out of memory condition. Set this flag to stop recording.
   bool mNeedsNoteOff = false;
 
   LoopCursor mBufferBegin;
@@ -303,6 +309,17 @@ struct LoopEventStream
   LoopCursor mPrevCursor;
 
   CCThrottlerT<LOOP_BREATH_PITCH_RESOLUTION_MS> mBreathPitchThrottler;
+
+  // valid only when READING
+  size_t GetMemoryUsage() const {
+    if (!mpStatus)
+      return 0;
+    if (mpStatus->mState != LooperState::DurationSet)
+      return 0;
+    if (!mIsPlaying)
+      return 0;
+    return mEventsValidEnd.DistanceBytes(mBufferBegin.mP);
+  }
 
   const LoopStatus* mpStatus = nullptr;
   const LoopStatus& GetStatus() const { return *mpStatus; }
@@ -601,7 +618,7 @@ struct LoopEventStream
     LoopEvent_ReadHeader(tempCursor, firstEventDelay, firstEventType, throwaway);
     bool shouldWriteFullState = firstEventType != LoopEventType::FullState;
     Ptr fsCursor = mBufferBegin.mP;
-    UnifyCircularBuffer_Left(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd, gLoopStationTempBuffer);
+    UnifyCircularBuffer_Left(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd, gLoopstationMemory.gLoopStationTempBuffer);
 
     if (shouldWriteFullState) {
       LoopEvent_SurgicallyWriteDelayInPlace(Ptr(segmentBBegin), 0);

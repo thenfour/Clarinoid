@@ -8,6 +8,7 @@
 
 struct LoopSettingsApp : public SettingsMenuApp
 {
+  EnumSettingItem<LooperTrigger> mTrigger = { "Trigger", gLooperTriggerTypeInfo, gAppSettings.mLooperSettings.mTrigger, AlwaysEnabled };
   TriggerSettingItem mClearAll = { "Clear All", [](){ gEWIControl.mMusicalState.mLooper.Clear(); }, AlwaysEnabled };
   TriggerSettingItem mLoopIt = { "Loop it", [](){ gEWIControl.mMusicalState.mLooper.LoopIt(gEWIControl.mMusicalState.mLiveVoice); }, AlwaysEnabled };
 
@@ -18,9 +19,58 @@ struct LoopSettingsApp : public SettingsMenuApp
   //LabelSettingItem mLoopPolyphony = { []() {return String("LoopPoly :") + gEWIControl.mMusicalState.mLooper.mCurrentPolyphony; }, AlwaysEnabled };
   LabelSettingItem mSynthPolyphony = { []() {return String("SynthPoly:") + gSynth.mCurrentPolyphony; }, AlwaysEnabled };
 
-  ISettingItem* mArray[7] =
+  LabelSettingItem mMemUsage = { []() { return String("Memusage ():") + GetMemUsagePercent() + "%"; }, AlwaysEnabled }; // memusage 32%
+  LabelSettingItem mMemUsage2 = { []() { return String("") + GetMemUsageKB() + "/" + GetTotalMemKB() + "kb"; }, AlwaysEnabled }; // 32/128kb
+  LabelSettingItem mDuration = { []() { return String("Rec len: ") + GetRecordedDurationSec() + "sec"; }, AlwaysEnabled };
+  LabelSettingItem mMaxDuration = { []() { return String("Est max len: ") + GetMaxRecordedDurationMin() + "min"; }, AlwaysEnabled };
+
+  static float GetMemUsagePercent() {
+    return (float)GetMemUsageKB() * 100.0f / GetTotalMemKB();
+  }
+
+  static int GetMemUsageKB()
   {
-    &mClearAll, &mLoopIt, &mStatus, &mLayer, &mLoopTime, &mLoopLen, &mSynthPolyphony
+    int ret = 0;
+    for (auto& l : gEWIControl.mMusicalState.mLooper.mLayers) {
+      ret += l.GetMemoryUsage();
+    }
+    return ret / 1024;
+  }
+
+  static int GetTotalMemKB()
+  {
+    return LOOPER_MEMORY_TOTAL_BYTES / 1024;
+  }
+
+  static float GetRecordedDurationSec()
+  {
+    size_t playingLayers = 0;
+    for (auto& l : gEWIControl.mMusicalState.mLooper.mLayers) {
+      if (l.mIsPlaying) {
+        ++playingLayers;
+      }
+    }
+    return (float)playingLayers * gEWIControl.mMusicalState.mLooper.mStatus.mLoopDurationMS / 1000.0f;
+  }
+
+  static float GetMaxRecordedDurationMin()
+  {
+    float memUsed = (float)GetMemUsageKB();
+    float memMax = (float)GetTotalMemKB();
+    if (memUsed < 0.01) {
+      return 0.0f;
+    }
+    float multi = memMax / memUsed; // how many times can we fit used into max
+    return multi * GetRecordedDurationSec() / 60.0f;
+  }
+
+  ISettingItem* mArray[12] =
+  {
+    &mTrigger, &mClearAll, &mLoopIt, &mStatus, &mLayer, &mLoopTime, &mLoopLen, &mSynthPolyphony,
+    &mMemUsage,
+    &mMemUsage2,
+    &mDuration,
+    &mMaxDuration
   };
   SettingsList mRootList = { mArray };
 
