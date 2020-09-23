@@ -18,6 +18,7 @@ struct SynthPreset
   float mOsc2PulseWidth = 0.5f;
   float mOsc3PulseWidth = 0.5f;
   bool mSync = true;
+  float mDetune = 0;
 };
 
 struct SynthSettings
@@ -26,12 +27,15 @@ struct SynthSettings
 
   SynthSettings() 
   {
-      mPresets[1].mOsc1Gain = .3f;
-      mPresets[1].mOsc2Gain = 0;
-      mPresets[1].mOsc3Gain = 0;
+      mPresets[1].mOsc1Gain = .2f;
+      mPresets[1].mOsc2Gain = .2f;
+      mPresets[1].mOsc3Gain = .2f;
 
       mPresets[1].mOsc1Waveform = 3;
+      mPresets[1].mOsc2Waveform = 3;
+      mPresets[1].mOsc3Waveform = 3;
       mPresets[1].mSync = false;
+      mPresets[1].mDetune = 0.06f;
   }
 };
 

@@ -618,7 +618,7 @@ struct LoopEventStream
     LoopEvent_ReadHeader(tempCursor, firstEventDelay, firstEventType, throwaway);
     bool shouldWriteFullState = firstEventType != LoopEventType::FullState;
     Ptr fsCursor = mBufferBegin.mP;
-    UnifyCircularBuffer_Left(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd, gLoopstationMemory.gLoopStationTempBuffer);
+    UnifyCircularBuffer_Left(segmentABegin, segmentAEnd, segmentBBegin, segmentBEnd, LOOPSTATION_TEMP_BUFFER);
 
     if (shouldWriteFullState) {
       LoopEvent_SurgicallyWriteDelayInPlace(Ptr(segmentBBegin), 0);

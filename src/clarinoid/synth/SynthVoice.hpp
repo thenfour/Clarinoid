@@ -94,8 +94,8 @@ struct Voice
       mOsc.waveform(3, mPreset->mOsc3Waveform);
     
       mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
-      mOsc.pulseWidth(2, mPreset->mOsc1PulseWidth);
-      mOsc.pulseWidth(3, mPreset->mOsc1PulseWidth);
+      mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
+      mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
   
       mOsc.removeNote();
       mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
@@ -103,8 +103,8 @@ struct Voice
 
     if (mv.IsPlaying()) {
       mOsc.amplitude(1, mPreset->mOsc1Gain);
-      mOsc.amplitude(2, mPreset->mOsc1Gain);
-      mOsc.amplitude(3, mPreset->mOsc1Gain);
+      mOsc.amplitude(2, mPreset->mOsc2Gain);
+      mOsc.amplitude(3, mPreset->mOsc3Gain);
     } else {
       mOsc.amplitude(1, 0.0);
       mOsc.amplitude(2, 0.0);
@@ -128,8 +128,8 @@ struct Voice
 
     float freq = MIDINoteToFreq(midiNote);
   
-    mOsc.frequency(1, freq);
-    mOsc.frequency(3, freq);
+    mOsc.frequency(1, MIDINoteToFreq(midiNote - mPreset->mDetune));
+    mOsc.frequency(3, MIDINoteToFreq(midiNote + mPreset->mDetune));
 
     if (mPreset->mSync) {
       float freqSync = map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * 2, freq * 7);
@@ -196,7 +196,7 @@ struct SynthGraphControl
   void Setup()
   {
     //AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
-    AudioStream::initialize_memory(gLoopstationMemory.gAudioMemory, SizeofStaticArray(gLoopstationMemory.gAudioMemory));
+    AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
 
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.

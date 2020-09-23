@@ -29,7 +29,7 @@ struct LooperAndHarmonizer
     mCurrentlyWritingLayer = 0;
     mStatus.mState = LooperState::StartSet;
     mStatus.mCurrentLoopTimeMS = 0;
-    mLayers[0].StartRecording(mStatus, liveVoice, Ptr(gLoopstationMemory.gLoopStationBuffer), Ptr(EndPtr(gLoopstationMemory.gLoopStationBuffer)));
+    mLayers[0].StartRecording(mStatus, liveVoice, Ptr(LOOPSTATION_BUFFER), Ptr(EndPtr(LOOPSTATION_BUFFER)));
   }
 
   // UI actions.
@@ -86,7 +86,7 @@ struct LooperAndHarmonizer
 
         mCurrentlyWritingLayer++; // can go out of bounds!
         if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
-          mLayers[mCurrentlyWritingLayer].StartRecording(mStatus, mv, buf, Ptr(EndPtr(gLoopstationMemory.gLoopStationBuffer)));// prepare the next layer for recording.
+          mLayers[mCurrentlyWritingLayer].StartRecording(mStatus, mv, buf, Ptr(EndPtr(LOOPSTATION_BUFFER)));// prepare the next layer for recording.
         }
       }
 

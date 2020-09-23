@@ -3,8 +3,8 @@
 
 #define CLARINOID_PLATFORM_TEENSY
 #define CLARINOID_MODULE_LHRH
-//#define LH
-#define RH
+#define LH
+//#define RH
 
 //============================================================
 
@@ -167,10 +167,10 @@ void loop() {
 
   gPayload.data.packedKeys = keyData.Serialize();
 
-  if (gCommThrottle.IsReady()) {
+  //if (gCommThrottle.IsReady()) {
     gTxRx.Send(gPayload);
     gTXIndicator.Touch();
-  }
+  //}
 
   if (ledThrottle.IsReady())
   {
