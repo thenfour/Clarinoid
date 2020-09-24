@@ -1,38 +1,34 @@
 
 #pragma once
 
+#pragma pack(push,4)
 
 template<typename T>
 struct Property
 {
+  // there are a few variations of property, and to reduce memory usage we union some properties.
+  //                 CHANGE+OWNVALUE          REF simple            REF+getters+setters
+  // Ownvalue             x
+  // Ref                                           x
+  // getter                                                                 x
+  // setter                                                                 x
+  // onchange             x
+  // capture              x                                                 x
+  //
+  // this shows which items can be "unionized".
+
   T mOwnValue;
-  T* mRefBinding = &mOwnValue;
+  T* mRefBinding = nullptr;
   typename cc::function<T(void*)>::ptr_t mGetter = nullptr;
-  typename cc::function<void(void*, const T&)>::ptr_t mSetter = nullptr;
-  typename cc::function<void(void*, const T& oldVal, const T& newVal)>::ptr_t mOnChange = nullptr;
+  union {
+    typename cc::function<void(void*, const T&)>::ptr_t mSetter;
+    typename cc::function<void(void*, const T& oldVal, const T& newVal)>::ptr_t mOnChange;
+  };
   void* mpCapture = nullptr;
 
   // copy
-  Property(const Property<T>& rhs) :
-    mOwnValue(rhs.mOwnValue),
-    mRefBinding(rhs.mRefBinding == &rhs.mOwnValue ? &mOwnValue : rhs.mRefBinding),
-    mGetter(rhs.mGetter),
-    mSetter(rhs.mSetter),
-    mOnChange(rhs.mOnChange),
-    mpCapture(rhs.mpCapture)
-  {
-  }
-
-  Property(Property<T>&& rhs) :
-    mOwnValue(rhs.mOwnValue),
-    mRefBinding(rhs.mRefBinding == &rhs.mOwnValue ? &mOwnValue : rhs.mRefBinding),
-    mGetter(std::move(rhs.mGetter)),
-    mSetter(std::move(rhs.mSetter)),
-    mOnChange(std::move(rhs.mOnChange)),
-    mpCapture(rhs.mpCapture)
-  {
-  }
-
+  Property(const Property<T>& rhs)= default;
+  Property(Property<T>&& rhs) = default;
   Property<T>& operator =(const Property<T>&) = delete;
   Property<T>& operator =(Property<T>&&) = delete;
   
@@ -70,10 +66,10 @@ struct Property
     if (mRefBinding) {
       *mRefBinding = val;
     }
-    if (mSetter) {
+    if (mGetter && mSetter) {
       mSetter(mpCapture, val);
     }
-    if (oldVal != val && mOnChange) {
+    if (!mGetter && (oldVal != val) && mOnChange) {
       mOnChange(mpCapture, oldVal, val);
     }
   }
@@ -95,4 +91,8 @@ Property<Tprop> MakePropertyByCasting(Tval* x) {
  
   return Property<Tprop>(getter, setter, x);
 }
+
+#pragma pack(pop)
+
+static constexpr size_t aoeu3 = sizeof(Property<int>);
 
