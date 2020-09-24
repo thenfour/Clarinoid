@@ -8,9 +8,9 @@ struct MetronomeSettingsApp : public SettingsMenuApp
 {
   BoolSettingItem mOnOff = { "Enabled?", "On", "Off", gAppSettings.mMetronomeOn, AlwaysEnabled };
   FloatSettingItem mBPM = { "BPM", 30.0f, 200.0f, gAppSettings.mBPM, AlwaysEnabled };
-  FloatSettingItem mGain = { "Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain, [&](){ return gAppSettings.mMetronomeOn; } };
-  IntSettingItem mNote = { "Note", 20, 120, gAppSettings.mMetronomeNote, [&](){ return gAppSettings.mMetronomeOn; } };
-  IntSettingItem mDecay = { "Decay", 1, 120, gAppSettings.mMetronomeDecayMS, [&](){ return gAppSettings.mMetronomeOn; } };
+  FloatSettingItem mGain = { "Gain", 0.0f, 1.0f, gAppSettings.mMetronomeGain, [](){ return gAppSettings.mMetronomeOn; } };
+  IntSettingItem mNote = { "Note", 20, 120, gAppSettings.mMetronomeNote, [](){ return gAppSettings.mMetronomeOn; } };
+  IntSettingItem mDecay = { "Decay", 1, 120, gAppSettings.mMetronomeDecayMS, [](){ return gAppSettings.mMetronomeOn; } };
 
   ISettingItem* mArray[5] =
   {

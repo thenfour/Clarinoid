@@ -41,37 +41,38 @@ public:
     }
   }
   
-  virtual void RenderApp()
+  static void pageRX(CCMainTxRx& rx, const char *title)
   {
-    gDisplay.mDisplay.setTextSize(1);
-    gDisplay.mDisplay.setTextColor(WHITE);
-    gDisplay.mDisplay.setCursor(0,0);
-
-    auto pageRX = [&](CCMainTxRx& rx, const char *title){
       //CCMainTxRx& rx = (gEncButton.IsPressed()) ? gLHSerial : gRHSerial;
       gDisplay.mDisplay.println(String(title) + " ok:" + rx.mRxSuccess + " #" + rx.mReceivedData.serial);
       gDisplay.mDisplay.print(String("Err:") + rx.mChecksumErrors);
       gDisplay.mDisplay.println(String(" Skip: ") + rx.mSkippedPayloads);
       gDisplay.mDisplay.println(String("fps:") + (int)rx.mReceivedData.framerate + " skip%:" + (int)((float)rx.mSkippedPayloads * 100 / max(1,(int)rx.mRxSuccess)));
       gDisplay.mDisplay.println(String("rxfps:") + (int)rx.mRxRate.getFPS());
-    };
+  };
 
-    auto pageLHRX = [&](){
+  virtual void RenderApp()
+  {
+    gDisplay.mDisplay.setTextSize(1);
+    gDisplay.mDisplay.setTextColor(WHITE);
+    gDisplay.mDisplay.setCursor(0,0);
+
+    auto pageLHRX = [](){
       pageRX(gLHSerial, "LH");
     };
     
-    auto pageRHRX = [&](){
+    auto pageRHRX = [](){
       pageRX(gRHSerial, "RH");
     };
     
-    auto pageMusicalState = [&]() {
+    auto pageMusicalState = []() {
       gDisplay.mDisplay.println(String("#:") + gEWIControl.mMusicalState.mLiveVoice.mMidiNote + " (" + (gEWIControl.mMusicalState.mLiveVoice.IsPlaying() ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.mLiveVoice.mMidiNote) + "hz");
       gDisplay.mDisplay.println(String("transpose:") + gAppSettings.mTranspose);
       gDisplay.mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
       gDisplay.mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
     };
     
-    auto pagePhysicalState = [&]() {
+    auto pagePhysicalState = []() {
       // LH: k:1234 o:1234 b:12
       // RH: k:1234 b:12
       // wind:0.455 // bite:0.11
@@ -105,29 +106,21 @@ public:
       gDisplay.mDisplay.print(String("  tristate: ") + ToString(gEWIControl.mPhysicalState.key_triState));
     };
 
-//    auto pageDebugLHRX = [&]() {
-//      gDisplay.mDisplay.println(String("LH debug") + ToString(gLHSerial.mReceivedData));
-//    };
-//
-//    auto pageDebugRHRX = [&]() {
-//      gDisplay.mDisplay.println(String("RH debug") + ToString(gRHSerial.mReceivedData));
-//    };
-
-    auto pageDebugMain = [&]() {
+    auto pageDebugMain = []() {
       gDisplay.mDisplay.println(String("Max frame ms: ") + ((float)gLongestLoopMicros / 1000));
       gDisplay.mDisplay.println(String("Max idle ms:  ") + ((float)gLongestBetweenLoopMicros / 1000));
       gDisplay.mDisplay.println(String("") + (int)gFramerate.getFPS() + "fps szRx=" + sizeof(LHRHPayload));
       gDisplay.mDisplay.println(String("nUO:") + gUpdateObjectCount + " szTx=" + sizeof(MainChecksummablePayload));
     };
     
-    auto pageAudioStatus = [&]() {
+    auto pageAudioStatus = []() {
       gDisplay.mDisplay.println(String("AM Curr: ") + AudioMemoryUsage());
       gDisplay.mDisplay.println(String("AM Max: ") + AudioMemoryUsageMax() + " ALLOC:" + AUDIO_MEMORY_TO_ALLOCATE);
       gDisplay.mDisplay.println(String("CPU: ") + AudioProcessorUsage());
       gDisplay.mDisplay.println(String("CPU Max: ") + AudioProcessorUsageMax());
     };
     
-    auto pageMemStatus = [&]() {
+    auto pageMemStatus = []() {
       // https://forum.pjrc.com/threads/58839-Teensy-4-0-memory-allocation
       // there are 2 locations we care about:
       // [......zeroed variables][local variables / stack][DMAMEM][ram2.........]0x20280000

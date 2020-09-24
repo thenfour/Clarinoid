@@ -6,14 +6,15 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////
 class SystemSettingsApp : public SettingsMenuApp
 {
-  TriggerSettingItem mResetKeys = { "Reset all keys", [&](){ this->OnResetKeys(); }, AlwaysEnabled };
+  TriggerSettingItem mResetKeys = { "Reset all keys", [](void* capture){ auto pthis = (SystemSettingsApp*)capture; pthis->OnResetKeys(); }, this, AlwaysEnabled };
   FloatSettingItem mTouchMaxFactor = { "Touch max fact", 1, 2, Property<float> {
-    [&]() { return gAppSettings.mTouchMaxFactor; },
-    [&](const float& f)
+    [](void*) { return gAppSettings.mTouchMaxFactor; },
+    [](void*, const float& f)
       {
         gAppSettings.mTouchMaxFactor = f;
         gApp.SendCmd(CommandFromMain::SetTouchMaxFactor, f);
-      }
+      },
+      nullptr
   }, AlwaysEnabled };
   
   FloatSettingItem mPitchDownMin = { "Pitchdown min", 0, 1, gAppSettings.mPitchDownMin, AlwaysEnabled };
@@ -23,16 +24,16 @@ class SystemSettingsApp : public SettingsMenuApp
   FloatSettingItem mBreathUpperBound = { "Breath inp max", 0, 1, gAppSettings.mBreathUpperBound, AlwaysEnabled };
   FloatSettingItem mBreathNoteOnThreshold = { "Breath note on thresh", 0, 1, gAppSettings.mBreathNoteOnThreshold, AlwaysEnabled };
 
-  BoolSettingItem mDimDisplay = { "Display dim?", "Yes", "No", Property<bool>{ [&]() { return gAppSettings.mDisplayDim; },
-    [&](const bool& x) { gAppSettings.mDisplayDim = x; gDisplay.mDisplay.dim(x); }}, AlwaysEnabled };
+  BoolSettingItem mDimDisplay = { "Display dim?", "Yes", "No", Property<bool>{ [](void*) { return gAppSettings.mDisplayDim; },
+    [](void*, const bool& x) { gAppSettings.mDisplayDim = x; gDisplay.mDisplay.dim(x); }, nullptr}, AlwaysEnabled };
 
   BoolSettingItem mOrangeLEDs = { "Orange LEDs?", "On", "Off", Property<bool>{
-    [&]() { return gAppSettings.mOrangeLEDs; },
-    [&](const bool& x)
+    [](void*) { return gAppSettings.mOrangeLEDs; },
+    [](void*, const bool& x)
       {
         gAppSettings.mOrangeLEDs = x;
         gApp.SendCmd(x ? CommandFromMain::EnableOrangeLED : CommandFromMain::DisableOrangeLED);
-      }
+      }, nullptr
     }, AlwaysEnabled };
 
 

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "function.hpp"
 #include "Memory.hpp"
 #include "Util.hpp"
 #include "Enum.hpp"
@@ -13,4 +14,3 @@
 #include "Tristate.hpp"
 #include "log.hpp"
 #include "assert.hpp"
-

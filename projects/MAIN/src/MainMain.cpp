@@ -31,6 +31,8 @@ PROGMEM const char gClarinoidVersion[] = "Clarinoid v0.01";
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_SSD1306.h>
 
+//#pragma pack(push, 1)
+
 // MIDI library is touchy about how you instantiate.
 // Simplest is to do it the way it's designed for: in the main sketch, global scope.
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, gMIDI);

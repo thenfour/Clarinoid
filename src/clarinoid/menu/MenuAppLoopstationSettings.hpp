@@ -9,20 +9,20 @@
 struct LoopSettingsApp : public SettingsMenuApp
 {
   EnumSettingItem<LooperTrigger> mTrigger = { "Trigger", gLooperTriggerTypeInfo, gAppSettings.mLooperSettings.mTrigger, AlwaysEnabled };
-  TriggerSettingItem mClearAll = { "Clear All", [](){ gEWIControl.mMusicalState.mLooper.Clear(); }, AlwaysEnabled };
-  TriggerSettingItem mLoopIt = { "Loop it", [](){ gEWIControl.mMusicalState.mLooper.LoopIt(gEWIControl.mMusicalState.mLiveVoice); }, AlwaysEnabled };
+  TriggerSettingItem mClearAll = { "Clear All", [](void*){ gEWIControl.mMusicalState.mLooper.Clear(); }, nullptr, AlwaysEnabled };
+  TriggerSettingItem mLoopIt = { "Loop it", [](void*){ gEWIControl.mMusicalState.mLooper.LoopIt(gEWIControl.mMusicalState.mLiveVoice); }, nullptr, AlwaysEnabled };
 
-  LabelSettingItem mStatus = { []() {return String("Status:") + (int)gEWIControl.mMusicalState.mLooper.mStatus.mState; }, AlwaysEnabled };
-  LabelSettingItem mLayer = { []() {return String("Layer:") + gEWIControl.mMusicalState.mLooper.mCurrentlyWritingLayer; }, AlwaysEnabled };
-  LabelSettingItem mLoopTime = { []() {return String("LoopTimeMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mCurrentLoopTimeMS; }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::StartSet; } };
-  LabelSettingItem mLoopLen = { []() {return String("LoopLengthMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mLoopDurationMS; }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::DurationSet; } };
+  LabelSettingItem mStatus = { []() {return (String)(String("Status:") + (int)gEWIControl.mMusicalState.mLooper.mStatus.mState); }, AlwaysEnabled };
+  LabelSettingItem mLayer = { []() {return (String)(String("Layer:") + gEWIControl.mMusicalState.mLooper.mCurrentlyWritingLayer); }, AlwaysEnabled };
+  LabelSettingItem mLoopTime = { []() {return (String)(String("LoopTimeMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mCurrentLoopTimeMS); }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::StartSet; } };
+  LabelSettingItem mLoopLen = { []() {return (String)(String("LoopLengthMS:") + gEWIControl.mMusicalState.mLooper.mStatus.mLoopDurationMS); }, [](){ return gEWIControl.mMusicalState.mLooper.mStatus.mState == LooperState::DurationSet; } };
   //LabelSettingItem mLoopPolyphony = { []() {return String("LoopPoly :") + gEWIControl.mMusicalState.mLooper.mCurrentPolyphony; }, AlwaysEnabled };
-  LabelSettingItem mSynthPolyphony = { []() {return String("SynthPoly:") + gSynth.mCurrentPolyphony; }, AlwaysEnabled };
+  LabelSettingItem mSynthPolyphony = { []() {return (String)(String("SynthPoly:") + gSynth.mCurrentPolyphony); }, AlwaysEnabled };
 
-  LabelSettingItem mMemUsage = { []() { return String("Memusage ():") + GetMemUsagePercent() + "%"; }, AlwaysEnabled }; // memusage 32%
-  LabelSettingItem mMemUsage2 = { []() { return String("") + GetMemUsageKB() + "/" + GetTotalMemKB() + "kb"; }, AlwaysEnabled }; // 32/128kb
-  LabelSettingItem mDuration = { []() { return String("Rec len: ") + GetRecordedDurationSec() + "sec"; }, AlwaysEnabled };
-  LabelSettingItem mMaxDuration = { []() { return String("Est max len: ") + GetMaxRecordedDurationMin() + "min"; }, AlwaysEnabled };
+  LabelSettingItem mMemUsage = { []() { return (String)(String("Memusage ():") + GetMemUsagePercent() + "%"); }, AlwaysEnabled }; // memusage 32%
+  LabelSettingItem mMemUsage2 = { []() { return (String)(String("") + GetMemUsageKB() + "/" + GetTotalMemKB() + "kb"); }, AlwaysEnabled }; // 32/128kb
+  LabelSettingItem mDuration = { []() { return (String)(String("Rec len: ") + GetRecordedDurationSec() + "sec"); }, AlwaysEnabled };
+  LabelSettingItem mMaxDuration = { []() { return (String)(String("Est max len: ") + GetMaxRecordedDurationMin() + "min"); }, AlwaysEnabled };
 
   static float GetMemUsagePercent() {
     return (float)GetMemUsageKB() * 100.0f / GetTotalMemKB();

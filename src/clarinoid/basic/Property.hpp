@@ -7,9 +7,10 @@ struct Property
 {
   T mOwnValue;
   T* mRefBinding = &mOwnValue;
-  std::function<T()> mGetter;
-  std::function<void(const T&)> mSetter;
-  std::function<void(const T& oldVal, const T& newVal)> mOnChange;
+  typename cc::function<T(void*)>::ptr_t mGetter = nullptr;
+  typename cc::function<void(void*, const T&)>::ptr_t mSetter = nullptr;
+  typename cc::function<void(void*, const T& oldVal, const T& newVal)>::ptr_t mOnChange = nullptr;
+  void* mpCapture = nullptr;
 
   // copy
   Property(const Property<T>& rhs) :
@@ -17,7 +18,8 @@ struct Property
     mRefBinding(rhs.mRefBinding == &rhs.mOwnValue ? &mOwnValue : rhs.mRefBinding),
     mGetter(rhs.mGetter),
     mSetter(rhs.mSetter),
-    mOnChange(rhs.mOnChange)
+    mOnChange(rhs.mOnChange),
+    mpCapture(rhs.mpCapture)
   {
   }
 
@@ -26,26 +28,28 @@ struct Property
     mRefBinding(rhs.mRefBinding == &rhs.mOwnValue ? &mOwnValue : rhs.mRefBinding),
     mGetter(std::move(rhs.mGetter)),
     mSetter(std::move(rhs.mSetter)),
-    mOnChange(std::move(rhs.mOnChange))
+    mOnChange(std::move(rhs.mOnChange)),
+    mpCapture(rhs.mpCapture)
   {
   }
 
   Property<T>& operator =(const Property<T>&) = delete;
   Property<T>& operator =(Property<T>&&) = delete;
   
-  Property(std::function<T()> getter, std::function<void(const T&)> setter) :
+  Property(typename cc::function<T(void*)>::ptr_t getter, typename cc::function<void(void*, const T&)>::ptr_t setter, void* capture) :
     mGetter(getter),
-    mSetter(setter)
+    mSetter(setter),
+    mpCapture(capture)
   {}
+
   Property(T& binding) :
     mRefBinding(&binding)
   {
-//    char x[100];
-//    sprintf(x, "ref binding to %p", (&binding));
-//    Serial.println(x);
   }
-  Property(std::function<void(const T& oldVal, const T& newVal)> onChange) :
-    mOnChange(onChange)
+
+  Property(typename cc::function<void(void* capture, const T& oldVal, const T& newVal)>::ptr_t onChange, void* capture) :
+    mOnChange(onChange),
+    mpCapture(capture)
   {
   }
   Property() :
@@ -54,8 +58,8 @@ struct Property
   }
   T GetValue() const
   {
-    if (!!mGetter) {
-      return mGetter();
+    if (mGetter) {
+      return mGetter(mpCapture);
     }
     CCASSERT(!!mRefBinding);
     return *mRefBinding;
@@ -67,19 +71,28 @@ struct Property
       *mRefBinding = val;
     }
     if (mSetter) {
-      mSetter(val);
+      mSetter(mpCapture, val);
     }
     if (oldVal != val && mOnChange) {
-      mOnChange(oldVal, val);
+      mOnChange(mpCapture, oldVal, val);
     }
   }
 };
 
 template<typename Tprop, typename Tval>
-Property<Tprop> MakePropertyByCasting(Tval& x) {
-  return Property<Tprop>(
-    [&]() { return static_cast<Tprop>(x); },
-    [&](const Tprop& val) { x = static_cast<Tval>(val);
-  });
+Property<Tprop> MakePropertyByCasting(Tval* x) {
+  static auto getter = [](void* capture)
+  {
+    Tval* px = (Tval*)capture;
+    return static_cast<Tprop>(*px); 
+  };
+
+  static auto setter = [](void* capture, const Tprop& val)
+  {
+    Tval* px = (Tval*)capture;
+    *px = static_cast<Tval>(val);
+  };
+ 
+  return Property<Tprop>(getter, setter, x);
 }
 

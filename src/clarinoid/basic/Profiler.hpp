@@ -72,8 +72,8 @@ struct ProfileTimer
 {
   Stopwatch mStopwatch;
   ProfileObjectType mType;
-  std::function<uint32_t*(ProfileTiming&)> mSelector;
-  ProfileTimer(ProfileObjectType type, std::function<uint32_t*(ProfileTiming&)> selector) :
+  cc::function<uint32_t*(ProfileTiming&)>::ptr_t mSelector;
+  ProfileTimer(ProfileObjectType type, cc::function<uint32_t*(ProfileTiming&)>::ptr_t selector) :
     mType(type),
     mSelector(selector)
   { }

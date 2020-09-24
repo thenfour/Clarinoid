@@ -9,7 +9,7 @@ struct HarmVoiceSettingsApp
   HarmVoiceSettings* mpBinding = nullptr;
 
   EnumSettingItem<HarmVoiceType> mVoiceType = { "Voice Type", gHarmVoiceTypeInfo, mpBinding->mVoiceType, AlwaysEnabled };
-  IntSettingItem mInterval = { "Interval", -48, 48, MakePropertyByCasting<int>(mpBinding->mSequence[0].mInterval), AlwaysEnabled };
+  IntSettingItem mInterval = { "Interval", -48, 48, MakePropertyByCasting<int>(&mpBinding->mSequence[0].mInterval), AlwaysEnabled };
 
   ISettingItem* mArray[2] =
   {
@@ -41,7 +41,7 @@ struct HarmPatchSettingsApp
   };
   
   //BoolSettingItem mIsEnabled = { "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
-  IntSettingItem mMinRotationTimeMS = { "Min Rotation MS", 0, 10000, MakePropertyByCasting<int>(mpBinding->mMinRotationTimeMS), AlwaysEnabled };
+  IntSettingItem mMinRotationTimeMS = { "Min Rotation MS", 0, 10000, MakePropertyByCasting<int>(&mpBinding->mMinRotationTimeMS), AlwaysEnabled };
   BoolSettingItem mEmitLiveNote = { "Emit live note?", "Yes", "No", mpBinding->mEmitLiveNote, AlwaysEnabled };
 
   SubmenuSettingItem mVoiceSubmenu1 = { "Voice1", &mVoiceSettings[0].mRootList, AlwaysEnabled };

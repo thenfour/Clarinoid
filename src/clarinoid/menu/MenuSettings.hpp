@@ -165,9 +165,9 @@ struct NumericSettingItem : public ISettingItem
   String mName;
   TEditor mEditor;
   Property<T> mBinding;
-  std::function<bool()> mIsEnabled;
+  typename cc::function<bool()>::ptr_t mIsEnabled;
   
-  NumericSettingItem(const String& name, T min_, T max_, const Property<T>& binding, const std::function<bool()>& isEnabled) :
+  NumericSettingItem(const String& name, T min_, T max_, const Property<T>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
     mName(name),
     mEditor(min_, max_, binding),
     mBinding(binding),
@@ -195,9 +195,9 @@ struct BoolSettingItem : public ISettingItem
   Property<bool> mBinding;
   String mTrueCaption;
   String mFalseCaption;
-  std::function<bool()> mIsEnabled;
+  typename cc::function<bool()>::ptr_t mIsEnabled;
   
-  BoolSettingItem(const String& name, const String& trueCaption, const String& falseCaption, const Property<bool>& binding, std::function<bool()> isEnabled) :
+  BoolSettingItem(const String& name, const String& trueCaption, const String& falseCaption, const Property<bool>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
     mName(name),
     mBinding(binding),
     mTrueCaption(trueCaption),
@@ -219,13 +219,15 @@ struct BoolSettingItem : public ISettingItem
 struct TriggerSettingItem : public ISettingItem
 {
   String mName;
-  std::function<void()> mAction;
-  std::function<bool()> mIsEnabled;
+  typename cc::function<void(void*)>::ptr_t mAction;
+  typename cc::function<bool()>::ptr_t mIsEnabled;
+  void* mActionCapture = nullptr;
   
-  TriggerSettingItem(const String& name, std::function<void()> action, const std::function<bool()>& isEnabled) :
+  TriggerSettingItem(const String& name, cc::function<void(void*)>::ptr_t action, void* actionCapture, typename cc::function<bool()>::ptr_t isEnabled) :
     mName(name),
     mAction(action),
-    mIsEnabled(isEnabled)
+    mIsEnabled(isEnabled),
+    mActionCapture(actionCapture)
   {
   }
 
@@ -233,7 +235,7 @@ struct TriggerSettingItem : public ISettingItem
   virtual SettingItemType GetType() { return SettingItemType::Trigger; }
   virtual bool IsEnabled() const { return mIsEnabled(); }
   virtual void Trigger() {
-    mAction();
+    mAction(mActionCapture);
   }
 };
 
@@ -242,9 +244,9 @@ struct SubmenuSettingItem : public ISettingItem
 {
   String mName;
   SettingsList* mSubmenu;
-  std::function<bool()> mIsEnabled;
+  typename cc::function<bool()>::ptr_t mIsEnabled;
   
-  SubmenuSettingItem(const String& name, SettingsList* pSubmenu, const std::function<bool()>& isEnabled) :
+  SubmenuSettingItem(const String& name, SettingsList* pSubmenu, typename cc::function<bool()>::ptr_t isEnabled) :
     mName(name),
     mSubmenu(pSubmenu),
     mIsEnabled(isEnabled)
@@ -272,8 +274,9 @@ struct EnumEditor : ISettingItemEditor
   const EnumInfo<T>& mEnumInfo;
 
   Property<int> mListSelectedItem = {
-    [&]() { return (int)mBinding.GetValue(); },
-    [&](const int& val) { mBinding.SetValue((T)val); }
+    [](void* capture) { EnumEditor<T>* pthis = (EnumEditor<T>*)capture; return (int)pthis->mBinding.GetValue(); },
+    [](void* capture, const int& val) { EnumEditor<T>* pthis = (EnumEditor<T>*)capture; pthis->mBinding.SetValue((T)val); },
+    this
   };
 
   ListControl mListControl;
@@ -325,9 +328,9 @@ struct EnumSettingItem : public ISettingItem
   EnumEditor<T> mEditor;
   Property<T> mBinding;
   const EnumInfo<T>& mEnumInfo;
-  std::function<bool()> mIsEnabled;
+  cc::function<bool()>::ptr_t mIsEnabled;
 
-  EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, const std::function<bool()>& isEnabled) :
+  EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, cc::function<bool()>::ptr_t isEnabled) :
     mName(name),
     mEditor(enumInfo, binding),
     mBinding(binding),
@@ -350,10 +353,10 @@ struct EnumSettingItem : public ISettingItem
 
 struct LabelSettingItem : public ISettingItem
 {
-  std::function<String()> mText;
-  std::function<bool()> mIsEnabled;
+  cc::function<String()>::ptr_t mText;
+  cc::function<bool()>::ptr_t mIsEnabled;
 
-  LabelSettingItem(const std::function<String()>& text, const std::function<bool()>& isEnabled) :
+  LabelSettingItem(cc::function<String()>::ptr_t text, cc::function<bool()>::ptr_t isEnabled) :
     mText(text),
     mIsEnabled(isEnabled)
   {

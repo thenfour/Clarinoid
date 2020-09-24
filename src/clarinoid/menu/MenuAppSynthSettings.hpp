@@ -6,14 +6,14 @@
 
 class SynthSettingsApp : public SettingsMenuApp
 {
-  IntSettingItem mGlobalSynthPreset = { "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, MakePropertyByCasting<int>(gAppSettings.mGlobalSynthPreset), AlwaysEnabled };
-  //FloatSettingItem mPortamentoTime = { "Portamento", 0.0f, 0.25f, gAppSettings.mPortamentoTime, AlwaysEnabled };
+  IntSettingItem mGlobalSynthPreset = { "Global synth P#", 0, SYNTH_PRESET_COUNT - 1, MakePropertyByCasting<int>(&gAppSettings.mGlobalSynthPreset), AlwaysEnabled };
   IntSettingItem mTranspose = { "Transpose", -48, 48, gAppSettings.mTranspose, AlwaysEnabled };
   FloatSettingItem mReverbGain = { "Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain, AlwaysEnabled };
   
   ISettingItem* mArray[3] =
   {
-    &mGlobalSynthPreset, &mTranspose, &mReverbGain
+    &mGlobalSynthPreset,
+    &mTranspose, &mReverbGain
   };
   SettingsList mRootList = { mArray };
 
