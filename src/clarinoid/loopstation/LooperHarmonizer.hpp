@@ -171,7 +171,7 @@ struct LooperAndHarmonizer
     // then just put the "live" note but mark it as muted.
 
     MusicalVoice* pout = outp;
-    MusicalVoice* pLiveVoices[LOOP_LAYERS]; // keep track of where i read layer state into, for later when deduced voices are filled in.
+    MusicalVoice* pLiveVoices[LOOP_LAYERS] = {0}; // keep track of where i read layer state into, for later when deduced voices are filled in.
 
     // do the same for other layers; they're read from stream.
     for (uint8_t iLayer = 0; iLayer < SizeofStaticArray(mLayers); ++iLayer) {
@@ -197,7 +197,7 @@ struct LooperAndHarmonizer
 
       if (layerIsUsed) {
         pLiveVoices[iLayer] = pout;// save this musicalvoice for later harmonizing (key=layer!)
-        pout += mHarmonizer.Harmonize(iLayer, pout, transitionEvents, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices);
+        pout += mHarmonizer.Harmonize(iLayer, pout, transitionEvents, pout + 1, outpEnd, Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices);
       }
     }
 
@@ -206,7 +206,7 @@ struct LooperAndHarmonizer
     // go through and fill in all deduced voices. logically, the "live voices" will all remain untouched so voices just get filled in.
     for (uint8_t iLayer = 0; iLayer < SizeofStaticArray(mLayers); ++iLayer) {
       auto& l = mLayers[iLayer];
-      if (l.mIsPlaying) {
+      if (pLiveVoices[iLayer] && l.mIsPlaying) {
         pout += mHarmonizer.Harmonize(iLayer, pLiveVoices[iLayer], transitionEvents, pout, outpEnd, Harmonizer::VoiceFilterOptions::OnlyDeducedVoices);
       }
     }

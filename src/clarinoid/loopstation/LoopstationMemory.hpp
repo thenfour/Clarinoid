@@ -4,7 +4,7 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 240000; // 384 kb should be enough right?
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 384000; // 384 kb should be enough right?
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;// a smaller buffer that's just used for intermediate copy ops
 
  // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.

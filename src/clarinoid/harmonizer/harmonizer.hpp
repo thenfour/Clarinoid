@@ -12,7 +12,7 @@ struct Harmonizer
 
   enum VoiceFilterOptions
   {
-    ExcludeDeducedVoices,
+    AllExceptDeducedVoices,
     OnlyDeducedVoices,
   };
 
@@ -21,7 +21,7 @@ struct Harmonizer
 
   // called each frame to add harmonizer voices to the output, given the live playing voice.
   // liveVoice is considered a part of the output. It will be muted or unmuted whether it should be part of playback
-  // returns the number of voices added (including live voice)
+  // returns the number of voices added (including live voice, even if muted)
   // layerID is needed in order to create the voiceID
   size_t Harmonize(uint8_t loopLayerID, MusicalVoice* liveVoice, const MusicalVoiceTransitionEvents& transitionEvents, MusicalVoice* outp, MusicalVoice* end, VoiceFilterOptions voiceFilter) {
     HarmPreset& preset = FindHarmPreset(liveVoice->mHarmPatch);
@@ -42,7 +42,7 @@ struct Harmonizer
     // then mark it as muted. it needs to be there so the scale deducer can use it.
     liveVoice->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote;
     liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, 0);
-    if (voiceFilter == Harmonizer::VoiceFilterOptions::ExcludeDeducedVoices)
+    if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices)
       ++ ret; // live voice is a non-deduced voice.
 
     if (!gAppSettings.mHarmSettings.mIsEnabled) {
