@@ -28,15 +28,18 @@ enum class SettingItemType
 /////////////////////////////////////////////////////////////////////////////////////////////////
 struct ISettingItem
 {
-  virtual String GetName() = 0;
-  virtual String GetValueString() { return ""; } // not used for trigger types or submenu types
-  virtual SettingItemType GetType() = 0;
-  virtual bool IsEnabled() const = 0; // grayed or not
+  virtual size_t GetMultiCount() { return 1; } // return 1 if this is 1 item. otherwise this item gets replicated N times, with an index parameter.
 
-  virtual void ToggleBool() {} // for bool types
-  virtual void Trigger() {} // for trigger types
-  virtual struct ISettingItemEditor* GetEditor() { return nullptr; } // for custom types
-  virtual struct SettingsList* GetSubmenu() { return nullptr; } // for submenu type
+  virtual String GetName(size_t multiIndex) = 0;
+  virtual String GetValueString(size_t multiIndex) { return ""; } // not used for trigger types or submenu types
+  virtual SettingItemType GetType(size_t multiIndex) = 0;
+  virtual bool IsEnabled(size_t multiIndex) const = 0; // grayed or not
+
+  virtual void ToggleBool(size_t multiIndex) {} // for bool types
+  virtual void Trigger(size_t multiIndex) {} // for trigger types
+  virtual struct ISettingItemEditor* GetEditor(size_t multiIndex) { return nullptr; } // for custom types
+
+  virtual struct SettingsList* GetSubmenu(size_t multiIndex) { return nullptr; } // for submenu type
 };
 
 
@@ -44,17 +47,41 @@ struct ISettingItem
 struct SettingsList
 {
   ISettingItem** mItems;
-  int mItemCount;
+  size_t mItemRawCount;
+  size_t mItemTotalCount;
 
   template<size_t N>
   SettingsList(ISettingItem* (&arr)[N]) :
     mItems(arr),
-    mItemCount(N)
+    mItemRawCount(N)
   {
+    mItemTotalCount = 0;
+    for (auto& i : arr) {
+      mItemTotalCount += i->GetMultiCount();
+    }
   }
   
-  int Count() const { return mItemCount; }
-  ISettingItem* GetItem(int i) { return mItems[i]; }
+  size_t Count() const { return mItemTotalCount; }
+
+  // to consider: LUT or binary search. but since this is just for the menu system, not critical.
+  ISettingItem* GetItem(size_t ireq, size_t& multiIndex)
+  {
+    if (ireq < 0) {
+      CCASSERT(!"SettingsList::GetItem < 0");
+    }
+    size_t itemBeginIndex = 0;
+    for (size_t iraw = 0; iraw < mItemRawCount; ++ iraw)
+    {
+      size_t itemEndIndex = itemBeginIndex + mItems[iraw]->GetMultiCount();
+      if (ireq < itemEndIndex) {
+        multiIndex = ireq - itemBeginIndex;
+        return mItems[iraw];
+      }
+      itemBeginIndex += mItems[iraw]->GetMultiCount();
+    }
+    CCASSERT(!"setting item out of range");
+    return nullptr;
+  }
 };
 
 
@@ -175,12 +202,12 @@ struct NumericSettingItem : public ISettingItem
   {
   }
 
-  virtual String GetName() { return mName; }
-  virtual String GetValueString() { return String(mBinding.GetValue()); }
-  virtual SettingItemType GetType() { return SettingItemType::Custom; }
-  virtual bool IsEnabled() const { return mIsEnabled(); }
+  virtual String GetName(size_t multiIndex) { return mName; }
+  virtual String GetValueString(size_t multiIndex) { return String(mBinding.GetValue()); }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
 
-  virtual ISettingItemEditor* GetEditor() {
+  virtual ISettingItemEditor* GetEditor(size_t multiIndex) {
     return &mEditor;
   }
 };
@@ -206,11 +233,11 @@ struct BoolSettingItem : public ISettingItem
   {
   }
 
-  virtual String GetName() { return mName; }
-  virtual String GetValueString() { return mBinding.GetValue() ? mTrueCaption : mFalseCaption; }
-  virtual bool IsEnabled() const { return mIsEnabled(); }
-  virtual SettingItemType GetType() { return SettingItemType::Bool; }
-  virtual void ToggleBool() {
+  virtual String GetName(size_t multiIndex) { return mName; }
+  virtual String GetValueString(size_t multiIndex) { return mBinding.GetValue() ? mTrueCaption : mFalseCaption; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Bool; }
+  virtual void ToggleBool(size_t multiIndex) {
     mBinding.SetValue(!mBinding.GetValue());
   }
 };
@@ -231,10 +258,10 @@ struct TriggerSettingItem : public ISettingItem
   {
   }
 
-  virtual String GetName() { return mName; }
-  virtual SettingItemType GetType() { return SettingItemType::Trigger; }
-  virtual bool IsEnabled() const { return mIsEnabled(); }
-  virtual void Trigger() {
+  virtual String GetName(size_t multiIndex) { return mName; }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Trigger; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual void Trigger(size_t multiIndex) {
     mAction(mActionCapture);
   }
 };
@@ -253,14 +280,43 @@ struct SubmenuSettingItem : public ISettingItem
   {
   }
 
-  virtual String GetName() { return mName; }
-  virtual SettingItemType GetType() { return SettingItemType::Submenu; }
-  virtual bool IsEnabled() const { return mIsEnabled(); }
-  virtual struct SettingsList* GetSubmenu()
+  virtual String GetName(size_t multiIndex) { return mName; }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Submenu; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual struct SettingsList* GetSubmenu(size_t multiIndex)
   {
     return mSubmenu;
   }
 };
+
+
+
+struct MultiSubmenuSettingItem : public ISettingItem
+{
+  size_t mItemCount;
+  SettingsList* mSubmenu;
+  typename cc::function<String(size_t)>::ptr_t mName;
+  typename cc::function<bool(size_t)>::ptr_t mIsEnabled;
+  
+  MultiSubmenuSettingItem(size_t itemCount, typename cc::function<String(size_t)>::ptr_t name, SettingsList* pSubmenu, typename cc::function<bool(size_t)>::ptr_t isEnabled) :
+    mItemCount(itemCount),
+    mSubmenu(pSubmenu),
+    mName(name),
+    mIsEnabled(isEnabled)
+  {
+  }
+
+  virtual size_t GetMultiCount() { return mItemCount; }
+  virtual String GetName(size_t multiIndex) { return mName(multiIndex); }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Submenu; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(multiIndex); }
+  virtual struct SettingsList* GetSubmenu(size_t multiIndex)
+  {
+    // OH.
+    return mSubmenu;
+  }
+};
+
 
 
 template<typename T>
@@ -339,11 +395,11 @@ struct EnumSettingItem : public ISettingItem
   {
   }
 
-  virtual String GetName() { return mName; }
-  virtual String GetValueString() { return mEnumInfo.GetValueString(mBinding.GetValue()); }
-  virtual SettingItemType GetType() { return SettingItemType::Custom; }
-  virtual bool IsEnabled() const { return mIsEnabled(); }
-  virtual ISettingItemEditor* GetEditor() {
+  virtual String GetName(size_t multiIndex) { return mName; }
+  virtual String GetValueString(size_t multiIndex) { return mEnumInfo.GetValueString(mBinding.GetValue()); }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual ISettingItemEditor* GetEditor(size_t multiIndex) {
     return &mEditor;
   }
 };
@@ -362,10 +418,10 @@ struct LabelSettingItem : public ISettingItem
   {
   }
 
-  virtual String GetName() { return mText(); }
-  virtual String GetValueString() { return ""; }
-  virtual SettingItemType GetType() { return SettingItemType::Custom; }
-  virtual bool IsEnabled() const { return mIsEnabled(); }
+  virtual String GetName(size_t multiIndex) { return mText(); }
+  virtual String GetValueString(size_t multiIndex) { return ""; }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
   virtual ISettingItemEditor* GetEditor() {
     return nullptr;
   }
@@ -427,13 +483,14 @@ public:
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setCursor(0,0);
     gDisplay.mDisplay.setTextWrap(false);
-    int itemToRender = AddConstrained(state.focusedItem, -1, 0, state.pList->Count() - 1);
-    const int maxItemsToRender = 4;
-    const int itemsToRender = min(maxItemsToRender, state.pList->Count());
-    int i = 0;
+    size_t itemToRender = AddConstrained(state.focusedItem, -1, 0, state.pList->Count() - 1);
+    const size_t maxItemsToRender = 4;
+    const size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
+    size_t i = 0;
     for (; i < itemsToRender; ++ i) {
-      auto* item = state.pList->GetItem(itemToRender);
-      if (itemToRender == state.focusedItem) {
+      size_t multiIndex = 0;
+      auto* item = state.pList->GetItem(itemToRender, multiIndex);
+      if (itemToRender == (size_t)state.focusedItem) {
         gDisplay.mDisplay.setTextSize(1);
         gDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       } else {
@@ -441,17 +498,17 @@ public:
         gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
       }
 
-      gDisplay.mDisplay.mSolidText = item->IsEnabled();
+      gDisplay.mDisplay.mSolidText = item->IsEnabled(multiIndex);
 
-      switch (item->GetType()) {
+      switch (item->GetType(multiIndex)) {
       case SettingItemType::Trigger:
-        gDisplay.mDisplay.println(item->GetName());
+        gDisplay.mDisplay.println(item->GetName(multiIndex));
         break;
       case SettingItemType::Submenu:
-        gDisplay.mDisplay.println(item->GetName() + " -->");
+        gDisplay.mDisplay.println(item->GetName(multiIndex) + " -->");
         break;
       default:
-        gDisplay.mDisplay.println(item->GetName() + " = " + item->GetValueString());
+        gDisplay.mDisplay.println(item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex));
         break;  
       }
 
@@ -498,27 +555,28 @@ public:
     // enter
     if (gEncButton.IsNewlyPressed()) 
     {
-      auto* focusedItem = state.pList->GetItem(state.focusedItem);
-      if (!focusedItem->IsEnabled()) {
+      size_t multiIndex = 0;
+      auto* focusedItem = state.pList->GetItem(state.focusedItem, multiIndex);
+      if (!focusedItem->IsEnabled(multiIndex)) {
         // todo: show toast? or some flash or feedback for disabled items?
       } else {      
-        switch(focusedItem->GetType()) {
+        switch(focusedItem->GetType(multiIndex)) {
           case SettingItemType::Bool:
-            focusedItem->ToggleBool();
+            focusedItem->ToggleBool(multiIndex);
             break;
           case SettingItemType::Custom:
-            mpCurrentEditor = focusedItem->GetEditor();
+            mpCurrentEditor = focusedItem->GetEditor(multiIndex);
             if (mpCurrentEditor) {
               mpCurrentEditor->SetupEditing(this, 0, 0);
             }
             break;
           case SettingItemType::Submenu:
             gSettingsMenuNavDepth ++;
-            gSettingsMenuNavStack[gSettingsMenuNavDepth].pList = focusedItem->GetSubmenu();
+            gSettingsMenuNavStack[gSettingsMenuNavDepth].pList = focusedItem->GetSubmenu(multiIndex);
             gSettingsMenuNavStack[gSettingsMenuNavDepth].focusedItem = 0;
             break;
           case SettingItemType::Trigger:
-            focusedItem->Trigger();
+            focusedItem->Trigger(multiIndex);
             break;
         }
       }

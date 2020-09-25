@@ -57,6 +57,6 @@ struct MetronomeSettingsApp : public SettingsMenuApp
   }
 
   virtual ISettingItemEditor* GetBackEditor() {
-    return mBPM.GetEditor();
+    return mBPM.GetEditor(0);
   }
 };
