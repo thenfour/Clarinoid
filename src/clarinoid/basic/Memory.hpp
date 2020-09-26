@@ -6,10 +6,33 @@
 static int RotateIntoRange(const int& val, const int& itemCount) {
   CCASSERT(itemCount > 0);
   int ret = val;
-  while(ret < 0) {
+  while (ret < 0) {
     ret += itemCount; // todo: optimize
   }
   return ret % itemCount;
+}
+
+static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount) {
+  CCASSERT(itemCount > 0);
+  while (val < 0) {
+    val += itemCount; // todo: optimize
+  }
+  return ((uint8_t)(val)) % itemCount;
+}
+
+// correction gets set to the # of rotations, neg, signed. basically an "adjustment".
+static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount, int8_t& correction) {
+  CCASSERT(itemCount > 0);
+  correction = 0;
+  while (val < 0) {
+    val += itemCount; // todo: optimize
+    --correction;
+  }
+  while (val >= itemCount) {
+    val -= itemCount; // todo: optimize
+    ++correction;
+  }
+  return val;
 }
 
 static inline int AddConstrained(int orig, int delta, int min_, int max_) {

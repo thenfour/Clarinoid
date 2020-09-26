@@ -9,7 +9,7 @@ struct HarmVoiceSettingsApp
   HarmVoiceSettings* mpBinding = nullptr;
 
   EnumSettingItem<HarmVoiceType> mVoiceType = { "Voice Type", gHarmVoiceTypeInfo, mpBinding->mVoiceType, AlwaysEnabled };
-  IntSettingItem mInterval = { "Interval", -48, 48, MakePropertyByCasting<int>(&mpBinding->mSequence[0].mInterval), AlwaysEnabled };
+  IntSettingItem mInterval = { "Interval", -48, 48, MakePropertyByCasting<int>(&mpBinding->mSequence[0]), AlwaysEnabled };
 
   ISettingItem* mArray[2] =
   {

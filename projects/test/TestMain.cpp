@@ -9,9 +9,12 @@
 #include "Test.hpp"
 #include "TestMemory.hpp"
 #include "TestLoopstation.hpp"
+#include "TestScales.hpp"
 
 int main()
 {
+  gAppSettings.mLooperSettings.mTrigger = LooperTrigger::Immediate;
+
   TestBufferUnification();
 
   TestReadHeader();
@@ -35,6 +38,8 @@ int main()
   TestVoiceID();
   TestLoopstationLegato();
   TestLoopstationSynth();
+
+  TestScales();
 
   return 0;
 }

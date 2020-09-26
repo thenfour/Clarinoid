@@ -162,6 +162,7 @@
     <ClInclude Include="Test.hpp" />
     <ClInclude Include="TestLoopstation.hpp" />
     <ClInclude Include="TestMemory.hpp" />
+    <ClInclude Include="TestScales.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TestMain.cpp" />

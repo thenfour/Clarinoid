@@ -5,7 +5,6 @@
 #include "AnalogValue.hpp"
 #include "MusicalVoice.hpp"
 
-
 struct Harmonizer
 {
   // state & processing for harmonizer.
@@ -61,7 +60,7 @@ struct Harmonizer
       // can we skip straight away?
       if (hv.mVoiceType == HarmVoiceType::Off)
         continue;
-      if (hv.mSequence[0].mEnd || hv.mSequenceLength == 0)
+      if (hv.mSequence[0] == HarmVoiceSequenceEntry_END || hv.mSequenceLength == 0)
         continue;
       if (pout >= end) {
         return ret;
@@ -89,10 +88,11 @@ struct Harmonizer
         continue;
 
       *pout = *liveVoice; // copy from live voice to get started.
-      pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, nVoice);
+      pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)nVoice);
 
-      CCASSERT(!hv.mSequence[mSequencePos % HARM_SEQUENCE_LEN].mEnd);
-      if (!pScale->AdjustNoteByInterval(pout->mMidiNote, hv.mSequence[mSequencePos % HARM_SEQUENCE_LEN].mInterval, hv.mNonDiatonicBehavior)) {
+      CCASSERT(hv.mSequence[mSequencePos % HARM_SEQUENCE_LEN] != HarmVoiceSequenceEntry_END);
+      // todo: use hv.mNonDiatonicBehavior
+      if (!pScale->AdjustNoteByInterval(pout->mMidiNote, hv.mSequence[mSequencePos % HARM_SEQUENCE_LEN], EnharmonicDirection::Sharp)) {
         continue;
       }
 

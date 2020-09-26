@@ -135,3 +135,5 @@ static inline uint32_t analogWriteResolution(uint32_t bits) { return analogWrite
 
 void digitalWrite(uint8_t pin, uint8_t val) {}
 
+#define DMAMEM
+

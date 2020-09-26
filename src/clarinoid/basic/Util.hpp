@@ -57,6 +57,13 @@ constexpr auto array_of(T&&... t)
 }
 
 
+template<typename T, T divisor>
+void DivRem(T val, T& wholeParts, T& remainder)
+{
+  wholeParts = val / divisor;
+  remainder = val % divisor;
+}
+
 
 template<size_t divBits, typename Tval, typename Tremainder>
 void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)

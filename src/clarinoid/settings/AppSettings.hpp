@@ -90,10 +90,10 @@ HarmPreset& FindHarmPreset(uint16_t id) {
   static HarmPreset defaultHarmPreset;
   if (!defaultInitialized) {
     defaultHarmPreset.mVoiceSettings[0].mVoiceType = HarmVoiceType::Sequence;
-    defaultHarmPreset.mVoiceSettings[0].mSequence[0].mInterval = 0;
-    defaultHarmPreset.mVoiceSettings[0].mSequence[0].mEnd = true;
+    //defaultHarmPreset.mVoiceSettings[0].mSequence[0].mInterval = 0;
+    defaultHarmPreset.mVoiceSettings[0].mSequence[0] = HarmVoiceSequenceEntry_END;
     defaultHarmPreset.mVoiceSettings[0].mScaleRef = ScaleRefType::Local;
-    defaultHarmPreset.mVoiceSettings[0].mLocalScale = Scale { ScaleFlavorIndex::Chromatic, 0 };
+    defaultHarmPreset.mVoiceSettings[0].mLocalScale = Scale { 0, ScaleFlavorIndex::Chromatic };
   }
   // if (!enabled) {
   //   return defaultHarmPreset;

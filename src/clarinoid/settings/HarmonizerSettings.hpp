@@ -3,12 +3,29 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
+
+
 ////////////////////////////////////////////////////
-struct HarmVoiceSequenceEntry
+enum class NonDiatonicBehavior : uint8_t
 {
-  bool mEnd = true;
-  int8_t mInterval = 0;
+  NextDiatonicNote,
+  PrevDiatonicNote,
+  //FollowMelodyFromBelow, // so this voice plays a nondiatonic note too, based on distance from lower note
+  //FollowMelodyFromAbove, // so this voice plays a nondiatonic note too, based on distance from upper note
+  Drop,
+  //DontMove,
+  //TryAlternateScale, // could be interesting to have a list of alternative scales to try.
 };
+
+static constexpr int8_t HarmVoiceSequenceEntry_END = -127;
+
+
+// ////////////////////////////////////////////////////
+// struct HarmVoiceSequenceEntry
+// {
+//   bool mEnd = true;
+//   int8_t mInterval = 0;
+// };
 
 ////////////////////////////////////////////////////
 enum class NoteOOBBehavior : uint8_t
@@ -67,7 +84,7 @@ EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo (gHarmSynthPresetRe
 struct HarmVoiceSettings
 {
   HarmVoiceType mVoiceType = HarmVoiceType::Off;
-  HarmVoiceSequenceEntry mSequence[HARM_SEQUENCE_LEN];
+  int8_t mSequence[HARM_SEQUENCE_LEN];
   size_t mSequenceLength = 0;
 
   HarmSynthPresetRefType mSynthPresetRef = HarmSynthPresetRefType::Global;
@@ -93,4 +110,25 @@ struct HarmSettings
 {
   bool mIsEnabled = false;
   HarmPreset mPresets[HARM_PRESET_COUNT];
+
+  HarmSettings() 
+  {
+    mPresets[1].mEmitLiveNote = true;
+
+    mPresets[1].mVoiceSettings[0].mScaleRef = ScaleRefType::Local;
+    mPresets[1].mVoiceSettings[0].mLocalScale = Scale { 5, ScaleFlavorIndex::MinorPentatonic };
+    mPresets[1].mVoiceSettings[0].mSequenceLength = 1;
+    mPresets[1].mVoiceSettings[0].mVoiceType = HarmVoiceType::Sequence;
+    mPresets[1].mVoiceSettings[0].mSequence[0] = -1;
+    mPresets[1].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Voice;
+
+    mPresets[1].mVoiceSettings[1].mScaleRef = ScaleRefType::Local;
+    mPresets[1].mVoiceSettings[1].mLocalScale = Scale { 5, ScaleFlavorIndex::MinorPentatonic };
+    mPresets[1].mVoiceSettings[1].mSequenceLength = 2;
+    mPresets[1].mVoiceSettings[1].mVoiceType = HarmVoiceType::Sequence;
+    mPresets[1].mVoiceSettings[1].mSequence[0] = -2;
+    mPresets[1].mVoiceSettings[1].mSequence[1] = -3;
+    mPresets[1].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Voice;
+
+  }
 };
