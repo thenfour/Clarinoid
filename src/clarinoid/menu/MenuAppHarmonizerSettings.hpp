@@ -3,132 +3,112 @@
 #include "MenuAppBase.hpp"
 #include "MenuSettings.hpp"
 
+size_t gEditingHarmVoice = 0;
+size_t gEditingHarmPreset = 0;
 
 struct HarmVoiceSettingsApp
 {
-  HarmVoiceSettings* mpBinding = nullptr;
+  static HarmVoiceSettings& EditingVoice() { return gAppSettings.mHarmSettings.mPresets[gEditingHarmPreset].mVoiceSettings[gEditingHarmVoice]; }
 
-  EnumSettingItem<HarmVoiceType> mVoiceType = { "Voice Type", gHarmVoiceTypeInfo, mpBinding->mVoiceType, AlwaysEnabled };
-  IntSettingItem mInterval = { "Interval", -48, 48, MakePropertyByCasting<int>(&mpBinding->mSequence[0]), AlwaysEnabled };
+  EnumSettingItem<HarmSynthPresetRefType> mSynthPresetRef = { "Synth preset ref", gHarmSynthPresetRefTypeInfo, Property<HarmSynthPresetRefType> {
+    [](void* cap) { return EditingVoice().mSynthPresetRef; }, // getter
+    [](void* cap, const HarmSynthPresetRefType& val) { EditingVoice().mSynthPresetRef = val; }, // setter
+    this // capture val
+    }, AlwaysEnabled};
+  IntSettingItem mMinRotationTimeMS = { "Synth Preset", 0, SYNTH_PRESET_COUNT - 1, Property<int> {
+    [](void* cap) { return (int)EditingVoice().mVoiceSynthPreset; }, // getter
+    [](void* cap, const int& val) { EditingVoice().mVoiceSynthPreset = val; }, // setter
+    this // capture val
+    }, AlwaysEnabled };
+
+  // HarmScaleRefType mScaleRef = HarmScaleRefType::Global;
+  // Scale mLocalScale;
+  // uint8_t mMinOutpNote = 0;
+  // uint8_t mMaxOutpNote = 127;
+  // NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::TransposeOctave;
+  // NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+
+  // int8_t mSequence[HARM_SEQUENCE_LEN] = { HarmVoiceSequenceEntry_END };
+  // uint8_t mSequenceLength = 0;
 
   ISettingItem* mArray[2] =
   {
-    &mVoiceType, &mInterval
+    &mSynthPresetRef, &mMinRotationTimeMS
   };
   SettingsList mRootList = { mArray };
-
-  HarmVoiceSettingsApp(HarmVoiceSettings& binding) :
-    mpBinding(&binding)
-  {
-  }
 };
+
+HarmVoiceSettingsApp gHarmVoiceSettingsApp;
 
 struct HarmPatchSettingsApp
 {
-  HarmPreset* mpBinding = nullptr;
-  HarmPatchSettingsApp(HarmPreset& binding) :
-    mpBinding(&binding)
+  static HarmPreset& EditingPreset() { return gAppSettings.mHarmSettings.mPresets[gEditingHarmPreset]; }
+
+  StringSettingItem mName = { [](){ return gAppSettings.mHarmSettings.mPresets[gEditingHarmPreset].mName; }, AlwaysEnabled };
+  BoolSettingItem mEmitLiveNote = { "Emit live note?", "Yes", "No", Property<bool> {
+    [](void* cap) { return EditingPreset().mEmitLiveNote; }, // getter
+    [](void* cap, const bool& val) { EditingPreset().mEmitLiveNote = val; }, // setter
+    this // capture val
+    }, AlwaysEnabled };
+  IntSettingItem mMinRotationTimeMS = { "Min Rotation MS", 0, 10000, Property<int> {
+    [](void* cap) { return (int)EditingPreset().mMinRotationTimeMS; }, // getter
+    [](void* cap, const int& val) { EditingPreset().mMinRotationTimeMS = val; }, // setter
+    this // capture val
+    }, AlwaysEnabled };
+  IntSettingItem mSynthPreset1 = { "Synth preset 1", 0, SYNTH_PRESET_COUNT - 1,Property<int> {
+    [](void* cap) { return (int)EditingPreset().mSynthPreset1; }, // getter
+    [](void* cap, const int& val) { EditingPreset().mSynthPreset1 = val; }, // setter
+    this // capture val
+    }, AlwaysEnabled };
+  IntSettingItem mSynthPreset2 = { "Synth preset 2", 0, SYNTH_PRESET_COUNT - 1, Property<int> {
+    [](void* cap) { return (int)EditingPreset().mSynthPreset2; }, // getter
+    [](void* cap, const int& val) { EditingPreset().mSynthPreset2 = val; }, // setter
+    this // capture val
+    }, AlwaysEnabled };
+  IntSettingItem mSynthPreset3 = { "Synth preset 3", 0, SYNTH_PRESET_COUNT - 1, Property<int> {
+    [](void* cap) { return (int)EditingPreset().mSynthPreset3; }, // getter
+    [](void* cap, const int& val) { EditingPreset().mSynthPreset3 = val; }, // setter
+    this // capture val
+    }, AlwaysEnabled };
+
+  MultiSubmenuSettingItem mVoiceSubmenu = {
+    HARM_VOICES,
+    [](void* cap,size_t mi) { return (String)(String("Voice ") + mi); }, // return string name
+    [](void* cap,size_t mi) { gEditingHarmVoice = mi; return &gHarmVoiceSettingsApp.mRootList; }, // return submenu
+    [](void* cap,size_t mi) { return true; },
+    this
+  };
+
+  ISettingItem* mArray[6] =
   {
-  }
-
-  HarmVoiceSettingsApp mVoiceSettings = { mpBinding->mVoiceSettings[0] };
-  // [HARM_VOICES] = {
-  //   { mpBinding->mVoiceSettings[0] },
-  //   { mpBinding->mVoiceSettings[1] },
-  //   { mpBinding->mVoiceSettings[2] },
-  //   { mpBinding->mVoiceSettings[3] },
-  //   { mpBinding->mVoiceSettings[4] },
-  //   { mpBinding->mVoiceSettings[5] },
-  // };
-  
-  //BoolSettingItem mIsEnabled = { "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
-  IntSettingItem mMinRotationTimeMS = { "Min Rotation MS", 0, 10000, MakePropertyByCasting<int>(&mpBinding->mMinRotationTimeMS), AlwaysEnabled };
-  BoolSettingItem mEmitLiveNote = { "Emit live note?", "Yes", "No", mpBinding->mEmitLiveNote, AlwaysEnabled };
-
-  MultiSubmenuSettingItem mVoiceSubmenu = { HARM_VOICES, [](size_t mi) { return (String)(String("Voice ") + mi); }, &mVoiceSettings.mRootList, [](size_t mi) {return true;} };
-  // SubmenuSettingItem mVoiceSubmenu2 = { "Voice2", &mVoiceSettings[1].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mVoiceSubmenu3 = { "Voice3", &mVoiceSettings[2].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mVoiceSubmenu4 = { "Voice4", &mVoiceSettings[3].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mVoiceSubmenu5 = { "Voice5", &mVoiceSettings[4].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mVoiceSubmenu6 = { "Voice6", &mVoiceSettings[5].mRootList, AlwaysEnabled };
-
-  ISettingItem* mArray[3] =
-  {
-    &mMinRotationTimeMS, &mEmitLiveNote, &mVoiceSubmenu,
-    // &mVoiceSubmenu2,
-    //  &mVoiceSubmenu3, &mVoiceSubmenu4, &mVoiceSubmenu5,
-    //   &mVoiceSubmenu6
+    &mEmitLiveNote,
+    &mMinRotationTimeMS,
+    &mSynthPreset1,
+    &mSynthPreset2,
+    &mSynthPreset3,
+    &mVoiceSubmenu,
   };
   SettingsList mRootList = { mArray };
-
-
 };
 
-
+HarmPatchSettingsApp gHarmPatchSettings;
 
 struct HarmSettingsApp : public SettingsMenuApp
 {
-  HarmPatchSettingsApp mPatchSettings = { gAppSettings.mHarmSettings.mPresets[0] };
-  // [HARM_PRESET_COUNT] = {
-  //   { gAppSettings.mHarmSettings.mPresets[0] },
-  //   { gAppSettings.mHarmSettings.mPresets[1] },
-  //   { gAppSettings.mHarmSettings.mPresets[2] },
-  //   { gAppSettings.mHarmSettings.mPresets[3] },
-  //   { gAppSettings.mHarmSettings.mPresets[4] },
-  //   { gAppSettings.mHarmSettings.mPresets[5] },
-  //   { gAppSettings.mHarmSettings.mPresets[6] },
-  //   { gAppSettings.mHarmSettings.mPresets[7] },
-  //   { gAppSettings.mHarmSettings.mPresets[8] },
-  //   { gAppSettings.mHarmSettings.mPresets[9] },
-  //   { gAppSettings.mHarmSettings.mPresets[10] },
-  //   { gAppSettings.mHarmSettings.mPresets[11] },
-  //   { gAppSettings.mHarmSettings.mPresets[12] },
-  //   { gAppSettings.mHarmSettings.mPresets[13] },
-  //   { gAppSettings.mHarmSettings.mPresets[14] },
-  //   { gAppSettings.mHarmSettings.mPresets[15] },
-  // };
-  
-  BoolSettingItem mIsEnabled = { "Enabled?", "On", "Off", gAppSettings.mHarmSettings.mIsEnabled, AlwaysEnabled };
-  //IntSettingItem mGlobalSynthPreset = { "Global synth preset", 0, SYNTH_PRESET_COUNT - 1, gAppSettings.mHarmSettings.mGlobalSynthPreset, AlwaysEnabled };
-  //Scale mGlobalScale;
-  //IntSettingItem mMinRotationTimeMS = { "Min Rotation", 0, 10000, gAppSettings.mHarmSettings.mMinRotationTimeMS, AlwaysEnabled };
+  //LabelSettingItem mNothing = { []() {return String("nothing"); }, AlwaysEnabled };
 
-  MultiSubmenuSettingItem mPatchSubmenu = { HARM_PRESET_COUNT, [](size_t mi) { return (String)(String("Preset ") + mi); }, &mPatchSettings.mRootList, [](size_t){return true;} };
-  // SubmenuSettingItem mPatchSubmenu01 = { "Preset 01", &mPatchSettings[1].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu02 = { "Preset 02", &mPatchSettings[2].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu03 = { "Preset 03", &mPatchSettings[3].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu04 = { "Preset 04", &mPatchSettings[4].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu05 = { "Preset 05", &mPatchSettings[5].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu06 = { "Preset 06", &mPatchSettings[6].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu07 = { "Preset 07", &mPatchSettings[7].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu08 = { "Preset 08", &mPatchSettings[8].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu09 = { "Preset 09", &mPatchSettings[9].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu10 = { "Preset 10", &mPatchSettings[10].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu11 = { "Preset 11", &mPatchSettings[11].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu12 = { "Preset 12", &mPatchSettings[12].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu13 = { "Preset 13", &mPatchSettings[13].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu14 = { "Preset 14", &mPatchSettings[14].mRootList, AlwaysEnabled };
-  // SubmenuSettingItem mPatchSubmenu15 = { "Preset 15", &mPatchSettings[15].mRootList, AlwaysEnabled };
+  MultiSubmenuSettingItem mPatchSubmenu = {
+    HARM_PRESET_COUNT,
+    [](void*,size_t mi) { return (String)(String("") + mi + ":" + gAppSettings.mHarmSettings.mPresets[mi].mName); },
+    [](void*,size_t mi) { gEditingHarmPreset = mi; return &gHarmPatchSettings.mRootList; },
+    [](void*,size_t mi){ return true; },
+    this
+  };
 
-  ISettingItem* mArray[2] =
+  ISettingItem* mArray[1] =
   {
-    &mIsEnabled,// &mGlobalSynthPreset, &mMinRotationTimeMS,
+    //&mNothing
     &mPatchSubmenu
-    // &mPatchSubmenu01,
-    // &mPatchSubmenu02,
-    // &mPatchSubmenu03,
-    // &mPatchSubmenu04,
-    // &mPatchSubmenu05,
-    // &mPatchSubmenu06,
-    // &mPatchSubmenu07,
-    // &mPatchSubmenu08,
-    // &mPatchSubmenu09,
-    // &mPatchSubmenu10,
-    // &mPatchSubmenu11,
-    // &mPatchSubmenu12,
-    // &mPatchSubmenu13,
-    // &mPatchSubmenu14,
-    // &mPatchSubmenu15,
   };
   SettingsList mRootList = { mArray };
 
@@ -142,9 +122,9 @@ struct HarmSettingsApp : public SettingsMenuApp
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setTextColor(WHITE);
     gDisplay.mDisplay.setCursor(0,0);
-    gDisplay.mDisplay.println(String("Harmonizer [") + (gAppSettings.mHarmSettings.mIsEnabled ? "on" : "off") + "]");
-    gDisplay.mDisplay.println(String("Scale: "));
-    gDisplay.mDisplay.println(String("Preset: "));
+    gDisplay.mDisplay.println("Harmonizer Settings");
+    gDisplay.mDisplay.println(String(""));
+    gDisplay.mDisplay.println(String(""));
     gDisplay.mDisplay.println(String("                  -->"));
 
     SettingsMenuApp::RenderFrontPage();

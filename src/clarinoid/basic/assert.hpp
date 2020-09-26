@@ -60,6 +60,7 @@ static inline void Die(const String& msg) {
 
 #endif
 
-#define CCASSERT(x) if (!(x)) { Die(String("E:" #x) + __FILE__ + ":" + (int)__LINE__); }
-  
+#define CCASSERT(x) if (!(x)) { Die(String("E:") + __COUNTER__ + (":" #x) + __FILE__ + ":" + (int)__LINE__); }
+#define CCDIE(msg) { Die(String("E:") + __COUNTER__ + ":"  + msg + __FILE__ + ":" + (int)__LINE__); }
+
 

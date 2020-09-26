@@ -7,7 +7,7 @@
 class SynthSettingsApp : public SettingsMenuApp
 {
   IntSettingItem mGlobalSynthPreset = { "Global synth P#", 0, SYNTH_PRESET_COUNT - 1, MakePropertyByCasting<int>(&gAppSettings.mGlobalSynthPreset), AlwaysEnabled };
-  IntSettingItem mGlobalHarmPreset = { "Global harm P#", 0, HARM_PRESET_COUNT - 1, MakePropertyByCasting<int>(&gAppSettings.mSelectedHarmPreset), AlwaysEnabled };
+  IntSettingItem mGlobalHarmPreset = { "Global harm P#", 0, HARM_PRESET_COUNT - 1, MakePropertyByCasting<int>(&gAppSettings.mGlobalHarmPreset), AlwaysEnabled };
   IntSettingItem mTranspose = { "Transpose", -48, 48, gAppSettings.mTranspose, AlwaysEnabled };
   FloatSettingItem mReverbGain = { "Reverb gain", 0.0f, 1.0f, gAppSettings.mReverbGain, AlwaysEnabled };
   

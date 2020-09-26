@@ -5,130 +5,121 @@
 
 
 
+enum class HarmScaleRefType : uint8_t
+{
+  Global,
+  //Preset, // you don't really need a scale at the preset level. set it globally, or use local scales for things like chromatic etc.
+  Voice,
+};
+
+EnumItemInfo<HarmScaleRefType> gHarmScaleRefTypeItems[2] = {
+  { HarmScaleRefType::Global, "Global" },
+  { HarmScaleRefType::Voice, "Voice" },
+};
+
+EnumInfo<HarmScaleRefType> gHarmScaleRefTypeInfo ("HarmScaleRefType", gHarmScaleRefTypeItems);
+
+
+
 ////////////////////////////////////////////////////
 enum class NonDiatonicBehavior : uint8_t
 {
   NextDiatonicNote,
   PrevDiatonicNote,
+  PreferStay, // keep playing the same note, if it's within range. otherwise change to the next.
+  PreferMove, // change to the next note (think cantaloupe comp that passing B)
+  Drop, // just don't play this note.
   //FollowMelodyFromBelow, // so this voice plays a nondiatonic note too, based on distance from lower note
   //FollowMelodyFromAbove, // so this voice plays a nondiatonic note too, based on distance from upper note
-  Drop,
-  //DontMove,
-  //TryAlternateScale, // could be interesting to have a list of alternative scales to try.
+  TryAlternateScale, // could be interesting to have a list of alternative scales to try. need to have a LUT of alternative scales or maybe even just use the scale follower's LUT?
 };
 
-static constexpr int8_t HarmVoiceSequenceEntry_END = -127;
+EnumItemInfo<NonDiatonicBehavior> gNonDiatonicBehaviorItems[6] = {
+  { NonDiatonicBehavior::NextDiatonicNote, "NextDiatonicNote" },
+  { NonDiatonicBehavior::PrevDiatonicNote, "PrevDiatonicNote" },
+  { NonDiatonicBehavior::PreferStay, "PreferStay" },
+  { NonDiatonicBehavior::PreferMove, "PreferMove" },
+  { NonDiatonicBehavior::Drop, "Drop" },
+  { NonDiatonicBehavior::TryAlternateScale, "TryAlternateScale" },
+};
+
+EnumInfo<NonDiatonicBehavior> gNonDiatonicBehaviorInfo ("NonDiatonicBehavior", gNonDiatonicBehaviorItems);
 
 
-// ////////////////////////////////////////////////////
-// struct HarmVoiceSequenceEntry
-// {
-//   bool mEnd = true;
-//   int8_t mInterval = 0;
-// };
 
 ////////////////////////////////////////////////////
 enum class NoteOOBBehavior : uint8_t
 {
   Drop,
   TransposeOctave
+  // transposeoctave_but_drop_if_it_crosses_live
 };
-
-////////////////////////////////////////////////////
-enum class HarmVoiceType : uint8_t
-{
-  Off,
-  //Interval,
-  Sequence
-};
-
-EnumItemInfo<HarmVoiceType> gHarmVoiceTypeItems[2] = {
-  { HarmVoiceType::Off, "Off" },
-  //{ HarmVoiceType::Interval, "Interval" }, // it means you only have 1 item in the sequence; it's for GUI purposes not internal.
-  { HarmVoiceType::Sequence, "Sequence" },
-};
-
-EnumInfo<HarmVoiceType> gHarmVoiceTypeInfo (gHarmVoiceTypeItems);
-
-
 
 ////////////////////////////////////////////////////
 enum class HarmSynthPresetRefType : uint8_t
 {
   Global,
-  //Harm,
+  Preset1, // at the preset level i can imagine setting a bass, comp, fx synth presets. they can be used for multiple layers then.
+  Preset2,
+  Preset3,
   Voice
 };
 
-EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[2] = {
+EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[5] = {
   { HarmSynthPresetRefType::Global, "Global" },
-  //{ HarmSynthPresetRefType::Harm, "Harm" },
+  { HarmSynthPresetRefType::Preset1, "Preset1" },
+  { HarmSynthPresetRefType::Preset2, "Preset2" },
+  { HarmSynthPresetRefType::Preset3, "Preset3" },
   { HarmSynthPresetRefType::Voice, "Voice" },
 };
 
-EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo (gHarmSynthPresetRefTypeItems);
-
-
-////////////////////////////////////////////////////
-// enum class HarmRotationTrigger : uint8_t
-// {
-//   Beat,
-//   NoteOn,
-//   NoteChange
-// };
-
-
+EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo ("HarmSynthPresetRefType", gHarmSynthPresetRefTypeItems);
 
 
 ////////////////////////////////////////////////////
 struct HarmVoiceSettings
 {
-  HarmVoiceType mVoiceType = HarmVoiceType::Off;
-  int8_t mSequence[HARM_SEQUENCE_LEN];
-  size_t mSequenceLength = 0;
+  int8_t mSequence[HARM_SEQUENCE_LEN] = { 0 };
+  uint8_t mSequenceLength = 0;
 
   HarmSynthPresetRefType mSynthPresetRef = HarmSynthPresetRefType::Global;
   uint16_t mVoiceSynthPreset = 0;
 
-  ScaleRefType mScaleRef = ScaleRefType::Global;
-  Scale mLocalScale;
-  int mMinOutpNote = 0;
-  int mMaxOutpNote = 127;
-  NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::Drop;
-  NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::Drop;
+  HarmScaleRefType mScaleRef = HarmScaleRefType::Global;
+  Scale mLocalScale = { 0, ScaleFlavorIndex::Chromatic };
+  uint8_t mMinOutpNote = 0;
+  uint8_t mMaxOutpNote = 127;
+  NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::TransposeOctave;
+  NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
 };
 
 struct HarmPreset
 {
-  PresetName mName;
+  String mName = "<init>";
   bool mEmitLiveNote = true;
   HarmVoiceSettings mVoiceSettings[HARM_VOICES];
-  uint32_t mMinRotationTimeMS;
+  uint32_t mMinRotationTimeMS = 150;
+  uint16_t mSynthPreset1 = 0;
+  uint16_t mSynthPreset2 = 1;
+  uint16_t mSynthPreset3 = 2;
 };
 
 struct HarmSettings
 {
-  bool mIsEnabled = false;
   HarmPreset mPresets[HARM_PRESET_COUNT];
+  HarmPreset mDisabledPreset; // the preset that is used when harmonizer is disabled.
 
   HarmSettings() 
   {
-    mPresets[1].mEmitLiveNote = true;
-
-    mPresets[1].mVoiceSettings[0].mScaleRef = ScaleRefType::Local;
-    mPresets[1].mVoiceSettings[0].mLocalScale = Scale { 5, ScaleFlavorIndex::MinorPentatonic };
+    mPresets[1].mName = "sample";
     mPresets[1].mVoiceSettings[0].mSequenceLength = 1;
-    mPresets[1].mVoiceSettings[0].mVoiceType = HarmVoiceType::Sequence;
-    mPresets[1].mVoiceSettings[0].mSequence[0] = -1;
-    mPresets[1].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Voice;
+    mPresets[1].mVoiceSettings[0].mSequence[0] = -2;
 
-    mPresets[1].mVoiceSettings[1].mScaleRef = ScaleRefType::Local;
-    mPresets[1].mVoiceSettings[1].mLocalScale = Scale { 5, ScaleFlavorIndex::MinorPentatonic };
     mPresets[1].mVoiceSettings[1].mSequenceLength = 2;
-    mPresets[1].mVoiceSettings[1].mVoiceType = HarmVoiceType::Sequence;
-    mPresets[1].mVoiceSettings[1].mSequence[0] = -2;
-    mPresets[1].mVoiceSettings[1].mSequence[1] = -3;
-    mPresets[1].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Voice;
-
+    mPresets[1].mVoiceSettings[1].mSequence[0] = -3;
+    mPresets[1].mVoiceSettings[1].mSequence[1] = -4;
   }
 };
+
+static constexpr auto harmsettingssize = sizeof(HarmSettings);
+

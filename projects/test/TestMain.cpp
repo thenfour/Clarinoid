@@ -10,6 +10,7 @@
 #include "TestMemory.hpp"
 #include "TestLoopstation.hpp"
 #include "TestScales.hpp"
+#include "TestHarmonizer.hpp"
 
 int main()
 {
@@ -40,6 +41,7 @@ int main()
   TestLoopstationSynth();
 
   TestScales();
+  TestHarmonizer();
 
   return 0;
 }

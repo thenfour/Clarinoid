@@ -294,26 +294,27 @@ struct SubmenuSettingItem : public ISettingItem
 struct MultiSubmenuSettingItem : public ISettingItem
 {
   size_t mItemCount;
-  SettingsList* mSubmenu;
-  typename cc::function<String(size_t)>::ptr_t mName;
-  typename cc::function<bool(size_t)>::ptr_t mIsEnabled;
+  typename cc::function<SettingsList*(void*,size_t)>::ptr_t mGetSubmenu;// SettingsList* mSubmenu;
+  typename cc::function<String(void*,size_t)>::ptr_t mName;
+  typename cc::function<bool(void*,size_t)>::ptr_t mIsEnabled;
+  void* mpCapture = nullptr;
   
-  MultiSubmenuSettingItem(size_t itemCount, typename cc::function<String(size_t)>::ptr_t name, SettingsList* pSubmenu, typename cc::function<bool(size_t)>::ptr_t isEnabled) :
+  MultiSubmenuSettingItem(size_t itemCount, typename cc::function<String(void*,size_t)>::ptr_t name, typename cc::function<SettingsList*(void*,size_t)>::ptr_t pGetSubmenu, typename cc::function<bool(void*,size_t)>::ptr_t isEnabled, void* capture) :
     mItemCount(itemCount),
-    mSubmenu(pSubmenu),
+    mGetSubmenu(pGetSubmenu),
     mName(name),
-    mIsEnabled(isEnabled)
+    mIsEnabled(isEnabled),
+    mpCapture(capture)
   {
   }
 
   virtual size_t GetMultiCount() { return mItemCount; }
-  virtual String GetName(size_t multiIndex) { return mName(multiIndex); }
+  virtual String GetName(size_t multiIndex) { return mName(mpCapture,multiIndex); }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Submenu; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(multiIndex); }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(mpCapture,multiIndex); }
   virtual struct SettingsList* GetSubmenu(size_t multiIndex)
   {
-    // OH.
-    return mSubmenu;
+    return mGetSubmenu(mpCapture,multiIndex);
   }
 };
 
@@ -426,6 +427,32 @@ struct LabelSettingItem : public ISettingItem
     return nullptr;
   }
 };
+
+
+
+
+
+
+struct StringSettingItem : public ISettingItem
+{
+  cc::function<String()>::ptr_t mText;
+  cc::function<bool()>::ptr_t mIsEnabled;
+
+  StringSettingItem(cc::function<String()>::ptr_t text, cc::function<bool()>::ptr_t isEnabled) :
+    mText(text),
+    mIsEnabled(isEnabled)
+  {
+  }
+
+  virtual String GetName(size_t multiIndex) { return mText(); }
+  virtual String GetValueString(size_t multiIndex) { return ""; }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual ISettingItemEditor* GetEditor() {
+    return nullptr;
+  }
+};
+
 
 
 

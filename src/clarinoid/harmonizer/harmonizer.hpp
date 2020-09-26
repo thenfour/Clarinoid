@@ -9,7 +9,7 @@ struct Harmonizer
 {
   // state & processing for harmonizer.
 
-  enum VoiceFilterOptions
+  enum class VoiceFilterOptions : uint8_t
   {
     AllExceptDeducedVoices,
     OnlyDeducedVoices,
@@ -33,6 +33,7 @@ struct Harmonizer
       {
         mRotationTriggerTimer.Restart();
         mSequencePos ++;
+        //Serial.println(String("seq") + mSequencePos);
       }
     }
 
@@ -44,23 +45,17 @@ struct Harmonizer
     if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices)
       ++ ret; // live voice is a non-deduced voice.
 
-    if (!gAppSettings.mHarmSettings.mIsEnabled) {
-      return ret;
-    }
-
     MusicalVoice* pout = outp;
     
-    bool globalDeduced = gAppSettings.mGlobalScaleRef == ScaleRefType::Deduced;
-    Scale* pGlobalScale = globalDeduced ? &gAppSettings.mDeducedScale : &gAppSettings.mGlobalScale;
+    bool globalDeduced = gAppSettings.mGlobalScaleRef == GlobalScaleRefType::Deduced;
+    Scale globalScale = globalDeduced ? gAppSettings.mDeducedScale : gAppSettings.mGlobalScale;
 
     for (size_t nVoice = 0; nVoice < SizeofStaticArray(preset.mVoiceSettings); ++ nVoice)
     {
       auto& hv = preset.mVoiceSettings[nVoice];
 
       // can we skip straight away?
-      if (hv.mVoiceType == HarmVoiceType::Off)
-        continue;
-      if (hv.mSequence[0] == HarmVoiceSequenceEntry_END || hv.mSequenceLength == 0)
+      if (hv.mSequenceLength == 0)
         continue;
       if (pout >= end) {
         return ret;
@@ -68,18 +63,15 @@ struct Harmonizer
 
       // is it a deduced voice? in other words, one that a scale follower selects? we may need to filter it.
       bool deduced = false;
-      Scale* pScale = nullptr;
+      Scale scale;
 
       switch (hv.mScaleRef) {
-      case ScaleRefType::Local:
-        pScale = &hv.mLocalScale;
-      case ScaleRefType::Global:
-        deduced = globalDeduced;
-        pScale = pGlobalScale;
+      case HarmScaleRefType::Voice:
+        scale = hv.mLocalScale;
         break;
-      case ScaleRefType::Deduced:
-        deduced = true;
-        pScale = &gAppSettings.mDeducedScale;
+      case HarmScaleRefType::Global:
+        deduced = globalDeduced;
+        scale = globalScale;
         break;
       } 
 
@@ -88,13 +80,15 @@ struct Harmonizer
         continue;
 
       *pout = *liveVoice; // copy from live voice to get started.
-      pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)nVoice);
+      pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)(nVoice + 1)); // +1 because live voice is id 0.
 
-      CCASSERT(hv.mSequence[mSequencePos % HARM_SEQUENCE_LEN] != HarmVoiceSequenceEntry_END);
       // todo: use hv.mNonDiatonicBehavior
-      if (!pScale->AdjustNoteByInterval(pout->mMidiNote, hv.mSequence[mSequencePos % HARM_SEQUENCE_LEN], EnharmonicDirection::Sharp)) {
+      auto newNote = scale.AdjustNoteByInterval(pout->mMidiNote, hv.mSequence[mSequencePos % hv.mSequenceLength], EnharmonicDirection::Sharp);
+      if (!newNote) {
         continue;
       }
+
+      pout->mMidiNote = newNote;
 
       // corrective settings...
       switch (hv.mNoteOOBBehavior) {
@@ -122,6 +116,15 @@ struct Harmonizer
       case HarmSynthPresetRefType::Global:
         pout->mSynthPatch = gAppSettings.mGlobalSynthPreset;
         break;
+      case HarmSynthPresetRefType::Preset1:
+        pout->mSynthPatch = preset.mSynthPreset1;
+        break;
+      case HarmSynthPresetRefType::Preset2:
+        pout->mSynthPatch = preset.mSynthPreset2;
+        break;
+      case HarmSynthPresetRefType::Preset3:
+        pout->mSynthPatch = preset.mSynthPreset3;
+        break;
       case HarmSynthPresetRefType::Voice:
         pout->mSynthPatch = hv.mVoiceSynthPreset;
         break;
@@ -129,8 +132,7 @@ struct Harmonizer
 
       ++ pout;
       ++ ret;
-    }
-
+    } // for voice
     
     return ret;
   }

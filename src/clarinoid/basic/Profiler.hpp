@@ -43,7 +43,7 @@ EnumItemInfo<ProfileObjectType> gProfileObjectTypeItems[gProfileObjectTypeCount]
   { ProfileObjectType::BreathSensor, "BreathSensor" },
 };
 
-EnumInfo<ProfileObjectType> gProfileObjectTypeInfo (gProfileObjectTypeItems);
+EnumInfo<ProfileObjectType> gProfileObjectTypeInfo ("ProfileObjectType", gProfileObjectTypeItems);
 
 
 struct ProfileTiming

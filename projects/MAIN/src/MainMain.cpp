@@ -66,7 +66,6 @@ uint32_t gLoopExitMicros = micros();
     gDisplay.mDisplay.setCursor(0,0);
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-    gDisplay.mDisplay.println("!EXCEPTION!");
     gDisplay.mDisplay.println(gCrashMessage);
     gDisplay.mDisplay.display();
     Serial.begin(9600);

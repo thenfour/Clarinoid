@@ -52,7 +52,7 @@ struct CCEWIMusicalState
     mNewState.mPitchBendN11 = this->pitchBendN11.GetValue();
     mNewState.mVelocity = 100; // TODO
 
-    mNewState.mHarmPatch = gAppSettings.mSelectedHarmPreset;
+    mNewState.mHarmPatch = gAppSettings.mGlobalHarmPreset;
     mNewState.mSynthPatch = gAppSettings.mGlobalSynthPreset; 
 
     // the rules are rather weird for keys. open is a C#...

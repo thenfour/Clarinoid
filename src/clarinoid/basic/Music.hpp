@@ -21,18 +21,34 @@ struct NoteDesc
 };
 
 NoteDesc const gNotes[12] = {
-  {0, "C"},
+  {0, "C "},
   {1, "C#"},
-  {2, "D"},
+  {2, "D "},
   {3, "D#"},
-  {4, "E"},
-  {5, "F"},
+  {4, "E "},
+  {5, "F "},
   {6, "F#"},
-  {7, "G"},
+  {7, "G "},
   {8, "G#"},
-  {9, "A"},
+  {9, "A "},
   {10, "A#"},
-  {11, "B"},
+  {11, "B "},
+};
+
+enum class Note : uint8_t
+{
+  C,
+  Db,
+  D,
+  Eb,
+  E,
+  F,
+  Gb,
+  G,
+  Ab,
+  A,
+  Bb,
+  B
 };
 
 ////////////////////////////////////////////////////
@@ -59,6 +75,13 @@ public:
   MidiNote(uint8_t oct, uint8_t note) :
     mValue(oct * 12 + note),
     mNoteIndex(note),
+    mOctave(oct)
+  {
+  }
+
+  MidiNote(uint8_t oct, Note note) :
+    mValue(oct * 12 + (uint8_t)note),
+    mNoteIndex((uint8_t)note),
     mOctave(oct)
   {
   }
@@ -263,6 +286,10 @@ struct Scale
   Scale(const Scale&) = default;
   Scale(uint8_t root, ScaleFlavorIndex flavor) :
     mRootNoteIndex(root),
+    mFlavorIndex(flavor)
+  {}
+  Scale(Note root, ScaleFlavorIndex flavor) :
+    mRootNoteIndex((uint8_t)root),
     mFlavorIndex(flavor)
   {}
 

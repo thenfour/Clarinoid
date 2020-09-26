@@ -84,7 +84,7 @@ struct LoopSettingsApp : public SettingsMenuApp
     gDisplay.mDisplay.setTextSize(1);
     gDisplay.mDisplay.setTextColor(WHITE);
     gDisplay.mDisplay.setCursor(0,0);
-    gDisplay.mDisplay.println(String("Looper [") + (gAppSettings.mHarmSettings.mIsEnabled ? "on" : "off") + "]");
+    gDisplay.mDisplay.println("Looper settings");
     gDisplay.mDisplay.println(String("Scale: "));
     gDisplay.mDisplay.println(String("Preset: "));
     gDisplay.mDisplay.println(String("                  -->"));

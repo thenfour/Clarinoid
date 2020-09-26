@@ -6,7 +6,7 @@
 
 struct SynthPreset
 {
-  PresetName mName;
+  String mName;
   float mPortamentoTime = 0.005f;
   float mOsc1Gain = 0;
   float mOsc2Gain = 0.3f;

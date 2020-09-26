@@ -14,33 +14,9 @@ static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * (HARM_VOICES + 1 /* e
 
 static const size_t PRESET_NAME_LEN = 16;
 
-static const size_t SYNTH_PRESET_COUNT = 10;
+static const size_t SYNTH_PRESET_COUNT = 16;
 
 bool gTouchKeyGraphsIsRunning = false; // todo: this is a hack
-
-class PresetName
-{
-  char buf[PRESET_NAME_LEN];
-};
-
-enum class ScaleRefType : uint8_t
-{
-  Global,
-  Deduced,
-  Local
-};
-
-EnumItemInfo<ScaleRefType> gScaleRefTypeItems[3] = {
-  { ScaleRefType::Global, "Global" },
-  { ScaleRefType::Deduced, "Deduced" },
-  { ScaleRefType::Local, "Local" },
-};
-
-EnumInfo<ScaleRefType> gScaleRefTypeInfo (gScaleRefTypeItems);
-
-
-
-
 
 
 #include "HarmonizerSettings.hpp"
@@ -48,10 +24,26 @@ EnumInfo<ScaleRefType> gScaleRefTypeInfo (gScaleRefTypeItems);
 #include "LoopstationSettings.hpp"
 
 
+
+
+enum class GlobalScaleRefType : uint8_t
+{
+  Chosen,
+  Deduced,
+};
+
+EnumItemInfo<GlobalScaleRefType> gGlobalScaleRefTypeItems[2] = {
+  { GlobalScaleRefType::Chosen, "Chosen" },
+  { GlobalScaleRefType::Deduced, "Deduced" },
+};
+
+EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo ("GlobalScaleRefType", gGlobalScaleRefTypeItems);
+
+
+
+
 struct AppSettings
 {
-  float mReverbGain = 0.2f;
-
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
 
@@ -59,16 +51,24 @@ struct AppSettings
   float mBreathUpperBound = 0.7f;
   float mBreathNoteOnThreshold = 0.01f;
   
+  float mTouchMaxFactor = 1.5f;
+  float mPitchDownMin = 0.15f;
+  float mPitchDownMax = 0.6f;
+
+  float mReverbGain = 0.2f;
+
   bool mMetronomeOn = false;
   float mMetronomeGain = 0.8f;
   int mMetronomeNote = 80;
   int mMetronomeDecayMS= 15;
 
+  float mBPM = 104.0f;
+
   int mTranspose = 0;
-  ScaleRefType mGlobalScaleRef;
-  Scale mGlobalScale; // you can set this
+
+  GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Chosen;
+  Scale mGlobalScale = Scale { Note::E, ScaleFlavorIndex::MajorPentatonic }; // you can set this
   Scale mDeducedScale; // this is automatically populated always
-  float mBPM = 90.0f;
   
   HarmSettings mHarmSettings;
   LooperSettings mLooperSettings;
@@ -76,37 +76,21 @@ struct AppSettings
 
   // these are for the live playing voice. a harmonizer's voices can override the synth preset though.
   uint16_t mGlobalSynthPreset = 0;
-  uint16_t mSelectedHarmPreset = 0;
-
-  float mTouchMaxFactor = 1.5f;
-  float mPitchDownMin = 0.15f;
-  float mPitchDownMax = 0.6f;
+  uint16_t mGlobalHarmPreset = 0;
 };
 
 AppSettings gAppSettings;
 
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 HarmPreset& FindHarmPreset(uint16_t id) {
-  static bool defaultInitialized = false;
-  static HarmPreset defaultHarmPreset;
-  if (!defaultInitialized) {
-    defaultHarmPreset.mVoiceSettings[0].mVoiceType = HarmVoiceType::Sequence;
-    //defaultHarmPreset.mVoiceSettings[0].mSequence[0].mInterval = 0;
-    defaultHarmPreset.mVoiceSettings[0].mSequence[0] = HarmVoiceSequenceEntry_END;
-    defaultHarmPreset.mVoiceSettings[0].mScaleRef = ScaleRefType::Local;
-    defaultHarmPreset.mVoiceSettings[0].mLocalScale = Scale { 0, ScaleFlavorIndex::Chromatic };
-  }
-  // if (!enabled) {
-  //   return defaultHarmPreset;
-  // }
-  if (id < 0) {
-    return defaultHarmPreset;
-  }
-  if (id >= SYNTH_PRESET_COUNT) {
-    return defaultHarmPreset;
-  }
+  if (id < 0) return gAppSettings.mHarmSettings.mDisabledPreset;
+  if (id >= SYNTH_PRESET_COUNT) return gAppSettings.mHarmSettings.mDisabledPreset;
   return gAppSettings.mHarmSettings.mPresets[id];
 }
-
 
 SynthPreset& FindSynthPreset(uint16_t id)
 {

@@ -26,7 +26,7 @@ EnumItemInfo<LooperTrigger> gLooperTriggerTypeItems[7] = {
   { LooperTrigger::Beat8, "Beat8" },
 };
 
-EnumInfo<LooperTrigger> gLooperTriggerTypeInfo (gLooperTriggerTypeItems);
+EnumInfo<LooperTrigger> gLooperTriggerTypeInfo ("LooperTrigger", gLooperTriggerTypeItems);
 
 
 

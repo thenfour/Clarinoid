@@ -16,20 +16,21 @@ struct EnumItemInfo
 };
 
 // THIS REQUIRES THAT YOUR VALUES ARE SEQUENTIAL AND THE SAME AS LIST INDICES. Runtime checks performed.
-// otherwise i would need to add a bunch of inefficient 
 template<typename T>
 struct EnumInfo : IList {
   const size_t mItemCount;
   const EnumItemInfo<T>* mItems;
+  const char *mTypeName;
   
   template<size_t N>
-  EnumInfo(const EnumItemInfo<T>(&enumItems)[N]) :
+  EnumInfo(const char *typeName, const EnumItemInfo<T>(&enumItems)[N]) :
     mItemCount(N),
-    mItems(enumItems)
+    mItems(enumItems),
+    mTypeName(typeName)
   {
     for (size_t i = 0; i < N; ++ i) {
       if (static_cast<size_t>(mItems[i].mValue) != i) {
-        Die("Enum value did not correspond to list index");
+        CCDIE(String("enum<") + mTypeName + "> bad item value");
       }
     }
   }
