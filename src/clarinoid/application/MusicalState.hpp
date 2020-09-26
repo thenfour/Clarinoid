@@ -47,7 +47,7 @@ struct CCEWIMusicalState
         mCurrentBreath01.Update(breath);
       }
 
-      CCPlot(ps.pitchDown01);
+      //CCPlot(ps.pitchDown01);
 
       {
         _incomingPitchBendN11.Update(ps.pitchDown01);
