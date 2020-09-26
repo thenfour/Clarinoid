@@ -17,8 +17,8 @@ class SystemSettingsApp : public SettingsMenuApp
       nullptr
   }, AlwaysEnabled };
   
-  FloatSettingItem mPitchDownMin = { "Pitchdown min", 0, 1, gAppSettings.mPitchDownMin, AlwaysEnabled };
-  FloatSettingItem mPitchDownMax = { "Pitchdown max", 0, 1, gAppSettings.mPitchDownMax, AlwaysEnabled };
+  //FloatSettingItem mPitchDownMin = { "Pitchdown min", 0, 1, gAppSettings.mPitchDownMin, AlwaysEnabled };
+  //FloatSettingItem mPitchDownMax = { "Pitchdown max", 0, 1, gAppSettings.mPitchDownMax, AlwaysEnabled };
 
   FloatSettingItem mBreathLowerBound = { "Breath inp min", 0, 1, gAppSettings.mBreathLowerBound, AlwaysEnabled };
   FloatSettingItem mBreathUpperBound = { "Breath inp max", 0, 1, gAppSettings.mBreathUpperBound, AlwaysEnabled };
@@ -37,10 +37,12 @@ class SystemSettingsApp : public SettingsMenuApp
     }, AlwaysEnabled };
 
 
-  ISettingItem* mArray[9] =
+  ISettingItem* mArray[7] =
   {
-    &mResetKeys, &mTouchMaxFactor, &mPitchDownMin,
-    &mPitchDownMax, &mBreathLowerBound, &mBreathUpperBound,
+    &mResetKeys, &mTouchMaxFactor,
+    //&mPitchDownMin,
+    //&mPitchDownMax,
+    &mBreathLowerBound, &mBreathUpperBound,
     &mBreathNoteOnThreshold, &mDimDisplay, &mOrangeLEDs
   };
   SettingsList mRootList = { mArray };

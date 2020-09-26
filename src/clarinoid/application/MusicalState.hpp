@@ -13,15 +13,20 @@ struct CCEWIMusicalState
   LooperAndHarmonizer mLooper;
 
   // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
-  SimpleMovingAverage<15> breath01;// 0-1
-  SimpleMovingAverage<60> pitchBendN11; // -1 to 1
+  SimpleMovingAverage<4> _incomingBreath01;// 0-1
+  SimpleMovingAverage<4> _incomingPitchBendN11; // -1 to 1
+  SimpleMovingAverage<15> mCurrentBreath01;
+  SimpleMovingAverage<60> mCurrentPitchN11;
+
   CCThrottlerT<1> mPressureSensingThrottle;
   int nUpdates = 0;
   int noteOns = 0;
 
   CCEWIMusicalState() {
-    this->breath01.Update(0);
-    this->pitchBendN11.Update(0);
+    this->_incomingBreath01.Update(0);
+    this->mCurrentBreath01.Update(0);
+    this->_incomingPitchBendN11.Update(0);
+    this->mCurrentPitchN11.Update(0);
   }
 
   void Update(const CCEWIPhysicalState& ps)
@@ -31,25 +36,59 @@ struct CCEWIMusicalState
     // convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
 
-    if (nUpdates == 0 || mPressureSensingThrottle.IsReady()) {
+    if (nUpdates == 0 || mPressureSensingThrottle.IsReady())
+    {
+      {
+        _incomingBreath01.Update(ps.breath01);
+        float breath = _incomingBreath01.GetValue();
+        breath = constrain(breath, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound);
+        breath = map(breath, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound, 0.0f, 1.0f);
+        breath = constrain(breath, 0.0f, 1.0f);
+        mCurrentBreath01.Update(breath);
+      }
 
-      float breathAdj = (float)ps.breath01;
-      breathAdj = constrain(breathAdj, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound);
-      breathAdj = map(breathAdj, gAppSettings.mBreathLowerBound, gAppSettings.mBreathUpperBound, 0.0f, 1.0f);
-      breathAdj = constrain(breathAdj, 0.0f, 1.0f);
-      this->breath01.Update(breathAdj);
+      CCPlot(ps.pitchDown01);
 
-      float pitchDownAdj = (float)ps.pitchDown01;
-      pitchDownAdj = constrain(pitchDownAdj, gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax);
-      pitchDownAdj = map(pitchDownAdj, gAppSettings.mPitchDownMin, gAppSettings.mPitchDownMax, 0.0f, -1.0f);
-      pitchDownAdj = constrain(pitchDownAdj, -1.0f, 0.0f);
-      this->pitchBendN11.Update(pitchDownAdj);
+      {
+        _incomingPitchBendN11.Update(ps.pitchDown01);
+        // see PitchStripSettings to understand the different regions.
+        float pb = _incomingPitchBendN11.GetValue();
+
+        if (pb <= gAppSettings.mPitchStrip.mHandsOffNoiseThresh) {
+          // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
+          // =======^
+          mCurrentPitchN11.Update(0.0f);
+        } else if (pb <= gAppSettings.mPitchStrip.mPitchUpMax) {
+          // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
+          //        ^========^
+          mCurrentPitchN11.Update(1.0f);
+        } else if (pb <= gAppSettings.mPitchStrip.mZeroMin) {
+          // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
+          //                 ^=============^
+          float t = map(pb, gAppSettings.mPitchStrip.mZeroMin, gAppSettings.mPitchStrip.mPitchUpMax, 0, 1);
+          mCurrentPitchN11.Update(t);
+        } else if (pb <= gAppSettings.mPitchStrip.mZeroMax) {
+          // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
+          //                               ^======^
+          mCurrentPitchN11.Update(0.0f);
+        } else if (pb <= gAppSettings.mPitchStrip.mPitchDownMax) {
+          // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
+          //                                      ^===============^
+          float t = map(pb, gAppSettings.mPitchStrip.mPitchDownMax, gAppSettings.mPitchStrip.mZeroMax, -1, 0);
+          mCurrentPitchN11.Update(t);
+        } else {
+          // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
+          //                                                      ^==========^
+          mCurrentPitchN11.Update(-1);// full pitch down.
+        }
+      }
+
     }
 
-    mNewState.mBreath01 = this->breath01.GetValue();
+    mNewState.mBreath01 = mCurrentBreath01.GetValue();
     bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > gAppSettings.mBreathNoteOnThreshold;
 
-    mNewState.mPitchBendN11 = this->pitchBendN11.GetValue();
+    mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
     mNewState.mVelocity = 100; // TODO
 
     mNewState.mHarmPatch = gAppSettings.mGlobalHarmPreset;

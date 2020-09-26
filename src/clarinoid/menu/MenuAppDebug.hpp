@@ -68,8 +68,8 @@ public:
     auto pageMusicalState = []() {
       gDisplay.mDisplay.println(String("#:") + gEWIControl.mMusicalState.mLiveVoice.mMidiNote + " (" + (gEWIControl.mMusicalState.mLiveVoice.IsPlaying() ? "ON" : "off" ) + ") " + (int)MIDINoteToFreq(gEWIControl.mMusicalState.mLiveVoice.mMidiNote) + "hz");
       gDisplay.mDisplay.println(String("transpose:") + gAppSettings.mTranspose);
-      gDisplay.mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
-      gDisplay.mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
+      //gDisplay.mDisplay.println(String("breath:") + gEWIControl.mMusicalState.breath01.GetValue());
+      //gDisplay.mDisplay.print(String("pitch:") + gEWIControl.mMusicalState.pitchBendN11.GetValue());
     };
     
     auto pagePhysicalState = []() {

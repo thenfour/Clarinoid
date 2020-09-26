@@ -41,6 +41,29 @@ EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo ("GlobalScaleRefType", gGlo
 
 
 
+// the pitch bend strip has various zones.
+//                 | IDLE  | UP MAX | UP VARIABLE     | ZERO       | DOWN VARIABLE                | DOWN MAX  |
+//                 |-------|--------|-----------------|------------|------------------------------|-----------|
+// analog value:  0.0    0.03      0.08              0.20         0.38                           0.88        1.00
+// IDLE =               pitch is 0
+// UPMAX =              pitch is +1
+// UP VARIABLE = transition from 0 -> 1
+// ZERO =               pitch is 0
+// DOWN VARIABLE = transition from 0 -> -1
+// DOWN MAX     =       pitch is -1
+// 
+// * IDLE is necessary so when you are hands-off, pitch is still 0. so zero pitch has 2 zones: 0-IDLE, and ZERO
+// * the UP MAX range is very important, to have some buffer between the hard cutoff of IDLE to UPMAX.
+//   maybe even a small transition zone would be useful to a player as a warning.
+struct PitchStripSettings
+{
+  float mHandsOffNoiseThresh = 0.035;
+  float mPitchUpMax = 0.08; // or min? depends how you measure this.
+  float mZeroMin = 0.20;
+  float mZeroMax = 0.38;
+  float mPitchDownMax = 0.88;
+};
+
 
 struct AppSettings
 {
@@ -52,8 +75,8 @@ struct AppSettings
   float mBreathNoteOnThreshold = 0.01f;
   
   float mTouchMaxFactor = 1.5f;
-  float mPitchDownMin = 0.15f;
-  float mPitchDownMax = 0.6f;
+
+  PitchStripSettings mPitchStrip;
 
   float mReverbGain = 0.2f;
 

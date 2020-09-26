@@ -143,8 +143,6 @@ struct LHRHChecksummablePayload
   uint16_t pressure2; // raw analog readings
 };
 
-//static constexpr size_t gsaou =  sizeof(LHRHChecksummablePayload);
-
 // payload is the same between both LH/RH modules.
 struct LHRHPayload
 {
@@ -154,6 +152,10 @@ struct LHRHPayload
   uint16_t serial;
   uint16_t dataChecksum;
 };
+
+static constexpr size_t LHRHChecksummablePayloadsize =  sizeof(LHRHChecksummablePayload);
+static constexpr size_t LHRHPayloadsize =  sizeof(LHRHPayload);
+
 
 inline String ToString(const LHRHPayload& p)
 {
