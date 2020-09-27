@@ -47,17 +47,16 @@ struct CCEWIMusicalState
         mCurrentBreath01.Update(breath);
       }
 
-      //CCPlot(ps.pitchDown01);
-
       {
         _incomingPitchBendN11.Update(ps.pitchDown01);
         // see PitchStripSettings to understand the different regions.
         float pb = _incomingPitchBendN11.GetValue();
 
-        if (pb <= gAppSettings.mPitchStrip.mHandsOffNoiseThresh) {
+        // #30: idle zone should LATCH existing pitch bend (i.e. just don't touch it) value.
+        // to make that as quick as possible, bypass any signal filtering for this check. worst case we miss some subtle pitch-up change events.
+        if (ps.pitchDown01 <= gAppSettings.mPitchStrip.mHandsOffNoiseThresh || pb <= gAppSettings.mPitchStrip.mHandsOffNoiseThresh) {
           // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
           // =======^
-          mCurrentPitchN11.Update(0.0f);
         } else if (pb <= gAppSettings.mPitchStrip.mPitchUpMax) {
           // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
           //        ^========^
