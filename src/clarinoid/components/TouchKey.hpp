@@ -30,21 +30,30 @@ struct TouchableKeyInfo {
   touchablePin mTouchablePin;
   int mKeyDescIndex;
   KeyDesc& mDesc;
+  float mMaxFactor = CCEWI_TOUCHABLE_PIN_MAX_FACTOR;
 
   void Reset() {
     //int m1 = micros();
-    /*int n = */mTouchablePin.touchRead();
+    ///*int n = */mTouchablePin.touchRead();
     //int m2 = micros();
     //mMinValue = 0; // will be re-set later.
     mRunningValues.Clear();
-    mTouchablePin.initUntouched();
+    auto pinNumber = mTouchablePin.pinNumber; // save for re-construction
+    mTouchablePin.~touchablePin();
+    new (&mTouchablePin) touchablePin(pinNumber, mMaxFactor);
+    //mTouchablePin.initUntouched();
+    // auto pinNumber = mTouchablePin.pinNumber; // save for re-construction
+    // mTouchablePin.~touchablePin();
+    // new (&mTouchablePin) touchablePin(pinNumber, mMaxFactor);
   }
 
   void SetMaxFactor(float newMaxFactor) {
-    // for some reason touchablePin doesn't have a method to change this. so we have to re-construct the object.
-    auto pinNumber = mTouchablePin.pinNumber; // save for re-construction
-    mTouchablePin.~touchablePin();
-    new (&mTouchablePin) touchablePin(pinNumber, newMaxFactor);
+    mMaxFactor = newMaxFactor;
+    Reset();
+    // // for some reason touchablePin doesn't have a method to change this. so we have to re-construct the object.
+    // auto pinNumber = mTouchablePin.pinNumber; // save for re-construction
+    // mTouchablePin.~touchablePin();
+    // new (&mTouchablePin) touchablePin(pinNumber, newMaxFactor);
   }
 };
 
@@ -78,7 +87,8 @@ public:
     }
   }
 
-  virtual void loop() {
+  virtual void loop()
+  {
    if (!mThrottle.IsReady()) {
      return;
    }
@@ -89,17 +99,17 @@ public:
    auto& k = *mKeys[mIndex];
    k.mRunningValues.Update((float)n);
 
-   if (m2 > m1) {
+   if (m2 > m1) { // avoid overflow
      k.mTouchReadMicros = m2 - m1;
    }
    k.mTouchReadValue = n;
 
-   if (k.mRunningValues.GetSampleCount() == TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
+   if (k.mRunningValues.GetTotalSamplesTaken() == TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
+     // after we have a complete smoothed value buffer, initialize the min value.
      k.mMinValue = k.mRunningValues.GetValue();
-   } else if (k.mRunningValues.GetSampleCount() > TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
+   } else if (k.mRunningValues.GetTotalSamplesTaken() > TOUCH_KEY_CALIB_UNTOUCHED_MOVING_AVG_SAMPLES) {
      float av = k.mRunningValues.GetValue();
-     if (av < (k.mMinValue / CCEWI_TOUCHABLE_PIN_MAX_FACTOR)) {
-       //Serial.println(String("Re-calibrating touch key ") + k.mDesc.mName);
+     if (av < (k.mMinValue / CCEWI_TOUCHABLE_PIN_MAX_FACTOR)) { // if significantly lower.
        k.mMinValue = av;
        k.mTouchablePin.initUntouched();      
      }

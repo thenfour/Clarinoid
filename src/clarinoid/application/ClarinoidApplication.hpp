@@ -50,6 +50,7 @@ class CCEWIApp : UpdateObjectT<ProfileObjectType::EWIApp>
 public:
 
   MainPayload mPayload;
+  framerateCalculator<1000> mFps;
 
   CCEWIApp()
   {
@@ -81,7 +82,9 @@ public:
     //Serial.println("Sendingcmd2");
   }
 
-  void loop() {
+  void loop()
+  {
+    mFps.onFrame();
 
     if (!gSettingsLoaded) {
       SendCmd(gAppSettings.mOrangeLEDs ? CommandFromMain::EnableOrangeLED : CommandFromMain::DisableOrangeLED);

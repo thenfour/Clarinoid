@@ -108,9 +108,11 @@ public:
 
     auto pageDebugMain = []() {
       gDisplay.mDisplay.println(String("Max frame ms: ") + ((float)gLongestLoopMicros / 1000));
-      gDisplay.mDisplay.println(String("Max idle ms:  ") + ((float)gLongestBetweenLoopMicros / 1000));
-      gDisplay.mDisplay.println(String("") + (int)gFramerate.getFPS() + "fps szRx=" + sizeof(LHRHPayload));
-      gDisplay.mDisplay.println(String("nUO:") + gUpdateObjectCount + " szTx=" + sizeof(MainChecksummablePayload));
+      //gDisplay.mDisplay.println(String("Max idle ms:  ") + ((float)gLongestBetweenLoopMicros / 1000));
+      gDisplay.mDisplay.println(String("fps>: ") + (int)gApp.mFps.getMinFPS());// + "fps szRx=" + sizeof(LHRHPayload));
+      gDisplay.mDisplay.println(String("fps=: ") + (int)gApp.mFps.getFPS());// + "fps szRx=" + sizeof(LHRHPayload));
+      gDisplay.mDisplay.println(String("fps<: ") + (int)gApp.mFps.getMaxFPS());// + "fps szRx=" + sizeof(LHRHPayload));
+      //gDisplay.mDisplay.println(String("nUO:") + gUpdateObjectCount + " szTx=" + sizeof(MainChecksummablePayload));
     };
     
     auto pageAudioStatus = []() {

@@ -24,11 +24,17 @@ class SimpleMovingAverage
     float GetValue() const {
       return total_ / min(num_samples_, N);
     }
-    size_t GetSampleCount() const { return num_samples_; }
+
+    size_t GetValidSampleCount() const { return min(num_samples_, N); }
+    size_t GetTotalSamplesTaken() const { return num_samples_; }
 
     void Clear() {
       total_ = 0;
       num_samples_ = 0;
+    }
+
+    float GetSample(size_t n) const {
+      return samples_[n % N];
     }
 
   private:

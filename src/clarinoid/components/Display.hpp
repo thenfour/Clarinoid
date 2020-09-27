@@ -15,8 +15,6 @@ public:
   virtual void Render() = 0; // called occasionally
 };
 
-framerateCalculator gFramerate;
-
 //////////////////////////////////////////////////////////////////////
 struct CCDisplay : UpdateObjectT<ProfileObjectType::Display>
 {
@@ -89,8 +87,6 @@ struct CCDisplay : UpdateObjectT<ProfileObjectType::Display>
     if (!mThrottle.IsReady())
      return;
 
-    gFramerate.onFrame();
-
     mDisplay.clearDisplay();
     mDisplay.mSolidText = true;
     mDisplay.mTextLeftMargin = 0;
@@ -101,8 +97,6 @@ struct CCDisplay : UpdateObjectT<ProfileObjectType::Display>
     mDisplay.setTextSize(1);
     mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
     mDisplay.setCursor(0,0);
-
-    //mDisplay.println(String("working.") + micros() + "\r\n" + gFramerate.getFPS() + " fps");
 
     if (pMenuApp) {
       pMenuApp->Render();

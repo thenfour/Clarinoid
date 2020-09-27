@@ -255,7 +255,7 @@ union BothPayloads
 class CCLHRHTxRx: UpdateObjectT<ProfileObjectType::TxRx>
 {
   // { for TX
-  framerateCalculator mFramerate;
+  framerateCalculator<> mFramerate;
   HardwareSerial& mSerial;
   EasyTransfer mET;
   BothPayloads mLivePayload;
@@ -323,7 +323,7 @@ class CCMainTxRx: UpdateObjectT<ProfileObjectType::TxRx>
 {
 public:
   // { for TX
-  framerateCalculator mFramerate;
+  framerateCalculator<> mFramerate;
   HardwareSerial& mSerial;
   EasyTransfer mET;
   BothPayloads mLivePayload;
@@ -334,7 +334,7 @@ public:
   bool mHaveNewData = false;
   bool mErrorsDirty = false;
   LHRHPayload mReceivedData;
-  framerateCalculator mRxRate;
+  framerateCalculator<> mRxRate;
   
   // stats
   uint32_t mRxSuccess = 0;
