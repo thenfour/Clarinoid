@@ -201,7 +201,7 @@ struct LooperAndHarmonizer
       }
     }
 
-    gScaleFollower.Update(outp, pout - outp);
+    gAppSettings.mDeducedScale = gScaleFollower.Update(gAppSettings.mDeducedScale, outp, pout - outp); // deduce, but don't actually change the global scale because we still need to use the existing...
 
     // go through and fill in all deduced voices. logically, the "live voices" will all remain untouched so voices just get filled in.
     for (uint8_t iLayer = 0; iLayer < SizeofStaticArray(mLayers); ++iLayer) {

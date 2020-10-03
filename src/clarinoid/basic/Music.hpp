@@ -42,7 +42,7 @@ enum class Note : uint8_t
   D,
   Eb,
   E,
-  F,
+  F_, // damned arduino.h getting in the way.
   Gb,
   G,
   Ab,
@@ -94,6 +94,8 @@ public:
 
 
 ////////////////////////////////////////////////////
+// NOTE: only want 16 (4 bits) max of these which participate in scale follower to help save space with the scale follower LUTs
+// put the scale follower ones first for this reason.
 enum class ScaleFlavorIndex : uint8_t // match index to gScaleFlavors
 {
   Chromatic,
@@ -110,7 +112,12 @@ enum class ScaleFlavorIndex : uint8_t // match index to gScaleFlavors
   Blues,
   Unison, // used by scale follower when there's no info
   Power,
+  ScaleFlavorCount
+  // unisono
+  // 10 chord: 9
+  // 11 chord: maj13 (maj minus 4th)
 };
+static constexpr size_t ScaleFlavorCount = (size_t)ScaleFlavorIndex::ScaleFlavorCount;
 
 ////////////////////////////////////////////////////
 // using this + Scale flavor allows you to construct an absolute MIDI note value.
@@ -144,6 +151,9 @@ struct ScaleFlavor
   ScaleFlavorIndex mID;
   const char *mName;
   ScaleFlavorOptions mOptions;
+
+  bool IsAllowedInMenus() const { return (uint8_t)mOptions & (uint8_t)ScaleFlavorOptions::AllowInMenus; }
+  bool IsAllowedInScaleFollower() const { return (uint8_t)mOptions & (uint8_t)ScaleFlavorOptions::AllowInScaleFollower; }
 
   // list of intervals in the scale?
   uint8_t mIntervalCount;
@@ -304,7 +314,7 @@ struct Scale
     return gScaleFlavors[(size_t)mFlavorIndex];
   }
 
-  NoteInScaleFlavorContext GetNoteInScaleContext(uint8_t midiNote, uint8_t& midiNoteOffset, EnharmonicDirection ed)
+  NoteInScaleFlavorContext GetNoteInScaleContext(uint8_t midiNote, uint8_t& midiNoteOffset, EnharmonicDirection ed) const
   {
     CCASSERT(midiNote <= 127);
     MidiNote chromaticRelToRoot = (int8_t)midiNote - mRootNoteIndex; // make relative to the root.
@@ -331,5 +341,41 @@ struct Scale
     uint8_t ret = GetMidiNoteFromContext(ctx, midiNoteOffset);
     return ret;
   }
+
+  // takes 0-127 style midi note
+  // and returns 0 to 11, semitones relative to root
+  // so if we are C and you pass C# , return = C-C# = 0 - 1 =  -1, +12 to normalize = 11
+  uint8_t MidiToChromaticRelativeToRoot(uint8_t midiNote) const
+  {
+    MidiNote m = MidiNote(midiNote);
+    int8_t ret = m.GetNoteIndex();
+    CCASSERT(ret >= 0 && ret <= 11);
+    ret -= this->mRootNoteIndex;
+    if (ret < 0)
+      ret += 12;
+    return ret;
+  }
+
+  bool IsNoteDiatonic(Note note) const {
+    uint8_t temp = 0;
+    auto ctx = GetNoteInScaleContext(MidiNote(0, note).GetMidiValue(), temp, EnharmonicDirection::Flat);
+    return ctx.mEnharmonic == 0;
+  }
+
+#ifdef CLARINOID_MODULE_TEST // because this is using std::vector, and is not optimized
+  std::vector<Note> GetDiatonicNotes() const
+  {
+    std::vector<Note> ret;
+    for (Note n = (Note)0; (int)n < 12; n = (Note)((int)n + 1)) {
+      if (IsNoteDiatonic(n)) {
+        ret.push_back(n);
+      }
+    }
+    return ret;
+  }
+#endif
 };
+
+constexpr size_t scalesize = sizeof(Scale);
+
 

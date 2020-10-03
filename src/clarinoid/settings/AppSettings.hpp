@@ -56,11 +56,11 @@ EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo ("GlobalScaleRefType", gGlo
 //   maybe even a small transition zone would be useful to a player as a warning.
 struct PitchStripSettings
 {
-  float mHandsOffNoiseThresh = 0.035;
-  float mPitchUpMax = 0.08; // or min? depends how you measure this.
-  float mZeroMin = 0.20;
-  float mZeroMax = 0.38;
-  float mPitchDownMax = 0.88;
+  float mHandsOffNoiseThresh = 0.035f;
+  float mPitchUpMax = 0.08f; // or min? depends how you measure this.
+  float mZeroMin = 0.20f;
+  float mZeroMax = 0.38f;
+  float mPitchDownMax = 0.88f;
 };
 
 

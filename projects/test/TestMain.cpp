@@ -7,6 +7,7 @@
 #include <clarinoid/x86/ArduinoEmu.hpp>
 
 #include "Test.hpp"
+#include "TestScaleFollower.hpp"
 #include "TestMemory.hpp"
 #include "TestLoopstation.hpp"
 #include "TestScales.hpp"
@@ -16,32 +17,33 @@ int main()
 {
   gAppSettings.mLooperSettings.mTrigger = LooperTrigger::Immediate;
 
-  TestBufferUnification();
+  //TestBufferUnification();
 
-  TestReadHeader();
-  Test12BitParam();
-  TestDivRem();
+  //TestReadHeader();
+  //Test12BitParam();
+  //TestDivRem();
 
-  TestHappyFlow();
-  TestConsumeMultipleEvents();
-  TestMuted();
-  TestReadingAfterLooped();
-  TestReadingEmptyBuffer();
+  //TestHappyFlow();
+  //TestConsumeMultipleEvents();
+  //TestMuted();
+  //TestReadingAfterLooped();
+  //TestReadingEmptyBuffer();
 
-  TestScenarioOOM_PartialLoop();
+  //TestScenarioOOM_PartialLoop();
 
-  TestEndRecordingWithFullLoopSimple(); // PZE
-  TestScenarioEP();
+  //TestEndRecordingWithFullLoopSimple(); // PZE
+  //TestScenarioEP();
 
-  TestFullMusicalState1();
-  TestFullMusicalState2();
+  //TestFullMusicalState1();
+  //TestFullMusicalState2();
 
-  TestVoiceID();
-  TestLoopstationLegato();
-  TestLoopstationSynth();
+  //TestVoiceID();
+  //TestLoopstationLegato();
+  //TestLoopstationSynth();
 
-  TestScales();
-  TestHarmonizer();
+  //TestScales();
+  TestScaleFollower();
+  //TestHarmonizer();
 
   return 0;
 }

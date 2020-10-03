@@ -96,16 +96,16 @@ uint32_t micros() {
 
 #else
 #error huh
-void delay(uint32_t ms) {
-  ::Sleep(ms);
-}
-uint32_t millis() {
-  return GetTickCount();
-}
-
-uint32_t micros() {
-  return GetTickCount() * 1000;
-}
+//void delay(uint32_t ms) {
+//  ::Sleep(ms);
+//}
+//uint32_t millis() {
+//  return GetTickCount();
+//}
+//
+//uint32_t micros() {
+//  return GetTickCount() * 1000;
+//}
 #endif
 
 
@@ -136,4 +136,4 @@ static inline uint32_t analogWriteResolution(uint32_t bits) { return analogWrite
 void digitalWrite(uint8_t pin, uint8_t val) {}
 
 #define DMAMEM
-
+#define F
