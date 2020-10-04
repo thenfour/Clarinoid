@@ -2,8 +2,8 @@
 
 #pragma once
 
-
 #include <clarinoid/scale_follower/ScaleFollower.hpp>
+#include "Test.hpp"
 
 MusicalVoice NoteOn(Note note, uint8_t octave)
 {
@@ -85,8 +85,16 @@ void TestScaleFollower()
   ScaleFollower sf;
   MusicalVoice lv[8];
 
+  SetTestClockMillis(1000);
   lv[0] = NoteOn(Note::C, 3);
-  auto newScale = sf.Update(Scale(Note::D, ScaleFlavorIndex::Major), lv, 1);
+  s = sf.Update(lv, 1);
+  SetTestClockMillis(1050);
+  lv[0] = NoteOn(Note::Eb, 3);
+  s = sf.Update(lv, 1);
+
+  SetTestClockMillis(1010); // 10 milliseconds later you release the Eb. we should act like it never happened.
+  lv[0] = {};
+  s = sf.Update(lv, 1);
 
 }
 

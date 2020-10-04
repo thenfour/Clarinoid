@@ -283,18 +283,20 @@ constexpr auto scaleFlavorSize = sizeof(gScaleFlavors);
 ////////////////////////////////////////////////////
 struct Scale
 {
-  uint8_t mRootNoteIndex = 0; // note index gNotes
+  Note mRootNoteIndex = Note::C; // note index gNotes
   ScaleFlavorIndex mFlavorIndex = (ScaleFlavorIndex)0; // index into gScaleFlavors
 
   Scale() = default;
   Scale(Scale&&) = default;
   Scale(const Scale&) = default;
   Scale(uint8_t root, ScaleFlavorIndex flavor) :
-    mRootNoteIndex(root),
+    mRootNoteIndex((Note)root),
     mFlavorIndex(flavor)
-  {}
+  {
+    CCASSERT(root < 12);
+  }
   Scale(Note root, ScaleFlavorIndex flavor) :
-    mRootNoteIndex((uint8_t)root),
+    mRootNoteIndex(root),
     mFlavorIndex(flavor)
   {}
 
@@ -319,9 +321,9 @@ struct Scale
   NoteInScaleFlavorContext GetNoteInScaleContext(uint8_t midiNote, uint8_t& midiNoteOffset, EnharmonicDirection ed) const
   {
     CCASSERT(midiNote <= 127);
-    MidiNote chromaticRelToRoot = (int8_t)midiNote - mRootNoteIndex; // make relative to the root.
+    MidiNote chromaticRelToRoot = (int8_t)midiNote - (uint8_t)mRootNoteIndex; // make relative to the root.
     
-    midiNoteOffset = (chromaticRelToRoot.GetOctave() * 12) + mRootNoteIndex;
+    midiNoteOffset = (chromaticRelToRoot.GetOctave() * 12) + (uint8_t)mRootNoteIndex;
     // now convert note to scale degree & enharmonic.
     return GetScaleFlavor().RelativeChrNoteToContext(chromaticRelToRoot.GetNoteIndex(), ed);
   }
@@ -352,7 +354,7 @@ struct Scale
     MidiNote m = MidiNote(midiNote);
     int8_t ret = m.GetNoteIndex();
     CCASSERT(ret >= 0 && ret <= 11);
-    ret -= this->mRootNoteIndex;
+    ret -= (uint8_t)this->mRootNoteIndex;
     if (ret < 0)
       ret += 12;
     return ret;
@@ -382,7 +384,7 @@ struct Scale
 
   String ToString() const
   {
-    return String(gNotes[mRootNoteIndex].mName) + " " + GetScaleFlavor().mLongName;
+    return String(gNotes[(uint8_t)mRootNoteIndex].mName) + " " + GetScaleFlavor().mLongName;
   }
 };
 

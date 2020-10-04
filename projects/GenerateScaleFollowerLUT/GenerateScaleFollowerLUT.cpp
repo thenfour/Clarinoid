@@ -43,17 +43,6 @@ int ModularDistance(int a, int b)
   return std::min(b - a, a + period - b);
 }
 
-// note weights are 0, 1, 2, or 3. for proper weighting this outputs a scaled value.
-//int AdjustNoteWeight(int n)
-//{
-//  switch (n) {
-//  case 1: return 25;
-//  case 2: return 50;
-//  case 3: return 80;
-//  case 4: return 100;
-//  }
-//  return 0;
-//}
 
 uint8_t SemitoneDistance(Note a, Note b)
 {
@@ -148,26 +137,6 @@ int CalcDistance(const Scale& currentScale, const std::vector<Note>& playingNote
     for (auto c : candDiatonic)
     {
       if (c.first == f.first) {
-        // it's found.
-        // candidate weight effectively means "We want this much weight to be considered fully satisfied".
-        // fantasy weight is how much we're eating.
-        //if (c.second > f.second) {
-        //  // distance is only affected if you didn't satisfy the whole weight.
-        //  if (dolog) {
-        //    //cc::log("  Note distance %s (candidate[%d] - fantasy[%d]) = %d", gNotes[(int)c.first].mName, c.second, f.second, std::abs(c.second - f.second));
-        //    //cc::log("  Note distance %s (candidate[%d] - fantasy[%d]) = %d remaining", gNotes[(int)c.first].mName, c.second, f.second, c.second - f.second);
-        //  }
-        //  dist += c.second - f.second;
-        //}
-        //else {
-        //  if (dolog) {
-        //    cc::log("  Note distance %s  (candidate[%d] - fantasy[%d]) satisfied! 0 dist added.", gNotes[(int)c.first].mName, c.second, f.second);
-        //  }
-
-        //}
-        //int remainingWeight = c.second - f.second;
-        //if (delta < 0) 
-        //dist += std::abs(c.second - f.second);
         if (dolog) {
           cc::log("  Note distance %s (candidate[%d] - fantasy[%d]) satisfied! 0 dist added.", gNotes[(int)c.first].mName, c.second, f.second);
         }
@@ -218,100 +187,6 @@ int CalcDistance(const Scale& currentScale, const std::vector<Note>& playingNote
 
   return dist;
 }
-
-
-//int CalcFitness(const Scale& currentScale, const std::vector<Note>& playingNotes, const Scale& candidateScale, bool dolog)
-//{
-//  // points for candidate containing the playing notes (the most important)
-//  auto candidateDiatonic = candidateScale.GetDiatonicNotesAndWeights();
-//  int playingMatchScore = 0;
-//  for (auto& playing : playingNotes)
-//  {
-//    // does candidate scale contain this playing note?
-//    for (auto& cand : candidateDiatonic) {
-//      if (cand.first == playing) {
-//        playingMatchScore += AdjustNoteWeight(cand.second);
-//      }
-//    }
-//  }
-//  // adjust the score based on candidate total weight.
-//  if (playingNotes.size()) {
-//    playingMatchScore = (playingMatchScore * 50) / candidateScale.GetScaleFlavor().mTotalWeight;
-//  }
-//
-//  // points for candidate containing notes of the current scale
-//  // but which are not already counted by the previous search.
-//  int currentMatchScore = 0;
-//  auto currentDiatonic = currentScale.GetDiatonicNotesAndWeights();
-//  for (auto& curr : currentDiatonic)
-//  {
-//    // does playing notes contain this degree of the current scale?
-//    for (auto& d : playingNotes) {
-//      if (d == curr.first) {
-//        // we already counted this above!
-//        continue;
-//      }
-//    }
-//
-//    // does the candidate contain this degree of the current scale?
-//    for (auto& d : candidateDiatonic) {
-//      if (d.first == curr.first) {
-//        currentMatchScore += AdjustNoteWeight(d.second);
-//      }
-//    }
-//  }
-//  currentMatchScore = (currentMatchScore * 50) / candidateScale.GetScaleFlavor().mTotalWeight;
-//
-//  // subtract points for all candidate notes which haven't positively counted so far.
-//  int kissScore = 0;
-//  for (auto& d : candidateDiatonic)
-//  {
-//    bool used = false;
-//    for (auto& curr : currentDiatonic) {
-//      if (d.first == curr.first) {
-//        used = true;
-//        break;
-//      }
-//    }
-//    if (!used) {
-//      for (auto& playing : playingNotes) {
-//        if (d.first == playing) {
-//          used = true;
-//          break;
-//        }
-//      }
-//    }
-//    if (!used) {
-//      kissScore += AdjustNoteWeight(d.second);
-//    }
-//  }
-//  kissScore = (kissScore * 50) / candidateScale.GetScaleFlavor().mTotalWeight;
-//
-//
-//  int ret = (playingMatchScore * 3) + (currentMatchScore * 3) - (kissScore * 1);
-//
-//  if (dolog) {
-//    cc::log("Analyzing scale [ %s ] while playing [ %s ], candidate [ %s ] ",
-//      currentScale.ToString().mStr.str().c_str(),
-//      NoteListToString(playingNotes).c_str(),
-//      candidateScale.ToString().mStr.str().c_str()
-//    );
-//    cc::log("  playingMatchScore = %d", playingMatchScore);
-//    cc::log("  currentMatchScore = %d", currentMatchScore);
-//    cc::log("  kissScore         = %d", kissScore);
-//    cc::log("  fitness = %d", ret);
-//  }
-//
-//
-//  return ret;
-//}
-
-
-//
-//bool ltpairintscale(const std::pair<int, Scale>& lhs, const std::pair<int, Scale>& rhs)
-//{
-//  return lhs.first < rhs.first;
-//}
 
 
 bool gtpairintscale(const std::pair<int, Scale>& lhs, const std::pair<int, Scale>& rhs)

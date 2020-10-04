@@ -202,7 +202,7 @@ struct LooperAndHarmonizer
     }
 
     //auto old = gAppSettings.mDeducedScale;
-    gAppSettings.mDeducedScale = gScaleFollower.Update(gAppSettings.mDeducedScale, outp, pout - outp);
+    gAppSettings.mDeducedScale = gScaleFollower.Update(outp, pout - outp);
     // if (gAppSettings.mDeducedScale != old) {
     //   Serial.println(String("scale changed to ") + gAppSettings.mDeducedScale.ToString());
     // }

@@ -43,7 +43,7 @@ int main()
 
   //TestScales();
   TestScaleFollower();
-  TestHarmonizer();
+  //TestHarmonizer();
 
   return 0;
 }

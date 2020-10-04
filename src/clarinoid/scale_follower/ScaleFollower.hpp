@@ -1,10 +1,4 @@
-/*
 
-brainstorming ideas for other methods of scale detection:
-- just use a sort of "ideal" key continuously morphed from a C major scale, altering degrees as they're introduced.
-  in other words, no LUT at all, just make your own scale. seems bad though.
-
-*/
 #pragma once
 
 //#include <optional> // not available!
@@ -19,6 +13,8 @@ static const size_t SCALE_DISAMBIGUATION_MAPPING_NOTES = 4;
 // # of notes in the recent pool which results in the above mapping.
 // we are polyphonic so you may need to throw out up to MAX_MUSICAL_VOICES number of voices if they are found to be too short.
 static const size_t SCALE_DISAMBIGUATION_NOTES_TO_ANALYZE = SCALE_DISAMBIGUATION_MAPPING_NOTES + MAX_MUSICAL_VOICES;
+
+static const int SCALE_FOLLOWER_TRANSIENT_NOTE_THRESH_MILLIS = 50;
 
 // Map context to a new scale.
 // KEY:
@@ -45,6 +41,7 @@ struct ScaleFollowerVoice
   Stopwatch mNoteOffTimer;
   int mImportance = 0;
   bool mTouched = false;
+  bool mIsTransient = true;
 
   // log2 sorta
   template<size_t BitsToCount = 11, bool reverse = false>
@@ -80,7 +77,7 @@ struct ScaleFollowerVoice
 
   void UpdateImportance()
   {
-    // calc importance.
+    // calc importance
     // is playing
     // duration
     // time since note off
@@ -136,6 +133,10 @@ struct ScaleFollowerVoice
 
     mRunningVoice = mv;
 
+    if (mRunningVoice.IsPlaying()) {
+      mIsTransient = mNoteDurationTimer.ElapsedMillis() < SCALE_FOLLOWER_TRANSIENT_NOTE_THRESH_MILLIS;
+    }
+
     UpdateImportance();
   }
 
@@ -155,98 +156,6 @@ struct ScaleFollowerVoice
     if (mRunningVoice.mVoiceId == MAGIC_VOICE_ID_UNASSIGNED)
       return false;
     return true;
-  }
-};
-
-// keep maximal values at front. pushes out too-low items.
-template<typename Tval, size_t N, typename Tlessthan>
-struct SortedArray
-{
-  size_t mSize = 0;
-  Tval mArray[N];
-  Tlessthan mLessThan;
-
-  SortedArray(Tlessthan&& lt) :
-    mLessThan(lt)
-  {
-  }
-
-  void Clear()
-  {
-    mSize = 0;
-  }
-
-  bool Insert(Tval&& newVal)
-  {
-    size_t newIndex = 0;
-    //std::optional<Tval> ret;
-    bool ret = false;
-    if (mSize > 0) {
-      // figure out where to place it; use binary search.
-      size_t windowLeft = 0;
-      // place at END, not last index. It means we never actually compare windowRight.
-      // this plays well with finding the edge.
-      size_t windowRight = std::min(mSize, N - 1); 
-      while (true)
-      {
-        size_t edge = (windowRight + windowLeft) / 2;
-        CCASSERT(windowLeft != windowRight); // because R is never compared ("end"), they should never meet.
-        if (mLessThan(newVal, mArray[edge])) {
-          //     E          where E == L
-          //     L--------R where R = L+1
-          //      ====V===|   <-- val is less than L which means it's R.
-          // OR
-          //     L--------E--------R
-          //     |         ====V===|
-          // =>    -->    |        |
-          if (windowLeft == edge) {
-            CCASSERT(windowRight == (windowLeft + 1));
-            newIndex = windowRight;
-            break;
-          }
-          windowLeft = edge;
-        }
-        else
-        {
-          //     E            where E == L
-          //     L--------R   where R = L+1
-          //     V therefore V == E, and therefore should be inserted at E.
-          //    Here, 
-          // OR
-          //     L--------E--------R
-          //     |====V====        |
-          // =>  |        |    <--
-          if (windowLeft == edge) {
-            CCASSERT(windowRight == (windowLeft + 1));
-            newIndex = edge;
-            break;
-          }
-          windowRight = edge;
-        }
-      }
-
-      // insert it there...
-      // remember last item.
-      size_t itemsToSlide = mSize - newIndex;
-      if (mSize == N) {
-        // we'll be pushing an item off.
-        --itemsToSlide; 
-        ret = true;
-        //ret.emplace(std::move(mArray[N - 1]));
-      }
-    
-      for (size_t i = newIndex + itemsToSlide; i > newIndex; -- i) {
-        mArray[i] = std::move(mArray[i - 1]);
-      }
-    }
-
-    mArray[newIndex] = std::move(newVal);
-    if (mSize < N)
-    {
-      ++mSize;
-    }
-
-    return ret;
   }
 };
 
@@ -349,6 +258,10 @@ struct ScaleFollower
 {
   ScaleFollowerVoice mVoices[MAX_MUSICAL_VOICES];
 
+  // the current scale which is calculated ONLY of notes which are not transient.
+  // this way, as transient notes pass and are ignored, their effect is reversed.
+  Scale mCurrentScale = { Note::C, ScaleFlavorIndex::Major};
+
   // returns a voice that's either already assigned to this voice, or the best one to free up for it.
   ScaleFollowerVoice* FindAssignedOrAvailable(int16_t musicalVoiceId) {
     ScaleFollowerVoice* firstFree = nullptr;
@@ -368,57 +281,78 @@ struct ScaleFollower
   }
 
   // Call to "feed" musical context.
-  Scale Update(Scale currentScale, const MusicalVoice* voices, size_t voiceCount)
+  Scale Update(const MusicalVoice* voices, size_t voiceCount)
   {
+    MaxItemsGrabber<int, ScaleFollowerVoice*, SCALE_DISAMBIGUATION_MAPPING_NOTES> mostImportantNonTransient;
     MaxItemsGrabber<int, ScaleFollowerVoice*, SCALE_DISAMBIGUATION_MAPPING_NOTES> mostImportant;
 
     // this is not necessary, because we reset it later, which prepares for the next frame.
     //for (auto& v : mVoices) { v.mTouched = false; }
     //int16_t mapKey = 0;
 
-    for (size_t i = 0; i < voiceCount; ++ i) {
+    for (size_t i = 0; i < voiceCount; ++i) {
       auto& lv = voices[i];
       auto* pv = FindAssignedOrAvailable(lv.mVoiceId);
       pv->mTouched = true;
       pv->Update(lv);
       mostImportant.Update(pv->mImportance, pv);
+      if (!pv->mIsTransient) {
+        mostImportantNonTransient.Update(pv->mImportance, pv);
+      }
     }
 
     // calc note offs
-    for (auto& v : mVoices) 
+    for (auto& v : mVoices)
     {
-      if (!v.mTouched) {
-        v.Stop();
-        if (v.Eligible()) {
-          mostImportant.Update(v.mImportance, &v);
+      if (v.mTouched) {
+        v.mTouched = false; // reset for next frame
+        continue;
+      }
+      v.Stop();
+      if (v.Eligible()) {
+        mostImportant.Update(v.mImportance, &v);
+        if (!v.mIsTransient) {
+          mostImportantNonTransient.Update(v.mImportance, &v);
         }
       }
-      v.mTouched = false; // reset for next frame
     }
 
-    uint16_t k = ((uint16_t)currentScale.mFlavorIndex) << 12;
+    uint16_t kNonTransient = ((uint16_t)mCurrentScale.mFlavorIndex) << 12;
+    uint16_t kWithTransient = kNonTransient;
 
-    // take important notes
-    for (size_t i = 0; i < mostImportant.mArray.mSize; ++i)
+    auto fnTakeImportantNotes = [](const decltype(mostImportant)& importantNotes, uint16_t& k, const Scale& currentScale)
     {
-      if (mostImportant.mArray.mArray[i].first < SCALE_FOLLOWER_IMPORTANCE_THRESHOLD) {
-        break; // filter by threshold of importance
+      for (size_t i = 0; i < importantNotes.mArray.mSize; ++i)
+      {
+        if (importantNotes.mArray.mArray[i].first < SCALE_FOLLOWER_IMPORTANCE_THRESHOLD) {
+          break; // filter by threshold of importance
+        }
+        // convert to relative to the scale.
+        auto* p = importantNotes.mArray.mArray[i].second;
+        uint8_t rel = currentScale.MidiToChromaticRelativeToRoot(p->mRunningVoice.mMidiNote);
+        CCASSERT(rel >= 0 && rel <= 11);
+
+        k |= 1 << rel;
       }
-      // convert to relative to the scale.
-      auto* p = mostImportant.mArray.mArray[i].second;
-      uint8_t rel = currentScale.MidiToChromaticRelativeToRoot(p->mRunningVoice.mMidiNote);
-      CCASSERT(rel >= 0 && rel <= 11);
+    };
 
-      k |= 1 << rel;
-    }
+    fnTakeImportantNotes(mostImportant, kWithTransient, mCurrentScale);
+    fnTakeImportantNotes(mostImportantNonTransient, kNonTransient, mCurrentScale);
 
-    // convert map value to scale.
-    auto v = ScaleFollowerDetail::MapValue::Deserialize(gScaleToScaleMappings[k]);
-    Scale ret;
-    ret.mFlavorIndex = v.mScaleFlavor;
-    int8_t root = v.mRelativeRoot;
-    root += currentScale.mRootNoteIndex;
-    ret.mRootNoteIndex = RotateIntoRangeByte(root, 12);
+    auto fnGetScale = [](uint16_t k, const Scale& currentScale)
+    {
+      // convert map value to scale.
+      auto v = ScaleFollowerDetail::MapValue::Deserialize(gScaleToScaleMappings[k]);
+      Scale ret;
+      ret.mFlavorIndex = v.mScaleFlavor;
+      int8_t root = v.mRelativeRoot;
+      root += (uint8_t)currentScale.mRootNoteIndex;
+      ret.mRootNoteIndex = (Note)RotateIntoRangeByte(root, 12);
+      return ret;
+    };
+
+    mCurrentScale = fnGetScale(kNonTransient, mCurrentScale);
+    Scale ret = fnGetScale(kWithTransient, mCurrentScale);
 
     return ret;
   }
