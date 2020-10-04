@@ -116,7 +116,7 @@ struct CCEWIMusicalState
       newNote -= 1;
     }
     if (ps.key_rh3.IsCurrentlyPressed()) {
-      newNote -= 2;
+      newNote -= ps.key_rh2.IsCurrentlyPressed() ? 2 : 1; // deviation from akai. feels more flute-friendly.
     }
     if (ps.key_rh4.IsCurrentlyPressed()) {
       newNote -= 2;
