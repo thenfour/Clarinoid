@@ -266,7 +266,7 @@ std::map<MapKey, MapValue> GenerateMap()
         );
       }
 
-      v.mRelativeRoot = chosenScale.mRootNoteIndex; // because we start at C=0 scale, the new scale root is already relative.
+      v.mRelativeRoot = (uint8_t)chosenScale.mRootNoteIndex; // because we start at C=0 scale, the new scale root is already relative.
       v.mScaleFlavor = chosenScale.mFlavorIndex;
       ret[k] = v;
       keysFilled++;
