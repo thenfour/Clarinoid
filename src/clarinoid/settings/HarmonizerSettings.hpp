@@ -118,6 +118,13 @@ struct HarmSettings
     mPresets[1].mVoiceSettings[1].mSequenceLength = 2;
     mPresets[1].mVoiceSettings[1].mSequence[0] = -3;
     mPresets[1].mVoiceSettings[1].mSequence[1] = -4;
+
+    mPresets[2].mName = "maj inv2";
+    mPresets[2].mVoiceSettings[0].mSequenceLength = 1;
+    mPresets[2].mVoiceSettings[0].mSequence[0] = -3;
+
+    mPresets[2].mVoiceSettings[1].mSequenceLength = 1;
+    mPresets[2].mVoiceSettings[1].mSequence[0] = -5;
   }
 };
 

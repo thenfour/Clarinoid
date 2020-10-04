@@ -43,12 +43,16 @@ struct Harmonizer
     liveVoice->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote;
     liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, 0);
     if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices)
+    {
       ++ ret; // live voice is a non-deduced voice.
+    }
 
     MusicalVoice* pout = outp;
     
     bool globalDeduced = gAppSettings.mGlobalScaleRef == GlobalScaleRefType::Deduced;
     Scale globalScale = globalDeduced ? gAppSettings.mDeducedScale : gAppSettings.mGlobalScale;
+
+            //CCPlot(String("globalScale:") + globalScale.ToString() + ", isdeduced=" + (globalDeduced ? "yes" : "no"));
 
     for (size_t nVoice = 0; nVoice < SizeofStaticArray(preset.mVoiceSettings); ++ nVoice)
     {
@@ -76,8 +80,14 @@ struct Harmonizer
       } 
 
       bool wantDeduced = (voiceFilter == VoiceFilterOptions::OnlyDeducedVoices);
+      //CCPlot(String("wantdeduced:") + (wantDeduced ? "yes" : "no") + "voiceFilter=" + (int)(voiceFilter));
       if (wantDeduced != deduced)
         continue;
+
+      //if (deduced) {
+      //      CCPlot(String("harmpreset:") + int(liveVoice->mHarmPatch));
+      //}
+
 
       *pout = *liveVoice; // copy from live voice to get started.
       pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)(nVoice + 1)); // +1 because live voice is id 0.

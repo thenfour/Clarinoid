@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <initializer_list>
+#include <vector>
 #include "Enum.hpp"
 
 
@@ -146,53 +148,46 @@ enum class ScaleFlavorOptions : uint8_t
   AllowEverywhere = 3,
 };
 
+
 struct ScaleFlavor
 {
   ScaleFlavorIndex mID;
-  const char *mName;
+  const char *mShortName;
+  const char *mLongName;
   ScaleFlavorOptions mOptions;
 
   bool IsAllowedInMenus() const { return (uint8_t)mOptions & (uint8_t)ScaleFlavorOptions::AllowInMenus; }
   bool IsAllowedInScaleFollower() const { return (uint8_t)mOptions & (uint8_t)ScaleFlavorOptions::AllowInScaleFollower; }
 
   // list of intervals in the scale?
-  uint8_t mIntervalCount;
-  int8_t mIntervals[13]; // signed because we have -1 magic numbers.
+  uint8_t mSymmetry = 0; // symmetric scales mean there are not 12 unique ones. chromatic = symmetry of 1. whole tone = symmetry 2.
+  std::vector<int8_t> mIntervals; // signed because we have -1 magic numbers.
+  std::vector<int8_t> mDegreeWeights;
+  uint8_t mTotalWeight = 0;
   NoteInScaleFlavorContext mNoteToScaleDegreeLUT_Sharps[12]; // convert chromatic note to scale degree+enharmonic.
   NoteInScaleFlavorContext mNoteToScaleDegreeLUT_Flats[12]; // convert chromatic note to scale degree+enharmonic.
   uint8_t mScaleDegreeToChromaticRelNoteLUT[12]; // convert scale degree to chromatic relative note (0=scale root, 1=scale root +1 semitone)
 
-  ScaleFlavor(ScaleFlavorIndex id, const char *name, ScaleFlavorOptions options,
-    int8_t i1, int8_t i2 = -1, int8_t i3 = -1, int8_t i4 = -1,
-    int8_t i5 = -1, int8_t i6 = -1, int8_t i7 = -1, int8_t i8 = -1,
-    int8_t i9 = -1, int8_t i10 = -1, int8_t i11 = -1, int8_t i12 = -1,
-    int8_t i13 = -1) :
+  ScaleFlavor(ScaleFlavorIndex id, const char *shortName, const char* longName, ScaleFlavorOptions options,
+    uint8_t symmetry,
+    std::initializer_list<int8_t> intervals, std::initializer_list<int8_t> degreeWeights) :
     mID(id),
-    mName(name),
-    mOptions(options)
+    mShortName(shortName),
+    mLongName(longName),
+    mOptions(options),
+    mSymmetry(symmetry),
+    mIntervals(intervals),
+    mDegreeWeights(degreeWeights)
   {
-    mIntervals[0] = i1;
-    mIntervals[1] = i2;
-    mIntervals[2] = i3;
-    mIntervals[3] = i4;
-    mIntervals[4] = i5;
-    mIntervals[5] = i6;
-    mIntervals[6] = i7;
-    mIntervals[7] = i8;
-    mIntervals[8] = i9;
-    mIntervals[9] = i10;
-    mIntervals[10] = i11;
-    mIntervals[11] = i12;
-    mIntervals[12] = i13;
     uint8_t span = 0;
-    for (int8_t i = 0; i < (int8_t)SizeofStaticArray(mIntervals); ++ i) {
-      if (mIntervals[i] == -1) {
-        mIntervalCount = i;
-        break;
-      }
-      span += mIntervals[i];
+    for (auto i : mIntervals) {
+      span += i;
     }
     CCASSERT(span == 12);
+
+    for (auto i : mDegreeWeights) {
+      mTotalWeight += i;
+    }
 
     // fill LUTs.
 
@@ -207,7 +202,7 @@ struct ScaleFlavor
       mNoteToScaleDegreeLUT_Sharps[ich].mScaleDegree = iScaleDeg_sharps;
       mNoteToScaleDegreeLUT_Sharps[ich].mEnharmonic = enh_sharps;
       enh_sharps++;
-      if (enh_sharps >= mIntervals[iScaleDeg_sharps]) {
+      if (enh_sharps >= mIntervals.begin()[iScaleDeg_sharps]) {
         enh_sharps = 0;
         iScaleDeg_sharps++;
         mScaleDegreeToChromaticRelNoteLUT[iScaleDeg_sharps] = (ich + 1) % 12;
@@ -223,8 +218,8 @@ struct ScaleFlavor
       mNoteToScaleDegreeLUT_Flats[ich % 12].mScaleDegree = iScaleDeg_flats;
       mNoteToScaleDegreeLUT_Flats[ich % 12].mEnharmonic = -enh_flats;
       enh_flats++;
-      uint8_t intMinus1 = RotateIntoRange(iScaleDeg_flats - 1, mIntervalCount);
-      if (enh_flats >= mIntervals[intMinus1]) {
+      uint8_t intMinus1 = RotateIntoRange(iScaleDeg_flats - 1, mIntervals.size());
+      if (enh_flats >= mIntervals.begin()[intMinus1]) {
         enh_flats = 0;
         iScaleDeg_flats = intMinus1;
       }
@@ -246,13 +241,13 @@ struct ScaleFlavor
   // takes any scale degree and brings it into range of 0-
   uint8_t NormalizeScaleDegree(int8_t s) const
   {
-    return RotateIntoRangeByte(s, mIntervalCount);
+    return RotateIntoRangeByte(s, (uint8_t)mIntervals.size());
   }
 
   // takes any scale degree and brings it into range of 0-
   uint8_t NormalizeScaleDegree(int8_t s, int8_t& octaveTransposition) const
   {
-    return RotateIntoRangeByte(s, mIntervalCount, octaveTransposition);
+    return RotateIntoRangeByte(s, (uint8_t)mIntervals.size(), octaveTransposition);
   }
 
   // if ctx octave had to be normalized, offsetAdj will be adjusted to understand how to preserve octave info.
@@ -266,21 +261,21 @@ struct ScaleFlavor
 
 // always make sure the scale spans 1 octave exactly.
 // !! NB: match indices to ScaleFlavorIndex!
-const ScaleFlavor gScaleFlavors[14] = { 
-  {ScaleFlavorIndex::Chromatic, "Chr", ScaleFlavorOptions::AllowEverywhere, 1,1,1,1, 1,1,1,1, 1,1,1,1},
-  {ScaleFlavorIndex::Major, "Maj", ScaleFlavorOptions::AllowEverywhere, 2,2,1,2,2,2,1},
-  {ScaleFlavorIndex::Minor, "Min", ScaleFlavorOptions::AllowEverywhere, 2,1,2,2,1,2,2},// not needed
-  {ScaleFlavorIndex::MelodicMinor, "Mmi", ScaleFlavorOptions::AllowEverywhere, 2,1,2,2,2,2,1},
-  {ScaleFlavorIndex::HarmonicMinor, "Hm", ScaleFlavorOptions::AllowEverywhere, 2,1,2,2,1,3,1},
-  {ScaleFlavorIndex::MajorPentatonic, "MaP", ScaleFlavorOptions::AllowEverywhere, 2,2,3,2,3 },
-  {ScaleFlavorIndex::MinorPentatonic, "miP", ScaleFlavorOptions::AllowEverywhere, 3,2,2,3,2},
-  {ScaleFlavorIndex::WholeTone, "Who", ScaleFlavorOptions::AllowEverywhere, 2,2,2,2,2,2},
-  {ScaleFlavorIndex::HalfWholeDiminished, "hwd", ScaleFlavorOptions::AllowEverywhere, 1,2,1,2,1,2,1,2},
-  {ScaleFlavorIndex::WholeHalfDiminished, "whd", ScaleFlavorOptions::AllowEverywhere, 2,1,2,1,2,1,2,1},
-  {ScaleFlavorIndex::Altered, "Alt", ScaleFlavorOptions::AllowEverywhere, 1,2,1,2,2,2,2},
-  {ScaleFlavorIndex::Blues, "Blu", ScaleFlavorOptions::AllowEverywhere, 3,2,1,1,3,2},
-  {ScaleFlavorIndex::Unison, "Uni", ScaleFlavorOptions::AllowEverywhere, 12},
-  {ScaleFlavorIndex::Power, "5th", ScaleFlavorOptions::AllowEverywhere, 7,5},
+const ScaleFlavor gScaleFlavors[14] = {
+  {ScaleFlavorIndex::Chromatic, "Chrom", "Chromatic", ScaleFlavorOptions::AllowInMenus,1, { 1,1,1,1, 1,1,1,1, 1,1,1,1 }, {1,1,1,1,1,1,1,1,1,1,1,1}},
+  {ScaleFlavorIndex::Major, "Major", "Major", ScaleFlavorOptions::AllowEverywhere,12, {2,2,1,2,2,2,1}, {2,1,3,1,2,1,1}},
+  {ScaleFlavorIndex::Minor, "Minor", "Minor", ScaleFlavorOptions::AllowInMenus,12, {2,1,2,2,1,2,2}, {2,1,3,1,2,1,1}},
+  {ScaleFlavorIndex::MelodicMinor, "MelMi", "Mel Min", ScaleFlavorOptions::AllowEverywhere,12, {2,1,2,2,2,2,1}, {2,1,3,1,1,1,3}},
+  {ScaleFlavorIndex::HarmonicMinor, "HrmMi", "Harm Min", ScaleFlavorOptions::AllowEverywhere, 12, {2,1,2,2,1,3,1}, {2,1,3,1,1,3,3}},
+  {ScaleFlavorIndex::MajorPentatonic, "MajPent", "Maj Pent", ScaleFlavorOptions::AllowEverywhere, 12, {2,2,3,2,3}, {2,1,3,2,1}},
+  {ScaleFlavorIndex::MinorPentatonic, "MinPent", "Min Pent", ScaleFlavorOptions::AllowEverywhere,12, {3,2,2,3,2}, {2,3,1,1,1}},
+  {ScaleFlavorIndex::WholeTone, "WholeTone", "WholeTone", ScaleFlavorOptions::AllowEverywhere,2,{ 2,2,2,2,2,2}, {1,1,1,1,1,1}},
+  {ScaleFlavorIndex::HalfWholeDiminished, "HalfWhDim", "Half-Whole Dim", ScaleFlavorOptions::AllowEverywhere,3, {1,2,1,2,1,2,1,2}, {1,1,1,1,1,1,1,1}},
+  {ScaleFlavorIndex::WholeHalfDiminished, "WhHalfDim", "Whole-Half Dim", ScaleFlavorOptions::AllowInMenus,3, {2,1,2,1,2,1,2,1}, {1,1,1,1,1,1,1,1}},
+  {ScaleFlavorIndex::Altered, "Alt", "Altered", ScaleFlavorOptions::AllowInMenus, 12, {1,2,1,2,2,2,2}, {2,2,1,2,1,1,1}},
+  {ScaleFlavorIndex::Blues, "Blues", "Blues", ScaleFlavorOptions::AllowEverywhere, 12, {3,2,1,1,3,2}, {2,3,1,3,2,1}},
+  {ScaleFlavorIndex::Unison, "Uni", "Unison", ScaleFlavorOptions::AllowEverywhere,12, {12}, {1}},
+  {ScaleFlavorIndex::Power, "5th", "Power", ScaleFlavorOptions::AllowEverywhere,12, {7,5}, {1,1}},
 };
 
 constexpr auto scaleFlavorSize = sizeof(gScaleFlavors);
@@ -308,6 +303,13 @@ struct Scale
     mRootNoteIndex = rhs.mRootNoteIndex;
     mFlavorIndex = rhs.mFlavorIndex;
     return *this;
+  }
+
+  bool operator ==(const Scale& rhs) const {
+    return (mRootNoteIndex == rhs.mRootNoteIndex) && (mFlavorIndex == rhs.mFlavorIndex);
+  }
+  bool operator !=(const Scale& rhs) const {
+    return !((*this) == rhs);
   }
 
   const ScaleFlavor& GetScaleFlavor() const {
@@ -356,24 +358,32 @@ struct Scale
     return ret;
   }
 
-  bool IsNoteDiatonic(Note note) const {
-    uint8_t temp = 0;
-    auto ctx = GetNoteInScaleContext(MidiNote(0, note).GetMidiValue(), temp, EnharmonicDirection::Flat);
-    return ctx.mEnharmonic == 0;
-  }
+  //bool IsNoteDiatonic(Note note) const {
+  //  uint8_t temp = 0;
+  //  auto ctx = GetNoteInScaleContext(MidiNote(1, note).GetMidiValue(), temp, EnharmonicDirection::Flat);
+  //  return ctx.mEnharmonic == 0;
+  //}
 
 #ifdef CLARINOID_MODULE_TEST // because this is using std::vector, and is not optimized
-  std::vector<Note> GetDiatonicNotes() const
+  std::vector<std::pair<Note, int>> GetDiatonicNotesAndWeights() const
   {
-    std::vector<Note> ret;
+    std::vector<std::pair<Note, int>> ret;
     for (Note n = (Note)0; (int)n < 12; n = (Note)((int)n + 1)) {
-      if (IsNoteDiatonic(n)) {
-        ret.push_back(n);
+      uint8_t temp = 0;
+      auto ctx = GetNoteInScaleContext(MidiNote(1, n).GetMidiValue(), temp, EnharmonicDirection::Flat);
+      if (ctx.mEnharmonic == 0) {
+        CCASSERT(ctx.mScaleDegree >= 0 && ctx.mScaleDegree < (int8_t)this->GetScaleFlavor().mDegreeWeights.size());
+        ret.push_back(std::make_pair(n, this->GetScaleFlavor().mDegreeWeights.begin()[ctx.mScaleDegree]));
       }
     }
     return ret;
   }
 #endif
+
+  String ToString() const
+  {
+    return String(gNotes[mRootNoteIndex].mName) + " " + GetScaleFlavor().mLongName;
+  }
 };
 
 constexpr size_t scalesize = sizeof(Scale);

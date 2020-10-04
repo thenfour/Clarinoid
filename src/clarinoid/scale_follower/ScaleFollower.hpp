@@ -1,7 +1,13 @@
+/*
 
+brainstorming ideas for other methods of scale detection:
+- just use a sort of "ideal" key continuously morphed from a C major scale, altering degrees as they're introduced.
+  in other words, no LUT at all, just make your own scale. seems bad though.
+
+*/
 #pragma once
 
-#include <optional>
+//#include <optional> // not available!
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/basic/Music.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
@@ -23,7 +29,11 @@ static const size_t SCALE_DISAMBIGUATION_NOTES_TO_ANALYZE = SCALE_DISAMBIGUATION
 //   [4 bits scale flavor index]
 //
 // if instead we wanted to like, use sorted list of notes, it gets more complex, and i'm not sure it's worth it.
+#ifdef CLARINOID_DONT_INCLUDE_SCALE_FOLLOWER_LUT
+uint8_t gScaleToScaleMappings[65536] = { 0 };
+#else
 #include "ScaleFollowerLUT.hpp"
+#endif
 
 // playing notes below this threshold will not even be considered for scale follower
 static const int SCALE_FOLLOWER_IMPORTANCE_THRESHOLD = 100;
@@ -166,10 +176,11 @@ struct SortedArray
     mSize = 0;
   }
 
-  std::optional<Tval> Insert(Tval&& newVal) // if an item was pushed out as the result, it's returned with true.
+  bool Insert(Tval&& newVal)
   {
     size_t newIndex = 0;
-    std::optional<Tval> ret;
+    //std::optional<Tval> ret;
+    bool ret = false;
     if (mSize > 0) {
       // figure out where to place it; use binary search.
       size_t windowLeft = 0;
@@ -220,7 +231,8 @@ struct SortedArray
       if (mSize == N) {
         // we'll be pushing an item off.
         --itemsToSlide; 
-        ret.emplace(std::move(mArray[N - 1]));
+        ret = true;
+        //ret.emplace(std::move(mArray[N - 1]));
       }
     
       for (size_t i = newIndex + itemsToSlide; i > newIndex; -- i) {
@@ -254,7 +266,8 @@ struct MaxItemsGrabber
 
   void Update(Tkey k, Tvalue v)
   {
-    auto r = mArray.Insert(std::make_pair(k, v));
+    //auto r = 
+    mArray.Insert(std::make_pair(k, v));
   }
 };
 
@@ -282,21 +295,33 @@ namespace ScaleFollowerDetail
       }
       return ret;
     }
-  };
 
-  MapKey IndexToMapKey(size_t index)
-  {
-    //   [4 bits scale flavor]
-    //   [12 bits of context notes, relative to scale root. each bit = note on or off]
-    MapKey ret;
-    for (size_t i = 0; i < 12; ++i)
+    static MapKey FromScaleFlavorAndNoteBits(ScaleFlavorIndex sf, uint16_t noteBits)
     {
-      ret.mPlayingNotes[i] = index & 1;
-      index >>= 1;
+      MapKey ret;
+      for (size_t i = 0; i < 12; ++i)
+      {
+        ret.mPlayingNotes[i] = noteBits & 1;
+        noteBits >>= 1;
+      }
+      ret.mScaleFlavor = sf;
+      return ret;
     }
-    ret.mScaleFlavor = (ScaleFlavorIndex)index;
-    return ret;
-  }
+
+    static MapKey FromIndex(size_t index)
+    {
+      //   [4 bits scale flavor]
+      //   [12 bits of context notes, relative to scale root. each bit = note on or off]
+      MapKey ret;
+      for (size_t i = 0; i < 12; ++i)
+      {
+        ret.mPlayingNotes[i] = index & 1;
+        index >>= 1;
+      }
+      ret.mScaleFlavor = (ScaleFlavorIndex)index;
+      return ret;
+    }
+  };
 
   struct MapValue
   {
@@ -306,7 +331,7 @@ namespace ScaleFollowerDetail
     uint16_t Serialize() const {
       //   [4 bits scale root, relative to current (unsigned)]
       //   [4 bits scale flavor index]
-      return (mRelativeRoot << 4) | ((int)mScaleFlavor);
+      return ((uint16_t)mRelativeRoot << 4) | ((int)mScaleFlavor);
     }
 
     static MapValue Deserialize(uint16_t t) {
@@ -319,8 +344,6 @@ namespace ScaleFollowerDetail
   };
 
 } // namespace scalefollowerdetails
-
-
 
 struct ScaleFollower
 {
@@ -351,7 +374,7 @@ struct ScaleFollower
 
     // this is not necessary, because we reset it later, which prepares for the next frame.
     //for (auto& v : mVoices) { v.mTouched = false; }
-    int16_t mapKey = 0;
+    //int16_t mapKey = 0;
 
     for (size_t i = 0; i < voiceCount; ++ i) {
       auto& lv = voices[i];

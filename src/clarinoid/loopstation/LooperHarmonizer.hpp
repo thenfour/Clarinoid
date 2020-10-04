@@ -201,15 +201,23 @@ struct LooperAndHarmonizer
       }
     }
 
-    gAppSettings.mDeducedScale = gScaleFollower.Update(gAppSettings.mDeducedScale, outp, pout - outp); // deduce, but don't actually change the global scale because we still need to use the existing...
+    //auto old = gAppSettings.mDeducedScale;
+    gAppSettings.mDeducedScale = gScaleFollower.Update(gAppSettings.mDeducedScale, outp, pout - outp);
+    // if (gAppSettings.mDeducedScale != old) {
+    //   Serial.println(String("scale changed to ") + gAppSettings.mDeducedScale.ToString());
+    // }
 
     // go through and fill in all deduced voices. logically, the "live voices" will all remain untouched so voices just get filled in.
+    //int deduced = 0;
     for (uint8_t iLayer = 0; iLayer < SizeofStaticArray(mLayers); ++iLayer) {
       auto& l = mLayers[iLayer];
-      if (pLiveVoices[iLayer] && l.mIsPlaying) {
+      if (pLiveVoices[iLayer] && (l.mIsPlaying || (iLayer == mCurrentlyWritingLayer))) {
+        //deduced ++;
         pout += mHarmonizer.Harmonize(iLayer, pLiveVoices[iLayer], transitionEvents, pout, outpEnd, Harmonizer::VoiceFilterOptions::OnlyDeducedVoices);
       }
     }
+
+    //CCPlot(String("musical poly: ") + int(pout - outp) + ", deduced layers touched: " + deduced);
 
     return pout - outp;
   }

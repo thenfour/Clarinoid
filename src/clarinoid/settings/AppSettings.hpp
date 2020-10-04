@@ -88,9 +88,9 @@ struct AppSettings
 
   int mTranspose = 0;
 
-  GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Chosen;
-  Scale mGlobalScale = Scale { Note::E, ScaleFlavorIndex::MajorPentatonic }; // you can set this
-  Scale mDeducedScale; // this is automatically populated always
+  GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Deduced;
+  Scale mGlobalScale = Scale { Note::E, ScaleFlavorIndex::MajorPentatonic }; // you can set this in menus
+  Scale mDeducedScale = Scale { Note::C, ScaleFlavorIndex::MajorPentatonic };; // this is automatically populated always
   
   HarmSettings mHarmSettings;
   LooperSettings mLooperSettings;
@@ -98,7 +98,7 @@ struct AppSettings
 
   // these are for the live playing voice. a harmonizer's voices can override the synth preset though.
   uint16_t mGlobalSynthPreset = 0;
-  uint16_t mGlobalHarmPreset = 0;
+  uint16_t mGlobalHarmPreset = 2;
 };
 
 AppSettings gAppSettings;

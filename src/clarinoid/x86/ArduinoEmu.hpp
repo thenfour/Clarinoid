@@ -50,7 +50,7 @@ struct String
     return *this;
   }
   String& operator =(const String& s) {
-    mStr.clear();
+    mStr.str(std::string());
     mStr << s.mStr.str();
     return *this;
   }
