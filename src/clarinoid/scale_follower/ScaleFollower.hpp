@@ -84,7 +84,14 @@ struct ScaleFollowerVoice
     // note value
 
     // - is playing (not playing but recent can still count!)
-    mImportance = mRunningVoice.IsPlaying() ? 100 : 0;
+    bool isPlaying = mRunningVoice.IsPlaying();
+
+    if (!isPlaying && mIsTransient) {
+      mImportance = 0;
+      return;
+    }
+      
+    mImportance = isPlaying ? 100 : 0;
 
     // - duration - i'd like log behavior but maybe that's not worth the processing time
     int durationScore = CalcDurationScore0_100(mNoteDurationTimer.ElapsedMillis());
@@ -124,12 +131,30 @@ struct ScaleFollowerVoice
       te = CalculateTransitionEvents(mRunningVoice, mv);
     }
     if (te.mNeedsNoteOn) {
+#ifdef CLARINOID_MODULE_TEST
+      cc::log("  v:[%d] Note On [%s]", (int)mv.mVoiceId, MidiNote(mv.mMidiNote).ToString());
+#endif // CLARINOID_MODULE_TEST
       mNoteDurationTimer.Restart();
     }
-    if (te.mNeedsNoteOff) {
+    else if (te.mNeedsNoteOff)
+    {
+      mIsTransient = mNoteDurationTimer.ElapsedMillis() < SCALE_FOLLOWER_TRANSIENT_NOTE_THRESH_MILLIS;
+#ifdef CLARINOID_MODULE_TEST
+      cc::log("  v:[%d] Note Off [%s], duration: [%d ms%s]", (int)mv.mVoiceId, MidiNote(mv.mMidiNote).ToString(), mNoteDurationTimer.ElapsedMillis(), mIsTransient ? " (TRANSIENT)" : "");
+#endif // CLARINOID_MODULE_TEST
       mNoteDurationTimer.Pause();
       mNoteOffTimer.Restart();
     }
+#ifdef CLARINOID_MODULE_TEST
+    else {
+      if (mv.IsPlaying()) {
+        cc::log("  v:[%d] continuing... [%s], duration: [%d ms]", (int)mv.mVoiceId, MidiNote(mv.mMidiNote).ToString(), mNoteDurationTimer.ElapsedMillis());
+      }
+      else {
+        cc::log("  v:[%d] no longer playing ... [%s], duration: [%d ms], age: [%d ms]", (int)mv.mVoiceId, MidiNote(mv.mMidiNote).ToString(), mNoteDurationTimer.ElapsedMillis(), mNoteOffTimer.ElapsedMillis());
+      }
+    }
+#endif // CLARINOID_MODULE_TEST
 
     mRunningVoice = mv;
 
@@ -141,15 +166,23 @@ struct ScaleFollowerVoice
   }
 
   // called when we didn't find this note any longer from musical state. consider it a note off.
-  void Stop()
-  {
-    mNoteDurationTimer.Pause();
-    mNoteOffTimer.Restart();
-    // make our running voice stop "playing".
-    mRunningVoice.mVelocity = 0;
-    //mRunningVoice.mMidiNote = 0; // don't set this to 0! we can use it to remember which note was played.
-    UpdateImportance();
-  }
+//  void Stop()
+//  {
+//#ifdef CLARINOID_MODULE_TEST
+//    if (mRunningVoice.IsPlaying()) {
+//      cc::log("  v:[%d] STOPPING by force (?) [%s], duration: [%d ms]", (int)mRunningVoice.mVoiceId, MidiNote(mRunningVoice.mMidiNote).ToString(), mNoteDurationTimer.ElapsedMillis());
+//    }
+//    else {
+//      cc::log("  v:[%d] STOPPING by force (?) [%s], duration: [%d ms], age: [%d ms]", (int)mRunningVoice.mVoiceId, MidiNote(mRunningVoice.mMidiNote).ToString(), mNoteDurationTimer.ElapsedMillis(), mNoteOffTimer.ElapsedMillis());
+//    }
+//#endif // CLARINOID_MODULE_TEST
+//    mNoteDurationTimer.Pause();
+//    mNoteOffTimer.Restart();
+//    // make our running voice stop "playing".
+//    mRunningVoice.mVelocity = 0;
+//    //mRunningVoice.mMidiNote = 0; // don't set this to 0! we can use it to remember which note was played.
+//    UpdateImportance();
+//  }
 
   bool Eligible() const {
     // is the voice even eligible to be used for scale follower?
@@ -283,8 +316,25 @@ struct ScaleFollower
   // Call to "feed" musical context.
   Scale Update(const MusicalVoice* voices, size_t voiceCount)
   {
+#ifdef CLARINOID_MODULE_TEST
+    cc::log("Scale Follower Update-----------------------");
+
+    auto ImportantListToString = [](MaxItemsGrabber<int, ScaleFollowerVoice*, SCALE_DISAMBIGUATION_MAPPING_NOTES>& list) {
+      String ret = "(";
+      for (size_t i = 0; i < list.mArray.mSize; ++i) {
+        // (Eb : 100)
+        ret += MidiNote(list.mArray.mArray[i].second->mRunningVoice.mMidiNote).ToString();
+        ret += " : ";
+        ret += list.mArray.mArray[i].second->mImportance;
+      }
+      ret += ")";
+      return ret.mStr.str();
+    };
+
+#endif // CLARINOID_MODULE_TEST
+
     MaxItemsGrabber<int, ScaleFollowerVoice*, SCALE_DISAMBIGUATION_MAPPING_NOTES> mostImportantNonTransient;
-    MaxItemsGrabber<int, ScaleFollowerVoice*, SCALE_DISAMBIGUATION_MAPPING_NOTES> mostImportant;
+    MaxItemsGrabber<int, ScaleFollowerVoice*, SCALE_DISAMBIGUATION_MAPPING_NOTES> mostImportantWithTransient;
 
     // this is not necessary, because we reset it later, which prepares for the next frame.
     //for (auto& v : mVoices) { v.mTouched = false; }
@@ -293,9 +343,10 @@ struct ScaleFollower
     for (size_t i = 0; i < voiceCount; ++i) {
       auto& lv = voices[i];
       auto* pv = FindAssignedOrAvailable(lv.mVoiceId);
+      CCASSERT(!pv->mTouched); // this would be a duplicate voice ID in 1 update.
       pv->mTouched = true;
       pv->Update(lv);
-      mostImportant.Update(pv->mImportance, pv);
+      mostImportantWithTransient.Update(pv->mImportance, pv);
       if (!pv->mIsTransient) {
         mostImportantNonTransient.Update(pv->mImportance, pv);
       }
@@ -308,9 +359,10 @@ struct ScaleFollower
         v.mTouched = false; // reset for next frame
         continue;
       }
-      v.Stop();
       if (v.Eligible()) {
-        mostImportant.Update(v.mImportance, &v);
+        //v.Stop();
+        v = {}; // reset it fully.
+        mostImportantWithTransient.Update(v.mImportance, &v);
         if (!v.mIsTransient) {
           mostImportantNonTransient.Update(v.mImportance, &v);
         }
@@ -320,7 +372,7 @@ struct ScaleFollower
     uint16_t kNonTransient = ((uint16_t)mCurrentScale.mFlavorIndex) << 12;
     uint16_t kWithTransient = kNonTransient;
 
-    auto fnTakeImportantNotes = [](const decltype(mostImportant)& importantNotes, uint16_t& k, const Scale& currentScale)
+    auto fnTakeImportantNotes = [](const decltype(mostImportantWithTransient)& importantNotes, uint16_t& k, const Scale& currentScale)
     {
       for (size_t i = 0; i < importantNotes.mArray.mSize; ++i)
       {
@@ -336,8 +388,13 @@ struct ScaleFollower
       }
     };
 
-    fnTakeImportantNotes(mostImportant, kWithTransient, mCurrentScale);
+    fnTakeImportantNotes(mostImportantWithTransient, kWithTransient, mCurrentScale);
     fnTakeImportantNotes(mostImportantNonTransient, kNonTransient, mCurrentScale);
+
+#ifdef CLARINOID_MODULE_TEST
+    // dump important note list
+#endif // CLARINOID_MODULE_TEST
+
 
     auto fnGetScale = [](uint16_t k, const Scale& currentScale)
     {
@@ -351,8 +408,23 @@ struct ScaleFollower
       return ret;
     };
 
-    mCurrentScale = fnGetScale(kNonTransient, mCurrentScale);
-    Scale ret = fnGetScale(kWithTransient, mCurrentScale);
+    auto newCurrentScale = fnGetScale(kNonTransient, mCurrentScale);
+    Scale ret = fnGetScale(kWithTransient, newCurrentScale);
+
+#ifdef CLARINOID_MODULE_TEST
+    if (newCurrentScale != mCurrentScale) {
+      cc::log("  CHANGING current scale [%s] + long notes [%s] ==> [%s]",
+        mCurrentScale.ToString().mStr.str().c_str(),
+        ImportantListToString(mostImportantNonTransient).c_str(),
+        newCurrentScale.ToString().mStr.str().c_str());
+    }
+    cc::log("  Current scale [%s] + short notes [%s] ==> [%s]",
+      newCurrentScale.ToString().mStr.str().c_str(),
+      ImportantListToString(mostImportantWithTransient).c_str(),
+      ret.ToString().mStr.str().c_str());
+#endif // CLARINOID_MODULE_TEST
+
+    mCurrentScale = newCurrentScale;
 
     return ret;
   }

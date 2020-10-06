@@ -88,6 +88,10 @@ public:
   {
   }
 
+  const char *ToString() const {
+    return gNotes[mNoteIndex].mName;
+  }
+
   uint8_t GetMidiValue() const { return mValue; }
   uint8_t GetNoteIndex() const { return mNoteIndex; }
   const NoteDesc& GetNoteDesc() const { return gNotes[mNoteIndex]; }
