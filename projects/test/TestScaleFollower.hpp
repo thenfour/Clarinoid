@@ -121,15 +121,56 @@ void TestScaleFollower()
   Test(s == Scale(Note::Bb, ScaleFlavorIndex::Major));
 
   SetTestClockMillis(1500); // the Eb + Bb are not transient notes.
-  // move Eb to Db
-  lv[0] = NoteOn(Note::Db, 3, 1);
+  lv[0] = NoteOn(Note::Db, 3, 1); // move Eb to Db
+  s = sf.Update(lv, 1); // this should mark Eb and Bb as non-transient, no longer playing, and Db now transient & playing.
+  Test(s == Scale(Note::C, ScaleFlavorIndex::HalfWholeDiminished));
+
+  SetTestClockMillis(2200); // kinda erase the Db
+  lv[0] = NoteOn(Note::D, 3, 1);
   s = sf.Update(lv, 1);
+  // it's unclear what the LUT should produce here. But it's especially ambiguous because
+  // we don't care about importance.
+  // better would be to ignore the non-playing notes.
+  // a mitigating factor is that the non-important notes will definitely get pushed out soon, 
+  // but better would be to have 2 tiers of importance.
+  // at first i was concerned about LUT size, but i need to just restructure it because it's 
+  // very inefficient. it accounst for all combinations of 12 notes playing together.
+  // but considering we never analyze more than 4 notes at a time, it eliminates a LOT of permutations.
+
+
+  // more normalish scenarios. Let's transition to F minor, then Ab minor
+  cc::log("\r\n");
+  SetTestClockMillis(1000);
+  sf = {};
+  SetTestClockMillis(1000); // play Eb+Bb poly
+  lv[0] = NoteOn(Note::Eb, 3, 1);
+  lv[1] = NoteOn(Note::Bb, 3, 2);
+  s = sf.Update(lv, 2);
   Test(s == Scale(Note::Bb, ScaleFlavorIndex::Major));
 
+  SetTestClockMillis(1500); // the Eb + Bb are not transient notes.
+  lv[0] = NoteOn(Note::Ab, 3, 1); // move Eb to Ab
+  s = sf.Update(lv, 1); // this should mark Eb and Bb as non-transient, no longer playing, and Ab now transient & playing.
+  Test(s == Scale(Note::Eb, ScaleFlavorIndex::Major));
 
+  delay(300);
+  lv[0] = NoteOn(Note::G, 3, 1); // move Ab to G
+  s = sf.Update(lv, 1);
+  Test(s == Scale(Note::Eb, ScaleFlavorIndex::Major));
+
+  delay(300);
+  lv[0] = NoteOn(Note::Bb, 3, 1);
+  s = sf.Update(lv, 1);
+  Test(s == Scale(Note::Eb, ScaleFlavorIndex::Major));
+
+  delay(300);
+  lv[0] = NoteOn(Note::B, 3, 1);
+  s = sf.Update(lv, 1);
+  Test(s == Scale(Note::Ab, ScaleFlavorIndex::MelodicMinor));
+
+  // test note duration increase importance
+  // test important notes, test transientness
   // test LUT
-
-  // test scale following
 
 }
 
