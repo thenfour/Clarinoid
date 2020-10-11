@@ -80,18 +80,54 @@ struct LooperAndHarmonizer
     case LooperState::DurationSet:
       // tell the currently-writing layer it's over.
       UpdateCurrentLoopTimeMS();
-      if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers) - 1) { // -1 because you always need one "live" layer playing
+
+      // figure out what the new layer will be.
+      LoopEventStream* newLayer = nullptr;
+      size_t iNewLayer = 0;
+      for (size_t inew = 0; inew < SizeofStaticArray(mLayers); ++ inew)
+      {
+        if (mCurrentlyWritingLayer == inew)
+          continue;
+        auto& l = mLayers[inew];
+        if (l.IsInUse()) { 
+          continue;
+        }
+        // found it.
+        iNewLayer = inew;
+        newLayer = &l;
+        break;
+      }
+
+      if (newLayer) { // without a layer to move to, we can't do anything. you need a "live" layer always.
+
+        // wrap up existing recording
         Ptr buf = mLayers[mCurrentlyWritingLayer].WrapUpRecording();
         mLayers[mCurrentlyWritingLayer].mIsPlaying = true;
 
-        mCurrentlyWritingLayer++; // can go out of bounds!
-        if (mCurrentlyWritingLayer < SizeofStaticArray(mLayers)) {
-          mLayers[mCurrentlyWritingLayer].StartRecording(mStatus, mv, buf, Ptr(EndPtr(LOOPSTATION_BUFFER)));// prepare the next layer for recording.
-        }
+        // and start with the new layer.
+        mCurrentlyWritingLayer = iNewLayer;
+        newLayer->StartRecording(mStatus, mv, buf, Ptr(EndPtr(LOOPSTATION_BUFFER)));
       }
 
       break;
+    } // switch
+  }
+
+  // see notes https://github.com/thenfour/Clarinoid/issues/25
+  // blitting all subsequent layers to reduce fragmentation would be a lot of overhead when it's very
+  // unlikely that we will OOM. specific strategies to tighten space can be employed (first, when you wrap up recording, THEN move the recorded layer to the biggest free block)
+  // but for now until that's an actual problem, just eat up more buffer.
+  void ClearLayer(size_t layer)
+  {
+    CCASSERT(layer < SizeofStaticArray(mLayers));
+    if (layer == mCurrentlyWritingLayer)
+    {
+      // you can't "clear" the currently writing layer. this is the "live" layer where we're
+      // not actually playing the recorded material, so there would be no user-facing effect.
+      return;
     }
+    auto& l = mLayers[layer];
+    l.Stop(); // this will mark the layer free for use (after it plays its note-off) and its memory will be frozen and forgotten.
   }
 
   void Clear()

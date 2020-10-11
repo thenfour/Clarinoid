@@ -24,8 +24,35 @@ struct LoopSettingsApp : public SettingsMenuApp
   LabelSettingItem mDuration = { []() { return (String)(String("Rec len: ") + GetRecordedDurationSec() + "sec"); }, AlwaysEnabled };
   LabelSettingItem mMaxDuration = { []() { return (String)(String("Est max len: ") + GetMaxRecordedDurationMin() + "min"); }, AlwaysEnabled };
 
+  LabelSettingItem mLayer1Info = { []() { return (String)(String("Layer1: ") + GetMemUsageBytes(0) + " bytes"); }, AlwaysEnabled };
+  LabelSettingItem mLayer1Status = { []() { return (String)(String("   Status: ") + GetLayerStatus(0)); }, AlwaysEnabled };
+  TriggerSettingItem mLayer1Clear = { " > Clear", [](void*){ gEWIControl.mMusicalState.mLooper.ClearLayer(0); }, nullptr, AlwaysEnabled };
+
+  LabelSettingItem mLayer2Info = { []() { return (String)(String("Layer2: ") + GetMemUsageBytes(1) + " bytes"); }, AlwaysEnabled };
+  LabelSettingItem mLayer2Status = { []() { return (String)(String("   Status: ") + GetLayerStatus(1)); }, AlwaysEnabled };
+  TriggerSettingItem mLayer2Clear = { " > Clear", [](void*){ gEWIControl.mMusicalState.mLooper.ClearLayer(1); }, nullptr, AlwaysEnabled };
+
+  LabelSettingItem mLayer3Info = { []() { return (String)(String("Layer3: ") + GetMemUsageBytes(2) + " bytes"); }, AlwaysEnabled };
+  LabelSettingItem mLayer3Status = { []() { return (String)(String("   Status: ") + GetLayerStatus(2)); }, AlwaysEnabled };
+  TriggerSettingItem mLayer3Clear = { " > Clear", [](void*){ gEWIControl.mMusicalState.mLooper.ClearLayer(2); }, nullptr, AlwaysEnabled };
+
+
   static float GetMemUsagePercent() {
     return (float)GetMemUsageKB() * 100.0f / GetTotalMemKB();
+  }
+
+  static const char *GetLayerStatus(size_t layer)
+  {
+    return gEWIControl.mMusicalState.mLooper.mLayers[layer].GetStateString();
+  }
+
+  static int GetMemUsageBytes(size_t layer)
+  {
+    int ret = 0;
+    for (auto& l : gEWIControl.mMusicalState.mLooper.mLayers) {
+      ret += l.GetMemoryUsage();
+    }
+    return ret / 1024;
   }
 
   static int GetMemUsageKB()
@@ -64,13 +91,16 @@ struct LoopSettingsApp : public SettingsMenuApp
     return multi * GetRecordedDurationSec() / 60.0f;
   }
 
-  ISettingItem* mArray[12] =
+  ISettingItem* mArray[21] =
   {
     &mTrigger, &mClearAll, &mLoopIt, &mStatus, &mLayer, &mLoopTime, &mLoopLen, &mSynthPolyphony,
     &mMemUsage,
     &mMemUsage2,
     &mDuration,
-    &mMaxDuration
+    &mMaxDuration,
+    &mLayer1Info, &mLayer1Status, &mLayer1Clear,
+    &mLayer2Info, &mLayer2Status, &mLayer2Clear,
+    &mLayer3Info, &mLayer3Status, &mLayer3Clear,
   };
   SettingsList mRootList = { mArray };
 

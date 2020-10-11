@@ -321,11 +321,30 @@ struct LoopEventStream
     return mEventsValidEnd.DistanceBytes(mBufferBegin.mP);
   }
 
+  const char *GetStateString() const {
+    if (mIsPlaying && mOOM) return "Playing but OOM!";
+    if (mIsPlaying && !mOOM) return "Playing";
+    if (mIsRecording && mOOM) return "Recording but OOM!";
+    if (mIsRecording && !mOOM) return "Recording";
+    if (mNeedsNoteOff) return "Needs note off";
+    return "Idle";
+  }
+
   const LoopStatus* mpStatus = nullptr;
   const LoopStatus& GetStatus() const { return *mpStatus; }
 
+  // represents a recorded size of 0
   bool IsEmpty() const {
     return mBufferBegin.mP == mEventsValidEnd;
+  }
+
+  // basically if this returns false then nothing is lost by calling BeginRecording(). Is this voice not available?
+  bool IsInUse() const
+  {
+    if (mIsPlaying) return true;
+    if (mIsRecording) return true;
+    if (mNeedsNoteOff) return true;
+    return false;
   }
 
   uint32_t Duration(uint32_t begin, uint32_t end) {
@@ -336,6 +355,7 @@ struct LoopEventStream
     return end - begin;
   }
 
+  // musical stop (if playing, it will emit a note off for example).
   void Stop()
   {
     if (mOOM)
