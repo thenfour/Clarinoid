@@ -79,6 +79,18 @@ void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)
 }
 
 
+template<int period>
+int ModularDistance(int a, int b)
+{
+  a = RotateIntoRange(a, period);
+  b = RotateIntoRange(b, period);
+  if (a > b) {
+    return std::min(a - b, b + period - a);
+  }
+  return std::min(b - a, a + period - b);
+}
+
+
 // allows throttled plotting to Serial.
 class PlotHelper : UpdateObjectT<ProfileObjectType::PlotHelper>
 {

@@ -89,9 +89,9 @@ struct Voice
     if (voiceOrPatchChanged)
     {
       // init synth patch.
-      mOsc.waveform(1, mPreset->mOsc1Waveform);
-      mOsc.waveform(2, mPreset->mOsc2Waveform);
-      mOsc.waveform(3, mPreset->mOsc3Waveform);
+      mOsc.waveform(1, (uint8_t)mPreset->mOsc1Waveform);
+      mOsc.waveform(2, (uint8_t)mPreset->mOsc2Waveform);
+      mOsc.waveform(3, (uint8_t)mPreset->mOsc3Waveform);
     
       mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
       mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
@@ -126,16 +126,15 @@ struct Voice
     mOsc.portamentoTime(2, mPreset->mPortamentoTime);
     mOsc.portamentoTime(3, mPreset->mPortamentoTime);
 
-    float freq = MIDINoteToFreq(midiNote);
-  
-    mOsc.frequency(1, MIDINoteToFreq(midiNote - mPreset->mDetune));
-    mOsc.frequency(3, MIDINoteToFreq(midiNote + mPreset->mDetune));
+    mOsc.frequency(1, MIDINoteToFreq(midiNote + mPreset->mOsc1PitchFine + mPreset->mOsc1PitchSemis - mPreset->mDetune));
+    mOsc.frequency(3, MIDINoteToFreq(midiNote + mPreset->mOsc3PitchFine + mPreset->mOsc3PitchSemis + mPreset->mDetune));
 
     if (mPreset->mSync) {
+      float freq = MIDINoteToFreq(midiNote + mPreset->mOsc2PitchFine + mPreset->mOsc2PitchSemis);
       float freqSync = map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * 2, freq * 7);
       mOsc.frequency(2, freqSync);
     } else {
-      mOsc.frequency(2, freq);
+      mOsc.frequency(2, MIDINoteToFreq(midiNote + mPreset->mOsc2PitchFine + mPreset->mOsc2PitchSemis));
     }
 
     float filterFreq = map(mv.mBreath01.GetFloatVal(), 0.01, 1, 0, 15000);

@@ -166,22 +166,22 @@ struct ScaleFlavor
   // list of intervals in the scale?
   uint8_t mSymmetry = 0; // symmetric scales mean there are not 12 unique ones. chromatic = symmetry of 1. whole tone = symmetry 2.
   std::vector<int8_t> mIntervals; // signed because we have -1 magic numbers.
-  std::vector<int8_t> mDegreeWeights;
-  uint8_t mTotalWeight = 0;
+  std::vector<int8_t> mDegreeCharacteristicStrengths;
+  uint8_t mTotalCharacteristicStrength = 0;
   NoteInScaleFlavorContext mNoteToScaleDegreeLUT_Sharps[12]; // convert chromatic note to scale degree+enharmonic.
   NoteInScaleFlavorContext mNoteToScaleDegreeLUT_Flats[12]; // convert chromatic note to scale degree+enharmonic.
   uint8_t mScaleDegreeToChromaticRelNoteLUT[12]; // convert scale degree to chromatic relative note (0=scale root, 1=scale root +1 semitone)
 
   ScaleFlavor(ScaleFlavorIndex id, const char *shortName, const char* longName, ScaleFlavorOptions options,
     uint8_t symmetry,
-    std::initializer_list<int8_t> intervals, std::initializer_list<int8_t> degreeWeights) :
+    std::initializer_list<int8_t> intervals, std::initializer_list<int8_t> degreeCharacteristicStrengths) :
     mID(id),
     mShortName(shortName),
     mLongName(longName),
     mOptions(options),
     mSymmetry(symmetry),
     mIntervals(intervals),
-    mDegreeWeights(degreeWeights)
+    mDegreeCharacteristicStrengths(degreeCharacteristicStrengths)
   {
     uint8_t span = 0;
     for (auto i : mIntervals) {
@@ -189,8 +189,8 @@ struct ScaleFlavor
     }
     CCASSERT(span == 12);
 
-    for (auto i : mDegreeWeights) {
-      mTotalWeight += i;
+    for (auto i : mDegreeCharacteristicStrengths) {
+      mTotalCharacteristicStrength += i;
     }
 
     // fill LUTs.
@@ -266,7 +266,7 @@ struct ScaleFlavor
 // always make sure the scale spans 1 octave exactly.
 // !! NB: match indices to ScaleFlavorIndex!
 const ScaleFlavor gScaleFlavors[14] = {
-  {ScaleFlavorIndex::Chromatic, "Chrom", "Chromatic", ScaleFlavorOptions::AllowInMenus,1, { 1,1,1,1, 1,1,1,1, 1,1,1,1 }, {1,1,1,1,1,1,1,1,1,1,1,1}},
+  {ScaleFlavorIndex::Chromatic, "Chrom", "Chromatic", ScaleFlavorOptions::AllowInMenus,1,{ 1,1,1,1, 1,1,1,1, 1,1,1,1 }, {1,1,1,1,1,1,1,1,1,1,1,1}},
   {ScaleFlavorIndex::Major, "Major", "Major", ScaleFlavorOptions::AllowEverywhere,12, {2,2,1,2,2,2,1}, {2,1,3,1,2,1,1}},
   {ScaleFlavorIndex::Minor, "Minor", "Minor", ScaleFlavorOptions::AllowInMenus,12, {2,1,2,2,1,2,2}, {2,1,3,1,2,1,1}},
   {ScaleFlavorIndex::MelodicMinor, "MelMi", "Mel Min", ScaleFlavorOptions::AllowEverywhere,12, {2,1,2,2,2,2,1}, {2,1,3,1,1,1,3}},
@@ -371,15 +371,15 @@ struct Scale
   //}
 
 #ifdef CLARINOID_MODULE_TEST // because this is using std::vector, and is not optimized
-  std::vector<std::pair<Note, int>> GetDiatonicNotesAndWeights() const
+  std::vector<std::pair<Note, int>> GetDiatonicNotesAndCharacter() const
   {
     std::vector<std::pair<Note, int>> ret;
     for (Note n = (Note)0; (int)n < 12; n = (Note)((int)n + 1)) {
       uint8_t temp = 0;
       auto ctx = GetNoteInScaleContext(MidiNote(1, n).GetMidiValue(), temp, EnharmonicDirection::Flat);
       if (ctx.mEnharmonic == 0) {
-        CCASSERT(ctx.mScaleDegree >= 0 && ctx.mScaleDegree < (int8_t)this->GetScaleFlavor().mDegreeWeights.size());
-        ret.push_back(std::make_pair(n, this->GetScaleFlavor().mDegreeWeights.begin()[ctx.mScaleDegree]));
+        CCASSERT(ctx.mScaleDegree >= 0 && ctx.mScaleDegree < (int8_t)this->GetScaleFlavor().mDegreeCharacteristicStrengths.size());
+        ret.push_back(std::make_pair(n, this->GetScaleFlavor().mDegreeCharacteristicStrengths.begin()[ctx.mScaleDegree]));
       }
     }
     return ret;

@@ -71,13 +71,13 @@ struct AppSettings
 
   float mBreathLowerBound = 0.07f;
   float mBreathUpperBound = 0.7f;
-  float mBreathNoteOnThreshold = 0.01f;
+  float mBreathNoteOnThreshold = 0.005f;
   
   float mTouchMaxFactor = 1.5f;
 
   PitchStripSettings mPitchStrip;
 
-  float mReverbGain = 0.2f;
+  float mReverbGain = 0.02f;
 
   bool mMetronomeOn = false;
   float mMetronomeGain = 0.8f;
@@ -98,7 +98,7 @@ struct AppSettings
 
   // these are for the live playing voice. a harmonizer's voices can override the synth preset though.
   uint16_t mGlobalSynthPreset = 0;
-  uint16_t mGlobalHarmPreset = 2;
+  uint16_t mGlobalHarmPreset = 0;
 };
 
 AppSettings gAppSettings;

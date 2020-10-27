@@ -25,10 +25,10 @@ static const int SCALE_FOLLOWER_TRANSIENT_NOTE_THRESH_MILLIS = 50;
 //   [4 bits scale flavor index]
 //
 // if instead we wanted to like, use sorted list of notes, it gets more complex, and i'm not sure it's worth it.
-#ifdef CLARINOID_DONT_INCLUDE_SCALE_FOLLOWER_LUT
-uint8_t gScaleToScaleMappings[65536] = { 0 };
-#else
 #include "ScaleFollowerLUT.hpp"
+#ifndef CLARINOID_SCALE_FOLLOWER_LUT
+#define CLARINOID_SCALE_FOLLOWER_LUT
+uint8_t gScaleToScaleMappings[65536] = { 0 };
 #endif
 
 // playing notes below this threshold will not even be considered for scale follower
@@ -216,54 +216,68 @@ struct MaxItemsGrabber
   }
 };
 
+using ImportantNoteList_t = MaxItemsGrabber<int, ScaleFollowerNote*, SCALE_DISAMBIGUATION_MAPPING_NOTES>;
+
 
 namespace ScaleFollowerDetail
 {
+  // [4 bits scale flavor]
+  // [15 bits notes & importance]
+  //
+  // 4 base-13 digits, in order of importance, where 0 is "no note".
+  // so max decimal 13*13*13*13 = 28561 = 0x6F91 = 15 bits (max 32768)
+  // notes are relative to scale root. each bit = note on or off
   struct MapKey
   {
+    static constexpr size_t NoteBase = 13; // 12 for notes, 1 for whether the note is on or off.
+    static constexpr size_t NoteBits = 15;
+    using index_t = uint32_t; // needs to be able to hold the max key
+
     bool operator <(const MapKey& rhs)const {
-      return ToIndex() < rhs.ToIndex();
+      return SerializeToIndex() < rhs.SerializeToIndex();
     }
 
     ScaleFlavorIndex mScaleFlavor;
-    bool mPlayingNotes[12];
+    int8_t mNotes[SCALE_DISAMBIGUATION_MAPPING_NOTES]; // 0 = note off; these are 0-12
 
-    uint16_t ToIndex() const {
-      //   [4 bits scale flavor]
-      //   [12 bits of context notes, relative to scale root. each bit = note on or off]
-      uint16_t ret = ((uint16_t)mScaleFlavor) << 12;
-      for (size_t i = 0; i < 12; ++i)
-      {
-        if (mPlayingNotes[i]) {
-          ret |= 1 << i;
-        }
+    MapKey() = default;
+
+#ifdef CLARINOID_MODULE_TEST
+    MapKey(const Scale& currentScale, const std::vector<Note>& importantNotes)
+    {
+      mScaleFlavor = currentScale.mFlavorIndex;
+      for (size_t i = 0; i < importantNotes.size(); ++i) {
+        // convert to relative to the scale.
+        //auto* p = importantNotes.mArray.mArray[i].second;
+        uint8_t rel = currentScale.MidiToChromaticRelativeToRoot(MidiNote(3, importantNotes[i]).GetMidiValue());
+        CCASSERT(rel >= 0 && rel <= 11);
+        mNotes[i] = rel + 1; // +1 means it's a note on.
       }
+    }
+#endif
+
+    index_t SerializeToIndex() const {
+      uint32_t ret = mNotes[0];
+      for (auto n : mNotes)
+      {
+        ret = (ret * NoteBase) + n;
+      }
+      ret |= ((uint32_t)mScaleFlavor) << NoteBits;
       return ret;
     }
 
-    static MapKey FromScaleFlavorAndNoteBits(ScaleFlavorIndex sf, uint16_t noteBits)
+    static index_t ToIndex(const Scale& currentScale, const ImportantNoteList_t& importantNotes)
     {
-      MapKey ret;
-      for (size_t i = 0; i < 12; ++i)
-      {
-        ret.mPlayingNotes[i] = noteBits & 1;
-        noteBits >>= 1;
+      index_t ret = 0;
+      for (size_t i = 0; i < importantNotes.mArray.mSize; ++i) {
+        ret *= NoteBase;
+        // convert to relative to the scale.
+        auto* p = importantNotes.mArray.mArray[i].second;
+        uint8_t rel = currentScale.MidiToChromaticRelativeToRoot(p->GetNote().GetMidiValue());
+        CCASSERT(rel >= 0 && rel <= 11);
+        ret += rel + 1; // +1 means it's a note on.
       }
-      ret.mScaleFlavor = sf;
-      return ret;
-    }
-
-    static MapKey FromIndex(size_t index)
-    {
-      //   [4 bits scale flavor]
-      //   [12 bits of context notes, relative to scale root. each bit = note on or off]
-      MapKey ret;
-      for (size_t i = 0; i < 12; ++i)
-      {
-        ret.mPlayingNotes[i] = index & 1;
-        index >>= 1;
-      }
-      ret.mScaleFlavor = (ScaleFlavorIndex)index;
+      ret |= ((index_t)currentScale.mFlavorIndex) << NoteBits;
       return ret;
     }
   };
@@ -317,7 +331,7 @@ struct ScaleFollower
 #ifdef CLARINOID_MODULE_TEST
     cc::log("Scale Follower Update-----------------------");
 
-    auto ImportantListToString = [](MaxItemsGrabber<int, ScaleFollowerNote*, SCALE_DISAMBIGUATION_MAPPING_NOTES>& list) {
+    auto ImportantListToString = [](ImportantNoteList_t& list) {
       String ret = "(";
       for (size_t i = 0; i < list.mArray.mSize; ++i) {
         // (Eb : 100)
@@ -332,8 +346,8 @@ struct ScaleFollower
 
 #endif // CLARINOID_MODULE_TEST
 
-    MaxItemsGrabber<int, ScaleFollowerNote*, SCALE_DISAMBIGUATION_MAPPING_NOTES> mostImportantNoTransients;
-    MaxItemsGrabber<int, ScaleFollowerNote*, SCALE_DISAMBIGUATION_MAPPING_NOTES> mostImportantAll;
+    ImportantNoteList_t mostImportantNoTransients;
+    ImportantNoteList_t mostImportantAll;
 
     for (auto& myv : mNotes)
     {

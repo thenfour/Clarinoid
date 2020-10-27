@@ -105,7 +105,7 @@ struct LooperAndHarmonizer
         mLayers[mCurrentlyWritingLayer].mIsPlaying = true;
 
         // and start with the new layer.
-        mCurrentlyWritingLayer = iNewLayer;
+        mCurrentlyWritingLayer = (uint8_t)iNewLayer;
         newLayer->StartRecording(mStatus, mv, buf, Ptr(EndPtr(LOOPSTATION_BUFFER)));
       }
 
