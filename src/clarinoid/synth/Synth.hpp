@@ -3,7 +3,10 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
+namespace clarinoid
+{
 static constexpr float pitchBendRange = 2.0f;
+} // namespace clarinoid
 
 #ifdef CLARINOID_MODULE_TEST
 #include "MockSynthVoice.hpp"
@@ -11,10 +14,20 @@ static constexpr float pitchBendRange = 2.0f;
 #include "SynthVoice.hpp"
 #endif
 
+namespace clarinoid
+{
 
-struct CCSynth : UpdateObjectT<ProfileObjectType::Synth>
+struct CCSynth
 {
   size_t mCurrentPolyphony = 0;
+  AppSettings* mAppSettings;
+  Metronome* mMetronome;
+
+  void Init(AppSettings* appSettings, Metronome* metronome) {
+    mAppSettings = appSettings;
+    mMetronome = metronome;
+    gSynthGraphControl.Setup(appSettings, metronome);
+  }
 
   // returns a voice that's either already assigned to this voice, or the best one to free up for it.
   Voice* FindAssignedOrAvailable(int16_t musicalVoiceId) {
@@ -33,10 +46,6 @@ struct CCSynth : UpdateObjectT<ProfileObjectType::Synth>
     // no free voices. in this case find the oldest.
     // TODO.
     return &gVoices[0];
-  }
-
-  virtual void setup() {
-    gSynthGraphControl.Setup();
   }
 
   void SetGain(float f) {
@@ -71,3 +80,4 @@ struct CCSynth : UpdateObjectT<ProfileObjectType::Synth>
 };
 
 
+} // namespace clarinoid

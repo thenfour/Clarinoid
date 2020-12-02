@@ -1,6 +1,9 @@
 
 #pragma once
 
+namespace clarinoid
+{
+
 // keep maximal values at front. pushes out too-low items.
 template<typename Tval, size_t N, typename Tlessthan>
 struct SortedArray
@@ -92,3 +95,5 @@ struct SortedArray
     return ret;
   }
 };
+
+} // namespace clarinoid

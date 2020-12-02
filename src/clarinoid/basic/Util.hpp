@@ -8,6 +8,28 @@
 #include "Profiler.hpp"
 #include "Property.hpp"
 
+namespace clarinoid
+{
+
+    struct ColorF
+    {
+        float r;
+        float g;
+        float b;
+    };
+
+    template<typename T, T minOutput, T maxOutput>
+    static T Float01ToInt(float f)
+    {
+        if (f <= 0.0f)
+            return minOutput;
+        if (f >= 1.0f)
+            return maxOutput;
+        T ret = (T)(f * (maxOutput - minOutput));
+        return ret;
+    }
+
+
 // use as a global var to run init code 
 struct StaticInit
 {
@@ -90,107 +112,179 @@ int ModularDistance(int a, int b)
   return std::min(b - a, a + period - b);
 }
 
-
-// allows throttled plotting to Serial.
-class PlotHelper : UpdateObjectT<ProfileObjectType::PlotHelper>
+struct SawWave
 {
-  CCThrottlerT<5> mThrot;
-  String mFields;
-public:
-  virtual void loop() {
-    if (mThrot.IsReady()) {
-      if (mFields.length() > 0) {
-        if (Serial) {
-          Serial.println(mFields);
-        }
-      }
-    }
-    mFields = "";
+  uint32_t mFrequencyMicros = 1000000; // just 1 hz frequency default
+  void SetFrequency(float f)
+  {
+    mFrequencyMicros = 1000000.0f / f;
   }
-
-  template<typename T>
-  void AppendField(const T& s) {
-    if (mFields.length() > 0) {
-      mFields.append("\t");
-    }
-    mFields.append(s);
+  float GetValue01(uint64_t tmicros) const
+  {
+    float r = (float)(tmicros % mFrequencyMicros);
+    return r / mFrequencyMicros;
   }
 };
 
-PlotHelper gPlot;
-template<typename T>
-inline void CCPlot(const T& val) {
-  gPlot.AppendField(val);
-}
-
-
-
-// helps interpreting touch keys like buttons. like a computer keyboard, starts repeating after an initial delay.
-// untouching the key will reset the delays
-template<int TrepeatInitialDelayMS, int TrepeatPeriodMS>
-class BoolKeyWithRepeat
+struct PulseWave
 {
-  bool mPrevState = false;
-  CCThrottlerT<TrepeatInitialDelayMS> mInitialDelayTimer;
-  CCThrottlerT<TrepeatPeriodMS> mRepeatTimer;
-  bool mInitialDelayPassed = false;
-  bool mIsTriggered = false; // one-frame
-public:
-  void Update(bool pressed) { // call once a frame. each call to this will reset IsTriggered
-    
-    if (!mPrevState && !pressed) {
-      // typical idle state; nothing to do.
-      mIsTriggered = false;
-      return;
-    }
-    
-    if (mPrevState && pressed) {
-      // key repeat?
-      if (!mInitialDelayPassed) {
-        if (mInitialDelayTimer.IsReady()) {
-          mInitialDelayPassed = true;
-          mRepeatTimer.Reset();
-          // retrig.
-          mIsTriggered = true;
-          return;
-        }
-        // during initial delay; nothing to do.
-        mIsTriggered = false;
-        return;
-      }
-      // mInitialDelayPassed is satisfied. now we can check the normal key repeat timer.
-      if (mRepeatTimer.IsReady()) {
-        // trig!
-        mIsTriggered = true;
-        return;
-      }
-      // between key repeats
-      mIsTriggered = false;
-      return;
-    }
-    
-    if (!mPrevState && pressed) {
-      // newly pressed. reset initial repeat delay
-      mInitialDelayTimer.Reset();
-      mInitialDelayPassed = false;
-      mPrevState = true;
-      mIsTriggered = true;
-      return;      
-    }
-    
-    if (mPrevState && !pressed) {
-      // newly released.
-      mIsTriggered = false;
-      mPrevState = false;
-      return;
-    }
+  float mFrequency;
+  uint32_t mFrequencyMicros;
+  float mDutyCycle01;
+  uint32_t mDutyCycleMicros;
+
+  void SetFrequencyAndDutyCycle01(float freq, float dc01)
+  {
+    mFrequency = freq;
+    mFrequencyMicros = 1000000.0f / freq;
+    mDutyCycle01 = dc01;
+    mDutyCycleMicros = dc01 * mFrequencyMicros;
   }
 
-  // valid during 1 frame.
-  bool IsTriggered() const {
-    return mIsTriggered;
+  void SetFrequency(float f)
+  {
+    SetFrequencyAndDutyCycle01(f, mDutyCycle01);
+  }
+
+  void SetDutyCycle01(float dc01)
+  {
+    SetFrequencyAndDutyCycle01(mFrequency, dc01);
+  }
+
+  PulseWave()
+  {
+    SetFrequencyAndDutyCycle01(1.0f, 0.5f);
+  }
+
+  int GetValue01Int(uint64_t tmicros) const
+  {
+
+    uint64_t pos = (tmicros % mFrequencyMicros);
+    return (pos < mDutyCycleMicros) ? 0 : 1;
   }
 };
 
+// for a triangle, it's just a modified sawtooth.
+struct TriangleWave
+{
+  uint32_t mFrequencyMicros;
+  void SetFrequency(float f)
+  {
+    mFrequencyMicros = 1000000.0f / f;
+  }
+  TriangleWave() { SetFrequency(1.0f); }
+  float GetValue01(uint64_t tmicros) const
+  {
+    float r = (float)(tmicros % mFrequencyMicros);
+    r = r / mFrequencyMicros; // saw wave
+    r -= .5f; // 1st half the wave is negative.
+    r = ::fabsf(r); // it's a triangle but half height.
+    return r * 2;
+  }
+};
 
+// // allows throttled plotting to Serial.
+// class PlotHelper : UpdateObjectT<ProfileObjectType::PlotHelper>
+// {
+//   CCThrottlerT<5> mThrot;
+//   String mFields;
+// public:
+//   virtual void loop() {
+//     if (mThrot.IsReady()) {
+//       if (mFields.length() > 0) {
+//         if (Serial) {
+//           Serial.println(mFields);
+//         }
+//       }
+//     }
+//     mFields = "";
+//   }
+
+//   template<typename T>
+//   void AppendField(const T& s) {
+//     if (mFields.length() > 0) {
+//       mFields.append("\t");
+//     }
+//     mFields.append(s);
+//   }
+// };
+
+// PlotHelper gPlot;
+// template<typename T>
+// inline void CCPlot(const T& val) {
+//   gPlot.AppendField(val);
+// }
+
+
+
+// // helps interpreting touch keys like buttons. like a computer keyboard, starts repeating after an initial delay.
+// // untouching the key will reset the delays
+// template<int TrepeatInitialDelayMS, int TrepeatPeriodMS>
+// class BoolKeyWithRepeat
+// {
+//   bool mPrevState = false;
+//   CCThrottlerT<TrepeatInitialDelayMS> mInitialDelayTimer;
+//   CCThrottlerT<TrepeatPeriodMS> mRepeatTimer;
+//   bool mInitialDelayPassed = false;
+//   bool mIsTriggered = false; // one-frame
+// public:
+//   void Update(bool pressed) { // call once a frame. each call to this will reset IsTriggered
+    
+//     if (!mPrevState && !pressed) {
+//       // typical idle state; nothing to do.
+//       mIsTriggered = false;
+//       return;
+//     }
+    
+//     if (mPrevState && pressed) {
+//       // key repeat?
+//       if (!mInitialDelayPassed) {
+//         if (mInitialDelayTimer.IsReady()) {
+//           mInitialDelayPassed = true;
+//           mRepeatTimer.Reset();
+//           // retrig.
+//           mIsTriggered = true;
+//           return;
+//         }
+//         // during initial delay; nothing to do.
+//         mIsTriggered = false;
+//         return;
+//       }
+//       // mInitialDelayPassed is satisfied. now we can check the normal key repeat timer.
+//       if (mRepeatTimer.IsReady()) {
+//         // trig!
+//         mIsTriggered = true;
+//         return;
+//       }
+//       // between key repeats
+//       mIsTriggered = false;
+//       return;
+//     }
+    
+//     if (!mPrevState && pressed) {
+//       // newly pressed. reset initial repeat delay
+//       mInitialDelayTimer.Reset();
+//       mInitialDelayPassed = false;
+//       mPrevState = true;
+//       mIsTriggered = true;
+//       return;      
+//     }
+    
+//     if (mPrevState && !pressed) {
+//       // newly released.
+//       mIsTriggered = false;
+//       mPrevState = false;
+//       return;
+//     }
+//   }
+
+//   // valid during 1 frame.
+//   bool IsTriggered() const {
+//     return mIsTriggered;
+//   }
+// };
+
+
+
+} // namespace clarinoid
 

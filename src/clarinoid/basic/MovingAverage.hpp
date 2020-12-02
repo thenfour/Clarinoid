@@ -2,6 +2,9 @@
 
 #pragma once
 
+namespace clarinoid
+{
+
 template <size_t N>
 class SimpleMovingAverage
 {
@@ -42,3 +45,5 @@ class SimpleMovingAverage
     size_t num_samples_ = 0;
     float total_ = 0;
 };
+
+} // namespace clarinoid

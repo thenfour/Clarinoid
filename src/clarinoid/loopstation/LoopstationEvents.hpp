@@ -6,6 +6,10 @@
 #include <clarinoid/harmonizer/harmonizer.hpp>
 
 
+namespace clarinoid
+{
+
+
 using event_delay_t = uint8_t;
 static constexpr size_t LOOP_EVENT_DELAY_BITS = sizeof(event_delay_t) * 8;
 static constexpr uint16_t LOOP_EVENT_DELAY_MAX = std::numeric_limits<event_delay_t>::max();
@@ -359,3 +363,4 @@ struct LoopEvent_FullState
   }
 };
 
+} // namespace clarinoid

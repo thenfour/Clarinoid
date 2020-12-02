@@ -15,3 +15,4 @@
 #include "log.hpp"
 #include "assert.hpp"
 #include "SortedArray.hpp"
+#include "Control.hpp"

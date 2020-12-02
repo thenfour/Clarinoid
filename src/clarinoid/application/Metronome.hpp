@@ -2,21 +2,33 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 
+namespace clarinoid
+{
+
 struct Metronome
 {
-    CCThrottlerT<500> mMetronomeTimer; // the 500 is arbitrary
-    int GetBeatInt() const {
-        // gSynthGraphControl.mMetronomeTimer.GetBeatFloat(60000.0f / gAppSettings.mBPM)
-        return mMetronomeTimer.GetBeatInt((int)(60000.0f / gAppSettings.mBPM));
+  AppSettings* mAppSettings;
+
+  explicit Metronome(AppSettings* appSettings) :
+    mAppSettings(appSettings)
+  {
+  }
+
+  PeriodicTimer mTimer;
+
+    int GetBeatInt() {
+        mTimer.SetPeriod(MillisToMicros((uint32_t)(60000.0f / mAppSettings->mBPM)));
+        return mTimer.GetBeatInt();
     }
-    float GetBeatFloat() const {
-        return mMetronomeTimer.GetBeatFloat((int)(60000.0f / gAppSettings.mBPM));
+    float GetBeatFloat() {
+        mTimer.SetPeriod(MillisToMicros((uint32_t)(60000.0f / mAppSettings->mBPM)));
+       return mTimer.GetBeatFloat();
     }
-    float GetBeatFrac() const {
-        return mMetronomeTimer.GetBeatFrac((int)(60000.0f / gAppSettings.mBPM));
+    float GetBeatFrac() {
+        mTimer.SetPeriod(MillisToMicros((uint32_t)(60000.0f / mAppSettings->mBPM)));
+       return mTimer.GetBeatFrac();
     }
 };
 
 
-Metronome gMetronome;
-
+} // namespace clarinoid

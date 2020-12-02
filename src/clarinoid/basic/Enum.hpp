@@ -1,6 +1,8 @@
 
 #pragma once
 
+namespace clarinoid
+{
 
 struct IList {
   virtual int List_GetItemCount() const = 0;
@@ -61,3 +63,4 @@ struct EnumInfo : IList {
   T ToValue(const int& val) const { return  static_cast<T>(val); }
 };
 
+} // namespace clarinoid

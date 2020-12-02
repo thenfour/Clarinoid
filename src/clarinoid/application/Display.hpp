@@ -1,0 +1,175 @@
+
+// This is basically a clarinoid-specific "controller" for a display.
+
+#pragma once
+
+#include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/settings/AppSettings.hpp>
+#include "clarinoid/components/AdafruitSSD1366Wrapper.hpp"
+#include <clarinoid/application/ControlMapper.hpp>
+
+namespace clarinoid
+{
+
+static constexpr int TOAST_DURATION_MILLIS = 2000;
+
+//////////////////////////////////////////////////////////////////////
+struct IDisplayApp
+{
+  virtual void DisplayAppInit() {}
+  virtual void DisplayAppOnSelected() {}
+  virtual void DisplayAppOnUnselected() {}
+  virtual void DisplayAppUpdate() = 0; // called to update internal state.
+  virtual void DisplayAppRender() = 0; // called to render to display.
+  virtual const char *DisplayAppGetName() = 0;
+};
+
+//////////////////////////////////////////////////////////////////////
+struct CCDisplay :
+  ITask
+{
+  CCAdafruitSSD1306 mDisplay;
+
+  AppSettings* mAppSettings;
+  IControlMapper* mControlMapper;
+
+  bool mIsSetup = false; // used for crash handling to try and setup this if we can
+  bool mFirstAppSelected = false;
+
+  cc::array_view<IDisplayApp*> mApps;
+  int mCurrentAppIndex = 0;
+
+  // hardware SPI
+  CCDisplay(uint8_t w, uint8_t h, SPIClass *spi, int8_t dc_pin, int8_t rst_pin, int8_t cs_pin, uint32_t bitrate = 8000000UL) :
+    mDisplay(w, h, spi, dc_pin, rst_pin, cs_pin, bitrate)// 128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 44 * 1000000UL)
+  {
+    //Serial.println(String("Display ctor, control mapper = ") + ((uintptr_t)(&mControlMapper)));
+  }
+
+  // bit-bang
+  CCDisplay(uint8_t w, uint8_t h, int8_t mosi_pin, int8_t sclk_pin, int8_t dc_pin, int8_t rst_pin, int8_t cs_pin) :
+    mDisplay(w, h, mosi_pin, sclk_pin, dc_pin, rst_pin, cs_pin)
+  {
+    //Serial.println(String("Display ctor, control mapper = ") + ((uintptr_t)(&mControlMapper)));
+    //Init();
+  }
+
+  void Init(AppSettings* appSettings, IControlMapper* controlMapper, const cc::array_view<IDisplayApp*>& apps) {
+    mAppSettings = appSettings;
+    mControlMapper = controlMapper;
+    mApps = apps;
+
+    // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
+    //Serial.println(String("Display init"));
+    mDisplay.begin(SSD1306_SWITCHCAPVCC);
+    mIsSetup = true;
+    mDisplay.dim(mAppSettings->mDisplayDim);
+
+    // welcome msg.
+    mDisplay.clearDisplay();
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+    mDisplay.setCursor(0,0);
+
+    mDisplay.println(gClarinoidVersion);
+    mDisplay.display();
+
+    for (size_t i = 0; i < mApps.mSize; ++ i)
+    {
+      mApps.mData[i]->DisplayAppInit();
+    }
+  }
+
+  void SelectApp(int n) {
+    n %= mApps.mSize;
+    while (n < 0) {
+      n += mApps.mSize;
+    }
+
+    if (n == mCurrentAppIndex)
+      return;
+
+    mApps.mData[mCurrentAppIndex]->DisplayAppOnUnselected();
+    mCurrentAppIndex = n;
+    mApps.mData[mCurrentAppIndex]->DisplayAppOnSelected();
+  }
+
+  void ScrollApps(int delta) {
+    SelectApp(mCurrentAppIndex + delta);
+  }
+
+  int mframe = 0;
+
+  virtual void TaskRun() override {
+    CCASSERT(this->mIsSetup);
+
+    //Serial.println(String("Display::TaskRun, mCurrentAppIndex = ") + mCurrentAppIndex);
+
+    IDisplayApp* pMenuApp = nullptr;
+
+    if (mCurrentAppIndex < (int)mApps.mSize) {
+      pMenuApp = mApps.mData[mCurrentAppIndex];
+      //Serial.println(String(" => ") + pMenuApp->DisplayAppGetName());
+
+      if (!mFirstAppSelected) {
+        mFirstAppSelected = true;
+        pMenuApp->DisplayAppOnSelected();
+      }
+
+      //Serial.println(String(" => update ") + pMenuApp->DisplayAppGetName());
+      pMenuApp->DisplayAppUpdate();
+      //Serial.println(String(" => after update ") + pMenuApp->DisplayAppGetName());
+    }
+    
+    mDisplay.clearDisplay();
+    mDisplay.mSolidText = true;
+    mDisplay.mTextLeftMargin = 0;
+    mDisplay.ResetClip();
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+    mDisplay.setCursor(0,0);
+
+    if (pMenuApp) {
+      //Serial.println(String(" => render ") + pMenuApp->DisplayAppGetName());
+      pMenuApp->DisplayAppRender();
+    }
+
+    if (mIsShowingToast) {
+      if (mToastTimer.ElapsedMillis() >= TOAST_DURATION_MILLIS) {
+        mIsShowingToast = false;
+      } else {
+        // render toast.
+        SetupModal();
+        mDisplay.print(mToastMsg);
+      }
+    }
+
+     mDisplay.display();
+  }
+
+  Stopwatch mToastTimer;
+  bool mIsShowingToast = false;
+  String mToastMsg;
+
+  void ShowToast(const String& msg) {
+    mIsShowingToast = true;
+    mToastMsg = msg;
+    mToastTimer.Restart(0);
+  }
+
+
+  // draws & prepares the screen for a modal message. after this just print text whatever.
+  inline void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4) {
+    mDisplay.setCursor(0,0);
+    mDisplay.fillRect(pad, pad, mDisplay.width() - pad, mDisplay.height() - pad, SSD1306_BLACK);
+    mDisplay.drawRect(rectStart, rectStart, mDisplay.width() - rectStart, mDisplay.height() - rectStart, SSD1306_WHITE);
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+    mDisplay.mTextLeftMargin = textStart;
+    mDisplay.ClipToMargin(textStart);
+    mDisplay.setCursor(textStart, textStart);
+  }
+
+};
+
+} // namespace clarinoid

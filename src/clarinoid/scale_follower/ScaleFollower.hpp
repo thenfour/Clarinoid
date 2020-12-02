@@ -7,6 +7,10 @@
 #include <clarinoid/settings/AppSettings.hpp>
 #include <clarinoid/harmonizer/harmonizer.hpp>
 
+namespace clarinoid
+{
+
+
 // # of notes to actually use in mapping dest scale.
 static const size_t SCALE_DISAMBIGUATION_MAPPING_NOTES = 4;
 
@@ -432,5 +436,6 @@ struct ScaleFollower
   }
 };
 
-static ScaleFollower gScaleFollower;
+//static ScaleFollower gScaleFollower;
 
+} // namespace clarinoid

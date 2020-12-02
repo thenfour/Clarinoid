@@ -5,6 +5,8 @@
 #include <vector>
 #include "Enum.hpp"
 
+namespace clarinoid
+{
 
 
 // don't use a LUT because we want to support pitch bend and glides and stuff. using a LUT + interpolation would be asinine.
@@ -395,3 +397,4 @@ struct Scale
 constexpr size_t scalesize = sizeof(Scale);
 
 
+} // namespace clarinoid

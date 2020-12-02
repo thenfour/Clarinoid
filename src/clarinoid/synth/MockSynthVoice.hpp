@@ -4,6 +4,9 @@
 #include <clarinoid/basic/Basic.hpp>
 //#include <clarinoid/application/MusicalState.hpp>
 
+namespace clarinoid
+{
+
 
 struct Voice
 {
@@ -55,3 +58,4 @@ struct SynthGraphControl
 
 SynthGraphControl gSynthGraphControl;
 
+} // namespace clarinoid

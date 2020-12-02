@@ -2,6 +2,8 @@
 
 #include "assert.hpp"
 
+namespace clarinoid
+{
 
 static int RotateIntoRange(const int& val, const int& itemCount) {
   CCASSERT(itemCount > 0);
@@ -347,3 +349,5 @@ static size_t UnifyCircularBuffer_Left(void* segmentABegin, void* segmentAEnd, v
 {
   return UnifyCircularBuffer_Left(Ptr(segmentABegin), Ptr(segmentAEnd), Ptr(segmentBBegin), Ptr(segmentBEnd), tempBuffer);
 }
+
+} // namespace clarinoid

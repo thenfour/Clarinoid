@@ -1,5 +1,8 @@
 #pragma once
 
+namespace clarinoid 
+{
+  
 enum class Tristate
 {
   Null,
@@ -21,3 +24,5 @@ const char *ToString(Tristate t) {
   }
   return "null";
 }
+
+} // namespace clarinoid

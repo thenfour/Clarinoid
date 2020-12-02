@@ -1,80 +1,46 @@
 // represents typical switches on a digital pin.
 // no interrupts, just poll.
-// connect pin to gnd.
 
 #pragma once
 
 //#include <Bounce.h>
 #include "../basic/Basic.hpp"
 
-struct ICCSwitch
+namespace clarinoid
 {
-  virtual bool IsCurrentlyPressed() const = 0;
-  virtual bool IsNewlyPressed() const = 0;
-  virtual bool IsDirty() const = 0;
-};
 
-// like CCOnOffSwitch but you update it manually instead of using bounce library + physical pins
-struct CCVirtualSwitch : ICCSwitch
+struct NullSwitch :
+  ISwitch
 {
-  bool mIsDirty = false;
-  bool mIsCurrentlyPressed = false;
-  bool mIsNewlyPressed = false;
-
-  void Update(bool isCurrentlyPressed)
+  NullSwitch()
   {
-    mIsDirty = mIsCurrentlyPressed != isCurrentlyPressed;
-    mIsNewlyPressed = !mIsCurrentlyPressed && isCurrentlyPressed;
-    mIsCurrentlyPressed = isCurrentlyPressed;
   }
-  
-  virtual bool IsDirty() const { return mIsDirty; }
-  virtual bool IsNewlyPressed() const { return mIsNewlyPressed; }
-  virtual bool IsCurrentlyPressed() const { return mIsCurrentlyPressed; }
+
+  virtual bool CurrentValue() const override { return false; }
+
 };
 
-class CCOnOffSwitch : UpdateObjectT<ProfileObjectType::Switch>, ICCSwitch
+
+
+// assume pullup required
+struct DigitalPinSwitch :
+  ISwitch
 {
   uint8_t mPin;
-  bool mIsCurrentlyPressed = false;
-  bool mIsNewlyPressed = false;
-  bool mIsDirty = false;
-  Bounce mBounce;
+  bool mCurrentValue = false;
 
-public:
-  explicit CCOnOffSwitch(uint8_t pin, uint32_t bouncePeriodMS) :
-    mPin(pin),
-    mBounce(pin, bouncePeriodMS)
+  explicit DigitalPinSwitch(uint8_t pin) :
+    mPin(pin)
   {
+    pinMode(pin, INPUT_PULLUP);
   }
 
-  virtual void setup()
+  void Update() 
   {
-    pinMode(mPin, INPUT_PULLUP);
+    mCurrentValue = !!digitalReadFast(mPin);
   }
 
-  virtual void loop()
-  {
-    mIsDirty = false;
-    mIsNewlyPressed = false;
-    mBounce.update();
-    if (mBounce.fallingEdge()) {
-      mIsDirty = !mIsCurrentlyPressed;
-      mIsNewlyPressed = !mIsCurrentlyPressed;
-      mIsCurrentlyPressed = true;
-    } else if (mBounce.risingEdge()) {
-      mIsDirty = mIsCurrentlyPressed;
-      mIsCurrentlyPressed = false;
-    }
-  }
-
-  bool IsCurrentlyPressed() const {
-    return mIsCurrentlyPressed;
-  }
-  bool IsNewlyPressed() const {
-    return mIsNewlyPressed;
-  }
-  bool IsDirty() const {
-    return mIsDirty;
-  }
+  virtual bool CurrentValue() const override { return mCurrentValue; }
 };
+
+} // namespace clarinoid

@@ -10,6 +10,9 @@
 
 #include "Patch.hpp"
 
+namespace clarinoid
+{
+
 namespace CCSynthGraph
 {
 /*
@@ -57,7 +60,7 @@ AudioConnection          patchCord32(ampLeft, 0, i2s1, 0);
 AudioControlSGTL5000     audioShield;    //xy=1944.0000114440918,536.2500076293945
 // GUItool: end automatically generated code
 
-}
+} // namespace CCSynthGraph
 
 struct Voice
 {
@@ -73,8 +76,12 @@ struct Voice
   MusicalVoice mRunningVoice;
   SynthPreset* mPreset = nullptr;
 
-  void EnsurePatchConnections()
+  AppSettings* mAppSettings;
+
+  void EnsurePatchConnections(AppSettings* appSettings)
   {
+    mAppSettings = appSettings;
+
     mPatchOsc1ToMix.connect();
     mPatchOsc2ToMix.connect();
     mPatchOsc3ToMix.connect();
@@ -84,7 +91,7 @@ struct Voice
   
   void Update(const MusicalVoice& mv)
   {
-    mPreset = &FindSynthPreset(mv.mSynthPatch);
+    mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatch);
     bool voiceOrPatchChanged = (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatch != mv.mSynthPatch);
     if (voiceOrPatchChanged)
     {
@@ -191,23 +198,28 @@ struct Voice
 struct SynthGraphControl
 {
   float mPrevMetronomeBeatFrac = 0;
+  AppSettings* mAppSettings;
+  Metronome* mMetronome;
 
-  void Setup()
+  void Setup(AppSettings* appSettings, Metronome* metronome)
   {
     //AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
     AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
 
+    mAppSettings = appSettings;
+    mMetronome = metronome;
+
     // for some reason patches really don't like to connect unless they are
     // last in the initialization order. Here's a workaround to force them to connect.
     for (auto& v : gVoices) {
-      v.EnsurePatchConnections();
+      v.EnsurePatchConnections(appSettings);
     }
     
     CCSynthGraph::audioShield.enable();
-    CCSynthGraph::audioShield.volume(.7); // headphone vol
-    CCSynthGraph::ampLeft.gain(.01);
-    CCSynthGraph::ampRight.gain(.01);
-    delay(100); // why?
+    CCSynthGraph::audioShield.volume(.9); // headphone vol
+    CCSynthGraph::ampLeft.gain(.9);
+    CCSynthGraph::ampRight.gain(.9);
+    delay(300); // why?
 
     CCSynthGraph::metronomeEnv.delay(0);
     CCSynthGraph::metronomeEnv.attack(0);
@@ -217,6 +229,7 @@ struct SynthGraphControl
   }
 
   void SetGain(float f) {
+    Serial.println(String("SetGain: ") + f);
     CCSynthGraph::ampLeft.gain(f);
     CCSynthGraph::ampRight.gain(f);
   }
@@ -232,17 +245,17 @@ struct SynthGraphControl
   void UpdatePostFx() {
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);
-    CCSynthGraph::verbWetAmpLeft.gain(gAppSettings.mReverbGain);
-    CCSynthGraph::verbWetAmpRight.gain(gAppSettings.mReverbGain);
+    CCSynthGraph::verbWetAmpLeft.gain(mAppSettings->mReverbGain);
+    CCSynthGraph::verbWetAmpRight.gain(mAppSettings->mReverbGain);
 
-    if (!gAppSettings.mMetronomeOn) {
+    if (!mAppSettings->mMetronomeOn) {
       CCSynthGraph::metronomeOsc.amplitude(0);
     } else {
-      CCSynthGraph::metronomeEnv.decay(gAppSettings.mMetronomeDecayMS);
-      CCSynthGraph::metronomeOsc.amplitude(gAppSettings.mMetronomeGain);
-      CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(gAppSettings.mMetronomeNote));
+      CCSynthGraph::metronomeEnv.decay(mAppSettings->mMetronomeDecayMS);
+      CCSynthGraph::metronomeOsc.amplitude(mAppSettings->mMetronomeGain);
+      CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(mAppSettings->mMetronomeNote));
 
-      float metronomeBeatFrac = gMetronome.GetBeatFrac();
+      float metronomeBeatFrac = mMetronome->GetBeatFrac();
       if (metronomeBeatFrac < mPrevMetronomeBeatFrac) {// beat boundary is when the frac drops back to 0
         CCSynthGraph::metronomeEnv.noteOn();
       }
@@ -252,3 +265,5 @@ struct SynthGraphControl
 };
 
 SynthGraphControl gSynthGraphControl;
+
+} // namespace clarinoid

@@ -6,9 +6,26 @@
 #include "LoopstationMemory.hpp"
 #include "Loopstation.hpp"
 
+namespace clarinoid
+{
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct LooperAndHarmonizer
 {
+  AppSettings* mAppSettings;
+  Metronome* mMetronome;
+  ScaleFollower *mScaleFollower;
+
+  explicit LooperAndHarmonizer(AppSettings* appSettings, Metronome* mMetronome, ScaleFollower *mScaleFollower) :
+    mAppSettings(appSettings),
+    mMetronome(mMetronome),
+    mScaleFollower(mScaleFollower),
+
+    mHarmonizer(appSettings)
+  {
+  }
+
+
   uint8_t mCurrentlyWritingLayer = 0;
   LoopEventStream mLayers[LOOP_LAYERS];
 
@@ -41,7 +58,7 @@ struct LooperAndHarmonizer
     // if the loop length is set, just commit to next layer.
     switch (mStatus.mState) {
     case LooperState::Idle:
-      switch (gAppSettings.mLooperSettings.mTrigger) {
+      switch (mAppSettings->mLooperSettings.mTrigger) {
         case LooperTrigger::Immediate:
           TriggerSetStart(mv);
           break;
@@ -51,19 +68,19 @@ struct LooperAndHarmonizer
           mArmed = true; // triggering happens on update.
           break;
         case LooperTrigger::Beat1:
-          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 1);
+          mBeatTimeToStartRecording = ceilf(mMetronome->GetBeatFloat() + 1);
           mArmed = true;
           break;
         case LooperTrigger::Beat2:
-          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 2);
+          mBeatTimeToStartRecording = ceilf(mMetronome->GetBeatFloat() + 2);
           mArmed = true;
           break;
         case LooperTrigger::Beat4:
-          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 4);
+          mBeatTimeToStartRecording = ceilf(mMetronome->GetBeatFloat() + 4);
           mArmed = true;
           break;
         case LooperTrigger::Beat8:
-          mBeatTimeToStartRecording = ceilf(gMetronome.GetBeatFloat() + 8);
+          mBeatTimeToStartRecording = ceilf(mMetronome->GetBeatFloat() + 8);
           mArmed = true;
           break;
       }
@@ -172,7 +189,7 @@ struct LooperAndHarmonizer
     */
 
     if (mArmed) {
-      switch (gAppSettings.mLooperSettings.mTrigger) {
+      switch (mAppSettings->mLooperSettings.mTrigger) {
         default:
         case LooperTrigger::Immediate:
           CCASSERT(false);
@@ -192,7 +209,7 @@ struct LooperAndHarmonizer
         case LooperTrigger::Beat4:
         case LooperTrigger::Beat8:
           // ask metronome if we crossed a beat, countdown.
-          if (gMetronome.GetBeatFloat() >= mBeatTimeToStartRecording) {
+          if (mMetronome->GetBeatFloat() >= mBeatTimeToStartRecording) {
             TriggerSetStart(liveVoice);
           }
           break;
@@ -238,7 +255,7 @@ struct LooperAndHarmonizer
     }
 
     //auto old = gAppSettings.mDeducedScale;
-    gAppSettings.mDeducedScale = gScaleFollower.Update(outp, pout - outp);
+    mAppSettings->mDeducedScale = mScaleFollower->Update(outp, pout - outp);
     // if (gAppSettings.mDeducedScale != old) {
     //   Serial.println(String("scale changed to ") + gAppSettings.mDeducedScale.ToString());
     // }
@@ -259,3 +276,4 @@ struct LooperAndHarmonizer
   }
 };
 
+} // namespace clarinoid

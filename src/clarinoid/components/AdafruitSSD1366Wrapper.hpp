@@ -2,12 +2,6 @@
 
 #pragma once
 
-#define OLED_MOSI   9
-#define OLED_CLK   10
-#define OLED_DC    11
-#define OLED_CS    12
-#define OLED_RESET 13
-
 
 // FROM Adafruit_GFX.cpp:
 
@@ -63,20 +57,50 @@ inline uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont) {
 // text left margin (so println() new line doesn't set x=0)
 // clipping bounds
 // disabled text
-class CCAdafruitSSD1306 : public Adafruit_SSD1306
+struct CCAdafruitSSD1306 : public Adafruit_SSD1306
 {
-public:
+  CCAdafruitSSD1306(uint8_t w, uint8_t h, SPIClass *spi, int8_t dc_pin, int8_t rst_pin, int8_t cs_pin, uint32_t bitrate = 8000000UL) :
+    Adafruit_SSD1306(w, h, spi, dc_pin, rst_pin, cs_pin, bitrate),// 128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 44 * 1000000UL)
+    mClipRight(w),
+    mClipBottom(h)
+  {
+    ResetClip();
+  }
 
-  CCAdafruitSSD1306() :
-    Adafruit_SSD1306(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS)
-  {}
+// #define OLED_MOSI   9
+// #define OLED_CLK   10
+// #define OLED_DC    11
+// #define OLED_CS    12
+// #define OLED_RESET 13
+  CCAdafruitSSD1306(uint8_t w, uint8_t h, int8_t mosi_pin, int8_t sclk_pin,
+                   int8_t dc_pin, int8_t rst_pin, int8_t cs_pin) :
+    Adafruit_SSD1306(w, h, mosi_pin, sclk_pin, dc_pin, rst_pin, cs_pin)
+  {
+    ResetClip();
+  }
 
   bool mSolidText = true;
   int mTextLeftMargin = 0;
   int mClipLeft = 0;
-  int mClipRight = RESOLUTION_X;
+  int mClipRight = 0;
   int mClipTop = 0;
-  int mClipBottom = RESOLUTION_Y;
+  int mClipBottom = 0;
+
+  void ResetClip()
+  {
+    mClipLeft = 0;
+    mClipRight = width();
+    mClipTop = 0;
+    mClipBottom = height();
+  }
+
+  void ClipToMargin(int m)
+  {
+    mClipLeft = m;
+    mClipRight = width() - m;
+    mClipTop = m;
+    mClipBottom = height() - m;
+  }
 
   // for checker-style bool checking
   bool PixelParity(int16_t x, int16_t y) const {

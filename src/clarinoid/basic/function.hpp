@@ -4,8 +4,12 @@
 #include <functional>
 #include <type_traits>
 
+namespace clarinoid
+{
+
 namespace cc
 {
+    // use just to generate a function ptr type that's similar to the syntax you'd use for std::function.
     template<typename Tsignature>
     struct function
     {
@@ -16,3 +20,4 @@ namespace cc
 
 }
 
+} // namespace clarinoid

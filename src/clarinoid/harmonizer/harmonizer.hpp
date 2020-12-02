@@ -2,11 +2,21 @@
 #pragma once
 
 #include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/settings/AppSettings.hpp>
 #include "AnalogValue.hpp"
 #include "MusicalVoice.hpp"
 
+namespace clarinoid
+{
+
 struct Harmonizer
 {
+  AppSettings* mAppSettings;
+
+  explicit Harmonizer(AppSettings* appSettings) : mAppSettings(appSettings)
+  {
+  }
+
   // state & processing for harmonizer.
 
   enum class VoiceFilterOptions : uint8_t
@@ -23,7 +33,7 @@ struct Harmonizer
   // returns the number of voices added (including live voice, even if muted)
   // layerID is needed in order to create the voiceID
   size_t Harmonize(uint8_t loopLayerID, MusicalVoice* liveVoice, const MusicalVoiceTransitionEvents& transitionEvents, MusicalVoice* outp, MusicalVoice* end, VoiceFilterOptions voiceFilter) {
-    HarmPreset& preset = FindHarmPreset(liveVoice->mHarmPatch);
+    HarmPreset& preset = mAppSettings->FindHarmPreset(liveVoice->mHarmPatch);
 
     size_t ret = 0;
 
@@ -49,8 +59,8 @@ struct Harmonizer
 
     MusicalVoice* pout = outp;
     
-    bool globalDeduced = gAppSettings.mGlobalScaleRef == GlobalScaleRefType::Deduced;
-    Scale globalScale = globalDeduced ? gAppSettings.mDeducedScale : gAppSettings.mGlobalScale;
+    bool globalDeduced = mAppSettings->mGlobalScaleRef == GlobalScaleRefType::Deduced;
+    Scale globalScale = globalDeduced ? mAppSettings->mDeducedScale : mAppSettings->mGlobalScale;
 
             //CCPlot(String("globalScale:") + globalScale.ToString() + ", isdeduced=" + (globalDeduced ? "yes" : "no"));
 
@@ -124,7 +134,7 @@ struct Harmonizer
       switch (hv.mSynthPresetRef)
       {
       case HarmSynthPresetRefType::Global:
-        pout->mSynthPatch = gAppSettings.mGlobalSynthPreset;
+        pout->mSynthPatch = mAppSettings->mGlobalSynthPreset;
         break;
       case HarmSynthPresetRefType::Preset1:
         pout->mSynthPatch = preset.mSynthPreset1;
@@ -147,3 +157,5 @@ struct Harmonizer
     return ret;
   }
 };
+
+} // namespace clarinoid

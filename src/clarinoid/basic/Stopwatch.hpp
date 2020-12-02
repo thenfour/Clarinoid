@@ -1,6 +1,9 @@
 
 #pragma once
 
+namespace clarinoid
+{
+
 //////////////////////////////////////////////////////////////////////
 // initially running.
 struct Stopwatch
@@ -71,3 +74,142 @@ struct Stopwatch
   }
 };
 
+
+// template<uint32_t TperiodMicros>
+// struct PeriodicTimer
+// {
+//   Stopwatch mSw;
+
+//   void Reset() {
+//     mSw.Restart(0);
+//   }
+
+//   float GetBeatFloat() {
+//     float f = abs(float(mSw.ElapsedMicros()) / TperiodMicros);
+//     return f;
+//   }
+//   // returns 0-1 the time since the last "beat".
+//   float GetBeatFrac() {
+//     float f = GetBeatFloat();
+//     return f - floor(f); // fractional part only.
+//   }
+//   int GetBeatInt() {
+//     float f = GetBeatFloat();
+//     return (int)floor(f);
+//   }
+
+//   int32_t BeatsToMicros(float b) const {
+//     return b * TperiodMicros;
+//   }
+// };
+
+
+constexpr uint32_t MillisToMicros(uint32_t ms)
+{
+  return ms * 1000;
+}
+
+constexpr uint32_t Micros(uint32_t ms)
+{
+  return ms;
+}
+
+constexpr uint32_t FPSToMicros(uint32_t fps)
+{
+  return 1000000 / fps;
+}
+
+
+// TODO: support smoothly changing periods, not jerky behavior like this.
+struct PeriodicTimer
+{
+  Stopwatch mSw;
+  uint32_t mPeriodMicros = MillisToMicros(100);
+
+  explicit PeriodicTimer(uint32_t periodMicros) :
+    mPeriodMicros(periodMicros)
+  {
+    CCASSERT(periodMicros != 0);
+  }
+
+  PeriodicTimer()
+  {
+  }
+
+  void SetPeriod(uint32_t periodMicros)
+  {
+    CCASSERT(periodMicros != 0);
+    mPeriodMicros = periodMicros;
+  }
+
+  void Reset() {
+    mSw.Restart(0);
+  }
+
+  float GetBeatFloat() {
+    float f = abs(float(mSw.ElapsedMicros()) / mPeriodMicros);
+    return f;
+  }
+  // returns 0-1 the time since the last "beat".
+  float GetBeatFrac() {
+    float f = GetBeatFloat();
+    return f - floor(f); // fractional part only.
+  }
+  int GetBeatInt() {
+    float f = GetBeatFloat();
+    return (int)floor(f);
+  }
+
+  int32_t BeatsToMicros(float b) const {
+    return b * mPeriodMicros;
+  }
+};
+
+
+//////////////////////////////////////////////////////////////////////
+template<uint32_t TperiodMS>
+class CCThrottlerT
+{
+  uint32_t mPeriodStartMS;
+  uint32_t mFirstPeriodStartMS;
+public:
+  CCThrottlerT()
+  {
+    mPeriodStartMS = mFirstPeriodStartMS = millis();
+  }
+
+  void Reset() {
+    mPeriodStartMS = mFirstPeriodStartMS = millis();
+  }
+
+  bool IsReady() {
+    return IsReady(TperiodMS);
+  }
+
+  float GetBeatFloat(uint32_t periodMS) const {
+    auto now = millis(); // minus is more theoretically accurate but this serves the purpose just as well.
+    float f = abs(float(now - mFirstPeriodStartMS) / periodMS);
+    return f;
+  }
+  // returns 0-1 the time since the last "beat".
+  float GetBeatFrac(uint32_t periodMS) const {
+    float f = GetBeatFloat(periodMS);
+    return f - floor(f); // fractional part only.
+  }
+  int GetBeatInt(uint32_t periodMS) const {
+    float f = GetBeatFloat(periodMS);
+    return (int)floor(f);
+  }
+  
+  bool IsReady(uint32_t periodMS) {
+    auto now = millis(); // minus is more theoretically accurate but this serves the purpose just as well.
+    if (now - mPeriodStartMS < periodMS) {
+      return false;
+    }
+    mPeriodStartMS += periodMS * ((now - mPeriodStartMS) / periodMS); // this potentially advances multiple periods if needed so we don't get backed up.
+    return true;
+  }
+};
+
+
+} // namespace clarinoid

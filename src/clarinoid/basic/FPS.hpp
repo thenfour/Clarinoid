@@ -3,6 +3,9 @@
 #include "MovingAverage.hpp"
 #include "Stopwatch.hpp"
 
+namespace clarinoid
+{
+
 template<size_t Nsamples = 120>
 struct framerateCalculator
 {
@@ -42,3 +45,4 @@ struct framerateCalculator
 };
 
 
+} // namespace clarinoid

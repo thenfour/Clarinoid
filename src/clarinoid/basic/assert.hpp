@@ -3,15 +3,22 @@
 
 #include "log.hpp"
 
-inline void DebugBlink(int n, int period=100)
+namespace clarinoid
+{
+
+inline void DebugBlink(int n, int period=120)
 {
   pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+  delay(period * 3);
   for (int i = 0; i < n; ++ i) {
     digitalWrite(13, HIGH);
     delay(period);
     digitalWrite(13, LOW);
     delay(period);
   }
+  digitalWrite(13, LOW);
+  delay(period * 3);
 }
 
 inline void BlinkyDeath(int n)
@@ -29,10 +36,24 @@ inline void BlinkyDeath(int n)
 bool gIsCrashed = false;
 String gCrashMessage;
 
+
+void DefaultCrashHandler()
+{
+  Serial.begin(9600);
+  while (!Serial);
+  while(true) {
+    Serial.println(gCrashMessage);
+    delay(500);
+  }
+}
+
+void (*pfnCrashHandler)() = DefaultCrashHandler;
+
 static inline void Die(const String& msg) {
   DebugBlink(4);
   gCrashMessage = msg;
   gIsCrashed = true;
+  pfnCrashHandler();
 }
 
 #elif defined(CLARINOID_PLATFORM_TEENSY)
@@ -60,7 +81,8 @@ static inline void Die(const String& msg) {
 
 #endif
 
-#define CCASSERT(x) if (!(x)) { Die(String("E:") + __COUNTER__ + (":" #x) + __FILE__ + ":" + (int)__LINE__); }
-#define CCDIE(msg) { Die(String("E:") + __COUNTER__ + ":"  + msg + __FILE__ + ":" + (int)__LINE__); }
+#define CCASSERT(x) if (!(x)) { Die(String("E") + __COUNTER__ + (":" #x) + __FILE__ + ":" + (int)__LINE__); }
+#define CCDIE(msg) { Die(String("E") + __COUNTER__ + ":"  + msg + __FILE__ + ":" + (int)__LINE__); }
 
 
+} // namespace clarinoid

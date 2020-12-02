@@ -4,6 +4,9 @@
 #include <clarinoid/basic/Basic.hpp>
 #include "AnalogValue.hpp"
 
+namespace clarinoid
+{
+
 using MusicalVoiceID_t = uint16_t;
 
 static constexpr MusicalVoiceID_t MAGIC_VOICE_ID_UNASSIGNED = std::numeric_limits<MusicalVoiceID_t>::max(); // used as a voice ID for voices that aren't assigned to any musical voice.
@@ -63,3 +66,4 @@ MusicalVoiceTransitionEvents CalculateTransitionEvents(const MusicalVoice& a, co
   return ret;
 }
 
+} // namespace clarinoid

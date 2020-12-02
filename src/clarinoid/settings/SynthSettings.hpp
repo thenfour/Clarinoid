@@ -3,6 +3,10 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
+namespace clarinoid
+{
+
+
 enum class OscWaveformShape
 {
   Sine = 0,
@@ -70,3 +74,4 @@ struct SynthSettings
   }
 };
 
+} // namespace

@@ -16,11 +16,17 @@
 #include <clarinoid/scale_follower/ScaleFollower.hpp>
 #include <clarinoid/harmonizer/harmonizer.hpp>
 
+namespace clarinoid
+{
 static const uint32_t LOOP_BREATH_PITCH_RESOLUTION_MS = 5; // record only every N milliseconds max. This should probably be coordinated with the similar throttler in MusicalState, to make sure it plays well together
 static const uint32_t LOOP_MIN_DURATION = 100; // minimum length in MS of a loop layer
+}
 
 #include "LoopstationMemory.hpp"
 #include "LoopstationEvents.hpp"
+
+namespace clarinoid
+{
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class LooperState
@@ -809,3 +815,5 @@ struct LoopEventStream
     }
   }
 };
+
+} // namespace clarinoid

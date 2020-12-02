@@ -3,6 +3,9 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
+namespace clarinoid
+{
+
 static const size_t MAX_SYNTH_VOICES = 8;
 
 static const size_t HARM_PRESET_COUNT = 16;
@@ -16,13 +19,16 @@ static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 16;
 
-bool gTouchKeyGraphsIsRunning = false; // todo: this is a hack
+//bool gTouchKeyGraphsIsRunning = false; // todo: this is a hack
 
+} // namespace clarinoid
 
 #include "HarmonizerSettings.hpp"
 #include "SynthSettings.hpp"
 #include "LoopstationSettings.hpp"
 
+namespace clarinoid
+{
 
 
 
@@ -99,25 +105,26 @@ struct AppSettings
   // these are for the live playing voice. a harmonizer's voices can override the synth preset though.
   uint16_t mGlobalSynthPreset = 0;
   uint16_t mGlobalHarmPreset = 0;
+
+
+  HarmPreset& FindHarmPreset(uint16_t id) {
+    if (id < 0) return mHarmSettings.mDisabledPreset;
+    if (id >= SYNTH_PRESET_COUNT) return mHarmSettings.mDisabledPreset;
+    return mHarmSettings.mPresets[id];
+  }
+
+  SynthPreset& FindSynthPreset(uint16_t id)
+  {
+    if (id < 0) id = 0;
+    if (id >= SYNTH_PRESET_COUNT) id = 0;
+    return mSynthSettings.mPresets[id];
+  }
+
 };
 
-AppSettings gAppSettings;
+//AppSettings gAppSettings;
+//static constexpr auto appsettingssize = sizeof(AppSettings);
 
 
-static constexpr auto appsettingssize = sizeof(gAppSettings);
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-HarmPreset& FindHarmPreset(uint16_t id) {
-  if (id < 0) return gAppSettings.mHarmSettings.mDisabledPreset;
-  if (id >= SYNTH_PRESET_COUNT) return gAppSettings.mHarmSettings.mDisabledPreset;
-  return gAppSettings.mHarmSettings.mPresets[id];
-}
-
-SynthPreset& FindSynthPreset(uint16_t id)
-{
-  if (id < 0) id = 0;
-  if (id >= SYNTH_PRESET_COUNT) id = 0;
-  return gAppSettings.mSynthSettings.mPresets[id];
-}
+} // namespace clarinoid
 

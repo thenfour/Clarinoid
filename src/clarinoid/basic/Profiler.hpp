@@ -4,23 +4,16 @@
 #include "Enum.hpp"
 #include "Stopwatch.hpp"
 
+namespace clarinoid {
+
 //////////////////////////////////////////////////////////////////////
 enum class ProfileObjectType
 {
   Total,
   LED,
-  Pot,
-  Encoder,
-  MIDI,
-  Synth,
-  EWIApp,
+  MusicalState,
+  Input,
   Display,
-  PlotHelper,
-  Switch,
-  TxRx,
-  TouchKeyCalibration,
-  TouchKey,
-  BreathSensor,
   END
 };
 
@@ -29,18 +22,9 @@ static constexpr size_t gProfileObjectTypeCount = (size_t)(ProfileObjectType::EN
 EnumItemInfo<ProfileObjectType> gProfileObjectTypeItems[gProfileObjectTypeCount] = {
   { ProfileObjectType::Total, "Total" },
   { ProfileObjectType::LED, "LED" },
-  { ProfileObjectType::Pot, "Pot" },
-  { ProfileObjectType::Encoder, "Encoder" },
-  { ProfileObjectType::MIDI, "MIDI" },
-  { ProfileObjectType::Synth, "Synth" },
-  { ProfileObjectType::EWIApp, "EWIApp" },
+  { ProfileObjectType::MusicalState, "MusicalState" },
+  { ProfileObjectType::Input, "Input" },
   { ProfileObjectType::Display, "Display" },
-  { ProfileObjectType::PlotHelper, "PlotHelper" },
-  { ProfileObjectType::Switch, "Switch" },
-  { ProfileObjectType::TxRx, "TxRx" },
-  { ProfileObjectType::TouchKeyCalibration, "TouchKeyCalibration" },
-  { ProfileObjectType::TouchKey, "TouchKey" },
-  { ProfileObjectType::BreathSensor, "BreathSensor" },
 };
 
 EnumInfo<ProfileObjectType> gProfileObjectTypeInfo ("ProfileObjectType", gProfileObjectTypeItems);
@@ -85,3 +69,4 @@ struct ProfileTimer
   }
 };
 
+} // namespace clarinoid

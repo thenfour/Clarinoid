@@ -4,6 +4,9 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/application/MusicalState.hpp>
 
+namespace clarinoid
+{
+
 
 struct CCPatch : public AudioConnection
 {
@@ -13,3 +16,4 @@ struct CCPatch : public AudioConnection
   }
 };
 
+} // namespace clarinoid

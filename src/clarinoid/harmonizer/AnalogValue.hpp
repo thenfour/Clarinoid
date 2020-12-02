@@ -3,6 +3,10 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
+namespace clarinoid
+{
+
+
 static const size_t ANALOG_RESOLUTION_BITS = 12;
 
 
@@ -98,3 +102,4 @@ private:
   float mFloatVal = 0;
 };
 
+} // namespace clarinoid

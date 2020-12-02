@@ -4,9 +4,13 @@
 #include "MenuAppBase.hpp"
 #include "MenuListControl.hpp"
 
+namespace clarinoid
+{
+
 static const int SETTINGS_STACK_MAX_DEPTH = 10;
 
 static bool AlwaysEnabled() { return true; }
+static bool AlwaysEnabledWithCapture(void*) { return true; }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14,6 +18,9 @@ static bool AlwaysEnabled() { return true; }
 struct ISettingItemEditorActions
 {
   virtual void CommitEditing() = 0;
+  virtual CCDisplay* GetDisplay() = 0;
+  virtual AppSettings* GetAppSettings() = 0;
+  virtual IControlMapper* GetControlMapper() = 0;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +93,7 @@ struct SettingsList
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-struct ISettingItemEditor : ISettingItemEditorActions
+struct ISettingItemEditor// : ISettingItemEditorActions
 {
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) = 0;
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta) = 0; // every frame.
@@ -94,7 +101,7 @@ struct ISettingItemEditor : ISettingItemEditorActions
   virtual void UpdateMomentaryMode(int encIntDelta) = 0;
 
   // just for convenience.
-  virtual void CommitEditing() { }
+  //virtual void CommitEditing() { }
 };
 
 template<typename T>
@@ -120,7 +127,8 @@ struct NumericEditor : ISettingItemEditor
   
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
     mpApi = papi;
-    if (!mpApi) mpApi = this;
+    CCASSERT(!!papi);
+//    if (!mpApi) mpApi = this;
     oldVal = mBinding.GetValue();
     this->x = x;
     this->y = y;
@@ -146,7 +154,7 @@ struct NumericEditor : ISettingItemEditor
   }
   virtual void Render()
   {
-    gDisplay.SetupModal();
+    mpApi->GetDisplay()->SetupModal();
     DrawValue(mBinding.GetValue(), oldVal);
   }
 };
@@ -155,16 +163,16 @@ struct IntEditor : NumericEditor<int>
 {
   IntEditor(int min_, int max_, const Property<int>& binding) :
     NumericEditor(min_, max_, binding)
-  {  
+  {
   }
   virtual int Add(int n, int encDelta) {
     return n + encDelta;
   }
   virtual void DrawValue(int n, int oldVal)
   {
-    gDisplay.mDisplay.print(String("") + n);
+    this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
     int delta = n - oldVal;
-    gDisplay.mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+    this->mpApi->GetDisplay()->mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
   }
 };
 
@@ -179,9 +187,9 @@ struct FloatEditor : NumericEditor<float>
   }
   virtual void DrawValue(float n, float oldVal)
   {
-    gDisplay.mDisplay.print(String("") + n);
+    this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
     float delta = n - oldVal;
-    gDisplay.mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+    this->mpApi->GetDisplay()->mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
   }
 };
 
@@ -372,7 +380,7 @@ struct EnumEditor : ISettingItemEditor
   }
   virtual void Render()
   {
-    gDisplay.SetupModal();
+    mpApi->GetDisplay()->SetupModal();
     mListControl.Render();
   }
 };
@@ -410,8 +418,12 @@ struct EnumSettingItem : public ISettingItem
 
 struct LabelSettingItem : public ISettingItem
 {
-  cc::function<String()>::ptr_t mText;
-  cc::function<bool()>::ptr_t mIsEnabled;
+  cc::function<String()>::ptr_t mText = nullptr;
+  cc::function<bool()>::ptr_t mIsEnabled = nullptr;
+
+  cc::function<String(void*)>::ptr_t mTextWithCapture = nullptr;
+  cc::function<bool(void*)>::ptr_t mIsEnabledWithCapture = nullptr;
+  void* mCapture = nullptr;
 
   LabelSettingItem(cc::function<String()>::ptr_t text, cc::function<bool()>::ptr_t isEnabled) :
     mText(text),
@@ -419,10 +431,17 @@ struct LabelSettingItem : public ISettingItem
   {
   }
 
-  virtual String GetName(size_t multiIndex) { return mText(); }
+  LabelSettingItem(cc::function<String(void*)>::ptr_t text, cc::function<bool(void*)>::ptr_t isEnabled, void* capture) :
+    mTextWithCapture(text),
+    mIsEnabledWithCapture(isEnabled),
+    mCapture(capture)
+  {
+  }
+
+  virtual String GetName(size_t multiIndex) { return mText ? mText() : mTextWithCapture(mCapture); }
   virtual String GetValueString(size_t multiIndex) { return ""; }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled ? mIsEnabled() : mIsEnabledWithCapture(mCapture); }
   virtual ISettingItemEditor* GetEditor() {
     return nullptr;
   }
@@ -475,22 +494,33 @@ int gSettingsMenuNavDepth = 0;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-class SettingsMenuApp : public MenuAppBaseWithUtils, public ISettingItemEditorActions
+// abstract class for specific settings apps
+struct SettingsMenuApp :
+    DisplayApp,
+    ISettingItemEditorActions
 {
   ISettingItemEditor* mpCurrentEditor = nullptr;
 
-public:
+  SettingsMenuApp(CCDisplay& d) :
+    DisplayApp(d)
+  {
+  }
 
   virtual void CommitEditing() {
     mpCurrentEditor = nullptr;
   }
   
-  virtual void OnSelected() {
+  virtual void DisplayAppOnSelected() {
     gSettingsMenuNavDepth = 0;
     gSettingsMenuNavStack[0].focusedItem = 0;
     gSettingsMenuNavStack[0].pList = GetRootSettingsList();
-    GoToFrontPage();
+    DisplayApp::DisplayAppOnSelected();
   }
+
+  virtual CCDisplay* GetDisplay() { return &mDisplay; }
+  virtual AppSettings* GetAppSettings() { return mAppSettings; }
+  virtual IControlMapper* GetControlMapper() { return mControlMapper; }
+
 
   virtual SettingsList* GetRootSettingsList() = 0;
   virtual ISettingItemEditor* GetBackEditor() { return nullptr; }
@@ -507,35 +537,39 @@ public:
   {
     SettingsMenuState& state = gSettingsMenuNavStack[gSettingsMenuNavDepth];
 
-    gDisplay.mDisplay.setTextSize(1);
-    gDisplay.mDisplay.setCursor(0,0);
-    gDisplay.mDisplay.setTextWrap(false);
-    size_t itemToRender = AddConstrained(state.focusedItem, -1, 0, state.pList->Count() - 1);
-    const size_t maxItemsToRender = 4;
+    mDisplay.mDisplay.setTextSize(1);
+    mDisplay.mDisplay.setCursor(0,0);
+    mDisplay.mDisplay.setTextWrap(false);
+
+    const size_t lineHeight = 8;
+    const size_t maxItemsToRender = mDisplay.mDisplay.width() / lineHeight;
     const size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
+    const size_t itemsFromTop = maxItemsToRender / 3; // estimated... whatever.
+
+    size_t itemToRender = AddConstrained(state.focusedItem, itemsFromTop, 0, state.pList->Count() - 1);
     size_t i = 0;
     for (; i < itemsToRender; ++ i) {
       size_t multiIndex = 0;
       auto* item = state.pList->GetItem(itemToRender, multiIndex);
       if (itemToRender == (size_t)state.focusedItem) {
-        gDisplay.mDisplay.setTextSize(1);
-        gDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+        mDisplay.mDisplay.setTextSize(1);
+        mDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       } else {
-        gDisplay.mDisplay.setTextSize(1);
-        gDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+        mDisplay.mDisplay.setTextSize(1);
+        mDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
       }
 
-      gDisplay.mDisplay.mSolidText = item->IsEnabled(multiIndex);
+      mDisplay.mDisplay.mSolidText = item->IsEnabled(multiIndex);
 
       switch (item->GetType(multiIndex)) {
       case SettingItemType::Trigger:
-        gDisplay.mDisplay.println(item->GetName(multiIndex));
+        mDisplay.mDisplay.println(item->GetName(multiIndex));
         break;
       case SettingItemType::Submenu:
-        gDisplay.mDisplay.println(item->GetName(multiIndex) + " -->");
+        mDisplay.mDisplay.println(item->GetName(multiIndex) + " -->");
         break;
       default:
-        gDisplay.mDisplay.println(item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex));
+        mDisplay.mDisplay.println(item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex));
         break;  
       }
 
@@ -548,22 +582,23 @@ public:
   }
 
   // handle extra ui stuff for the front page to enable "back actions".
-  virtual void Update()
+  virtual void DisplayAppUpdate()
   {
+    DisplayApp::DisplayAppUpdate(); // update input
+
     if (IsShowingFrontPage()) {
-      if (BackButton().IsNewlyPressed()) {
+      if (mBack.IsNewlyPressed()) {
         mpCurrentEditor = GetBackEditor();
         if (mpCurrentEditor) {
           mpCurrentEditor->SetupEditing(nullptr, 0, 0);
         }
         return;
-      } else if (BackButton().IsCurrentlyPressed() && mpCurrentEditor) {
-        mpCurrentEditor->UpdateMomentaryMode(EncoderIntDelta());
+      } else if (mBack.IsPressedState() && mpCurrentEditor) {
+        mpCurrentEditor->UpdateMomentaryMode(mEnc.GetIntDelta());
         return;
       }
       mpCurrentEditor = nullptr;
     }
-    MenuAppBaseWithUtils::Update();    
   }
 
   
@@ -572,15 +607,15 @@ public:
     SettingsMenuState& state = gSettingsMenuNavStack[gSettingsMenuNavDepth];
 
     if (mpCurrentEditor) {
-      mpCurrentEditor->Update(BackButton().IsNewlyPressed(), gEncButton.IsNewlyPressed(), EncoderIntDelta());
+      mpCurrentEditor->Update(mBack.IsNewlyPressed(), mOK.IsNewlyPressed(), mEnc.GetIntDelta());
       return;
     }
 
     // scrolling
-    state.focusedItem = AddConstrained(state.focusedItem, EncoderIntDelta(), 0, state.pList->Count() - 1);
+    state.focusedItem = AddConstrained(state.focusedItem, mEnc.GetIntDelta(), 0, state.pList->Count() - 1);
     
     // enter
-    if (gEncButton.IsNewlyPressed()) 
+    if (mOK.IsNewlyPressed()) 
     {
       size_t multiIndex = 0;
       auto* focusedItem = state.pList->GetItem(state.focusedItem, multiIndex);
@@ -610,7 +645,7 @@ public:
     }
 
     // back/up when not editing
-    if (BackButton().IsNewlyPressed()) 
+    if (mBack.IsNewlyPressed()) 
     {
       if (gSettingsMenuNavDepth == 0) {
         GoToFrontPage();
@@ -621,3 +656,4 @@ public:
   }
 };
 
+} // namespace clarinoid

@@ -3,6 +3,9 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
+namespace clarinoid
+{
+
 
 
 enum class LooperTrigger : uint8_t
@@ -38,3 +41,4 @@ struct LooperSettings
 
 
 
+} // namespace

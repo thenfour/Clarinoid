@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <stdio.h>
 
+namespace clarinoid
+{
 
 String ToString(void* p) {
   static char x[20];
@@ -16,8 +18,6 @@ const char *ToString(bool p) {
 }
 
 #ifdef CLARINOID_PLATFORM_X86 // for some reason snprintf() is not available in teensyduino
- namespace cc
- {
    static int gLogIndent = 0;
    template <typename ...Args>
    static void log(const std::string& format, Args && ...args)
@@ -36,7 +36,6 @@ const char *ToString(bool p) {
      //OutputDebugStringA(output.c_str());
      Serial.print(output.c_str());
    }
-}
 
 struct ScopeLog
 {
@@ -57,4 +56,18 @@ struct ScopeLog
   }
 };
 
+#else
+
+void log(const String& s)
+{
+  if (!Serial) {
+    Serial.begin(9600);
+    while(!Serial);
+  }
+  Serial.println(s);
+  delay(10);
+}
+
 #endif
+
+}

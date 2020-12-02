@@ -4,6 +4,9 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 
+namespace clarinoid
+{
+
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 256000; // 384 kb should be enough right?
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;// a smaller buffer that's just used for intermediate copy ops
 
@@ -29,3 +32,5 @@ static DMAMEM DMAClarinoidMemory gClarinoidDmaMem;
 #define LOOPSTATION_BUFFER (gClarinoidDmaMem.gLoopStationBuffer)
 #define LOOPSTATION_TEMP_BUFFER (gClarinoidDmaMem.gLoopStationTempBuffer)
 #define CLARINOID_AUDIO_MEMORY (gClarinoidDmaMem.gAudioMemory)
+
+} // namespace clarinoid

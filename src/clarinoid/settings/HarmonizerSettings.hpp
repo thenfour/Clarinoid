@@ -3,6 +3,8 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
+namespace clarinoid
+{
 
 
 enum class HarmScaleRefType : uint8_t
@@ -128,5 +130,6 @@ struct HarmSettings
   }
 };
 
-static constexpr auto harmsettingssize = sizeof(HarmSettings);
+//static constexpr auto harmsettingssize = sizeof(HarmSettings);
 
+} // namespace clarinoid
