@@ -96,19 +96,19 @@ struct BassoonoidControlMapper :
 
     virtual IAnalogControl* BreathSensor() { return &mBreath; };
 
-    virtual ISwitch* KeyLH1() override { return &mLHMCP.mButtons[4]; };
-    virtual ISwitch* KeyLH2() override { return &mLHMCP.mButtons[5]; };
-    virtual ISwitch* KeyLH3() override { return &mLHMCP.mButtons[6]; };
-    virtual ISwitch* KeyLH4() override { return &mLHMCP.mButtons[7]; };
+    virtual ISwitch* KeyLH1() override { return &mLHMCP.mButtons[7]; };
+    virtual ISwitch* KeyLH2() override { return &mLHMCP.mButtons[6]; };
+    virtual ISwitch* KeyLH3() override { return &mLHMCP.mButtons[5]; };
+    virtual ISwitch* KeyLH4() override { return &mLHMCP.mButtons[4]; };
 
-    virtual ISwitch* KeyRH1() override { return &mRHMCP.mButtons[8]; };
-    virtual ISwitch* KeyRH2() override { return &mRHMCP.mButtons[9]; };
-    virtual ISwitch* KeyRH3() override { return &mRHMCP.mButtons[10]; };
-    virtual ISwitch* KeyRH4() override { return &mRHMCP.mButtons[11]; };
+    virtual ISwitch* KeyRH1() override { return &mRHMCP.mButtons[11]; };
+    virtual ISwitch* KeyRH2() override { return &mRHMCP.mButtons[10]; };
+    virtual ISwitch* KeyRH3() override { return &mRHMCP.mButtons[9]; };
+    virtual ISwitch* KeyRH4() override { return &mRHMCP.mButtons[8]; };
 
-    virtual ISwitch* KeyOct1() override { return &mLHMCP.mButtons[8]; };
+    virtual ISwitch* KeyOct1() override { return &mLHMCP.mButtons[10]; };
     virtual ISwitch* KeyOct2() override { return &mLHMCP.mButtons[9]; };
-    virtual ISwitch* KeyOct3() override { return &mLHMCP.mButtons[10]; };
+    virtual ISwitch* KeyOct3() override { return &mLHMCP.mButtons[8]; };
 };
 
 } // namespace clarinoid

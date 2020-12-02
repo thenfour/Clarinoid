@@ -143,7 +143,13 @@ struct CCEWIMusicalState
 
 #ifdef THREE_BUTTON_OCTAVES
     // todo.
-    newNote += 36;
+    newNote += 0;
+    if (mControlMapper->KeyOct1()->CurrentValue()) {
+      newNote -= 12;
+    }
+    if (mControlMapper->KeyOct3()->CurrentValue()) {
+      newNote += 12;
+    }
 #else
     if (ps.key_octave4.IsCurrentlyPressed()) {
       newNote += 12 * 4;  

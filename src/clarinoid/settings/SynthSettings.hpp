@@ -32,8 +32,8 @@ struct SynthPreset
   String mName;
   float mPortamentoTime = 0.005f;
   float mOsc1Gain = 0;
-  float mOsc2Gain = 0.3f;
-  float mOsc3Gain = 0.3f;
+  float mOsc2Gain = 0.9f;
+  float mOsc3Gain = 0.9f;
 
   int mOsc1PitchSemis = 0;
   int mOsc2PitchSemis = 0;
@@ -62,9 +62,9 @@ struct SynthSettings
 
     // detuned saw.
     mPresets[1].mName = "SAW IV";
-    mPresets[1].mOsc1Gain = .2f;
-    mPresets[1].mOsc2Gain = .2f;
-    mPresets[1].mOsc3Gain = .2f;
+    mPresets[1].mOsc1Gain = .9f;
+    mPresets[1].mOsc2Gain = .9f;
+    mPresets[1].mOsc3Gain = .9f;
 
     mPresets[1].mOsc1Waveform = OscWaveformShape::SawSync;
     mPresets[1].mOsc2Waveform = OscWaveformShape::SawSync;

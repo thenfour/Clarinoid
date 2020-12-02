@@ -41,7 +41,7 @@ struct TaskManager
 
   size_t AddTask(ITask& proc, uint32_t periodMicros, ProfileObjectType profileObjectType, const char* name)
   {
-    log(String("taskman adding task ") + name);
+    //log(String("taskman adding task ") + name);
     mTaskCount ++;
     CCASSERT(mTaskCount < MAX_TASKS);
     auto& t = mTasks[mTaskCount - 1];
@@ -56,7 +56,7 @@ struct TaskManager
   // there are any number of smarter ways to schedule tasks, but for the moment we just run the next ready.
   void Main()
   {
-    log(String("taskman main. taskcount = ") + mTaskCount);
+    //log(String("taskman main. taskcount = ") + mTaskCount);
     uint32_t tasksRun = 0;
     CCASSERT(mTaskCount >= 1);
 
