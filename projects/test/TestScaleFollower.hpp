@@ -5,9 +5,16 @@
 #include <clarinoid/scale_follower/ScaleFollower.hpp>
 #include "Test.hpp"
 
+using MusicalVoice = clarinoid::MusicalVoice;
+using Note = clarinoid::Note;
+using MidiNote = clarinoid::MidiNote;
+using Scale = clarinoid::Scale;
+using ScaleFlavor = clarinoid::ScaleFlavor;
+using ScaleFlavorIndex = clarinoid::ScaleFlavorIndex;
+
 MusicalVoice NoteOn(Note note, uint8_t octave, uint16_t voiceID)
 {
-  cc::log("NOTE ON v:%d [ %s ]", (int)voiceID, MidiNote(octave, note).ToString());
+  clarinoid::log("NOTE ON v:%d [ %s ]", (int)voiceID, MidiNote(octave, note).ToString());
   MusicalVoice ret;
   ret.mVelocity = 30;
   ret.mVoiceId = voiceID;
@@ -17,7 +24,7 @@ MusicalVoice NoteOn(Note note, uint8_t octave, uint16_t voiceID)
 
 void NoteOff(MusicalVoice& mv)
 {
-  cc::log("NOTE OFF v:%d [ %s ]", (int)mv.mVoiceId, MidiNote(mv.mMidiNote).ToString());
+  clarinoid::log("NOTE OFF v:%d [ %s ]", (int)mv.mVoiceId, MidiNote(mv.mMidiNote).ToString());
   mv.mVelocity = 0;
 }
 
@@ -28,7 +35,7 @@ bool ltint(const int& lhs, const int& rhs)
 
 void TestSortedArray()
 {
-  SortedArray<int, 4, decltype(&ltint)> a(&ltint);
+  clarinoid::SortedArray<int, 4, decltype(&ltint)> a(&ltint);
   Test(a.mSize == 0);
   a.Insert(1); // 1 .
   Test(a.mSize == 1);
@@ -90,11 +97,11 @@ void TestScaleFollower()
   TestSortedArray();
 
   Scale s = Scale(Note::C, ScaleFlavorIndex::Major);
-  ScaleFollower sf;
+  clarinoid::ScaleFollower sf;
   MusicalVoice lv[8];
 
   // test transient note gets forgotten.
-  cc::log("\r\n");
+  clarinoid::log("\r\n");
   SetTestClockMillis(1000);
   lv[0] = NoteOn(Note::C, 3, 1);
   s = sf.Update(lv, 1);
@@ -111,7 +118,7 @@ void TestScaleFollower()
   Test(s == Scale(Note::C, ScaleFlavorIndex::Major));
 
   // test progressive following.
-  cc::log("\r\n");
+  clarinoid::log("\r\n");
   SetTestClockMillis(1000);
   sf = {};
   SetTestClockMillis(1000); // play Eb+Bb poly
@@ -139,7 +146,7 @@ void TestScaleFollower()
 
 
   // more normalish scenarios. Let's transition to F minor, then Ab minor
-  cc::log("\r\n");
+  clarinoid::log("\r\n");
   SetTestClockMillis(1000);
   sf = {};
   SetTestClockMillis(1000); // play Eb+Bb poly

@@ -19,8 +19,6 @@ static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 16;
 
-//bool gTouchKeyGraphsIsRunning = false; // todo: this is a hack
-
 } // namespace clarinoid
 
 #include "HarmonizerSettings.hpp"
@@ -69,17 +67,60 @@ struct PitchStripSettings
   float mPitchDownMax = 0.88f;
 };
 
+struct BreathCalibrationSettings
+{
+    float mRangeMin = 0.11f;
+    float mRangeMax = 0.57f;
+    float mCurve = 1.0f;
+    //float mNoteOnThreshold = 0.1f;// POST-scaling.
+
+    BreathCalibrationSettings() = default;
+    ~BreathCalibrationSettings() = default;
+    bool operator ==(const BreathCalibrationSettings& rhs) const
+    {
+      if (mRangeMin != rhs.mRangeMin) return false;
+      if (mRangeMax != rhs.mRangeMax) return false;
+      if (mCurve != rhs.mCurve) return false;
+      //if (mNoteOnThreshold != rhs.mNoteOnThreshold) return false;
+      return true;
+    }
+    bool operator !=(const BreathCalibrationSettings& rhs) const
+    {
+      return !(rhs == *this);
+    } 
+
+    float TranfsormValue01(float f)
+    {
+      float realMin, realMax;
+      if (mRangeMin < mRangeMax) {
+        realMin = mRangeMin;
+        realMax = mRangeMax;
+      } else {
+        realMin = mRangeMax;
+        realMax = mRangeMin;
+      }
+        // scale
+        f -= realMin;
+        f /= (realMax - realMin);
+        if (f < 0) f = 0;
+        if (f > 1) f = 1;
+        if (mCurve != 1.0f) {
+            f = 1.0f - ::powf(1.0f - f, mCurve);
+            if (f < 0) f = 0;
+            if (f > 1) f = 1;
+        }
+        return f;
+    }
+};
 
 struct AppSettings
 {
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
 
-  float mBreathLowerBound = 0.07f;
-  float mBreathUpperBound = 0.7f;
-  float mBreathNoteOnThreshold = 0.005f;
+  BreathCalibrationSettings mBreathCalibration;
   
-  float mTouchMaxFactor = 1.5f;
+  //float mTouchMaxFactor = 1.5f;
 
   PitchStripSettings mPitchStrip;
 

@@ -30,6 +30,7 @@
 namespace clarinoid
 {
 
+
 struct BassoonoidApp
 {
     Leds1 mLed1;
@@ -41,12 +42,14 @@ struct BassoonoidApp
 
     MusicalStateTask mMusicalStateTask;
 
+    PerformanceApp mPerformanceApp;
     DebugDisplayApp mDebugDisplayApp;
     SystemSettingsApp mSystemSettingsApp;
 
     BassoonoidApp() :
-        mDisplay(128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 44 * 1000000UL),
+        mDisplay(128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 88 * 1000000UL),
         mMusicalStateTask(&mAppSettings, &mControlMapper),
+        mPerformanceApp(mDisplay, &mMusicalStateTask),
         mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
         mSystemSettingsApp(mDisplay)
     {
@@ -57,23 +60,22 @@ struct BassoonoidApp
         TaskManager tm;
         IDisplayApp* allApps[] =
         {
+            &mPerformanceApp,
             &mDebugDisplayApp,
             &mSystemSettingsApp,
         };
 
         mDisplay.Init(&mAppSettings, &mControlMapper, allApps);
         mMusicalStateTask.Init();
+        mPerformanceApp.Init(&tm);
 
-        // So there's one high priority and long-running task, and the rest are chopped into small pieces.
-        // The long task gets input and updates all critical musical systems. There's no sense in breaking it down into smaller pieces, it would only get less responsive.
-        // The rest are low priority and don't really matter. They should therefore be as small as possible.
-        // TODO: after every low-priority task, see if the high priority task is due.
-        // also TODO: the low-priority tasks are pretty easy to estimate execution time. So amendment to above: see if the high priority task WOULD be due before this low-priority task completes.
-        tm.AddTask(mMusicalStateTask, 500, ProfileObjectType::MusicalState, "MusicalState");
-        tm.AddTask(mDisplay, FPSToMicros(60), ProfileObjectType::Display, "display");
-        tm.AddTask(mLed1, FPSToMicros(6), ProfileObjectType::LED, "LED1");
-        tm.AddTask(mLed2, FPSToMicros(8), ProfileObjectType::LED, "LED2");
-        tm.AddTask(mBreathLED, FPSToMicros(24), ProfileObjectType::LED, "BreathLED");
+        //CCASSERT(false);
+
+        tm.AddTask(mMusicalStateTask, 5000, "MusicalState", PriorityClass::Normal);
+        tm.AddTask(mDisplay, FPSToMicros(12), "display", PriorityClass::Normal);
+        tm.AddTask(mLed1, FPSToMicros(12), "LED1", PriorityClass::Normal);
+        tm.AddTask(mLed2, FPSToMicros(12), "LED2", PriorityClass::Normal);
+        tm.AddTask(mBreathLED, FPSToMicros(12), "BreathLED", PriorityClass::Normal);
 
         tm.Main();
     }

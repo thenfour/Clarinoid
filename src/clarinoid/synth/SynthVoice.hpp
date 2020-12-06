@@ -22,42 +22,38 @@ https://www.pjrc.com/teensy/gui/index.html?info=AudioEffectDelay
 */
 
 // GUItool: begin automatically generated code
-AudioMixer4              waveMixer;      //xy=840.0000114440918,416.25000762939453
-AudioSynthWaveformSine   metronomeOsc;          //xy=842.1818466186523,757.1818141937256
-AudioEffectEnvelope      metronomeEnv;      //xy=1048.1818542480469,741.1818132400513
-AudioEffectFreeverbStereo verb;           //xy=1176.0000457763672,350.2500247955322
-AudioAmplifier           verbWetAmpLeft; //xy=1357.0000457763672,346.2500247955322
-AudioAmplifier           verbWetAmpRight; //xy=1359.0000457763672,383.2500247955322
-AudioMixer4              postMixerLeft;  //xy=1671.0000114440918,575.2500076293945
-AudioMixer4              postMixerRight; //xy=1675.0000114440918,641.2500076293945
-AudioAmplifier           ampRight;       //xy=1877.0000839233398,623.2500238418579
-AudioAmplifier           ampLeft;        //xy=1878.000087738037,585.2500228881836
-AudioOutputI2S           i2s1;           //xy=2065.999969482422,580.2500228881836
-AudioMixer4 voiceMix1;
-AudioMixer4 voiceMix2;
-AudioMixer4 voiceMix3;
-AudioMixer4 voiceMix4;
-AudioMixer4 voiceMixOutp;
-AudioConnection voiceMixPatch1(voiceMix1, 0, voiceMixOutp, 0);
-AudioConnection voiceMixPatch2(voiceMix2, 0, voiceMixOutp, 1);
-AudioConnection voiceMixPatch3(voiceMix3, 0, voiceMixOutp, 2);
-AudioConnection voiceMixPatch4(voiceMix4, 0, voiceMixOutp, 3);
-AudioConnection voiceMixPatchOut(voiceMixOutp, 0, waveMixer, 1);
-AudioConnection          patchCord18(metronomeOsc, metronomeEnv);
-AudioConnection          patchCord19(waveMixer, 0, postMixerLeft, 1);
-AudioConnection          patchCord20(waveMixer, 0, postMixerRight, 1);
-AudioConnection          patchCord21(waveMixer, 0, verb, 0);
-AudioConnection          patchCord22(metronomeEnv, 0, postMixerLeft, 2);
-AudioConnection          patchCord23(metronomeEnv, 0, postMixerRight, 2);
-AudioConnection          patchCord24(verb, 0, verbWetAmpLeft, 0);
-AudioConnection          patchCord25(verb, 1, verbWetAmpRight, 0);
-AudioConnection          patchCord26(verbWetAmpLeft, 0, postMixerLeft, 0);
-AudioConnection          patchCord27(verbWetAmpRight, 0, postMixerRight, 0);
-AudioConnection          patchCord28(postMixerLeft, ampLeft);
-AudioConnection          patchCord29(postMixerRight, ampRight);
-AudioConnection          patchCord30(ampRight, 0, i2s1, 1);
-AudioConnection          patchCord32(ampLeft, 0, i2s1, 0);
-AudioControlSGTL5000     audioShield;    //xy=1944.0000114440918,536.2500076293945
+AudioMixer4              voiceMix2;      //xy=787.2500190734863,825.0000057220459
+AudioMixer4              voiceMix4;      //xy=794.7500190734863,1000.0000171661377
+AudioMixer4              voiceMix1;      //xy=796.0000190734863,751.250020980835
+AudioMixer4              voiceMix3;      //xy=803.5000267028809,915.0000076293945
+AudioMixer4              voiceMixOutp;   //xy=1067.2500267028809,872.5000228881836
+AudioMixer4              waveMixer;      //xy=1289.7500343322754,873.5000228881836
+AudioEffectFreeverbStereo verb;           //xy=1459.50004196167,777.5000190734863
+AudioSynthWaveformSine   metronomeOsc;   //xy=1478.0000381469727,964.5001258850098
+AudioAmplifier           verbWetAmpLeft; //xy=1654.2500457763672,774.7500228881836
+AudioEffectEnvelope      metronomeEnv;   //xy=1679.0000457763672,966.0000286102295
+AudioMixer4              postMixerLeft;  //xy=1942,885
+AudioAmplifier           ampLeft;        //xy=2151.5000648498535,891.2500267028809
+AudioOutputI2S           i2s1;           //xy=2389.750068664551,901.2500267028809
+AudioAnalyzePeak         peak1;          //xy=2393.500068664551,1005.0000290870667
+AudioAnalyzeRMS          rms1;           //xy=2394.750068664551,1046.2500305175781
+AudioConnection          patchCord1(voiceMix2, 0, voiceMixOutp, 1);
+AudioConnection          patchCord2(voiceMix4, 0, voiceMixOutp, 3);
+AudioConnection          patchCord3(voiceMix1, 0, voiceMixOutp, 0);
+AudioConnection          patchCord4(voiceMix3, 0, voiceMixOutp, 2);
+AudioConnection          patchCord5(voiceMixOutp, 0, waveMixer, 1);
+AudioConnection          patchCord6(waveMixer, 0, postMixerLeft, 1);
+AudioConnection          patchCord7(waveMixer, verb);
+AudioConnection          patchCord8(verb, 0, verbWetAmpLeft, 0);
+AudioConnection          patchCord9(metronomeOsc, metronomeEnv);
+AudioConnection          patchCord10(verbWetAmpLeft, 0, postMixerLeft, 0);
+AudioConnection          patchCord11(metronomeEnv, 0, postMixerLeft, 2);
+AudioConnection          patchCord12(postMixerLeft, ampLeft);
+AudioConnection          patchCord13(ampLeft, 0, i2s1, 0);
+AudioConnection          patchCord14(ampLeft, peak1);
+AudioConnection          patchCord15(ampLeft, rms1);
+AudioConnection          patchCord16(ampLeft, 0, i2s1, 1);
+AudioControlSGTL5000     audioShield;    //xy=2150.000068664551,814.7500247955322
 // GUItool: end automatically generated code
 
 } // namespace CCSynthGraph
@@ -218,7 +214,7 @@ struct SynthGraphControl
     CCSynthGraph::audioShield.enable();
     CCSynthGraph::audioShield.volume(.9); // headphone vol
     CCSynthGraph::ampLeft.gain(.9);
-    CCSynthGraph::ampRight.gain(.9);
+    //CCSynthGraph::ampRight.gain(.9);
     delay(300); // why?
 
     CCSynthGraph::metronomeEnv.delay(0);
@@ -229,24 +225,24 @@ struct SynthGraphControl
   }
 
   void SetGain(float f) {
-    Serial.println(String("SetGain: ") + f);
+    //Serial.println(String("SetGain: ") + f);
     CCSynthGraph::ampLeft.gain(f);
-    CCSynthGraph::ampRight.gain(f);
+    //CCSynthGraph::ampRight.gain(f);
   }
 
   void BeginUpdate() {
-    AudioNoInterrupts();// https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
+    //AudioNoInterrupts();// https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
   }
 
   void EndUpdate() {
-    AudioInterrupts();
+    //AudioInterrupts();
   }
 
   void UpdatePostFx() {
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);
     CCSynthGraph::verbWetAmpLeft.gain(mAppSettings->mReverbGain);
-    CCSynthGraph::verbWetAmpRight.gain(mAppSettings->mReverbGain);
+    //CCSynthGraph::verbWetAmpRight.gain(mAppSettings->mReverbGain);
 
     if (!mAppSettings->mMetronomeOn) {
       CCSynthGraph::metronomeOsc.amplitude(0);

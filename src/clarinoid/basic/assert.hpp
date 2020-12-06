@@ -43,7 +43,7 @@ void DefaultCrashHandler()
   while (!Serial);
   while(true) {
     Serial.println(gCrashMessage);
-    delay(500);
+    delay(1000);
   }
 }
 
@@ -71,7 +71,7 @@ static inline void Die(const String& msg) {
 #elif defined (CLARINOID_PLATFORM_X86)
 
 static inline void Die(const String& msg) {
-  cc::log(msg.mStr.str().c_str());
+  log(msg.mStr.str().c_str());
   DebugBreak();
 }
 
@@ -81,7 +81,7 @@ static inline void Die(const String& msg) {
 
 #endif
 
-#define CCASSERT(x) if (!(x)) { Die(String("E") + __COUNTER__ + (":" #x) + __FILE__ + ":" + (int)__LINE__); }
+#define CCASSERT(x) if (!(x)) { ::clarinoid::Die(String("E") + __COUNTER__ + (":" #x) + __FILE__ + ":" + (int)__LINE__); }
 #define CCDIE(msg) { Die(String("E") + __COUNTER__ + ":"  + msg + __FILE__ + ":" + (int)__LINE__); }
 
 

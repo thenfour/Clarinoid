@@ -53,13 +53,6 @@ static inline int AddConstrained(int orig, int delta, int min_, int max_) {
 
 //////////////////////////////////////////////////////////////////////
 
-// random utility function
-template<typename T, size_t N>
-constexpr size_t SizeofStaticArray(const T(&x)[N])
-{
-  return N;
-}
-
 template<typename T, size_t N>
 constexpr const T* EndPtr(const T(&x)[N])
 {

@@ -10,6 +10,7 @@
 #include "Stopwatch.hpp"
 #include "Music.hpp"
 #include "Profiler.hpp"
+#include "CircularArray.hpp"
 #include "Taskman.hpp"
 #include "Tristate.hpp"
 #include "log.hpp"

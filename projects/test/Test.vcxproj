@@ -167,6 +167,7 @@
     <ClInclude Include="TestMemory.hpp" />
     <ClInclude Include="TestScaleFollower.hpp" />
     <ClInclude Include="TestScales.hpp" />
+    <ClInclude Include="TestTaskManager.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TestMain.cpp" />

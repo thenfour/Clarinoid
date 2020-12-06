@@ -25,10 +25,10 @@ class SimpleMovingAverage
     }
 
     float GetValue() const {
-      return total_ / min(num_samples_, N);
+      return total_ / std::min(num_samples_, N);
     }
 
-    size_t GetValidSampleCount() const { return min(num_samples_, N); }
+    size_t GetValidSampleCount() const { return std::min(num_samples_, N); }
     size_t GetTotalSamplesTaken() const { return num_samples_; }
 
     void Clear() {

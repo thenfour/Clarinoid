@@ -100,3 +100,4 @@ Property<Tprop> MakePropertyByCasting(Tval* x) {
 static constexpr size_t aoeu3 = sizeof(Property<int>);
 
 } // namespace clarinoid
+

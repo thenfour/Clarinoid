@@ -24,6 +24,11 @@ struct MusicalStateTask :
     ScaleFollower mScaleFollower;
     // MIDI here too eventually.
 
+    // for timing subtasks
+    SimpleMovingAverage<15> mInputTiming;
+    SimpleMovingAverage<15> mMusicalStateTiming;
+    SimpleMovingAverage<15> mSynthStateTiming;
+
     MusicalStateTask(AppSettings* appSettings, BassoonoidControlMapper *controlMapper) : 
         mAppSettings(appSettings),
         mControlMapper(controlMapper),
@@ -39,9 +44,26 @@ struct MusicalStateTask :
 
     virtual void TaskRun() override
     {
-        mControlMapper->TaskRun();
-        mMusicalState.Update();
-        mSynth.Update(mMusicalState.mMusicalVoices, mMusicalState.mMusicalVoices + mMusicalState.mVoiceCount);
+        {
+            int m1 = micros();
+            mControlMapper->TaskRun();
+            int m2 = micros();
+            mInputTiming.Update((float)(m2 - m1));
+        }
+        {
+            int m1 = micros();
+            mMusicalState.Update();
+            int m2 = micros();
+            mMusicalStateTiming.Update((float)(m2 - m1));
+        }
+        
+        {
+            // does its own interrupt disabling.
+            int m1 = micros();
+            mSynth.Update(mMusicalState.mMusicalVoices, mMusicalState.mMusicalVoices + mMusicalState.mVoiceCount);
+            int m2 = micros();
+            mSynthStateTiming.Update((float)(m2 - m1));
+        }
     }
 };
 

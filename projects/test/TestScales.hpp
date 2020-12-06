@@ -6,6 +6,9 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/basic/Music.hpp>
 
+using clarinoid::RotateIntoRangeByte;
+using clarinoid::EnharmonicDirection;
+
 void TestScaleBasics()
 {
   Test(RotateIntoRangeByte(-3, 3) == 0);
@@ -24,7 +27,7 @@ void TestScaleBasics()
 void TestScaleFlavors()
 {
   // check intervals.
-  auto& sfmaj = gScaleFlavors[(int)ScaleFlavorIndex::Major];
+  auto& sfmaj = clarinoid::gScaleFlavors[(int)ScaleFlavorIndex::Major];
   Test(sfmaj.NormalizeScaleDegree(-1) == 6);
   Test(sfmaj.NormalizeScaleDegree(-7) == 0);
   Test(sfmaj.NormalizeScaleDegree(-8) == 6);
@@ -61,7 +64,7 @@ void TestScaleFlavors()
   Test(ctx.mEnharmonic == 0);
   Test(ctx.mScaleDegree == 0);
 
-  auto& sfhmin = gScaleFlavors[(int)ScaleFlavorIndex::HarmonicMinor];
+  auto& sfhmin = clarinoid::gScaleFlavors[(int)ScaleFlavorIndex::HarmonicMinor];
   ctx = sfhmin.RelativeChrNoteToContext(10, EnharmonicDirection::Sharp);
   Test(ctx.mEnharmonic == 2);
   Test(ctx.mScaleDegree == 5);
@@ -71,13 +74,13 @@ void TestScaleFlavors()
   Test(ctx.mScaleDegree == 6);
 
   int8_t offsetAdj  = 0;
-  Test(sfhmin.ContextToChrRelativeNote(NoteInScaleFlavorContext{ 2, -1 }, offsetAdj) == 2); // scale degree 2 = Eb, flat = D = 2.
-  Test(sfhmin.ContextToChrRelativeNote(NoteInScaleFlavorContext{ 1, -1 }, offsetAdj) == 1); // scale degree 1 = D, flat = Db = 1.
-  uint8_t n = sfhmin.ContextToChrRelativeNote(NoteInScaleFlavorContext{ 0, -1 }, offsetAdj);
+  Test(sfhmin.ContextToChrRelativeNote(clarinoid::NoteInScaleFlavorContext{ 2, -1 }, offsetAdj) == 2); // scale degree 2 = Eb, flat = D = 2.
+  Test(sfhmin.ContextToChrRelativeNote(clarinoid::NoteInScaleFlavorContext{ 1, -1 }, offsetAdj) == 1); // scale degree 1 = D, flat = Db = 1.
+  uint8_t n = sfhmin.ContextToChrRelativeNote(clarinoid::NoteInScaleFlavorContext{ 0, -1 }, offsetAdj);
   Test(n == 11); // scale degree 0 = C, flat = B = 11.
 
   // test some oddballs. unison first.
-  auto& uni = gScaleFlavors[(int)ScaleFlavorIndex::Unison];
+  auto& uni = clarinoid::gScaleFlavors[(int)ScaleFlavorIndex::Unison];
   ctx = uni.RelativeChrNoteToContext(0, EnharmonicDirection::Sharp);
   Test(ctx.mEnharmonic == 0 && ctx.mScaleDegree == 0);
   ctx = uni.RelativeChrNoteToContext(1, EnharmonicDirection::Sharp);
@@ -105,7 +108,7 @@ void TestScaleFlavors()
   Test(ctx.mEnharmonic == -6 && ctx.mScaleDegree == 0);
 
   // test chromatic. enharmonic always 0.
-  auto& chr = gScaleFlavors[(int)ScaleFlavorIndex::Chromatic];
+  auto& chr = clarinoid::gScaleFlavors[(int)ScaleFlavorIndex::Chromatic];
   ctx = chr.RelativeChrNoteToContext(0, EnharmonicDirection::Sharp);
   Test(ctx.mEnharmonic == 0 && ctx.mScaleDegree == 0);
   ctx = chr.RelativeChrNoteToContext(7, EnharmonicDirection::Sharp);

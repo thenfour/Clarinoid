@@ -23,9 +23,12 @@
 #include <clarinoid/basic/Music.hpp>
 #include <clarinoid/scale_follower/ScaleFollower.hpp>
 
-using MapKey = ScaleFollowerDetail::MapKey;
-using MapValue = ScaleFollowerDetail::MapValue;
-
+using MapKey = clarinoid::ScaleFollowerDetail::MapKey;
+using MapValue = clarinoid::ScaleFollowerDetail::MapValue;
+using Note = clarinoid::Note;
+using Scale = clarinoid::Scale;
+using ScaleFlavor = clarinoid::ScaleFlavor;
+using ScaleFlavorIndex = clarinoid::ScaleFlavorIndex;
 
 constexpr float NON_ZERO_CHARACTER_LIFT = 1.0f;
 constexpr float PLAYING_BUT_NOT_IN_CURRENT_SCALE_WEIGHT = 2.5f;
@@ -45,7 +48,7 @@ std::string NoteListToString(const std::vector<Note>& c)
 {
   String spn = "";
   for (auto& p : c) {
-    spn = spn + " " + gNotes[(int)p].mName;
+    spn = spn + " " + clarinoid::gNotes[(int)p].mName;
   }
   return spn.mStr.str();
 }
@@ -54,7 +57,7 @@ std::string NoteListToString(const std::vector<std::pair<Note, int>>& c)
 {
   String spn = "";
   for (auto& n : c) {
-    spn = spn + " " + gNotes[(int)n.first].mName + ":" + n.second;
+    spn = spn + " " + clarinoid::gNotes[(int)n.first].mName + ":" + n.second;
   }
   return spn.mStr.str();
 }
@@ -63,7 +66,7 @@ std::string NoteListToString(const std::vector<FantasyScaleNote>& c)
 {
   String spn = "FantasyScale{note, impo, char} [ ";
   for (auto& n : c) {
-    spn = spn + " [" + gNotes[(int)n.mNote].mName + ", " + n.mImportanceFactor + ", " + n.mCharacteristicWeight + "]";
+    spn = spn + " [" + clarinoid::gNotes[(int)n.mNote].mName + ", " + n.mImportanceFactor + ", " + n.mCharacteristicWeight + "]";
   }
   spn += " ]";
   return spn.mStr.str();
@@ -71,7 +74,7 @@ std::string NoteListToString(const std::vector<FantasyScaleNote>& c)
 
 uint8_t SemitoneDistance(Note a, Note b)
 {
-  return (uint8_t)ModularDistance<12>((int)a, (int)b);
+  return (uint8_t)clarinoid::ModularDistance<12>((int)a, (int)b);
 }
 
 
@@ -278,7 +281,7 @@ struct ScaleComparison
     for (size_t id = 0; id < 12; ++id)
     {
       Note n = (Note)id;
-      const NoteDesc& desc = gNotes[id];
+      const clarinoid::NoteDesc& desc = clarinoid::gNotes[id];
       float importanceFactor = 1;
       float fantasyCharacter = 0;
       float candidateCharacter = 0;
@@ -387,7 +390,7 @@ std::vector<Scale>& GetAllCandidateScales()
 {
   static std::vector<Scale> ret;
   if (ret.empty()) {
-    for (int i = 0; i < ScaleFlavorCount; ++i)
+    for (int i = 0; i < clarinoid::ScaleFlavorCount; ++i)
     {
       for (int n = 0; n < 12; ++n)
       {
@@ -403,7 +406,7 @@ Scale DeduceScale(const Scale& currentScale, std::vector<Note> playingNotes, boo
   ScaleComparison protoComp = { currentScale, playingNotes, Scale{ Note::C, ScaleFlavorIndex::Major } };
   auto& fantasyScale = protoComp.mFantasyScale;
 
-  SortedArray<std::pair<float, Scale>, 50, decltype(&gtpairintscale)> candidateScales(&gtpairintscale);
+  clarinoid::SortedArray<std::pair<float, Scale>, 50, decltype(&gtpairintscale)> candidateScales(&gtpairintscale);
 
   for (auto& candidateScale : GetAllCandidateScales())
   {
@@ -417,7 +420,7 @@ Scale DeduceScale(const Scale& currentScale, std::vector<Note> playingNotes, boo
   auto chosenScale = candidateScales.mArray[0].second;
 
   if (dolog) {
-    cc::log("DEDUCED SCALE: Scale [ %s ] with notes [ %s ] = [ %s ]",
+    clarinoid::log("DEDUCED SCALE: Scale [ %s ] with notes [ %s ] = [ %s ]",
       currentScale.ToString().mStr.str().c_str(),
       NoteListToString(playingNotes).c_str(),
       chosenScale.ToString().mStr.str().c_str()
@@ -429,7 +432,7 @@ Scale DeduceScale(const Scale& currentScale, std::vector<Note> playingNotes, boo
 
 void ExamineScaleDeduction(const Scale& currentScale, std::vector<Note> playingNotes, const Scale& expectedScale)
 {
-  ScopeLog ls(String("ExamineScaleDeduction for: Scale [ ")
+  clarinoid::ScopeLog ls(String("ExamineScaleDeduction for: Scale [ ")
     + currentScale.ToString().mStr.str().c_str()
     + " ] with notes [ "
     + NoteListToString(playingNotes).c_str()
@@ -450,7 +453,7 @@ std::map<MapKey, MapValue> GenerateMap()
   std::map<MapKey, MapValue> ret;
   //auto allImportanceCombos = GetAllNoteImportanceCombinations();
   //auto allCandidateScales = GetAllCandidateScales();
-  for (size_t sourceScaleFlavor = 0; sourceScaleFlavor < ScaleFlavorCount; ++ sourceScaleFlavor)
+  for (size_t sourceScaleFlavor = 0; sourceScaleFlavor < clarinoid::ScaleFlavorCount; ++ sourceScaleFlavor)
   {
     Scale sourceScale = Scale(Note::C, (ScaleFlavorIndex)sourceScaleFlavor); // make everything relative to (0) for simplicity
     for (auto& noteImportanceList : GetAllNoteImportanceCombinations())
@@ -543,7 +546,7 @@ int main()
     //  Scale(Note::C, ScaleFlavorIndex::Major), { Note::E, Note::Bb },
     //  Scale(Note::F_, ScaleFlavorIndex::Major), true);
 
-    cc::log("ok");
+    clarinoid::log("ok");
   }
 
   // determine path.
@@ -563,11 +566,11 @@ int main()
     path = std::string("..\\") + path;
   }
   if (!found) {
-    cc::log("couldn't find the output file; outta here.");
+    clarinoid::log("couldn't find the output file; outta here.");
     return 0;
   }
 
-  cc::log("Output file: %s", path.c_str());
+  clarinoid::log("Output file: %s", path.c_str());
 
   {
     std::ofstream f;

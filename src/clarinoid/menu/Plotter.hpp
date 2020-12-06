@@ -7,89 +7,60 @@
 namespace clarinoid
 {
 
+// feed it data and it will plot.
+template</*int TdisplayWidth, */int Tspeed> // Tspeed is # of plots per column
+struct Plotter
+{
+  //static constexpr size_t SamplesCapacity = TdisplayWidth * Tspeed; // theoretical maximum samples to take
+  //float mSamples[SamplesCapacity];
+  size_t mSamplesCapacity; // # of samples that we will actually use in mVals (width based on display area passed to Init())
+  size_t mCursor = 0;
+  size_t mValidSamples = 0; // how many elements in mSamples are valid.
+  RectI mDisplayArea;
+  CCDisplay* mDisplay = nullptr;
+  float *mSamples = nullptr;
 
-// // feed it data and it will plot.
-// // supports also 1 "boolean" series which plots solid when true, nothing when off.
-// template<int TseriesCount, int Tspeed> // Tspeed is # of plots per column
-// struct Plotter
-// {
-//   static constexpr int DisplayWidth = RESOLUTION_X;
-//   static constexpr int DisplayHeight = RESOLUTION_Y;
-//   size_t mCursor = 0;
-//   size_t mValid = 0;
-//   static constexpr size_t sampleCount = DisplayWidth * Tspeed;
-//   int32_t vals[TseriesCount][sampleCount];
-//   bool boolVals[sampleCount];
+  void Init(CCDisplay* display, RectI displayArea)
+  {
+      mDisplay = display;
+      CCASSERT(!!mDisplay);
+      mDisplayArea = displayArea;
+      mSamplesCapacity = displayArea.width * Tspeed;
+      mSamples = new float[mSamplesCapacity];
+  }
 
-//   Plotter() {
-//     for (auto& b : boolVals) {
-//       b = false;      
-//     }
-//   }
+  void clear() {
+    mValidSamples = 0;
+    mCursor = 0;
+  }
   
-//   void clear() {
-//     mValid = 0;
-//     mCursor = 0;
-//   }
+    void Plot(float val1) {
+        CCASSERT(!!mDisplay);
+        mSamples[mCursor] = val1;
+        mValidSamples = max(mValidSamples, mCursor);
+        mCursor = (mCursor + 1) % mSamplesCapacity;
+    }
   
-//   void Plot4(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4) {
-//     CCASSERT(TseriesCount == 4);
-//     vals[0][mCursor] = val1;
-//     vals[1][mCursor] = val2;
-//     vals[2][mCursor] = val3;
-//     vals[3][mCursor] = val4;
-//     mValid = max(mValid, mCursor);
-//     mCursor = (mCursor + 1) % sampleCount;
-//   }
-  
-//   void Plot3b(uint32_t val1, uint32_t val2, uint32_t val3, bool boolVal) {
-//     CCASSERT(TseriesCount == 3);
-//     vals[0][mCursor] = val1;
-//     vals[1][mCursor] = val2;
-//     vals[2][mCursor] = val3;
-//     boolVals[mCursor] = boolVal;
-//     mValid = max(mValid, mCursor);
-//     mCursor = (mCursor + 1) % sampleCount;
-//   }
-  
-//   void Plot1(uint32_t val1) {
-//     CCASSERT(TseriesCount == 1);
-//     vals[0][mCursor] = val1;
-//     mValid = max(mValid, mCursor);
-//     mCursor = (mCursor + 1) % sampleCount;
-//   }
-  
-//   void Render() {
-//     // determine min/max for scale.
-//     if (mValid == 0) return;
-//     int32_t min_ = vals[0][0];
-//     int32_t max_ = min_;
-//     for (size_t x = 0; x < mValid; ++ x) {
-//       for (size_t s = 0; s < TseriesCount; ++ s) {
-//         min_ = min(min_, vals[s][x]);
-//         max_ = max(max_, vals[s][x]);
-//       }
-//     }
-//     if (min_ == max_) max_ ++; // avoid div0
+  void Render() {
+    if (mValidSamples == 0) return;
 
-//     // draw back from cursor.
-//     for (int n = 0; n < (int)mValid; ++ n) {
-//       int x = ((sampleCount - n) / Tspeed) - 1;
-//       int i = (int)mCursor - n - 1;
-//       if (i < 0)
-//         i += sampleCount;
-//       for (size_t s = 0; s < TseriesCount; ++ s) {
-//         uint32_t y = map(vals[s][i], min_, max_, DisplayHeight - 1, 0);
-//         gDisplay.mDisplay.drawPixel(x, y, WHITE);
-//       }
+    // draw back from cursor.
+    for (int n = 0; n < (int)mValidSamples; ++ n) {
+        int x = ((mSamplesCapacity - n) / Tspeed) - 1;
+        int i = (int)mCursor - n - 1;
+        if (i < 0)
+        {
+            i += mSamplesCapacity;
+        }
+        float f = mSamples[i];
+        if (f < 0) f = 0;
+        if (f > 1) f = 1;
+        float y = map(f, 0.0f, 1.0f, float(mDisplayArea.height - 1), 0.0f);
+        mDisplay->mDisplay.drawPixel(mDisplayArea.x + x, mDisplayArea.y + y, WHITE);
+    }
+  }
+};
 
-//       // plot bool val
-//       if (boolVals[i]) {
-//         gDisplay.mDisplay.DrawDottedRect(x, DisplayHeight - 4, 1, RESOLUTION_Y, WHITE);
-//       }
-//     }
-    
-//   }
-// };
+
 
 } // namespace clarinoid

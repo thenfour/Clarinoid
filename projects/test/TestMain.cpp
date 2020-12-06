@@ -12,11 +12,10 @@
 #include "TestLoopstation.hpp"
 #include "TestScales.hpp"
 #include "TestHarmonizer.hpp"
+#include "TestTaskManager.hpp"
 
 int main()
 {
-  gAppSettings.mLooperSettings.mTrigger = LooperTrigger::Immediate;
-
   TestBufferUnification();
 
   TestReadHeader();
@@ -41,7 +40,10 @@ int main()
   TestLoopstationLegato();
   TestLoopstationSynth();
 
+  clarinoid::TestTaskManager();
+
   TestScales();
+
   //TestScaleFollower();
   //TestHarmonizer();
 

@@ -55,20 +55,26 @@ struct SettingsList
 {
   ISettingItem** mItems;
   size_t mItemRawCount;
-  size_t mItemTotalCount;
+  //size_t mItemTotalCount;
 
   template<size_t N>
   SettingsList(ISettingItem* (&arr)[N]) :
     mItems(arr),
     mItemRawCount(N)
   {
-    mItemTotalCount = 0;
-    for (auto& i : arr) {
-      mItemTotalCount += i->GetMultiCount();
-    }
+    // mItemTotalCount = 0;
+    // for (auto& i : arr) {
+    //   mItemTotalCount += i->GetMultiCount();
+    // }
   }
   
-  size_t Count() const { return mItemTotalCount; }
+  size_t Count() const {
+    size_t mItemTotalCount = 0;
+    for (size_t i = 0; i < mItemRawCount; ++ i) {
+      mItemTotalCount += mItems[i]->GetMultiCount();
+    }
+    return mItemTotalCount;
+  }
 
   // to consider: LUT or binary search. but since this is just for the menu system, not critical.
   ISettingItem* GetItem(size_t ireq, size_t& multiIndex)
@@ -86,7 +92,7 @@ struct SettingsList
       }
       itemBeginIndex += mItems[iraw]->GetMultiCount();
     }
-    CCASSERT(!"setting item out of range");
+    Die(String("setting item out of range; req=") + ireq);
     return nullptr;
   }
 };
@@ -98,156 +104,7 @@ struct ISettingItemEditor// : ISettingItemEditorActions
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) = 0;
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta) = 0; // every frame.
   virtual void Render() = 0; // not every frame.
-  virtual void UpdateMomentaryMode(int encIntDelta) = 0;
-
-  // just for convenience.
-  //virtual void CommitEditing() { }
-};
-
-template<typename T>
-struct NumericEditor : ISettingItemEditor
-{
-  ISettingItemEditorActions* mpApi;
-  int x;
-  int y;
-  T mMin;
-  T mMax;
-  Property<T> mBinding;
-  T oldVal;
-
-  NumericEditor(T min_, T max_, const Property<T>& binding) :
-    mMin(min_),
-    mMax(max_),
-    mBinding(binding)
-  {
-  }
-
-  virtual T Add(T rhs, int encoderIntDelta) = 0;
-  virtual void DrawValue(T val, T oldVal) = 0;
-  
-  virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
-    mpApi = papi;
-    CCASSERT(!!papi);
-//    if (!mpApi) mpApi = this;
-    oldVal = mBinding.GetValue();
-    this->x = x;
-    this->y = y;
-  }
-
-  // for editing when holding back button. so back button is definitely pressed, and we don't want to bother
-  // with encoder button pressed here.
-  virtual void UpdateMomentaryMode(int encIntDelta)
-  {
-    mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
-  }
-  
-  virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
-  {
-    mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
-    if (backWasPressed) {
-      mBinding.SetValue(oldVal);
-      mpApi->CommitEditing();
-    }
-    if (encWasPressed) {
-      mpApi->CommitEditing();
-    }
-  }
-  virtual void Render()
-  {
-    mpApi->GetDisplay()->SetupModal();
-    DrawValue(mBinding.GetValue(), oldVal);
-  }
-};
-
-struct IntEditor : NumericEditor<int>
-{
-  IntEditor(int min_, int max_, const Property<int>& binding) :
-    NumericEditor(min_, max_, binding)
-  {
-  }
-  virtual int Add(int n, int encDelta) {
-    return n + encDelta;
-  }
-  virtual void DrawValue(int n, int oldVal)
-  {
-    this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
-    int delta = n - oldVal;
-    this->mpApi->GetDisplay()->mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
-  }
-};
-
-struct FloatEditor : NumericEditor<float>
-{
-  FloatEditor(float min_, float max_, const Property<float>& binding) :
-    NumericEditor(min_, max_, binding)
-  {  
-  }
-  virtual float Add(float n, int encDelta) {
-    return n + (float)encDelta * (mMax - mMin) / 100;
-  }
-  virtual void DrawValue(float n, float oldVal)
-  {
-    this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
-    float delta = n - oldVal;
-    this->mpApi->GetDisplay()->mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
-  }
-};
-
-
-template<typename T, typename TEditor>
-struct NumericSettingItem : public ISettingItem
-{
-  String mName;
-  TEditor mEditor;
-  Property<T> mBinding;
-  typename cc::function<bool()>::ptr_t mIsEnabled;
-  
-  NumericSettingItem(const String& name, T min_, T max_, const Property<T>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
-    mName(name),
-    mEditor(min_, max_, binding),
-    mBinding(binding),
-    mIsEnabled(isEnabled)
-  {
-  }
-
-  virtual String GetName(size_t multiIndex) { return mName; }
-  virtual String GetValueString(size_t multiIndex) { return String(mBinding.GetValue()); }
-  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
-
-  virtual ISettingItemEditor* GetEditor(size_t multiIndex) {
-    return &mEditor;
-  }
-};
-
-using IntSettingItem = NumericSettingItem<int, IntEditor>;
-//using UInt16SettingItem = NumericSettingItem<uint16_t, IntEditor>;
-using FloatSettingItem = NumericSettingItem<float, FloatEditor>;
-
-struct BoolSettingItem : public ISettingItem
-{
-  String mName;
-  Property<bool> mBinding;
-  String mTrueCaption;
-  String mFalseCaption;
-  typename cc::function<bool()>::ptr_t mIsEnabled;
-  
-  BoolSettingItem(const String& name, const String& trueCaption, const String& falseCaption, const Property<bool>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
-    mName(name),
-    mBinding(binding),
-    mTrueCaption(trueCaption),
-    mFalseCaption(falseCaption),
-    mIsEnabled(isEnabled)
-  {
-  }
-
-  virtual String GetName(size_t multiIndex) { return mName; }
-  virtual String GetValueString(size_t multiIndex) { return mBinding.GetValue() ? mTrueCaption : mFalseCaption; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
-  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Bool; }
-  virtual void ToggleBool(size_t multiIndex) {
-    mBinding.SetValue(!mBinding.GetValue());
-  }
+  virtual void UpdateMomentaryMode(int encIntDelta) {}
 };
 
 
@@ -301,22 +158,33 @@ struct SubmenuSettingItem : public ISettingItem
 
 struct MultiSubmenuSettingItem : public ISettingItem
 {
-  size_t mItemCount;
-  typename cc::function<SettingsList*(void*,size_t)>::ptr_t mGetSubmenu;// SettingsList* mSubmenu;
-  typename cc::function<String(void*,size_t)>::ptr_t mName;
-  typename cc::function<bool(void*,size_t)>::ptr_t mIsEnabled;
+  typename cc::function<size_t(void*)>::ptr_t mGetItemCount = nullptr;
+  typename cc::function<SettingsList*(void*,size_t)>::ptr_t mGetSubmenu = nullptr;// SettingsList* mSubmenu;
+  typename cc::function<String(void*,size_t)>::ptr_t mName = nullptr;
+  typename cc::function<bool(void*,size_t)>::ptr_t mIsEnabled = nullptr;
   void* mpCapture = nullptr;
+
+  MultiSubmenuSettingItem() = default;
   
-  MultiSubmenuSettingItem(size_t itemCount, typename cc::function<String(void*,size_t)>::ptr_t name, typename cc::function<SettingsList*(void*,size_t)>::ptr_t pGetSubmenu, typename cc::function<bool(void*,size_t)>::ptr_t isEnabled, void* capture) :
-    mItemCount(itemCount),
+  MultiSubmenuSettingItem(typename cc::function<size_t(void*)>::ptr_t getItemCount, typename cc::function<String(void*,size_t)>::ptr_t name, typename cc::function<SettingsList*(void*,size_t)>::ptr_t pGetSubmenu, typename cc::function<bool(void*,size_t)>::ptr_t isEnabled, void* capture) :
+    mGetItemCount(getItemCount),
     mGetSubmenu(pGetSubmenu),
     mName(name),
     mIsEnabled(isEnabled),
     mpCapture(capture)
   {
   }
+  
+  void Init(typename cc::function<size_t(void*)>::ptr_t getItemCount, typename cc::function<String(void*,size_t)>::ptr_t name, typename cc::function<SettingsList*(void*,size_t)>::ptr_t pGetSubmenu, typename cc::function<bool(void*,size_t)>::ptr_t isEnabled, void* capture)
+  {
+    mGetItemCount = getItemCount;
+    mGetSubmenu = pGetSubmenu;
+    mName = name;
+    mIsEnabled = isEnabled;
+    mpCapture = capture;
+  }
 
-  virtual size_t GetMultiCount() { return mItemCount; }
+  virtual size_t GetMultiCount() { return mGetItemCount(mpCapture); }
   virtual String GetName(size_t multiIndex) { return mName(mpCapture,multiIndex); }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Submenu; }
   virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(mpCapture,multiIndex); }
@@ -325,95 +193,6 @@ struct MultiSubmenuSettingItem : public ISettingItem
     return mGetSubmenu(mpCapture,multiIndex);
   }
 };
-
-
-
-template<typename T>
-struct EnumEditor : ISettingItemEditor
-{
-  // set on SetupEditing()
-  ISettingItemEditorActions* mpApi;
-  T mOldVal;
-
-  Property<T> mBinding;
-  const EnumInfo<T>& mEnumInfo;
-
-  Property<int> mListSelectedItem = {
-    [](void* capture) { EnumEditor<T>* pthis = (EnumEditor<T>*)capture; return (int)pthis->mBinding.GetValue(); },
-    [](void* capture, const int& val) { EnumEditor<T>* pthis = (EnumEditor<T>*)capture; pthis->mBinding.SetValue((T)val); },
-    this
-  };
-
-  ListControl mListControl;
-
-  EnumEditor(const EnumInfo<T>&enumInfo, const Property<T>& binding) :
-    mBinding(binding),
-    mEnumInfo(enumInfo),
-    mListControl(&mEnumInfo, mListSelectedItem, 12, 12, 3)
-  {
-  }
-
-  virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
-    mpApi = papi;
-    if (!mpApi) mpApi = this;
-    mOldVal = mBinding.GetValue();
-  }
-
-  // for editing when holding back button. so back button is definitely pressed, and we don't want to bother
-  // with encoder button pressed here.
-  virtual void UpdateMomentaryMode(int encIntDelta)
-  {
-  }
-  
-  virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
-  {
-    CCASSERT(mpApi != nullptr);
-    //Serial.println(String("update enum editor ") + (int)(micros()));
-    mListControl.Update();
-    if (backWasPressed) {
-      mBinding.SetValue(mOldVal);
-      mpApi->CommitEditing();
-    }
-    if (encWasPressed) {
-      mpApi->CommitEditing();
-    }
-  }
-  virtual void Render()
-  {
-    mpApi->GetDisplay()->SetupModal();
-    mListControl.Render();
-  }
-};
-
-
-template<typename T>
-struct EnumSettingItem : public ISettingItem
-{
-  String mName;
-  EnumEditor<T> mEditor;
-  Property<T> mBinding;
-  const EnumInfo<T>& mEnumInfo;
-  cc::function<bool()>::ptr_t mIsEnabled;
-
-  EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, cc::function<bool()>::ptr_t isEnabled) :
-    mName(name),
-    mEditor(enumInfo, binding),
-    mBinding(binding),
-    mEnumInfo(enumInfo),
-    mIsEnabled(isEnabled)
-  {
-  }
-
-  virtual String GetName(size_t multiIndex) { return mName; }
-  virtual String GetValueString(size_t multiIndex) { return mEnumInfo.GetValueString(mBinding.GetValue()); }
-  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
-  virtual ISettingItemEditor* GetEditor(size_t multiIndex) {
-    return &mEditor;
-  }
-};
-
-
 
 
 struct LabelSettingItem : public ISettingItem
@@ -450,6 +229,32 @@ struct LabelSettingItem : public ISettingItem
 
 
 
+struct MultiLabelSettingItem : public ISettingItem
+{
+  cc::function<size_t(void*)>::ptr_t mGetItemCount = nullptr;
+  cc::function<String(void*,size_t)>::ptr_t mText = nullptr;
+  cc::function<bool(void*,size_t)>::ptr_t mIsEnabled = nullptr;
+  void* mCapture = nullptr;
+
+  MultiLabelSettingItem(cc::function<size_t(void*)>::ptr_t getItemCount, cc::function<String(void*, size_t)>::ptr_t text, cc::function<bool(void*, size_t)>::ptr_t isEnabled, void* capture) :
+    mGetItemCount(getItemCount),
+    mText(text),
+    mIsEnabled(isEnabled),
+    mCapture(capture)
+  {
+  }
+
+  virtual size_t GetMultiCount() { return mGetItemCount(mCapture); }
+  virtual String GetName(size_t multiIndex) { return mText(mCapture, multiIndex); }
+  virtual String GetValueString(size_t multiIndex) { return ""; }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(mCapture, multiIndex); }
+  virtual ISettingItemEditor* GetEditor() {
+    return nullptr;
+  }
+};
+
+
 
 
 struct StringSettingItem : public ISettingItem
@@ -472,17 +277,11 @@ struct StringSettingItem : public ISettingItem
   }
 };
 
-
-
-
-
-
 struct SettingsMenuState
 {
   SettingsList* pList;
   int focusedItem;
 };
-
 
 // glabal because:
 // - we don't want to use dynamic memory for this (so static array)
@@ -546,7 +345,8 @@ struct SettingsMenuApp :
     const size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
     const size_t itemsFromTop = maxItemsToRender / 3; // estimated... whatever.
 
-    size_t itemToRender = AddConstrained(state.focusedItem, itemsFromTop, 0, state.pList->Count() - 1);
+    size_t itemToRender = (state.focusedItem + itemsFromTop) % state.pList->Count();
+    //Serial.println(String("focuseditem = ") + state.focusedItem + " itemsFromTop=" + itemsFromTop + "plist count =" + state.pList->Count());
     size_t i = 0;
     for (; i < itemsToRender; ++ i) {
       size_t multiIndex = 0;
@@ -573,7 +373,7 @@ struct SettingsMenuApp :
         break;  
       }
 
-      itemToRender = AddConstrained(itemToRender, 1, 0, state.pList->Count() - 1);
+      itemToRender = (itemToRender + 1) % state.pList->Count();
     }
 
     if (mpCurrentEditor) {
@@ -612,7 +412,12 @@ struct SettingsMenuApp :
     }
 
     // scrolling
-    state.focusedItem = AddConstrained(state.focusedItem, mEnc.GetIntDelta(), 0, state.pList->Count() - 1);
+    if (state.pList->Count() <= 1) {
+      state.focusedItem = 0;
+    }
+    else {
+      state.focusedItem = AddConstrained(state.focusedItem, mEnc.GetIntDelta(), 0, state.pList->Count() - 1);
+    }
     
     // enter
     if (mOK.IsNewlyPressed()) 

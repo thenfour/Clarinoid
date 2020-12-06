@@ -39,7 +39,7 @@ struct SynthGraphControl
 {
   CCThrottlerT<500> mMetronomeTimer;
 
-  void Setup()
+  void Setup(...)
   {
   }
 

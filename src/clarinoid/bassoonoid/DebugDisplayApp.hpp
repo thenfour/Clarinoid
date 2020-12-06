@@ -7,6 +7,110 @@
 namespace clarinoid
 {
 
+
+struct PerformanceApp :
+    SettingsMenuApp
+{
+    size_t mSelectedTaskID = 0;
+    TaskManager* mTaskManager = nullptr;
+    MusicalStateTask* mpMusicalStateTask = nullptr;
+    virtual const char *DisplayAppGetName() override { return "Performance"; }
+
+    PerformanceApp(CCDisplay& d, MusicalStateTask* pMusicalStateTask) :
+        SettingsMenuApp(d),
+        mpMusicalStateTask(pMusicalStateTask)
+    {}
+
+    MultiSubmenuSettingItem mTiming;
+
+    LabelSettingItem mInput = { [](void* cap)
+    {
+        PerformanceApp* pThis = (PerformanceApp*)cap;
+        String ret = "M->Input:";
+        ret += (int)pThis->mpMusicalStateTask->mInputTiming.GetValue();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    LabelSettingItem mMusicalState = { [](void* cap)
+    {
+        PerformanceApp* pThis = (PerformanceApp*)cap;
+        String ret = "M->Music:";
+        ret += (int)pThis->mpMusicalStateTask->mMusicalStateTiming.GetValue();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    LabelSettingItem mSynthState = { [](void* cap)
+    {
+        PerformanceApp* pThis = (PerformanceApp*)cap;
+        String ret = "M->Synth:";
+        ret += (int)pThis->mpMusicalStateTask->mSynthStateTiming.GetValue();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+
+
+    void Init(TaskManager* tm)
+    {
+        mTaskManager = tm;
+
+        mTiming.Init(
+            [](void* cap) {  // get item count
+                PerformanceApp* pThis = (PerformanceApp*)cap;
+                return pThis->mTaskManager->mTaskCount;
+            },
+            [](void* cap, size_t i) // get name
+            {
+                PerformanceApp* pThis = (PerformanceApp*)cap;
+                auto& t = pThis->mTaskManager->mTasks[i];
+                String ret = String(t.mName) + ":" + (int)t.mExecutionTimeMicros.GetValue();
+                //Serial.println(ret);
+                return ret;
+            },
+            [](void* cap, size_t i) // get submenu
+            {
+                PerformanceApp* pThis = (PerformanceApp*)cap;
+                pThis->mSelectedTaskID = i;
+                return &pThis->mSubitemList;
+            },
+            [](void* cap, size_t i) { return true; },
+            this
+            );
+    }
+
+    LabelSettingItem mSubitemTmp = { [](void* cap)
+    {
+        //PerformanceApp* pThis = (PerformanceApp*)cap;
+        return String("tmp.");
+    }, AlwaysEnabledWithCapture, this };
+
+    ISettingItem* mSubitemArray[1] =
+    {
+        &mSubitemTmp,
+    };
+    SettingsList mSubitemList = { mSubitemArray };
+
+
+    ISettingItem* mArray[4] =
+    {
+        &mTiming,
+        &mInput,
+        &mMusicalState,
+        &mSynthState,
+    };
+    SettingsList mRootList = { mArray };
+    virtual SettingsList* GetRootSettingsList()
+    {
+        return &mRootList;
+    }
+
+    virtual void RenderFrontPage() 
+    {
+        mDisplay.mDisplay.println(String("Performance ->"));
+        SettingsMenuApp::RenderFrontPage();
+    }
+};
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 struct DebugDisplayApp :
     SettingsMenuApp
@@ -107,7 +211,40 @@ struct DebugDisplayApp :
         return ret;
     }, AlwaysEnabledWithCapture, this };
 
-    ISettingItem* mArray[10] =
+// AudioProcessorUsage();
+// AudioProcessorUsageMax();
+// AudioMemoryUsage();
+// AudioMemoryUsageMax();
+
+    LabelSettingItem mAudioProcessorUsage = { [](void* cap)
+    {
+        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        String ret = String("Audio CPU %:") + AudioProcessorUsage();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    LabelSettingItem mAudioProcessorUsageMax = { [](void* cap)
+    {
+        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        String ret = String("Audio max CPU %:") + AudioProcessorUsageMax();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    LabelSettingItem mAudioMemoryUsage = { [](void* cap)
+    {
+        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        String ret = String("Audio mem:") + AudioMemoryUsage();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    LabelSettingItem mAudioMemoryUsageMax = { [](void* cap)
+    {
+        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        String ret = String("Audio mem max:") + AudioMemoryUsageMax();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    ISettingItem* mArray[14] =
     {
         &mBreath,
         &mLHA,
@@ -119,6 +256,10 @@ struct DebugDisplayApp :
         &mRHEnc,
         &mToggleUp,
         &mSynthPoly,
+        &mAudioProcessorUsage,
+        &mAudioProcessorUsageMax,
+        &mAudioMemoryUsage,
+        &mAudioMemoryUsageMax,
         // joyx
         // joyy
         // pitch
@@ -133,7 +274,7 @@ struct DebugDisplayApp :
 
     virtual void RenderFrontPage() 
     {
-        mDisplay.mDisplay.println(String("Debug..."));
+        mDisplay.mDisplay.println(String("Debug info ->"));
         SettingsMenuApp::RenderFrontPage();
     }
 };

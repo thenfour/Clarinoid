@@ -3,13 +3,43 @@
 #include <limits>
 
 #include "Memory.hpp"
-#include "Taskman.hpp"
-#include "FPS.hpp"
-#include "Profiler.hpp"
+//#include "Taskman.hpp"
+//#include "FPS.hpp"
+//#include "Profiler.hpp"
 #include "Property.hpp"
 
 namespace clarinoid
 {
+  bool FloatEquals(float f1, float f2, float eps = 0.00001f)
+  {
+    return fabs(f1 - f2) < eps;
+  }
+
+    struct PointF
+    {
+      float x;
+      float y;
+    };
+    struct PointI
+    {
+      int x;
+      int y;
+    };
+
+    struct RectF
+    {
+      float x;
+      float y;
+      float width;
+      float height;
+    };
+    struct RectI
+    {
+      int x;
+      int y;
+      int width;
+      int height;
+    };
 
     struct ColorF
     {
@@ -45,8 +75,7 @@ uint16_t ClampUint32ToUint16(uint32_t a) {
   return (uint16_t)a;
 }
 
-namespace cc
-{
+
   template<typename T>
   struct array_view
   {
@@ -68,7 +97,6 @@ namespace cc
   {
     return array_view<T>(a);
   }
-}
 
 // https://stackoverflow.com/questions/26351587/how-to-create-stdarray-with-initialization-list-without-providing-size-directl
 template <typename V, typename... T>
@@ -117,7 +145,7 @@ struct SawWave
   uint32_t mFrequencyMicros = 1000000; // just 1 hz frequency default
   void SetFrequency(float f)
   {
-    mFrequencyMicros = 1000000.0f / f;
+    mFrequencyMicros = (uint32_t)(1000000.0f / f);
   }
   float GetValue01(uint64_t tmicros) const
   {
@@ -136,9 +164,9 @@ struct PulseWave
   void SetFrequencyAndDutyCycle01(float freq, float dc01)
   {
     mFrequency = freq;
-    mFrequencyMicros = 1000000.0f / freq;
+    mFrequencyMicros = (uint32_t)(1000000.0f / freq);
     mDutyCycle01 = dc01;
-    mDutyCycleMicros = dc01 * mFrequencyMicros;
+    mDutyCycleMicros = (uint32_t)(dc01 * mFrequencyMicros);
   }
 
   void SetFrequency(float f)
@@ -170,7 +198,7 @@ struct TriangleWave
   uint32_t mFrequencyMicros;
   void SetFrequency(float f)
   {
-    mFrequencyMicros = 1000000.0f / f;
+    mFrequencyMicros = (uint32_t)(1000000.0f / f);
   }
   TriangleWave() { SetFrequency(1.0f); }
   float GetValue01(uint64_t tmicros) const
@@ -182,6 +210,32 @@ struct TriangleWave
     return r * 2;
   }
 };
+
+
+
+struct NoInterrupts
+{
+  static int gNoInterruptRefs;
+  NoInterrupts() {
+#ifndef CLARINOID_PLATFORM_X86
+    if (0 == gNoInterruptRefs) {
+      NVIC_DISABLE_IRQ(IRQ_SOFTWARE);
+    }
+#endif
+    gNoInterruptRefs ++;
+  }
+  ~NoInterrupts()
+  {
+    gNoInterruptRefs --;
+#ifndef CLARINOID_PLATFORM_X86
+    if (0 == gNoInterruptRefs) {
+      NVIC_ENABLE_IRQ(IRQ_SOFTWARE);
+    }
+#endif
+  }
+};
+
+int NoInterrupts::gNoInterruptRefs = 0;
 
 // // allows throttled plotting to Serial.
 // class PlotHelper : UpdateObjectT<ProfileObjectType::PlotHelper>

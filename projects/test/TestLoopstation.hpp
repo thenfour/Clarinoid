@@ -8,10 +8,18 @@
 #include <clarinoid/loopstation/LooperHarmonizer.hpp>
 #include <clarinoid/synth/Synth.hpp>
 
+using LoopStatus = clarinoid::LoopStatus;
+using Ptr = clarinoid::Ptr;
+//template<typename T, size_t N>
+//using EndPtr = clarinoid::EndPtr<T, N>;
+using LoopEventStream = clarinoid::LoopEventStream;
+using LoopEventType = clarinoid::LoopEventType;
+using LayoutSituation = clarinoid::LayoutSituation;
+using LooperState = clarinoid::LooperState;
 
 inline bool SynthIsPlayingNote(uint16_t voiceID, uint8_t midiNote)
 {
-  for (auto& l : gVoices) {
+  for (auto& l : clarinoid::gVoices) {
     if (l.mRunningVoice.mVoiceId != voiceID)
       continue;
     if (l.mRunningVoice.mMidiNote != midiNote)
@@ -28,15 +36,15 @@ void TestHappyFlow()
   MusicalVoice mv;
 
   uint8_t buf[10000];
-  LoopEventStream stream;
-  LoopStatus status;
+  clarinoid::LoopEventStream stream;
+  clarinoid::LoopStatus status;
 
-  status.mState = LooperState::StartSet;
+  status.mState = clarinoid::LooperState::StartSet;
   status.mLoopDurationMS = 0;
 
   // some events at 0, 100ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 0;
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, clarinoid::Ptr(buf), clarinoid::Ptr(clarinoid::EndPtr(buf)));
   mv.mBreath01 = 0.5f;
   stream.Write(mv);
   stream.Dump();
@@ -53,7 +61,7 @@ void TestHappyFlow()
   Test(stream.DebugGetStream().size() == 5);
 
   // simulate pressing LoopIt again at 1sec.
-  status.mState = LooperState::DurationSet;
+  status.mState = clarinoid::LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
   status.mCurrentLoopTimeMS = 0;
 
@@ -95,12 +103,12 @@ void TestConsumeMultipleEvents()
   MusicalVoice mv;
   MusicalVoice mvout;
   uint8_t buf[10000];
-  LoopEventStream stream;
-  LoopStatus status;
+  clarinoid::LoopEventStream stream;
+  clarinoid::LoopStatus status;
 
-  status.mState = LooperState::DurationSet;
+  status.mState = clarinoid::LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, clarinoid::Ptr(buf), clarinoid::Ptr(clarinoid::EndPtr(buf)));
   stream.Dump();
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
@@ -113,7 +121,7 @@ void TestConsumeMultipleEvents()
   status.mCurrentLoopTimeMS = 20;
   mv.mPitchBendN11.Deserialize12Bit(2);
   stream.Write(mv);
-  cc::log("---");
+  clarinoid::log("---");
   stream.Dump();
   Test(stream.DebugGetStream().size() == 3);
 
@@ -122,7 +130,7 @@ void TestConsumeMultipleEvents()
   mv.mSynthPatch = 5;
   mv.mBreath01.Deserialize12Bit(5);
   stream.Write(mv);
-  cc::log("---");
+  clarinoid::log("---");
   stream.Dump();
   Test(stream.DebugGetStream().size() == 6);
 
@@ -154,18 +162,18 @@ void TestMuted()
   MusicalVoice mv;
   MusicalVoice mvout;
   uint8_t buf[10000];
-  LoopEventStream stream;
-  LoopStatus status;
+  clarinoid::LoopEventStream stream;
+  clarinoid::LoopStatus status;
 
-  status.mState = LooperState::DurationSet;
+  status.mState = clarinoid::LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
   mv.mBreath01.Deserialize12Bit(1);
   stream.Write(mv);
-  cc::log("---");
+  clarinoid::log("---");
   stream.Dump();
   Test(stream.DebugGetStream().size() == 2);
 
@@ -188,7 +196,7 @@ void TestReadingAfterLooped()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
 
   // some events at 10ms, 20ms, 50ms, loop len 1 second.
   status.mCurrentLoopTimeMS = 10;
@@ -238,7 +246,7 @@ void TestReadingEmptyBuffer()
 
   status.mState = LooperState::DurationSet;
   status.mLoopDurationMS = 1000;
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
   stream.Dump();
   stream.WrapUpRecording();
 
@@ -267,7 +275,7 @@ void TestEndRecordingWithFullLoopSimple()
   status.mLoopDurationMS = 1000;
   status.mCurrentLoopTimeMS = 0;
 
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
 
   status.mCurrentLoopTimeMS = 0;
   mv.mBreath01.Deserialize12Bit(0);
@@ -356,7 +364,7 @@ void TestScenarioEP()
   // and in order to actually trigger this scenario we need to capture prev
   // cursor. so we must cross a loop within the buffer. so make loop small enough.
 
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
 
   status.mCurrentLoopTimeMS = 0;
   for (int i = 0; i < 100; ++i) {
@@ -417,7 +425,7 @@ void TestFullMusicalState1()
   mv.mSynthPatch = 1003;
   mv.mHarmPatch = 1004;
 
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
   stream.Dump();
 
   // we somehow wrap all the way around to t=3 with totalyl new state.
@@ -470,7 +478,7 @@ void TestFullMusicalState2()
   mv.mSynthPatch = 1003;
   mv.mHarmPatch = 1004;
 
-  stream.StartRecording(status, mv, Ptr(buf), Ptr(EndPtr(buf)));
+  stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
   stream.Dump();
 
   // we somehow wrap all the way around to t=3 with totalyl new state.
@@ -571,9 +579,15 @@ void Test12BitParam()
 // test that voice IDs are constructed well
 void TestVoiceID()
 {
-  LooperAndHarmonizer lh;
+  clarinoid::AppSettings appSettings;
+  appSettings.mLooperSettings.mTrigger = clarinoid::LooperTrigger::Immediate;
+
+  clarinoid::Metronome metronome(&appSettings);
+  clarinoid::ScaleFollower scaleFollower;
+
+  clarinoid::LooperAndHarmonizer lh(&appSettings, &metronome, &scaleFollower);
   MusicalVoice lv;
-  MusicalVoiceTransitionEvents te;
+  clarinoid::MusicalVoiceTransitionEvents te;
 
   SetTestClockMillis(1000);
   lv.mHarmPatch = 4;
@@ -619,19 +633,24 @@ void TestVoiceID()
   Test(lh.mStatus.mState == LooperState::DurationSet);
 //  Test(lh.mCurrentPolyphony == 2);
   Test(lh.mCurrentlyWritingLayer == 1);
-  Test(outp[0].mVoiceId == MakeMusicalVoiceID(0, 0));
+  Test(outp[0].mVoiceId == clarinoid::MakeMusicalVoiceID(0, 0));
   Test(outp[0].mMidiNote == 30);
-  Test(outp[1].mVoiceId == MakeMusicalVoiceID(1, 0));
+  Test(outp[1].mVoiceId == clarinoid::MakeMusicalVoiceID(1, 0));
 }
 
 // test that voice IDs are mapped to real synth output
 void TestLoopstationSynth()
 {
-  LooperAndHarmonizer lh;
+  clarinoid::AppSettings appSettings;
+  appSettings.mLooperSettings.mTrigger = clarinoid::LooperTrigger::Immediate;
+  clarinoid::Metronome metronome(&appSettings);
+  clarinoid::ScaleFollower scaleFollower;
+
+  clarinoid::LooperAndHarmonizer lh(&appSettings, &metronome, &scaleFollower);
   MusicalVoice lv;
-  CCSynth s;
-  MusicalVoiceTransitionEvents te;
-  s.setup();
+  clarinoid::CCSynth s;
+  clarinoid::MusicalVoiceTransitionEvents te;
+  s.Init(&appSettings, &metronome);
 
   SetTestClockMillis(1000);
   lv.mHarmPatch = 4;
@@ -666,15 +685,15 @@ void TestLoopstationSynth()
   Test(lh.mStatus.mLoopDurationMS == 3000);
   Test(lh.mStatus.mState == LooperState::DurationSet);
   //Test(lh.mCurrentPolyphony == 2);
-  Test(outp[0].mVoiceId == MakeMusicalVoiceID(0, 0));
+  Test(outp[0].mVoiceId == clarinoid::MakeMusicalVoiceID(0, 0));
   Test(outp[0].mMidiNote == 30);
-  Test(outp[1].mVoiceId == MakeMusicalVoiceID(1, 0));
+  Test(outp[1].mVoiceId == clarinoid::MakeMusicalVoiceID(1, 0));
 
   s.Update(outp, outp + vc); // update synth @ loop time 1000; now we should see layer0 note. live voice is not playing.
   Test(s.mCurrentPolyphony == 1);
-  Test(gVoices[0].mRunningVoice.mVoiceId == 0x0000);
-  Test(gVoices[0].mRunningVoice.mMidiNote == 30);
-  Test(gVoices[0].mRunningVoice.mVelocity == 31);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVoiceId == 0x0000);
+  Test(clarinoid::gVoices[0].mRunningVoice.mMidiNote == 30);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVelocity == 31);
 
   SetTestClockMillis(5001 /* loop time 1001 */);
   // play a live voice, check that 2 notes are playing with correct ids
@@ -694,13 +713,13 @@ void TestLoopstationSynth()
   // do similar test to @1001 but include the live playing voice.
   s.Update(outp, outp + vc);
   Test(s.mCurrentPolyphony == 2);
-  Test(gVoices[0].mRunningVoice.mVoiceId == 0x0000);
-  Test(gVoices[0].mRunningVoice.mMidiNote == 30);
-  Test(gVoices[0].mRunningVoice.mVelocity == 31);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVoiceId == 0x0000);
+  Test(clarinoid::gVoices[0].mRunningVoice.mMidiNote == 30);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVelocity == 31);
 
-  Test(gVoices[1].mRunningVoice.mVoiceId == 0x0100);
-  Test(gVoices[1].mRunningVoice.mMidiNote == 45);
-  Test(gVoices[1].mRunningVoice.mVelocity == 1);
+  Test(clarinoid::gVoices[1].mRunningVoice.mVoiceId == 0x0100);
+  Test(clarinoid::gVoices[1].mRunningVoice.mMidiNote == 45);
+  Test(clarinoid::gVoices[1].mRunningVoice.mVelocity == 1);
 
   SetTestClockMillis(6000 /* loop time 2000 */); // note off should happen now.
   vc = lh.Update(lv, te, outp, EndPtr(outp));
@@ -710,12 +729,12 @@ void TestLoopstationSynth()
 
   s.Update(outp, outp + vc); // just playing live voice
   Test(s.mCurrentPolyphony == 1);
-  Test(gVoices[0].mRunningVoice.mVoiceId == 0xffff);
-  Test(gVoices[0].mRunningVoice.mMidiNote == 0);
-  Test(gVoices[0].mRunningVoice.mVelocity == 0);
-  Test(gVoices[1].mRunningVoice.mVoiceId == 0x0100);
-  Test(gVoices[1].mRunningVoice.mMidiNote == 45);
-  Test(gVoices[1].mRunningVoice.mVelocity == 1);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVoiceId == 0xffff);
+  Test(clarinoid::gVoices[0].mRunningVoice.mMidiNote == 0);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVelocity == 0);
+  Test(clarinoid::gVoices[1].mRunningVoice.mVoiceId == 0x0100);
+  Test(clarinoid::gVoices[1].mRunningVoice.mMidiNote == 45);
+  Test(clarinoid::gVoices[1].mRunningVoice.mVelocity == 1);
 
   SetTestClockMillis(6001 /* loop time 2001 */); // no activity.
   vc = lh.Update(lv, te, outp, EndPtr(outp));
@@ -724,12 +743,12 @@ void TestLoopstationSynth()
 
   s.Update(outp, outp + vc); // just playing live voice
   Test(s.mCurrentPolyphony == 1);
-  Test(gVoices[0].mRunningVoice.mVoiceId == 0xffff);
-  Test(gVoices[0].mRunningVoice.mMidiNote == 0);
-  Test(gVoices[0].mRunningVoice.mVelocity == 0);
-  Test(gVoices[1].mRunningVoice.mVoiceId == 0x0100);
-  Test(gVoices[1].mRunningVoice.mMidiNote == 45);
-  Test(gVoices[1].mRunningVoice.mVelocity == 1);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVoiceId == 0xffff);
+  Test(clarinoid::gVoices[0].mRunningVoice.mMidiNote == 0);
+  Test(clarinoid::gVoices[0].mRunningVoice.mVelocity == 0);
+  Test(clarinoid::gVoices[1].mRunningVoice.mVoiceId == 0x0100);
+  Test(clarinoid::gVoices[1].mRunningVoice.mMidiNote == 45);
+  Test(clarinoid::gVoices[1].mRunningVoice.mVelocity == 1);
 
   
   lv.mMidiNote = 0;
@@ -742,7 +761,7 @@ void TestLoopstationSynth()
 
   s.Update(outp, outp + vc); // just playing live voice
   Test(s.mCurrentPolyphony == 0);
-  Test(gVoices[1].mRunningVoice.mVoiceId == 0xffff);
+  Test(clarinoid::gVoices[1].mRunningVoice.mVoiceId == 0xffff);
 
   // commit recording again
   // the loop is 3 seconds long.
@@ -833,12 +852,19 @@ void TestLoopstationSynth()
 
 void TestLoopstationLegato()
 {
-  MusicalVoiceTransitionEvents te;
+  clarinoid::MusicalVoiceTransitionEvents te;
   MusicalVoice outp[10];
-  LooperAndHarmonizer lh;
+
+
+  clarinoid::AppSettings appSettings;
+  appSettings.mLooperSettings.mTrigger = clarinoid::LooperTrigger::Immediate;
+  clarinoid::Metronome metronome(&appSettings);
+  clarinoid::ScaleFollower scaleFollower;
+  
+  clarinoid::LooperAndHarmonizer lh(&appSettings, &metronome, &scaleFollower);
   MusicalVoice lv;
-  CCSynth s;
-  s.setup();
+  clarinoid::CCSynth s;
+  s.Init(&appSettings, &metronome);
 
   SetTestClockMillis(1000);
   lv.mHarmPatch = 4;

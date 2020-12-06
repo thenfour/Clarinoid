@@ -139,6 +139,14 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
     }
   }
 
+  template<int skip = 2>
+  void DrawDottedHLine(int16_t left, int16_t width, int16_t y, uint16_t color)
+  {
+      for (int16_t x = left; x < left + width; x += skip) {
+        drawPixel(x, y, color);
+      }
+  }
+  
   // the text rendering routine calls these, so if you want clipped/checkered text you need to implement these too.
   //  virtual void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
   //    // TODO: clip

@@ -82,10 +82,18 @@ void SetTestClockMillis(uint32_t ms) {
   gTestClockMicros = ms;
   gTestClockMicros *= 1000;
 }
+void SetTestClockMicros(uint32_t m) {
+  gTestClockMicros = m;
+}
 
 void delay(uint32_t ms) {
   gTestClockMicros += ((uint64_t)ms) * 1000;
 }
+void delayMicroseconds(uint32_t m)
+{
+  gTestClockMicros += m;
+}
+
 uint32_t millis() {
   return (uint32_t)(gTestClockMicros / 1000);
 }

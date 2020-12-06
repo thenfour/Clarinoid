@@ -451,26 +451,26 @@ struct LoopEventStream
 
   void Dump()
   {
-    cc::log("----");
+    clarinoid::log("----");
     auto events = DebugGetStream();
     auto layout = mIsRecording ? GetLayoutSituation() : LayoutSituation::PE;
 
     if (mIsRecording) {
       switch (layout) {
       case LayoutSituation::PE:// |---PxxxxZxxxxE (pze)
-        cc::log("|---PxxxxxxxxxE (PE)");
+        clarinoid::log("|---PxxxxxxxxxE (PE)");
         break;
       case LayoutSituation::EP:// |xxE---PxxxxZxx (epz)
-        cc::log("|xxE---Pxxxxxxx (EP)");
+        clarinoid::log("|xxE---Pxxxxxxx (EP)");
         break;
       }
 
       if (layout == LayoutSituation::PE) {
-        cc::log("   > { %p pe padding %d bytes }", mBufferBegin.mP, mPrevCursor.mP.DistanceBytes(mBufferBegin.mP));
+        clarinoid::log("   > { %p pe padding %d bytes }", mBufferBegin.mP, mPrevCursor.mP.DistanceBytes(mBufferBegin.mP));
       }
     }
     else {
-      cc::log("not recording; layout not relevant.");
+      clarinoid::log("not recording; layout not relevant.");
     }
 
     bool encounteredPadding = false;
@@ -481,12 +481,12 @@ struct LoopEventStream
         switch (layout) {
         case LayoutSituation::EP:
           encounteredPadding = true;
-          cc::log(" E > { %p t=%d EP padding %d bytes }", mCursor.mP, mCursor.mLoopTimeMS, mPrevCursor.mP.DistanceBytes(mCursor.mP));
+          clarinoid::log(" E > { %p t=%d EP padding %d bytes }", mCursor.mP, mCursor.mLoopTimeMS, mPrevCursor.mP.DistanceBytes(mCursor.mP));
           break;
         }
       }
 
-      cc::log("%s%s%s [%p (+%d) t=%d: dly=%d <looptime=%d> type=%s, params=%s]",
+      clarinoid::log("%s%s%s [%p (+%d) t=%d: dly=%d <looptime=%d> type=%s, params=%s]",
         e.mP == mBufferBegin.mP ? "B" : " ",
         e.mP == mCursor.mP ? "E" : " ",
         e.mP == mPrevCursor.mP ? "P" : " ",
@@ -500,27 +500,27 @@ struct LoopEventStream
     } // for()
 
     if (mCursor.mP == mEventsValidEnd) {
-      cc::log(" E  [%p (+%d) t=%d <eof> ]",
+      clarinoid::log(" E  [%p (+%d) t=%d <eof> ]",
         mCursor.mP,
         mCursor.mP.DistanceBytes(mBufferBegin.mP),
         mCursor.mLoopTimeMS
         );
     }
-    cc::log("   > { %p VE padding %d bytes } <", mEventsValidEnd, mEventsValidEnd.DistanceBytes(mBufferEnd));
-    cc::log("   > { %p end } <", mBufferEnd);
-    cc::log("begin-valid: %d, event count: %d %s",
+    clarinoid::log("   > { %p VE padding %d bytes } <", mEventsValidEnd, mEventsValidEnd.DistanceBytes(mBufferEnd));
+    clarinoid::log("   > { %p end } <", mBufferEnd);
+    clarinoid::log("begin-valid: %d, event count: %d %s",
       mEventsValidEnd.DistanceBytes(mBufferBegin.mP),
       events.size(),
       mOOM ? "OOM!" : ""
       );
     if (mBufferBegin.mP) {
-      cc::log("B state {%s}", LoopEvent_FullState(mBufferBegin.mRunningVoice).ToString().mStr.str().data());
+      clarinoid::log("B state {%s}", LoopEvent_FullState(mBufferBegin.mRunningVoice).ToString().mStr.str().data());
     }
     if (mPrevCursor.mP) {
-      cc::log("P state {%s}", LoopEvent_FullState(mPrevCursor.mRunningVoice).ToString().mStr.str().data());
+      clarinoid::log("P state {%s}", LoopEvent_FullState(mPrevCursor.mRunningVoice).ToString().mStr.str().data());
     }
     if (mCursor.mP) {
-      cc::log("E state {%s}", LoopEvent_FullState(mCursor.mRunningVoice).ToString().mStr.str().data());
+      clarinoid::log("E state {%s}", LoopEvent_FullState(mCursor.mRunningVoice).ToString().mStr.str().data());
     }
   }
 

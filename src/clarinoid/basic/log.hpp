@@ -6,9 +6,19 @@
 namespace clarinoid
 {
 
+  template<typename T, size_t N>
+  constexpr size_t SizeofStaticArray(const T(&x)[N])
+  {
+    return N;
+  }
+
 String ToString(void* p) {
   static char x[20];
+#ifdef CLARINOID_PLATFORM_X86 // for some reason snprintf() is not available in teensyduino
+  std::snprintf(x, SizeofStaticArray(x), "%p", p);
+#else
   sprintf(x, "%p", p);
+#endif
   return String(x);
 }
 
@@ -44,13 +54,13 @@ struct ScopeLog
   {
     //Serial.print("{ ");
     //Serial.println(msg);
-    cc::log("{ %s", msg.mStr.str().c_str());
-    cc::gLogIndent++;
+    log("{ %s", msg.mStr.str().c_str());
+    gLogIndent++;
   }
   ~ScopeLog()
   {
-    cc::gLogIndent--;
-    cc::log("} %s", mMsg.mStr.str().c_str());
+    gLogIndent--;
+    log("} %s", mMsg.mStr.str().c_str());
     //Serial.print("} ");
     //Serial.println(mMsg);
   }

@@ -52,7 +52,7 @@ struct CCEWIMusicalState
     // most interesting EWI-ish logic is.
 
     float _incomingBreath = mControlMapper->BreathSensor()->CurrentValue01();
-    _incomingBreath = map(_incomingBreath, 0.1f, 7.0f, 0.0f, 1.0f);
+    _incomingBreath = mAppSettings->mBreathCalibration.TranfsormValue01(_incomingBreath);
     mCurrentBreath01.Update(_incomingBreath);
 
     // if (nUpdates == 0 || mPressureSensingThrottle.IsReady())
@@ -104,7 +104,7 @@ struct CCEWIMusicalState
     //}
 
     mNewState.mBreath01 = mCurrentBreath01.GetValue();
-    bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > mAppSettings->mBreathNoteOnThreshold;
+    bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > 0.005;//mAppSettings->mBreathCalibration.mNoteOnThreshold;
 
     mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
     mNewState.mVelocity = 100; // TODO

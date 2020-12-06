@@ -161,7 +161,7 @@ struct PeriodicTimer
   }
 
   int32_t BeatsToMicros(float b) const {
-    return b * mPeriodMicros;
+    return (int32_t)(b * mPeriodMicros);
   }
 };
 

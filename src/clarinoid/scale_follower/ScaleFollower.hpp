@@ -333,7 +333,7 @@ struct ScaleFollower
   Scale Update(const MusicalVoice* voices, size_t voiceCount)
   {
 #ifdef CLARINOID_MODULE_TEST
-    cc::log("Scale Follower Update-----------------------");
+    clarinoid::log("Scale Follower Update-----------------------");
 
     auto ImportantListToString = [](ImportantNoteList_t& list) {
       String ret = "(";
@@ -382,7 +382,7 @@ struct ScaleFollower
       {
         if (importantNotes.mArray.mArray[i].first < SCALE_FOLLOWER_IMPORTANCE_THRESHOLD) {
 #ifdef CLARINOID_MODULE_TEST
-          cc::log("  Note [ %s ] importance [ %d ] below threshold [ %d ]",
+          clarinoid::log("  Note [ %s ] importance [ %d ] below threshold [ %d ]",
             importantNotes.mArray.mArray[i].second->GetNote().ToString(),
             importantNotes.mArray.mArray[i].first,
             SCALE_FOLLOWER_IMPORTANCE_THRESHOLD
@@ -419,12 +419,12 @@ struct ScaleFollower
 
 #ifdef CLARINOID_MODULE_TEST
     if (newCurrentScale != mCurrentScale) {
-      cc::log("  CHANGING current scale [%s] + long notes [%s] ==> [%s]",
+      clarinoid::log("  CHANGING current scale [%s] + long notes [%s] ==> [%s]",
         mCurrentScale.ToString().mStr.str().c_str(),
         ImportantListToString(mostImportantNoTransients).c_str(),
         newCurrentScale.ToString().mStr.str().c_str());
     }
-    cc::log("  Current scale [%s] + short notes [%s] ==> [%s]",
+    clarinoid::log("  Current scale [%s] + short notes [%s] ==> [%s]",
       mCurrentScale.ToString().mStr.str().c_str(),
       ImportantListToString(mostImportantAll).c_str(),
       ret.ToString().mStr.str().c_str());

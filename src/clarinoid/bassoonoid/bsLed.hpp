@@ -45,7 +45,7 @@ struct Leds2 :
     {}
 
     int n = 0;
-    int period = 20;
+    int period = 10;
     virtual void TaskRun() override 
     {
         for (int i = 0; i < mPixelCount; ++ i)

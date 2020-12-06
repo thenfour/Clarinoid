@@ -28,6 +28,11 @@ struct IDisplayApp
 struct CCDisplay :
   ITask
 {
+private:
+  static CCAdafruitSSD1306* gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in general.
+
+public:
+
   CCAdafruitSSD1306 mDisplay;
 
   AppSettings* mAppSettings;
@@ -36,7 +41,7 @@ struct CCDisplay :
   bool mIsSetup = false; // used for crash handling to try and setup this if we can
   bool mFirstAppSelected = false;
 
-  cc::array_view<IDisplayApp*> mApps;
+  array_view<IDisplayApp*> mApps;
   int mCurrentAppIndex = 0;
 
   // hardware SPI
@@ -54,7 +59,7 @@ struct CCDisplay :
     //Init();
   }
 
-  void Init(AppSettings* appSettings, IControlMapper* controlMapper, const cc::array_view<IDisplayApp*>& apps) {
+  void Init(AppSettings* appSettings, IControlMapper* controlMapper, const array_view<IDisplayApp*>& apps) {
     mAppSettings = appSettings;
     mControlMapper = controlMapper;
     mApps = apps;
@@ -63,6 +68,25 @@ struct CCDisplay :
     //Serial.println(String("Display init"));
     mDisplay.begin(SSD1306_SWITCHCAPVCC);
     mIsSetup = true;
+
+    gDisplay = &mDisplay;
+
+    pfnCrashHandler = [](){
+        Serial.println(gCrashMessage);
+        Serial.println(String("Display ptr = ") + (uintptr_t)gDisplay);
+        // why doesn't this work???
+        // gDisplay->clearDisplay();
+        // gDisplay->mSolidText = true;
+        // gDisplay->mTextLeftMargin = 0;
+        // gDisplay->ResetClip();
+        // gDisplay->setTextSize(1);
+        // gDisplay->setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+        // gDisplay->setCursor(0,0);
+        // gDisplay->println(gCrashMessage);
+        // gDisplay->display();
+        DefaultCrashHandler();
+    };
+
     mDisplay.dim(mAppSettings->mDisplayDim);
 
     // welcome msg.
@@ -171,5 +195,8 @@ struct CCDisplay :
   }
 
 };
+
+
+CCAdafruitSSD1306* CCDisplay::gDisplay = nullptr;
 
 } // namespace clarinoid

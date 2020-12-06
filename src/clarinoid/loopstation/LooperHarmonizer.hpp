@@ -16,10 +16,10 @@ struct LooperAndHarmonizer
   Metronome* mMetronome;
   ScaleFollower *mScaleFollower;
 
-  explicit LooperAndHarmonizer(AppSettings* appSettings, Metronome* mMetronome, ScaleFollower *mScaleFollower) :
+  explicit LooperAndHarmonizer(AppSettings* appSettings, Metronome* metronome, ScaleFollower *scaleFollower) :
     mAppSettings(appSettings),
-    mMetronome(mMetronome),
-    mScaleFollower(mScaleFollower),
+    mMetronome(metronome),
+    mScaleFollower(scaleFollower),
 
     mHarmonizer(appSettings)
   {
