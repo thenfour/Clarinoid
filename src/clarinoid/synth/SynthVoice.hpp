@@ -53,7 +53,7 @@ AudioConnection          patchCord13(ampLeft, 0, i2s1, 0);
 AudioConnection          patchCord14(ampLeft, peak1);
 AudioConnection          patchCord15(ampLeft, rms1);
 AudioConnection          patchCord16(ampLeft, 0, i2s1, 1);
-AudioControlSGTL5000     audioShield;    //xy=2150.000068664551,814.7500247955322
+//AudioControlSGTL5000     audioShield;    //xy=2150.000068664551,814.7500247955322
 // GUItool: end automatically generated code
 
 } // namespace CCSynthGraph
@@ -177,8 +177,8 @@ struct Voice
     { 3, CCSynthGraph::voiceMix1, 3 }, // 4
     { 4, CCSynthGraph::voiceMix2, 0 },
     { 5, CCSynthGraph::voiceMix2, 1 },
-    { 6, CCSynthGraph::voiceMix2, 2 },
-    { 7, CCSynthGraph::voiceMix2, 3 }, // 8
+   // { 6, CCSynthGraph::voiceMix2, 2 },
+    //{ 7, CCSynthGraph::voiceMix2, 3 }, // 8
 //    { 8, mix3, 0 },
 //    { 9, mix3, 1 },
 //    { 10, mix3, 2 },
@@ -211,8 +211,8 @@ struct SynthGraphControl
       v.EnsurePatchConnections(appSettings);
     }
     
-    CCSynthGraph::audioShield.enable();
-    CCSynthGraph::audioShield.volume(.9); // headphone vol
+    //CCSynthGraph::audioShield.enable();
+    //CCSynthGraph::audioShield.volume(.9); // headphone vol
     CCSynthGraph::ampLeft.gain(.9);
     //CCSynthGraph::ampRight.gain(.9);
     delay(300); // why?

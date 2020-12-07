@@ -3,16 +3,76 @@
 
 namespace clarinoid
 {
+  struct TimeSpan
+  {
+  private:
+    int64_t mMicros = 0; // signed, because it simplifies math, less error-prone, and is still an enormous amount of time.
+  public:
+    TimeSpan() {}
+    explicit TimeSpan(int64_t m) : mMicros(m) {}
+    TimeSpan(const TimeSpan& rhs) = default;
+    TimeSpan(TimeSpan&& rhs) = default;
+
+    TimeSpan& operator =(const TimeSpan& rhs) { mMicros = rhs.mMicros; return *this; }
+    TimeSpan& operator -=(const TimeSpan& rhs) { mMicros -= rhs.mMicros; return *this; }
+    TimeSpan& operator +=(const TimeSpan& rhs) { mMicros += rhs.mMicros; return *this; }
+
+    bool operator >(const TimeSpan& rhs) const { return mMicros > rhs.mMicros; }
+    bool operator >=(const TimeSpan& rhs) const { return mMicros >= rhs.mMicros; }
+    bool operator <(const TimeSpan& rhs) const { return mMicros < rhs.mMicros; }
+    bool operator <=(const TimeSpan& rhs) const { return mMicros <= rhs.mMicros; }
+    bool operator ==(const TimeSpan& rhs) const { return mMicros == rhs.mMicros; }
+    bool operator !=(const TimeSpan& rhs) const { return mMicros != rhs.mMicros; }
+
+    int64_t ElapsedMicros() const { return mMicros; }
+    int64_t ElapsedMillisI() const { return mMicros / 1000; }
+    float ElapsedSeconds() const // note: LOSSY.
+    {
+      // todo: is there a more efficient way?
+      double d = (double)mMicros;
+      d /= 1000000;// convert micros to seconds.
+      return (float)d;
+    }
+
+    bool IsZero() const { return mMicros == 0; }
+    bool IsNonZero() const { return mMicros != 0; }
+
+    static TimeSpan FromMicros(int64_t m) {
+      return TimeSpan{m};
+    }
+    static TimeSpan FromMillis(int64_t m) {
+      return TimeSpan{m * 1000};
+    }
+    static TimeSpan FromBPM(float bpm) {
+      return TimeSpan { int64_t(60000.0f / bpm) };
+    }
+    static TimeSpan FromFPS(float bpm) {
+      return TimeSpan { int64_t(1000.0f / bpm) };
+    }
+    static TimeSpan Zero() {
+      return TimeSpan{};
+    }
+  };
+
+  TimeSpan operator -(const TimeSpan& a, const TimeSpan& b) { return TimeSpan { a.ElapsedMicros() - b.ElapsedMicros() }; }
+  TimeSpan operator +(const TimeSpan& a, const TimeSpan& b) { return TimeSpan { a.ElapsedMicros() + b.ElapsedMicros() }; }
+  
+  TimeSpan Uptime()
+  {
+    return TimeSpan::FromMicros(UptimeMicros64());
+  }
+
+
+
 
 //////////////////////////////////////////////////////////////////////
 // initially running.
 struct Stopwatch
 {
   bool mIsRunning = true;
-  uint64_t mPauseMicros = 0; // when we pause, remember the elapsedmicros() when we paused. later restart to here.
-
-  uint64_t mExtra = 0; // store overflow here. yes there's still an overflow condition but this helps
-  uint32_t mStartTime = 0;
+  TimeSpan mPauseTime; // when we pause, remember the ElapsedTime() when we paused. later restart to here.
+  TimeSpan mStartUptime;
+  TimeSpan mExtraTime; // for specifying an offset.
 
   Stopwatch() {
     Restart();
@@ -25,52 +85,65 @@ struct Stopwatch
   Stopwatch& operator =(Stopwatch&&) = default;
 
   // also sets running state.
-  void Restart(uint64_t newTime = 0)
+  void Restart(TimeSpan newTime = TimeSpan::FromMicros(0))
   {
-    mExtra = newTime;
-    mStartTime = micros();
+    mExtraTime = newTime;
+    mStartUptime = Uptime();
     mIsRunning = true;
   }
 
-  uint32_t ElapsedMillis() {
-    return (uint32_t) ElapsedMicros() / 1000;
-  }
-
-  uint64_t ElapsedMicros() {
-    if (mIsRunning) {
-      uint32_t now = micros();
-      if (now < mStartTime) {
-        mExtra += 0xffffffff - mStartTime;
-        mStartTime = 0;
-      }
-      return (now - mStartTime) + mExtra;
-    }
-
-    // for paused, just return the pause time.
-    return mPauseMicros;
-  }
-
-  void SetMicros(uint64_t m)
+  TimeSpan ElapsedTime()
   {
     if (mIsRunning) {
-      Restart(m);
-      return;
+      TimeSpan now = Uptime();
+      return now - mStartUptime + mExtraTime;
     }
-
-    // for paused, just set paused time.
-    mPauseMicros = m;
+    return mPauseTime;
   }
 
+  // uint32_t ElapsedMillis() {
+  //   //return (uint32_t) ElapsedMicros() / 1000;
+  // }
+
+  // uint64_t ElapsedMicros() {
+  //   if (mIsRunning) {
+  //     uint32_t now = micros();
+  //     if (now < mStartTime) {
+  //       mExtra += 0xffffffff - mStartTime;
+  //       mStartTime = 0;
+  //     }
+  //     return (now - mStartTime) + mExtra;
+  //   }
+
+  //   // for paused, just return the pause time.
+  //   return mPauseMicros;
+  // }
+
+  // void SetMicros(uint64_t m)
+  // {
+  //   if (mIsRunning) {
+  //     Restart(m);
+  //     return;
+  //   }
+
+  //   // for paused, just set paused time.
+  //   mPauseMicros = m;
+  // }
+
   void Pause() {
-    if (!mIsRunning) return;
+    if (!mIsRunning) {
+      return;
+    }
+    mPauseTime = ElapsedTime();
     mIsRunning = false;
-    mPauseMicros = ElapsedMicros();
   }
 
   void Unpause() {
-    if (mIsRunning) return;
+    if (mIsRunning) {
+      return;
+    } 
     mIsRunning = true;
-    Restart(mPauseMicros);
+    Restart(mPauseTime);
   }
 };
 
@@ -104,64 +177,67 @@ struct Stopwatch
 // };
 
 
-constexpr uint32_t MillisToMicros(uint32_t ms)
-{
-  return ms * 1000;
-}
+// constexpr uint32_t MillisToMicros(uint32_t ms)
+// {
+//   return ms * 1000;
+// }
 
-constexpr uint32_t Micros(uint32_t ms)
-{
-  return ms;
-}
+// constexpr uint32_t Micros(uint32_t ms)
+// {
+//   return ms;
+// }
 
-constexpr uint32_t FPSToMicros(uint32_t fps)
-{
-  return 1000000 / fps;
-}
+// constexpr TimeSpan FPSToTimeSpan(uint32_t fps)
+// {
+//   return 1000000 / fps;
+// }
 
 
 // TODO: support smoothly changing periods, not jerky behavior like this.
 struct PeriodicTimer
 {
   Stopwatch mSw;
-  uint32_t mPeriodMicros = MillisToMicros(100);
+  TimeSpan mPeriod = TimeSpan::FromMillis(100);
 
-  explicit PeriodicTimer(uint32_t periodMicros) :
-    mPeriodMicros(periodMicros)
+  explicit PeriodicTimer(const TimeSpan& period) :
+    mPeriod(period)
   {
-    CCASSERT(periodMicros != 0);
+    CCASSERT(mPeriod.IsNonZero());
   }
 
   PeriodicTimer()
   {
   }
 
-  void SetPeriod(uint32_t periodMicros)
+  void SetPeriod(const TimeSpan& period)
   {
-    CCASSERT(periodMicros != 0);
-    mPeriodMicros = periodMicros;
+    CCASSERT(period.IsNonZero()); // avoid div0
+    mPeriod = period;
   }
 
   void Reset() {
-    mSw.Restart(0);
+    mSw.Restart(TimeSpan::Zero());
   }
 
   float GetBeatFloat() {
-    float f = abs(float(mSw.ElapsedMicros()) / mPeriodMicros);
+    float f = (float)GetBeatInt();
+    f += GetBeatFrac();
     return f;
   }
   // returns 0-1 the time since the last "beat".
   float GetBeatFrac() {
-    float f = GetBeatFloat();
-    return f - floor(f); // fractional part only.
+    auto beatMicros = mSw.ElapsedTime().ElapsedMicros() % mPeriod.ElapsedMicros(); // micros within the beat. mod it like this to ensure huge numbers don't cause issues.
+    float frac = (float)beatMicros / mPeriod.ElapsedMicros();
+    return frac;
   }
-  int GetBeatInt() {
-    float f = GetBeatFloat();
-    return (int)floor(f);
+  uint32_t GetBeatInt() {
+    auto beatInt = mSw.ElapsedTime().ElapsedMicros() / mPeriod.ElapsedMicros();
+    return (uint32_t) beatInt;
   }
 
-  int32_t BeatsToMicros(float b) const {
-    return (int32_t)(b * mPeriodMicros);
+  TimeSpan BeatsToTimeSpan(float b) const {
+    auto a = b * mPeriod.ElapsedMicros();
+    return TimeSpan((int64_t)a);
   }
 };
 

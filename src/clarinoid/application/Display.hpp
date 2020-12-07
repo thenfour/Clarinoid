@@ -159,7 +159,7 @@ public:
     }
 
     if (mIsShowingToast) {
-      if (mToastTimer.ElapsedMillis() >= TOAST_DURATION_MILLIS) {
+      if (mToastTimer.ElapsedTime().ElapsedMillisI() >= TOAST_DURATION_MILLIS) {
         mIsShowingToast = false;
       } else {
         // render toast.
@@ -178,7 +178,7 @@ public:
   void ShowToast(const String& msg) {
     mIsShowingToast = true;
     mToastMsg = msg;
-    mToastTimer.Restart(0);
+    mToastTimer.Restart();
   }
 
 

@@ -20,6 +20,49 @@
 #include <sstream>
 #include <algorithm>
 
+#ifdef CLARINOID_MODULE_TEST
+
+static uint64_t gTestClockMicros = 0;
+
+uint32_t millis() {
+  return (uint32_t)((gTestClockMicros / 1000) & 0xffffffff);
+}
+
+uint32_t micros() {
+  return (uint32_t)(gTestClockMicros & 0xffffffff);
+}
+
+#else
+#error huh
+#endif
+
+#include "../basic/Uptime.hpp"
+
+
+#ifdef CLARINOID_MODULE_TEST
+
+void SetTestClockMillis(int64_t ms) {
+  clarinoid::UptimeReset();
+  gTestClockMicros = ms * 1000;
+}
+void SetTestClockMicros(int64_t m) {
+  clarinoid::UptimeReset();
+  gTestClockMicros = m;
+}
+
+void delay(uint32_t ms) {
+  gTestClockMicros += ((uint64_t)ms) * 1000;
+}
+void delayMicroseconds(uint32_t m)
+{
+  gTestClockMicros += m;
+}
+
+#else
+#error huh
+#endif
+
+
 struct String
 {
   std::stringstream mStr;
@@ -73,48 +116,6 @@ struct
 } Serial;
 
 
-
-#ifdef CLARINOID_MODULE_TEST
-
-static uint64_t gTestClockMicros = 0;
-
-void SetTestClockMillis(uint32_t ms) {
-  gTestClockMicros = ms;
-  gTestClockMicros *= 1000;
-}
-void SetTestClockMicros(uint32_t m) {
-  gTestClockMicros = m;
-}
-
-void delay(uint32_t ms) {
-  gTestClockMicros += ((uint64_t)ms) * 1000;
-}
-void delayMicroseconds(uint32_t m)
-{
-  gTestClockMicros += m;
-}
-
-uint32_t millis() {
-  return (uint32_t)(gTestClockMicros / 1000);
-}
-
-uint32_t micros() {
-  return (uint32_t)(gTestClockMicros);
-}
-
-#else
-#error huh
-//void delay(uint32_t ms) {
-//  ::Sleep(ms);
-//}
-//uint32_t millis() {
-//  return GetTickCount();
-//}
-//
-//uint32_t micros() {
-//  return GetTickCount() * 1000;
-//}
-#endif
 
 
 // from core_pins.h

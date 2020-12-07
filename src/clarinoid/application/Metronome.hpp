@@ -16,16 +16,21 @@ struct Metronome
 
   PeriodicTimer mTimer;
 
+  void SyncPeriod()
+  {
+    mTimer.SetPeriod(TimeSpan::FromBPM(mAppSettings->mBPM));
+  }
+
     int GetBeatInt() {
-        mTimer.SetPeriod(MillisToMicros((uint32_t)(60000.0f / mAppSettings->mBPM)));
+      SyncPeriod();
         return mTimer.GetBeatInt();
     }
     float GetBeatFloat() {
-        mTimer.SetPeriod(MillisToMicros((uint32_t)(60000.0f / mAppSettings->mBPM)));
+      SyncPeriod();
        return mTimer.GetBeatFloat();
     }
     float GetBeatFrac() {
-        mTimer.SetPeriod(MillisToMicros((uint32_t)(60000.0f / mAppSettings->mBPM)));
+      SyncPeriod();
        return mTimer.GetBeatFrac();
     }
 };

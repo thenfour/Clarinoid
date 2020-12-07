@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "Uptime.hpp"
 #include "function.hpp"
 #include "Memory.hpp"
 #include "Util.hpp"

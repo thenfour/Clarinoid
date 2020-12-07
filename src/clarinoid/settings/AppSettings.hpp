@@ -6,7 +6,7 @@
 namespace clarinoid
 {
 
-static const size_t MAX_SYNTH_VOICES = 8;
+static const size_t MAX_SYNTH_VOICES = 6;
 
 static const size_t HARM_PRESET_COUNT = 16;
 static const size_t HARM_VOICES = 6;

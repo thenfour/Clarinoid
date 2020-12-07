@@ -57,7 +57,6 @@ struct BassoonoidApp
 
     void Main()
     {
-        TaskManager tm;
         IDisplayApp* allApps[] =
         {
             &mPerformanceApp,
@@ -67,17 +66,21 @@ struct BassoonoidApp
 
         mDisplay.Init(&mAppSettings, &mControlMapper, allApps);
         mMusicalStateTask.Init();
-        mPerformanceApp.Init(&tm);
+
+        TaskPlanner tp {
+        };
+
+        mPerformanceApp.Init(&tp);
 
         //CCASSERT(false);
 
-        tm.AddTask(mMusicalStateTask, 5000, "MusicalState", PriorityClass::Normal);
-        tm.AddTask(mDisplay, FPSToMicros(12), "display", PriorityClass::Normal);
-        tm.AddTask(mLed1, FPSToMicros(12), "LED1", PriorityClass::Normal);
-        tm.AddTask(mLed2, FPSToMicros(12), "LED2", PriorityClass::Normal);
-        tm.AddTask(mBreathLED, FPSToMicros(12), "BreathLED", PriorityClass::Normal);
+        // tm.AddTask(mMusicalStateTask, 5000, "MusicalState", PriorityClass::Normal);
+        // tm.AddTask(mDisplay, FPSToMicros(12), "display", PriorityClass::Normal);
+        // tm.AddTask(mLed1, FPSToMicros(12), "LED1", PriorityClass::Normal);
+        // tm.AddTask(mLed2, FPSToMicros(12), "LED2", PriorityClass::Normal);
+        // tm.AddTask(mBreathLED, FPSToMicros(12), "BreathLED", PriorityClass::Normal);
 
-        tm.Main();
+        // tm.Main();
     }
 };
 

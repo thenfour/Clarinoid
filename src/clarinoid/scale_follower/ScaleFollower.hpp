@@ -45,7 +45,7 @@ private:
 
   // log2 sorta
   template<size_t BitsToCount = 11>
-  static int CalcDurationScore0_100(uint32_t lenMS)
+  static int CalcDurationScore0_100(int lenMS)
   {
     // - duration - i'd like log behavior but maybe that's not worth the processing time
     int durationScore = 0;
@@ -86,7 +86,7 @@ private:
     mImportance = mPlayingRefs * 100;
 
     // - duration
-    int durationScore = CalcDurationScore0_100(mNoteDurationTimer.ElapsedMillis());
+    int durationScore = CalcDurationScore0_100((int)mNoteDurationTimer.ElapsedTime().ElapsedMillisI());
     if (mPlayingRefs > 0) {
       mImportance += durationScore;
     }
@@ -96,7 +96,7 @@ private:
       // for notes that are not currently playing, how recently was it playing?
       // somehow i feel like this should be a longer timeline than note duration (maybe like up to 3-5 seconds),
       // and falloff linear.
-      auto offTime = mNoteOffTimer.ElapsedMillis();
+      int offTime = (int)mNoteOffTimer.ElapsedTime().ElapsedMillisI();
       offTime = offTime / 30;// scale 3000 to 100
       if (offTime > 100)
         offTime = 100;
@@ -182,7 +182,7 @@ public:
 
     if (mPlayingRefs > 0) {
       // while the note is playing, track transient status.
-      mIsTransient = mNoteDurationTimer.ElapsedMillis() < SCALE_FOLLOWER_TRANSIENT_NOTE_THRESH_MILLIS;
+      mIsTransient = mNoteDurationTimer.ElapsedTime().ElapsedMillisI() < SCALE_FOLLOWER_TRANSIENT_NOTE_THRESH_MILLIS;
     }
 
     if (!mTouched) {

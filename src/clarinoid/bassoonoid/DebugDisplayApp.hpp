@@ -12,7 +12,7 @@ struct PerformanceApp :
     SettingsMenuApp
 {
     size_t mSelectedTaskID = 0;
-    TaskManager* mTaskManager = nullptr;
+    TaskPlanner* mTaskManager = nullptr;
     MusicalStateTask* mpMusicalStateTask = nullptr;
     virtual const char *DisplayAppGetName() override { return "Performance"; }
 
@@ -49,20 +49,20 @@ struct PerformanceApp :
 
 
 
-    void Init(TaskManager* tm)
+    void Init(TaskPlanner* tm)
     {
         mTaskManager = tm;
 
         mTiming.Init(
             [](void* cap) {  // get item count
                 PerformanceApp* pThis = (PerformanceApp*)cap;
-                return pThis->mTaskManager->mTaskCount;
+                return pThis->mTaskManager->mTasks.size();
             },
             [](void* cap, size_t i) // get name
             {
                 PerformanceApp* pThis = (PerformanceApp*)cap;
                 auto& t = pThis->mTaskManager->mTasks[i];
-                String ret = String(t.mName) + ":" + (int)t.mExecutionTimeMicros.GetValue();
+                String ret = String(t.mInfo.mName) + ":" + (int)t.mInfo.mExecutionTimeMicros.GetValue();
                 //Serial.println(ret);
                 return ret;
             },
@@ -218,28 +218,28 @@ struct DebugDisplayApp :
 
     LabelSettingItem mAudioProcessorUsage = { [](void* cap)
     {
-        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio CPU %:") + AudioProcessorUsage();
         return ret;
     }, AlwaysEnabledWithCapture, this };
 
     LabelSettingItem mAudioProcessorUsageMax = { [](void* cap)
     {
-        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio max CPU %:") + AudioProcessorUsageMax();
         return ret;
     }, AlwaysEnabledWithCapture, this };
 
     LabelSettingItem mAudioMemoryUsage = { [](void* cap)
     {
-        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio mem:") + AudioMemoryUsage();
         return ret;
     }, AlwaysEnabledWithCapture, this };
 
     LabelSettingItem mAudioMemoryUsageMax = { [](void* cap)
     {
-        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio mem max:") + AudioMemoryUsageMax();
         return ret;
     }, AlwaysEnabledWithCapture, this };

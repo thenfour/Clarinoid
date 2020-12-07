@@ -159,7 +159,7 @@ struct LooperAndHarmonizer
   }
 
   void UpdateCurrentLoopTimeMS() {
-    uint32_t ret = (uint32_t)(mLoopTimer.ElapsedMicros() / 1000); // theoretical error for very long loop times.
+    uint32_t ret = (uint32_t)(mLoopTimer.ElapsedTime().ElapsedMillisI()); // theoretical error for very long loop times.
     if (mStatus.mState == LooperState::DurationSet) {
       // handle wrapping.
       ret %= mStatus.mLoopDurationMS;

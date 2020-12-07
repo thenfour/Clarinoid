@@ -7,7 +7,7 @@ namespace clarinoid
 {
 
 template<size_t Nsamples = 120>
-struct framerateCalculator
+struct FPSCalculator
 {
   float getFPS() const { return mVal.GetValue(); }
   float getMinFPS() const
@@ -34,9 +34,8 @@ struct framerateCalculator
   }
 
   void onFrame() {
-    auto microsSinceLastFrame = mTimer.ElapsedMicros();
     // get frame rate of that one frame.
-    mVal.Update(float(1000 * 1000) / microsSinceLastFrame);
+    mVal.Update(1.0f / mTimer.ElapsedTime().ElapsedSeconds());
     mTimer.Restart();
   }
 
@@ -44,5 +43,7 @@ struct framerateCalculator
   SimpleMovingAverage<Nsamples> mVal;
 };
 
+
+constexpr auto aoeux = sizeof(FPSCalculator<>);
 
 } // namespace clarinoid

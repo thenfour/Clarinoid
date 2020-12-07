@@ -39,7 +39,7 @@ struct Harmonizer
 
     // advance sequence pointer?
     if (transitionEvents.mNeedsNoteOn) {
-      if (mRotationTriggerTimer.ElapsedMillis() >= preset.mMinRotationTimeMS)
+      if (mRotationTriggerTimer.ElapsedTime().ElapsedMillisI() >= preset.mMinRotationTimeMS)
       {
         mRotationTriggerTimer.Restart();
         mSequencePos ++;
