@@ -25,8 +25,7 @@ struct IDisplayApp
 };
 
 //////////////////////////////////////////////////////////////////////
-struct CCDisplay :
-  ITask
+struct CCDisplay
 {
 private:
   static CCAdafruitSSD1306* gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in general.
@@ -124,27 +123,25 @@ public:
 
   int mframe = 0;
 
-  virtual void TaskRun() override {
+  // splitting the entire "display actions" into sub tasks:
+  // UpdateAndRenderTask which runs state updating and  renders to the DMA
+  // DisplayTask which "uploads" to the device. This is a natural separation of things to give the task runner some method of yielding.
+  void UpdateAndRenderTask() {
     CCASSERT(this->mIsSetup);
-
-    //Serial.println(String("Display::TaskRun, mCurrentAppIndex = ") + mCurrentAppIndex);
 
     IDisplayApp* pMenuApp = nullptr;
 
     if (mCurrentAppIndex < (int)mApps.mSize) {
       pMenuApp = mApps.mData[mCurrentAppIndex];
-      //Serial.println(String(" => ") + pMenuApp->DisplayAppGetName());
 
       if (!mFirstAppSelected) {
         mFirstAppSelected = true;
         pMenuApp->DisplayAppOnSelected();
       }
 
-      //Serial.println(String(" => update ") + pMenuApp->DisplayAppGetName());
       pMenuApp->DisplayAppUpdate();
-      //Serial.println(String(" => after update ") + pMenuApp->DisplayAppGetName());
     }
-    
+
     mDisplay.clearDisplay();
     mDisplay.mSolidText = true;
     mDisplay.mTextLeftMargin = 0;
@@ -168,6 +165,11 @@ public:
       }
     }
 
+  }
+
+  void DisplayTask()
+  {
+    //NoInterrupts _ni;
      mDisplay.display();
   }
 

@@ -54,6 +54,7 @@ struct CCMCP23017// :
 
   explicit CCMCP23017(TwoWire *theWire)
   {
+    NoInterrupts _ni;
     mMcp.begin(theWire);
     theWire->setClock(800000/*400000*/); // use high speed mode. default speed = 100k
     for (int i  = 0; i < 16; ++ i) {
@@ -64,6 +65,7 @@ struct CCMCP23017// :
 
   void Update()
   {
+    NoInterrupts _ni;
     mPreviousValue = mCurrentValue;
     mCurrentValue = mMcp.readGPIOAB();
   }

@@ -14,11 +14,13 @@ struct PerformanceApp :
     size_t mSelectedTaskID = 0;
     TaskPlanner* mTaskManager = nullptr;
     MusicalStateTask* mpMusicalStateTask = nullptr;
+    BassoonoidControlMapper* mpControls = nullptr;
     virtual const char *DisplayAppGetName() override { return "Performance"; }
 
-    PerformanceApp(CCDisplay& d, MusicalStateTask* pMusicalStateTask) :
+    PerformanceApp(CCDisplay& d, MusicalStateTask* pMusicalStateTask, BassoonoidControlMapper* controls) :
         SettingsMenuApp(d),
-        mpMusicalStateTask(pMusicalStateTask)
+        mpMusicalStateTask(pMusicalStateTask),
+        mpControls(controls)
     {}
 
     MultiSubmenuSettingItem mTiming;
@@ -105,7 +107,13 @@ struct PerformanceApp :
 
     virtual void RenderFrontPage() 
     {
-        mDisplay.mDisplay.println(String("Performance ->"));
+        mDisplay.mDisplay.println(String("PERFormance >"));
+        mDisplay.mDisplay.println(String(" mTimingMcp: ") + (int)mpControls->mTimingMcp.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" mTimingBreath: ") + (int)mpControls->mTimingBreath.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" mTimingEncoders: ") + (int)mpControls->mTimingEncoders.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" mTimingAnalog: ") + (int)mpControls->mTimingAnalog.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" mTimingDigital: ") + (int)mpControls->mTimingDigital.ElapsedMicros());
+
         SettingsMenuApp::RenderFrontPage();
     }
 };

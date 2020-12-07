@@ -47,9 +47,9 @@ struct BassoonoidApp
     SystemSettingsApp mSystemSettingsApp;
 
     BassoonoidApp() :
-        mDisplay(128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 88 * 1000000UL),
+        mDisplay(128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 44 * 1000000UL),
         mMusicalStateTask(&mAppSettings, &mControlMapper),
-        mPerformanceApp(mDisplay, &mMusicalStateTask),
+        mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
         mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
         mSystemSettingsApp(mDisplay)
     {
@@ -67,20 +67,48 @@ struct BassoonoidApp
         mDisplay.Init(&mAppSettings, &mControlMapper, allApps);
         mMusicalStateTask.Init();
 
+        FunctionTask mDisplayTask1 { this, [](void* cap){
+            BassoonoidApp* pThis = (BassoonoidApp*)cap;
+            pThis->mDisplay.UpdateAndRenderTask();
+        } };
+
+        FunctionTask mDisplayTask2 { this, [](void* cap){
+            BassoonoidApp* pThis = (BassoonoidApp*)cap;
+            pThis->mDisplay.DisplayTask();
+        } };
+
+        // there's no need to have a sophisticated task manager which decides which task
+        // to run based on periodicity, priority, etc.
+        // we have a static number of tasks which are very easy to manually piece together
+        // into an execution plan.
+        //
+        // the "Musical state" task tends to take about 1000 microseconds, and is the most
+        // critical. So let's run it every 2000 microseconds.
+        // that means every other task can just get interlaced between these.
+        // Other tasks can run much slower; even at 60fps we have a whole period of 16667 micros.
+        // that means running musical state 8 times and everything else gets placed between.
+        NopTask nopTask;
+
         TaskPlanner tp {
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(1000), &mDisplayTask1, "Display1" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(2000), &mMusicalStateTask, "MusS1" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(3000), &mDisplayTask2, "Display2" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS2" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(5000), &mLed1, "mLed1" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(6000), &mMusicalStateTask, "MusS3" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(7000), &mLed2, "mLed2" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(8000), &mMusicalStateTask, "MusS4" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(9000), &mBreathLED, "mBreathLED" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS5" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(12000), &mMusicalStateTask, "MusS6" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(14000), &mMusicalStateTask, "MusS7" },
+            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(16000), &nopTask, "Nop" },
         };
 
         mPerformanceApp.Init(&tp);
 
-        //CCASSERT(false);
-
-        // tm.AddTask(mMusicalStateTask, 5000, "MusicalState", PriorityClass::Normal);
-        // tm.AddTask(mDisplay, FPSToMicros(12), "display", PriorityClass::Normal);
-        // tm.AddTask(mLed1, FPSToMicros(12), "LED1", PriorityClass::Normal);
-        // tm.AddTask(mLed2, FPSToMicros(12), "LED2", PriorityClass::Normal);
-        // tm.AddTask(mBreathLED, FPSToMicros(12), "BreathLED", PriorityClass::Normal);
-
-        // tm.Main();
+        tp.Main();
     }
 };
 

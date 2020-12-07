@@ -30,6 +30,13 @@ struct FunctionTask :
   void* mpCapture = nullptr;
   cc::function<void(void*)>::ptr_t mPtr = nullptr;
 
+  FunctionTask() = default;
+  FunctionTask(void* capture, cc::function<void(void*)>::ptr_t fn) :
+    mpCapture(capture),
+    mPtr(fn)
+  {
+  }
+
   virtual void TaskRun() override
   {
     if (mPtr) {

@@ -54,28 +54,40 @@ struct BassoonoidControlMapper :
     NullSwitch mNullSwitch;
     NullBreathSensor mNullBreath;
 
+    TimeSpan mTimingMcp;
+    TimeSpan mTimingBreath;
+    TimeSpan mTimingEncoders;
+    TimeSpan mTimingAnalog;
+    TimeSpan mTimingDigital;
+
     virtual void TaskRun() override
     {
+        NoInterrupts _ni;
+        Stopwatch sw;
         mCPEncoder.Update();
         mRHEncoder.Update();
         mLHEncoder.Update();// reading encoders is dirt cheap. 1 microsecond.
+        mTimingEncoders = sw.ElapsedTime();
 
-        //Stopwatch sw;
+        sw.Restart();
         mRHMCP.Update();
         mLHMCP.Update();
-        mBreath.Update();
-        //int i2c = sw.ElapsedMicros();
+        mTimingMcp = sw.ElapsedTime();
 
-        //sw.Restart();
+        sw.Restart();
+        mBreath.Update();
+        mTimingBreath = sw.ElapsedTime();
+
+        sw.Restart();
         mVolumePot.Update();
         mPitchStrip.Update();
         mJoyX.Update();
         mJoyY.Update();
-        //int ana = sw.ElapsedMicros();
+        mTimingAnalog = sw.ElapsedTime();
 
+        sw.Restart();
         mToggleUp.Update();
-
-        //Serial.println(String("TIMING: i2c=") + i2c + ", ana=" + ana);
+        mTimingDigital = sw.ElapsedTime();
     }
 
     CCEncoder<1, 2, 3> mRHEncoder;
@@ -101,10 +113,10 @@ struct BassoonoidControlMapper :
     virtual ISwitch* KeyLH3() override { return &mLHMCP.mButtons[5]; };
     virtual ISwitch* KeyLH4() override { return &mLHMCP.mButtons[4]; };
 
-    virtual ISwitch* KeyRH1() override { return &mRHMCP.mButtons[11]; };
-    virtual ISwitch* KeyRH2() override { return &mRHMCP.mButtons[10]; };
-    virtual ISwitch* KeyRH3() override { return &mRHMCP.mButtons[9]; };
-    virtual ISwitch* KeyRH4() override { return &mRHMCP.mButtons[8]; };
+    virtual ISwitch* KeyRH1() override { return &mRHMCP.mButtons[8]; };
+    virtual ISwitch* KeyRH2() override { return &mRHMCP.mButtons[9]; };
+    virtual ISwitch* KeyRH3() override { return &mRHMCP.mButtons[10]; };
+    virtual ISwitch* KeyRH4() override { return &mRHMCP.mButtons[11]; };
 
     virtual ISwitch* KeyOct1() override { return &mLHMCP.mButtons[10]; };
     virtual ISwitch* KeyOct2() override { return &mLHMCP.mButtons[9]; };
