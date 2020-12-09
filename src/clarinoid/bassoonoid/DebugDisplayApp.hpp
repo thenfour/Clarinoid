@@ -108,11 +108,12 @@ struct PerformanceApp :
     virtual void RenderFrontPage() 
     {
         mDisplay.mDisplay.println(String("PERFormance >"));
-        mDisplay.mDisplay.println(String(" mTimingMcp: ") + (int)mpControls->mTimingMcp.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" mTimingBreath: ") + (int)mpControls->mTimingBreath.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" mTimingEncoders: ") + (int)mpControls->mTimingEncoders.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" mTimingAnalog: ") + (int)mpControls->mTimingAnalog.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" mTimingDigital: ") + (int)mpControls->mTimingDigital.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" McpL: ") + (int)mpControls->mTimingMcpL.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" McpR: ") + (int)mpControls->mTimingMcpR.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" Breath: ") + (int)mpControls->mTimingBreath.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" Encoders: ") + (int)mpControls->mTimingEncoders.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" Analog: ") + (int)mpControls->mTimingAnalog.ElapsedMicros());
+        mDisplay.mDisplay.println(String(" Digital: ") + (int)mpControls->mTimingDigital.ElapsedMicros());
 
         SettingsMenuApp::RenderFrontPage();
     }

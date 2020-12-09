@@ -36,7 +36,7 @@ PROGMEM const char gClarinoidVersion[] = "BASSOONOID v0.01";
 #include <polyBlepOscillator.h>// https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
 #include <Encoder.h>
 #include <WS2812Serial.h>
-#include <Adafruit_MCP23017.h>
+//#include <Adafruit_MCP23017.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SPIDevice.h>
 #include <Adafruit_SSD1306.h>

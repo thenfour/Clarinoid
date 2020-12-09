@@ -54,7 +54,8 @@ struct BassoonoidControlMapper :
     NullSwitch mNullSwitch;
     NullBreathSensor mNullBreath;
 
-    TimeSpan mTimingMcp;
+    TimeSpan mTimingMcpR;
+    TimeSpan mTimingMcpL;
     TimeSpan mTimingBreath;
     TimeSpan mTimingEncoders;
     TimeSpan mTimingAnalog;
@@ -71,8 +72,11 @@ struct BassoonoidControlMapper :
 
         sw.Restart();
         mRHMCP.Update();
+        mTimingMcpR = sw.ElapsedTime();
+
+        sw.Restart();
         mLHMCP.Update();
-        mTimingMcp = sw.ElapsedTime();
+        mTimingMcpL = sw.ElapsedTime();
 
         sw.Restart();
         mBreath.Update();

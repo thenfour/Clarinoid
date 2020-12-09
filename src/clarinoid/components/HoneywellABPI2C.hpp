@@ -71,7 +71,7 @@ struct CCHoneywellAPB :
   explicit CCHoneywellAPB(TwoWire& wire, uint8_t address = 0x28) :
     mAbp(wire, address)
   {
-    wire.setClock(800000); // use high speed mode. default speed = 100k
+    wire.setClock(400000); // use high speed mode. default speed = 100k
   }
 
   void Update()
