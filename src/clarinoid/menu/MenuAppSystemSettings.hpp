@@ -33,27 +33,15 @@ struct SystemSettingsApp :
       },
       [](void* cap) {
         auto pThis = (SystemSettingsApp*)cap;
-        return pThis->mControlMapper->BreathSensor()->CurrentValue01();
+        return pThis->mInput->mBreath.CurrentValue01();
       },
       this
     };
 
-    LabelSettingItem mL1 = { []() {return (String)"hi 1."; }, AlwaysEnabled };
-    LabelSettingItem mL2 = { []() {return (String)"hi 2."; }, AlwaysEnabled };
-    LabelSettingItem mL3 = { []() {return (String)"hi 3."; }, AlwaysEnabled };
-    LabelSettingItem mL4 = { []() {return (String)"hi 4."; }, AlwaysEnabled };
-    LabelSettingItem mL5 = { []() {return (String)"hi 5."; }, AlwaysEnabled };
-    LabelSettingItem mL6 = { []() {return (String)"hi 6."; }, AlwaysEnabled };
-
-  ISettingItem* mArray[7] =
+  ISettingItem* mArray[2] =
   {
     &mDimDisplay,
     &mBreath,
-    &mL2,
-    &mL3,
-    &mL4,
-    &mL5,
-    &mL6,
   };
   SettingsList mRootList = { mArray };
 

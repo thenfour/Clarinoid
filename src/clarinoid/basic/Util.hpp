@@ -219,6 +219,7 @@ struct NoInterrupts
   NoInterrupts() {
 #ifndef CLARINOID_PLATFORM_X86
     if (0 == gNoInterruptRefs) {
+      // __disable_irq(); // not sure which one to use honestly...
       NVIC_DISABLE_IRQ(IRQ_SOFTWARE);
     }
 #endif
@@ -229,6 +230,7 @@ struct NoInterrupts
     gNoInterruptRefs --;
 #ifndef CLARINOID_PLATFORM_X86
     if (0 == gNoInterruptRefs) {
+      // __enable_irq(); // not sure which one to use honestly...
       NVIC_ENABLE_IRQ(IRQ_SOFTWARE);
     }
 #endif

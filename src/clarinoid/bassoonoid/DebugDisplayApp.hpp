@@ -7,7 +7,7 @@
 namespace clarinoid
 {
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct PerformanceApp :
     SettingsMenuApp
 {
@@ -17,6 +17,8 @@ struct PerformanceApp :
     BassoonoidControlMapper* mpControls = nullptr;
     virtual const char *DisplayAppGetName() override { return "Performance"; }
 
+    SimpleMovingAverage<30> mCPUUsage;
+
     PerformanceApp(CCDisplay& d, MusicalStateTask* pMusicalStateTask, BassoonoidControlMapper* controls) :
         SettingsMenuApp(d),
         mpMusicalStateTask(pMusicalStateTask),
@@ -24,6 +26,36 @@ struct PerformanceApp :
     {}
 
     MultiSubmenuSettingItem mTiming;
+
+    LabelSettingItem mDelay = { [](void* cap)
+    {
+        PerformanceApp* pThis = (PerformanceApp*)cap;
+        String ret = "TS Delay: ";
+        ret += (int)pThis->mTaskManager->mPreviousTimeSliceDelayTime.ElapsedMicros();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    LabelSettingItem mTimesliceLen = { [](void* cap)
+    {
+        PerformanceApp* pThis = (PerformanceApp*)cap;
+        String ret = "TS Len: ";
+        ret += (int)pThis->mTaskManager->mTimesliceDuration.ElapsedMicros();
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
+
+    LabelSettingItem mCPU = { [](void* cap)
+    {
+        PerformanceApp* pThis = (PerformanceApp*)cap;
+        String ret = "CPU usage: ";
+        float p = (float)pThis->mTaskManager->mPreviousTimeSliceDelayTime.ElapsedMicros();
+        p /= pThis->mTaskManager->mTimesliceDuration.ElapsedMicros();
+        p = 1.0f - p;
+        pThis->mCPUUsage.Update(p);
+        p = pThis->mCPUUsage.GetValue() * 100;
+        ret += p;
+        ret += "%";
+        return ret;
+    }, AlwaysEnabledWithCapture, this };
 
     LabelSettingItem mInput = { [](void* cap)
     {
@@ -92,8 +124,11 @@ struct PerformanceApp :
     SettingsList mSubitemList = { mSubitemArray };
 
 
-    ISettingItem* mArray[4] =
+    ISettingItem* mArray[7] =
     {
+        &mDelay,
+        &mTimesliceLen,
+        &mCPU,
         &mTiming,
         &mInput,
         &mMusicalState,
@@ -120,7 +155,7 @@ struct PerformanceApp :
 };
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct DebugDisplayApp :
     SettingsMenuApp
 {
@@ -287,5 +322,35 @@ struct DebugDisplayApp :
         SettingsMenuApp::RenderFrontPage();
     }
 };
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// struct AudioMonitorApp :
+//     DisplayApp  
+// {
+//   AudioMonitorApp(CCDisplay& d) :
+//     DisplayApp(d)
+//   {}
+
+//   virtual void UpdateApp()
+//   {
+//       float rms01 = CCSynthGraph::rms1.read();
+//       CCSynthGraph::peak1.readPeakToPeak();
+//   }
+//   virtual void RenderApp()
+//   {
+//       //
+//   }
+//   virtual void RenderFrontPage()
+//   {
+//       //
+//   }
+//   virtual void DisplayAppUpdate()
+//   {
+//       //
+//   }
+// };
+
+
+
 
 } // namespace clarinoid

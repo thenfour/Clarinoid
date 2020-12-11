@@ -114,8 +114,12 @@ struct TaskPlanner
   std::vector<TaskDeadline> mTasks; // signed because we have -1 magic numbers.
 
   TimeSpan mTimesliceDuration;
+  TimeSpan mPreviousTimeSliceDelayTime;
+  TimeSpan mCurrentTimeSliceDelayTime;
+
   size_t mTaskCursor = 0; // which task is next to execute.
   Stopwatch mTimesliceTimer;
+
 
   TaskPlanner(std::initializer_list<TaskDeadline> x) :
     mTasks(x)
@@ -127,6 +131,8 @@ struct TaskPlanner
 
   void StartNewTimeSlice(TimeSpan newPos /* nonzero if you overran the existing plan */)
   {
+    mPreviousTimeSliceDelayTime = mCurrentTimeSliceDelayTime;
+    mCurrentTimeSliceDelayTime = TimeSpan::Zero();
     mTimesliceTimer.Restart(newPos);
     mTaskCursor = 0;
   }
@@ -155,6 +161,7 @@ struct TaskPlanner
   {
     if (!a.mTask)
     {
+      mCurrentTimeSliceDelayTime += a.mTTD;
       delayMicroseconds((int)a.mTTD.ElapsedMicros());
       return;
     }

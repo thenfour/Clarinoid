@@ -18,7 +18,7 @@ struct DisplayApp :
 
   CCDisplay& mDisplay;
   AppSettings* mAppSettings;
-  IControlMapper* mControlMapper;
+  InputDelegator* mInput;
 
   SwitchControlReader mOK;
   SwitchControlReader mBack;
@@ -30,10 +30,11 @@ struct DisplayApp :
 
   virtual void DisplayAppInit() override {
     mAppSettings = mDisplay.mAppSettings;
-    mControlMapper = mDisplay.mControlMapper;
-    mOK.SetSource(mControlMapper->MenuOK());
-    mBack.SetSource(mControlMapper->MenuBack());
-    mEnc.SetSource(mControlMapper->MenuEncoder());
+    mInput = mDisplay.mInput;
+
+    mOK.SetSource(&mInput->mMenuOK);
+    mBack.SetSource(&mInput->mMenuBack);
+    mEnc.SetSource(&mInput->mMenuScrollA);
   }
 
   virtual void UpdateApp() = 0;

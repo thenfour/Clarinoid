@@ -63,7 +63,7 @@ private:
 
 
 struct CCHoneywellAPB :
-  IAnalogControl
+  IAnalogAxis
 {
   HoneywellABPI2C mAbp;
   float value;

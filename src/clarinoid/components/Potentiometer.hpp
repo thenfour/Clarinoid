@@ -9,7 +9,7 @@ namespace clarinoid
 
 
 struct AnalogPinControl :
-  IAnalogControl
+  IAnalogAxis
 {
   uint8_t mPin;
   float mValue01 = 0;

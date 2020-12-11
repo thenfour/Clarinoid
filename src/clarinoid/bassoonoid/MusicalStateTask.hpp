@@ -17,6 +17,7 @@ struct MusicalStateTask :
 {
     AppSettings* mAppSettings;
     BassoonoidControlMapper *mControlMapper;
+    InputDelegator* mpInput;
 
     Metronome mMetronome;
     CCEWIMusicalState mMusicalState;
@@ -29,11 +30,12 @@ struct MusicalStateTask :
     SimpleMovingAverage<15> mMusicalStateTiming;
     SimpleMovingAverage<15> mSynthStateTiming;
 
-    MusicalStateTask(AppSettings* appSettings, BassoonoidControlMapper *controlMapper) : 
+    MusicalStateTask(AppSettings* appSettings, InputDelegator* input, BassoonoidControlMapper *controlMapper) : 
         mAppSettings(appSettings),
         mControlMapper(controlMapper),
+        mpInput(input),
         mMetronome(appSettings),
-        mMusicalState(appSettings, controlMapper, &mMetronome, &mScaleFollower)
+        mMusicalState(appSettings, mpInput, &mMetronome, &mScaleFollower)
     {
     }
 
@@ -47,6 +49,7 @@ struct MusicalStateTask :
         {
             int m1 = micros();
             mControlMapper->TaskRun();
+            mpInput->Update();
             int m2 = micros();
             mInputTiming.Update((float)(m2 - m1));
         }

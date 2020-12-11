@@ -16,26 +16,23 @@ struct ListControl
   int mMaxItemsToRender;
   EncoderReader mEnc;// = EncoderReader { gControlMapper.MenuEncoder() };
   CCDisplay* mDisplay;
-  IControlMapper* mControlMapper;
+  IEncoder* pEncoder;
 
-  ListControl(const IList* list, CCDisplay* d, IControlMapper* c, Property<int> selectedItemBinding, int x, int y, int nVisibleItems) : 
+  ListControl(const IList* list, CCDisplay* d, IEncoder* penc, Property<int> selectedItemBinding, int x, int y, int nVisibleItems) : 
     mpList(list),
     mSelectedItem(selectedItemBinding),
     mX(x),
     mY(y),
     mMaxItemsToRender(nVisibleItems),
     mDisplay(d),
-    mControlMapper(c)
+    pEncoder(penc)
   {
-//    CCASSERT(!!selectedItemBinding.mGetter);
-//    CCASSERT(!!selectedItemBinding.mSetter);
-//    CCASSERT(!!mSelectedItem.mGetter);
-//    CCASSERT(!!mSelectedItem.mSetter);
   }
 
   void Init()
   {
-    mEnc.SetSource(mControlMapper->MenuEncoder());
+    mEnc.SetSource(pEncoder);
+    //mEnc.SetSource(mControlMapper->MenuEncoder());
   }
   
   void Render()

@@ -3,27 +3,10 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
-namespace clarinoid
-{
-
-static const size_t MAX_SYNTH_VOICES = 6;
-
-static const size_t HARM_PRESET_COUNT = 16;
-static const size_t HARM_VOICES = 6;
-static const size_t HARM_SEQUENCE_LEN = 8;
-
-static const size_t LOOP_LAYERS = 6;
-static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
-
-static const size_t PRESET_NAME_LEN = 16;
-
-static const size_t SYNTH_PRESET_COUNT = 16;
-
-} // namespace clarinoid
-
 #include "HarmonizerSettings.hpp"
 #include "SynthSettings.hpp"
 #include "LoopstationSettings.hpp"
+#include "ControlMapping.hpp"
 
 namespace clarinoid
 {
@@ -115,6 +98,10 @@ struct BreathCalibrationSettings
 
 struct AppSettings
 {
+  ButtonMapping mButtonMappings[MAX_BUTTON_MAPPINGS];
+  AxisMapping mAxisMappings[MAX_AXIS_MAPPINGS];
+  EncoderMapping mEncoderMappings[MAX_ENCODER_MAPPINGS];
+  
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
 

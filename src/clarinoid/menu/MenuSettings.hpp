@@ -20,7 +20,7 @@ struct ISettingItemEditorActions
   virtual void CommitEditing() = 0;
   virtual CCDisplay* GetDisplay() = 0;
   virtual AppSettings* GetAppSettings() = 0;
-  virtual IControlMapper* GetControlMapper() = 0;
+  virtual InputDelegator* GetInputDelegator() = 0;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -305,20 +305,21 @@ struct SettingsMenuApp :
   {
   }
 
-  virtual void CommitEditing() {
+  virtual void CommitEditing() override {
     mpCurrentEditor = nullptr;
   }
   
-  virtual void DisplayAppOnSelected() {
+  virtual void DisplayAppOnSelected() override {
     gSettingsMenuNavDepth = 0;
     gSettingsMenuNavStack[0].focusedItem = 0;
     gSettingsMenuNavStack[0].pList = GetRootSettingsList();
     DisplayApp::DisplayAppOnSelected();
   }
 
-  virtual CCDisplay* GetDisplay() { return &mDisplay; }
-  virtual AppSettings* GetAppSettings() { return mAppSettings; }
-  virtual IControlMapper* GetControlMapper() { return mControlMapper; }
+  virtual CCDisplay* GetDisplay() override { return &mDisplay; }
+  virtual AppSettings* GetAppSettings() override { return mAppSettings; }
+  //virtual IControlMapper* GetControlMapper() override { return mControlMapper; }
+  virtual InputDelegator* GetInputDelegator() override { return mInput; }
 
 
   virtual SettingsList* GetRootSettingsList() = 0;

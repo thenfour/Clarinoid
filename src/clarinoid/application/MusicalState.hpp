@@ -10,7 +10,7 @@ namespace clarinoid
 struct CCEWIMusicalState
 {
   AppSettings* mAppSettings;
-  IControlMapper* mControlMapper;
+  InputDelegator* mInput;
   Metronome* mMetronome;
   ScaleFollower* mScaleFollower;
 
@@ -30,9 +30,9 @@ struct CCEWIMusicalState
   int nUpdates = 0;
   int noteOns = 0;
 
-  CCEWIMusicalState(AppSettings* appSettings, IControlMapper* controlMapper, Metronome* metronome, ScaleFollower* scaleFollower) :
+  CCEWIMusicalState(AppSettings* appSettings, InputDelegator* inputDelegator, Metronome* metronome, ScaleFollower* scaleFollower) :
     mAppSettings(appSettings),
-    mControlMapper(controlMapper),
+    mInput(inputDelegator),
     mMetronome(metronome),
     mScaleFollower(scaleFollower),
 
@@ -51,7 +51,7 @@ struct CCEWIMusicalState
     // convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
 
-    float _incomingBreath = mControlMapper->BreathSensor()->CurrentValue01();
+    float _incomingBreath = mInput->mBreath.CurrentValue01();
     _incomingBreath = mAppSettings->mBreathCalibration.TranfsormValue01(_incomingBreath);
     mCurrentBreath01.Update(_incomingBreath);
 
@@ -115,39 +115,39 @@ struct CCEWIMusicalState
     // the rules are rather weird for keys. open is a C#...
     // https://bretpimentel.com/flexible-ewi-fingerings/
     int newNote = 49; // C#2
-    if (mControlMapper->KeyLH1()->CurrentValue()){
+    if (mInput->mKeyLH1.CurrentValue()){
       newNote -= 2;
     }
-    if (mControlMapper->KeyLH2()->CurrentValue()) {
-      newNote -= mControlMapper->KeyLH1()->CurrentValue() ? 2 : 1;
+    if (mInput->mKeyLH2.CurrentValue()) {
+      newNote -= mInput->mKeyLH1.CurrentValue() ? 2 : 1;
     }
-    if (mControlMapper->KeyLH3()->CurrentValue()) {
+    if (mInput->mKeyLH3.CurrentValue()) {
       newNote -= 2;
     }
-    if (mControlMapper->KeyLH4()->CurrentValue()) {
+    if (mInput->mKeyLH4.CurrentValue()) {
       newNote += 1;
     }
 
-    if (mControlMapper->KeyRH1()->CurrentValue()) {
-      newNote -= mControlMapper->KeyLH3()->CurrentValue() ? 2 : 1;
+    if (mInput->mKeyRH1.CurrentValue()) {
+      newNote -= mInput->mKeyLH3.CurrentValue() ? 2 : 1;
     }
-    if (mControlMapper->KeyRH2()->CurrentValue()) {
+    if (mInput->mKeyRH2.CurrentValue()) {
       newNote -= 1;
     }
-    if (mControlMapper->KeyRH3()->CurrentValue()) {
-      newNote -= mControlMapper->KeyRH2()->CurrentValue() ? 2 : 1; // deviation from akai. feels more flute-friendly.
+    if (mInput->mKeyRH3.CurrentValue()) {
+      newNote -= mInput->mKeyRH2.CurrentValue() ? 2 : 1; // deviation from akai. feels more flute-friendly.
     }
-    if (mControlMapper->KeyRH4()->CurrentValue()) {
+    if (mInput->mKeyRH4.CurrentValue()) {
       newNote -= 2;
     }
 
 #ifdef THREE_BUTTON_OCTAVES
     // todo.
     newNote += 0;
-    if (mControlMapper->KeyOct1()->CurrentValue()) {
+    if (mInput->mKeyOct1.CurrentValue()) {
       newNote -= 12;
     }
-    if (mControlMapper->KeyOct3()->CurrentValue()) {
+    if (mInput->mKeyOct3.CurrentValue()) {
       newNote += 12;
     }
 #else

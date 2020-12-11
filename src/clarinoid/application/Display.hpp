@@ -35,7 +35,7 @@ public:
   CCAdafruitSSD1306 mDisplay;
 
   AppSettings* mAppSettings;
-  IControlMapper* mControlMapper;
+  InputDelegator* mInput;
 
   bool mIsSetup = false; // used for crash handling to try and setup this if we can
   bool mFirstAppSelected = false;
@@ -58,9 +58,9 @@ public:
     //Init();
   }
 
-  void Init(AppSettings* appSettings, IControlMapper* controlMapper, const array_view<IDisplayApp*>& apps) {
+  void Init(AppSettings* appSettings, InputDelegator* input, const array_view<IDisplayApp*>& apps) {
     mAppSettings = appSettings;
-    mControlMapper = controlMapper;
+    mInput = input;
     mApps = apps;
 
     // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
