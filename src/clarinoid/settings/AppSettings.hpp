@@ -41,75 +41,73 @@ EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo ("GlobalScaleRefType", gGlo
 // 
 // * the UP MAX range is very important, to have some buffer between the hard cutoff of IDLE to UPMAX.
 //   maybe even a small transition zone would be useful to a player as a warning.
-struct PitchStripSettings
-{
-  float mHandsOffNoiseThresh = 0.035f;
-  float mPitchUpMax = 0.08f; // or min? depends how you measure this.
-  float mZeroMin = 0.20f;
-  float mZeroMax = 0.38f;
-  float mPitchDownMax = 0.88f;
-};
+// struct PitchStripSettings
+// {
+//   float mHandsOffNoiseThresh = 0.035f;
+//   float mPitchUpMax = 0.08f; // or min? depends how you measure this.
+//   float mZeroMin = 0.20f;
+//   float mZeroMax = 0.38f;
+//   float mPitchDownMax = 0.88f;
+// };
 
-struct BreathCalibrationSettings
-{
-    float mRangeMin = 0.11f;
-    float mRangeMax = 0.57f;
-    float mCurve = 1.0f;
-    //float mNoteOnThreshold = 0.1f;// POST-scaling.
+// struct BreathCalibrationSettings
+// {
+//     float mRangeMin = 0.11f;
+//     float mRangeMax = 0.57f;
+//     float mCurve = 1.0f;
+//     //float mNoteOnThreshold = 0.1f;// POST-scaling.
 
-    BreathCalibrationSettings() = default;
-    ~BreathCalibrationSettings() = default;
-    bool operator ==(const BreathCalibrationSettings& rhs) const
-    {
-      if (mRangeMin != rhs.mRangeMin) return false;
-      if (mRangeMax != rhs.mRangeMax) return false;
-      if (mCurve != rhs.mCurve) return false;
-      //if (mNoteOnThreshold != rhs.mNoteOnThreshold) return false;
-      return true;
-    }
-    bool operator !=(const BreathCalibrationSettings& rhs) const
-    {
-      return !(rhs == *this);
-    } 
+//     BreathCalibrationSettings() = default;
+//     ~BreathCalibrationSettings() = default;
+//     bool operator ==(const BreathCalibrationSettings& rhs) const
+//     {
+//       if (mRangeMin != rhs.mRangeMin) return false;
+//       if (mRangeMax != rhs.mRangeMax) return false;
+//       if (mCurve != rhs.mCurve) return false;
+//       //if (mNoteOnThreshold != rhs.mNoteOnThreshold) return false;
+//       return true;
+//     }
+//     bool operator !=(const BreathCalibrationSettings& rhs) const
+//     {
+//       return !(rhs == *this);
+//     } 
 
-    float TranfsormValue01(float f)
-    {
-      float realMin, realMax;
-      if (mRangeMin < mRangeMax) {
-        realMin = mRangeMin;
-        realMax = mRangeMax;
-      } else {
-        realMin = mRangeMax;
-        realMax = mRangeMin;
-      }
-        // scale
-        f -= realMin;
-        f /= (realMax - realMin);
-        if (f < 0) f = 0;
-        if (f > 1) f = 1;
-        if (mCurve != 1.0f) {
-            f = 1.0f - ::powf(1.0f - f, mCurve);
-            if (f < 0) f = 0;
-            if (f > 1) f = 1;
-        }
-        return f;
-    }
-};
+//     float TranfsormValue01(float f)
+//     {
+//       float realMin, realMax;
+//       if (mRangeMin < mRangeMax) {
+//         realMin = mRangeMin;
+//         realMax = mRangeMax;
+//       } else {
+//         realMin = mRangeMax;
+//         realMax = mRangeMin;
+//       }
+//         // scale
+//         f -= realMin;
+//         f /= (realMax - realMin);
+//         if (f < 0) f = 0;
+//         if (f > 1) f = 1;
+//         if (mCurve != 1.0f) {
+//             f = 1.0f - ::powf(1.0f - f, mCurve);
+//             if (f < 0) f = 0;
+//             if (f > 1) f = 1;
+//         }
+//         return f;
+//     }
+// };
 
 struct AppSettings
 {
-  ButtonMapping mButtonMappings[MAX_BUTTON_MAPPINGS];
-  AxisMapping mAxisMappings[MAX_AXIS_MAPPINGS];
-  EncoderMapping mEncoderMappings[MAX_ENCODER_MAPPINGS];
+  ControlMapping mControlMappings[MAX_CONTROL_MAPPINGS];
   
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
 
-  BreathCalibrationSettings mBreathCalibration;
+  //BreathCalibrationSettings mBreathCalibration;
   
   //float mTouchMaxFactor = 1.5f;
 
-  PitchStripSettings mPitchStrip;
+  //PitchStripSettings mPitchStrip;
 
   float mReverbGain = 0.02f;
 
@@ -150,8 +148,8 @@ struct AppSettings
 
 };
 
-//AppSettings gAppSettings;
 //static constexpr auto appsettingssize = sizeof(AppSettings);
+//static constexpr auto rththth = sizeof(AppSettings::mControlMappings);
 
 
 } // namespace clarinoid

@@ -32,9 +32,9 @@ struct DisplayApp :
     mAppSettings = mDisplay.mAppSettings;
     mInput = mDisplay.mInput;
 
-    mOK.SetSource(&mInput->mMenuOK);
-    mBack.SetSource(&mInput->mMenuBack);
-    mEnc.SetSource(&mInput->mMenuScrollA);
+    // mOK.SetSource(&mInput->mMenuOK);
+    // mBack.SetSource(&mInput->mMenuBack);
+    // mEnc.SetSource(&mInput->mMenuScrollA);
   }
 
   virtual void UpdateApp() = 0;
@@ -66,9 +66,9 @@ struct DisplayApp :
   virtual void DisplayAppUpdate()
   {
     //Serial.println(String("") + micros() + " DisplayApp Update [" + this->DisplayAppGetName() + "]");
-    mOK.Update();
-    mBack.Update();
-    mEnc.Update();
+    mOK.Update(&mInput->mMenuOK);
+    mBack.Update(&mInput->mMenuBack);
+    mEnc.Update(&mInput->mMenuScrollA);
 
     //=Serial.println(String("OK for appobj ") + ((uintptr_t)this) + " delta: " + mEnc.GetIntDelta() + ", val=" + mEnc.GetIntValue());
 

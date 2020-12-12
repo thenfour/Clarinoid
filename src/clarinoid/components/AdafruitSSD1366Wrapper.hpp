@@ -147,23 +147,6 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
       }
   }
   
-  // the text rendering routine calls these, so if you want clipped/checkered text you need to implement these too.
-  //  virtual void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
-  //    // TODO: clip
-  //    // TODO: checker
-  //    fillRect(x, y, w, h, color);
-  //  }
-  //
-  //  void writeFastVLine(int16_t x, int16_t y, int16_t h,
-  //                                    uint16_t color) {
-  //    if (!mSolidText) {
-  //      writeFillRect(x, y, 1, h, color);
-  //      return;
-  //    }
-  //    // TODO: clip
-  //    drawFastVLine(x, y, h, color);
-  //  }
-
   /**************************************************************************/
   /*!
       @brief  Print one byte/character of data, used to support print()

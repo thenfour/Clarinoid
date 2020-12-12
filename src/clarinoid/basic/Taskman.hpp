@@ -124,7 +124,14 @@ struct TaskPlanner
   TaskPlanner(std::initializer_list<TaskDeadline> x) :
     mTasks(x)
   {
-    // todo: assert every task in order.
+    // assert every task in order.
+    TimeSpan lastTS = TimeSpan::Zero();
+    for (auto& t : mTasks)
+    {
+      CCASSERT(t.mTimeSliceDeadline >= lastTS);
+      lastTS = t.mTimeSliceDeadline;
+    }
+
     mTimesliceDuration = mTasks.back().mTimeSliceDeadline;
     StartNewTimeSlice(TimeSpan::Zero());
   }

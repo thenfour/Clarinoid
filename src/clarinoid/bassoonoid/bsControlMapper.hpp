@@ -93,68 +93,56 @@ struct BassoonoidControlMapper :
 
     virtual void InputSource_Init(struct InputDelegator* p) override
     {
-        mEncoderInfo[(size_t)PhysicalEncoder::CP] = EncoderInfo { "CPENC", &mCPEncoder };
-        mEncoderInfo[(size_t)PhysicalEncoder::LH] = EncoderInfo { "LHENC", &mLHEncoder };
-        mEncoderInfo[(size_t)PhysicalEncoder::RH] = EncoderInfo { "RHENC", &mRHEncoder };
+        mControlInfo[(size_t)PhysicalControl::CPEnc] = ControlInfo { "CPENC", &mCPEncoder };
+        mControlInfo[(size_t)PhysicalControl::LHEnc] = ControlInfo { "LHENC", &mLHEncoder };
+        mControlInfo[(size_t)PhysicalControl::RHEnc] = ControlInfo { "RHENC", &mRHEncoder };
 
-        mAxisInfo[(size_t)PhysicalAxis::Breath] = AxisInfo { "Breath", &mBreath };
-        mAxisInfo[(size_t)PhysicalAxis::Volume] = AxisInfo { "VolPot", &mVolumePot };
-        mAxisInfo[(size_t)PhysicalAxis::Pitch] = AxisInfo { "Pitch", &mPitchStrip };
-        mAxisInfo[(size_t)PhysicalAxis::JoyX] = AxisInfo { "JoyX", &mJoyX };
-        mAxisInfo[(size_t)PhysicalAxis::JoyY] = AxisInfo { "JoyY", &mJoyY };
+        mControlInfo[(size_t)PhysicalControl::Breath] = ControlInfo { "Breath", &mBreath };
+        mControlInfo[(size_t)PhysicalControl::Volume] = ControlInfo { "VolPot", &mVolumePot };
+        mControlInfo[(size_t)PhysicalControl::Pitch] = ControlInfo { "Pitch", &mPitchStrip };
+        mControlInfo[(size_t)PhysicalControl::JoyX] = ControlInfo { "JoyX", &mJoyX };
+        mControlInfo[(size_t)PhysicalControl::JoyY] = ControlInfo { "JoyY", &mJoyY };
 
-        mSwitchInfo[(size_t)PhysicalSwitch::CPBack] = SwitchInfo { "CPBack", &mRHMCP.mButtons[0] };
-        mSwitchInfo[(size_t)PhysicalSwitch::CPOk] = SwitchInfo { "CPOk", &mRHMCP.mButtons[1] };
-        mSwitchInfo[(size_t)PhysicalSwitch::CPToggleUp] = SwitchInfo { "CPToggleUp", &mToggleUp };
-        mSwitchInfo[(size_t)PhysicalSwitch::CPEnc] = SwitchInfo { "CPEnc", &mRHMCP.mButtons[2] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHx1] = SwitchInfo { "LHx1", &mLHMCP.mButtons[0] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHx2] = SwitchInfo { "LHx2", &mLHMCP.mButtons[1] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHx3] = SwitchInfo { "LHx3", &mLHMCP.mButtons[2] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHx4] = SwitchInfo { "LHx4", &mLHMCP.mButtons[3] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHEnc] = SwitchInfo { "LHEnc", &mLHMCP.mButtons[13] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHBack] = SwitchInfo { "LHBack", &mLHMCP.mButtons[11] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHOk] = SwitchInfo { "LHOk", &mLHMCP.mButtons[12] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHThx1] = SwitchInfo { "LHThx1", &mLHMCP.mButtons[14] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHThx2] = SwitchInfo { "LHThx2", &mLHMCP.mButtons[15] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHOct1] = SwitchInfo { "LHO1", &mLHMCP.mButtons[10] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHOct2] = SwitchInfo { "LHO2", &mLHMCP.mButtons[9] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHOct3] = SwitchInfo { "LHO3", &mLHMCP.mButtons[8] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHKey1] = SwitchInfo { "LHKey1", &mLHMCP.mButtons[7] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHKey2] = SwitchInfo { "LHKey2", &mLHMCP.mButtons[6] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHKey3] = SwitchInfo { "LHKey3", &mLHMCP.mButtons[5] };
-        mSwitchInfo[(size_t)PhysicalSwitch::LHKey4] = SwitchInfo { "LHKey4", &mLHMCP.mButtons[4] };
+        mControlInfo[(size_t)PhysicalControl::CPBack] = ControlInfo { "CPBack", &mRHMCP.mButtons[0] };
+        mControlInfo[(size_t)PhysicalControl::CPOk] = ControlInfo { "CPOk", &mRHMCP.mButtons[1] };
+        mControlInfo[(size_t)PhysicalControl::CPToggleUp] = ControlInfo { "CPToggleUp", &mToggleUp };
+        mControlInfo[(size_t)PhysicalControl::CPEncButton] = ControlInfo { "CPEncBtn", &mRHMCP.mButtons[2] };
+        mControlInfo[(size_t)PhysicalControl::LHx1] = ControlInfo { "LHx1", &mLHMCP.mButtons[0] };
+        mControlInfo[(size_t)PhysicalControl::LHx2] = ControlInfo { "LHx2", &mLHMCP.mButtons[1] };
+        mControlInfo[(size_t)PhysicalControl::LHx3] = ControlInfo { "LHx3", &mLHMCP.mButtons[2] };
+        mControlInfo[(size_t)PhysicalControl::LHx4] = ControlInfo { "LHx4", &mLHMCP.mButtons[3] };
+        mControlInfo[(size_t)PhysicalControl::LHEncButton] = ControlInfo { "LHEncBtn", &mLHMCP.mButtons[13] };
+        mControlInfo[(size_t)PhysicalControl::LHBack] = ControlInfo { "LHBack", &mLHMCP.mButtons[11] };
+        mControlInfo[(size_t)PhysicalControl::LHOk] = ControlInfo { "LHOk", &mLHMCP.mButtons[12] };
+        mControlInfo[(size_t)PhysicalControl::LHThx1] = ControlInfo { "LHThx1", &mLHMCP.mButtons[14] };
+        mControlInfo[(size_t)PhysicalControl::LHThx2] = ControlInfo { "LHThx2", &mLHMCP.mButtons[15] };
+        mControlInfo[(size_t)PhysicalControl::LHOct1] = ControlInfo { "LHO1", &mLHMCP.mButtons[10] };
+        mControlInfo[(size_t)PhysicalControl::LHOct2] = ControlInfo { "LHO2", &mLHMCP.mButtons[9] };
+        mControlInfo[(size_t)PhysicalControl::LHOct3] = ControlInfo { "LHO3", &mLHMCP.mButtons[8] };
+        mControlInfo[(size_t)PhysicalControl::LHKey1] = ControlInfo { "LHKey1", &mLHMCP.mButtons[7] };
+        mControlInfo[(size_t)PhysicalControl::LHKey2] = ControlInfo { "LHKey2", &mLHMCP.mButtons[6] };
+        mControlInfo[(size_t)PhysicalControl::LHKey3] = ControlInfo { "LHKey3", &mLHMCP.mButtons[5] };
+        mControlInfo[(size_t)PhysicalControl::LHKey4] = ControlInfo { "LHKey4", &mLHMCP.mButtons[4] };
 
-        mSwitchInfo[(size_t)PhysicalSwitch::RHTh1] = SwitchInfo { "RHTh1", &mRHMCP.mButtons[5] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHTh2] = SwitchInfo { "RHTh2", &mRHMCP.mButtons[6] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHTh3] = SwitchInfo { "RHTh3", &mRHMCP.mButtons[7] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHx1] = SwitchInfo { "RHx1", &mRHMCP.mButtons[4] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHx2] = SwitchInfo { "RHx2", &mRHMCP.mButtons[12] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHx3] = SwitchInfo { "RHx3", &mRHMCP.mButtons[13] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHx4] = SwitchInfo { "RHx4", &mRHMCP.mButtons[14] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHx5] = SwitchInfo { "RHx5", &mRHMCP.mButtons[15] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHKey1] = SwitchInfo { "RHKey1", &mRHMCP.mButtons[8] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHKey2] = SwitchInfo { "RHKey2", &mRHMCP.mButtons[9] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHKey3] = SwitchInfo { "RHKey3", &mRHMCP.mButtons[10] };
-        mSwitchInfo[(size_t)PhysicalSwitch::RHKey4] = SwitchInfo { "RHKey4", &mRHMCP.mButtons[11] };
+        mControlInfo[(size_t)PhysicalControl::RHTh1] = ControlInfo { "RHTh1", &mRHMCP.mButtons[5] };
+        mControlInfo[(size_t)PhysicalControl::RHTh2] = ControlInfo { "RHTh2", &mRHMCP.mButtons[6] };
+        mControlInfo[(size_t)PhysicalControl::RHTh3] = ControlInfo { "RHTh3", &mRHMCP.mButtons[7] };
+        mControlInfo[(size_t)PhysicalControl::RHx1] = ControlInfo { "RHx1", &mRHMCP.mButtons[4] };
+        mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo { "RHx2", &mRHMCP.mButtons[12] };
+        mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo { "RHx3", &mRHMCP.mButtons[13] };
+        mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo { "RHx4", &mRHMCP.mButtons[14] };
+        mControlInfo[(size_t)PhysicalControl::RHx5] = ControlInfo { "RHx5", &mRHMCP.mButtons[15] };
+        mControlInfo[(size_t)PhysicalControl::RHKey1] = ControlInfo { "RHKey1", &mRHMCP.mButtons[8] };
+        mControlInfo[(size_t)PhysicalControl::RHKey2] = ControlInfo { "RHKey2", &mRHMCP.mButtons[9] };
+        mControlInfo[(size_t)PhysicalControl::RHKey3] = ControlInfo { "RHKey3", &mRHMCP.mButtons[10] };
+        mControlInfo[(size_t)PhysicalControl::RHKey4] = ControlInfo { "RHKey4", &mRHMCP.mButtons[11] };
     }
 
-    virtual size_t InputSource_GetSwitchCount() override { return SizeofStaticArray(mSwitchInfo); }
-    virtual SwitchInfo InputSource_GetSwitch(PhysicalSwitch index) override
+    virtual size_t InputSource_GetControlCount() override { return SizeofStaticArray(mControlInfo); }
+    virtual ControlInfo InputSource_GetControl(PhysicalControl index) override
     {
-        CCASSERT((size_t)index < SizeofStaticArray(mSwitchInfo));
-        return mSwitchInfo[(size_t)index];
-    }
-    virtual size_t InputSource_GetAxisCount() override { return SizeofStaticArray(mAxisInfo); }
-    virtual AxisInfo InputSource_GetAxis(PhysicalAxis index) override
-    {
-        CCASSERT((size_t)index < SizeofStaticArray(mAxisInfo));
-        return mAxisInfo[(size_t)index];
-    }
-    virtual size_t InputSource_GetEncoderCount() override { return SizeofStaticArray(mEncoderInfo); }
-    virtual EncoderInfo InputSource_GetEncoder(PhysicalEncoder index) override
-    {
-        CCASSERT((size_t)index < SizeofStaticArray(mEncoderInfo));
-        return mEncoderInfo[(size_t)index];
+        CCASSERT((size_t)index < SizeofStaticArray(mControlInfo));
+        return mControlInfo[(size_t)index];
     }
 
     CCEncoder<1, 2, 3> mRHEncoder;
@@ -169,9 +157,7 @@ struct BassoonoidControlMapper :
     AnalogPinControl mJoyY = AnalogPinControl { 39 };
     DigitalPinSwitch mToggleUp = DigitalPinSwitch { 30 };
 
-    SwitchInfo mSwitchInfo[(size_t)PhysicalSwitch::COUNT];
-    AxisInfo mAxisInfo[(size_t)PhysicalAxis::COUNT];
-    EncoderInfo mEncoderInfo[(size_t)PhysicalEncoder::COUNT];
+    ControlInfo mControlInfo[(size_t)PhysicalControl::COUNT];
 };
 
 } // namespace clarinoid

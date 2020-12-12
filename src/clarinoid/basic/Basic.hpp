@@ -1,7 +1,10 @@
 
 #pragma once
 
+#include "log.hpp"
+#include "assert.hpp"
 #include "Uptime.hpp"
+#include "Math.hpp"
 #include "function.hpp"
 #include "Memory.hpp"
 #include "Util.hpp"
@@ -14,7 +17,5 @@
 #include "CircularArray.hpp"
 #include "Taskman.hpp"
 #include "Tristate.hpp"
-#include "log.hpp"
-#include "assert.hpp"
 #include "SortedArray.hpp"
 #include "Control.hpp"

@@ -51,8 +51,8 @@ struct CCEWIMusicalState
     // convert that to musical state. i guess this is where the 
     // most interesting EWI-ish logic is.
 
-    float _incomingBreath = mInput->mBreath.CurrentValue01();
-    _incomingBreath = mAppSettings->mBreathCalibration.TranfsormValue01(_incomingBreath);
+    float _incomingBreath = mInput->mBreath.CurrentValue01(); // this is actually the transformed value.
+    //_incomingBreath = mAppSettings->mBreathCalibration.TranfsormValue01(_incomingBreath);
     mCurrentBreath01.Update(_incomingBreath);
 
     // if (nUpdates == 0 || mPressureSensingThrottle.IsReady())
@@ -107,7 +107,7 @@ struct CCEWIMusicalState
     bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > 0.005;//mAppSettings->mBreathCalibration.mNoteOnThreshold;
 
     mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
-    mNewState.mVelocity = 100; // TODO
+    mNewState.mVelocity = 100;
 
     mNewState.mHarmPatch = mAppSettings->mGlobalHarmPreset;
     mNewState.mSynthPatch = mAppSettings->mGlobalSynthPreset; 
@@ -142,7 +142,6 @@ struct CCEWIMusicalState
     }
 
 #ifdef THREE_BUTTON_OCTAVES
-    // todo.
     newNote += 0;
     if (mInput->mKeyOct1.CurrentValue()) {
       newNote -= 12;

@@ -3,18 +3,10 @@
 #include <limits>
 
 #include "Memory.hpp"
-//#include "Taskman.hpp"
-//#include "FPS.hpp"
-//#include "Profiler.hpp"
 #include "Property.hpp"
 
 namespace clarinoid
 {
-  bool FloatEquals(float f1, float f2, float eps = 0.00001f)
-  {
-    return fabs(f1 - f2) < eps;
-  }
-
     struct PointF
     {
       float x;
@@ -69,12 +61,6 @@ struct StaticInit
   }
 };
 
-uint16_t ClampUint32ToUint16(uint32_t a) {
-  if (a > std::numeric_limits<uint16_t>::max())
-    return std::numeric_limits<uint16_t>::max();
-  return (uint16_t)a;
-}
-
 
   template<typename T>
   struct array_view
@@ -105,111 +91,6 @@ constexpr auto array_of(T&&... t)
 {
     return {{ std::forward<T>(t)... }};
 }
-
-
-template<typename T, T divisor>
-void DivRem(T val, T& wholeParts, T& remainder)
-{
-  wholeParts = val / divisor;
-  remainder = val % divisor;
-}
-
-
-template<size_t divBits, typename Tval, typename Tremainder>
-void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)
-{
-  static_assert(std::is_integral<Tval>::value, "must be integral");
-  static_assert(std::is_integral<Tremainder>::value, "must be integral");
-  auto mask = (1 << divBits) - 1;
-  wholeParts = val / mask;
-  //auto rem = val & mask;// wish this would work but it doesn't.
-  auto rem = (val - (wholeParts * mask));
-  CCASSERT((Tremainder)std::max((decltype(rem))0, rem) <= std::numeric_limits<Tremainder>::max());
-  remainder = (Tremainder)rem;
-}
-
-
-template<int period>
-int ModularDistance(int a, int b)
-{
-  a = RotateIntoRange(a, period);
-  b = RotateIntoRange(b, period);
-  if (a > b) {
-    return std::min(a - b, b + period - a);
-  }
-  return std::min(b - a, a + period - b);
-}
-
-struct SawWave
-{
-  uint32_t mFrequencyMicros = 1000000; // just 1 hz frequency default
-  void SetFrequency(float f)
-  {
-    mFrequencyMicros = (uint32_t)(1000000.0f / f);
-  }
-  float GetValue01(uint64_t tmicros) const
-  {
-    float r = (float)(tmicros % mFrequencyMicros);
-    return r / mFrequencyMicros;
-  }
-};
-
-struct PulseWave
-{
-  float mFrequency;
-  uint32_t mFrequencyMicros;
-  float mDutyCycle01;
-  uint32_t mDutyCycleMicros;
-
-  void SetFrequencyAndDutyCycle01(float freq, float dc01)
-  {
-    mFrequency = freq;
-    mFrequencyMicros = (uint32_t)(1000000.0f / freq);
-    mDutyCycle01 = dc01;
-    mDutyCycleMicros = (uint32_t)(dc01 * mFrequencyMicros);
-  }
-
-  void SetFrequency(float f)
-  {
-    SetFrequencyAndDutyCycle01(f, mDutyCycle01);
-  }
-
-  void SetDutyCycle01(float dc01)
-  {
-    SetFrequencyAndDutyCycle01(mFrequency, dc01);
-  }
-
-  PulseWave()
-  {
-    SetFrequencyAndDutyCycle01(1.0f, 0.5f);
-  }
-
-  int GetValue01Int(uint64_t tmicros) const
-  {
-
-    uint64_t pos = (tmicros % mFrequencyMicros);
-    return (pos < mDutyCycleMicros) ? 0 : 1;
-  }
-};
-
-// for a triangle, it's just a modified sawtooth.
-struct TriangleWave
-{
-  uint32_t mFrequencyMicros;
-  void SetFrequency(float f)
-  {
-    mFrequencyMicros = (uint32_t)(1000000.0f / f);
-  }
-  TriangleWave() { SetFrequency(1.0f); }
-  float GetValue01(uint64_t tmicros) const
-  {
-    float r = (float)(tmicros % mFrequencyMicros);
-    r = r / mFrequencyMicros; // saw wave
-    r -= .5f; // 1st half the wave is negative.
-    r = ::fabsf(r); // it's a triangle but half height.
-    return r * 2;
-  }
-};
 
 
 

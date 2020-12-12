@@ -9,7 +9,7 @@
 namespace clarinoid
 {
 
-PROGMEM const char gClarinoidVersion[] = "BASSOONOID v0.01";
+const char gClarinoidVersion[] = "BASSOONOID v0.01";
 
 static const size_t MAX_SYNTH_VOICES = 6;
 
@@ -24,21 +24,19 @@ static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 16;
 
-//static const size_t HARDWARE_BUTTON_COUNT = 33; // 2xmcp23017, 1 toggle switch
-//static const size_t HARDWARE_AXIS_COUNT = 5;// breath, vol, joyx, joyy, pitchbend
-//static const size_t HARDWARE_ENCODER_COUNT = 3;
+static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
 
-enum class PhysicalSwitch : uint8_t
+enum class PhysicalControl : uint8_t
 {
     CPBack,
     CPOk,
     CPToggleUp,
-    CPEnc,
+    CPEncButton,
     LHx1,
     LHx2,
     LHx3,
     LHx4,
-    LHEnc,
+    LHEncButton,
     LHBack,
     LHOk,
     LHThx1,
@@ -53,8 +51,8 @@ enum class PhysicalSwitch : uint8_t
     RHTh1,
     RHTh2,
     RHTh3,
-    //RHJoy,
-    //RHEnc,
+    //RHJoyButton,
+    //RHEncButton,
     RHx1,
     RHx2,
     RHx3,
@@ -64,31 +62,22 @@ enum class PhysicalSwitch : uint8_t
     RHKey2,
     RHKey3,
     RHKey4,
-    COUNT,
-};
 
-enum class PhysicalAxis : uint8_t
-{
     Breath,
     Pitch,
     JoyX,
     JoyY,
     Volume,
-    COUNT,
-};
 
-enum class PhysicalEncoder : uint8_t
-{
-    CP,
-    LH,
-    RH,
+    CPEnc,
+    LHEnc,
+    RHEnc,
+
     COUNT,
 };
 
 // assignable slots.
-static const size_t MAX_BUTTON_MAPPINGS = 64;
-static const size_t MAX_AXIS_MAPPINGS = 32;
-static const size_t MAX_ENCODER_MAPPINGS = 32;
+static const size_t MAX_CONTROL_MAPPINGS = 64;
 
 } // namespace clarinoid
 
@@ -159,26 +148,26 @@ struct BassoonoidApp
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
-        mAppSettings.mButtonMappings[0] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHOk, ButtonMapping::Destination::MenuOK);
-        mAppSettings.mButtonMappings[1] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHBack, ButtonMapping::Destination::MenuBack);
+        mAppSettings.mControlMappings[0] = ControlMapping::MomentaryMapping(PhysicalControl::LHOk, ControlMapping::Function::MenuOK);
+        mAppSettings.mControlMappings[1] = ControlMapping::MomentaryMapping(PhysicalControl::LHBack, ControlMapping::Function::MenuBack);
 
-        mAppSettings.mButtonMappings[2] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHOct1, ButtonMapping::Destination::Oct1);
-        mAppSettings.mButtonMappings[3] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHOct2, ButtonMapping::Destination::Oct2);
-        mAppSettings.mButtonMappings[4] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHOct3, ButtonMapping::Destination::Oct3);
+        mAppSettings.mControlMappings[2] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct1, ControlMapping::Function::Oct1);
+        mAppSettings.mControlMappings[3] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct2, ControlMapping::Function::Oct2);
+        mAppSettings.mControlMappings[4] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct3, ControlMapping::Function::Oct3);
 
-        mAppSettings.mButtonMappings[5] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHKey1, ButtonMapping::Destination::LH1);
-        mAppSettings.mButtonMappings[6] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHKey2, ButtonMapping::Destination::LH2);
-        mAppSettings.mButtonMappings[7] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHKey3, ButtonMapping::Destination::LH3);
-        mAppSettings.mButtonMappings[8] = ButtonMapping::MomentaryMapping(PhysicalSwitch::LHKey4, ButtonMapping::Destination::LH4);
+        mAppSettings.mControlMappings[5] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey1, ControlMapping::Function::LH1);
+        mAppSettings.mControlMappings[6] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey2, ControlMapping::Function::LH2);
+        mAppSettings.mControlMappings[7] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey3, ControlMapping::Function::LH3);
+        mAppSettings.mControlMappings[8] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey4, ControlMapping::Function::LH4);
 
-        mAppSettings.mButtonMappings[9] = ButtonMapping::MomentaryMapping(PhysicalSwitch::RHKey1, ButtonMapping::Destination::RH1);
-        mAppSettings.mButtonMappings[10] = ButtonMapping::MomentaryMapping(PhysicalSwitch::RHKey2, ButtonMapping::Destination::RH2);
-        mAppSettings.mButtonMappings[11] = ButtonMapping::MomentaryMapping(PhysicalSwitch::RHKey3, ButtonMapping::Destination::RH3);
-        mAppSettings.mButtonMappings[12] = ButtonMapping::MomentaryMapping(PhysicalSwitch::RHKey4, ButtonMapping::Destination::RH4);
+        mAppSettings.mControlMappings[9] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey1, ControlMapping::Function::RH1);
+        mAppSettings.mControlMappings[10] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey2, ControlMapping::Function::RH2);
+        mAppSettings.mControlMappings[11] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey3, ControlMapping::Function::RH3);
+        mAppSettings.mControlMappings[12] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
 
-        mAppSettings.mAxisMappings[0] = AxisMapping::SimpleMapping(PhysicalAxis::Breath, AxisMapping::Destination::Breath);
+        mAppSettings.mControlMappings[0] = ControlMapping::BreathMapping(PhysicalControl::Breath, ControlMapping::Function::Breath);
 
-        mAppSettings.mEncoderMappings[0] = EncoderMapping::SimpleMapping(PhysicalEncoder::LH, EncoderMapping::Destination::MenuScroll);
+        mAppSettings.mControlMappings[0] = ControlMapping::MenuScrollMapping(PhysicalControl::LHEnc, ControlMapping::Function::MenuScrollA);
 
         mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
         mMusicalStateTask.Init();

@@ -31,7 +31,7 @@ struct ListControl
 
   void Init()
   {
-    mEnc.SetSource(pEncoder);
+    //mEnc.SetSource(pEncoder);
     //mEnc.SetSource(mControlMapper->MenuEncoder());
   }
   
@@ -59,7 +59,7 @@ struct ListControl
   
   virtual void Update()
   {
-    mEnc.Update();
+    mEnc.Update(pEncoder);
     CCASSERT(mpList);
     auto c = mpList->List_GetItemCount();
     if (c == 0)

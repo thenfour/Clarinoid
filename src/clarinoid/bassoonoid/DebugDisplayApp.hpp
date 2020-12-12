@@ -223,21 +223,21 @@ struct DebugDisplayApp :
     LabelSettingItem mCPEnc = { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
-        String ret = String("CP Encoder raw:") + pThis->mControls.mCPEncoder.CurrentValue().RawValue;
+        String ret = String("CP Encoder raw:") + pThis->mControls.mCPEncoder.RawValue();
         return ret;
     }, AlwaysEnabledWithCapture, this };
 
     LabelSettingItem mLHEnc = { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
-        String ret = String("LH Encoder raw:") + pThis->mControls.mLHEncoder.CurrentValue().RawValue;
+        String ret = String("LH Encoder raw:") + pThis->mControls.mLHEncoder.RawValue();
         return ret;
     }, AlwaysEnabledWithCapture, this };
 
     LabelSettingItem mRHEnc = { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
-        String ret = String("RH Encoder raw:") + pThis->mControls.mRHEncoder.CurrentValue().RawValue;
+        String ret = String("RH Encoder raw:") + pThis->mControls.mRHEncoder.RawValue();
         return ret;
     }, AlwaysEnabledWithCapture, this };
 
@@ -254,11 +254,6 @@ struct DebugDisplayApp :
         String ret = String("Synth poly:") + (pThis->mMusicalStateTask.mSynth.mCurrentPolyphony);
         return ret;
     }, AlwaysEnabledWithCapture, this };
-
-// AudioProcessorUsage();
-// AudioProcessorUsageMax();
-// AudioMemoryUsage();
-// AudioMemoryUsageMax();
 
     LabelSettingItem mAudioProcessorUsage = { [](void* cap)
     {

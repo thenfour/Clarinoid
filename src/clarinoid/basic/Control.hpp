@@ -3,12 +3,148 @@
 
 namespace clarinoid
 {
-    struct ISwitch
+    struct ControlValueDatatype
+    {
+        enum class Type : uint8_t
+        {
+            Bool,
+            Int,
+            Enum,
+            Float01,  // unipolar float with 0-1 bounds.
+            FloatN11, // bipolar float -1 to 1 bounds.
+        };
+
+        Type mDatatype = Type::Float01;
+        GenericEnumItemInfo *mEnumInfo = nullptr;
+    };
+    // a control mapping will output a value. this value.
+    // the point is to be able to map any control to any function/destination. so it means we need a variant of sorts
+    // that all mappable controls and functions can understand and work with. it's by doing this that we could assign
+    // a potentiometer to octave transposition, or a push button to master tuning or something.
+    struct ControlValue
+    {
+    private:
+        float mVal = 0.0f;
+
+    public:
+        // bool Equals(int n) const // there are different ways to treat int, so don't expose this.
+        // {
+        //     return FloatRoundedEqualsInt(mVal, n);
+        // }
+        bool Equals(bool n) const
+        {
+            return FloatRoundedEqualsInt(mVal, n ? 1 : 0);
+        }
+        bool Equals(float f) const
+        {
+            return FloatEquals(mVal, f, 0.0001f); // seems reasonable. a 16-bit input would be a precision of .0001525902189669642
+        }
+        bool Equals(const ControlValue &v)
+        {
+            return Equals(v.mVal);
+        }
+
+        bool AsBool() const
+        {
+            return Equals(true);
+        }
+        int AsRoundedInt() const
+        {
+            return FloatRoundToInt(mVal);
+        }
+        int AsFlooredInt() const
+        {
+            return (int)::floorf(mVal);
+        }
+        float AsFloat01() const
+        {
+            return mVal;
+        }
+
+        static ControlValue BoolValue(bool b)
+        {
+            ControlValue ret;
+            ret.mVal = b ? 1.0f : 0.0f;
+            return ret;
+        }
+        static ControlValue IntValue(int n)
+        {
+            ControlValue ret;
+            ret.mVal = (float)n;
+            return ret;
+        }
+        static ControlValue FloatValue(float f)
+        {
+            ControlValue ret;
+            ret.mVal = f;
+            return ret;
+        }
+
+    };
+
+    struct IControl
+    {
+        virtual ControlValue GetControlValue() const = 0;
+    };
+
+    // generic control reader, for use by the control mapping system to determine triggers for example.
+    struct ControlReader
+    {
+    private:
+        const IControl *mC = nullptr;
+        bool mDirty = false;
+        ControlValue mPreviousValue;
+        ControlValue mCurrentValue;
+        bool mFirst = true;
+
+    public:
+        // Each call to Update() frames Dirty / Previous / Current
+        void Update(const IControl *c)
+        {
+            if (mC != c)
+            {
+                // first time seeing this control.
+                mC = c;
+                mCurrentValue = mC->GetControlValue();
+                mPreviousValue = mCurrentValue;
+                mDirty = false;
+                mFirst = false;
+                return;
+            }
+
+            mPreviousValue = mCurrentValue;
+            mCurrentValue = mC->GetControlValue();
+            mDirty = mPreviousValue.Equals(mCurrentValue);
+        }
+
+        // assuming it's a switch-like control,
+        bool IsCurrentlyPressed() const { return mCurrentValue.AsBool(); }
+        bool IsCurrentlyUnpressed() const { return !IsCurrentlyPressed(); }
+        bool IsNewlyPressed() const { return mCurrentValue.AsBool() && mDirty; }
+        bool IsNewlyUnpressed() const { return !mCurrentValue.AsBool() && mDirty; }
+        bool IsDirty() const { return mDirty; }
+
+        // assuming it's an axis-like control,
+        float GetCurrentFloatValue01() const { return mCurrentValue.AsFloat01(); }
+        float GetPreviousFloatValue01() const { return mPreviousValue.AsFloat01(); }
+
+        // assuming encoder-like,
+        int GetIntDelta() const { return mCurrentValue.AsFlooredInt() - mPreviousValue.AsFlooredInt(); }
+        float GetFloatDelta() const { return mCurrentValue.AsFloat01() - mPreviousValue.AsFloat01(); }
+        int GetIntValue() const { return mCurrentValue.AsFlooredInt(); }
+        float GetFloatValue() const { return mCurrentValue.AsFloat01(); }
+    };
+
+    struct ISwitch : IControl
     {
         virtual bool CurrentValue() const
         {
             CCASSERT(false);
             return false;
+        }
+        virtual ControlValue GetControlValue() const override
+        {
+            return ControlValue::BoolValue(CurrentValue());
         }
     };
 
@@ -23,23 +159,25 @@ namespace clarinoid
         bool mFirst = true;
 
     public:
-        explicit SwitchControlReader(ISwitch *c) : mC(c)
-        {
-            // NB: don't update in ctor because it's a pure virtual fn call :/
-        }
+        // explicit SwitchControlReader(ISwitch *c) : mC(c)
+        // {
+        //     // NB: don't update in ctor because it's a pure virtual fn call :/
+        // }
 
-        explicit SwitchControlReader()
-        {
-        }
+        // explicit SwitchControlReader()
+        // {
+        // }
 
-        void SetSource(ISwitch *c)
-        {
-            mC = c;
-            mFirst = true;
-        }
+        // void SetSource(ISwitch *c)
+        // {
+        //     if (mC == c)
+        //         return;
+        //     mC = c;
+        //     mFirst = true;
+        // }
 
         // Each call to Update() frames Dirty / Previous / Current
-        void Update()
+        void Update(ISwitch *c)
         {
             if (mFirst)
             {
@@ -66,19 +204,12 @@ namespace clarinoid
         bool WasUnpressedState() const { return !mPreviousValue; }
     };
 
-    struct EncoderState
+    struct IEncoder : IControl
     {
-        int RawValue;
-        float FloatValue; // divided by TStep
-        int CommonValue;  // rounded version of FloatValue
-    };
-
-    struct IEncoder
-    {
-        virtual EncoderState CurrentValue() const
+        virtual float CurrentValue() const = 0;
+        virtual ControlValue GetControlValue() const
         {
-            CCASSERT(false);
-            return {};
+            return ControlValue::FloatValue(CurrentValue());
         }
     };
 
@@ -87,62 +218,63 @@ namespace clarinoid
     private:
         IEncoder *mC = nullptr;
         bool mDirty = true;
-        bool mFirst = true;
-        EncoderState mPreviousValue;
-        EncoderState mCurrentValue;
+        //bool mFirst = true;
+        ControlValue mPreviousValue;
+        ControlValue mCurrentValue;
 
     public:
-        explicit EncoderReader(IEncoder *enc) : mC(enc)
-        {
-        }
-        EncoderReader()
-        {
-        }
-        void SetSource(IEncoder *enc)
-        {
-            mC = enc;
-            mFirst = true; // mark to reset everything.
-        }
+        // explicit EncoderReader(IEncoder *enc) : mC(enc)
+        // {
+        // }
+        // EncoderReader()
+        // {
+        // }
+        // void SetSource(IEncoder *enc)
+        // {
+        //     if (mC == enc)
+        //         return;
+        //     mC = enc;
+        //     mFirst = true; // mark to reset everything.
+        // }
 
         void ClearState()
         {
+            mC = nullptr;
             // resets state so that there's no dirtiness.
-            mFirst = true;
-            Update();
+            // mFirst = true;
+            // Update();
         }
 
-        void Update()
+        void Update(IEncoder *enc)
         {
-            if (mFirst)
+            if (mC != enc)
             {
-                mCurrentValue = mC->CurrentValue();
+                mC = enc;
+                mCurrentValue = mC->GetControlValue();
                 mPreviousValue = mCurrentValue;
                 mDirty = false; // since current == prev, plus we don't want everything to act like you just changed stuff at the startup.
-                mFirst = false;
-                //Serial.println(String("enc reader ") + ((uintptr_t)this) + " updated for the first time with raw val " + mCurrentValue.RawValue);
+                //mFirst = false;
                 return;
             }
             mPreviousValue = mCurrentValue;
-            mCurrentValue = mC->CurrentValue();
-            mDirty = (mPreviousValue.RawValue != mCurrentValue.RawValue);
-            //Serial.println(String("enc reader ") + ((uintptr_t)this) + " updated with raw val " + mCurrentValue.RawValue + ", prev=" + mPreviousValue.RawValue);
+            mCurrentValue = mC->GetControlValue();
+            mDirty = mPreviousValue.Equals(mCurrentValue);
         }
 
         bool IsDirty() const { return mDirty; }
-        int GetIntDelta() const { return mCurrentValue.CommonValue - mPreviousValue.CommonValue; }
-        float GetFloatDelta() const { return mCurrentValue.FloatValue - mPreviousValue.FloatValue; }
-        int GetIntValue() const { return mCurrentValue.CommonValue; }
-        float GetFloatValue() const { return mCurrentValue.FloatValue; }
+        int GetIntDelta() const { return mCurrentValue.AsFlooredInt() - mPreviousValue.AsFlooredInt(); }
+        float GetFloatDelta() const { return mCurrentValue.AsFloat01() - mPreviousValue.AsFloat01(); }
+        int GetIntValue() const { return mCurrentValue.AsFlooredInt(); }
+        float GetFloatValue() const { return mCurrentValue.AsFloat01(); }
     };
 
-    struct IAnalogAxis
+    struct IAnalogAxis : IControl
     {
         virtual float CurrentValue01() const = 0;
+        virtual ControlValue GetControlValue() const
+        {
+            return ControlValue::FloatValue(CurrentValue01());
+        }
     };
-
-    // struct NullBreathSensor : IAnalogControl
-    // {
-    //   virtual float CurrentValue01() const override { return 0; }
-    // };
 
 } // namespace clarinoid

@@ -28,7 +28,6 @@ namespace clarinoid
     int64_t ElapsedMillisI() const { return mMicros / 1000; }
     float ElapsedSeconds() const // note: LOSSY.
     {
-      // todo: is there a more efficient way?
       double d = (double)mMicros;
       d /= 1000000;// convert micros to seconds.
       return (float)d;
@@ -101,35 +100,6 @@ struct Stopwatch
     return mPauseTime;
   }
 
-  // uint32_t ElapsedMillis() {
-  //   //return (uint32_t) ElapsedMicros() / 1000;
-  // }
-
-  // uint64_t ElapsedMicros() {
-  //   if (mIsRunning) {
-  //     uint32_t now = micros();
-  //     if (now < mStartTime) {
-  //       mExtra += 0xffffffff - mStartTime;
-  //       mStartTime = 0;
-  //     }
-  //     return (now - mStartTime) + mExtra;
-  //   }
-
-  //   // for paused, just return the pause time.
-  //   return mPauseMicros;
-  // }
-
-  // void SetMicros(uint64_t m)
-  // {
-  //   if (mIsRunning) {
-  //     Restart(m);
-  //     return;
-  //   }
-
-  //   // for paused, just set paused time.
-  //   mPauseMicros = m;
-  // }
-
   void Pause() {
     if (!mIsRunning) {
       return;
@@ -147,50 +117,6 @@ struct Stopwatch
   }
 };
 
-
-// template<uint32_t TperiodMicros>
-// struct PeriodicTimer
-// {
-//   Stopwatch mSw;
-
-//   void Reset() {
-//     mSw.Restart(0);
-//   }
-
-//   float GetBeatFloat() {
-//     float f = abs(float(mSw.ElapsedMicros()) / TperiodMicros);
-//     return f;
-//   }
-//   // returns 0-1 the time since the last "beat".
-//   float GetBeatFrac() {
-//     float f = GetBeatFloat();
-//     return f - floor(f); // fractional part only.
-//   }
-//   int GetBeatInt() {
-//     float f = GetBeatFloat();
-//     return (int)floor(f);
-//   }
-
-//   int32_t BeatsToMicros(float b) const {
-//     return b * TperiodMicros;
-//   }
-// };
-
-
-// constexpr uint32_t MillisToMicros(uint32_t ms)
-// {
-//   return ms * 1000;
-// }
-
-// constexpr uint32_t Micros(uint32_t ms)
-// {
-//   return ms;
-// }
-
-// constexpr TimeSpan FPSToTimeSpan(uint32_t fps)
-// {
-//   return 1000000 / fps;
-// }
 
 
 // TODO: support smoothly changing periods, not jerky behavior like this.

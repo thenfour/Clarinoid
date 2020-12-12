@@ -25,23 +25,23 @@ struct SystemSettingsApp :
     AlwaysEnabled
     };
 
-    BreathCalibrationSettingItem mBreath = {
-      Property<BreathCalibrationSettings> {
-        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; return pThis->mAppSettings->mBreathCalibration; }, // getter
-        [](void* cap, const BreathCalibrationSettings& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mBreathCalibration = x; },
-        this
-      },
-      [](void* cap) {
-        auto pThis = (SystemSettingsApp*)cap;
-        return pThis->mInput->mBreath.CurrentValue01();
-      },
-      this
-    };
+    // BreathCalibrationSettingItem mBreath = {
+    //   Property<BreathCalibrationSettings> {
+    //     [](void* cap) { auto pThis = (SystemSettingsApp*)cap; return pThis->mAppSettings->mBreathCalibration; }, // getter
+    //     [](void* cap, const BreathCalibrationSettings& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mBreathCalibration = x; },
+    //     this
+    //   },
+    //   [](void* cap) {
+    //     auto pThis = (SystemSettingsApp*)cap;
+    //     return pThis->mInput->mBreath.CurrentValue01();
+    //   },
+    //   this
+    // };
 
-  ISettingItem* mArray[2] =
+  ISettingItem* mArray[1] =
   {
     &mDimDisplay,
-    &mBreath,
+    //&mBreath,
   };
   SettingsList mRootList = { mArray };
 

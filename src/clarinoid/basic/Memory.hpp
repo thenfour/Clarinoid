@@ -5,51 +5,6 @@
 namespace clarinoid
 {
 
-static int RotateIntoRange(const int& val, const int& itemCount) {
-  CCASSERT(itemCount > 0);
-  int ret = val;
-  while (ret < 0) {
-    ret += itemCount; // todo: optimize
-  }
-  return ret % itemCount;
-}
-
-static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount) {
-  CCASSERT(itemCount > 0);
-  while (val < 0) {
-    val += itemCount; // todo: optimize
-  }
-  return ((uint8_t)(val)) % itemCount;
-}
-
-// correction gets set to the # of rotations, neg, signed. basically an "adjustment".
-static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount, int8_t& correction) {
-  CCASSERT(itemCount > 0);
-  correction = 0;
-  while (val < 0) {
-    val += itemCount; // todo: optimize
-    --correction;
-  }
-  while (val >= itemCount) {
-    val -= itemCount; // todo: optimize
-    ++correction;
-  }
-  return val;
-}
-
-static inline int AddConstrained(int orig, int delta, int min_, int max_) {
-  CCASSERT(max_ >= min_);
-  if (max_ <= min_)
-    return min_;
-  int ret = orig + delta;
-  int period = max_ - min_ + 1; // if [0,0], add 1 each time to reach 0. If [3,6], add 4.
-  while (ret < min_)
-    ret += period;
-  while (ret > max_)
-    ret -= period;
-  return ret;
-}
-
 
 //////////////////////////////////////////////////////////////////////
 
@@ -75,15 +30,6 @@ void set(T *dest, size_t elements, T val)
     ++dest;
   }
 }
-
-// assumes T is integral
-// performs integral division but with common 0.5 rounding
-template<typename T>
-T idiv_round(T dividend, T divisor)
-{
-    return (dividend + (divisor / 2)) / divisor;
-}
-
 
 struct Ptr
 {
