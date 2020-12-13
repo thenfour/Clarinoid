@@ -52,6 +52,11 @@ namespace clarinoid
       return mControlInfo[(size_t)index];
     }
 
+    virtual void InputSource_ShowToast(const String& s) override
+    {
+      log("TOAST : %s", s.mStr.str().c_str());
+    }
+
     TestEncoder mEncoder1;
     TestEncoder mEncoder2;
     TestAxis mAxis1;
@@ -66,6 +71,7 @@ namespace clarinoid
 
   void TestInputDelegator()
   {
+    {
       InputDelegator id;
       TestControlMapper tcm;
       AppSettings as;
@@ -426,6 +432,39 @@ namespace clarinoid
       Test(id.mMenuBack.CurrentValue());
       Test(!backReader.IsNewlyPressed());
       Test(!backReader.IsNewlyUnpressed());
+    }
+
+    // test "transpose" style mapping.
+    {
+      InputDelegator id;
+      TestControlMapper tcm;
+      AppSettings as;
+
+      id.Init(&as, &tcm);
+
+      as.mControlMappings[0] = ControlMapping::ButtonIncrementMapping(PhysicalControl::Button1, ControlMapping::Function::SynthPreset, 1.0f);
+
+      tcm.mButton1.mValue = false;
+      as.mGlobalSynthPreset = 0; // ensure initial state
+      id.Update();
+      TestEq(as.mGlobalSynthPreset, 0); // not triggered yet.
+
+      tcm.mButton1.mValue = true;
+      id.Update();
+      TestEq(as.mGlobalSynthPreset, 1); // triggered
+
+      tcm.mButton1.mValue = true;
+      id.Update();
+      TestEq(as.mGlobalSynthPreset, 1); // not triggered 
+
+      tcm.mButton1.mValue = false;
+      id.Update();
+      TestEq(as.mGlobalSynthPreset, 1); // not triggered
+
+      tcm.mButton1.mValue = true;
+      id.Update();
+      TestEq(as.mGlobalSynthPreset, 2); // triggered
+    }
   }
 
 } // namespace clarinoid

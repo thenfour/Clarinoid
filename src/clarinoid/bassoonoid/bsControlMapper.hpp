@@ -24,6 +24,13 @@ struct BassoonoidControlMapper :
     TimeSpan mTimingAnalog;
     TimeSpan mTimingDigital;
 
+    CCDisplay* mDisplay = nullptr;
+
+    void Init(CCDisplay* display)
+    {
+        mDisplay = display;
+    }
+
     virtual void TaskRun() override
     {
         NoInterrupts _ni;
@@ -109,6 +116,11 @@ struct BassoonoidControlMapper :
     {
         CCASSERT((size_t)index < SizeofStaticArray(mControlInfo));
         return mControlInfo[(size_t)index];
+    }
+
+    virtual void InputSource_ShowToast(const String& s) 
+    {
+        mDisplay->ShowToast(s);
     }
 
     CCEncoder<1, 2, 3> mRHEncoder;

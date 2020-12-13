@@ -178,6 +178,7 @@ public:
   String mToastMsg;
 
   void ShowToast(const String& msg) {
+    //Serial.println(String("toast: ") +msg);
     mIsShowingToast = true;
     mToastMsg = msg;
     mToastTimer.Restart();

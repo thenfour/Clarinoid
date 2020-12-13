@@ -37,109 +37,112 @@ namespace clarinoid
 {
 
 
-struct BassoonoidApp
-{
-    Leds1 mLed1;
-    Leds2 mLed2;
-    BreathLED mBreathLED;
-    InputDelegator mInputDelegator;
-    BassoonoidControlMapper mControlMapper;
-    CCDisplay mDisplay;
-    AppSettings mAppSettings;
-
-    MusicalStateTask mMusicalStateTask;
-
-    PerformanceApp mPerformanceApp;
-    DebugDisplayApp mDebugDisplayApp;
-    SystemSettingsApp mSystemSettingsApp;
-
-    BassoonoidApp() :
-        mDisplay(128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 44 * 1000000UL),
-        mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
-        mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
-        mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
-        mSystemSettingsApp(mDisplay)
+    struct BassoonoidApp
     {
-    }
+        Leds1 mLed1;
+        Leds2 mLed2;
+        BreathLED mBreathLED;
+        InputDelegator mInputDelegator;
+        BassoonoidControlMapper mControlMapper;
+        CCDisplay mDisplay;
+        AppSettings mAppSettings;
 
-    void Main()
-    {
-        IDisplayApp* allApps[] =
+        MusicalStateTask mMusicalStateTask;
+
+        PerformanceApp mPerformanceApp;
+        DebugDisplayApp mDebugDisplayApp;
+        SystemSettingsApp mSystemSettingsApp;
+
+        BassoonoidApp() : mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 44 * 1000000UL),
+                          mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
+                          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
+                          mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
+                          mSystemSettingsApp(mDisplay)
         {
-            &mPerformanceApp,
-            &mDebugDisplayApp,
-            &mSystemSettingsApp,
-        };
+        }
 
-        mInputDelegator.Init(&mAppSettings, &mControlMapper);
+        void Main()
+        {
+            mControlMapper.Init(&mDisplay);
 
-        mAppSettings.mControlMappings[0] = ControlMapping::MomentaryMapping(PhysicalControl::LHOk, ControlMapping::Function::MenuOK);
-        mAppSettings.mControlMappings[1] = ControlMapping::MomentaryMapping(PhysicalControl::LHBack, ControlMapping::Function::MenuBack);
+            IDisplayApp *allApps[] =
+                {
+                    &mPerformanceApp,
+                    &mDebugDisplayApp,
+                    &mSystemSettingsApp,
+                };
 
-        mAppSettings.mControlMappings[2] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct1, ControlMapping::Function::Oct1);
-        mAppSettings.mControlMappings[3] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct2, ControlMapping::Function::Oct2);
-        mAppSettings.mControlMappings[4] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct3, ControlMapping::Function::Oct3);
+            mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
-        mAppSettings.mControlMappings[5] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey1, ControlMapping::Function::LH1);
-        mAppSettings.mControlMappings[6] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey2, ControlMapping::Function::LH2);
-        mAppSettings.mControlMappings[7] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey3, ControlMapping::Function::LH3);
-        mAppSettings.mControlMappings[8] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey4, ControlMapping::Function::LH4);
+            mAppSettings.mControlMappings[0] = ControlMapping::MomentaryMapping(PhysicalControl::LHOk, ControlMapping::Function::MenuOK);
+            mAppSettings.mControlMappings[1] = ControlMapping::MomentaryMapping(PhysicalControl::LHBack, ControlMapping::Function::MenuBack);
 
-        mAppSettings.mControlMappings[9] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey1, ControlMapping::Function::RH1);
-        mAppSettings.mControlMappings[10] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey2, ControlMapping::Function::RH2);
-        mAppSettings.mControlMappings[11] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey3, ControlMapping::Function::RH3);
-        mAppSettings.mControlMappings[12] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
+            mAppSettings.mControlMappings[2] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct1, ControlMapping::Function::Oct1);
+            mAppSettings.mControlMappings[3] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct2, ControlMapping::Function::Oct2);
+            mAppSettings.mControlMappings[4] = ControlMapping::MomentaryMapping(PhysicalControl::LHOct3, ControlMapping::Function::Oct3);
 
-        mAppSettings.mControlMappings[13] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
+            mAppSettings.mControlMappings[5] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey1, ControlMapping::Function::LH1);
+            mAppSettings.mControlMappings[6] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey2, ControlMapping::Function::LH2);
+            mAppSettings.mControlMappings[7] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey3, ControlMapping::Function::LH3);
+            mAppSettings.mControlMappings[8] = ControlMapping::MomentaryMapping(PhysicalControl::LHKey4, ControlMapping::Function::LH4);
 
-        mAppSettings.mControlMappings[14] = ControlMapping::TypicalEncoderMapping(PhysicalControl::LHEnc, ControlMapping::Function::MenuScrollA);
+            mAppSettings.mControlMappings[9] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey1, ControlMapping::Function::RH1);
+            mAppSettings.mControlMappings[10] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey2, ControlMapping::Function::RH2);
+            mAppSettings.mControlMappings[11] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey3, ControlMapping::Function::RH3);
+            mAppSettings.mControlMappings[12] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
 
-        mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
-        mMusicalStateTask.Init();
+            mAppSettings.mControlMappings[13] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
 
-        FunctionTask mDisplayTask1 { this, [](void* cap){
-            BassoonoidApp* pThis = (BassoonoidApp*)cap;
-            pThis->mDisplay.UpdateAndRenderTask();
-        } };
+            mAppSettings.mControlMappings[14] = ControlMapping::TypicalEncoderMapping(PhysicalControl::LHEnc, ControlMapping::Function::MenuScrollA);
 
-        FunctionTask mDisplayTask2 { this, [](void* cap){
-            BassoonoidApp* pThis = (BassoonoidApp*)cap;
-            pThis->mDisplay.DisplayTask();
-        } };
+            mAppSettings.mControlMappings[15] = ControlMapping::ButtonIncrementMapping(PhysicalControl::LHThx1, ControlMapping::Function::Transpose, 12.0f);
+            mAppSettings.mControlMappings[16] = ControlMapping::ButtonIncrementMapping(PhysicalControl::LHThx2, ControlMapping::Function::Transpose, -12.0f);
 
-        // there's no need to have a sophisticated task manager which decides which task
-        // to run based on periodicity, priority, etc.
-        // we have a static number of tasks which are very easy to manually piece together
-        // into an execution plan.
-        //
-        // the "Musical state" task tends to take about 1000 microseconds, and is the most
-        // critical. So let's run it every 2000 microseconds.
-        // that means every other task can just get interlaced between these.
-        // Other tasks can run much slower; even at 60fps we have a whole period of 16667 micros.
-        // that means running musical state 8 times and everything else gets placed between.
-        NopTask nopTask;
+            mAppSettings.mControlMappings[17] = ControlMapping::ButtonIncrementMapping(PhysicalControl::RHTh3, ControlMapping::Function::SynthPreset, 1.0f);
+            mAppSettings.mControlMappings[18] = ControlMapping::ButtonIncrementMapping(PhysicalControl::RHTh2, ControlMapping::Function::SynthPreset, -1.0f);
 
-        TaskPlanner tp {
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(1000), &mDisplayTask1, "Display1" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(2000), &mMusicalStateTask, "MusS1" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(3000), &mDisplayTask2, "Display2" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS2" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(5000), &mLed1, "mLed1" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(6000), &mMusicalStateTask, "MusS3" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(7000), &mLed2, "mLed2" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(8000), &mMusicalStateTask, "MusS4" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(9000), &mBreathLED, "mBreathLED" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS5" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(12000), &mMusicalStateTask, "MusS6" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(14000), &mMusicalStateTask, "MusS7" },
-            TaskPlanner::TaskDeadline { TimeSpan::FromMicros(16000), &nopTask, "Nop" },
-        };
 
-        mPerformanceApp.Init(&tp);
+            mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
+            mMusicalStateTask.Init();
 
-        tp.Main();
-    }
-};
+            FunctionTask mDisplayTask1{this, [](void *cap) {
+                                           BassoonoidApp *pThis = (BassoonoidApp *)cap;
+                                           pThis->mDisplay.UpdateAndRenderTask();
+                                       }};
+
+            FunctionTask mDisplayTask2{this, [](void *cap) {
+                                           BassoonoidApp *pThis = (BassoonoidApp *)cap;
+                                           pThis->mDisplay.DisplayTask();
+                                       }};
+
+            // the "Musical state" task tends to take about 1000 microseconds, and is the most
+            // critical. So let's run it every 2000 microseconds.
+            // that means every other task can just get interlaced between these.
+            // Other tasks can run much slower; even at 60fps we have a whole period of 16667 micros.
+            // that means running musical state 8 times and everything else gets placed between.
+            NopTask nopTask;
+
+            TaskPlanner tp{
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1000), &mDisplayTask1, "Display1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2000), &mMusicalStateTask, "MusS1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(3000), &mDisplayTask2, "Display2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mLed1, "mLed1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(6000), &mMusicalStateTask, "MusS3"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7000), &mLed2, "mLed2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mMusicalStateTask, "MusS4"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(9000), &mBreathLED, "mBreathLED"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS5"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12000), &mMusicalStateTask, "MusS6"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(14000), &mMusicalStateTask, "MusS7"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &nopTask, "Nop"},
+            };
+
+            mPerformanceApp.Init(&tp);
+
+            tp.Main();
+        }
+    };
 
 } // namespace clarinoid

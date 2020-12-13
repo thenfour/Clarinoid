@@ -64,14 +64,14 @@ namespace clarinoid
     return x;
   }
 
-  // static int ClampI(int x, int min, int max)
-  // {
-  //   if (x <= min)
-  //     return min;
-  //   if (x >= max)
-  //     return max;
-  //   return x;
-  // }
+  static int ClampI(int x, int min, int max)
+  {
+    if (x <= min)
+      return min;
+    if (x >= max)
+      return max;
+    return x;
+  }
 
   // this is all utilities for shaping curves using this style:
   // https://www.desmos.com/calculator/3zhzwbfrxd

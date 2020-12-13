@@ -42,6 +42,9 @@ namespace clarinoid
             Breath,
             PitchBend,
             MenuScrollA,
+            SynthPreset,
+            Transpose,
+            //Volume,
             COUNT,
         };
 
@@ -93,8 +96,10 @@ namespace clarinoid
             float curr = mReader.GetCurrentFloatValue01();
             if (prev < mTriggerAboveValue && curr >= mTriggerAboveValue)
             {
+                //Serial.println(String("trigger up!!! prev=") + prev + ", curr=" + curr);
                 return true;
             }
+                //Serial.println(String("no trigger up. prev=") + prev + ", curr=" + curr);
             return false;
         }
 
@@ -198,6 +203,18 @@ namespace clarinoid
             ret.mValueArray[0] = 1.0f;
             ret.mValueArray[1] = -1.0f;
             ret.mFunction = d;
+            return ret;
+        }
+
+        // triggers when down pressed, adds a value to the param.
+        static ControlMapping ButtonIncrementMapping(PhysicalControl source, Function fn, float delta)
+        {
+            ControlMapping ret;
+            ret.mSource = source;
+            ret.mOperator = Operator::Add;
+            ret.mStyle = MapStyle::TriggerUpValue; // doing it this way allows you to map multiple buttons to the same boolean thing.
+            ret.mValueArray[0] = delta;
+            ret.mFunction = fn;
             return ret;
         }
 

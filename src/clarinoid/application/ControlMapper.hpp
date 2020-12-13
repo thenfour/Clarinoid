@@ -7,6 +7,69 @@
 
 namespace clarinoid
 {
+  struct SynthPresetMappableFunction : FunctionHandler
+  {
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+      mInputSrc = psrc;
+      mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+      int nv = v.AsRoundedInt();
+      nv = RotateIntoRange(nv, SYNTH_PRESET_COUNT);
+      int old = mAppSettings->mGlobalSynthPreset;
+      if (old != nv)
+      {
+        mInputSrc->InputSource_ShowToast(String("Synth preset: ") + nv + " (" + (nv - old) + ")");
+        mAppSettings->mGlobalSynthPreset = nv;
+      }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+      int v = mAppSettings->mGlobalSynthPreset;
+      return ControlValue::IntValue(v);
+    }
+  };
+
+  struct TransposeMappableFunction : FunctionHandler
+  {
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+      mInputSrc = psrc;
+      mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+      int nv = v.AsRoundedInt();
+      if (nv < -48) {
+        mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo low"));
+        return;
+      }
+      if (nv > 48) { 
+        mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo high"));
+        return;
+      }
+      int old = mAppSettings->mTranspose;
+      if (old != nv)
+      {
+        mInputSrc->InputSource_ShowToast(String("Transpose: ") + nv + " (" + (nv - old) + ")");
+        mAppSettings->mTranspose = nv;
+      }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+      return ControlValue::IntValue(mAppSettings->mTranspose);
+    }
+  };
 
   struct InputDelegator
   {
@@ -43,10 +106,16 @@ namespace clarinoid
     VirtualSwitch mModifierShift;
     VirtualSwitch mModifierCtrl;
 
+    SynthPresetMappableFunction mSynthPresetFn;
+    TransposeMappableFunction mTransposeFn;
+
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
       mpAppSettings = appSettings;
       mpSrc = psrc;
+
+      mSynthPresetFn.Init(appSettings, psrc);
+      mTransposeFn.Init(appSettings, psrc);
 
       RegisterFunction(ControlMapping::Function::Nop, &mMenuBack); // anything works; it's never called.
 
@@ -76,6 +145,9 @@ namespace clarinoid
       RegisterFunction(ControlMapping::Function::Breath, &mBreath);
       RegisterFunction(ControlMapping::Function::PitchBend, &mPitchBend);
 
+      RegisterFunction(ControlMapping::Function::SynthPreset, &mSynthPresetFn);
+      RegisterFunction(ControlMapping::Function::Transpose, &mTransposeFn);
+
       mpSrc->InputSource_Init(this);
     }
 
@@ -89,23 +161,29 @@ namespace clarinoid
 
     bool MatchesModifierKeys(const ControlMapping& m)
     {
-      if (m.mModifier == ModifierKey::Any)
-        return true;
-      bool course = mModifierCourse.CurrentValue();
-      if (HasFlag(m.mModifier, ModifierKey::Course) && !course) // requires course but course not set.
-        return false;
-      bool fine = mModifierFine.CurrentValue();
-      if (HasFlag(m.mModifier, ModifierKey::Fine) && !fine)
-        return false;
-      bool shift = mModifierShift.CurrentValue();
-      if (HasFlag(m.mModifier, ModifierKey::Shift) && !shift)
-        return false;
-      bool ctrl = mModifierCtrl.CurrentValue();
-      if (HasFlag(m.mModifier, ModifierKey::Ctrl) && !ctrl)
-        return false;
-      if ((m.mModifier == ModifierKey::None) && (course || fine || shift || ctrl))
-        return false;
       return true;
+
+      // todo: this needs to be fully thought-out. we have modifier keys but,
+      // criteria for matching them is not super basic, so it should be done right.
+      // maybe also, mod keys mapping should be handled specially
+
+      // if (m.mModifier == ModifierKey::Any)
+      //   return true;
+      // bool course = mModifierCourse.CurrentValue();
+      // if (HasFlag(m.mModifier, ModifierKey::Course) && !course) // requires course but course not set.
+      //   return false;
+      // bool fine = mModifierFine.CurrentValue();
+      // if (HasFlag(m.mModifier, ModifierKey::Fine) && !fine)
+      //   return false;
+      // bool shift = mModifierShift.CurrentValue();
+      // if (HasFlag(m.mModifier, ModifierKey::Shift) && !shift)
+      //   return false;
+      // bool ctrl = mModifierCtrl.CurrentValue();
+      // if (HasFlag(m.mModifier, ModifierKey::Ctrl) && !ctrl)
+      //   return false;
+      // if ((m.mModifier == ModifierKey::None) && (course || fine || shift || ctrl))
+      //   return false;
+      // return true;
     }
 
     // for test code.
