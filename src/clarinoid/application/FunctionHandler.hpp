@@ -10,24 +10,16 @@ namespace clarinoid
   struct FunctionHandler
   {
     ControlValue mAggregateValue;
-    size_t mValuesRead = 0;
     virtual void BeginUpdate()
     {
-      mValuesRead = 0;
+      mAggregateValue = FunctionHandler_GetCurrentValue();
     }
     virtual void Update(ControlMapping &mapping, const ControlInfo &src)
     {
       ControlValue out;
-      auto used = mapping.MapValue(src.p->GetControlValue(), out);
+      auto used = mapping.UpdateAndMapValue(src.p, out);
       if (!used)
         return;
-
-      if (mValuesRead == 0)
-      {
-        mAggregateValue = out;
-        mValuesRead = 1;
-        return;
-      }
 
       mAggregateValue = ControlMapping::ApplyValue(mAggregateValue, out, mapping.mOperator);// FunctionHandler_ApplyValue(mAggregateValue, out, mapping.mOperator);
     }
@@ -37,7 +29,7 @@ namespace clarinoid
     }
 
     // implement in child controls to accept the final value of an input update round.
-    //virtual ControlValue FunctionHandler_ApplyValue(const ControlValue &a, const ControlValue &b, ControlMapping::Operator op) = 0;
+    virtual ControlValue FunctionHandler_GetCurrentValue() const = 0;
     virtual void FunctionHandler_Update(const ControlValue &) = 0;
   };
 
@@ -47,33 +39,39 @@ namespace clarinoid
   // for enabling / disabling settings, it's fine if they're functions.
   struct VirtualSwitch : ISwitch, FunctionHandler
   {
-    bool mValue = false;
+    ControlValue mValue;
     virtual bool CurrentValue() const override
     {
-      return mValue;
+      return mValue.AsBool();
     }
     virtual void FunctionHandler_Update(const ControlValue &v) override
     {
-      mValue = v.AsBool();
+      mValue = v;
     }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override { return mValue; }
   };
 
   struct VirtualAxis : IAnalogAxis, FunctionHandler
   {
-    float mValue;
+    float mValue = 0.0f;
     virtual float CurrentValue01() const override
     {
-      return mValue;
+      return Clamp(mValue, 0.0f, 1.0f);
+    }
+    float CurrentValueN11() const // pitch bend.
+    {
+      return Clamp(mValue, -1.0f, 1.0f);
     }
     virtual void FunctionHandler_Update(const ControlValue &v) override
     {
       mValue = v.AsFloat01();
     }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override { return ControlValue::FloatValue(mValue); }
   };
 
   struct VirtualEncoder : IEncoder, FunctionHandler
   {
-    float mValue;
+    float mValue = 0.0f;
     virtual float CurrentValue() const override
     {
       return mValue;
@@ -82,6 +80,7 @@ namespace clarinoid
     {
       mValue = v.AsFloat01();
     }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override { return ControlValue::FloatValue(mValue); }
   };
 
 } // namespace clarinoid

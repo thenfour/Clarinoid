@@ -19,6 +19,9 @@
 #include <map>
 
 #include <clarinoid/x86/ArduinoEmu.hpp>
+
+#include <clarinoid/bassoonoid/bsBaseSystemSettings.hpp>
+
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/basic/Music.hpp>
 #include <clarinoid/scale_follower/ScaleFollower.hpp>

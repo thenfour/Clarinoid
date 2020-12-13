@@ -33,7 +33,10 @@ namespace clarinoid
         // }
         bool Equals(bool n) const
         {
-            return FloatRoundedEqualsInt(mVal, n ? 1 : 0);
+          if (n) {
+            return !FloatEquals(mVal, 0.0f);
+          }
+          return FloatEquals(mVal, 0.0f);
         }
         bool Equals(float f) const
         {
@@ -60,6 +63,8 @@ namespace clarinoid
         {
             return mVal;
         }
+
+        ControlValue& operator =(bool b) { mVal = b ? 1.0f : 0.0f; return *this; }
 
         static ControlValue BoolValue(bool b)
         {
@@ -95,9 +100,12 @@ namespace clarinoid
         bool mDirty = false;
         ControlValue mPreviousValue;
         ControlValue mCurrentValue;
-        bool mFirst = true;
 
     public:
+      void Reset()
+      {
+        mC = nullptr;
+      }
         // Each call to Update() frames Dirty / Previous / Current
         void Update(const IControl *c)
         {
@@ -108,7 +116,6 @@ namespace clarinoid
                 mCurrentValue = mC->GetControlValue();
                 mPreviousValue = mCurrentValue;
                 mDirty = false;
-                mFirst = false;
                 return;
             }
 
@@ -137,11 +144,7 @@ namespace clarinoid
 
     struct ISwitch : IControl
     {
-        virtual bool CurrentValue() const
-        {
-            CCASSERT(false);
-            return false;
-        }
+      virtual bool CurrentValue() const = 0;
         virtual ControlValue GetControlValue() const override
         {
             return ControlValue::BoolValue(CurrentValue());
@@ -156,37 +159,20 @@ namespace clarinoid
         bool mDirty = false;
         bool mPreviousValue = false;
         bool mCurrentValue = false;
-        bool mFirst = true;
 
     public:
-        // explicit SwitchControlReader(ISwitch *c) : mC(c)
-        // {
-        //     // NB: don't update in ctor because it's a pure virtual fn call :/
-        // }
-
-        // explicit SwitchControlReader()
-        // {
-        // }
-
-        // void SetSource(ISwitch *c)
-        // {
-        //     if (mC == c)
-        //         return;
-        //     mC = c;
-        //     mFirst = true;
-        // }
-
         // Each call to Update() frames Dirty / Previous / Current
         void Update(ISwitch *c)
         {
-            if (mFirst)
-            {
-                mCurrentValue = mC->CurrentValue();
-                mPreviousValue = mCurrentValue;
-                mDirty = false;
-                mFirst = false;
-                return;
-            }
+          if (mC != c)
+          {
+            mC = c;
+            mCurrentValue = mC->CurrentValue();
+            mPreviousValue = mCurrentValue;
+            mDirty = false;
+            return;
+          }
+
             mPreviousValue = mCurrentValue;
             mCurrentValue = mC->CurrentValue();
             mDirty = mPreviousValue != mCurrentValue;
@@ -218,25 +204,10 @@ namespace clarinoid
     private:
         IEncoder *mC = nullptr;
         bool mDirty = true;
-        //bool mFirst = true;
         ControlValue mPreviousValue;
         ControlValue mCurrentValue;
 
     public:
-        // explicit EncoderReader(IEncoder *enc) : mC(enc)
-        // {
-        // }
-        // EncoderReader()
-        // {
-        // }
-        // void SetSource(IEncoder *enc)
-        // {
-        //     if (mC == enc)
-        //         return;
-        //     mC = enc;
-        //     mFirst = true; // mark to reset everything.
-        // }
-
         void ClearState()
         {
             mC = nullptr;

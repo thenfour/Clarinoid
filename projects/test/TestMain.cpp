@@ -6,6 +6,45 @@
 
 #include <clarinoid/x86/ArduinoEmu.hpp>
 
+namespace clarinoid
+{
+  #define BASSOONOID1
+  #define THREE_BUTTON_OCTAVES
+
+  const char gClarinoidVersion[] = "BASSOONOID v0.01";
+
+  static const size_t MAX_SYNTH_VOICES = 6;
+
+  static const size_t HARM_PRESET_COUNT = 16;
+  static const size_t HARM_VOICES = 6;
+  static const size_t HARM_SEQUENCE_LEN = 8;
+
+  static const size_t LOOP_LAYERS = 6;
+  static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
+
+  static const size_t PRESET_NAME_LEN = 16;
+
+  static const size_t SYNTH_PRESET_COUNT = 16;
+
+  static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
+
+  // assignable slots.
+  static const size_t MAX_CONTROL_MAPPINGS = 64;
+
+  enum class PhysicalControl : uint8_t
+  {
+    Button1,
+    Button2,
+    Axis1,
+    Axis2,
+    Encoder1,
+    Encoder2,
+    COUNT,
+  };
+
+} // namespace clarinoid
+
+
 #include "Test.hpp"
 #include "TestScaleFollower.hpp"
 #include "TestMemory.hpp"
@@ -13,36 +52,41 @@
 #include "TestScales.hpp"
 #include "TestHarmonizer.hpp"
 #include "TestTaskManager.hpp"
+#include "TestInputMapping.hpp"
 
 int main()
 {
-  TestBufferUnification();
+  clarinoid::TestInputDelegator(); // test that input, mapping, and functions work.
+  //TestControlReaders();
+  //TestInputMappings(); // test conditions 
 
-  TestReadHeader();
-  Test12BitParam();
-  TestDivRem();
+  //TestBufferUnification();
 
-  TestHappyFlow();
-  TestConsumeMultipleEvents();
-  TestMuted();
-  TestReadingAfterLooped();
-  TestReadingEmptyBuffer();
+  //TestReadHeader();
+  //Test12BitParam();
+  //TestDivRem();
 
-  TestScenarioOOM_PartialLoop();
+  //TestHappyFlow();
+  //TestConsumeMultipleEvents();
+  //TestMuted();
+  //TestReadingAfterLooped();
+  //TestReadingEmptyBuffer();
 
-  TestEndRecordingWithFullLoopSimple(); // PZE
-  TestScenarioEP();
+  //TestScenarioOOM_PartialLoop();
 
-  TestFullMusicalState1();
-  TestFullMusicalState2();
+  //TestEndRecordingWithFullLoopSimple(); // PZE
+  //TestScenarioEP();
 
-  TestVoiceID();
-  TestLoopstationLegato();
-  TestLoopstationSynth();
+  //TestFullMusicalState1();
+  //TestFullMusicalState2();
 
-  clarinoid::TestTaskManager();
+  //TestVoiceID();
+  //TestLoopstationLegato();
+  //TestLoopstationSynth();
 
-  TestScales();
+  //clarinoid::TestTaskManager();
+
+  //TestScales();
 
   //TestScaleFollower();
   //TestHarmonizer();

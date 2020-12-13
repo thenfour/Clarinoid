@@ -36,21 +36,28 @@ namespace clarinoid
     VirtualSwitch mKeyOct3;
 
     VirtualAxis mBreath;
+    VirtualAxis mPitchBend;
+
+    VirtualSwitch mModifierFine;
+    VirtualSwitch mModifierCourse;
+    VirtualSwitch mModifierShift;
+    VirtualSwitch mModifierCtrl;
 
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
       mpAppSettings = appSettings;
       mpSrc = psrc;
 
-      RegisterFunction(ControlMapping::Function::MenuScrollA, &mMenuScrollA);
+      RegisterFunction(ControlMapping::Function::Nop, &mMenuBack); // anything works; it's never called.
 
-      RegisterFunction(ControlMapping::Function::Breath, &mBreath);
+      RegisterFunction(ControlMapping::Function::ModifierCourse, &mModifierCourse);
+      RegisterFunction(ControlMapping::Function::ModifierFine, &mModifierFine);
+      RegisterFunction(ControlMapping::Function::ModifierShift, &mModifierShift);
+      RegisterFunction(ControlMapping::Function::ModifierCtrl, &mModifierCtrl);
 
       RegisterFunction(ControlMapping::Function::MenuBack, &mMenuBack);
       RegisterFunction(ControlMapping::Function::MenuOK, &mMenuOK);
-      RegisterFunction(ControlMapping::Function::Oct1, &mKeyOct1);
-      RegisterFunction(ControlMapping::Function::Oct2, &mKeyOct2);
-      RegisterFunction(ControlMapping::Function::Oct3, &mKeyOct3);
+      RegisterFunction(ControlMapping::Function::MenuScrollA, &mMenuScrollA);
 
       RegisterFunction(ControlMapping::Function::LH1, &mKeyLH1);
       RegisterFunction(ControlMapping::Function::LH2, &mKeyLH2);
@@ -62,7 +69,52 @@ namespace clarinoid
       RegisterFunction(ControlMapping::Function::RH3, &mKeyRH3);
       RegisterFunction(ControlMapping::Function::RH4, &mKeyRH4);
 
+      RegisterFunction(ControlMapping::Function::Oct1, &mKeyOct1);
+      RegisterFunction(ControlMapping::Function::Oct2, &mKeyOct2);
+      RegisterFunction(ControlMapping::Function::Oct3, &mKeyOct3);
+
+      RegisterFunction(ControlMapping::Function::Breath, &mBreath);
+      RegisterFunction(ControlMapping::Function::PitchBend, &mPitchBend);
+
       mpSrc->InputSource_Init(this);
+    }
+
+    template<typename Tval, typename TEnum>
+    static bool HasFlag(Tval val, TEnum e)
+    {
+      auto ival = (typename std::underlying_type<TEnum>::type)val;
+      auto ie = (typename std::underlying_type<TEnum>::type)e;
+      return (ival & ie) == ie;
+    }
+
+    bool MatchesModifierKeys(const ControlMapping& m)
+    {
+      if (m.mModifier == ModifierKey::Any)
+        return true;
+      bool course = mModifierCourse.CurrentValue();
+      if (HasFlag(m.mModifier, ModifierKey::Course) && !course) // requires course but course not set.
+        return false;
+      bool fine = mModifierFine.CurrentValue();
+      if (HasFlag(m.mModifier, ModifierKey::Fine) && !fine)
+        return false;
+      bool shift = mModifierShift.CurrentValue();
+      if (HasFlag(m.mModifier, ModifierKey::Shift) && !shift)
+        return false;
+      bool ctrl = mModifierCtrl.CurrentValue();
+      if (HasFlag(m.mModifier, ModifierKey::Ctrl) && !ctrl)
+        return false;
+      if ((m.mModifier == ModifierKey::None) && (course || fine || shift || ctrl))
+        return false;
+      return true;
+    }
+
+    // for test code.
+    void ResetModifiers()
+    {
+      mModifierCourse.mValue = false;
+      mModifierFine.mValue = false;
+      mModifierShift.mValue = false;
+      mModifierCtrl.mValue = false;
     }
 
     // process all input state and delegate to handlers.
@@ -86,12 +138,13 @@ namespace clarinoid
         auto &mapping = mpAppSettings->mControlMappings[i];
         if (mapping.mFunction == ControlMapping::Function::Nop)
           continue;
+        if (!MatchesModifierKeys(mapping))
+          continue;
 
         CCASSERT((size_t)mapping.mFunction < SizeofStaticArray(mHandlers));
 
         FunctionHandler *dest = mHandlers[(size_t)mapping.mFunction]; // get the function this is mapped to
         auto src = mpSrc->InputSource_GetControl(mapping.mSource); // and the source control providing the value to map.
-        mapping.UpdateValue(src.p);
         dest->Update(mapping, src);
       }
 

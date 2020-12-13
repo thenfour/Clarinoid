@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClInclude Include="Test.hpp" />
     <ClInclude Include="TestHarmonizer.hpp" />
+    <ClInclude Include="TestInputMapping.hpp" />
     <ClInclude Include="TestLoopstation.hpp" />
     <ClInclude Include="TestMemory.hpp" />
     <ClInclude Include="TestScaleFollower.hpp" />

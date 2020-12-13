@@ -1,37 +1,3 @@
-// LH MCP buttons:
-// 0 = x pinky
-// 1 = x 1
-// 2 = x 2
-// 3 = x index
-// 4 = key1
-// 5 = key2
-// 6 = key3
-// 7 = key4
-// 8 = oct up
-// 9 = oct neutral
-// 10 = oct down
-// 11 = lh back
-// 12 = lh ok
-// 13 = lh enc button
-// 14 = x oct 1
-// 15 = x oct 2
-
-// RH MCP buttons:
-// 0 = cp back
-// 1 = cp ok
-// 2 = cp enc
-// 4 = x5
-// 5 = x thumb 1
-// 6 = x thumb 2
-// 7 = x thumb 3
-// 8 = key1
-// 9 = key2
-// 10 = key3
-// 11 = key4
-// 12 = x1
-// 13 = x2
-// 14 = x3
-// 15 = x4
 
 #pragma once
 

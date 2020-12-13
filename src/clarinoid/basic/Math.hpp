@@ -15,7 +15,7 @@ namespace clarinoid
 
   inline int FloatRoundToInt(float f)
   {
-    return ::floorf(f + 0.5f);
+    return (int)::floorf(f + 0.5f);
   }
 
   inline bool FloatEquals(float f1, float f2, float eps = 0.00001f)
@@ -28,9 +28,31 @@ namespace clarinoid
     return (int)FloatRoundToInt(f) == n;
   }
 
-  static float Lerp(float a, float b, float t)
+  // static float Lerp(float a, float b, float t)
+  // {
+  //   return a * (1.0f - t) + b * t;
+  // }
+
+  // remap so src min to max become [0-1]. results are NOT clamped.
+  // if min-max == 0, just return x to avoid bad behaviors
+  static float RemapTo01(float x, float xmin, float xmax)
   {
-    return a * (1.0f - t) + b * t;
+    if (FloatEquals(xmax - xmin, 0.0f))
+      return x;
+    x -= xmin;
+    x /= xmax - xmin;
+    return x;
+  }
+
+  // remap a 0-1 float val to a new min/max. no clamping performed anywhere so if the src is out of 0-1 range, the dest will be out of destMin-destMax range.
+  // if min-max == 0, just return x to avoid bad behaviors
+  static float Remap01ToRange(float x01, float destMin, float destMax)
+  {
+    if (FloatEquals(destMax - destMin, 0.0f))
+      return x01;
+    x01 *= destMax - destMin;
+    x01 += destMin;
+    return x01;
   }
 
   static float Clamp(float x, float low, float hi)
@@ -42,14 +64,14 @@ namespace clarinoid
     return x;
   }
 
-  static int ClampI(int x, int min, int max)
-  {
-    if (x <= min)
-      return min;
-    if (x >= max)
-      return max;
-    return x;
-  }
+  // static int ClampI(int x, int min, int max)
+  // {
+  //   if (x <= min)
+  //     return min;
+  //   if (x >= max)
+  //     return max;
+  //   return x;
+  // }
 
   // this is all utilities for shaping curves using this style:
   // https://www.desmos.com/calculator/3zhzwbfrxd
@@ -59,10 +81,10 @@ namespace clarinoid
   // use it and linear
   namespace Curve2
   {
-    static float Step01(float x, float thresh)
-    {
-      return x < thresh ? 0 : 1;
-    }
+    // static float Step01(float x, float thresh)
+    // {
+    //   return x < thresh ? 0.0f : 1.0f;
+    // }
 
     static float Curve2_F(float c, float x, float n)
     {
@@ -73,7 +95,7 @@ namespace clarinoid
 
     // this is the basic function for the curve.
     // curves between x=0,1
-    // returns 0,1
+    // returns 0,1 clamped.
     static float Eval(float _x, float _p, float slope)
     {
       if (_x <= 0)
@@ -89,6 +111,93 @@ namespace clarinoid
       return 1.0f - Curve2_F(c, 1.0f - _x, 1.0f - _p);
     }
   } // namespace Curve2
+
+
+
+  struct UnipolarMapping
+  {
+    float mSrcMin;
+    float mSrcMax;
+    float mDestMin;
+    float mDestMax;
+    float mCurveP; // curve position 0-1
+    float mCurveS; // curve slope, -1 to 1 technically, but more like -.9 to +.9
+
+    UnipolarMapping() = default;
+    UnipolarMapping(float srcMin, float srcMax, float destMin, float destMax, float p, float s): 
+      mSrcMin(srcMin),
+      mSrcMax(srcMax),
+      mDestMin(destMin),
+      mDestMax(destMax),
+      mCurveP(p),
+      mCurveS(s)
+    {
+    }
+
+    bool IsSrcInRegion(float src) const
+    {
+      return (src >= mSrcMin) && (src <= mSrcMax);
+    }
+
+    float PerformMapping(float src) const
+    {
+      // remap src to 0-1 range.
+      float x = RemapTo01(src, mSrcMin, mSrcMax);
+      // apply curve
+      x = Curve2::Eval(x, mCurveP, mCurveS); // returns clamped.
+      // remap 0-1 to dest
+      x = Remap01ToRange(x, mDestMin, mDestMax);
+      return x;
+    }
+  };
+
+  // for two-polar. like joystick X or pitch bend strip,
+  // these are 0-1 source values, but we want to map them into -1 to 1 float values.
+  // instead of the 1 region of unipolar defined by {min,max}
+  // we have 3 regions (negative, zero, positive), defined by the boundaries.
+  // looking at the whole source range,
+  // |---------------------------------------------------------------|
+  //    |neg_min------neg_max|-----|pos_min----------pos_max|
+  struct NPolarMapping
+  {
+    UnipolarMapping mNegative; // used for unipolar mapping.
+    UnipolarMapping mPositive;
+
+    float PerformUnipolarMapping(float src) const
+    {
+      return mNegative.PerformMapping(src);
+    }
+
+    float PerformBipolarMapping(float src) const
+    {
+      // in fact it's not "bipolar" in any enforced sense. it's just 2 regions. if it's in the negative region, we use it.
+      // if it's in the positive region we use that.
+      // but you could in theory make overlapping regions or other nonsensical regions which here we just don't bother.
+
+      // determine which region to let evaluate this.
+      // if it's IN either range then it's clear.
+      if (mNegative.IsSrcInRegion(src)) {
+        return mNegative.PerformMapping(src);
+      }
+      if (mPositive.IsSrcInRegion(src)) {
+        return mPositive.PerformMapping(src);
+      }
+
+      // so figure out if src is closer to the neg or positive region.
+      float negCenter = (mNegative.mSrcMin + mNegative.mSrcMax) / 2;
+      float posCenter = (mPositive.mSrcMin + mPositive.mSrcMax) / 2;
+      float distToNeg = fabs(src - negCenter);
+      float distToPos = fabs(src - posCenter);
+      if (distToNeg < distToPos)
+      {
+        return mNegative.PerformMapping(src);
+      }
+      return mPositive.PerformMapping(src);
+    }
+  };
+
+
+
 
   template <typename T, T divisor>
   void DivRem(T val, T &wholeParts, T &remainder)

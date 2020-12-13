@@ -5,30 +5,20 @@
 
 namespace clarinoid
 {
-
-    // flags. consider things like "fine"
+  // flags. consider things like "fine"
     enum class ModifierKey : uint8_t
     {
-        None = 0,
+        None = 0, // requires no modifiers are pressed.
         Fine = 1,
         Course = 2,
         Shift = 4,
         Ctrl = 8,
+        Any = 128, // special; any combination works.
     };
 
     // defines a mapping from a switch.
     struct ControlMapping
     {
-        enum class MapStyle : uint8_t
-        {
-            Passthrough,            // can be used as a "nop", or things like mapping a button input to a bool function
-            RemapUnipolar,          // map the source value with {min,max} => float01
-            RemapBipolar,           // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11
-            TriggerUpValue,         // when trigger up condition is met, set dest value to X.
-            TriggerUpDownValue,     // when trigger up condition is met, set the dest value to X. when the trigger down, set to Y.
-            TriggerUpValueSequence, // when trigger condition is met, set the dest value to the next value in the sequence, cycling. can be used to set up a toggle.
-        };
-
         enum class Function : uint8_t
         {
             Nop,
@@ -50,10 +40,24 @@ namespace clarinoid
             RH3,
             RH4,
             Breath,
+            PitchBend,
             MenuScrollA,
             COUNT,
         };
 
+        enum class MapStyle : uint8_t
+        {
+          Passthrough,            // can be used as a "nop", or things like mapping a button input to a bool function
+          RemapUnipolar,          // map the source value with {min,max} => float01
+          RemapBipolar,           // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11
+          DeltaWithScale,// for encoders scrolling for example. if you just "set" the value, then it would interfere. it's more accurate like this.
+          TriggerUpValue,         // when trigger up condition is met, set dest value to X.
+          TriggerDownValue,         // when trigger down condition is met, set dest value to X.
+          TriggerUpDownValue,     // when trigger up condition is met, set the dest value to X. when the trigger down, set to Y.
+          TriggerUpValueSequence, // when trigger condition is met, set the dest value to the next value in the sequence, cycling. can be used to set up a toggle.
+        };
+
+        // specifies how aggregate values are combined, AND how it's applied to the destination parameter.
         enum class Operator : uint8_t
         {
             Set,
@@ -62,7 +66,7 @@ namespace clarinoid
             COUNT,
         };
 
-        ModifierKey mModifier = ModifierKey::None;
+        ModifierKey mModifier = ModifierKey::Any;
         PhysicalControl mSource;
         Function mFunction = Function::Nop;
         MapStyle mStyle = MapStyle::Passthrough;
@@ -72,26 +76,9 @@ namespace clarinoid
         float mTriggerBelowValue = 0.5f;
         float mTriggerAboveValue = 0.5f;
 
-        // for two-polar. like joystick X or pitch bend strip,
-        // these are 0-1 source values, but we want to map them into -1 to 1 float values.
-        // instead of the 1 region of unipolar defined by {min,max}
-        // we have 3 regions (negative, zero, positive), defined by the boundaries.
-        // looking at the whole source range,
-        // |---------------------------------------------------------------|
-        //    |neg_min------neg_max|-----|pos_min----------pos_max|
+        NPolarMapping mNPolarMapping;
 
-        struct MapRegion
-        {
-            float mSrcMin;
-            float mSrcMax;
-            float mDestMin;
-            float mDestMax;
-            float mCurveP;
-            float mCurveS;
-        };
-
-        MapRegion mNegRegion;
-        MapRegion mPosRegion; // use this for unipolar.
+        float mDeltaScale = 1.0f; // for delta operators.
 
         float mValueArray[MAPPED_CONTROL_SEQUENCE_LENGTH];
         size_t mValueCount = 0;
@@ -99,11 +86,6 @@ namespace clarinoid
         // --> not app settings, but state stuff.
         size_t mCursor = 0;    // keeps track of the stack or sequence.
         ControlReader mReader; // some caller needs to set this when a mapping is established.
-
-        void UpdateValue(const IControl *c)
-        {
-            mReader.Update(c);
-        }
 
         bool IsTriggerUp()
         {
@@ -127,28 +109,42 @@ namespace clarinoid
             return false;
         }
 
+        // call to update this mapping with the source control it's mapped to.
         // return whetehr the out value should be used.
-        bool MapValue(const ControlValue &i, ControlValue &out)
+        bool UpdateAndMapValue(const IControl *c, /*const ControlValue &i,*/ ControlValue &out)
         {
-            switch (mStyle)
+          mReader.Update(c);
+          switch (mStyle)
             {
             default:
             case MapStyle::Passthrough:
-                out = i;
+                out = ControlValue::FloatValue(mReader.GetCurrentFloatValue01());
                 return true;
             case MapStyle::RemapUnipolar: // map the source value with {min,max} => float01. breath would use this.
-                // todo
-                out = i;
-                return true;
+            {
+              float f = mNPolarMapping.PerformUnipolarMapping(mReader.GetCurrentFloatValue01());
+              out = ControlValue::FloatValue(f);
+              return true;
+            }
             case MapStyle::RemapBipolar: // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11. think pitch bend with positive & negative regions.
-                // todo
-                out = i;
-                return true;
+            {
+              float f = mNPolarMapping.PerformBipolarMapping(mReader.GetCurrentFloatValue01());
+              out = ControlValue::FloatValue(f);
+              return true;
+            }
+            case MapStyle::DeltaWithScale:
+              out = ControlValue::FloatValue(this->mDeltaScale * mReader.GetFloatDelta());
+              return true;
             case MapStyle::TriggerUpValue: // when trigger condition is met, set dest value to X.
-                if (!IsTriggerUp())
-                    return false;
-                out = i;
-                return true;
+              if (!IsTriggerUp())
+                return false;
+              out = ControlValue::FloatValue(mValueArray[0]);
+              return true;
+            case MapStyle::TriggerDownValue: // when trigger condition is met, set dest value to X.
+              if (!IsTriggerDown())
+                return false;
+              out = ControlValue::FloatValue(mValueArray[0]);
+              return true;
             case MapStyle::TriggerUpDownValue: // when trigger condition is met, set the dest value to X. when the trigger condition is not met, set to Y.
                 if (IsTriggerUp())
                 {
@@ -190,31 +186,44 @@ namespace clarinoid
             default:
                 CCDIE("unsupported operator");
             }
-            __builtin_unreachable();
+            return {};
         }
 
         static ControlMapping MomentaryMapping(PhysicalControl source, Function d)
         {
             ControlMapping ret;
             ret.mSource = source;
-            ret.mStyle = MapStyle::Passthrough;
+            ret.mOperator = Operator::Add;
+            ret.mStyle = MapStyle::TriggerUpDownValue; // doing it this way allows you to map multiple buttons to the same boolean thing.
+            ret.mValueArray[0] = 1.0f;
+            ret.mValueArray[1] = -1.0f;
             ret.mFunction = d;
             return ret;
         }
-        static ControlMapping MenuScrollMapping(PhysicalControl source, Function d)
+
+        static ControlMapping TypicalEncoderMapping(PhysicalControl source, Function d)
+        {
+            ControlMapping ret;
+            ret.mSource = source;
+            ret.mOperator = Operator::Add;
+            ret.mStyle = MapStyle::DeltaWithScale;
+            ret.mDeltaScale = 1.0f;
+            ret.mFunction = d;
+            return ret;
+        }
+
+        static ControlMapping UnipolarMapping(PhysicalControl source, Function d, float srcMin, float srcMax)
         {
             ControlMapping ret;
             ret.mSource = source;
             ret.mFunction = d;
-            return ret;
-        }
-        static ControlMapping BreathMapping(PhysicalControl source, Function d)
-        {
-            ControlMapping ret;
-            ret.mSource = source;
-            ret.mFunction = d;
+            ret.mStyle = MapStyle::RemapUnipolar;
+            ret.mOperator = Operator::Set;
+            ret.mNPolarMapping.mNegative = clarinoid::UnipolarMapping { srcMin, srcMax, 0.0f, 1.0f, 0.5f, 0.0f };
             return ret;
         }
     };
+
+    //constexpr size_t aoeuuichpcuihp = sizeof(ControlMapping);
 
 } // namespace clarinoid

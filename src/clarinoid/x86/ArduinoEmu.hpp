@@ -139,10 +139,25 @@ struct
 void pinMode(uint8_t pin, uint8_t mode) { }
 void init_pins(void) { }
 void analogWrite(uint8_t pin, int val) { }
+int analogRead(uint8_t pin) { return 0; }
 uint32_t analogWriteRes(uint32_t bits) { return 0; }
 static inline uint32_t analogWriteResolution(uint32_t bits) { return analogWriteRes(bits); }
 
-void digitalWrite(uint8_t pin, uint8_t val) {}
+bool gPinStates[256];
+
+
+void digitalWrite(uint8_t pin, uint8_t val) { gPinStates[pin] = val; }
+
+bool digitalReadFast(uint8_t pin) { return gPinStates[pin]; }
+
 
 #define DMAMEM
 #define F
+
+
+struct Encoder
+{
+  void write(int) { }
+  int read() { return 0; }
+};
+

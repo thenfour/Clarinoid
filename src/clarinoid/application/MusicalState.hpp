@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <clarinoid/harmonizer/harmonizer.hpp>
@@ -21,12 +22,9 @@ struct CCEWIMusicalState
   LooperAndHarmonizer mLooper;
 
   // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
-  //SimpleMovingAverage<4> _incomingBreath01;// 0-1
-  //SimpleMovingAverage<4> _incomingPitchBendN11; // -1 to 1
   SimpleMovingAverage<15> mCurrentBreath01;
   SimpleMovingAverage<60> mCurrentPitchN11;
 
-  //CCThrottlerT<1> mPressureSensingThrottle;
   int nUpdates = 0;
   int noteOns = 0;
 
@@ -38,9 +36,7 @@ struct CCEWIMusicalState
 
     mLooper(appSettings, metronome, scaleFollower)
   {
-    //this->_incomingBreath01.Update(0);
     this->mCurrentBreath01.Update(0);
-    //this->_incomingPitchBendN11.Update(0);
     this->mCurrentPitchN11.Update(0);
   }
 
@@ -52,60 +48,11 @@ struct CCEWIMusicalState
     // most interesting EWI-ish logic is.
 
     float _incomingBreath = mInput->mBreath.CurrentValue01(); // this is actually the transformed value.
-    //_incomingBreath = mAppSettings->mBreathCalibration.TranfsormValue01(_incomingBreath);
     mCurrentBreath01.Update(_incomingBreath);
-
-    // if (nUpdates == 0 || mPressureSensingThrottle.IsReady())
-    // {
-    //   {
-    //     _incomingBreath01.Update(mControlMapper->BreathSensor()->CurrentValue01());
-    //     float breath = _incomingBreath01.GetValue();
-    //     breath = constrain(breath, mAppSettings->mBreathLowerBound, mAppSettings->mBreathUpperBound);
-    //     breath = map(breath, mAppSettings->mBreathLowerBound, mAppSettings->mBreathUpperBound, 0.0f, 1.0f);
-    //     breath = constrain(breath, 0.0f, 1.0f);
-    //     mCurrentBreath01.Update(breath);
-    //   }
-
-    //   {
-    //     _incomingPitchBendN11.Update(gControlMapper.PitchStrip().GetValue01());
-    //     // see PitchStripSettings to understand the different regions.
-    //     float pb = _incomingPitchBendN11.GetValue();
-
-    //     // #30: idle zone should LATCH existing pitch bend (i.e. just don't touch it) value.
-    //     // to make that as quick as possible, bypass any signal filtering for this check. worst case we miss some subtle pitch-up change events.
-    //     if (ps.pitchDown01 <= gAppSettings.mPitchStrip.mHandsOffNoiseThresh || pb <= gAppSettings.mPitchStrip.mHandsOffNoiseThresh) {
-    //       // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
-    //       // =======^
-    //     } else if (pb <= gAppSettings.mPitchStrip.mPitchUpMax) {
-    //       // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
-    //       //        ^========^
-    //       mCurrentPitchN11.Update(1.0f);
-    //     } else if (pb <= gAppSettings.mPitchStrip.mZeroMin) {
-    //       // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
-    //       //                 ^=============^
-    //       float t = map(pb, gAppSettings.mPitchStrip.mZeroMin, gAppSettings.mPitchStrip.mPitchUpMax, 0, 1);
-    //       mCurrentPitchN11.Update(t);
-    //     } else if (pb <= gAppSettings.mPitchStrip.mZeroMax) {
-    //       // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
-    //       //                               ^======^
-    //       mCurrentPitchN11.Update(0.0f);
-    //     } else if (pb <= gAppSettings.mPitchStrip.mPitchDownMax) {
-    //       // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
-    //       //                                      ^===============^
-    //       float t = map(pb, gAppSettings.mPitchStrip.mPitchDownMax, gAppSettings.mPitchStrip.mZeroMax, -1, 0);
-    //       mCurrentPitchN11.Update(t);
-    //     } else {
-    //       // | IDLE | UP MAX | UP VARIABLE | ZERO | DOWN VARIABLE | DOWN MAX |
-    //       //                                                      ^==========^
-    //       mCurrentPitchN11.Update(-1);// full pitch down.
-    //     }
-    //   }
-
-    //}
-
     mNewState.mBreath01 = mCurrentBreath01.GetValue();
     bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > 0.005;//mAppSettings->mBreathCalibration.mNoteOnThreshold;
 
+    mCurrentPitchN11.Update(mInput->mPitchBend.CurrentValueN11());
     mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
     mNewState.mVelocity = 100;
 
@@ -178,10 +125,6 @@ struct CCEWIMusicalState
     // we have calculated mLiveVoice, converting physical to live musical state.
     // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.
     size_t newVoiceCount = mLooper.Update(mLiveVoice, transitionEvents, mMusicalVoices, EndPtr(mMusicalVoices));
-    // if (newVoiceCount != mVoiceCount)
-    // {
-    //   Serial.println(String("VOICE COUNT: ") + newVoiceCount);
-    // }
     mVoiceCount = newVoiceCount;
   }
 };
