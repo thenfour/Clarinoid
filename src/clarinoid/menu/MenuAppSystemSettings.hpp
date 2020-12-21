@@ -2,7 +2,7 @@
 
 #include "MenuAppBase.hpp"
 #include "MenuSettings.hpp"
-#include "BreathSettingItem.hpp"
+#include "UnipolarCalibration.hpp"
 #include "BoolSettingItem.hpp"
 
 namespace clarinoid
@@ -13,8 +13,16 @@ struct SystemSettingsApp :
     SettingsMenuApp
 {
   virtual const char *DisplayAppGetName() override { return "SystemSettingsApp"; }
+  size_t mBreathMappingIndex;
+  cc::function<float(void *)>::ptr_t mRawBreathGetter;
+  void* mpCapture;
 
-    SystemSettingsApp(CCDisplay& d) : SettingsMenuApp(d) {}
+    SystemSettingsApp(CCDisplay& d, size_t breathMappingIndex, cc::function<float(void *)>::ptr_t rawBreathGetter, void* capture) :
+      SettingsMenuApp(d),
+      mBreathMappingIndex(breathMappingIndex),
+      mRawBreathGetter(rawBreathGetter),
+      mpCapture(capture)
+    {}
 
   BoolSettingItem mDimDisplay = { "Display dim?", "Yes", "No",
     Property<bool>{
@@ -25,23 +33,29 @@ struct SystemSettingsApp :
     AlwaysEnabled
     };
 
-    // BreathCalibrationSettingItem mBreath = {
-    //   Property<BreathCalibrationSettings> {
-    //     [](void* cap) { auto pThis = (SystemSettingsApp*)cap; return pThis->mAppSettings->mBreathCalibration; }, // getter
-    //     [](void* cap, const BreathCalibrationSettings& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mBreathCalibration = x; },
-    //     this
-    //   },
-    //   [](void* cap) {
-    //     auto pThis = (SystemSettingsApp*)cap;
-    //     return pThis->mInput->mBreath.CurrentValue01();
-    //   },
-    //   this
-    // };
+    BreathCalibrationSettingItem mBreath = {
+      Property<UnipolarMapping> {
+        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; UnipolarMapping ret = pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mNPolarMapping.Unipolar(); return ret; }, // getter
+        [](void* cap, const UnipolarMapping& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mNPolarMapping.Unipolar() = x; },
+        this
+      },
+      Property<float> {
+        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; return pThis->mAppSettings->mBreathNoteOnThreshold; }, // getter
+        [](void* cap, const float& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mBreathNoteOnThreshold = x; },
+        this
+      },
+      [](void* cap) {
+        auto pThis = (SystemSettingsApp*)cap;
+        return pThis->mRawBreathGetter(pThis->mpCapture);
+        //return pThis->mInput->mBreath.CurrentValue01();
+      },
+      this
+    };
 
-  ISettingItem* mArray[1] =
+  ISettingItem* mArray[2] =
   {
     &mDimDisplay,
-    //&mBreath,
+    &mBreath,
   };
   SettingsList mRootList = { mArray };
 

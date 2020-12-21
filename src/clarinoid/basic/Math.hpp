@@ -64,14 +64,14 @@ namespace clarinoid
     return x;
   }
 
-  static int ClampI(int x, int min, int max)
-  {
-    if (x <= min)
-      return min;
-    if (x >= max)
-      return max;
-    return x;
-  }
+  // static int ClampI(int x, int min, int max)
+  // {
+  //   if (x <= min)
+  //     return min;
+  //   if (x >= max)
+  //     return max;
+  //   return x;
+  // }
 
   // this is all utilities for shaping curves using this style:
   // https://www.desmos.com/calculator/3zhzwbfrxd
@@ -134,6 +134,24 @@ namespace clarinoid
     {
     }
 
+    bool operator ==(const UnipolarMapping& rhs) const {
+      if (!FloatEquals(mSrcMin, rhs.mSrcMin))
+        return false;
+      if (!FloatEquals(mSrcMax, rhs.mSrcMax))
+        return false;
+      if (!FloatEquals(mDestMin, rhs.mDestMin))
+        return false;
+      if (!FloatEquals(mDestMax, rhs.mDestMax))
+        return false;
+      if (!FloatEquals(mCurveP, rhs.mCurveP))
+        return false;
+      if (!FloatEquals(mCurveS, rhs.mCurveS))
+        return false;
+      return true;
+    }
+
+    bool operator !=(const UnipolarMapping& rhs) const { return !(*this == rhs); }
+
     bool IsSrcInRegion(float src) const
     {
       return (src >= mSrcMin) && (src <= mSrcMax);
@@ -162,6 +180,8 @@ namespace clarinoid
   {
     UnipolarMapping mNegative; // used for unipolar mapping.
     UnipolarMapping mPositive;
+
+    UnipolarMapping& Unipolar() { return mNegative; }
 
     float PerformUnipolarMapping(float src) const
     {

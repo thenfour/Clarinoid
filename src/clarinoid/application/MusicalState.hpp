@@ -90,7 +90,7 @@ struct CCEWIMusicalState
 
 #ifdef THREE_BUTTON_OCTAVES
     newNote += 0;
-    if (mInput->mKeyOct1.CurrentValue()) {
+    if (mInput->mKeyOct2.CurrentValue()) {
       newNote -= 12;
     }
     if (mInput->mKeyOct3.CurrentValue()) {

@@ -32,7 +32,15 @@ struct Property
   // copy
   Property(const Property<T>& rhs)= default;
   Property(Property<T>&& rhs) = default;
-  Property<T>& operator =(const Property<T>&) = delete;
+  Property<T>& operator =(const Property<T>& rhs) {
+    mOwnValue = rhs.mOwnValue;
+    mRefBinding = rhs.mRefBinding;
+    mGetter = rhs.mGetter;
+    if (rhs.mSetter) { mSetter = rhs.mSetter; }
+    else if (rhs.mOnChange) { mOnChange = rhs.mOnChange; } // yea this union is a bit stupid but ok.
+    mpCapture = rhs.mpCapture;
+    return *this;
+  }
   Property<T>& operator =(Property<T>&&) = delete;
   
   Property(typename cc::function<T(void*)>::ptr_t getter, typename cc::function<void(void*, const T&)>::ptr_t setter, void* capture) :

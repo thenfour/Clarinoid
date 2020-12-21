@@ -147,6 +147,15 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
       }
   }
   
+
+  uint16_t GetLineHeight() const
+  {
+    if (gfxFont) {
+      return textsize_y * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+    }
+    return textsize_y * 8;
+  }
+
   /**************************************************************************/
   /*!
       @brief  Print one byte/character of data, used to support print()

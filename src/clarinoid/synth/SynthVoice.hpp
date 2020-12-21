@@ -16,7 +16,7 @@ namespace clarinoid
 namespace CCSynthGraph
 {
 /*
-https://www.pjrc.com/teensy/gui/index.html?info=AudioEffectDelay
+https://www.pjrc.com/teensy/gui/index.html
 // this is the after-oscillator processing.
 
 */
@@ -53,7 +53,6 @@ AudioConnection          patchCord13(ampLeft, 0, i2s1, 0);
 AudioConnection          patchCord14(ampLeft, peak1);
 AudioConnection          patchCord15(ampLeft, rms1);
 AudioConnection          patchCord16(ampLeft, 0, i2s1, 1);
-//AudioControlSGTL5000     audioShield;    //xy=2150.000068664551,814.7500247955322
 // GUItool: end automatically generated code
 
 } // namespace CCSynthGraph

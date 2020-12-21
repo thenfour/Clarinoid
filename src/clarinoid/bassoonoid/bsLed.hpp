@@ -44,15 +44,28 @@ struct Leds2 :
         Leds(gLED2DisplayMemory)
     {}
 
-    int n = 0;
-    int period = 10;
+    int nR = 0;
+    int nG = 0;
+    int nB = 0;
+    int periodR = 25;
+    int periodG = 26;
+    int periodB = 27;
+    CCThrottlerT<48> mTh;
+
     virtual void TaskRun() override 
     {
+        if (!mTh.IsReady()) return;
         for (int i = 0; i < mPixelCount; ++ i)
         {
-            SetPixel(i, (n == (i%period)) ? ColorF{.2,0,0} : ColorF{0,0,0});
+            SetPixel(i,
+                (nR == (i%periodR)) ? 1 : 0,
+                (nG == (i%periodG)) ? 1 : 0,
+                (nB == (i%periodB)) ? 1 : 0
+            );
         }
-        n = (n+1)%period;
+        nR = (nR+1)%periodR;
+        nG = (nG+1)%periodG;
+        nB = (nB+1)%periodB;
         Show();
     }
 };

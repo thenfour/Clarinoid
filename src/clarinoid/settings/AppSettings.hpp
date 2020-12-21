@@ -30,6 +30,7 @@ EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo ("GlobalScaleRefType", gGlo
 struct AppSettings
 {
   ControlMapping mControlMappings[MAX_CONTROL_MAPPINGS];
+  float mBreathNoteOnThreshold = 0.05f;
   
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;

@@ -24,6 +24,8 @@ static const size_t SYNTH_PRESET_COUNT = 16;
 
 static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
 
+static const size_t MAX_DISPLAY_WIDTH = 128; // in order to maintain some static buffers.
+
 // assignable slots.
 static const size_t MAX_CONTROL_MAPPINGS = 64;
 

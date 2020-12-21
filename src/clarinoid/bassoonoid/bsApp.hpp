@@ -27,6 +27,7 @@
 #include <clarinoid/bassoonoid/bsLed.hpp>
 #include <clarinoid/bassoonoid/bsControlMapper.hpp>
 #include <clarinoid/bassoonoid/DebugDisplayApp.hpp>
+#include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include "MusicalStateTask.hpp"
 
 // MIDI library is touchy about how you instantiate.
@@ -39,6 +40,8 @@ namespace clarinoid
 
     struct BassoonoidApp
     {
+        static constexpr size_t breathMappingIndex = 13;
+
         Leds1 mLed1;
         Leds2 mLed2;
         BreathLED mBreathLED;
@@ -57,7 +60,10 @@ namespace clarinoid
                           mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
-                          mSystemSettingsApp(mDisplay)
+                          mSystemSettingsApp(mDisplay, breathMappingIndex, [](void* cap){
+                            BassoonoidApp* pThis = (BassoonoidApp*)cap;
+                            return pThis->mControlMapper.mBreath.CurrentValue01();
+                          }, this)
         {
         }
 
@@ -91,7 +97,7 @@ namespace clarinoid
             mAppSettings.mControlMappings[11] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey3, ControlMapping::Function::RH3);
             mAppSettings.mControlMappings[12] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
 
-            mAppSettings.mControlMappings[13] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
+            mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
 
             mAppSettings.mControlMappings[14] = ControlMapping::TypicalEncoderMapping(PhysicalControl::LHEnc, ControlMapping::Function::MenuScrollA);
 
