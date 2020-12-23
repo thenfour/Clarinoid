@@ -25,7 +25,8 @@ namespace clarinoid
       int old = mAppSettings->mGlobalSynthPreset;
       if (old != nv)
       {
-        mInputSrc->InputSource_ShowToast(String("Synth preset: ") + nv + " (" + (nv - old) + ")");
+        auto& p = mAppSettings->FindSynthPreset(nv);
+        mInputSrc->InputSource_ShowToast(String("Synth preset: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
         mAppSettings->mGlobalSynthPreset = nv;
       }
     }

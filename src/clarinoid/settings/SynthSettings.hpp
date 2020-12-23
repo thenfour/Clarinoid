@@ -70,18 +70,19 @@ struct SynthSettings
   {
     // detuned saw.
     mPresets[0].mName = "Saw";
-    mPresets[0].mOsc1Gain = .9f;
+    mPresets[0].mOsc1Gain = 0.0f;
     mPresets[0].mOsc2Gain = 0.0f;
     mPresets[0].mOsc3Gain = 0.0f;
 
     mPresets[0].mOsc1Waveform = OscWaveformShape::SawSync;
     mPresets[0].mOsc2Waveform = OscWaveformShape::SawSync;
     mPresets[0].mOsc3Waveform = OscWaveformShape::SawSync;
+    mPresets[0].mOsc2Gain = .5f;
     mPresets[0].mSync = false;
     mPresets[0].mDetune = 0.0f;
 
     mPresets[0].mFilterMinFreq = 0.0f;
-    mPresets[0].mFilterMaxFreq = 1000.0f;
+    mPresets[0].mFilterMaxFreq = 1200.0f;
     mPresets[0].mFilterQ = 0.7f;
 
     mPresets[1].mName = "Sync";

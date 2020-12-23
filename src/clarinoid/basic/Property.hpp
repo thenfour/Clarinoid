@@ -43,26 +43,40 @@ struct Property
   }
   Property<T>& operator =(Property<T>&&) = delete;
   
+  Property(T& binding) :
+    mRefBinding(&binding)
+  {
+  }
+
+  Property(typename cc::function<T(void*)>::ptr_t getter) :
+    mGetter(getter),
+    mSetter(nullptr),
+    mpCapture(nullptr)
+  {}
+
+  Property(typename cc::function<T(void*)>::ptr_t getter, void* capture) :
+    mGetter(getter),
+    mSetter(nullptr),
+    mpCapture(capture)
+  {}
+
   Property(typename cc::function<T(void*)>::ptr_t getter, typename cc::function<void(void*, const T&)>::ptr_t setter, void* capture) :
     mGetter(getter),
     mSetter(setter),
     mpCapture(capture)
   {}
 
-  Property(T& binding) :
-    mRefBinding(&binding)
-  {
-  }
-
   Property(typename cc::function<void(void* capture, const T& oldVal, const T& newVal)>::ptr_t onChange, void* capture) :
     mOnChange(onChange),
     mpCapture(capture)
   {
   }
+
   Property() :
     mRefBinding(&mOwnValue)
   {
   }
+
   T GetValue() const
   {
     if (mGetter) {
@@ -86,6 +100,7 @@ struct Property
   }
 };
 
+
 template<typename Tprop, typename Tval>
 Property<Tprop> MakePropertyByCasting(Tval* x) {
   static auto getter = [](void* capture)
@@ -105,7 +120,7 @@ Property<Tprop> MakePropertyByCasting(Tval* x) {
 
 #pragma pack(pop)
 
-static constexpr size_t aoeu3 = sizeof(Property<int>);
+//static constexpr size_t aoeu3 = sizeof(Property<int>);
 
 } // namespace clarinoid
 

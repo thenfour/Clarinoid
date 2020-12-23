@@ -103,6 +103,8 @@ namespace clarinoid
             mAppSettings.mControlMappings[12] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
 
             mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
+            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.65f;
+            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveS = -0.15f;
 
             mAppSettings.mControlMappings[14] = ControlMapping::TypicalEncoderMapping(PhysicalControl::LHEnc, ControlMapping::Function::MenuScrollA);
 
@@ -114,6 +116,8 @@ namespace clarinoid
 
             mAppSettings.mControlMappings[19] = ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierFine);
             mAppSettings.mControlMappings[20] = ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::ModifierCourse);
+
+            mAppSettings.mControlMappings[21] = ControlMapping::UnipolarMapping(PhysicalControl::JoyY, ControlMapping::Function::PitchBend, 0.9f, 0.1f, -1.0f, 1.0f);
 
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();

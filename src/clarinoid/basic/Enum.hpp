@@ -74,7 +74,10 @@ namespace clarinoid
 
     const EnumItemInfo<T> *GetItem(size_t n) const
     {
-      CCASSERT(n > 0 && n < this->mItemCount);
+      if (n >= this->mItemCount){
+        CCDIE(String("EnumItemInfo::GetItem where n(") + n + ") >= itemCount(" + this->mItemCount + ")");
+        CCASSERT(n > 0 && n < this->mItemCount);
+      }
       return &mItems[n];
     }
 

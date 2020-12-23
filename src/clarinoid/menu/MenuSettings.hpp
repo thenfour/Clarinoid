@@ -9,8 +9,8 @@ namespace clarinoid
 
 static const int SETTINGS_STACK_MAX_DEPTH = 10;
 
-static bool AlwaysEnabled() { return true; }
-static bool AlwaysEnabledWithCapture(void*) { return true; }
+static bool AlwaysEnabled(void*) { return true; }
+//static bool AlwaysEnabledWithCapture(void*) { return true; }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,30 +197,29 @@ struct MultiSubmenuSettingItem : public ISettingItem
 
 struct LabelSettingItem : public ISettingItem
 {
-  cc::function<String()>::ptr_t mText = nullptr;
-  cc::function<bool()>::ptr_t mIsEnabled = nullptr;
+  Property<String> mText;
+  Property<bool> mIsEnabled;
 
-  cc::function<String(void*)>::ptr_t mTextWithCapture = nullptr;
-  cc::function<bool(void*)>::ptr_t mIsEnabledWithCapture = nullptr;
-  void* mCapture = nullptr;
+  //cc::function<String(void*)>::ptr_t mTextWithCapture = nullptr;
+  //cc::function<bool(void*)>::ptr_t mIsEnabledWithCapture = nullptr;
+  //void* mCapture = nullptr;
 
-  LabelSettingItem(cc::function<String()>::ptr_t text, cc::function<bool()>::ptr_t isEnabled) :
+  // LabelSettingItem(cc::function<String()>::ptr_t text, const Property<bool>& isEnabled) :
+  //   mText(text),
+  //   mIsEnabled(isEnabled)
+  // {
+  // }
+
+  LabelSettingItem(const Property<String>& text, const Property<bool>& isEnabled) :
     mText(text),
     mIsEnabled(isEnabled)
   {
   }
 
-  LabelSettingItem(cc::function<String(void*)>::ptr_t text, cc::function<bool(void*)>::ptr_t isEnabled, void* capture) :
-    mTextWithCapture(text),
-    mIsEnabledWithCapture(isEnabled),
-    mCapture(capture)
-  {
-  }
-
-  virtual String GetName(size_t multiIndex) { return mText ? mText() : mTextWithCapture(mCapture); }
+  virtual String GetName(size_t multiIndex) { return mText.GetValue(); }
   virtual String GetValueString(size_t multiIndex) { return ""; }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled ? mIsEnabled() : mIsEnabledWithCapture(mCapture); }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled.GetValue(); }
   virtual ISettingItemEditor* GetEditor() {
     return nullptr;
   }

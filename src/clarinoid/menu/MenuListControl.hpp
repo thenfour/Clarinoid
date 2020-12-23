@@ -11,25 +11,25 @@ struct ListControl
 {
   const IList* mpList = nullptr;
   Property<int> mSelectedItem;
-  int mX = 0;
-  int mY = 0;
-  int mVisibleItems = 2;
+  //int mX = 0;
+  //int mY = 0;
+  //int mVisibleItems = 2;
   EncoderReader mEnc;
-  CCDisplay* mDisplay = nullptr;
+  //CCDisplay* mDisplay = nullptr;
   IEncoder* pEncoder = nullptr;
 
-  void Init(const IList* list, CCDisplay* d, IEncoder* penc, Property<int> selectedItemBinding, int x, int y, int nVisibleItems)
+  void Init(const IList* list, IEncoder* penc, const Property<int>& selectedItemBinding)
   {
     mpList = list;
     mSelectedItem = selectedItemBinding;
-    mX = x;
-    mY = y;
-    mVisibleItems = nVisibleItems;
-    mDisplay = d;
+    //mX = x;
+    //mY = y;
+    //mVisibleItems = nVisibleItems;
+    //mDisplay = d;
     pEncoder = penc;
   }
   
-  void Render()
+  void Render(CCDisplay* mDisplay, int x, int y, int mVisibleItems)
   {
     auto count = mpList->List_GetItemCount();
     if (count == 0) return;

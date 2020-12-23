@@ -27,23 +27,23 @@ struct PerformanceApp :
 
     MultiSubmenuSettingItem mTiming;
 
-    LabelSettingItem mDelay = { [](void* cap)
+    LabelSettingItem mDelay = { Property<String> { [](void* cap)
     {
         PerformanceApp* pThis = (PerformanceApp*)cap;
         String ret = "TS Delay: ";
         ret += (int)pThis->mTaskManager->mPreviousTimeSliceDelayTime.ElapsedMicros();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mTimesliceLen = { [](void* cap)
+    LabelSettingItem mTimesliceLen = { Property<String> {[](void* cap)
     {
         PerformanceApp* pThis = (PerformanceApp*)cap;
         String ret = "TS Len: ";
         ret += (int)pThis->mTaskManager->mTimesliceDuration.ElapsedMicros();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mCPU = { [](void* cap)
+    LabelSettingItem mCPU = {Property<String> { [](void* cap)
     {
         PerformanceApp* pThis = (PerformanceApp*)cap;
         String ret = "CPU usage: ";
@@ -55,31 +55,31 @@ struct PerformanceApp :
         ret += p;
         ret += "%";
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mInput = { [](void* cap)
+    LabelSettingItem mInput = { Property<String> {[](void* cap)
     {
         PerformanceApp* pThis = (PerformanceApp*)cap;
         String ret = "M->Input:";
         ret += (int)pThis->mpMusicalStateTask->mInputTiming.GetValue();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mMusicalState = { [](void* cap)
+    LabelSettingItem mMusicalState = { Property<String> {[](void* cap)
     {
         PerformanceApp* pThis = (PerformanceApp*)cap;
         String ret = "M->Music:";
         ret += (int)pThis->mpMusicalStateTask->mMusicalStateTiming.GetValue();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mSynthState = { [](void* cap)
+    LabelSettingItem mSynthState = { Property<String> {[](void* cap)
     {
         PerformanceApp* pThis = (PerformanceApp*)cap;
         String ret = "M->Synth:";
         ret += (int)pThis->mpMusicalStateTask->mSynthStateTiming.GetValue();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
 
 
@@ -111,11 +111,11 @@ struct PerformanceApp :
             );
     }
 
-    LabelSettingItem mSubitemTmp = { [](void* cap)
+    LabelSettingItem mSubitemTmp = { Property<String> {[](void* cap)
     {
         //PerformanceApp* pThis = (PerformanceApp*)cap;
         return String("tmp.");
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
     ISettingItem* mSubitemArray[1] =
     {
@@ -170,13 +170,13 @@ struct DebugDisplayApp :
         mMusicalStateTask(mst)
     {}
 
-    LabelSettingItem mBreath = { [](void* cap)
+    LabelSettingItem mBreath = {Property<String> { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         return (String)((String("Breath: ") + int(pThis->mControls.mBreath.CurrentValue01() * 1000)));
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mLHA = { [](void* cap)
+    LabelSettingItem mLHA = { Property<String> {[](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = "LHA:";
@@ -185,9 +185,9 @@ struct DebugDisplayApp :
             ret += pThis->mControls.mLHMCP.mButtons[i].CurrentValue() ? (String("") + i) : String(" ");
         }
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mLHB = { [](void* cap)
+    LabelSettingItem mLHB = {Property<String> { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = "LHB:";
@@ -196,9 +196,9 @@ struct DebugDisplayApp :
             ret += pThis->mControls.mLHMCP.mButtons[i].CurrentValue() ? (String("") + i) : String(" ");
         }
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled};
 
-    LabelSettingItem mRHA = { [](void* cap)
+    LabelSettingItem mRHA = {Property<String> { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = "RHA:";
@@ -207,9 +207,9 @@ struct DebugDisplayApp :
             ret += pThis->mControls.mRHMCP.mButtons[i].CurrentValue() ? (String("") + i) : String(" ");
         }
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mRHB = { [](void* cap)
+    LabelSettingItem mRHB = {Property<String> { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = "RHB:";
@@ -218,70 +218,70 @@ struct DebugDisplayApp :
             ret += pThis->mControls.mRHMCP.mButtons[i].CurrentValue() ? (String("") + i) : String(" ");
         }
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mCPEnc = { [](void* cap)
+    LabelSettingItem mCPEnc = { Property<String> {[](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("CP Encoder raw:") + pThis->mControls.mCPEncoder.RawValue();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mLHEnc = { [](void* cap)
+    LabelSettingItem mLHEnc = { Property<String> {[](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("LH Encoder raw:") + pThis->mControls.mLHEncoder.RawValue();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mRHEnc = { [](void* cap)
+    LabelSettingItem mRHEnc = {Property<String> { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("RH Encoder raw:") + pThis->mControls.mRHEncoder.RawValue();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mToggleUp = { [](void* cap)
+    LabelSettingItem mToggleUp = { Property<String> {[](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Toggle up:") + (pThis->mControls.mToggleUp.CurrentValue() ? "1" : "0");
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mSynthPoly = { [](void* cap)
+    LabelSettingItem mSynthPoly = {Property<String> { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Synth poly:") + (pThis->mMusicalStateTask.mSynth.mCurrentPolyphony);
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mAudioProcessorUsage = { [](void* cap)
+    LabelSettingItem mAudioProcessorUsage = {Property<String> { [](void* cap)
     {
         //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio CPU %:") + AudioProcessorUsage();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mAudioProcessorUsageMax = { [](void* cap)
+    LabelSettingItem mAudioProcessorUsageMax = {Property<String> { [](void* cap)
     {
         //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio max CPU %:") + AudioProcessorUsageMax();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mAudioMemoryUsage = { [](void* cap)
+    LabelSettingItem mAudioMemoryUsage = {Property<String> { [](void* cap)
     {
         //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio mem:") + AudioMemoryUsage();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
-    LabelSettingItem mAudioMemoryUsageMax = { [](void* cap)
+    LabelSettingItem mAudioMemoryUsageMax = {Property<String> { [](void* cap)
     {
         //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
         String ret = String("Audio mem max:") + AudioMemoryUsageMax();
         return ret;
-    }, AlwaysEnabledWithCapture, this };
+    }}, AlwaysEnabled };
 
     ISettingItem* mArray[14] =
     {

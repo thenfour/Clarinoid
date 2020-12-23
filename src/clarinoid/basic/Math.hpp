@@ -356,7 +356,6 @@ namespace clarinoid
 
     int GetValue01Int(uint64_t tmicros) const
     {
-
       uint64_t pos = (tmicros % mFrequencyMicros);
       return (pos < mDutyCycleMicros) ? 0 : 1;
     }
@@ -385,9 +384,9 @@ namespace clarinoid
   template <typename T>
   struct NumericEditRangeSpec
   {
-    static constexpr int DefaultCourseSteps = 50;
+    static constexpr int DefaultCourseSteps = 30;
     static constexpr int DefaultNormalSteps = 100;
-    static constexpr int DefaultFineSteps = 200;
+    static constexpr int DefaultFineSteps = 1000;
 
     T mRangeMin;
     T mRangeMax;
@@ -402,6 +401,12 @@ namespace clarinoid
       mCourseStep = (T)(float(rangeMax - rangeMin) / DefaultCourseSteps);
       mNormalStep = (T)(float(rangeMax - rangeMin) / DefaultNormalSteps);
       mFineStep = (T)(float(rangeMax - rangeMin) / DefaultFineSteps);
+      if (mFineStep == 0) {
+        if (std::is_integral<T>::value)
+          mFineStep = 1;
+        else
+          mFineStep = (T)1 / 100;
+      }
     }
 
     explicit NumericEditRangeSpec(T rangeMin, T rangeMax, T courseStep, T normalStep, T fineStep) : mRangeMin(rangeMin),

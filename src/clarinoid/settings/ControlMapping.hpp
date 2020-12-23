@@ -229,14 +229,14 @@ namespace clarinoid
             return ret;
         }
 
-        static ControlMapping UnipolarMapping(PhysicalControl source, Function d, float srcMin, float srcMax)
+        static ControlMapping UnipolarMapping(PhysicalControl source, Function d, float srcMin, float srcMax, float destMin = 0.0f, float destMax = 1.0f)
         {
             ControlMapping ret;
             ret.mSource = source;
             ret.mFunction = d;
             ret.mStyle = MapStyle::RemapUnipolar;
             ret.mOperator = Operator::Set;
-            ret.mNPolarMapping.mNegative = clarinoid::UnipolarMapping { srcMin, srcMax, 0.0f, 1.0f, 0.5f, 0.0f };
+            ret.mNPolarMapping.mNegative = clarinoid::UnipolarMapping { srcMin, srcMax, destMin, destMax, 0.5f, 0.0f };
             return ret;
         }
     };

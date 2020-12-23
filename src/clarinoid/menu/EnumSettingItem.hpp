@@ -38,7 +38,7 @@ struct EnumEditor : ISettingItemEditor
     mpApi = papi;
     //if (!mpApi)
     //  mpApi = this;
-    mListControl.Init(&mEnumInfo, mpApi->GetDisplay(), &mpApi->GetInputDelegator()->mMenuScrollA, mListSelectedItem, 12, 12, 3);
+    mListControl.Init(&mEnumInfo, &mpApi->GetInputDelegator()->mMenuScrollA, mListSelectedItem);//
     mOldVal = mBinding.GetValue();
   }
 
@@ -61,10 +61,12 @@ struct EnumEditor : ISettingItemEditor
       mpApi->CommitEditing();
     }
   }
+
   virtual void Render()
   {
     mpApi->GetDisplay()->SetupModal();
-    mListControl.Render();
+    int nitems = mpApi->GetDisplay()->mDisplay.ClippedAreaHeight() / mpApi->GetDisplay()->mDisplay.GetLineHeight();
+    mListControl.Render(mpApi->GetDisplay(), 12, 12, nitems);
   }
 };
 
@@ -76,9 +78,9 @@ struct EnumSettingItem : public ISettingItem
   EnumEditor<T> mEditor;
   Property<T> mBinding;
   const EnumInfo<T>& mEnumInfo;
-  cc::function<bool()>::ptr_t mIsEnabled;
+  Property<bool> mIsEnabled;
 
-  EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, cc::function<bool()>::ptr_t isEnabled) :
+  EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, const Property<bool>& isEnabled) :
     mName(name),
     mEditor(enumInfo, binding),
     mBinding(binding),
@@ -90,7 +92,7 @@ struct EnumSettingItem : public ISettingItem
   virtual String GetName(size_t multiIndex) { return mName; }
   virtual String GetValueString(size_t multiIndex) { return mEnumInfo.GetValueString(mBinding.GetValue()); }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled.GetValue(); }
   virtual ISettingItemEditor* GetEditor(size_t multiIndex) {
     return &mEditor;
   }

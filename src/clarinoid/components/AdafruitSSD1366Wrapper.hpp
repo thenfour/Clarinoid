@@ -86,6 +86,8 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
   int mClipTop = 0;
   int mClipBottom = 0;
 
+  int ClippedAreaHeight() const { return mClipBottom - mClipTop; }
+
   void ResetClip()
   {
     mClipLeft = 0;

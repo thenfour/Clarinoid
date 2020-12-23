@@ -24,13 +24,11 @@ struct NumericEditor : ISettingItemEditor
   {
   }
 
-  //virtual T Add(T rhs, int encoderIntDelta) = 0;
   virtual void DrawValue(T val, T oldVal) = 0;
   
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
     mpApi = papi;
     CCASSERT(!!papi);
-//    if (!mpApi) mpApi = this;
     oldVal = mBinding.GetValue();
     this->x = x;
     this->y = y;
@@ -42,7 +40,6 @@ struct NumericEditor : ISettingItemEditor
   {
     T val = mRange.AdjustValue(mBinding.GetValue(), encIntDelta, mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(), mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
     mBinding.SetValue(val);
-    //mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
   }
   
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
@@ -50,7 +47,6 @@ struct NumericEditor : ISettingItemEditor
     T val = mRange.AdjustValue(mBinding.GetValue(), encIntDelta, mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(), mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
     mBinding.SetValue(val);
 
-    //mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
     if (backWasPressed) {
       mBinding.SetValue(oldVal);
       mpApi->CommitEditing();
@@ -72,9 +68,7 @@ struct IntEditor : NumericEditor<int>
     NumericEditor(range_, binding)
   {
   }
-  // virtual int Add(int n, int encDelta) {
-  //   return n + encDelta;
-  // }
+
   virtual void DrawValue(int n, int oldVal)
   {
     this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
@@ -89,9 +83,7 @@ struct FloatEditor : NumericEditor<float>
     NumericEditor(range_, binding)
   {  
   }
-  // virtual float Add(float n, int encDelta) {
-  //   return n + (float)encDelta * (mMax - mMin) / 100;
-  // }
+
   virtual void DrawValue(float n, float oldVal)
   {
     this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
@@ -107,9 +99,9 @@ struct NumericSettingItem : public ISettingItem
   String mName;
   TEditor mEditor;
   Property<T> mBinding;
-  typename cc::function<bool()>::ptr_t mIsEnabled;
+  Property<bool> mIsEnabled;
   
-  NumericSettingItem(const String& name, const NumericEditRangeSpec<T>& range_, const Property<T>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
+  NumericSettingItem(const String& name, const NumericEditRangeSpec<T>& range_, const Property<T>& binding, const Property<bool>& isEnabled) :
     mName(name),
     mEditor(range_, binding),
     mBinding(binding),
@@ -120,7 +112,7 @@ struct NumericSettingItem : public ISettingItem
   virtual String GetName(size_t multiIndex) { return mName; }
   virtual String GetValueString(size_t multiIndex) { return String(mBinding.GetValue()); }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled.GetValue(); }
 
   virtual ISettingItemEditor* GetEditor(size_t multiIndex) {
     return &mEditor;
@@ -128,7 +120,6 @@ struct NumericSettingItem : public ISettingItem
 };
 
 using IntSettingItem = NumericSettingItem<int, IntEditor>;
-//using UInt16SettingItem = NumericSettingItem<uint16_t, IntEditor>;
 using FloatSettingItem = NumericSettingItem<float, FloatEditor>;
 
 
