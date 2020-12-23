@@ -48,29 +48,43 @@ struct SynthPreset
   float mOsc1PulseWidth = 0.5f;
   float mOsc2PulseWidth = 0.5f;
   float mOsc3PulseWidth = 0.5f;
+
   bool mSync = true;
+  float mSyncMultMin = 2.0f;
+  float mSyncMultMax = 7.0f;
+
   float mDetune = 0;
+
+  float mFilterQ = 1.0f; // 0.7 to 5.0 range
+  float mFilterMaxFreq = 15000.0f;
+  float mFilterMinFreq = 0.0f;
 };
 
 struct SynthSettings
 {
   SynthPreset mPresets[SYNTH_PRESET_COUNT];
+  float mReverbGain = 0.0f;
+  float mMasterGain = 1.0f;
 
   SynthSettings() 
   {
-    mPresets[0].mName = "Sync.";
-
     // detuned saw.
-    mPresets[1].mName = "SAW IV";
-    mPresets[1].mOsc1Gain = .9f;
-    mPresets[1].mOsc2Gain = .9f;
-    mPresets[1].mOsc3Gain = .9f;
+    mPresets[0].mName = "Saw";
+    mPresets[0].mOsc1Gain = .9f;
+    mPresets[0].mOsc2Gain = 0.0f;
+    mPresets[0].mOsc3Gain = 0.0f;
 
-    mPresets[1].mOsc1Waveform = OscWaveformShape::SawSync;
-    mPresets[1].mOsc2Waveform = OscWaveformShape::SawSync;
-    mPresets[1].mOsc3Waveform = OscWaveformShape::SawSync;
-    mPresets[1].mSync = false;
-    mPresets[1].mDetune = 0.06f;
+    mPresets[0].mOsc1Waveform = OscWaveformShape::SawSync;
+    mPresets[0].mOsc2Waveform = OscWaveformShape::SawSync;
+    mPresets[0].mOsc3Waveform = OscWaveformShape::SawSync;
+    mPresets[0].mSync = false;
+    mPresets[0].mDetune = 0.0f;
+
+    mPresets[0].mFilterMinFreq = 0.0f;
+    mPresets[0].mFilterMaxFreq = 1000.0f;
+    mPresets[0].mFilterQ = 0.7f;
+
+    mPresets[1].mName = "Sync";
   }
 };
 

@@ -101,8 +101,8 @@ struct BassoonoidControlMapper :
         mControlInfo[(size_t)PhysicalControl::RHTh2] = ControlInfo { "RHTh2", &mRHMCP.mButtons[6] };
         mControlInfo[(size_t)PhysicalControl::RHTh3] = ControlInfo { "RHTh3", &mRHMCP.mButtons[7] };
         mControlInfo[(size_t)PhysicalControl::RHx1] = ControlInfo { "RHx1", &mRHMCP.mButtons[4] };
-        mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo { "RHx2", &mRHMCP.mButtons[12] };
-        mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo { "RHx3", &mRHMCP.mButtons[13] };
+        mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo { "RHx2", &mRHMCP.mButtons[12] }; // above rh key1
+        mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo { "RHx3", &mRHMCP.mButtons[13] }; // also above rh key1
         mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo { "RHx4", &mRHMCP.mButtons[14] };
         mControlInfo[(size_t)PhysicalControl::RHx5] = ControlInfo { "RHx5", &mRHMCP.mButtons[15] };
         mControlInfo[(size_t)PhysicalControl::RHKey1] = ControlInfo { "RHKey1", &mRHMCP.mButtons[8] };

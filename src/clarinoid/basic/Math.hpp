@@ -64,14 +64,15 @@ namespace clarinoid
     return x;
   }
 
-  // static int ClampI(int x, int min, int max)
-  // {
-  //   if (x <= min)
-  //     return min;
-  //   if (x >= max)
-  //     return max;
-  //   return x;
-  // }
+  template <typename T>
+  static T ClampInclusive(T x, T minInclusive, T maxInclusive)
+  {
+    if (x <= minInclusive)
+      return minInclusive;
+    if (x >= maxInclusive)
+      return maxInclusive;
+    return x;
+  }
 
   // this is all utilities for shaping curves using this style:
   // https://www.desmos.com/calculator/3zhzwbfrxd
@@ -112,8 +113,6 @@ namespace clarinoid
     }
   } // namespace Curve2
 
-
-
   struct UnipolarMapping
   {
     float mSrcMin;
@@ -124,17 +123,17 @@ namespace clarinoid
     float mCurveS; // curve slope, -1 to 1 technically, but more like -.9 to +.9
 
     UnipolarMapping() = default;
-    UnipolarMapping(float srcMin, float srcMax, float destMin, float destMax, float p, float s): 
-      mSrcMin(srcMin),
-      mSrcMax(srcMax),
-      mDestMin(destMin),
-      mDestMax(destMax),
-      mCurveP(p),
-      mCurveS(s)
+    UnipolarMapping(float srcMin, float srcMax, float destMin, float destMax, float p, float s) : mSrcMin(srcMin),
+                                                                                                  mSrcMax(srcMax),
+                                                                                                  mDestMin(destMin),
+                                                                                                  mDestMax(destMax),
+                                                                                                  mCurveP(p),
+                                                                                                  mCurveS(s)
     {
     }
 
-    bool operator ==(const UnipolarMapping& rhs) const {
+    bool operator==(const UnipolarMapping &rhs) const
+    {
       if (!FloatEquals(mSrcMin, rhs.mSrcMin))
         return false;
       if (!FloatEquals(mSrcMax, rhs.mSrcMax))
@@ -150,7 +149,7 @@ namespace clarinoid
       return true;
     }
 
-    bool operator !=(const UnipolarMapping& rhs) const { return !(*this == rhs); }
+    bool operator!=(const UnipolarMapping &rhs) const { return !(*this == rhs); }
 
     bool IsSrcInRegion(float src) const
     {
@@ -181,7 +180,7 @@ namespace clarinoid
     UnipolarMapping mNegative; // used for unipolar mapping.
     UnipolarMapping mPositive;
 
-    UnipolarMapping& Unipolar() { return mNegative; }
+    UnipolarMapping &Unipolar() { return mNegative; }
 
     float PerformUnipolarMapping(float src) const
     {
@@ -196,10 +195,12 @@ namespace clarinoid
 
       // determine which region to let evaluate this.
       // if it's IN either range then it's clear.
-      if (mNegative.IsSrcInRegion(src)) {
+      if (mNegative.IsSrcInRegion(src))
+      {
         return mNegative.PerformMapping(src);
       }
-      if (mPositive.IsSrcInRegion(src)) {
+      if (mPositive.IsSrcInRegion(src))
+      {
         return mPositive.PerformMapping(src);
       }
 
@@ -215,9 +216,6 @@ namespace clarinoid
       return mPositive.PerformMapping(src);
     }
   };
-
-
-
 
   template <typename T, T divisor>
   void DivRem(T val, T &wholeParts, T &remainder)
@@ -382,5 +380,63 @@ namespace clarinoid
       return r * 2;
     }
   };
+
+  // for adjusting numeric values with the settings menu editor...
+  template <typename T>
+  struct NumericEditRangeSpec
+  {
+    static constexpr int DefaultCourseSteps = 50;
+    static constexpr int DefaultNormalSteps = 100;
+    static constexpr int DefaultFineSteps = 200;
+
+    T mRangeMin;
+    T mRangeMax;
+
+    T mCourseStep;
+    T mNormalStep;
+    T mFineStep;
+
+    explicit NumericEditRangeSpec(T rangeMin, T rangeMax) : mRangeMin(rangeMin),
+                                                            mRangeMax(rangeMax)
+    {
+      mCourseStep = (T)(float(rangeMax - rangeMin) / DefaultCourseSteps);
+      mNormalStep = (T)(float(rangeMax - rangeMin) / DefaultNormalSteps);
+      mFineStep = (T)(float(rangeMax - rangeMin) / DefaultFineSteps);
+    }
+
+    explicit NumericEditRangeSpec(T rangeMin, T rangeMax, T courseStep, T normalStep, T fineStep) : mRangeMin(rangeMin),
+                                                                                                    mRangeMax(rangeMax),
+                                                                                                    mCourseStep(courseStep),
+                                                                                                    mNormalStep(normalStep),
+                                                                                                    mFineStep(fineStep)
+    {
+    }
+
+    T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed)
+    {
+      T step = mNormalStep;
+      if (isCoursePressed && !isFinePressed)
+        step = mCourseStep;
+      if (isFinePressed && !isCoursePressed)
+        step = mFineStep;
+
+      T ret = f + (step * encoderIntDelta);
+      ret = ClampInclusive(ret, mRangeMin, mRangeMax);
+      return ret;
+    }
+  };
+
+  namespace StandardRangeSpecs
+  {
+    static const NumericEditRangeSpec<float> gFloat_0_1 = NumericEditRangeSpec<float> { 0.0f, 1.0f };
+   
+    // used by detune
+    static const NumericEditRangeSpec<float> gFloat_0_2 = NumericEditRangeSpec<float> { 0.0f, 2.0f };
+
+    static const NumericEditRangeSpec<float> gPortamentoRange = NumericEditRangeSpec<float> { 0.0f, 0.2f };
+
+    // osc pitch and global transpose
+    static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int> { -48, 48 };
+  }
 
 } // namespace clarinoid

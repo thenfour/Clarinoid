@@ -341,22 +341,19 @@ struct SettingsMenuApp :
     mDisplay.mDisplay.setCursor(0,0);
     mDisplay.mDisplay.setTextWrap(false);
 
-    const size_t lineHeight = 8;
-    const size_t maxItemsToRender = mDisplay.mDisplay.width() / lineHeight;
-    const size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
-    const size_t itemsFromTop = maxItemsToRender / 3; // estimated... whatever.
+    size_t lineHeight = mDisplay.mDisplay.GetLineHeight();
+    size_t maxItemsToRender = (mDisplay.mDisplay.height() + (lineHeight / 2)) / lineHeight;
+    size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
+    int focusedItemScreenPos = maxItemsToRender / 3; // estimated... whatever.
 
-    size_t itemToRender = (state.focusedItem + itemsFromTop) % state.pList->Count();
+    size_t itemToRender = AddConstrained(state.focusedItem, -focusedItemScreenPos, 0, state.pList->Count() - 1);
     //Serial.println(String("focuseditem = ") + state.focusedItem + " itemsFromTop=" + itemsFromTop + "plist count =" + state.pList->Count());
-    size_t i = 0;
-    for (; i < itemsToRender; ++ i) {
+    for (size_t i = 0; i < itemsToRender; ++ i) {
       size_t multiIndex = 0;
       auto* item = state.pList->GetItem(itemToRender, multiIndex);
       if (itemToRender == (size_t)state.focusedItem) {
-        mDisplay.mDisplay.setTextSize(1);
         mDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       } else {
-        mDisplay.mDisplay.setTextSize(1);
         mDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
       }
 

@@ -48,9 +48,9 @@ struct CCSynth
     return &gVoices[0];
   }
 
-  void SetGain(float f) {
-    gSynthGraphControl.SetGain(f);
-  }
+  // void SetGain(float f) {
+  //   gSynthGraphControl.SetGain(f);
+  // }
 
   // After musical state has been updated, call this to apply those changes to the synth state.
   void Update(const MusicalVoice* pVoicesBegin, const MusicalVoice* pVoicesEnd) {

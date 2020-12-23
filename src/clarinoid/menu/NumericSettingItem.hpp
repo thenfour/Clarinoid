@@ -14,19 +14,17 @@ struct NumericEditor : ISettingItemEditor
   ISettingItemEditorActions* mpApi;
   int x;
   int y;
-  T mMin;
-  T mMax;
+  NumericEditRangeSpec<T> mRange;
   Property<T> mBinding;
   T oldVal;
 
-  NumericEditor(T min_, T max_, const Property<T>& binding) :
-    mMin(min_),
-    mMax(max_),
+  NumericEditor(const NumericEditRangeSpec<T>& range_, const Property<T>& binding) :
+    mRange(range_),
     mBinding(binding)
   {
   }
 
-  virtual T Add(T rhs, int encoderIntDelta) = 0;
+  //virtual T Add(T rhs, int encoderIntDelta) = 0;
   virtual void DrawValue(T val, T oldVal) = 0;
   
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
@@ -42,12 +40,17 @@ struct NumericEditor : ISettingItemEditor
   // with encoder button pressed here.
   virtual void UpdateMomentaryMode(int encIntDelta)
   {
-    mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
+    T val = mRange.AdjustValue(mBinding.GetValue(), encIntDelta, mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(), mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+    mBinding.SetValue(val);
+    //mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
   }
   
   virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
   {
-    mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
+    T val = mRange.AdjustValue(mBinding.GetValue(), encIntDelta, mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(), mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+    mBinding.SetValue(val);
+
+    //mBinding.SetValue(constrain(Add(mBinding.GetValue(), encIntDelta), mMin, mMax));
     if (backWasPressed) {
       mBinding.SetValue(oldVal);
       mpApi->CommitEditing();
@@ -65,13 +68,13 @@ struct NumericEditor : ISettingItemEditor
 
 struct IntEditor : NumericEditor<int>
 {
-  IntEditor(int min_, int max_, const Property<int>& binding) :
-    NumericEditor(min_, max_, binding)
+  IntEditor(const NumericEditRangeSpec<int>& range_, const Property<int>& binding) :
+    NumericEditor(range_, binding)
   {
   }
-  virtual int Add(int n, int encDelta) {
-    return n + encDelta;
-  }
+  // virtual int Add(int n, int encDelta) {
+  //   return n + encDelta;
+  // }
   virtual void DrawValue(int n, int oldVal)
   {
     this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
@@ -82,13 +85,13 @@ struct IntEditor : NumericEditor<int>
 
 struct FloatEditor : NumericEditor<float>
 {
-  FloatEditor(float min_, float max_, const Property<float>& binding) :
-    NumericEditor(min_, max_, binding)
+  FloatEditor(const NumericEditRangeSpec<float>& range_, const Property<float>& binding) :
+    NumericEditor(range_, binding)
   {  
   }
-  virtual float Add(float n, int encDelta) {
-    return n + (float)encDelta * (mMax - mMin) / 100;
-  }
+  // virtual float Add(float n, int encDelta) {
+  //   return n + (float)encDelta * (mMax - mMin) / 100;
+  // }
   virtual void DrawValue(float n, float oldVal)
   {
     this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
@@ -106,9 +109,9 @@ struct NumericSettingItem : public ISettingItem
   Property<T> mBinding;
   typename cc::function<bool()>::ptr_t mIsEnabled;
   
-  NumericSettingItem(const String& name, T min_, T max_, const Property<T>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
+  NumericSettingItem(const String& name, const NumericEditRangeSpec<T>& range_, const Property<T>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
     mName(name),
-    mEditor(min_, max_, binding),
+    mEditor(range_, binding),
     mBinding(binding),
     mIsEnabled(isEnabled)
   {

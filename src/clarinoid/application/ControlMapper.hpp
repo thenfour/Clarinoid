@@ -50,11 +50,13 @@ namespace clarinoid
     virtual void FunctionHandler_Update(const ControlValue &v) override
     {
       int nv = v.AsRoundedInt();
-      if (nv < -48) {
+      if (nv < -48)
+      {
         mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo low"));
         return;
       }
-      if (nv > 48) { 
+      if (nv > 48)
+      {
         mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo high"));
         return;
       }
@@ -151,7 +153,7 @@ namespace clarinoid
       mpSrc->InputSource_Init(this);
     }
 
-    template<typename Tval, typename TEnum>
+    template <typename Tval, typename TEnum>
     static bool HasFlag(Tval val, TEnum e)
     {
       auto ival = (typename std::underlying_type<TEnum>::type)val;
@@ -159,7 +161,7 @@ namespace clarinoid
       return (ival & ie) == ie;
     }
 
-    bool MatchesModifierKeys(const ControlMapping& m)
+    bool MatchesModifierKeys(const ControlMapping &m)
     {
       return true;
 
@@ -222,7 +224,7 @@ namespace clarinoid
         CCASSERT((size_t)mapping.mFunction < SizeofStaticArray(mHandlers));
 
         FunctionHandler *dest = mHandlers[(size_t)mapping.mFunction]; // get the function this is mapped to
-        auto src = mpSrc->InputSource_GetControl(mapping.mSource); // and the source control providing the value to map.
+        auto src = mpSrc->InputSource_GetControl(mapping.mSource);    // and the source control providing the value to map.
         dest->Update(mapping, src);
       }
 
@@ -232,7 +234,6 @@ namespace clarinoid
         mHandlers[i]->EndUpdate();
       }
     }
-
 
     void RegisterFunction(ControlMapping::Function f, FunctionHandler *handler)
     {

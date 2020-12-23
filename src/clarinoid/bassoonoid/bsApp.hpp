@@ -20,6 +20,7 @@
 #include <clarinoid/application/ControlMapper.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
+#include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/application/MusicalState.hpp>
 
 #include <clarinoid/synth/Synth.hpp>
@@ -36,7 +37,6 @@
 
 namespace clarinoid
 {
-
 
     struct BassoonoidApp
     {
@@ -55,15 +55,19 @@ namespace clarinoid
         PerformanceApp mPerformanceApp;
         DebugDisplayApp mDebugDisplayApp;
         SystemSettingsApp mSystemSettingsApp;
+        SynthSettingsApp mSynthSettingsApp;
 
         BassoonoidApp() : mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 44 * 1000000UL),
                           mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
-                          mSystemSettingsApp(mDisplay, breathMappingIndex, [](void* cap){
-                            BassoonoidApp* pThis = (BassoonoidApp*)cap;
-                            return pThis->mControlMapper.mBreath.CurrentValue01();
-                          }, this)
+                          mSystemSettingsApp(
+                              mDisplay, breathMappingIndex, [](void *cap) {
+                                  BassoonoidApp *pThis = (BassoonoidApp *)cap;
+                                  return pThis->mControlMapper.mBreath.CurrentValue01();
+                              },
+                              this),
+                          mSynthSettingsApp(mDisplay)
         {
         }
 
@@ -76,6 +80,7 @@ namespace clarinoid
                     &mPerformanceApp,
                     &mDebugDisplayApp,
                     &mSystemSettingsApp,
+                    &mSynthSettingsApp,
                 };
 
             mInputDelegator.Init(&mAppSettings, &mControlMapper);
@@ -107,6 +112,8 @@ namespace clarinoid
             mAppSettings.mControlMappings[17] = ControlMapping::ButtonIncrementMapping(PhysicalControl::RHTh3, ControlMapping::Function::SynthPreset, 1.0f);
             mAppSettings.mControlMappings[18] = ControlMapping::ButtonIncrementMapping(PhysicalControl::RHTh2, ControlMapping::Function::SynthPreset, -1.0f);
 
+            mAppSettings.mControlMappings[19] = ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierFine);
+            mAppSettings.mControlMappings[20] = ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::ModifierCourse);
 
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();

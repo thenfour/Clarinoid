@@ -9,30 +9,24 @@ namespace clarinoid
 //////////////////////////////////////////////////////////////////////
 struct ListControl
 {
-  const IList* mpList;
+  const IList* mpList = nullptr;
   Property<int> mSelectedItem;
-  int mX;
-  int mY;
-  int mMaxItemsToRender;
-  EncoderReader mEnc;// = EncoderReader { gControlMapper.MenuEncoder() };
-  CCDisplay* mDisplay;
-  IEncoder* pEncoder;
+  int mX = 0;
+  int mY = 0;
+  int mVisibleItems = 2;
+  EncoderReader mEnc;
+  CCDisplay* mDisplay = nullptr;
+  IEncoder* pEncoder = nullptr;
 
-  ListControl(const IList* list, CCDisplay* d, IEncoder* penc, Property<int> selectedItemBinding, int x, int y, int nVisibleItems) : 
-    mpList(list),
-    mSelectedItem(selectedItemBinding),
-    mX(x),
-    mY(y),
-    mMaxItemsToRender(nVisibleItems),
-    mDisplay(d),
-    pEncoder(penc)
+  void Init(const IList* list, CCDisplay* d, IEncoder* penc, Property<int> selectedItemBinding, int x, int y, int nVisibleItems)
   {
-  }
-
-  void Init()
-  {
-    //mEnc.SetSource(pEncoder);
-    //mEnc.SetSource(mControlMapper->MenuEncoder());
+    mpList = list;
+    mSelectedItem = selectedItemBinding;
+    mX = x;
+    mY = y;
+    mVisibleItems = nVisibleItems;
+    mDisplay = d;
+    pEncoder = penc;
   }
   
   void Render()
@@ -43,7 +37,7 @@ struct ListControl
     //gDisplay.mDisplay.setCursor(0, 0);
     mDisplay->mDisplay.setTextWrap(false);
     int itemToRender = RotateIntoRange(mSelectedItem.GetValue() - 1, count);
-    const int itemsToRender = min(mMaxItemsToRender, count);
+    const int itemsToRender = min(mVisibleItems, count);
     for (int i = 0; i < itemsToRender; ++ i) {
       if (itemToRender == mSelectedItem.GetValue()) {
         mDisplay->mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text

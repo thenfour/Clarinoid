@@ -35,8 +35,6 @@ struct AppSettings
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
 
-  float mReverbGain = 0.02f;
-
   bool mMetronomeOn = false;
   float mMetronomeGain = 0.8f;
   int mMetronomeNote = 80;
@@ -48,7 +46,7 @@ struct AppSettings
 
   GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Deduced;
   Scale mGlobalScale = Scale { Note::E, ScaleFlavorIndex::MajorPentatonic }; // you can set this in menus
-  Scale mDeducedScale = Scale { Note::C, ScaleFlavorIndex::MajorPentatonic };; // this is automatically populated always
+  Scale mDeducedScale = Scale { Note::C, ScaleFlavorIndex::MajorPentatonic }; // this is automatically populated always
   
   HarmSettings mHarmSettings;
   LooperSettings mLooperSettings;

@@ -133,14 +133,15 @@ struct Voice
 
     if (mPreset->mSync) {
       float freq = MIDINoteToFreq(midiNote + mPreset->mOsc2PitchFine + mPreset->mOsc2PitchSemis);
-      float freqSync = map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * 2, freq * 7);
+      float freqSync = map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * mPreset->mSyncMultMin, freq * mPreset->mSyncMultMax);
       mOsc.frequency(2, freqSync);
     } else {
       mOsc.frequency(2, MIDINoteToFreq(midiNote + mPreset->mOsc2PitchFine + mPreset->mOsc2PitchSemis));
     }
 
-    float filterFreq = map(mv.mBreath01.GetFloatVal(), 0.01, 1, 0, 15000);
+    float filterFreq = map(mv.mBreath01.GetFloatVal(), 0.01, 1, mPreset->mFilterMinFreq, mPreset->mFilterMaxFreq);
     mFilter.frequency(filterFreq);
+    mFilter.resonance(mPreset->mFilterQ); // 0.7 to 5.0
 
     mRunningVoice = mv;
   }
@@ -212,7 +213,7 @@ struct SynthGraphControl
     
     //CCSynthGraph::audioShield.enable();
     //CCSynthGraph::audioShield.volume(.9); // headphone vol
-    CCSynthGraph::ampLeft.gain(.9);
+    CCSynthGraph::ampLeft.gain(1);
     //CCSynthGraph::ampRight.gain(.9);
     delay(300); // why?
 
@@ -223,11 +224,11 @@ struct SynthGraphControl
     CCSynthGraph::metronomeEnv.sustain(0);
   }
 
-  void SetGain(float f) {
-    //Serial.println(String("SetGain: ") + f);
-    CCSynthGraph::ampLeft.gain(f);
-    //CCSynthGraph::ampRight.gain(f);
-  }
+  // void SetGain(float f) {
+  //   //Serial.println(String("SetGain: ") + f);
+  //   CCSynthGraph::ampLeft.gain(f);
+  //   //CCSynthGraph::ampRight.gain(f);
+  // }
 
   void BeginUpdate() {
     //AudioNoInterrupts();// https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
@@ -240,8 +241,8 @@ struct SynthGraphControl
   void UpdatePostFx() {
     CCSynthGraph::verb.roomsize(.6f);
     CCSynthGraph::verb.damping(.7f);
-    CCSynthGraph::verbWetAmpLeft.gain(mAppSettings->mReverbGain);
-    //CCSynthGraph::verbWetAmpRight.gain(mAppSettings->mReverbGain);
+    CCSynthGraph::verbWetAmpLeft.gain(mAppSettings->mSynthSettings.mReverbGain);
+    CCSynthGraph::ampLeft.gain(mAppSettings->mSynthSettings.mMasterGain);
 
     if (!mAppSettings->mMetronomeOn) {
       CCSynthGraph::metronomeOsc.amplitude(0);

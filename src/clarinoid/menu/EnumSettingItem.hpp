@@ -28,14 +28,17 @@ struct EnumEditor : ISettingItemEditor
 
   EnumEditor(const EnumInfo<T>&enumInfo, const Property<T>& binding) :
     mBinding(binding),
-    mEnumInfo(enumInfo),
-    mListControl(&mEnumInfo, mListSelectedItem, 12, 12, 3)
+    mEnumInfo(enumInfo)//,
+    //mListControl() //   ListControl(const IList* list, CCDisplay* d, IEncoder* penc, Property<int> selectedItemBinding, int x, int y, int nVisibleItems) : 
   {
   }
 
   virtual void SetupEditing(ISettingItemEditorActions* papi, int x, int y) {
+    CCASSERT(!!papi);
     mpApi = papi;
-    if (!mpApi) mpApi = this;
+    //if (!mpApi)
+    //  mpApi = this;
+    mListControl.Init(&mEnumInfo, mpApi->GetDisplay(), &mpApi->GetInputDelegator()->mMenuScrollA, mListSelectedItem, 12, 12, 3);
     mOldVal = mBinding.GetValue();
   }
 
