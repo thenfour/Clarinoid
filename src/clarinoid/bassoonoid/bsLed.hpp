@@ -2,96 +2,238 @@
 
 #pragma once
 
+namespace std
+{
+    // solves some error in the gcc library
+    // ... .platformio\packages\toolchain-gccarmnoneeabi\arm-none-eabi\include\c++\5.4.1\bits\random.tcc:1468:42: note:   mismatched types 'std::initializer_list<_Tp>' and 'float'
+    // https://github.com/tianzhi0549/CTPN/issues/60
+    double max(const float &a, const double &b)
+    {
+        return (a < b) ? b : a;
+    }
+} // namespace std
+// 'max(float, const double&)
+
+#include <random>
 #include "clarinoid/basic/Basic.hpp"
 #include "clarinoid/components/Leds.hpp"
 
 namespace clarinoid
 {
 
+    DMAMEM byte gLED1DisplayMemory[20 * 12]; // 12 bytes per LED
 
-DMAMEM byte gLED1DisplayMemory[20*12]; // 12 bytes per LED
-
-struct Leds1 :
-    Leds<20, 1>,
-    ITask
-{
-    Leds1() :
-        Leds(gLED1DisplayMemory)
-    {}
-
-    int n = 0;
-    virtual void TaskRun() override
+    struct ILEDDataProvider
     {
-        for (int i = 0; i < mPixelCount; ++ i)
+        virtual Metronome *ILEDDataProvider_GetMetronomeBeat() = 0;
+        virtual InputDelegator *ILEDDataProvider_GetInput() = 0;
+        virtual CCEWIMusicalState *ILEDDataProvider_GetMusicalState() = 0;
+    };
+
+    struct Leds1 : Leds<20, 1>,
+                   ITask
+    {
+        ILEDDataProvider *mpProvider;
+        Leds1(ILEDDataProvider *pProvider) : Leds(gLED1DisplayMemory),
+                                             mpProvider(pProvider)
         {
-            uint8_t o = (n == i) ? 32 : 0;
-            SetPixel(i, 0, o, 0);
         }
-        n = (n+1)%mPixelCount;
-        Show();
-    }
-};
 
-
-
-DMAMEM byte gLED2DisplayMemory[64*12]; // 12 bytes per LED
-
-struct Leds2 :
-    Leds<64, 29>,
-    ITask
-{
-    Leds2() :
-        Leds(gLED2DisplayMemory)
-    {}
-
-    int nR = 0;
-    int nG = 0;
-    int nB = 0;
-    int periodR = 25;
-    int periodG = 26;
-    int periodB = 27;
-    CCThrottlerT<48> mTh;
-
-    virtual void TaskRun() override 
-    {
-        if (!mTh.IsReady()) return;
-        for (int i = 0; i < mPixelCount; ++ i)
+        int n = 0;
+        virtual void TaskRun() override
         {
-            SetPixel(i,
-                (nR == (i%periodR)) ? 1 : 0,
-                (nG == (i%periodG)) ? 1 : 0,
-                (nB == (i%periodB)) ? 1 : 0
-            );
-        }
-        nR = (nR+1)%periodR;
-        nG = (nG+1)%periodG;
-        nB = (nB+1)%periodB;
-        Show();
-    }
-};
+            // bank 1 is 0-9, bank 2 is 19-10
+            auto bank2 = [](int n) { return 19 - n; };
+            float beatFrac = mpProvider->ILEDDataProvider_GetMetronomeBeat()->GetBeatFrac();
 
-struct BreathLED :
-    DigitalPinRGBLed<36,37,33>,
-    ITask
-{
-    TriangleWave mWaveR;
-    TriangleWave mWaveG;
-    TriangleWave mWaveB;
-    BreathLED()
+            static const int ledsPerBank = 10;
+            for (int i = 0; i < ledsPerBank; ++i)
+            {
+                float y = (float)i / (ledsPerBank - 1);
+                y -= beatFrac;
+                int pixel = y * 4;
+                if (pixel < 0) pixel = 0;
+                if (pixel > 4) pixel = 0;
+
+                // todo: get the metronome working.
+                pixel = 0;
+                SetPixel(i, pixel, 0, 0);
+                SetPixel(bank2(i), 0, pixel, 0);
+            }
+
+            // for (int i = 0; i < mPixelCount; ++ i)
+            // {
+            //     uint8_t o = (n == i) ? 32 : 0;
+            //     SetPixel(i, 0, o, 0);
+            // }
+            // n = (n+1)%mPixelCount;
+            Show();
+        }
+    };
+
+    DMAMEM byte gLED2DisplayMemory[64 * 12]; // 12 bytes per LED
+
+    struct Leds2 : Leds<64, 29>,
+                   ITask
     {
-        mWaveR.SetFrequency(1.0f);
-        mWaveG.SetFrequency(0.6f);
-        mWaveB.SetFrequency(0.4f);
-    }
-    virtual void TaskRun() override 
+        ILEDDataProvider *mpProvider;
+        Leds2(ILEDDataProvider *pProvider) : Leds(gLED2DisplayMemory),
+                                             mpProvider(pProvider),
+                                             gen(rd()),
+                                             distrib(0, (1 << 20) - 1) // 20 bits of entropy.
+        {
+        }
+
+        // int nR = 0;
+        // int nG = 0;
+        // int nB = 0;
+        // int periodR = 25;
+        // int periodG = 26;
+        // int periodB = 27;
+        CCThrottlerT<48> mTh;
+
+        CCThrottlerT<999> mThR;
+        CCThrottlerT<555> mThG;
+       // CCThrottlerT<555> mThB;
+        uint32_t mRandR;
+        uint32_t mRandG;
+        //uint32_t mRandB;
+        std::random_device rd; //Will be used to obtain a seed for the random number engine
+        std::mt19937 gen;      //Standard mersenne_twister_engine seeded with rd()
+        std::uniform_int_distribution<uint32_t> distrib;
+
+        virtual void TaskRun() override
+        {
+            if (!mTh.IsReady())
+                return;
+
+            // for (int n = 0; n < 10; ++n)
+            //     //Use `distrib` to transform the random unsigned int generated by gen into an int in [1, 6]
+            //     std::cout << distrib(gen) << ' ';
+            // std::cout << '\n';
+
+            // update bank 1 with random techy looking garbage
+            if (mThR.IsReady())
+                mRandR = distrib(gen);
+            if (mThG.IsReady())
+                mRandG = distrib(gen);
+            // if (mThB.IsReady())
+            //     mRandB = distrib(gen);
+
+            auto nr = mRandR;
+            auto ng = mRandG;
+            auto nb = mRandG;
+            for (int i = 0; i <= 9; ++i)
+            {
+                if (nr & 1)
+                {
+                    SetPixel(i, (nr & 1) ? 1 : 0, (ng & 1) ? 1 : 0, 0);
+                }
+                else
+                {
+                    SetPixel(i, 0, 0, 0);
+                }
+                nr >>= 1;
+                ng >>= 1;
+                nb >>= 1;
+                if (nr & 1)
+                {
+                    SetPixel(63 - i, (nr & 1) ? 1 : 0, (ng & 1) ? 1 : 0, 0);
+                }
+                else
+                {
+                    SetPixel(63 - i, 0, 0, 0);
+                }
+                nr >>= 1;
+                ng >>= 1;
+                nb >>= 1;
+            }
+
+            // bank 1 (10 + 10)   0-9, 54-63
+            // bank 2 (10 + 10)  10-19, 44-53
+            // bank 3 (7 + 5)    20-26, 39-43
+            // bank 4 (7 + 5)    27-33, 34-38
+
+            // for (int i = 0; i <= 9; ++ i) {
+            //     // bank 1: red
+            //     SetPixel(i, 1+i, 0, 0);
+            //     SetPixel(63-i, 1+i, 0, 0);
+
+            //     // bank 2: green
+            //     SetPixel(10+i, 0, 1+i, 0);
+            //     SetPixel(53-i, 0, 1+i, 0);
+            // }
+
+            //                       c  C#  D   D#   E   F   F#  G   G#   A  A#  B
+            int bank3_indices[] = {26, 39, 25, 40, 24, 23, 41, 22, 42, 21, 43, 20};
+            // for (int i = 0; i <= 6; ++ i) {
+            //     SetPixel(20+i, 0, 0, 1+i);
+            // }
+            // for (int i = 0; i <= 4; ++ i) {
+            //     SetPixel(43-i, 0, 0, 1+i);
+            // }
+
+            //                       c  C#  D   D#   E   F   F#  G   G#   A  A#  B
+            int bank4_indices[] = {33, 34, 32, 35, 31, 30, 36, 29, 37, 28, 38, 27};
+            // for (int i = 0; i <= 6; ++ i) {
+            //     SetPixel(27+i, 1+i, 1+i, 0);
+            // }
+            // for (int i = 0; i <= 4; ++ i) {
+            //     SetPixel(38-i, 1+i, 1+i, 0);
+            // }
+
+            auto *ms = mpProvider->ILEDDataProvider_GetMusicalState();
+            MidiNote playingNote = MidiNote(ms->mLiveVoice.mMidiNote);
+
+            // clear.
+            for (int i = 0; i < 12; ++i)
+            {
+                SetPixel(bank3_indices[i], 0, 0, 0);
+                SetPixel(bank4_indices[i], 0, 0, 0);
+            }
+
+            SetPixel(bank4_indices[(int)ms->mScaleFollower->mCurrentScale.mRootNoteIndex], 0, 4, 0);
+            SetPixel(bank4_indices[playingNote.GetNoteIndex()], 8, 0, 0);
+
+            // chasing random colors (test)
+            // for (int i = 0; i < mPixelCount; ++i)
+            // {
+            //     SetPixel(i,
+            //              (nR == (i % periodR)) ? 1 : 0,
+            //              (nG == (i % periodG)) ? 1 : 0,
+            //              (nB == (i % periodB)) ? 1 : 0);
+            // }
+            // nR = (nR + 1) % periodR;
+            // nG = (nG + 1) % periodG;
+            // nB = (nB + 1) % periodB;
+            Show();
+        }
+    };
+
+    struct BreathLED : DigitalPinRGBLed<36, 37, 33>,
+                       ITask
     {
-        //Serial.println(String("breath led ") + mWaveR.GetValue01(micros()));
-        SetPixel(ColorF {
-            mWaveR.GetValue01(micros()),
-            mWaveG.GetValue01(micros()),
-            mWaveB.GetValue01(micros())
-            });
-    }
-};
+        ILEDDataProvider *mpProvider;
+        // TriangleWave mWaveR;
+        // TriangleWave mWaveG;
+        // TriangleWave mWaveB;
+        BreathLED(ILEDDataProvider *pProvider) : mpProvider(pProvider)
+        {
+            // mWaveR.SetFrequency(1.0f);
+            // mWaveG.SetFrequency(0.6f);
+            // mWaveB.SetFrequency(0.4f);
+        }
+        virtual void TaskRun() override
+        {
+            float breath = mpProvider->ILEDDataProvider_GetInput()->mBreath.CurrentValue01();
+            breath *= 1.3f;
+            int pixel = ClampInclusive(int(breath * 255), 0, 255);
+            SetPixel(pixel, pixel, pixel);
+            // SetPixel(ColorF{
+            //     mWaveR.GetValue01(micros()),
+            //     mWaveG.GetValue01(micros()),
+            //     mWaveB.GetValue01(micros())});
+        }
+    };
 
 } // namespace clarinoid

@@ -38,7 +38,7 @@
 namespace clarinoid
 {
 
-    struct BassoonoidApp
+    struct BassoonoidApp : ILEDDataProvider
     {
         static constexpr size_t breathMappingIndex = 13;
 
@@ -57,7 +57,10 @@ namespace clarinoid
         SystemSettingsApp mSystemSettingsApp;
         SynthSettingsApp mSynthSettingsApp;
 
-        BassoonoidApp() : mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 44 * 1000000UL),
+        BassoonoidApp() : mLed1(this),
+                          mLed2(this),
+                          mBreathLED(this),
+                          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 44 * 1000000UL),
                           mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
@@ -69,6 +72,19 @@ namespace clarinoid
                               this),
                           mSynthSettingsApp(mDisplay)
         {
+        }
+
+        virtual Metronome* ILEDDataProvider_GetMetronomeBeat() override
+        {
+            return &mMusicalStateTask.mMetronome;
+        }
+        virtual InputDelegator* ILEDDataProvider_GetInput() override
+        {
+            return &mInputDelegator;
+        }
+        virtual CCEWIMusicalState* ILEDDataProvider_GetMusicalState() override
+        {
+            return &mMusicalStateTask.mMusicalState;
         }
 
         void Main()

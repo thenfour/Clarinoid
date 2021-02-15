@@ -73,12 +73,12 @@ struct DigitalPinRGBLed
     DigitalPinLed<TBpin> mB;
 
     // 0 and 255 are limits
-    // void SetPixel(uint8_t r, uint8_t g, uint8_t b)
-    // {
-    //     mR.SetPixel(r);
-    //     mG.SetPixel(g);
-    //     mB.SetPixel(b);
-    // }
+    void SetPixel(uint8_t r, uint8_t g, uint8_t b)
+    {
+        mR.SetPixel(r);
+        mG.SetPixel(g);
+        mB.SetPixel(b);
+    }
 
     void SetPixel(const ColorF& c)
     {

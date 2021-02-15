@@ -5,35 +5,36 @@
 namespace clarinoid
 {
 
-struct Metronome
-{
-  AppSettings* mAppSettings;
-
-  explicit Metronome(AppSettings* appSettings) :
-    mAppSettings(appSettings)
+  struct Metronome
   {
-  }
+    AppSettings *mAppSettings;
 
-  PeriodicTimer mTimer;
-
-  void SyncPeriod()
-  {
-    mTimer.SetPeriod(TimeSpan::FromBPM(mAppSettings->mBPM));
-  }
-
-    int GetBeatInt() {
-      SyncPeriod();
-        return mTimer.GetBeatInt();
+    explicit Metronome(AppSettings *appSettings) : mAppSettings(appSettings)
+    {
     }
-    float GetBeatFloat() {
-      SyncPeriod();
-       return mTimer.GetBeatFloat();
-    }
-    float GetBeatFrac() {
-      SyncPeriod();
-       return mTimer.GetBeatFrac();
-    }
-};
 
+    PeriodicTimer mTimer;
+
+    void SyncPeriod()
+    {
+      mTimer.SetPeriod(TimeSpan::FromBPM(mAppSettings->mBPM));
+    }
+
+    int GetBeatInt()
+    {
+      SyncPeriod();
+      return mTimer.GetBeatInt();
+    }
+    float GetBeatFloat()
+    {
+      SyncPeriod();
+      return mTimer.GetBeatFloat();
+    }
+    float GetBeatFrac()
+    {
+      SyncPeriod();
+      return mTimer.GetBeatFrac();
+    }
+  };
 
 } // namespace clarinoid
