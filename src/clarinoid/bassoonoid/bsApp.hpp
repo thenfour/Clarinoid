@@ -57,6 +57,7 @@ namespace clarinoid
         DebugDisplayApp mDebugDisplayApp;
         SystemSettingsApp mSystemSettingsApp;
         SynthSettingsApp mSynthSettingsApp;
+        AudioMonitorApp mAudioMonitorApp;
 
         BassoonoidApp() : mLed1(this),
                           mLed2(this),
@@ -76,7 +77,8 @@ namespace clarinoid
                                   return pThis->mControlMapper.mJoyY.CurrentValue01();
                               },
                               this),
-                          mSynthSettingsApp(mDisplay)
+                          mSynthSettingsApp(mDisplay),
+                          mAudioMonitorApp(mDisplay)
         {
         }
 
@@ -100,6 +102,7 @@ namespace clarinoid
             IDisplayApp *allApps[] =
                 {
                     &mPerformanceApp,
+                    &mAudioMonitorApp,
                     &mDebugDisplayApp,
                     &mSystemSettingsApp,
                     &mSynthSettingsApp,

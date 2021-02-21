@@ -383,7 +383,6 @@ https://www.pjrc.com/teensy/gui/index.html
     AudioAmplifier ampLeft;              //xy=2151.5000648498535,891.2500267028809
     AudioOutputI2S i2s1;                 //xy=2389.750068664551,901.2500267028809
     AudioAnalyzePeak peak1;              //xy=2393.500068664551,1005.0000290870667
-    AudioAnalyzeRMS rms1;                //xy=2394.750068664551,1046.2500305175781
     AudioConnection patchCord1(voiceMix2, 0, voiceMixOutp, 1);
     AudioConnection patchCord2(voiceMix4, 0, voiceMixOutp, 3);
     AudioConnection patchCord3(voiceMix1, 0, voiceMixOutp, 0);
@@ -398,7 +397,6 @@ https://www.pjrc.com/teensy/gui/index.html
     AudioConnection patchCord12(postMixerLeft, ampLeft);
     AudioConnection patchCord13(ampLeft, 0, i2s1, 0);
     AudioConnection patchCord14(ampLeft, peak1);
-    AudioConnection patchCord15(ampLeft, rms1);
     AudioConnection patchCord16(ampLeft, 0, i2s1, 1);
     // GUItool: end automatically generated code
 
