@@ -305,18 +305,20 @@ namespace clarinoid
 
     struct BreathCalibrationSettingItem : public ISettingItem
     {
+        const char *mName;
         UnipolarCalibrationEditor mEditor;
         Property<UnipolarMapping> mCalibBinding;
 
-        BreathCalibrationSettingItem(const Property<UnipolarMapping> &calibBinding,
+        BreathCalibrationSettingItem(const char *name, const Property<UnipolarMapping> &calibBinding,
                                      const Property<float> &noteOnThreshBinding,
                                      cc::function<float(void *)>::ptr_t rawValueGetter,
-                                     void *capture) : mEditor(calibBinding, &noteOnThreshBinding, rawValueGetter, capture),
+                                     void *capture) : mName(name),
+                                                      mEditor(calibBinding, &noteOnThreshBinding, rawValueGetter, capture),
                                                       mCalibBinding(calibBinding)
         {
         }
 
-        virtual String GetName(size_t multiIndex) { return "Breath"; }
+        virtual String GetName(size_t multiIndex) { return mName; }
         virtual String GetValueString(size_t multiIndex)
         {
             auto v = mCalibBinding.GetValue();

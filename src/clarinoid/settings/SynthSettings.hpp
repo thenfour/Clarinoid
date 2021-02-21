@@ -58,6 +58,7 @@ struct SynthPreset
   float mFilterQ = 1.0f; // 0.7 to 5.0 range
   float mFilterMaxFreq = 15000.0f;
   float mFilterMinFreq = 0.0f;
+  float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect applied (low notes get higher freq cutoff)
 };
 
 struct SynthSettings
@@ -77,13 +78,14 @@ struct SynthSettings
     mPresets[0].mOsc1Waveform = OscWaveformShape::SawSync;
     mPresets[0].mOsc2Waveform = OscWaveformShape::SawSync;
     mPresets[0].mOsc3Waveform = OscWaveformShape::SawSync;
-    mPresets[0].mOsc2Gain = .5f;
+    mPresets[0].mOsc2Gain = .99f;
     mPresets[0].mSync = false;
     mPresets[0].mDetune = 0.0f;
 
     mPresets[0].mFilterMinFreq = 0.0f;
-    mPresets[0].mFilterMaxFreq = 1200.0f;
+    mPresets[0].mFilterMaxFreq = 4000.0f;
     mPresets[0].mFilterQ = 0.7f;
+    mPresets[0].mFilterKeytracking = 1.0f;
 
     mPresets[1].mName = "Sync";
   }

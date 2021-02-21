@@ -84,6 +84,13 @@ namespace clarinoid
                                                 this},
                                             AlwaysEnabled};
 
+        FloatSettingItem mBreathFiltKS = {" - filt KS", NumericEditRangeSpec<float> { 0.0f, 2.0f, .2f, .1f, 0.01f },
+                                            Property<float>{
+                                                [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mFilterKeytracking; },
+                                                [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mFilterKeytracking = v; },
+                                                this},
+                                            AlwaysEnabled};
+
 
         // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, cc::function<bool()>::ptr_t isEnabled) :
         EnumSettingItem<OscWaveformShape> mOsc1Waveform = {"Osc1-Waveform", gOscWaveformShapeInfo,
@@ -181,7 +188,7 @@ namespace clarinoid
                                                 this},
                                             AlwaysEnabled};
 
-        ISettingItem *mArray[24] =
+        ISettingItem *mArray[25] =
             {
                 &mBigSeparator,
                 &mDetune,
@@ -192,6 +199,7 @@ namespace clarinoid
                 &mBreathFiltQ,
                 &mBreathFiltMin,
                 &mBreathFiltMax,
+                &mBreathFiltKS,
                 &mOsc1Waveform,
                 &mOsc1Gain,
                 &mOsc1PitchSemis,

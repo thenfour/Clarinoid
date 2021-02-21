@@ -41,6 +41,7 @@ namespace clarinoid
     struct BassoonoidApp : ILEDDataProvider
     {
         static constexpr size_t breathMappingIndex = 13;
+        static constexpr size_t joyPitchMappingIndex = 21;
 
         Leds1 mLed1;
         Leds2 mLed2;
@@ -65,9 +66,14 @@ namespace clarinoid
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
                           mSystemSettingsApp(
-                              mDisplay, breathMappingIndex, [](void *cap) {
+                              mDisplay, breathMappingIndex, joyPitchMappingIndex,
+                              [](void *cap) { // raw breath value getter
                                   BassoonoidApp *pThis = (BassoonoidApp *)cap;
                                   return pThis->mControlMapper.mBreath.CurrentValue01();
+                              },
+                              [](void *cap) { // raw joy pitchbend value getter
+                                  BassoonoidApp *pThis = (BassoonoidApp *)cap;
+                                  return pThis->mControlMapper.mJoyY.CurrentValue01();
                               },
                               this),
                           mSynthSettingsApp(mDisplay)
@@ -133,7 +139,9 @@ namespace clarinoid
             mAppSettings.mControlMappings[19] = ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierFine);
             mAppSettings.mControlMappings[20] = ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::ModifierCourse);
 
-            mAppSettings.mControlMappings[21] = ControlMapping::UnipolarMapping(PhysicalControl::JoyY, ControlMapping::Function::PitchBend, 0.9f, 0.1f, -1.0f, 1.0f);
+            mAppSettings.mControlMappings[joyPitchMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::JoyY, ControlMapping::Function::PitchBend, 1.0f, 0.01f, -1.0f, 1.0f);
+            mAppSettings.mControlMappings[joyPitchMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.50f;
+            mAppSettings.mControlMappings[joyPitchMappingIndex].mNPolarMapping.Unipolar().mCurveS = -0.50f;
 
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();

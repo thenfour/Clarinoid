@@ -14,13 +14,17 @@ struct SystemSettingsApp :
 {
   virtual const char *DisplayAppGetName() override { return "SystemSettingsApp"; }
   size_t mBreathMappingIndex;
+  size_t mJoyPitchMappingIndex;
   cc::function<float(void *)>::ptr_t mRawBreathGetter;
+  cc::function<float(void *)>::ptr_t mRawPitchBendGetter;
   void* mpCapture;
 
-    SystemSettingsApp(CCDisplay& d, size_t breathMappingIndex, cc::function<float(void *)>::ptr_t rawBreathGetter, void* capture) :
+    SystemSettingsApp(CCDisplay& d, size_t breathMappingIndex, size_t joyPitchMappingIndex, cc::function<float(void *)>::ptr_t rawBreathGetter, cc::function<float(void *)>::ptr_t rawPitchBendGetter, void* capture) :
       SettingsMenuApp(d),
       mBreathMappingIndex(breathMappingIndex),
+      mJoyPitchMappingIndex(joyPitchMappingIndex),
       mRawBreathGetter(rawBreathGetter),
+      mRawPitchBendGetter(rawPitchBendGetter),
       mpCapture(capture)
     {}
 
@@ -34,6 +38,7 @@ struct SystemSettingsApp :
     };
 
     BreathCalibrationSettingItem mBreath = {
+      "Breath",
       Property<UnipolarMapping> {
         [](void* cap) { auto pThis = (SystemSettingsApp*)cap; UnipolarMapping ret = pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mNPolarMapping.Unipolar(); return ret; }, // getter
         [](void* cap, const UnipolarMapping& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mNPolarMapping.Unipolar() = x; },
@@ -52,10 +57,30 @@ struct SystemSettingsApp :
       this
     };
 
-  ISettingItem* mArray[2] =
+    BreathCalibrationSettingItem mPitchBend = {
+      "Pitch bend",
+      Property<UnipolarMapping> {
+        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; UnipolarMapping ret = pThis->mAppSettings->mControlMappings[pThis->mJoyPitchMappingIndex].mNPolarMapping.Unipolar(); return ret; }, // getter
+        [](void* cap, const UnipolarMapping& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mControlMappings[pThis->mJoyPitchMappingIndex].mNPolarMapping.Unipolar() = x; },
+        this
+      },
+      Property<float> { // note on threshold... not relevent for pitch; for the moment just ignore it.
+        [](void* cap) { /*auto pThis = (SystemSettingsApp*)cap; */return 0.0f; }, // getter
+        [](void* cap, const float& x) { /*auto pThis = (SystemSettingsApp*)cap; */}, 
+        this
+      },
+      [](void* cap) {
+        auto pThis = (SystemSettingsApp*)cap;
+        return pThis->mRawPitchBendGetter(pThis->mpCapture);
+      },
+      this
+    };
+
+  ISettingItem* mArray[3] =
   {
     &mDimDisplay,
     &mBreath,
+    &mPitchBend,
   };
   SettingsList mRootList = { mArray };
 

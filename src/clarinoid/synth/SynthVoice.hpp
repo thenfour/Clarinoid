@@ -139,7 +139,20 @@ struct Voice
       mOsc.frequency(2, MIDINoteToFreq(midiNote + mPreset->mOsc2PitchFine + mPreset->mOsc2PitchSemis));
     }
 
-    float filterFreq = map(mv.mBreath01.GetFloatVal(), 0.01, 1, mPreset->mFilterMinFreq, mPreset->mFilterMaxFreq);
+    float filterBS = mv.mBreath01.GetFloatVal(); // 0 to 1
+
+    // perform breath & key tracking for filter. we will basically multiply the effects.
+    // velocity we will only track between notes 
+    // from 7jam code: const halfKeyScaleRangeSemis = 12 * 4;
+    // from 7jam code: let ks = 1.0 - DF.remap(this.midiNote, 60.0 /* middle C */ - halfKeyScaleRangeSemis, 60.0 + halfKeyScaleRangeSemis, ksAmt, -ksAmt); // when vsAmt is 0, the range of vsAmt,-vsAmt is 0. hence making this 1.0-x
+    float filterKS = map(midiNote, 20, 120, 0.0f, 1.0f); // map midi note to full ks effect
+    filterKS = map(mPreset->mFilterKeytracking, 0, 1.0f, 1.0, filterKS); // map ks amt 0-1 to 1-fulleffect
+
+    float filterP = filterKS * filterBS;
+    filterP = ClampInclusive(filterP, 0.0f, 1.0f);
+
+    float filterFreq = map(filterP, 0.0f, 1.0f, mPreset->mFilterMinFreq, mPreset->mFilterMaxFreq);
+
     mFilter.frequency(filterFreq);
     mFilter.resonance(mPreset->mFilterQ); // 0.7 to 5.0
 

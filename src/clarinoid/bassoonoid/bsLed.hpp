@@ -92,8 +92,8 @@ namespace clarinoid
         // int periodB = 27;
         CCThrottlerT<48> mTh;
 
-        CCThrottlerT<999> mThR;
-        CCThrottlerT<555> mThG;
+        CCThrottlerT<777> mThR;
+        CCThrottlerT<333> mThG;
        // CCThrottlerT<555> mThB;
         uint32_t mRandR;
         uint32_t mRandG;
