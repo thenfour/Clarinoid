@@ -63,7 +63,7 @@ namespace clarinoid
                                             Property<bool> { [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mSync; }, this }
                                             };
 
-        FloatSettingItem mBreathFiltQ = {"Breath filt Q", NumericEditRangeSpec<float> { 0.7f, 5.0f },
+        FloatSettingItem mBreathFiltQ = {"Breath filt Q", NumericEditRangeSpec<float> { 0.0f, 20.0f, 1.0f, 0.2f, 0.1f },
                                             Property<float>{
                                                 [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mFilterQ; },
                                                 [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mFilterQ = v; },

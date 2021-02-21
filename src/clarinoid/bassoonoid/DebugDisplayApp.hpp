@@ -171,6 +171,33 @@ struct DebugDisplayApp :
         mMusicalStateTask(mst)
     {}
 
+    LabelSettingItem mMidiNote = {Property<String> { [](void* cap)
+    {
+        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+        String ret = String("MidiNote: ") + pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote;
+        return ret;
+    }, this}, AlwaysEnabled };
+
+    LabelSettingItem mFilterFreq = {Property<String> { [](void* cap)
+    {
+        DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
+
+        CCASSERT(pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch >= 0);
+        CCASSERT((size_t)pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch < SYNTH_PRESET_COUNT);
+        auto& synthPatch = pThis->mAppSettings->mSynthSettings.mPresets[pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch];
+
+        float filterFreq = clarinoid::Voice::CalcFilterCutoffFreq(
+            pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mBreath01.GetFloatVal(),
+            pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote,
+            synthPatch.mFilterKeytracking,
+            synthPatch.mFilterMinFreq,
+            synthPatch.mFilterMaxFreq
+        );
+
+        String ret = String("Filter HZ: ") + filterFreq;
+        return ret;
+    }, this}, AlwaysEnabled };
+
     LabelSettingItem mBreath = {Property<String> { [](void* cap)
     {
         DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
@@ -284,8 +311,10 @@ struct DebugDisplayApp :
         return ret;
     }, this}, AlwaysEnabled };
 
-    ISettingItem* mArray[14] =
+    ISettingItem* mArray[16] =
     {
+        &mMidiNote,
+        &mFilterFreq,
         &mBreath,
         &mLHA,
         &mLHB,

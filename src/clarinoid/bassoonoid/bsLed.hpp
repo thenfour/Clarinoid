@@ -94,9 +94,12 @@ namespace clarinoid
 
         CCThrottlerT<777> mThR;
         CCThrottlerT<333> mThG;
-       // CCThrottlerT<555> mThB;
+        CCThrottlerT<48*1> mThB;
+        CCThrottlerT<48*4> mThB2;
         uint32_t mRandR;
         uint32_t mRandG;
+        bool mBlue1 = true;
+        bool mBlue2 = true;
         //uint32_t mRandB;
         std::random_device rd; //Will be used to obtain a seed for the random number engine
         std::mt19937 gen;      //Standard mersenne_twister_engine seeded with rd()
@@ -117,13 +120,15 @@ namespace clarinoid
                 mRandR = distrib(gen);
             if (mThG.IsReady())
                 mRandG = distrib(gen);
-            // if (mThB.IsReady())
-            //     mRandB = distrib(gen);
+            if (mThB.IsReady()) 
+                mBlue1 = !mBlue1;
+            if (mThB2.IsReady())
+                mBlue2 = !mBlue2;
 
             auto nr = mRandR;
             auto ng = mRandG;
             auto nb = mRandG;
-            for (int i = 0; i <= 9; ++i)
+            for (int i = 1; i <= 5; ++i)
             {
                 if (nr & 1)
                 {
@@ -148,6 +153,20 @@ namespace clarinoid
                 ng >>= 1;
                 nb >>= 1;
             }
+
+            {
+                uint8_t p = mBlue1 ? 2: 0;
+                SetPixel(0, 0,0,p);
+                p = !mBlue1 ? 4: 0;
+                //SetPixel(63, 0,0,p);
+            }
+            {
+                uint8_t p = mBlue2 ? 2: 0;
+                //SetPixel(1, 0,0,p);
+                p = !mBlue2 ? 4: 0;
+                SetPixel(63, 0,0,p);
+            }
+
 
             // bank 1 (10 + 10)   0-9, 54-63
             // bank 2 (10 + 10)  10-19, 44-53
