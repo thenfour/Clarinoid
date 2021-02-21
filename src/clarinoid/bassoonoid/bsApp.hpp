@@ -21,9 +21,11 @@
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
+#include <clarinoid/midi/midi.hpp>
 #include <clarinoid/application/MusicalState.hpp>
 
 #include <clarinoid/synth/Synth.hpp>
+
 
 #include <clarinoid/bassoonoid/bsLed.hpp>
 #include <clarinoid/bassoonoid/bsControlMapper.hpp>
@@ -31,9 +33,6 @@
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include "MusicalStateTask.hpp"
 
-// MIDI library is touchy about how you instantiate.
-// Simplest is to do it the way it's designed for: in the main sketch, global scope.
-//MIDI_CREATE_INSTANCE(HardwareSerial, Serial8, gMIDI);
 
 namespace clarinoid
 {

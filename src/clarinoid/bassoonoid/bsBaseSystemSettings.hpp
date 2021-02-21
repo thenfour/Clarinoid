@@ -4,6 +4,8 @@
 #define BASSOONOID1
 #define THREE_BUTTON_OCTAVES
 
+#define CLARINOID_MIDI_INTERFACE Serial8
+
 namespace clarinoid
 {
 

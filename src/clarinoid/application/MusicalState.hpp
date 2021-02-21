@@ -20,6 +20,7 @@ struct CCEWIMusicalState
   size_t mVoiceCount = 0;
 
   LooperAndHarmonizer mLooper;
+  CCEWIMIDIOut mMidiOut;
 
   // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
   SimpleMovingAverage<15> mCurrentBreath01;
@@ -36,6 +37,7 @@ struct CCEWIMusicalState
 
     mLooper(appSettings, metronome, scaleFollower)
   {
+    mMidiOut.setup();
     this->mCurrentBreath01.Update(0);
     this->mCurrentPitchN11.Update(0);
   }
@@ -129,6 +131,8 @@ struct CCEWIMusicalState
     // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.
     size_t newVoiceCount = mLooper.Update(mLiveVoice, transitionEvents, mMusicalVoices, EndPtr(mMusicalVoices));
     mVoiceCount = newVoiceCount;
+
+    mMidiOut.Update(mLiveVoice, transitionEvents);
   }
 };
 

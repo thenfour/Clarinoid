@@ -1,99 +1,93 @@
 
 #pragma once
 
+#include <clarinoid/harmonizer/MusicalVoice.hpp>
+
+// MIDI library is touchy about how you instantiate.
+// Simplest is to do it the way it's designed for: in the main sketch, global scope.
+MIDI_CREATE_INSTANCE(HardwareSerial, CLARINOID_MIDI_INTERFACE, gMidi);
+
+
 namespace clarinoid
 {
+    const int CCEWI_MIDICHANNEL = 1;
 
+    class CCEWIMIDIOut
+    {
+        CCThrottlerT<30> gCCThrottle;
+        int currentPitchBendRaw = 0;
+        int currentBreathCC14Bit = 0;
 
-// #include <clarinoid/basic/Basic.hpp>
-// //#include <clarinoid/application/PhysicalState.hpp>
-// #include <clarinoid/application/MusicalState.hpp>
+        // from MIDI.hpp
+        static int CalcRawPitchBend(float inPitchValue)
+        {
+            const int scale = inPitchValue > 0.0 ? MIDI_PITCHBEND_MAX : -MIDI_PITCHBEND_MIN;
+            const int value = int(inPitchValue * float(scale));
+            return value;
+        }
 
-// const int CCEWI_MIDICHANNEL = 1;
+        static int Calc14BitBreath(float inBreath01)
+        {
+            int ret = (int)(inBreath01 * 0x3fff);
+            return ret & 0x3fff;
+        }
+        // splits 14-bit x into separate 7-bit MSB / LSB.
+        static void Breath14BitToMSBLSB(int inValue, uint8_t &outMSB, uint8_t &outLSB)
+        {
+            // from MIDI.hpp
+            outMSB = 0x7f & (inValue >> 7);
+            outLSB = 0x7f & inValue;
+        }
 
-// const float MIDI_BREATH_CURVE = 0.3f; // pow() - if <1, increases values
+    public:
+        int noteOns = 0;
 
-// class CCEWIMIDIOut : UpdateObjectT<ProfileObjectType::MIDI>
-// {
-//   CCThrottlerT<30> gCCThrottle;
-//   int currentPitchBendRaw = 0;
-//   int currentBreathCC14Bit = 0;
+        CCEWIMIDIOut()
+        {
+        }
 
-//   // from MIDI.hpp
-//   static int CalcRawPitchBend(double inPitchValue) {
-//     const int scale = inPitchValue > 0.0 ? MIDI_PITCHBEND_MAX : - MIDI_PITCHBEND_MIN;
-//     const int value = int(inPitchValue * double(scale));
-//     return value;
-//   }
+        virtual void setup()
+        {
+            gMidi.begin();
+        }
 
-//   static int Calc14BitBreath(double inBreath01) {
-//     int ret = (int)(inBreath01 * 0x3fff);
-//     return ret & 0x3fff;
-//   }
-//   // splits 14-bit x into separate 7-bit MSB / LSB.
-//   static void Breath14BitToMSBLSB(int inValue, uint8_t& outMSB, uint8_t& outLSB) {
-//     // from MIDI.hpp
-//     outMSB = 0x7f & (inValue >> 7);
-//     outLSB = 0x7f & inValue;
-//   }
+        void Update(const MusicalVoice& liveVoice, const MusicalVoiceTransitionEvents& transitionEvents)
+        {
+            // send pitchbend / breath BEFORE note ons, so the note starts with the correct state.
+            if (gCCThrottle.IsReady())
+            {
+                int pb = CalcRawPitchBend(liveVoice.mPitchBendN11.GetFloatVal());
+                if (pb != currentPitchBendRaw)
+                {
+                    gMidi.sendPitchBend(pb, CCEWI_MIDICHANNEL);
+                    currentPitchBendRaw = pb;
+                }
 
-//   MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial>>& mMidi;
-// public:
+                float breathAdj = liveVoice.mBreath01.GetFloatVal();// powf(ms.breath01.GetValue(), MIDI_BREATH_CURVE);
+                int breath = Calc14BitBreath(breathAdj);
 
-//   int noteOns = 0;
-//   bool activityHappened = false;
+                if (breath != currentBreathCC14Bit)
+                {
+                    currentBreathCC14Bit = breath;
+                    uint8_t msb, lsb;
+                    Breath14BitToMSBLSB(breath, msb, lsb);
+                    gMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController, msb, CCEWI_MIDICHANNEL);
+                    gMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController + 32, lsb, CCEWI_MIDICHANNEL);
+                }
+            }
 
-//   CCEWIMIDIOut(MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial>>& _midi) :
-//     mMidi(_midi)
-//   {
-//   }
-  
-//   virtual void setup() {
-//     mMidi.begin();
-//   }
-
-//   void Update(const CCEWIMusicalState& ms) {
-
-//     // TODO: get this working again after getting our own synth together.
-//     // we should keep a MusicalVoice here and do diffs to determine note ons & offs.
-
-//     // activityHappened = false;
-
-//     // // send pitchbend / breath BEFORE note ons, so the note starts with the correct state.
-//     // if (gCCThrottle.IsReady()) {
-//     //   int pb = CalcRawPitchBend(ms.pitchBendN11.GetValue());
-//     //   if (pb != currentPitchBendRaw) {
-//     //     mMidi.sendPitchBend(pb, CCEWI_MIDICHANNEL);
-//     //     activityHappened = true;
-//     //     currentPitchBendRaw = pb;
-//     //   }
-      
-//     //   float breathAdj = powf(ms.breath01.GetValue(), MIDI_BREATH_CURVE);
-//     //   int breath = Calc14BitBreath(breathAdj);
-//     //   uint8_t msb, lsb;
-//     //   Breath14BitToMSBLSB(breath, msb, lsb);
-
-//     //   if (breath != currentBreathCC14Bit && ms.mLiveVoice.IsPlaying()) {
-//     //     currentBreathCC14Bit = breath;
-//     //     activityHappened = true;
-//     //     mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController, msb, CCEWI_MIDICHANNEL);
-//     //     mMidi.sendControlChange(midi::MidiControlChangeNumber::BreathController + 32, lsb, CCEWI_MIDICHANNEL);
-//     //   }
-
-//     // }
-
-//     // // important: send note on before note off, to make portamento work.
-//     // if (ms.mLiveVoice.mNeedsNoteOn) {
-//     //   mMidi.sendNoteOn(ms.mLiveVoice.mMidiNote, ms.mLiveVoice.mVelocity, CCEWI_MIDICHANNEL);
-//     //   activityHappened = true;
-//     //   //Serial.println(String("note on?") + millis());
-//     // }
-//     // if (ms.mLiveVoice.mNeedsNoteOff) {
-//     //   mMidi.sendNoteOff(ms.mLiveVoice.mNoteOffNote, 0, CCEWI_MIDICHANNEL);
-//     //   activityHappened = true;
-//     // }
-
-//   }
-// };
+            // important: send note on before note off, to make portamento work.
+            if (transitionEvents.mNeedsNoteOn)
+            {
+                gMidi.sendNoteOn(liveVoice.mMidiNote, liveVoice.mVelocity, CCEWI_MIDICHANNEL);
+                //log(String("note on") + liveVoice.mMidiNote);
+            }
+            if (transitionEvents.mNeedsNoteOff)
+            {
+                gMidi.sendNoteOff(transitionEvents.mNoteOffNote, 0, CCEWI_MIDICHANNEL);
+                //log(String("note off") + liveVoice.mMidiNote);
+            }
+        }
+    };
 
 } // namespace clarinoid

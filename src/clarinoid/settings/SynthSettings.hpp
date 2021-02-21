@@ -78,14 +78,14 @@ struct SynthSettings
     mPresets[0].mOsc1Waveform = OscWaveformShape::SawSync;
     mPresets[0].mOsc2Waveform = OscWaveformShape::SawSync;
     mPresets[0].mOsc3Waveform = OscWaveformShape::SawSync;
-    mPresets[0].mOsc2Gain = .99f;
+    mPresets[0].mOsc2Gain = .7f;
     mPresets[0].mSync = false;
     mPresets[0].mDetune = 0.0f;
 
     mPresets[0].mFilterMinFreq = 0.0f;
-    mPresets[0].mFilterMaxFreq = 4000.0f;
+    mPresets[0].mFilterMaxFreq = 5000.0f;
     mPresets[0].mFilterQ = 0.7f;
-    mPresets[0].mFilterKeytracking = 1.0f;
+    mPresets[0].mFilterKeytracking = 0.8f;
 
     mPresets[1].mName = "Sync";
   }
