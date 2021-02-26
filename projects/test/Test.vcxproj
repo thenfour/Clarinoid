@@ -161,7 +161,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\DiodeFilter.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\filterbase.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\filters.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\K35Filter.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\MoogLadderFilter.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\OnePoleFilter.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\SEM12Filter.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\MockSynthVoice.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\Patch.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\Synth.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\SynthVoice.hpp" />
     <ClInclude Include="Test.hpp" />
+    <ClInclude Include="TestFilter.hpp" />
     <ClInclude Include="TestHarmonizer.hpp" />
     <ClInclude Include="TestInputMapping.hpp" />
     <ClInclude Include="TestLoopstation.hpp" />

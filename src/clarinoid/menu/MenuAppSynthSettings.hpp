@@ -46,7 +46,6 @@ namespace clarinoid
                                      this},
                                  AlwaysEnabled};
 
-
         FloatSettingItem mSyncMultMin = {" - mult min", NumericEditRangeSpec<float> { 0.0f, 15.0f },
                                             Property<float>{
                                                 [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mSyncMultMin; },
@@ -63,10 +62,26 @@ namespace clarinoid
                                             Property<bool> { [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mSync; }, this }
                                             };
 
-        FloatSettingItem mBreathFiltQ = {"Breath filt Q", NumericEditRangeSpec<float> { 0.0f, 20.0f, 1.0f, 0.2f, 0.1f },
+
+        // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, cc::function<bool()>::ptr_t isEnabled) :
+        EnumSettingItem<ClarinoidFilterType> mBreathFiltType = {"Filter", gClarinoidFilterTypeInfo,
+                Property<ClarinoidFilterType>{
+                    [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mFilterType; },
+                    [](void *cap, const ClarinoidFilterType &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mFilterType = v; },
+                    this},
+                AlwaysEnabled};
+
+        FloatSettingItem mBreathFiltQ = {" - Reso", NumericEditRangeSpec<float> { 0.0f, 20.0f, 1.0f, 0.2f, 0.1f },
                                             Property<float>{
                                                 [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mFilterQ; },
                                                 [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mFilterQ = v; },
+                                                this},
+                                            AlwaysEnabled};
+
+        FloatSettingItem mBreathFiltSaturation = {" - saturation", NumericEditRangeSpec<float> { 0.0f, 1.0f },
+                                            Property<float>{
+                                                [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mFilterSaturation; },
+                                                [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mFilterSaturation = v; },
                                                 this},
                                             AlwaysEnabled};
 
@@ -188,18 +203,20 @@ namespace clarinoid
                                                 this},
                                             AlwaysEnabled};
 
-        ISettingItem *mArray[25] =
+        ISettingItem *mArray[27] =
             {
                 &mBigSeparator,
+                &mBreathFiltType,
+                &mBreathFiltMin,
+                &mBreathFiltMax,
+                &mBreathFiltKS,
+                &mBreathFiltQ,
+                &mBreathFiltSaturation,
                 &mDetune,
                 &mPortamentoTime,
                 &mSync,
                 &mSyncMultMin,
                 &mSyncMultMax,
-                &mBreathFiltQ,
-                &mBreathFiltMin,
-                &mBreathFiltMax,
-                &mBreathFiltKS,
                 &mOsc1Waveform,
                 &mOsc1Gain,
                 &mOsc1PitchSemis,

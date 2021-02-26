@@ -53,10 +53,14 @@ namespace clarinoid
 #include "TestHarmonizer.hpp"
 #include "TestTaskManager.hpp"
 #include "TestInputMapping.hpp"
+#include "TestFilter.hpp"
 
 int main()
+//int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR lpCmdLine, int)
 {
-  clarinoid::TestInputDelegator(); // test that input, mapping, and functions work.
+  TestFilter();
+
+  //clarinoid::TestInputDelegator(); // test that input, mapping, and functions work.
   //TestControlReaders();
   //TestInputMappings(); // test conditions 
 

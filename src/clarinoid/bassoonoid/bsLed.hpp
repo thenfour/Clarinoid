@@ -128,7 +128,7 @@ namespace clarinoid
             auto nr = mRandR;
             auto ng = mRandG;
             auto nb = mRandG;
-            for (int i = 1; i <= 5; ++i)
+            for (int i = 1; i <= 4; ++i)
             {
                 if (nr & 1)
                 {

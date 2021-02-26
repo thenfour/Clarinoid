@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="TestMain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Test.hpp" />
+    <ClInclude Include="TestFilter.hpp" />
+    <ClInclude Include="TestHarmonizer.hpp" />
+    <ClInclude Include="TestInputMapping.hpp" />
+    <ClInclude Include="TestLoopstation.hpp" />
+    <ClInclude Include="TestMemory.hpp" />
+    <ClInclude Include="TestScaleFollower.hpp" />
+    <ClInclude Include="TestScales.hpp" />
+    <ClInclude Include="TestTaskManager.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\MockSynthVoice.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\Patch.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\Synth.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\SynthVoice.hpp" />
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\filterbase.hpp">
+      <Filter>filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\filters.hpp">
+      <Filter>filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\DiodeFilter.hpp">
+      <Filter>filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\SEM12Filter.hpp">
+      <Filter>filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\MoogLadderFilter.hpp">
+      <Filter>filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\OnePoleFilter.hpp">
+      <Filter>filters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\clarinoid\synth\filters\K35Filter.hpp">
+      <Filter>filters</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="filters">
+      <UniqueIdentifier>{313fe29a-031c-4921-880c-39fdee575628}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
