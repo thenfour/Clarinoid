@@ -107,6 +107,24 @@ namespace clarinoid
                                             AlwaysEnabled};
 
 
+        BoolSettingItem mDCEnabled = {"DC filter", "On", "Off",
+                                 Property<bool>{
+                                     [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mDCFilterEnabled; },
+                                     [](void *cap, const bool &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mDCFilterEnabled = v; },
+                                     this},
+                                 AlwaysEnabled};
+
+        FloatSettingItem mDCCutoff = {" - cutoff", NumericEditRangeSpec<float> { 0.01f, 100.0f },
+                                            Property<float>{
+                                                [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mDCFilterCutoff; },
+                                                [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mDCFilterCutoff = v; },
+                                                this},
+                                            Property<bool> { [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mDCFilterEnabled; }, this }
+                                            };
+
+
+
+
         // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding, cc::function<bool()>::ptr_t isEnabled) :
         EnumSettingItem<OscWaveformShape> mOsc1Waveform = {"Osc1-Waveform", gOscWaveformShapeInfo,
                                                            Property<OscWaveformShape>{
@@ -203,7 +221,7 @@ namespace clarinoid
                                                 this},
                                             AlwaysEnabled};
 
-        ISettingItem *mArray[27] =
+        ISettingItem *mArray[29] =
             {
                 &mBigSeparator,
                 &mBreathFiltType,
@@ -212,6 +230,8 @@ namespace clarinoid
                 &mBreathFiltKS,
                 &mBreathFiltQ,
                 &mBreathFiltSaturation,
+                &mDCEnabled,
+                &mDCCutoff,
                 &mDetune,
                 &mPortamentoTime,
                 &mSync,

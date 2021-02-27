@@ -9,7 +9,6 @@
 
 namespace clarinoid
 {
-
     class FilterNode : public AudioStream
     {
         filters::OnePoleFilter mOnePole;
@@ -19,6 +18,9 @@ namespace clarinoid
         filters::MoogLadderFilter mMoog;
 
         filters::IFilter *mSelectedFilter = &mK35;
+
+        bool mDCEnabled = false;
+        filters::DCFilter mDC;
 
     public:
         FilterNode() : AudioStream(1, inputQueueArray)
@@ -38,6 +40,9 @@ namespace clarinoid
                 tempBufferSource[i] = (float)p[i] / 32767.0f;
             }
             mSelectedFilter->ProcessInPlace(tempBufferSource, AUDIO_BLOCK_SAMPLES);
+            if (mDCEnabled) {
+                mDC.ProcessInPlace(tempBufferSource, AUDIO_BLOCK_SAMPLES);
+            }
             for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
             {
                 float f = tempBufferSource[i];
@@ -46,6 +51,13 @@ namespace clarinoid
 
             transmit(block);
             release(block);
+        }
+
+        void EnableDCFilter(bool enabled, float cutoffHZ) {
+            mDCEnabled = enabled;
+            if (enabled) {
+                mDC.SetMinus3DBFreq(cutoffHZ);
+            }
         }
 
         void SetParams(ClarinoidFilterType ctype, float cutoffHz, float reso, float saturation)

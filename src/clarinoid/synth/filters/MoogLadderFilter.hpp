@@ -181,6 +181,7 @@ namespace clarinoid
         // Oberheim variation
         switch (m_FilterType)
         {
+        case FilterType::LP:
         case FilterType::LP4:
           m_a = Real(0.0);
           m_b = Real(0.0);
@@ -195,6 +196,7 @@ namespace clarinoid
           m_d = Real(0.0);
           m_e = Real(0.0);
           break;
+        case FilterType::BP:
         case FilterType::BP4:
           m_a = Real(0.0);
           m_b = Real(0.0);
@@ -209,6 +211,7 @@ namespace clarinoid
           m_d = Real(0.0);
           m_e = Real(0.0);
           break;
+        case FilterType::HP:
         case FilterType::HP4:
           m_a = Real(1.0);
           m_b = Real(-4.0);

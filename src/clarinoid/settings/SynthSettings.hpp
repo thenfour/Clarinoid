@@ -83,6 +83,9 @@ namespace clarinoid
 
     float mDetune = 0;
 
+    bool mDCFilterEnabled = true;
+    float mDCFilterCutoff = 10.0f;
+
     ClarinoidFilterType mFilterType = ClarinoidFilterType::LP_Moog4;
     float mFilterQ = 0.02f;
     float mFilterMaxFreq = 15000.0f;

@@ -39,27 +39,91 @@ namespace clarinoid
         {
         }
 
+        float mHeldPeak = 0;
+        Stopwatch mHeldPeakTime; // peak is simply held for a duration.
+
         int n = 0;
         virtual void TaskRun() override
         {
             // bank 1 is 0-9, bank 2 is 19-10
+            auto bank1 = [](int n) { return n; };
             auto bank2 = [](int n) { return 19 - n; };
-            float beatFrac = mpProvider->ILEDDataProvider_GetMetronomeBeat()->GetBeatFrac();
+            constexpr int ledsPerBank = 10;
 
-            static const int ledsPerBank = 10;
+            float peak = CCSynth::GetPeakLevel();
+            float heldPeakDisplay;
+
+            // determine a new held peak
+            // if the held peak has been holding longer than 500ms, fade linear to 0.
+            constexpr uint32_t holdTimeMS = 900;
+            constexpr uint32_t falloffTimeMS = 400;
+            uint32_t holdDurationMS = (uint32_t)mHeldPeakTime.ElapsedTime().ElapsedMillisI();
+            if ((peak > mHeldPeak) || holdDurationMS > (holdTimeMS + falloffTimeMS))
+            {
+                // new peak, or after falloff reset.
+                mHeldPeak = peak;
+                heldPeakDisplay = peak;
+                mHeldPeakTime.Restart();
+            }
+            else if (holdDurationMS <= holdTimeMS)
+            {
+                heldPeakDisplay = mHeldPeak;
+            }
+            else
+            {
+                // falloff: remap millis from 500-1000 from heldpeak to 0.
+                heldPeakDisplay = map<float, float, float, float, float>(holdDurationMS, holdTimeMS, holdTimeMS + falloffTimeMS, mHeldPeak, peak);
+            }
+
+            int peakLEDIndex = (int)((peak * (ledsPerBank - 1)) + 0.1f); // +.1 helps nudge it up a bit.
+            int heldPeakLEDIndex = (int)((heldPeakDisplay * (ledsPerBank - 1)) + 0.1f);
+
+            peakLEDIndex = ClampInclusive(peakLEDIndex, 0, ledsPerBank - 1);
+            heldPeakLEDIndex = ClampInclusive(heldPeakLEDIndex, 0, ledsPerBank - 1);
+
+            // render. 1 red, 2 yellow, rest green.
             for (int i = 0; i < ledsPerBank; ++i)
             {
-                float y = (float)i / (ledsPerBank - 1);
-                y -= beatFrac;
-                int pixel = y * 4;
-                if (pixel < 0) pixel = 0;
-                if (pixel > 4) pixel = 0;
+                uint32_t color1 = 0; // default off=black.
+                uint32_t color2 = 0; // default off=black.
+                uint32_t onColor = GRB(0, 4, 0);
+                if (i == 9)
+                    onColor = GRB(4, 0, 0);
+                else if (i == 8)
+                    onColor = GRB(4, 4, 0);
+                else if (i == 7)
+                    onColor = GRB(4, 4, 0);
+                else if (i == 6)
+                    onColor = GRB(4, 4, 0);
 
-                // todo: get the metronome working.
-                pixel = 0;
-                SetPixel(i, pixel, 0, 0);
-                SetPixel(bank2(i), 0, pixel, 0);
+                if (i <= peakLEDIndex)
+                {
+                    color1 = onColor;
+                }
+                if (i == heldPeakLEDIndex)
+                {
+                    color2 = onColor;
+                }
+
+                SetPixel(bank1(i), color1);
+                SetPixel(bank2(i), color2);
             }
+
+            //float beatFrac = mpProvider->ILEDDataProvider_GetMetronomeBeat()->GetBeatFrac();
+
+            // for (int i = 0; i < ledsPerBank; ++i)
+            // {
+            //     float y = (float)i / (ledsPerBank - 1);
+            //     y -= beatFrac;
+            //     int pixel = y * 4;
+            //     if (pixel < 0) pixel = 0;
+            //     if (pixel > 4) pixel = 0;
+
+            //     // todo: get the metronome working.
+            //     //pixel = 0;
+            //     SetPixel(bank1(i), pixel, 0, 0);
+            //     SetPixel(bank2(i), 0, pixel, 0);
+            // }
 
             // for (int i = 0; i < mPixelCount; ++ i)
             // {
@@ -94,8 +158,8 @@ namespace clarinoid
 
         CCThrottlerT<777> mThR;
         CCThrottlerT<333> mThG;
-        CCThrottlerT<48*1> mThB;
-        CCThrottlerT<48*4> mThB2;
+        CCThrottlerT<48 * 1> mThB;
+        CCThrottlerT<48 * 4> mThB2;
         uint32_t mRandR;
         uint32_t mRandG;
         bool mBlue1 = true;
@@ -120,7 +184,7 @@ namespace clarinoid
                 mRandR = distrib(gen);
             if (mThG.IsReady())
                 mRandG = distrib(gen);
-            if (mThB.IsReady()) 
+            if (mThB.IsReady())
                 mBlue1 = !mBlue1;
             if (mThB2.IsReady())
                 mBlue2 = !mBlue2;
@@ -155,18 +219,17 @@ namespace clarinoid
             }
 
             {
-                uint8_t p = mBlue1 ? 2: 0;
-                SetPixel(0, 0,0,p);
-                p = !mBlue1 ? 4: 0;
+                uint8_t p = mBlue1 ? 2 : 0;
+                SetPixel(0, 0, 0, p);
+                p = !mBlue1 ? 4 : 0;
                 //SetPixel(63, 0,0,p);
             }
             {
-                uint8_t p = mBlue2 ? 2: 0;
+                uint8_t p = mBlue2 ? 2 : 0;
                 //SetPixel(1, 0,0,p);
-                p = !mBlue2 ? 4: 0;
-                SetPixel(63, 0,0,p);
+                p = !mBlue2 ? 4 : 0;
+                SetPixel(63, 0, 0, p);
             }
-
 
             // bank 1 (10 + 10)   0-9, 54-63
             // bank 2 (10 + 10)  10-19, 44-53

@@ -173,6 +173,7 @@ https://www.pjrc.com/teensy/gui/index.html
           mPreset->mFilterMaxFreq);
 
       mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
+      mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);
 
       mRunningVoice = mv;
     }
@@ -259,12 +260,12 @@ https://www.pjrc.com/teensy/gui/index.html
 
     void BeginUpdate()
     {
-      //AudioNoInterrupts();// https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
+      AudioNoInterrupts();// https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
     }
 
     void EndUpdate()
     {
-      //AudioInterrupts();
+      AudioInterrupts();
     }
 
     void UpdatePostFx()

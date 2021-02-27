@@ -32,6 +32,9 @@ struct Leds
     void SetPixel(uint8_t pixel, uint8_t r, uint8_t g, uint8_t b) {
         mLeds.setPixel(pixel, GRB(r,g,b));
     }
+    void SetPixel(uint8_t pixel, uint32_t c) {
+        mLeds.setPixel(pixel, c);
+    }
 
     void SetPixel(uint8_t pixel, ColorF c)
     {

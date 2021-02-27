@@ -395,12 +395,8 @@ namespace clarinoid
         virtual void RenderFrontPage() override
         {
             mDisplay.mDisplay.println(String("Peak"));
-            if (CCSynthGraph::peak1.available())
-            {
-                float f = CCSynthGraph::peak1.read();
-                mPlotter.Plot(f);
-                //log(String("plotting ") + f + " ; samples=" + mPlotter.mValidSamples);
-            }
+            float peak = CCSynth::GetPeakLevel();
+            mPlotter.Plot(peak);
             RectI rcDisplay = {0, 0, this->mDisplay.mDisplay.width(), this->mDisplay.mDisplay.height()};
             mPlotter.Render(this->mDisplay, rcDisplay);
         }

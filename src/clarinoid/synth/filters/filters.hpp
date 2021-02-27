@@ -7,3 +7,4 @@
 #include "SEM12Filter.hpp"
 #include "MoogLadderFilter.hpp"
 #include "K35Filter.hpp"
+#include "DCFilter.hpp"
