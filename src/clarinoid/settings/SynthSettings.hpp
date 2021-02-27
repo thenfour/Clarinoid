@@ -103,7 +103,7 @@ namespace clarinoid
     SynthSettings()
     {
       // detuned saw.
-      mPresets[0].mName = "Saw";
+      mPresets[0].mName = "!Bassoonoid";
       mPresets[0].mOsc1Gain = 0.0f;
       mPresets[0].mOsc2Gain = 0.0f;
       mPresets[0].mOsc3Gain = 0.0f;
@@ -111,14 +111,16 @@ namespace clarinoid
       mPresets[0].mOsc1Waveform = OscWaveformShape::SawSync;
       mPresets[0].mOsc2Waveform = OscWaveformShape::SawSync;
       mPresets[0].mOsc3Waveform = OscWaveformShape::SawSync;
-      mPresets[0].mOsc2Gain = .7f;
+      mPresets[0].mOsc2Gain = .99f;
       mPresets[0].mSync = false;
       mPresets[0].mDetune = 0.0f;
 
+      mPresets[0].mFilterType = ClarinoidFilterType::LP_Diode;
       mPresets[0].mFilterMinFreq = 0.0f;
-      mPresets[0].mFilterMaxFreq = 5000.0f;
-      mPresets[0].mFilterQ = 0.7f;
-      mPresets[0].mFilterKeytracking = 0.8f;
+      mPresets[0].mFilterMaxFreq = 10000.0f;
+      mPresets[0].mFilterQ = 0.2f;
+      mPresets[0].mFilterSaturation = 0.4f;
+      mPresets[0].mFilterKeytracking = 0.9f;
 
       mPresets[1].mName = "Sync";
     }

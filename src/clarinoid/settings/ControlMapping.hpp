@@ -45,6 +45,8 @@ namespace clarinoid
             SynthPreset,
             Transpose,
             //Volume,
+            LoopGo,
+            LoopStop,
             COUNT,
         };
 

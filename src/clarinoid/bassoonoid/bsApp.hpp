@@ -145,6 +145,9 @@ namespace clarinoid
             mAppSettings.mControlMappings[joyPitchMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.50f;
             mAppSettings.mControlMappings[joyPitchMappingIndex].mNPolarMapping.Unipolar().mCurveS = -0.50f;
 
+            mAppSettings.mControlMappings[22] = ControlMapping::MomentaryMapping(PhysicalControl::RHx5, ControlMapping::Function::LoopGo);
+            mAppSettings.mControlMappings[23] = ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
+
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();
 

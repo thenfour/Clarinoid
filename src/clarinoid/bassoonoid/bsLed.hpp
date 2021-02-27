@@ -30,33 +30,22 @@ namespace clarinoid
         virtual CCEWIMusicalState *ILEDDataProvider_GetMusicalState() = 0;
     };
 
-    struct Leds1 : Leds<20, 1>,
-                   ITask
+    template <int ledsPerBank, uint32_t holdTimeMS, uint32_t falloffTimeMS>
+    struct PeakMeter
     {
-        ILEDDataProvider *mpProvider;
-        Leds1(ILEDDataProvider *pProvider) : Leds(gLED1DisplayMemory),
-                                             mpProvider(pProvider)
-        {
-        }
-
         float mHeldPeak = 0;
         Stopwatch mHeldPeakTime; // peak is simply held for a duration.
 
-        int n = 0;
-        virtual void TaskRun() override
+        template <typename Tbank1, typename Tbank2>
+        void Update(const Tbank1 &setBank1, const Tbank2 &setBank2)
         {
-            // bank 1 is 0-9, bank 2 is 19-10
-            auto bank1 = [](int n) { return n; };
-            auto bank2 = [](int n) { return 19 - n; };
-            constexpr int ledsPerBank = 10;
-
             float peak = CCSynth::GetPeakLevel();
             float heldPeakDisplay;
 
             // determine a new held peak
             // if the held peak has been holding longer than 500ms, fade linear to 0.
-            constexpr uint32_t holdTimeMS = 900;
-            constexpr uint32_t falloffTimeMS = 400;
+            //constexpr uint32_t holdTimeMS = 1500;
+            //constexpr uint32_t falloffTimeMS = 350;
             uint32_t holdDurationMS = (uint32_t)mHeldPeakTime.ElapsedTime().ElapsedMillisI();
             if ((peak > mHeldPeak) || holdDurationMS > (holdTimeMS + falloffTimeMS))
             {
@@ -78,7 +67,7 @@ namespace clarinoid
             int peakLEDIndex = (int)((peak * (ledsPerBank - 1)) + 0.1f); // +.1 helps nudge it up a bit.
             int heldPeakLEDIndex = (int)((heldPeakDisplay * (ledsPerBank - 1)) + 0.1f);
 
-            peakLEDIndex = ClampInclusive(peakLEDIndex, 0, ledsPerBank - 1);
+            peakLEDIndex = ClampInclusive(peakLEDIndex, 0, (ledsPerBank - 1));
             heldPeakLEDIndex = ClampInclusive(heldPeakLEDIndex, 0, ledsPerBank - 1);
 
             // render. 1 red, 2 yellow, rest green.
@@ -105,32 +94,28 @@ namespace clarinoid
                     color2 = onColor;
                 }
 
-                SetPixel(bank1(i), color1);
-                SetPixel(bank2(i), color2);
+                setBank1(i, color1);
+                setBank2(i, color2);
             }
+        }
+    };
 
-            //float beatFrac = mpProvider->ILEDDataProvider_GetMetronomeBeat()->GetBeatFrac();
+    struct Leds1 : Leds<20, 1>,
+                   ITask
+    {
+        PeakMeter<10, 1500, 300> mPeakMeter;
+        ILEDDataProvider *mpProvider;
+        Leds1(ILEDDataProvider *pProvider) : Leds(gLED1DisplayMemory),
+                                             mpProvider(pProvider)
+        {
+        }
 
-            // for (int i = 0; i < ledsPerBank; ++i)
-            // {
-            //     float y = (float)i / (ledsPerBank - 1);
-            //     y -= beatFrac;
-            //     int pixel = y * 4;
-            //     if (pixel < 0) pixel = 0;
-            //     if (pixel > 4) pixel = 0;
+        virtual void TaskRun() override
+        {
+            mPeakMeter.Update(
+                [&](int n, uint32_t c) { this->SetPixel(n, c); },
+                [&](int n, uint32_t c) { this->SetPixel(19 - n, c); });
 
-            //     // todo: get the metronome working.
-            //     //pixel = 0;
-            //     SetPixel(bank1(i), pixel, 0, 0);
-            //     SetPixel(bank2(i), 0, pixel, 0);
-            // }
-
-            // for (int i = 0; i < mPixelCount; ++ i)
-            // {
-            //     uint8_t o = (n == i) ? 32 : 0;
-            //     SetPixel(i, 0, o, 0);
-            // }
-            // n = (n+1)%mPixelCount;
             Show();
         }
     };
@@ -140,6 +125,7 @@ namespace clarinoid
     struct Leds2 : Leds<64, 29>,
                    ITask
     {
+        PeakMeter<10, 500, 200> mPeakMeter;
         ILEDDataProvider *mpProvider;
         Leds2(ILEDDataProvider *pProvider) : Leds(gLED2DisplayMemory),
                                              mpProvider(pProvider),
@@ -148,16 +134,9 @@ namespace clarinoid
         {
         }
 
-        // int nR = 0;
-        // int nG = 0;
-        // int nB = 0;
-        // int periodR = 25;
-        // int periodG = 26;
-        // int periodB = 27;
         CCThrottlerT<48> mTh;
-
-        CCThrottlerT<777> mThR;
-        CCThrottlerT<333> mThG;
+        CCThrottlerT<500> mThR;
+        CCThrottlerT<309> mThG;
         CCThrottlerT<48 * 1> mThB;
         CCThrottlerT<48 * 4> mThB2;
         uint32_t mRandR;
@@ -192,7 +171,7 @@ namespace clarinoid
             auto nr = mRandR;
             auto ng = mRandG;
             auto nb = mRandG;
-            for (int i = 1; i <= 4; ++i)
+            for (int i = 1; i <= 3; ++i)
             {
                 if (nr & 1)
                 {
@@ -235,6 +214,10 @@ namespace clarinoid
             // bank 2 (10 + 10)  10-19, 44-53
             // bank 3 (7 + 5)    20-26, 39-43
             // bank 4 (7 + 5)    27-33, 34-38
+
+            mPeakMeter.Update(
+                [&](int n, uint32_t c) { this->SetPixel(n + 10, c); },
+                [&](int n, uint32_t c) { this->SetPixel(53 - n, c); });
 
             // for (int i = 0; i <= 9; ++ i) {
             //     // bank 1: red

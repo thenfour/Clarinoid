@@ -26,6 +26,9 @@ namespace clarinoid
     SimpleMovingAverage<15> mCurrentBreath01;
     SimpleMovingAverage<60> mCurrentPitchN11;
 
+    SwitchControlReader mLoopGoReader;
+    SwitchControlReader mLoopStopReader;
+
     int nUpdates = 0;
     int noteOns = 0;
 
@@ -98,7 +101,13 @@ namespace clarinoid
       }
 
 #ifdef THREE_BUTTON_OCTAVES
-      newNote += 0;
+      // Buttons   Transpose:
+      //     1+2   -24
+      //     1     -12
+      //           0
+      //     2     +12
+      //     2+3   +24
+      //     3     +36
       if (mInput->mKeyOct1.CurrentValue())
       {
         if (mInput->mKeyOct2.CurrentValue())
@@ -107,16 +116,23 @@ namespace clarinoid
         }
         else
         {
-          newNote -= 12; // low key
+          newNote -= 12; // button 1 only
         }
       }
       else if (mInput->mKeyOct2.CurrentValue())
       {
-        newNote += 12; // high key
+        if (mInput->mKeyOct3.CurrentValue())
+        {
+          newNote += 24; // holding 2+3
+        }
+        else
+        {
+          newNote += 12; // holding only 2
+        }
       }
-      if (mInput->mKeyOct3.CurrentValue())
+      else if (mInput->mKeyOct3.CurrentValue())
       {
-        newNote += 24; // extra high key
+        newNote += 36; // holding only 3
       }
 #else
       if (ps.key_octave4.IsCurrentlyPressed())
@@ -151,6 +167,15 @@ namespace clarinoid
       auto transitionEvents = CalculateTransitionEvents(mLiveVoice, mNewState);
 
       mLiveVoice = mNewState;
+
+      mLoopGoReader.Update(&mInput->mLoopGoButton);
+      mLoopStopReader.Update(&mInput->mLoopStopButton);
+      if (mLoopGoReader.IsNewlyPressed()) {
+        mLooper.LoopIt(mLiveVoice);
+      }
+      if (mLoopStopReader.IsNewlyPressed()) {
+        mLooper.Clear();
+      }
 
       // we have calculated mLiveVoice, converting physical to live musical state.
       // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.

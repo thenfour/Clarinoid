@@ -111,6 +111,8 @@ namespace clarinoid
 
     SynthPresetMappableFunction mSynthPresetFn;
     TransposeMappableFunction mTransposeFn;
+    VirtualSwitch mLoopStopButton;
+    VirtualSwitch mLoopGoButton;
 
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
@@ -150,6 +152,9 @@ namespace clarinoid
 
       RegisterFunction(ControlMapping::Function::SynthPreset, &mSynthPresetFn);
       RegisterFunction(ControlMapping::Function::Transpose, &mTransposeFn);
+
+      RegisterFunction(ControlMapping::Function::LoopStop, &mLoopStopButton);
+      RegisterFunction(ControlMapping::Function::LoopGo, &mLoopGoButton);
 
       mpSrc->InputSource_Init(this);
     }

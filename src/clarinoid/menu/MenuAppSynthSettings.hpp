@@ -71,7 +71,7 @@ namespace clarinoid
                     this},
                 AlwaysEnabled};
 
-        FloatSettingItem mBreathFiltQ = {" - Reso", NumericEditRangeSpec<float> { 0.0f, 20.0f, 1.0f, 0.2f, 0.1f },
+        FloatSettingItem mBreathFiltQ = {" - Reso", NumericEditRangeSpec<float> { 0.0f, 1.0f, .1f, .05f, 0.1f },
                                             Property<float>{
                                                 [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mFilterQ; },
                                                 [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mFilterQ = v; },
