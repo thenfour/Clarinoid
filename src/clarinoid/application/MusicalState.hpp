@@ -35,8 +35,12 @@ namespace clarinoid
     int noteOns = 0;
 
     int mLastPlayedNote = 0; // valid even when mLiveVoice is not.
+
     int mDefaultBaseNote = 49; // C#2
     bool mHoldingBaseNote = false;
+    bool mWaitingForRelativePitchToChange = false;
+    int mBaseNoteToUseAfterRelativePitchChanges = 0;
+    int mRelativeNoteWhenPitchHeld = 0;
     int mCurrentBaseNote = mDefaultBaseNote;
 
     CCEWIMusicalState(AppSettings *appSettings, InputDelegator *inputDelegator, Metronome *metronome, ScaleFollower *scaleFollower, IInputSource* inputSrc) : mAppSettings(appSettings),
@@ -74,39 +78,39 @@ namespace clarinoid
 
       // the rules are rather weird for keys. open is a C#...
       // https://bretpimentel.com/flexible-ewi-fingerings/
-      int newNote = this->mCurrentBaseNote;
+      int relativeNote = 0;
       if (mInput->mKeyLH1.CurrentValue())
       {
-        newNote -= 2;
+        relativeNote -= 2;
       }
       if (mInput->mKeyLH2.CurrentValue())
       {
-        newNote -= mInput->mKeyLH1.CurrentValue() ? 2 : 1;
+        relativeNote -= mInput->mKeyLH1.CurrentValue() ? 2 : 1;
       }
       if (mInput->mKeyLH3.CurrentValue())
       {
-        newNote -= 2;
+        relativeNote -= 2;
       }
       if (mInput->mKeyLH4.CurrentValue())
       {
-        newNote += 1;
+        relativeNote += 1;
       }
 
       if (mInput->mKeyRH1.CurrentValue())
       {
-        newNote -= mInput->mKeyLH3.CurrentValue() ? 2 : 1;
+        relativeNote -= mInput->mKeyLH3.CurrentValue() ? 2 : 1;
       }
       if (mInput->mKeyRH2.CurrentValue())
       {
-        newNote -= 1;
+        relativeNote -= 1;
       }
       if (mInput->mKeyRH3.CurrentValue())
       {
-        newNote -= mInput->mKeyRH2.CurrentValue() ? 2 : 1; // deviation from akai. feels more flute-friendly.
+        relativeNote -= mInput->mKeyRH2.CurrentValue() ? 2 : 1; // deviation from akai. feels more flute-friendly.
       }
       if (mInput->mKeyRH4.CurrentValue())
       {
-        newNote -= 2;
+        relativeNote -= 2;
       }
 
 #ifdef THREE_BUTTON_OCTAVES
@@ -121,49 +125,60 @@ namespace clarinoid
       {
         if (mInput->mKeyOct2.CurrentValue())
         {
-          newNote -= 24; // holding both 1&2 keys = sub-bass
+          relativeNote -= 24; // holding both 1&2 keys = sub-bass
         }
         else
         {
-          newNote -= 12; // button 1 only
+          relativeNote -= 12; // button 1 only
         }
       }
       else if (mInput->mKeyOct2.CurrentValue())
       {
         if (mInput->mKeyOct3.CurrentValue())
         {
-          newNote += 24; // holding 2+3
+          relativeNote += 24; // holding 2+3
         }
         else
         {
-          newNote += 12; // holding only 2
+          relativeNote += 12; // holding only 2
         }
       }
       else if (mInput->mKeyOct3.CurrentValue())
       {
-        newNote += 36; // holding only 3
+        relativeNote += 36; // holding only 3
       }
 #else
       if (ps.key_octave4.IsCurrentlyPressed())
       {
-        newNote += 12 * 4;
+        relativeNote += 12 * 4;
       }
       else if (ps.key_octave3.IsCurrentlyPressed())
       {
-        newNote += 12 * 3;
+        relativeNote += 12 * 3;
       }
       else if (ps.key_octave2.IsCurrentlyPressed())
       {
-        newNote += 12 * 2;
+        relativeNote += 12 * 2;
       }
       else if (ps.key_octave1.IsCurrentlyPressed())
       {
-        newNote += 12 * 1;
+        relativeNote += 12 * 1;
       }
 #endif
 
       // transpose
-      newNote += mAppSettings->mTranspose;
+      relativeNote += mAppSettings->mTranspose;
+      
+      // hold pitch is cool, but if we set the new base pitch while you're holding keys down (which is kinda 100%),
+      // then you immediately start playing relative to the existing pitch. very ugly, and literally never intended.
+      // so continue playing the existing note until the relative pitch changes.
+      int newNote = 0;
+      if (mWaitingForRelativePitchToChange && (mRelativeNoteWhenPitchHeld != relativeNote)) {
+        mWaitingForRelativePitchToChange = false;
+        this->mCurrentBaseNote = mBaseNoteToUseAfterRelativePitchChanges;
+      }
+      
+      newNote = relativeNote + this->mCurrentBaseNote;
       newNote = constrain(newNote, 1, 127);
       mNewState.mMidiNote = (uint8_t)newNote;
 
@@ -192,11 +207,15 @@ namespace clarinoid
       if (mHoldBasePitchReader.IsNewlyPressed()) {
         mHoldingBaseNote = !mHoldingBaseNote;
         if (mHoldingBaseNote) {
-          mCurrentBaseNote = mLastPlayedNote;
+          // set up the pitch hold scenario.
+          mBaseNoteToUseAfterRelativePitchChanges = mLastPlayedNote;
+          mRelativeNoteWhenPitchHeld = relativeNote;
+          mWaitingForRelativePitchToChange = true;
           MidiNote note(mCurrentBaseNote);
           mInputSrc->InputSource_ShowToast(String("HOLD: ") + note.ToString());
         } else {
           mInputSrc->InputSource_ShowToast(String("Release note"));
+          mRelativeNoteWhenPitchHeld = false;
           mCurrentBaseNote = mDefaultBaseNote;
         }
       }
