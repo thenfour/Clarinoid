@@ -98,7 +98,13 @@ namespace clarinoid
 
       if (mInput->mKeyRH1.CurrentValue())
       {
-        relativeNote -= mInput->mKeyLH3.CurrentValue() ? 2 : 1;
+        // naturally we expect this to be -2 (for G-F trill for example)
+        // but we need to support Bb.
+        if (mInput->mKeyLH1.CurrentValue() && !mInput->mKeyLH2.CurrentValue()) {
+          relativeNote -= 1;
+        } else {
+          relativeNote -= 2;
+        }
       }
       if (mInput->mKeyRH2.CurrentValue())
       {
