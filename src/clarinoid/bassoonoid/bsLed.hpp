@@ -116,6 +116,11 @@ namespace clarinoid
                 [&](int n, uint32_t c) { this->SetPixel(n, c); },
                 [&](int n, uint32_t c) { this->SetPixel(19 - n, c); });
 
+            if (mpProvider->ILEDDataProvider_GetMusicalState()->mHoldingBaseNote) {
+                this->SetPixel(9, 128,128,0);
+                this->SetPixel(10, 128,128,0);
+            }
+
             Show();
         }
     };

@@ -35,7 +35,7 @@ struct MusicalStateTask :
         mControlMapper(controlMapper),
         mpInput(input),
         mMetronome(appSettings),
-        mMusicalState(appSettings, mpInput, &mMetronome, &mScaleFollower)
+        mMusicalState(appSettings, mpInput, &mMetronome, &mScaleFollower, controlMapper)
     {
     }
 

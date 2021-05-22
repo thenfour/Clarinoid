@@ -148,6 +148,8 @@ namespace clarinoid
             mAppSettings.mControlMappings[22] = ControlMapping::MomentaryMapping(PhysicalControl::RHx5, ControlMapping::Function::LoopGo);
             mAppSettings.mControlMappings[23] = ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
+            mAppSettings.mControlMappings[24] = ControlMapping::MomentaryMapping(PhysicalControl::RHTh1, ControlMapping::Function::BaseNoteHoldToggle);
+
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();
 

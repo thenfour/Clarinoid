@@ -97,14 +97,14 @@ struct BassoonoidControlMapper :
         mControlInfo[(size_t)PhysicalControl::LHKey3] = ControlInfo { "LHKey3", &mLHMCP.mButtons[5] };
         mControlInfo[(size_t)PhysicalControl::LHKey4] = ControlInfo { "LHKey4", &mLHMCP.mButtons[4] };
 
-        mControlInfo[(size_t)PhysicalControl::RHTh1] = ControlInfo { "RHTh1", &mRHMCP.mButtons[5] };
-        mControlInfo[(size_t)PhysicalControl::RHTh2] = ControlInfo { "RHTh2", &mRHMCP.mButtons[6] };
-        mControlInfo[(size_t)PhysicalControl::RHTh3] = ControlInfo { "RHTh3", &mRHMCP.mButtons[7] };
+        mControlInfo[(size_t)PhysicalControl::RHTh1] = ControlInfo { "RHTh1", &mRHMCP.mButtons[5] }; // base note hold
+        mControlInfo[(size_t)PhysicalControl::RHTh2] = ControlInfo { "RHTh2", &mRHMCP.mButtons[6] }; // synth preset -
+        mControlInfo[(size_t)PhysicalControl::RHTh3] = ControlInfo { "RHTh3", &mRHMCP.mButtons[7] }; // synth preset +
         mControlInfo[(size_t)PhysicalControl::RHx1] = ControlInfo { "RHx1", &mRHMCP.mButtons[4] };
-        mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo { "RHx2", &mRHMCP.mButtons[12] }; // above rh key1
-        mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo { "RHx3", &mRHMCP.mButtons[13] }; // also above rh key1
-        mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo { "RHx4", &mRHMCP.mButtons[14] };
-        mControlInfo[(size_t)PhysicalControl::RHx5] = ControlInfo { "RHx5", &mRHMCP.mButtons[15] };
+        mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo { "RHx2", &mRHMCP.mButtons[12] }; // fine
+        mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo { "RHx3", &mRHMCP.mButtons[13] }; // course
+        mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo { "RHx4", &mRHMCP.mButtons[14] }; // loop stop
+        mControlInfo[(size_t)PhysicalControl::RHx5] = ControlInfo { "RHx5", &mRHMCP.mButtons[15] }; // loop go
         mControlInfo[(size_t)PhysicalControl::RHKey1] = ControlInfo { "RHKey1", &mRHMCP.mButtons[8] };
         mControlInfo[(size_t)PhysicalControl::RHKey2] = ControlInfo { "RHKey2", &mRHMCP.mButtons[9] };
         mControlInfo[(size_t)PhysicalControl::RHKey3] = ControlInfo { "RHKey3", &mRHMCP.mButtons[10] };

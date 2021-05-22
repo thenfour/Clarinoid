@@ -114,6 +114,8 @@ namespace clarinoid
     VirtualSwitch mLoopStopButton;
     VirtualSwitch mLoopGoButton;
 
+    VirtualSwitch mBaseNoteHoldToggle;
+
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
       mpAppSettings = appSettings;
@@ -155,6 +157,8 @@ namespace clarinoid
 
       RegisterFunction(ControlMapping::Function::LoopStop, &mLoopStopButton);
       RegisterFunction(ControlMapping::Function::LoopGo, &mLoopGoButton);
+
+      RegisterFunction(ControlMapping::Function::BaseNoteHoldToggle, &mBaseNoteHoldToggle);
 
       mpSrc->InputSource_Init(this);
     }
@@ -226,8 +230,8 @@ namespace clarinoid
           continue;
         if (!MatchesModifierKeys(mapping))
           continue;
-
-        CCASSERT((size_t)mapping.mFunction < SizeofStaticArray(mHandlers));
+        if ((size_t)mapping.mFunction >= SizeofStaticArray(mHandlers)) // maybe it's just not registered yet?
+          continue;
 
         FunctionHandler *dest = mHandlers[(size_t)mapping.mFunction]; // get the function this is mapped to
         auto src = mpSrc->InputSource_GetControl(mapping.mSource);    // and the source control providing the value to map.

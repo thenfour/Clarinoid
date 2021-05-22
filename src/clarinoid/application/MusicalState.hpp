@@ -14,6 +14,7 @@ namespace clarinoid
     InputDelegator *mInput;
     Metronome *mMetronome;
     ScaleFollower *mScaleFollower;
+    IInputSource* mInputSrc;
 
     MusicalVoice mLiveVoice;                         // the voice you're literally physically playing.
     MusicalVoice mMusicalVoices[MAX_MUSICAL_VOICES]; // these are all the voices that WANT to be played (after transpose, harmonize, looping, etc). May be more than synth polyphony.
@@ -28,18 +29,26 @@ namespace clarinoid
 
     SwitchControlReader mLoopGoReader;
     SwitchControlReader mLoopStopReader;
+    SwitchControlReader mHoldBasePitchReader;
 
     int nUpdates = 0;
     int noteOns = 0;
 
-    CCEWIMusicalState(AppSettings *appSettings, InputDelegator *inputDelegator, Metronome *metronome, ScaleFollower *scaleFollower) : mAppSettings(appSettings),
+    int mLastPlayedNote = 0; // valid even when mLiveVoice is not.
+    int mDefaultBaseNote = 49; // C#2
+    bool mHoldingBaseNote = false;
+    int mCurrentBaseNote = mDefaultBaseNote;
+
+    CCEWIMusicalState(AppSettings *appSettings, InputDelegator *inputDelegator, Metronome *metronome, ScaleFollower *scaleFollower, IInputSource* inputSrc) : mAppSettings(appSettings),
                                                                                                                                       mInput(inputDelegator),
                                                                                                                                       mMetronome(metronome),
                                                                                                                                       mScaleFollower(scaleFollower),
+                                                                                                                                      mInputSrc(inputSrc),
 
                                                                                                                                       mLooper(appSettings, metronome, scaleFollower)
     {
       mMidiOut.setup();
+
       this->mCurrentBreath01.Update(0);
       this->mCurrentPitchN11.Update(0);
     }
@@ -65,7 +74,7 @@ namespace clarinoid
 
       // the rules are rather weird for keys. open is a C#...
       // https://bretpimentel.com/flexible-ewi-fingerings/
-      int newNote = 49; // C#2
+      int newNote = this->mCurrentBaseNote;
       if (mInput->mKeyLH1.CurrentValue())
       {
         newNote -= 2;
@@ -162,6 +171,8 @@ namespace clarinoid
       {
         mNewState.mVelocity = 0;
         mNewState.mMidiNote = 0;
+      } else {
+        mLastPlayedNote = mNewState.mMidiNote;
       }
 
       auto transitionEvents = CalculateTransitionEvents(mLiveVoice, mNewState);
@@ -175,6 +186,19 @@ namespace clarinoid
       }
       if (mLoopStopReader.IsNewlyPressed()) {
         mLooper.Clear();
+      }
+
+      mHoldBasePitchReader.Update(&mInput->mBaseNoteHoldToggle);
+      if (mHoldBasePitchReader.IsNewlyPressed()) {
+        mHoldingBaseNote = !mHoldingBaseNote;
+        if (mHoldingBaseNote) {
+          mCurrentBaseNote = mLastPlayedNote;
+          MidiNote note(mCurrentBaseNote);
+          mInputSrc->InputSource_ShowToast(String("HOLD: ") + note.ToString());
+        } else {
+          mInputSrc->InputSource_ShowToast(String("Release note"));
+          mCurrentBaseNote = mDefaultBaseNote;
+        }
       }
 
       // we have calculated mLiveVoice, converting physical to live musical state.

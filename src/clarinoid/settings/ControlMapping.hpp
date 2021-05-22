@@ -47,6 +47,7 @@ namespace clarinoid
             //Volume,
             LoopGo,
             LoopStop,
+            BaseNoteHoldToggle,
             COUNT,
         };
 
