@@ -61,7 +61,7 @@ namespace clarinoid
         BassoonoidApp() : mLed1(this),
                           mLed2(this),
                           mBreathLED(this),
-                          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 44 * 1000000UL),
+                          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/ /*, 44 * 1000000UL*/),
                           mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
@@ -171,17 +171,25 @@ namespace clarinoid
             TaskPlanner tp{
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1000), &mDisplayTask1, "Display1"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2000), &mMusicalStateTask, "MusS1"},
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(3000), &mDisplayTask2, "Display2"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS2"},
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mLed1, "mLed1"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(6000), &mMusicalStateTask, "MusS3"},
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7000), &mLed2, "mLed2"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mMusicalStateTask, "MusS4"},
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(9000), &mBreathLED, "mBreathLED"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS5"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12000), &mMusicalStateTask, "MusS6"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(14000), &mMusicalStateTask, "MusS7"},
+
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &nopTask, "Nop"},
             };
 

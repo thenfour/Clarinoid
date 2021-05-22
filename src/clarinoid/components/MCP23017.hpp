@@ -266,7 +266,7 @@ struct CCMCP23017// :
   {
     NoInterrupts _ni;
     mMcp.begin(theWire);
-    theWire->setClock(400000); // use high speed mode. default speed = 100k
+    //theWire->setClock(400000); // use high speed mode. default speed = 100k
     for (int i  = 0; i < 16; ++ i) {
       mMcp.pinMode(i, INPUT);
       mMcp.pullUp(i, HIGH);  // turn on a 100K pullup internally

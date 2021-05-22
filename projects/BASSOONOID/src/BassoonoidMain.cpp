@@ -36,7 +36,6 @@ void setup()
   Serial.begin(9600);
   //while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
 
-  clarinoid::DebugBlink(2);
   clarinoid::BassoonoidApp app;
   app.Main();
 }
