@@ -127,28 +127,25 @@ namespace clarinoid
             mAppSettings.mControlMappings[12] = ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
 
             mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
-            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.65f;
-            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveS = -0.15f;
+            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.50f;
+            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveS = 0;//-0.15f;
 
             mAppSettings.mControlMappings[14] = ControlMapping::TypicalEncoderMapping(PhysicalControl::LHEnc, ControlMapping::Function::MenuScrollA);
 
-            mAppSettings.mControlMappings[15] = ControlMapping::ButtonIncrementMapping(PhysicalControl::LHThx1, ControlMapping::Function::Transpose, 12.0f);
-            mAppSettings.mControlMappings[16] = ControlMapping::ButtonIncrementMapping(PhysicalControl::LHThx2, ControlMapping::Function::Transpose, -12.0f);
-
-            mAppSettings.mControlMappings[17] = ControlMapping::ButtonIncrementMapping(PhysicalControl::RHTh3, ControlMapping::Function::SynthPreset, 1.0f);
-            mAppSettings.mControlMappings[18] = ControlMapping::ButtonIncrementMapping(PhysicalControl::RHTh2, ControlMapping::Function::SynthPreset, -1.0f);
+            mAppSettings.mControlMappings[17] = ControlMapping::ButtonIncrementMapping(PhysicalControl::LHThx1, ControlMapping::Function::SynthPreset, 1.0f);
+            mAppSettings.mControlMappings[18] = ControlMapping::ButtonIncrementMapping(PhysicalControl::LHThx2, ControlMapping::Function::SynthPreset, -1.0f);
 
             mAppSettings.mControlMappings[19] = ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierFine);
             mAppSettings.mControlMappings[20] = ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::ModifierCourse);
 
             mAppSettings.mControlMappings[joyPitchMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::JoyY, ControlMapping::Function::PitchBend, 1.0f, 0.01f, -1.0f, 1.0f);
             mAppSettings.mControlMappings[joyPitchMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.50f;
-            mAppSettings.mControlMappings[joyPitchMappingIndex].mNPolarMapping.Unipolar().mCurveS = -0.50f;
+            mAppSettings.mControlMappings[joyPitchMappingIndex].mNPolarMapping.Unipolar().mCurveS = 0;//-0.50f;
 
             mAppSettings.mControlMappings[22] = ControlMapping::MomentaryMapping(PhysicalControl::RHx5, ControlMapping::Function::LoopGo);
             mAppSettings.mControlMappings[23] = ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
-            mAppSettings.mControlMappings[24] = ControlMapping::MomentaryMapping(PhysicalControl::RHTh1, ControlMapping::Function::BaseNoteHoldToggle);
+            mAppSettings.mControlMappings[24] = ControlMapping::MomentaryMapping(PhysicalControl::RHTh3, ControlMapping::Function::BaseNoteHoldToggle);
 
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();

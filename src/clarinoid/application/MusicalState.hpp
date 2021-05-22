@@ -217,7 +217,7 @@ namespace clarinoid
           mBaseNoteToUseAfterRelativePitchChanges = mLastPlayedNote;
           mRelativeNoteWhenPitchHeld = relativeNote;
           mWaitingForRelativePitchToChange = true;
-          MidiNote note(mCurrentBaseNote);
+          MidiNote note(mLastPlayedNote);
           mInputSrc->InputSource_ShowToast(String("HOLD: ") + note.ToString());
         } else {
           mInputSrc->InputSource_ShowToast(String("Release note"));

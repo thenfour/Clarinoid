@@ -100,29 +100,44 @@ namespace clarinoid
     float mReverbGain = 0.0f;
     float mMasterGain = 1.0f;
 
-    SynthSettings()
+    void InitBassoonoidPreset(SynthPreset& p, const char* name, ClarinoidFilterType filt, float filterKeyScaling, float q)
     {
       // detuned saw.
-      mPresets[0].mName = "!Bassoonoid";
-      mPresets[0].mOsc1Gain = 0.0f;
-      mPresets[0].mOsc2Gain = 0.0f;
-      mPresets[0].mOsc3Gain = 0.0f;
+      p.mName = name;
+      p.mOsc1Gain = 0.0f;
+      p.mOsc3Gain = 0.0f;
 
-      mPresets[0].mOsc1Waveform = OscWaveformShape::SawSync;
-      mPresets[0].mOsc2Waveform = OscWaveformShape::SawSync;
-      mPresets[0].mOsc3Waveform = OscWaveformShape::SawSync;
-      mPresets[0].mOsc2Gain = .99f;
-      mPresets[0].mSync = false;
-      mPresets[0].mDetune = 0.0f;
+      p.mOsc1Waveform = OscWaveformShape::SawSync;
+      p.mOsc2Waveform = OscWaveformShape::SawSync;
+      p.mOsc3Waveform = OscWaveformShape::SawSync;
+      p.mOsc2Gain = .99f;
+      p.mSync = false;
+      p.mDetune = 0.0f;
 
-      mPresets[0].mFilterType = ClarinoidFilterType::LP_Diode;
-      mPresets[0].mFilterMinFreq = 0.0f;
-      mPresets[0].mFilterMaxFreq = 10000.0f;
-      mPresets[0].mFilterQ = 0.2f;
-      mPresets[0].mFilterSaturation = 0.4f;
-      mPresets[0].mFilterKeytracking = 0.9f;
+      p.mFilterType = filt;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 10000.0f;
+      p.mFilterQ = q;
+      p.mFilterKeytracking = filterKeyScaling;
+    }
 
-      mPresets[1].mName = "Sync";
+    SynthSettings()
+    {
+      InitBassoonoidPreset(mPresets[0], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f);
+      InitBassoonoidPreset(mPresets[1], "Moog-ks7-q15", ClarinoidFilterType::LP_Moog4, 0.7f, 0.15f);
+      InitBassoonoidPreset(mPresets[2], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f);
+      InitBassoonoidPreset(mPresets[3], "Moog-ks9-q15", ClarinoidFilterType::LP_Moog4, 0.9f, 0.15f);
+      InitBassoonoidPreset(mPresets[4], "Diode-ks7-q0", ClarinoidFilterType::LP_Diode, 0.7f, 0.0f);
+      InitBassoonoidPreset(mPresets[5], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f);
+      InitBassoonoidPreset(mPresets[6], "Diode-ks9-q0", ClarinoidFilterType::LP_Diode, 0.9f, 0.0f);
+      InitBassoonoidPreset(mPresets[7], "Diode-ks9-q15", ClarinoidFilterType::LP_Diode, 0.9f, 0.15f);
+
+      InitBassoonoidPreset(mPresets[8], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f);
+      InitBassoonoidPreset(mPresets[9], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f);
+      InitBassoonoidPreset(mPresets[10], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f);
+      InitBassoonoidPreset(mPresets[11], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f);
+
+      mPresets[12].mName = "Sync";
     }
   };
 

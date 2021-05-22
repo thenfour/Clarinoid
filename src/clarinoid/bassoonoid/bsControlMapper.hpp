@@ -87,8 +87,8 @@ struct BassoonoidControlMapper :
         mControlInfo[(size_t)PhysicalControl::LHEncButton] = ControlInfo { "LHEncBtn", &mLHMCP.mButtons[13] };
         mControlInfo[(size_t)PhysicalControl::LHBack] = ControlInfo { "LHBack", &mLHMCP.mButtons[11] };
         mControlInfo[(size_t)PhysicalControl::LHOk] = ControlInfo { "LHOk", &mLHMCP.mButtons[12] };
-        mControlInfo[(size_t)PhysicalControl::LHThx1] = ControlInfo { "LHThx1", &mLHMCP.mButtons[14] };
-        mControlInfo[(size_t)PhysicalControl::LHThx2] = ControlInfo { "LHThx2", &mLHMCP.mButtons[15] };
+        mControlInfo[(size_t)PhysicalControl::LHThx1] = ControlInfo { "LHThx1", &mLHMCP.mButtons[14] }; // transpose+ -> synthpreset+
+        mControlInfo[(size_t)PhysicalControl::LHThx2] = ControlInfo { "LHThx2", &mLHMCP.mButtons[15] }; // transpose- -> synthpreset -
         mControlInfo[(size_t)PhysicalControl::LHOct1] = ControlInfo { "LHO1", &mLHMCP.mButtons[10] };
         mControlInfo[(size_t)PhysicalControl::LHOct2] = ControlInfo { "LHO2", &mLHMCP.mButtons[9] };
         mControlInfo[(size_t)PhysicalControl::LHOct3] = ControlInfo { "LHO3", &mLHMCP.mButtons[8] };
@@ -97,9 +97,9 @@ struct BassoonoidControlMapper :
         mControlInfo[(size_t)PhysicalControl::LHKey3] = ControlInfo { "LHKey3", &mLHMCP.mButtons[5] };
         mControlInfo[(size_t)PhysicalControl::LHKey4] = ControlInfo { "LHKey4", &mLHMCP.mButtons[4] };
 
-        mControlInfo[(size_t)PhysicalControl::RHTh1] = ControlInfo { "RHTh1", &mRHMCP.mButtons[5] }; // base note hold
-        mControlInfo[(size_t)PhysicalControl::RHTh2] = ControlInfo { "RHTh2", &mRHMCP.mButtons[6] }; // synth preset -
-        mControlInfo[(size_t)PhysicalControl::RHTh3] = ControlInfo { "RHTh3", &mRHMCP.mButtons[7] }; // synth preset +
+        mControlInfo[(size_t)PhysicalControl::RHTh1] = ControlInfo { "RHTh1", &mRHMCP.mButtons[5] }; // base note hold   -> NOP
+        mControlInfo[(size_t)PhysicalControl::RHTh2] = ControlInfo { "RHTh2", &mRHMCP.mButtons[6] }; // synth preset -   -> NOP
+        mControlInfo[(size_t)PhysicalControl::RHTh3] = ControlInfo { "RHTh3", &mRHMCP.mButtons[7] }; // synth preset +   -> base note hold
         mControlInfo[(size_t)PhysicalControl::RHx1] = ControlInfo { "RHx1", &mRHMCP.mButtons[4] };
         mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo { "RHx2", &mRHMCP.mButtons[12] }; // fine
         mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo { "RHx3", &mRHMCP.mButtons[13] }; // course
