@@ -160,36 +160,29 @@ namespace clarinoid
                                            pThis->mDisplay.DisplayTask();
                                        }};
 
-            // the "Musical state" task tends to take about 1000 microseconds, and is the most
-            // critical. So let's run it every 2000 microseconds.
-            // that means every other task can just get interlaced between these.
-            // Other tasks can run much slower; even at 60fps we have a whole period of 16667 micros.
-            // that means running musical state 8 times and everything else gets placed between.
+            // the "Musical state" is the most critical. So let's run it periodically, spread through the whole time slice.
+            // display tasks are also very heavy. Display1 is update/state, Display2 is SPI render.
+            // musical state = about <2400 microseconds
+            // display1 = about <1500 microseconds
+            // display2 = about <2000 microseconds
+            // LED tasks tend to be almost instantaneous (~<10 microseconds) so they can all live in the same slot.
             NopTask nopTask;
 
-            TaskPlanner tp{
+            TaskPlanner tp {
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1000), &mDisplayTask1, "Display1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1), &mDisplayTask1, "Display1"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2000), &mMusicalStateTask, "MusS1"},
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(3000), &mDisplayTask2, "Display2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mMusicalStateTask, "MusS1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5001), &mLed1, "mLed1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5002), &mLed2, "mLed2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5003), &mBreathLED, "mBreathLED"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS2"},
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mLed1, "mLed1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(9000), &mMusicalStateTask, "MusS2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(9001), &mDisplayTask2, "Display2"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(6000), &mMusicalStateTask, "MusS3"},
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7000), &mLed2, "mLed2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(14000), &mMusicalStateTask, "MusS3"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mMusicalStateTask, "MusS4"},
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(9000), &mBreathLED, "mBreathLED"},
-
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS5"},
-
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12000), &mMusicalStateTask, "MusS6"},
-
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(14000), &mMusicalStateTask, "MusS7"},
-
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &nopTask, "Nop"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(18000), &nopTask, "Nop"},
             };
 
             mPerformanceApp.Init(&tp);

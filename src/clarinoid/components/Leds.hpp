@@ -24,7 +24,7 @@ namespace clarinoid
         Leds(void *displayMemory /* 12 bytes DMA per LED */) : mLeds(Tcount, displayMemory, mDrawingMemory, Tpin, WS2812_GRB)
         {
             //Serial.println(String("Leds ctor this = ") + ((uintptr_t)this));
-            delay(10);
+            //delay(10);
             mLeds.begin();
         }
 
