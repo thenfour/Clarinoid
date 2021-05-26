@@ -89,10 +89,8 @@ public:
     mDisplay.dim(mAppSettings->mDisplayDim);
 
     // welcome msg.
+    ClearState();
     mDisplay.clearDisplay();
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-    mDisplay.setCursor(0,0);
 
     mDisplay.println(gClarinoidVersion);
     mDisplay.display();
@@ -142,13 +140,8 @@ public:
       pMenuApp->DisplayAppUpdate();
     }
 
+    ClearState();
     mDisplay.clearDisplay();
-    mDisplay.mSolidText = true;
-    mDisplay.mTextLeftMargin = 0;
-    mDisplay.ResetClip();
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-    mDisplay.setCursor(0,0);
 
     if (pMenuApp) {
       //Serial.println(String(" => render ") + pMenuApp->DisplayAppGetName());
@@ -184,14 +177,20 @@ public:
     mToastTimer.Restart();
   }
 
+  void ClearState() {
+    mDisplay.mSolidText = true;
+    mDisplay.mTextLeftMargin = 0;
+    mDisplay.ResetClip();
+    mDisplay.setTextSize(1);
+    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+    mDisplay.setCursor(0,0);
+  }
 
   // draws & prepares the screen for a modal message. after this just print text whatever.
   inline void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4) {
-    mDisplay.setCursor(0,0);
+    ClearState();
     mDisplay.fillRect(pad, pad, mDisplay.width() - pad, mDisplay.height() - pad, SSD1306_BLACK);
     mDisplay.drawRect(rectStart, rectStart, mDisplay.width() - rectStart, mDisplay.height() - rectStart, SSD1306_WHITE);
-    mDisplay.setTextSize(1);
-    mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
     mDisplay.mTextLeftMargin = textStart;
     mDisplay.ClipToMargin(textStart);
     mDisplay.setCursor(textStart, textStart);

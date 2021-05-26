@@ -102,13 +102,14 @@ struct MetronomeSettingsApp : public SettingsMenuApp
 
     bool highlight = beatFrac < 0.1;
 
-    mDisplay.mDisplay.setTextSize(1);
-    mDisplay.mDisplay.setTextColor(WHITE);
+    mDisplay.ClearState();
+    //mDisplay.mDisplay.setTextSize(1);
+    //mDisplay.mDisplay.setTextColor(WHITE);
     if (highlight) {
       mDisplay.mDisplay.fillScreen(WHITE);
     }
     mDisplay.mDisplay.setTextColor(highlight ? BLACK : WHITE);
-    mDisplay.mDisplay.setCursor(0,0);
+    //mDisplay.mDisplay.setCursor(0,0);
 
     mDisplay.mDisplay.println(String("METRONOME SETTINGS"));
     mDisplay.mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");

@@ -334,10 +334,7 @@ namespace clarinoid
 
         virtual void RenderFrontPage()
         {
-            mDisplay.mDisplay.setTextSize(1);
-            mDisplay.mDisplay.setTextColor(WHITE);
-            mDisplay.mDisplay.setCursor(0, 0);
-
+            mDisplay.ClearState();
             mDisplay.mDisplay.println(String("SYNTH SETTINGS"));
             mDisplay.mDisplay.println(String(""));
             mDisplay.mDisplay.println(String(""));

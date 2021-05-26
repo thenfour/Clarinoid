@@ -336,9 +336,7 @@ struct SettingsMenuApp :
   {
     SettingsMenuState& state = gSettingsMenuNavStack[gSettingsMenuNavDepth];
 
-    mDisplay.mDisplay.setTextSize(1);
-    mDisplay.mDisplay.setCursor(0,0);
-    mDisplay.mDisplay.setTextWrap(false);
+    mDisplay.ClearState();
 
     size_t lineHeight = mDisplay.mDisplay.GetLineHeight();
     size_t maxItemsToRender = (mDisplay.mDisplay.height() + (lineHeight / 2)) / lineHeight;
