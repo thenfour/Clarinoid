@@ -275,7 +275,7 @@ https://www.pjrc.com/teensy/gui/index.html
       CCSynthGraph::verbWetAmpLeft.gain(mAppSettings->mSynthSettings.mReverbGain);
       CCSynthGraph::ampLeft.gain(mAppSettings->mSynthSettings.mMasterGain);
 
-      if (!mAppSettings->mMetronomeOn)
+      if (!mAppSettings->mMetronomeSoundOn)
       {
         CCSynthGraph::metronomeOsc.amplitude(0);
       }

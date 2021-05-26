@@ -48,6 +48,7 @@ namespace clarinoid
             LoopGo,
             LoopStop,
             BaseNoteHoldToggle,
+            MetronomeLEDToggle,
             COUNT,
         };
 

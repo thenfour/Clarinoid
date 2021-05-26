@@ -115,6 +115,7 @@ namespace clarinoid
     VirtualSwitch mLoopGoButton;
 
     VirtualSwitch mBaseNoteHoldToggle;
+    VirtualSwitch mMetronomeLEDToggle;
 
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
@@ -159,6 +160,7 @@ namespace clarinoid
       RegisterFunction(ControlMapping::Function::LoopGo, &mLoopGoButton);
 
       RegisterFunction(ControlMapping::Function::BaseNoteHoldToggle, &mBaseNoteHoldToggle);
+      RegisterFunction(ControlMapping::Function::MetronomeLEDToggle, &mMetronomeLEDToggle);
 
       mpSrc->InputSource_Init(this);
     }

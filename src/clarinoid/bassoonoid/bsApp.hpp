@@ -31,6 +31,7 @@
 #include <clarinoid/bassoonoid/bsControlMapper.hpp>
 #include <clarinoid/bassoonoid/DebugDisplayApp.hpp>
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
+#include <clarinoid/menu/MenuAppMetronome.hpp>
 #include "MusicalStateTask.hpp"
 
 
@@ -57,6 +58,7 @@ namespace clarinoid
         SystemSettingsApp mSystemSettingsApp;
         SynthSettingsApp mSynthSettingsApp;
         AudioMonitorApp mAudioMonitorApp;
+        MetronomeSettingsApp mMetronomeSettingsApp;
 
         BassoonoidApp() : mLed1(this),
                           mLed2(this),
@@ -77,7 +79,8 @@ namespace clarinoid
                               },
                               this),
                           mSynthSettingsApp(mDisplay),
-                          mAudioMonitorApp(mDisplay)
+                          mAudioMonitorApp(mDisplay),
+                          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay)
         {
         }
 
@@ -105,6 +108,7 @@ namespace clarinoid
                     &mDebugDisplayApp,
                     &mSystemSettingsApp,
                     &mSynthSettingsApp,
+                    &mMetronomeSettingsApp,
                 };
 
             mInputDelegator.Init(&mAppSettings, &mControlMapper);
@@ -146,6 +150,7 @@ namespace clarinoid
             mAppSettings.mControlMappings[23] = ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
             mAppSettings.mControlMappings[24] = ControlMapping::MomentaryMapping(PhysicalControl::RHTh3, ControlMapping::Function::BaseNoteHoldToggle);
+            mAppSettings.mControlMappings[25] = ControlMapping::MomentaryMapping(PhysicalControl::RHTh2, ControlMapping::Function::MetronomeLEDToggle);
 
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();

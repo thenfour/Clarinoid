@@ -442,6 +442,10 @@ namespace clarinoid
 
     // osc pitch and global transpose
     static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int> { -48, 48 };
+
+    static const NumericEditRangeSpec<float> gBPMRange = NumericEditRangeSpec<float> { 20, 300 };
+    static const NumericEditRangeSpec<int> gMetronomeNoteRange = NumericEditRangeSpec<int> { 20, 120 };
+    static const NumericEditRangeSpec<int> gMetronomeDecayRange = NumericEditRangeSpec<int> { 1, 200 };
   }
 
 } // namespace clarinoid

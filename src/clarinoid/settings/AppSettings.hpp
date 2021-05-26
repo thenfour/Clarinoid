@@ -35,10 +35,14 @@ struct AppSettings
   bool mDisplayDim = true;
   bool mOrangeLEDs = false;
 
-  bool mMetronomeOn = false;
+  bool mMetronomeSoundOn = false;
   float mMetronomeGain = 0.8f;
   int mMetronomeNote = 80;
   int mMetronomeDecayMS= 15;
+
+  bool mMetronomeLED = false;
+  int mMetronomeBrightness = 128;
+  float mMetronomeLEDDecay = 0.25f;
 
   float mBPM = 104.0f;
 

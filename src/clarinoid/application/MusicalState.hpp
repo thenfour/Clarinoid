@@ -31,6 +31,8 @@ namespace clarinoid
     SwitchControlReader mLoopStopReader;
     SwitchControlReader mHoldBasePitchReader;
 
+    SwitchControlReader mMetronomeLEDToggleReader;
+
     int nUpdates = 0;
     int noteOns = 0;
 
@@ -224,6 +226,13 @@ namespace clarinoid
           mRelativeNoteWhenPitchHeld = false;
           mCurrentBaseNote = mDefaultBaseNote;
         }
+      }
+
+      // this really doesn't belong here but while we're on the topic of reading inputs...
+      mMetronomeLEDToggleReader.Update(&mInput->mMetronomeLEDToggle);
+      if (mMetronomeLEDToggleReader.IsNewlyPressed()) {
+        mAppSettings->mMetronomeLED = !mAppSettings->mMetronomeLED;
+        mInputSrc->InputSource_ShowToast(String("Metronome LED: ") + ((mAppSettings->mMetronomeLED) ? "on" : "off"));
       }
 
       // we have calculated mLiveVoice, converting physical to live musical state.

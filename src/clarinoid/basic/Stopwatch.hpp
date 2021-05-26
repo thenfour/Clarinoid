@@ -9,7 +9,7 @@ namespace clarinoid
     int64_t mMicros = 0; // signed, because it simplifies math, less error-prone, and is still an enormous amount of time.
   public:
     TimeSpan() {}
-    explicit TimeSpan(int64_t m) : mMicros(m) {}
+    explicit TimeSpan(int64_t duration_micros) : mMicros(duration_micros) {}
     TimeSpan(const TimeSpan& rhs) = default;
     TimeSpan(TimeSpan&& rhs) = default;
 
@@ -43,10 +43,10 @@ namespace clarinoid
       return TimeSpan{m * 1000};
     }
     static TimeSpan FromBPM(float bpm) {
-      return TimeSpan { int64_t(60000.0f / bpm) };
+      return FromMillis (int64_t(60000.0f / bpm) );
     }
     static TimeSpan FromFPS(float bpm) {
-      return TimeSpan { int64_t(1000.0f / bpm) };
+      return FromMillis ( int64_t(1000.0f / bpm) );
     }
     static TimeSpan Zero() {
       return TimeSpan{};

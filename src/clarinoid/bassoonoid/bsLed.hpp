@@ -76,14 +76,14 @@ namespace clarinoid
                 uint32_t color1 = 0; // default off=black.
                 uint32_t color2 = 0; // default off=black.
                 uint32_t onColor = GRB(0, 4, 0);
-                if (i == 9)
+                if (i == (ledsPerBank - 1))
                     onColor = GRB(4, 0, 0);
-                else if (i == 8)
+                else if (i == (ledsPerBank - 2))
                     onColor = GRB(4, 4, 0);
-                else if (i == 7)
+                else if (i == (ledsPerBank - 3))
                     onColor = GRB(4, 4, 0);
-                else if (i == 6)
-                    onColor = GRB(4, 4, 0);
+                // else if (i == (ledsPerBank - 4))
+                //     onColor = GRB(4, 4, 0);
 
                 if (i <= peakLEDIndex)
                 {
@@ -103,7 +103,7 @@ namespace clarinoid
     struct Leds1 : Leds<20, 1>,
                    ITask
     {
-        PeakMeter<10, 1500, 300> mPeakMeter;
+        PeakMeter<9, 1500, 300> mPeakMeter;
         ILEDDataProvider *mpProvider;
         Leds1(ILEDDataProvider *pProvider) : Leds(gLED1DisplayMemory),
                                              mpProvider(pProvider)
@@ -114,11 +114,19 @@ namespace clarinoid
         {
             mPeakMeter.Update(
                 [&](int n, uint32_t c) { this->SetPixel(n, c); },
-                [&](int n, uint32_t c) { this->SetPixel(19 - n, c); });
+                [&](int n, uint32_t c) { this->SetPixel(18 - n, c); });
 
             if (mpProvider->ILEDDataProvider_GetMusicalState()->mHoldingBaseNote) {
-                this->SetPixel(9, 128,128,0);
-                this->SetPixel(10, 128,128,0);
+                this->SetPixel(10, 32,32,0);
+            }
+
+            this->SetPixel(9, 0, 0, 0);
+            if (mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeLED) {
+                float beatSlice = mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeLEDDecay;
+                float beatFrac = mpProvider->ILEDDataProvider_GetMetronomeBeat()->GetBeatFrac();
+                if (beatFrac < beatSlice) {
+                    this->SetPixel(9, mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeBrightness * (1.0f - (beatFrac / beatSlice)), 0, 0);
+                }
             }
 
             Show();
