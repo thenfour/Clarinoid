@@ -41,8 +41,8 @@ struct AppSettings
   int mMetronomeDecayMS= 15;
 
   bool mMetronomeLED = false;
-  int mMetronomeBrightness = 128;
-  float mMetronomeLEDDecay = 0.25f;
+  int mMetronomeBrightness = 255;
+  float mMetronomeLEDDecay = 0.1f;
 
   float mBPM = 104.0f;
 

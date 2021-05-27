@@ -102,10 +102,7 @@ public:
   }
 
   void SelectApp(int n) {
-    n %= mApps.mSize;
-    while (n < 0) {
-      n += mApps.mSize;
-    }
+    n = RotateIntoRange(n, mApps.mSize);
 
     if (n == mCurrentAppIndex)
       return;

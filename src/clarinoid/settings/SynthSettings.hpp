@@ -124,21 +124,23 @@ namespace clarinoid
 
     SynthSettings()
     {
-      InitBassoonoidPreset(mPresets[0], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f, 4000);
-      InitBassoonoidPreset(mPresets[1], "Moog-ks7-q15", ClarinoidFilterType::LP_Moog4, 0.7f, 0.15f, 4000);
-      InitBassoonoidPreset(mPresets[2], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f, 4000);
-      InitBassoonoidPreset(mPresets[3], "Moog-ks9-q15", ClarinoidFilterType::LP_Moog4, 0.9f, 0.15f, 4000);
-      InitBassoonoidPreset(mPresets[4], "Diode-ks7-q0", ClarinoidFilterType::LP_Diode, 0.7f, 0.0f, 4000);
-      InitBassoonoidPreset(mPresets[5], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 10000);
-      InitBassoonoidPreset(mPresets[6], "Diode-ks9-q0", ClarinoidFilterType::LP_Diode, 0.9f, 0.0f, 10000);
-      InitBassoonoidPreset(mPresets[7], "Diode-ks9-q15", ClarinoidFilterType::LP_Diode, 0.9f, 0.15f, 10000);
+      size_t i = 0;
+      InitBassoonoidPreset(mPresets[i++], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 10000);
+      InitBassoonoidPreset(mPresets[i++], "Diode-ks7-q0", ClarinoidFilterType::LP_Diode, 0.7f, 0.0f, 10000);
+      InitBassoonoidPreset(mPresets[i++], "Diode-ks9-q15", ClarinoidFilterType::LP_Diode, 0.9f, 0.15f, 10000);
+      InitBassoonoidPreset(mPresets[i++], "Diode-ks9-q0", ClarinoidFilterType::LP_Diode, 0.9f, 0.0f, 10000);
 
-      InitBassoonoidPreset(mPresets[8], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f, 750);
-      InitBassoonoidPreset(mPresets[9], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);
-      InitBassoonoidPreset(mPresets[10], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f, 750);
-      InitBassoonoidPreset(mPresets[11], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f, 750);
+      InitBassoonoidPreset(mPresets[i++], "Moog-ks7-q15", ClarinoidFilterType::LP_Moog4, 0.7f, 0.15f, 4000);
+      InitBassoonoidPreset(mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f, 4000);
+      InitBassoonoidPreset(mPresets[i++], "Moog-ks9-q15", ClarinoidFilterType::LP_Moog4, 0.9f, 0.15f, 4000);
+      InitBassoonoidPreset(mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f, 4000);
 
-      mPresets[12].mName = "Sync";
+      InitBassoonoidPreset(mPresets[i++], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);
+      InitBassoonoidPreset(mPresets[i++], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f, 750);
+      InitBassoonoidPreset(mPresets[i++], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f, 750);
+      InitBassoonoidPreset(mPresets[i++], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f, 750);
+
+      mPresets[i++].mName = "Sync";
     }
   };
 
