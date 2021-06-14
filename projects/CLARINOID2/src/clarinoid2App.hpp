@@ -110,7 +110,7 @@ namespace clarinoid
 
             size_t im = 0;
 
-            mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
+            mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.10f, 0.5f);
             mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.50f;
             mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveS = 0;
             CCASSERT(im == breathMappingIndex);

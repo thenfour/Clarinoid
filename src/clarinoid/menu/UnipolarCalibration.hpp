@@ -20,7 +20,6 @@ namespace clarinoid
             RangeMax,
             CurveP,
             CurveS,
-            NoteOnThreshold,
             COUNT
         };
 
@@ -35,8 +34,6 @@ namespace clarinoid
         ISettingItemEditorActions *mpApi;
 
         Property<UnipolarMapping> mCalibBinding;
-        Property<float> mNoteOnThreshBinding;
-        bool mSupportsNoteOnThresh = false;
 
         cc::function<float(void *)>::ptr_t mRawValueGetter;
         void *mCapture = nullptr;
@@ -46,15 +43,10 @@ namespace clarinoid
 
         PulseWave mBlinker;
 
-        UnipolarCalibrationEditor(const Property<UnipolarMapping> &calibBinding, const Property<float> *optionalNoteOnThreshBinding, cc::function<float(void *)>::ptr_t rawValueGetter, void *capture) : mCalibBinding(calibBinding),
-                                                                                                                                                                                                         mSupportsNoteOnThresh(optionalNoteOnThreshBinding != nullptr),
-                                                                                                                                                                                                         mRawValueGetter(rawValueGetter),
-                                                                                                                                                                                                         mCapture(capture)
+        UnipolarCalibrationEditor(const Property<UnipolarMapping> &calibBinding, cc::function<float(void *)>::ptr_t rawValueGetter, void *capture) : mCalibBinding(calibBinding),
+            mRawValueGetter(rawValueGetter),
+            mCapture(capture)
         {
-            if (mSupportsNoteOnThresh)
-            {
-                mNoteOnThreshBinding = *optionalNoteOnThreshBinding;
-            }
             mBlinker.SetFrequencyAndDutyCycle01(3, .3);
         }
 
@@ -101,11 +93,6 @@ namespace clarinoid
                 }
 
                 mSelectedParam = (SelectedParam)AddConstrained((int)mSelectedParam, encIntDelta, 0, ((int)SelectedParam::COUNT) - 1);
-                //mSelectedParam = (SelectedParam)(((int)mSelectedParam + encIntDelta) % (int)SelectedParam::COUNT);
-                if (!mSupportsNoteOnThresh && mSelectedParam == SelectedParam::NoteOnThreshold)
-                {
-                    mSelectedParam = (SelectedParam)0;
-                }
                 return;
             }
 
@@ -137,13 +124,6 @@ namespace clarinoid
                 val.mCurveS = ModifyFloatSlopeVal(val.mCurveS, encIntDelta);
                 mCalibBinding.SetValue(val);
                 break;
-            case SelectedParam::NoteOnThreshold:
-            {
-                float th = mNoteOnThreshBinding.GetValue();
-                th = ModifyFloat01Val(th, encIntDelta);
-                mNoteOnThreshBinding.SetValue(th);
-                break;
-            }
             case SelectedParam::COUNT: // -Wswitch
                 CCASSERT(false);
                 break;
@@ -188,7 +168,7 @@ namespace clarinoid
             mRawValuePlotter.Render(*d, rcLeft);
             mAdjValuePlotter.Render(*d, rcRight);
 
-            // draw lines. (min, max, thresh)
+            // draw lines. (min, max)
             if (mSelectedParam != SelectedParam::RangeMin || guidelineOn)
             {
                 int y = (int)((1.0f - v.mSrcMin) * rcLeft.height);
@@ -198,15 +178,6 @@ namespace clarinoid
             {
                 int y = (int)((1.0f - v.mSrcMax) * rcLeft.height);
                 d->mDisplay.DrawDottedHLine(rcLeft.x, rcLeft.width, y + rcLeft.y, SSD1306_WHITE);
-            }
-            if (mSupportsNoteOnThresh)
-            {
-                if (mSelectedParam != SelectedParam::NoteOnThreshold || guidelineOn)
-                {
-                    float thr = mNoteOnThreshBinding.GetValue();
-                    int y = (int)(thr * rcRight.height);
-                    d->mDisplay.DrawDottedHLine(rcRight.x, rcRight.width, y + rcRight.height, SSD1306_WHITE);
-                }
             }
         }
 
@@ -287,9 +258,6 @@ namespace clarinoid
             case SelectedParam::RangeMax:
                 RenderRange(String("Range max: ") + mCalibBinding.GetValue().mSrcMax);
                 break;
-            case SelectedParam::NoteOnThreshold:
-                RenderRange(String("Note thresh: ") + mNoteOnThreshBinding.GetValue());
-                break;
             case SelectedParam::CurveP:
                 RenderCurve(String("Curve Pos: ") + mCalibBinding.GetValue().mCurveP);
                 break;
@@ -310,10 +278,9 @@ namespace clarinoid
         Property<UnipolarMapping> mCalibBinding;
 
         BreathCalibrationSettingItem(const char *name, const Property<UnipolarMapping> &calibBinding,
-                                     const Property<float> &noteOnThreshBinding,
                                      cc::function<float(void *)>::ptr_t rawValueGetter,
                                      void *capture) : mName(name),
-                                                      mEditor(calibBinding, &noteOnThreshBinding, rawValueGetter, capture),
+                                                      mEditor(calibBinding, rawValueGetter, capture),
                                                       mCalibBinding(calibBinding)
         {
         }

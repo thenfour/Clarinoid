@@ -69,7 +69,7 @@ namespace clarinoid
       float _incomingBreath = mInput->mBreath.CurrentValue01(); // this is actually the transformed value.
       mCurrentBreath01.Update(_incomingBreath);
       mNewState.mBreath01 = mCurrentBreath01.GetValue();
-      bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > 0.005; //mAppSettings->mBreathCalibration.mNoteOnThreshold;
+      bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > 0;
 
       mCurrentPitchN11.Update(mInput->mPitchBend.CurrentValueN11());
       mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
@@ -169,10 +169,10 @@ namespace clarinoid
       {
         relativeNote += 12;
       }
-      // else if (mInput->mKeyOct3.CurrentValue())
-      // {
-      //   relativeNote += 12 * 2;
-      // }
+      else if (mInput->mKeyOct3.CurrentValue())
+      {
+        // no change. act like nothing is pressed.
+      }
       else if (mInput->mKeyOct2.CurrentValue())
       {
         relativeNote -= 12;

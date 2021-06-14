@@ -44,11 +44,6 @@ struct SystemSettingsApp :
         [](void* cap, const UnipolarMapping& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mNPolarMapping.Unipolar() = x; },
         this
       },
-      Property<float> {
-        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; return pThis->mAppSettings->mBreathNoteOnThreshold; }, // getter
-        [](void* cap, const float& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mBreathNoteOnThreshold = x; },
-        this
-      },
       [](void* cap) {
         auto pThis = (SystemSettingsApp*)cap;
         return pThis->mRawBreathGetter(pThis->mpCapture);

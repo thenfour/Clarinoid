@@ -103,7 +103,7 @@ namespace clarinoid
                    ITask
     {
         size_t serialCount = 0;
-        //PeakMeter<9, 1500, 300> mPeakMeter;
+        PeakMeter<8 /* # leds */, 1500 /*holdtime*/, 300 /*fallofftime*/> mPeakMeter;
         ILEDDataProvider *mpProvider;
         Clarinoid2LedsTask(ILEDDataProvider *pProvider) : Leds(gLED1DisplayMemory),
                                              mpProvider(pProvider)
@@ -127,31 +127,31 @@ namespace clarinoid
             for (size_t i = 0; i < 28; ++ i) {
                 if (IsInnerLED(i)) {
                     this->SetPixel(i, 0,0,32);
-                } else {
+                } else if (i > 1 && i < 12) {
                     this->SetPixel(i,
-                        (((serialCount / 3) & (1 << i)) > 0) ? 4 : 0,
+                        ((serialCount & (1 << i)) > 0) ? 6 : 0,
                         0,
-                        ((serialCount & (1 << i)) > 0) ? 4 : 0);
+                        0);//((serialCount & (1 << i)) > 0) ? 4 : 0);
                 }
             }
 
+            mPeakMeter.Update(
+                [&](int n, uint32_t c) { this->SetPixel(n + 15, c); },
+                [&](int n, uint32_t c) { });
 
-            // mPeakMeter.Update(
-            //     [&](int n, uint32_t c) { this->SetPixel(n, c); },
-            //     [&](int n, uint32_t c) { this->SetPixel(18 - n, c); });
+            if (mpProvider->ILEDDataProvider_GetMusicalState()->mHoldingBaseNote) {
+                this->SetPixel(25, 0,32,0);
+            }
 
-            // if (mpProvider->ILEDDataProvider_GetMusicalState()->mHoldingBaseNote) {
-            //     this->SetPixel(10, 32,32,0);
-            // }
-
-            // this->SetPixel(9, 0, 0, 0);
-            // if (mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeLED) {
-            //     float beatSlice = mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeLEDDecay;
-            //     float beatFrac = mpProvider->ILEDDataProvider_GetMetronomeBeat()->GetBeatFrac();
-            //     if (beatFrac < beatSlice) {
-            //         this->SetPixel(9, mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeBrightness * (1.0f - (beatFrac / beatSlice)), 0, 0);
-            //     }
-            // }
+            static const int metronomeLEDIndex = 24;
+            this->SetPixel(metronomeLEDIndex, 0, 0, 0);
+            if (mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeLED) {
+                float beatSlice = mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeLEDDecay;
+                float beatFrac = mpProvider->ILEDDataProvider_GetMetronomeBeat()->GetBeatFrac();
+                if (beatFrac < beatSlice) {
+                    this->SetPixel(metronomeLEDIndex, mpProvider->ILEDDataProvider_GetMusicalState()->mAppSettings->mMetronomeBrightness * (1.0f - (beatFrac / beatSlice)), 0, 0);
+                }
+            }
 
             Show();
         }
