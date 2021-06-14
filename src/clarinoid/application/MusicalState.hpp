@@ -24,8 +24,8 @@ namespace clarinoid
     CCEWIMIDIOut mMidiOut;
 
     // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
-    SimpleMovingAverage<5> mCurrentBreath01;
-    SimpleMovingAverage<5> mCurrentPitchN11;
+    SimpleMovingAverage<8> mCurrentBreath01;
+    SimpleMovingAverage<8> mCurrentPitchN11;
 
     SwitchControlReader mLoopGoReader;
     SwitchControlReader mLoopStopReader;

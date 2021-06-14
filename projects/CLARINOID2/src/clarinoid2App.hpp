@@ -59,7 +59,7 @@ namespace clarinoid
         MetronomeSettingsApp mMetronomeSettingsApp;
 
         Clarinoid2App() : mLed(this),
-                          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/ /*, 44 * 1000000UL*/),
+                          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
                           mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
@@ -149,6 +149,8 @@ namespace clarinoid
             mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
             mMusicalStateTask.Init();
 
+            Wire1.setClock(400000); // use high speed mode. default speed = 100k
+
             FunctionTask mDisplayTask1{this, [](void *cap) {
                                            Clarinoid2App *pThis = (Clarinoid2App *)cap;
                                            pThis->mDisplay.UpdateAndRenderTask();
@@ -171,15 +173,15 @@ namespace clarinoid
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
                 TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1), &mDisplayTask1, "Display1"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mMusicalStateTask, "MusS1"},
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5001), &mLed, "mLed"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2500), &mMusicalStateTask, "MusS1"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2501), &mLed, "mLed"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS2"},
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10001), &mDisplayTask2, "Display2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mMusicalStateTask, "MusS2"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5001), &mDisplayTask2, "Display2"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(15000), &mMusicalStateTask, "MusS3"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7500), &mMusicalStateTask, "MusS3"},
 
-                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(18000), &nopTask, "Nop"},
+                TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &nopTask, "Nop"},
             };
 
             mPerformanceApp.Init(&tp);

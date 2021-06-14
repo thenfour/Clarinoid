@@ -223,21 +223,41 @@ namespace clarinoid
                                                   this},
                                  AlwaysEnabled};
 
-        // LabelSettingItem mEnc = {Property<String>{[](void *cap) {
-        //                                                 DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-        //                                                 String ret = String("Encoder raw:") + pThis->mControls.mEncoder.RawValue();
-        //                                                 return ret;
-        //                                             },
-        //                                             this},
-        //                            AlwaysEnabled};
+        static String IndexToChar(int i) {
+            char r[2] = {0};
+            if (i < 10) { // 0-9
+                r[0] = '0' + i;
+            } else if (i < 37) { // 10-36
+                r[0] = 'A' + (i-10);
+            } else {
+                r[0] = '!';
+            }
+            return String(r);
+        }
 
-        // LabelSettingItem mSynthPoly = {Property<String>{[](void *cap) {
-        //                                                     DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-        //                                                     String ret = String("Synth poly:") + (pThis->mMusicalStateTask.mSynth.mCurrentPolyphony);
-        //                                                     return ret;
-        //                                                 },
-        //                                                 this},
-        //                                AlwaysEnabled};
+        LabelSettingItem mLHMPR121 = {Property<String>{[](void *cap) {
+                                                      DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+                                                      String ret = "L:";
+                                                      for (size_t i = 0; i < 12; ++i)
+                                                      {
+                                                          ret += pThis->mControls.mLHMPR.mButtons[i].CurrentValue() ? IndexToChar(i) : String("-");
+                                                      }
+                                                      return ret;
+                                                  },
+                                                  this},
+                                 AlwaysEnabled};
+
+        LabelSettingItem mRHMPR121 = {Property<String>{[](void *cap) {
+                                                      DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+                                                      String ret = "R:";
+                                                      for (size_t i = 0; i < 12; ++i)
+                                                      {
+                                                          ret += pThis->mControls.mRHMPR.mButtons[i].CurrentValue() ? IndexToChar(i) : String("-");
+                                                      }
+                                                      return ret;
+                                                  },
+                                                  this},
+                                 AlwaysEnabled};
 
         LabelSettingItem mAudioProcessorUsage = {Property<String>{[](void *cap) {
                                                                       //DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
@@ -271,15 +291,15 @@ namespace clarinoid
                                                                   this},
                                                  AlwaysEnabled};
 
-        ISettingItem *mArray[7] =
+        ISettingItem *mArray[9] =
             {
                 // &mMidiNote,
                 // &mFilterFreq,
                 &mBreath,
+                &mLHMPR121,
+                &mRHMPR121,
                 &mMCPA,
                 &mMCPB,
-                // &mEnc,
-                // &mSynthPoly,
                 &mAudioProcessorUsage,
                 &mAudioProcessorUsageMax,
                 &mAudioMemoryUsage,
