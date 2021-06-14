@@ -101,6 +101,10 @@ namespace clarinoid
     VirtualSwitch mKeyOct2;
     VirtualSwitch mKeyOct3;
 
+    VirtualSwitch mKeyOct4;
+    VirtualSwitch mKeyOct5;
+    VirtualSwitch mKeyOct6;
+
     VirtualAxis mBreath;
     VirtualAxis mPitchBend;
 
@@ -149,6 +153,9 @@ namespace clarinoid
       RegisterFunction(ControlMapping::Function::Oct1, &mKeyOct1);
       RegisterFunction(ControlMapping::Function::Oct2, &mKeyOct2);
       RegisterFunction(ControlMapping::Function::Oct3, &mKeyOct3);
+      RegisterFunction(ControlMapping::Function::Oct4, &mKeyOct4);
+      RegisterFunction(ControlMapping::Function::Oct5, &mKeyOct5);
+      RegisterFunction(ControlMapping::Function::Oct6, &mKeyOct6);
 
       RegisterFunction(ControlMapping::Function::Breath, &mBreath);
       RegisterFunction(ControlMapping::Function::PitchBend, &mPitchBend);
@@ -221,7 +228,8 @@ namespace clarinoid
       size_t functionCount = (size_t)ControlMapping::Function::COUNT;
       for (size_t i = 0; i < functionCount; ++i)
       {
-        CCASSERT(mHandlers[i] != nullptr);
+        //CCASSERT(mHandlers[i] != nullptr);
+        if (!mHandlers[i]) continue;
         mHandlers[i]->BeginUpdate();
       }
 
@@ -236,13 +244,16 @@ namespace clarinoid
           continue;
 
         FunctionHandler *dest = mHandlers[(size_t)mapping.mFunction]; // get the function this is mapped to
-        auto src = mpSrc->InputSource_GetControl(mapping.mSource);    // and the source control providing the value to map.
-        dest->Update(mapping, src);
+        if (!!dest) {
+          auto src = mpSrc->InputSource_GetControl(mapping.mSource);    // and the source control providing the value to map.
+          dest->Update(mapping, src);
+        }
       }
 
       // tell all destinations we completed.
       for (size_t i = 0; i < functionCount; ++i)
       {
+        if (!mHandlers[i]) continue;
         mHandlers[i]->EndUpdate();
       }
     }

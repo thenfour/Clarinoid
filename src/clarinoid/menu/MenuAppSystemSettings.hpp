@@ -57,6 +57,8 @@ struct SystemSettingsApp :
       this
     };
 
+// until we get REAL mappings, this is special cases per device.
+#ifdef BASSOONOID1
     BreathCalibrationSettingItem mPitchBend = {
       "Pitch bend",
       Property<UnipolarMapping> {
@@ -75,13 +77,23 @@ struct SystemSettingsApp :
       },
       this
     };
+#endif
 
+#ifdef BASSOONOID1
   ISettingItem* mArray[3] =
   {
     &mDimDisplay,
     &mBreath,
     &mPitchBend,
   };
+#else
+  ISettingItem* mArray[2] =
+  {
+    &mDimDisplay,
+    &mBreath,
+  };
+#endif
+
   SettingsList mRootList = { mArray };
 
 public:

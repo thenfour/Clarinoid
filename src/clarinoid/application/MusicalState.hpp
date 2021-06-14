@@ -24,8 +24,8 @@ namespace clarinoid
     CCEWIMIDIOut mMidiOut;
 
     // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
-    SimpleMovingAverage<15> mCurrentBreath01;
-    SimpleMovingAverage<60> mCurrentPitchN11;
+    SimpleMovingAverage<5> mCurrentBreath01;
+    SimpleMovingAverage<5> mCurrentPitchN11;
 
     SwitchControlReader mLoopGoReader;
     SwitchControlReader mLoopStopReader;
@@ -155,22 +155,31 @@ namespace clarinoid
       {
         relativeNote += 36; // holding only 3
       }
-#else
-      if (ps.key_octave4.IsCurrentlyPressed())
+#endif
+#ifdef SIX_OCTAVE_SEQ_BUTTONS
+      if (mInput->mKeyOct6.CurrentValue())
       {
-        relativeNote += 12 * 4;
+        relativeNote += 36;
       }
-      else if (ps.key_octave3.IsCurrentlyPressed())
+      else if (mInput->mKeyOct5.CurrentValue())
       {
-        relativeNote += 12 * 3;
+        relativeNote += 24;
       }
-      else if (ps.key_octave2.IsCurrentlyPressed())
+      else if (mInput->mKeyOct4.CurrentValue())
       {
-        relativeNote += 12 * 2;
+        relativeNote += 12;
       }
-      else if (ps.key_octave1.IsCurrentlyPressed())
+      // else if (mInput->mKeyOct3.CurrentValue())
+      // {
+      //   relativeNote += 12 * 2;
+      // }
+      else if (mInput->mKeyOct2.CurrentValue())
       {
-        relativeNote += 12 * 1;
+        relativeNote -= 12;
+      }
+      else if (mInput->mKeyOct1.CurrentValue())
+      {
+        relativeNote -= 24;
       }
 #endif
 
