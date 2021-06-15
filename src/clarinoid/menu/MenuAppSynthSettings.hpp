@@ -92,7 +92,7 @@ namespace clarinoid
                                                 this},
                                             AlwaysEnabled};
 
-        FloatSettingItem mBreathFiltMax = {" - filt max", NumericEditRangeSpec<float> { 0.0f, 15000.0f },
+        FloatSettingItem mBreathFiltMax = {" - filt max", NumericEditRangeSpec<float> { 0.0f, 25000.0f },
                                             Property<float>{
                                                 [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mFilterMaxFreq; },
                                                 [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mFilterMaxFreq = v; },

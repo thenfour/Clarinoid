@@ -88,7 +88,7 @@ namespace clarinoid
 
     ClarinoidFilterType mFilterType = ClarinoidFilterType::LP_Moog4;
     float mFilterQ = 0.02f;
-    float mFilterMaxFreq = 25000.0f;
+    float mFilterMaxFreq = 16000.0f;
     float mFilterMinFreq = 0.0f;
     float mFilterSaturation = 0.2f;
     float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect applied (low notes get higher freq cutoff)

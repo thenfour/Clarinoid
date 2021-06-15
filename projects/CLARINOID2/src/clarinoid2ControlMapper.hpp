@@ -57,7 +57,7 @@ struct Clarinoid2ControlMapper :
         mControlInfo[(size_t)PhysicalControl::Oct6] = ControlInfo { "LHO6", &mLHMPR.mButtons[5] };
 
         mControlInfo[(size_t)PhysicalControl::LHKey1] = ControlInfo { "LHKey1", &mLHMPR.mButtons[7] };
-        mControlInfo[(size_t)PhysicalControl::LHKey2] = ControlInfo { "LHKey2", &mLHMPR.mButtons[10] };
+        mControlInfo[(size_t)PhysicalControl::LHKey2] = ControlInfo { "LHKey2", &mLHMPR.mButtons[8] };
         mControlInfo[(size_t)PhysicalControl::LHKey3] = ControlInfo { "LHKey3", &mLHMPR.mButtons[6] };
         mControlInfo[(size_t)PhysicalControl::LHKey4] = ControlInfo { "LHKey4", &mLHMPR.mButtons[9] };
 
@@ -66,10 +66,10 @@ struct Clarinoid2ControlMapper :
         mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo { "RHx3", &mMCP.mButtons[12] };
         mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo { "RHx4", &mMCP.mButtons[11] };
 
-        mControlInfo[(size_t)PhysicalControl::RHKey1] = ControlInfo { "RHKey1", &mRHMPR.mButtons[11] };
-        mControlInfo[(size_t)PhysicalControl::RHKey2] = ControlInfo { "RHKey2", &mRHMPR.mButtons[10] };
-        mControlInfo[(size_t)PhysicalControl::RHKey3] = ControlInfo { "RHKey3", &mRHMPR.mButtons[9] };
-        mControlInfo[(size_t)PhysicalControl::RHKey4] = ControlInfo { "RHKey4", &mRHMPR.mButtons[8] };
+        mControlInfo[(size_t)PhysicalControl::RHKey1] = ControlInfo { "RHKey1", &mRHMPR.mButtons[3] };
+        mControlInfo[(size_t)PhysicalControl::RHKey2] = ControlInfo { "RHKey2", &mRHMPR.mButtons[2] };
+        mControlInfo[(size_t)PhysicalControl::RHKey3] = ControlInfo { "RHKey3", &mRHMPR.mButtons[1] };
+        mControlInfo[(size_t)PhysicalControl::RHKey4] = ControlInfo { "RHKey4", &mRHMPR.mButtons[0] };
     }
 
     virtual size_t InputSource_GetControlCount() override { return SizeofStaticArray(mControlInfo); }
