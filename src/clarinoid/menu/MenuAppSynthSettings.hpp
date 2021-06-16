@@ -146,7 +146,7 @@ namespace clarinoid
                                               [](void *cap, const int &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mOsc1PitchSemis = v; },
                                               this},
                                           AlwaysEnabled};
-        FloatSettingItem mOsc1PitchFine = {" - PitchFine", StandardRangeSpecs::gFloat_0_1,
+        FloatSettingItem mOsc1PitchFine = {" - PitchFine", StandardRangeSpecs::gFloat_N1_1,
                                            Property<float>{
                                                [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mOsc1PitchFine; },
                                                [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mOsc1PitchFine = v; },
@@ -177,7 +177,7 @@ namespace clarinoid
                                               [](void *cap, const int &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mOsc2PitchSemis = v; },
                                               this},
                                           AlwaysEnabled};
-        FloatSettingItem mOsc2PitchFine = {" - PitchFine", StandardRangeSpecs::gFloat_0_1,
+        FloatSettingItem mOsc2PitchFine = {" - PitchFine", StandardRangeSpecs::gFloat_N1_1,
                                            Property<float>{
                                                [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mOsc2PitchFine; },
                                                [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mOsc2PitchFine = v; },
@@ -208,7 +208,7 @@ namespace clarinoid
                                               [](void *cap, const int &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mOsc3PitchSemis = v; },
                                               this},
                                           AlwaysEnabled};
-        FloatSettingItem mOsc3PitchFine = {" - PitchFine", StandardRangeSpecs::gFloat_0_1,
+        FloatSettingItem mOsc3PitchFine = {" - PitchFine", StandardRangeSpecs::gFloat_N1_1,
                                            Property<float>{
                                                [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mOsc3PitchFine; },
                                                [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mOsc3PitchFine = v; },

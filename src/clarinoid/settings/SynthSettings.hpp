@@ -147,7 +147,7 @@ namespace clarinoid
 
 
 
-    void InitClarinoid2Preset(SynthPreset& p, const char* name, ClarinoidFilterType filt, float filterKeyScaling, float q, float filterMaxFreq)
+    static void InitClarinoid2Preset(SynthPreset& p, const char* name, ClarinoidFilterType filt, float filterKeyScaling, float q, float filterMaxFreq)
     {
       // detuned saw.
       p.mName = name;
@@ -169,27 +169,133 @@ namespace clarinoid
       p.mFilterKeytracking = filterKeyScaling;
     }
 
+    static void InitBasicLeadPreset(const char* name, OscWaveformShape shape, float pulseWidth, SynthPreset& p) {
+      p.mName = name;
+      p.mOsc1Gain = 0.0f;
+      p.mOsc3Gain = 0.0f;
+      p.mSync = false;
+      p.mDetune = 0.0f;
+
+      p.mOsc2Gain = .99f;
+      p.mOsc2Waveform = shape;
+      p.mOsc2PulseWidth = pulseWidth;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 16000;
+      p.mFilterSaturation = 0.30f;
+      p.mFilterQ = 0.25f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
+    static void InitDetunedLeadPreset(const char* name, OscWaveformShape shape, float pulseWidth, SynthPreset& p) {
+      p.mName = name;
+      p.mDetune = 0.1f;
+      p.mSync = false;
+
+      p.mOsc1Gain = 0.99f;
+      p.mOsc1Waveform = shape;
+      p.mOsc1PulseWidth = pulseWidth;
+
+      p.mOsc2Gain = .99f;
+      p.mOsc2Waveform = shape;
+      p.mOsc2PulseWidth = 1.0f - pulseWidth;
+
+      p.mOsc3Gain = .99f;
+      p.mOsc3Waveform = shape;
+      p.mOsc2PulseWidth = pulseWidth;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 16000;
+      p.mFilterSaturation = 0.30f;
+      p.mFilterQ = 0.25f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
+    static void InitFifthLeadPresetA(SynthPreset& p) {
+      p.mName = "5th lead A";
+      p.mSync = false;
+      p.mDetune = 0.0f;
+
+      p.mOsc1Gain = 0.99f;
+      p.mOsc1Waveform = OscWaveformShape::Pulse;
+      p.mOsc1PulseWidth = 0.08f;
+      p.mOsc1PitchSemis = -5;
+
+      p.mOsc3Gain = 0.0f;
+
+      p.mOsc2Gain = .99f;
+      p.mOsc2Waveform = OscWaveformShape::Pulse;
+      p.mOsc2PulseWidth = 0.92f;
+      p.mOsc2PitchSemis = -12;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 18000;
+      p.mFilterSaturation = 0.0f;
+      p.mFilterQ = 0.1f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
+    static void InitFifthLeadPresetB(SynthPreset& p) {
+      p.mName = "5th lead B";
+      p.mSync = false;
+      p.mDetune = 0.0f;
+
+      p.mOsc1Gain = 0.99f;
+      p.mOsc1Waveform = OscWaveformShape::Pulse;
+      p.mOsc1PulseWidth = 0.4f;
+      p.mOsc1PitchSemis = -5;
+
+      p.mOsc3Gain = 0.0f;
+
+      p.mOsc2Gain = .99f;
+      p.mOsc2Waveform = OscWaveformShape::Pulse;
+      p.mOsc2PitchSemis = -12;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 16000;
+      p.mFilterSaturation = 0.0f;
+      p.mFilterQ = 0.0f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
     SynthSettings()
     {
+      mPresets[0].mName = "Sync Lead"; // default.
+
       size_t i = 1; // 0 = default = sync
-      mPresets[0].mName = "Sync";
+      InitBasicLeadPreset("One Saw", OscWaveformShape::SawSync, 0.5f, mPresets[i++]);
+      InitBasicLeadPreset("One Tri", OscWaveformShape::VarTriangle, 0.5f, mPresets[i++]);
+      InitBasicLeadPreset("One Pulse 8%", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
+      InitBasicLeadPreset("One Pulse 50%", OscWaveformShape::Pulse, 0.50f, mPresets[i++]);
+      InitDetunedLeadPreset("Detuned saws", OscWaveformShape::SawSync, 0.5f, mPresets[i++]);
+      InitDetunedLeadPreset("Detuned sine", OscWaveformShape::Sine, 0.5f, mPresets[i++]);
+      InitDetunedLeadPreset("Detuned pulse 10", OscWaveformShape::Pulse, 0.1f, mPresets[i++]);
+      InitDetunedLeadPreset("Detuned pulse 50", OscWaveformShape::Pulse, 0.5f, mPresets[i++]);
+      InitDetunedLeadPreset("Detuned tri 10", OscWaveformShape::VarTriangle, 0.1f, mPresets[i++]);
+      InitDetunedLeadPreset("Detuned tri 50", OscWaveformShape::VarTriangle, 0.5f, mPresets[i++]);
+      InitFifthLeadPresetA(mPresets[i++]);
+      InitFifthLeadPresetB(mPresets[i++]);
 
-      InitClarinoid2Preset(mPresets[i++], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 10000);
-      InitClarinoid2Preset(mPresets[i++], "Diode-ks7-q0", ClarinoidFilterType::LP_Diode, 0.7f, 0.0f, 10000);
-      InitClarinoid2Preset(mPresets[i++], "Diode-ks9-q15", ClarinoidFilterType::LP_Diode, 0.9f, 0.15f, 10000);
-      InitClarinoid2Preset(mPresets[i++], "Diode-ks9-q0", ClarinoidFilterType::LP_Diode, 0.9f, 0.0f, 10000);
+      // InitClarinoid2Preset(mPresets[i++], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 10000);
+      // InitClarinoid2Preset(mPresets[i++], "Diode-ks7-q0", ClarinoidFilterType::LP_Diode, 0.7f, 0.0f, 10000);
+      // InitClarinoid2Preset(mPresets[i++], "Diode-ks9-q15", ClarinoidFilterType::LP_Diode, 0.9f, 0.15f, 10000);
+      // InitClarinoid2Preset(mPresets[i++], "Diode-ks9-q0", ClarinoidFilterType::LP_Diode, 0.9f, 0.0f, 10000);
 
-      InitClarinoid2Preset(mPresets[i++], "Moog-ks7-q15", ClarinoidFilterType::LP_Moog4, 0.7f, 0.15f, 8000);
-      InitClarinoid2Preset(mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f, 8000);
-      InitClarinoid2Preset(mPresets[i++], "Moog-ks9-q15", ClarinoidFilterType::LP_Moog4, 0.9f, 0.15f, 8000);
-      InitClarinoid2Preset(mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f, 8000);
+      // InitClarinoid2Preset(mPresets[i++], "Moog-ks7-q15", ClarinoidFilterType::LP_Moog4, 0.7f, 0.15f, 8000);
+      // InitClarinoid2Preset(mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f, 8000);
+      // InitClarinoid2Preset(mPresets[i++], "Moog-ks9-q15", ClarinoidFilterType::LP_Moog4, 0.9f, 0.15f, 8000);
+      // InitClarinoid2Preset(mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f, 8000);
 
-      InitClarinoid2Preset(mPresets[i++], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);
-      InitClarinoid2Preset(mPresets[i++], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f, 750);
-      InitClarinoid2Preset(mPresets[i++], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f, 750);
-      InitClarinoid2Preset(mPresets[i++], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f, 750);
+      // InitClarinoid2Preset(mPresets[i++], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);
+      // InitClarinoid2Preset(mPresets[i++], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f, 750);
+      // InitClarinoid2Preset(mPresets[i++], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f, 750);
+      // InitClarinoid2Preset(mPresets[i++], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f, 750);
 
-      mPresets[i++].mName = "Sync";
+      //mPresets[i++].mName = "Sync";
     }    
   };
 

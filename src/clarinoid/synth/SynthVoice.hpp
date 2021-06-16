@@ -107,15 +107,6 @@ https://www.pjrc.com/teensy/gui/index.html
       bool voiceOrPatchChanged = (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatch != mv.mSynthPatch);
       if (voiceOrPatchChanged)
       {
-        // init synth patch.
-        mOsc.waveform(1, (uint8_t)mPreset->mOsc1Waveform);
-        mOsc.waveform(2, (uint8_t)mPreset->mOsc2Waveform);
-        mOsc.waveform(3, (uint8_t)mPreset->mOsc3Waveform);
-
-        mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
-        mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
-        mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
-
         mOsc.removeNote();
         mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
       }
@@ -149,6 +140,14 @@ https://www.pjrc.com/teensy/gui/index.html
       mOsc.portamentoTime(1, mPreset->mPortamentoTime);
       mOsc.portamentoTime(2, mPreset->mPortamentoTime);
       mOsc.portamentoTime(3, mPreset->mPortamentoTime);
+
+      mOsc.waveform(1, (uint8_t)mPreset->mOsc1Waveform);
+      mOsc.waveform(2, (uint8_t)mPreset->mOsc2Waveform);
+      mOsc.waveform(3, (uint8_t)mPreset->mOsc3Waveform);
+
+      mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
+      mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
+      mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
 
       mOsc.frequency(1, MIDINoteToFreq(midiNote + mPreset->mOsc1PitchFine + mPreset->mOsc1PitchSemis - mPreset->mDetune));
       mOsc.frequency(3, MIDINoteToFreq(midiNote + mPreset->mOsc3PitchFine + mPreset->mOsc3PitchSemis + mPreset->mDetune));

@@ -434,6 +434,7 @@ namespace clarinoid
   namespace StandardRangeSpecs
   {
     static const NumericEditRangeSpec<float> gFloat_0_1 = NumericEditRangeSpec<float> { 0.0f, 1.0f };
+    static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<float> { -1.0f, 1.0f };
    
     // used by detune
     static const NumericEditRangeSpec<float> gFloat_0_2 = NumericEditRangeSpec<float> { 0.0f, 2.0f };
@@ -441,11 +442,11 @@ namespace clarinoid
     static const NumericEditRangeSpec<float> gPortamentoRange = NumericEditRangeSpec<float> { 0.0f, 0.2f };
 
     // osc pitch and global transpose
-    static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int> { -48, 48 };
+    static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int> { -48, 48, 6, 1, 1 };
 
-    static const NumericEditRangeSpec<float> gBPMRange = NumericEditRangeSpec<float> { 20, 300 };
-    static const NumericEditRangeSpec<int> gMetronomeNoteRange = NumericEditRangeSpec<int> { 20, 120 };
-    static const NumericEditRangeSpec<int> gMetronomeDecayRange = NumericEditRangeSpec<int> { 1, 200 };
+    static const NumericEditRangeSpec<float> gBPMRange = NumericEditRangeSpec<float> { 20, 300, 10, 2, 1 };
+    static const NumericEditRangeSpec<int> gMetronomeNoteRange = NumericEditRangeSpec<int> { 20, 120, 10, 1, 1 };
+    static const NumericEditRangeSpec<int> gMetronomeDecayRange = NumericEditRangeSpec<int> { 1, 200, 10, 1, 1 };
   }
 
 } // namespace clarinoid
