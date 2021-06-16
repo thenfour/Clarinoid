@@ -34,7 +34,7 @@ struct CCMPR121
   explicit CCMPR121(TwoWire *theWire, int address, uint8_t electrodesInUse)
   {
     NoInterrupts _ni;
-    mMpr121.begin(address, theWire, 12, 6, electrodesInUse);
+    mMpr121.begin(address, theWire, 12, 6, electrodesInUse, true);
   }
 
   void Update()

@@ -164,40 +164,54 @@ namespace clarinoid
         {
         }
 
-        // LabelSettingItem mMidiNote = {Property<String>{[](void *cap) {
-        //                                                    DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-        //                                                    String ret = String("MidiNote: ") + pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote;
-        //                                                    return ret;
-        //                                                },
-        //                                                this},
-        //                               AlwaysEnabled};
-
-        // LabelSettingItem mFilterFreq = {Property<String>{[](void *cap) {
-        //                                                      DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-
-        //                                                      CCASSERT(pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch >= 0);
-        //                                                      CCASSERT((size_t)pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch < SYNTH_PRESET_COUNT);
-        //                                                      auto &synthPatch = pThis->mAppSettings->mSynthSettings.mPresets[pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch];
-
-        //                                                      float filterFreq = clarinoid::Voice::CalcFilterCutoffFreq(
-        //                                                          pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mBreath01.GetFloatVal(),
-        //                                                          pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote,
-        //                                                          synthPatch.mFilterKeytracking,
-        //                                                          synthPatch.mFilterMinFreq,
-        //                                                          synthPatch.mFilterMaxFreq);
-
-        //                                                      String ret = String("Filter HZ: ") + filterFreq;
-        //                                                      return ret;
-        //                                                  },
-        //                                                  this},
-        //                                 AlwaysEnabled};
-
         LabelSettingItem mBreath = {Property<String>{[](void *cap) {
                                                          DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                          return (String)((String("Breath: ") + int(pThis->mControls.mBreath.CurrentValue01() * 1000)));
                                                      },
                                                      this},
                                     AlwaysEnabled};
+
+
+        LabelSettingItem mLHK = {Property<String>{[](void *cap) {
+                                                      DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+                                                    String ret = "LHK:";
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyLH1.CurrentValue() ? (String("1")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyLH2.CurrentValue() ? (String("2")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyLH3.CurrentValue() ? (String("3")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyLH4.CurrentValue() ? (String("4")) : String(" ");
+                                                      return ret;
+                                                  },
+                                                  this},
+                                 AlwaysEnabled};
+
+        LabelSettingItem mOct = {Property<String>{[](void *cap) {
+                                                      DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+                                                    String ret = "Oct:";
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyOct1.CurrentValue() ? (String("1")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyOct2.CurrentValue() ? (String("2")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyOct3.CurrentValue() ? (String("3")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyOct4.CurrentValue() ? (String("4")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyOct5.CurrentValue() ? (String("5")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyOct6.CurrentValue() ? (String("6")) : String(" ");
+                                                      return ret;
+                                                  },
+                                                  this},
+                                 AlwaysEnabled};
+
+
+        LabelSettingItem mRHK = {Property<String>{[](void *cap) {
+                                                      DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+                                                    String ret = "RHK:";
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyRH1.CurrentValue() ? (String("1")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyRH2.CurrentValue() ? (String("2")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyRH3.CurrentValue() ? (String("3")) : String(" ");
+                                                        ret += pThis->mMusicalStateTask.mpInput->mKeyRH4.CurrentValue() ? (String("4")) : String(" ");
+                                                      return ret;
+                                                  },
+                                                  this},
+                                 AlwaysEnabled};
+
+
 
         LabelSettingItem mMCPA = {Property<String>{[](void *cap) {
                                                       DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
@@ -291,11 +305,12 @@ namespace clarinoid
                                                                   this},
                                                  AlwaysEnabled};
 
-        ISettingItem *mArray[9] =
+        ISettingItem *mArray[12] =
             {
-                // &mMidiNote,
-                // &mFilterFreq,
                 &mBreath,
+                &mLHK,
+                &mOct,
+                &mRHK,
                 &mLHMPR121,
                 &mRHMPR121,
                 &mMCPA,
@@ -355,5 +370,74 @@ namespace clarinoid
             DisplayApp::DisplayAppUpdate(); // update input
         }
     };
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    struct TouchKeyMonitorApp : DisplayApp
+    {
+        CCMPR121& mDevice;
+        const char *mDisplayName;
+        size_t mKeyIndexBegin;
+        size_t mKeyCount;
+
+        TouchKeyMonitorApp(CCDisplay &d, CCMPR121& device, const char *displayName, size_t keyIndexBegin, size_t keyCount) :
+            DisplayApp(d),
+            mDevice(device), mDisplayName(displayName),
+            mKeyIndexBegin(keyIndexBegin),
+            mKeyCount(keyCount)
+        {
+        }
+
+        virtual const char *DisplayAppGetName() override { return mDisplayName; }
+
+        virtual void UpdateApp() override
+        {
+            if (mBack.IsNewlyPressed())
+            {
+                GoToFrontPage();
+            }
+        }
+
+        virtual void RenderApp() override
+        {
+        }
+
+        virtual void RenderFrontPage() override
+        {
+            //String strBase(mDisplayName);
+
+            for (size_t i = 0; i < mKeyCount; ++ i) {
+                int filteredVal = mDevice.mMpr121.filteredData(i + mKeyIndexBegin);
+                int baselineVal = mDevice.mMpr121.baselineData(i + mKeyIndexBegin);
+
+                int x = mDisplay.mDisplay.width() * i / mKeyCount; // 128 * 5 / 10 = 
+                int x2 = mDisplay.mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 = 
+                int width = x2 - x;
+                mDisplay.mDisplay.setCursor(x, 0);
+                mDisplay.mDisplay.print(String("") + i + mKeyIndexBegin);
+
+                mDisplay.mDisplay.drawFastVLine(x, 0, 4, WHITE);
+                int filteredY = (int)mDisplay.mDisplay.height() * filteredVal / 1024; // 10 bit val scaled to height.
+                int baselineY = (int)mDisplay.mDisplay.height() * baselineVal / 1024; // 10 bit val scaled to height.
+
+                //strBase += String(" ") + baselineVal + ":" + filteredVal + "[" + baselineY + ":" + filteredY + "]";
+
+                mDisplay.mDisplay.mSolidText = false;
+                mDisplay.mDisplay.drawFastHLine(x, baselineY, width, WHITE);
+                mDisplay.mDisplay.mSolidText = true;
+                mDisplay.mDisplay.drawFastHLine(x, filteredY, width, WHITE);
+            }
+            //log(strBase);
+        }
+
+        virtual void DisplayAppUpdate() override
+        {
+            DisplayApp::DisplayAppUpdate(); // updates input
+        }
+    };
+
+
 
 } // namespace clarinoid

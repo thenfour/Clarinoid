@@ -100,6 +100,9 @@ namespace clarinoid
             mAppSettings.mTranspose = 12;
             mAppSettings.mSynthSettings.mReverbGain = 0.25f;
 
+            TouchKeyMonitorApp mLHKeysMonitor(mDisplay, mControlMapper.mLHMPR, "LH Keys Monitor", 0, 10);
+            TouchKeyMonitorApp mRHKeysMonitor(mDisplay, mControlMapper.mRHMPR, "RH Keys Monitor", 0, 4);
+
             IDisplayApp *allApps[] =
                 {
                     &mPerformanceApp,
@@ -108,6 +111,8 @@ namespace clarinoid
                     &mSystemSettingsApp,
                     &mSynthSettingsApp,
                     &mMetronomeSettingsApp,
+                    &mLHKeysMonitor,
+                    &mRHKeysMonitor,
                 };
 
             mInputDelegator.Init(&mAppSettings, &mControlMapper);
