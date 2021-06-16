@@ -71,7 +71,6 @@ struct AppSettings
     if (id >= SYNTH_PRESET_COUNT) id = 0;
     return mSynthSettings.mPresets[id];
   }
-
 };
 
 //static constexpr auto appsettingssize = sizeof(AppSettings);

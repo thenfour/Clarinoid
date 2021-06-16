@@ -85,8 +85,8 @@ struct Clarinoid2ControlMapper :
     }
 
     CCEncoder<4/* step increment each increment */, 2 /* pin #1 */, 3 /* pin #2 */> mEncoder;
-    CCMPR121 mLHMPR = CCMPR121 { &Wire1, 0x5A };
-    CCMPR121 mRHMPR = CCMPR121 { &Wire1, 0x5B };
+    CCMPR121 mLHMPR = CCMPR121 { &Wire1, 0x5A, 10 };
+    CCMPR121 mRHMPR = CCMPR121 { &Wire1, 0x5B, 4 };
     CCMCP23017 mMCP = CCMCP23017 { &Wire1, 0x20 };
     CCHoneywellAPB mBreath = CCHoneywellAPB { Wire1, 0x28 };
     AnalogPinControl mPitchStrip = AnalogPinControl { 23 };

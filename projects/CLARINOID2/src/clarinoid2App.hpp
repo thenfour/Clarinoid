@@ -96,6 +96,10 @@ namespace clarinoid
         {
             mControlMapper.Init(&mDisplay);
 
+            // initialize some settings.
+            mAppSettings.mTranspose = 12;
+            mAppSettings.mSynthSettings.mReverbGain = 0.25f;
+
             IDisplayApp *allApps[] =
                 {
                     &mPerformanceApp,
