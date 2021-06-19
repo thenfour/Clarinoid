@@ -8,7 +8,7 @@
 namespace clarinoid
 {
 
-const char gClarinoidVersion[] = "BASSOONOID v0.01";
+const char gClarinoidVersion[] = "BASSOONOID v0.02";
 
 static const size_t MAX_SYNTH_VOICES = 6;
 

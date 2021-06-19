@@ -233,6 +233,11 @@ void setThresholds(uint8_t touch, uint8_t release) {
   }
 }
 
+void setThresholds(uint8_t keyIndex, uint8_t touch, uint8_t release) {
+  writeRegister(MPR121Register::TOUCHTH_0 + 2 * keyIndex, touch);
+  writeRegister(MPR121Register::RELEASETH_0 + 2 * keyIndex, release);
+}
+
 /*!
  *  @brief      Read the filtered data from channel t. The ADC raw data outputs
  *              run through 3 levels of digital filtering to filter out the high

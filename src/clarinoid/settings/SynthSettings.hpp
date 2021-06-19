@@ -101,51 +101,6 @@ namespace clarinoid
     float mMasterGain = 1.0f;
 
 
-    // todo: restore this code for bassoonoid.
-    // void InitBassoonoidPreset(SynthPreset& p, const char* name, ClarinoidFilterType filt, float filterKeyScaling, float q, float filterMaxFreq)
-    // {
-    //   // detuned saw.
-    //   p.mName = name;
-    //   p.mOsc1Gain = 0.0f;
-    //   p.mOsc3Gain = 0.0f;
-
-    //   p.mOsc1Waveform = OscWaveformShape::SawSync;
-    //   p.mOsc2Waveform = OscWaveformShape::SawSync;
-    //   p.mOsc3Waveform = OscWaveformShape::SawSync;
-    //   p.mOsc2Gain = .99f;
-    //   p.mSync = false;
-    //   p.mDetune = 0.0f;
-
-    //   p.mFilterType = filt;
-    //   p.mFilterMinFreq = 0.0f;
-    //   p.mFilterMaxFreq = filterMaxFreq;
-    //   p.mFilterSaturation = 0;
-    //   p.mFilterQ = q;
-    //   p.mFilterKeytracking = filterKeyScaling;
-    // }
-
-    // SynthSettings()
-    // {
-    //   size_t i = 0;
-    //   InitBassoonoidPreset(mPresets[i++], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 10000);
-    //   InitBassoonoidPreset(mPresets[i++], "Diode-ks7-q0", ClarinoidFilterType::LP_Diode, 0.7f, 0.0f, 10000);
-    //   InitBassoonoidPreset(mPresets[i++], "Diode-ks9-q15", ClarinoidFilterType::LP_Diode, 0.9f, 0.15f, 10000);
-    //   InitBassoonoidPreset(mPresets[i++], "Diode-ks9-q0", ClarinoidFilterType::LP_Diode, 0.9f, 0.0f, 10000);
-
-    //   InitBassoonoidPreset(mPresets[i++], "Moog-ks7-q15", ClarinoidFilterType::LP_Moog4, 0.7f, 0.15f, 4000);
-    //   InitBassoonoidPreset(mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f, 4000);
-    //   InitBassoonoidPreset(mPresets[i++], "Moog-ks9-q15", ClarinoidFilterType::LP_Moog4, 0.9f, 0.15f, 4000);
-    //   InitBassoonoidPreset(mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f, 4000);
-
-    //   InitBassoonoidPreset(mPresets[i++], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);
-    //   InitBassoonoidPreset(mPresets[i++], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f, 750);
-    //   InitBassoonoidPreset(mPresets[i++], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f, 750);
-    //   InitBassoonoidPreset(mPresets[i++], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f, 750);
-
-    //   mPresets[i++].mName = "Sync";
-    // }
-
-
 
     static void InitClarinoid2Preset(SynthPreset& p, const char* name, ClarinoidFilterType filt, float filterKeyScaling, float q, float filterMaxFreq)
     {

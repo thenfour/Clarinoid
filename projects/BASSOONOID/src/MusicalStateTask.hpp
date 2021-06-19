@@ -3,8 +3,8 @@
 
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/synth/Synth.hpp>
-#include <clarinoid/bassoonoid/bsLed.hpp>
-#include <clarinoid/bassoonoid/bsControlMapper.hpp>
+#include"bsLed.hpp"
+#include"bsControlMapper.hpp"
 
 namespace clarinoid
 {

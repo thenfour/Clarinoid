@@ -26,10 +26,11 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SPIDevice.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_MCP23017.h>
 
 #pragma GCC diagnostic pop
 
-#include <clarinoid/bassoonoid/bsApp.hpp>
+#include "bsApp.hpp"
 
 void setup()
 {

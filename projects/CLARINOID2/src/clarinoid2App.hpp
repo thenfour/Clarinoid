@@ -160,6 +160,18 @@ namespace clarinoid
 
             Wire1.setClock(400000); // use high speed mode. default speed = 100k
 
+            // for (int i = 0; i < 4; ++ i) {
+            //     mAppSettings.mLHKeyTouchThresholds[i] = 12;
+            //     mAppSettings.mRHKeyTouchThresholds[i] = 12;
+            //     mAppSettings.mLHKeyTouchThresholds[i] = 6;
+            //     mAppSettings.mRHKeyTouchThresholds[i] = 6;
+            // }
+
+            // for (int i = 0; i < 6; ++ i) {
+            //     mAppSettings.mOctKeyTouchThresholds[i] = 12;
+            //     mAppSettings.mOctKeyReleaseThresholds[i] = 6;
+            // }
+
             FunctionTask mDisplayTask1{this, [](void *cap) {
                                            Clarinoid2App *pThis = (Clarinoid2App *)cap;
                                            pThis->mDisplay.UpdateAndRenderTask();

@@ -46,6 +46,13 @@ struct AppSettings
 
   int mTranspose = 0;
 
+  // uint8_t mLHKeyTouchThresholds[4];
+  // uint8_t mRHKeyTouchThresholds[4];
+  // uint8_t mOctKeyTouchThresholds[6];
+  // uint8_t mLHKeyReleaseThresholds[4];
+  // uint8_t mRHKeyReleaseThresholds[4];
+  // uint8_t mOctKeyReleaseThresholds[6];
+
   GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Deduced;
   Scale mGlobalScale = Scale { Note::E, ScaleFlavorIndex::MajorPentatonic }; // you can set this in menus
   Scale mDeducedScale = Scale { Note::C, ScaleFlavorIndex::MajorPentatonic }; // this is automatically populated always
