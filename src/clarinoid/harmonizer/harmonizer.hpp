@@ -100,6 +100,7 @@ struct Harmonizer
 
 
       *pout = *liveVoice; // copy from live voice to get started.
+      pout->mIsNoteCurrentlyMuted = false;
       pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)(nVoice + 1)); // +1 because live voice is id 0.
 
       // todo: use hv.mNonDiatonicBehavior

@@ -80,18 +80,32 @@ namespace clarinoid
         return 0;
     }
 
+CCThrottlerT<600> mth;
 
     void Update()
     {
       MusicalVoice mNewState(mLiveVoice);
 
-      // convert that to musical state. i guess this is where the
-      // most interesting EWI-ish logic is.
-
       float _incomingBreath = mInput->mBreath.CurrentValue01(); // this is actually the transformed value.
       mCurrentBreath01.Update(_incomingBreath);
       mNewState.mBreath01 = mCurrentBreath01.GetValue();
-      bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > 0;
+      bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > (.000001f); // rounding errors amplify; FLT_EPSILON would be too precise for this check.
+
+// if (mth.IsReady()) {
+//   Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" + (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
+// }
+
+// if (this->mLiveVoice.IsPlaying() && !isPlayingNote) {
+//   Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" + (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
+//   Serial.println(String("transition to note OFF"));
+// }
+
+// if (!this->mLiveVoice.IsPlaying() && isPlayingNote) {
+//   Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 1000) + " isplaying=" + (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
+//   Serial.println(String("transition to note ON"));
+// }
+
+
 
       mCurrentPitchN11.Update(mInput->mPitchBend.CurrentValueN11());
       mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();

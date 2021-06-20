@@ -338,8 +338,10 @@ struct HarmPatchSettingsApp {
   MultiSubmenuSettingItem mVoiceSubmenu = {
       [](void *cap) { return clarinoid::HARM_VOICES; },
       [](void *cap, size_t mi) { // name
-        // auto *pThis = (HarmPatchSettingsApp *)cap;
-        return (String)(String("Voice ") + mi);
+        auto *pThis = (HarmPatchSettingsApp *)cap;
+        // like
+        // Voice 5 [-2,2]
+        return (String)(String("Voice ") + mi + "" + pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
       },                         // return string name
       [](void *cap, size_t mi) { // get submenu for item
         auto *pThis = (HarmPatchSettingsApp *)cap;

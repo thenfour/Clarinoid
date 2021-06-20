@@ -30,7 +30,7 @@ struct MusicalVoice
     *this = MusicalVoice();
   }
 
-  bool IsPlaying() const {
+  bool IsPlaying() const { // does not consider mIsNoteCurrentlyMuted, because that means the note should go to the synth but it will be at 0 volume.
     return !!mMidiNote && !!mVelocity;
   }
 

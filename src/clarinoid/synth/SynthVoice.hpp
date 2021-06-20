@@ -126,7 +126,7 @@ https://www.pjrc.com/teensy/gui/index.html
         mOsc.addNote(); // this also engages portamento
       }
 
-      if (mv.IsPlaying())
+      if (mv.IsPlaying() && !mv.mIsNoteCurrentlyMuted)
       {
         mOsc.amplitude(1, GetModulatedValue(mPreset->mOsc1Gain, ModulationDestination::Osc1Volume));
         mOsc.amplitude(2, GetModulatedValue(mPreset->mOsc2Gain, ModulationDestination::Osc2Volume));

@@ -102,6 +102,18 @@ struct HarmVoiceSettings
   uint8_t mMaxOutpNote = 127;
   NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::TransposeOctave;
   NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+
+  String GetMenuDetailString() const {
+    if (mSequenceLength < 1) return "<off>";
+    String ret = "[";
+    for (size_t i = 0; i < (size_t)mSequenceLength - 1; ++ i) {
+      ret += mSequence[i];
+      ret += ",";
+    }
+    ret += mSequence[mSequenceLength - 1];
+    ret += "]";
+    return ret;
+  }
 };
 
 struct HarmPreset
