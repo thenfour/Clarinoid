@@ -8,15 +8,20 @@
 namespace clarinoid
 {
 
-    struct SynthPatchMenuApp
+    // acts as a standalone "current patch" editor app,
+    // as well as sub-app of general synth settings. so you can change params of patches without them even being selected.
+    struct SynthPatchMenuApp : public SettingsMenuApp
     {
-        size_t mEditingSynthPatch = 0;
-        CCDisplay &mDisplay;
+        virtual const char *DisplayAppGetName() override { return "SynthPatchMenuApp"; }
 
-        SynthPatchMenuApp(CCDisplay &d) : mDisplay(d) {}
+        SynthPatchMenuApp(CCDisplay &d) : SettingsMenuApp(d)//, mDisplay(d)
+        {
+        }
 
-        AppSettings &GetAppSettings() { return *mDisplay.mAppSettings; }
-        SynthPreset &GetBinding() { return GetAppSettings().mSynthSettings.mPresets[mEditingSynthPatch]; }
+        //AppSettings &GetAppSettings() { return *mDisplay.mAppSettings; }
+        SynthPreset &GetBinding() {
+            return GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset];
+        }
 
         // LabelSettingItem(cc::function<String()>::ptr_t text, cc::function<bool()>::ptr_t isEnabled) :
         LabelSettingItem mBigSeparator = {
@@ -257,10 +262,31 @@ namespace clarinoid
 
         SettingsList *Start(size_t iPatch)
         {
-            mEditingSynthPatch = iPatch;
+            this->DisplayAppInit(); // required to initialize stuff
+            // log(String("Starting synth patch app"));
+            // log(String("  appsettings: ") + (uint32_t)GetAppSettings());
+            // log(String("  from ") + GetAppSettings()->mGlobalSynthPreset + " to " + iPatch);
+            GetAppSettings()->mGlobalSynthPreset = iPatch;
+            // mAppSettings->mGlobalSynthPreset = nv;
+            // mEditingSynthPatch = iPatch;
             return &mRootList;
         }
+
+        virtual SettingsList *GetRootSettingsList()
+        {
+            //log("synth patch app GetRootSettingsList");
+            // this will only be called whne this app is standalone. that means it should always be working on the "current" synth patch.
+            return &mRootList;
+        }
+
+        virtual void RenderFrontPage()
+        {
+            mDisplay.ClearState();
+            mDisplay.mDisplay.println(String("PATCH->"));
+            SettingsMenuApp::RenderFrontPage();
+        }
     };
+
 
     struct SynthSettingsApp : public SettingsMenuApp
     {
@@ -334,6 +360,7 @@ namespace clarinoid
 
         virtual void RenderFrontPage()
         {
+            //log(String("synth settings app settings = ") + (uint32_t)mAppSettings);
             mDisplay.ClearState();
             mDisplay.mDisplay.println(String("SYNTH SETTINGS"));
             mDisplay.mDisplay.println(String(""));
@@ -343,5 +370,7 @@ namespace clarinoid
             SettingsMenuApp::RenderFrontPage();
         }
     };
+
+
 
 } // namespace clarinoid

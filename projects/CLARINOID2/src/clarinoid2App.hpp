@@ -56,8 +56,10 @@ namespace clarinoid
         DebugDisplayApp mDebugDisplayApp;
         SystemSettingsApp mSystemSettingsApp;
         SynthSettingsApp mSynthSettingsApp;
+        SynthPatchMenuApp mSynthPatchApp;
         AudioMonitorApp mAudioMonitorApp;
         MetronomeSettingsApp mMetronomeSettingsApp;
+        //HarmVoiceSettingsApp mHarmVoiceSettingsApp;
 
         Clarinoid2App() : mLed(this),
                           mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
@@ -75,6 +77,7 @@ namespace clarinoid
                               },
                               this),
                           mSynthSettingsApp(mDisplay),
+                          mSynthPatchApp(mDisplay),
                           mAudioMonitorApp(mDisplay),
                           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay)
         {
@@ -107,12 +110,16 @@ namespace clarinoid
 
             IDisplayApp *allApps[] =
                 {
-                    &mPerformanceApp,
-                    &mAudioMonitorApp,
-                    &mDebugDisplayApp,
-                    &mSystemSettingsApp,
+                    &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
+
+                    &mSynthPatchApp,
                     &mSynthSettingsApp,
+                    &mSystemSettingsApp,
                     &mMetronomeSettingsApp,
+                    &mAudioMonitorApp,
+                    //&mHarmVoiceSettingsApp,
+
+                    &mDebugDisplayApp,
                     &mLHKeysMonitor,
                     &mRHKeysMonitor,
                 };
