@@ -220,9 +220,6 @@ struct LabelSettingItem : public ISettingItem
   virtual String GetValueString(size_t multiIndex) { return ""; }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
   virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled.GetValue(); }
-  virtual ISettingItemEditor* GetEditor() {
-    return nullptr;
-  }
 };
 
 
@@ -248,9 +245,6 @@ struct MultiLabelSettingItem : public ISettingItem
   virtual String GetValueString(size_t multiIndex) { return ""; }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
   virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(mCapture, multiIndex); }
-  virtual ISettingItemEditor* GetEditor() {
-    return nullptr;
-  }
 };
 
 
@@ -271,9 +265,6 @@ struct StringSettingItem : public ISettingItem
   virtual String GetValueString(size_t multiIndex) { return ""; }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
   virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
-  virtual ISettingItemEditor* GetEditor() {
-    return nullptr;
-  }
 };
 
 struct SettingsMenuState

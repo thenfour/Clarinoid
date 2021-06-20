@@ -34,7 +34,7 @@
 #include "clarinoid2DebugDisplayApp.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
-
+#include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
 
 namespace clarinoid
 {
@@ -59,7 +59,7 @@ namespace clarinoid
         SynthPatchMenuApp mSynthPatchApp;
         AudioMonitorApp mAudioMonitorApp;
         MetronomeSettingsApp mMetronomeSettingsApp;
-        //HarmVoiceSettingsApp mHarmVoiceSettingsApp;
+        HarmSettingsApp mHarmVoiceSettingsApp;
 
         Clarinoid2App() : mLed(this),
                           mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
@@ -79,7 +79,8 @@ namespace clarinoid
                           mSynthSettingsApp(mDisplay),
                           mSynthPatchApp(mDisplay),
                           mAudioMonitorApp(mDisplay),
-                          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay)
+                          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
+                          mHarmVoiceSettingsApp(mDisplay)
         {
         }
 
@@ -114,10 +115,11 @@ namespace clarinoid
 
                     &mSynthPatchApp,
                     &mSynthSettingsApp,
-                    &mSystemSettingsApp,
+                    &mHarmVoiceSettingsApp,
+
                     &mMetronomeSettingsApp,
+                    &mSystemSettingsApp,
                     &mAudioMonitorApp,
-                    //&mHarmVoiceSettingsApp,
 
                     &mDebugDisplayApp,
                     &mLHKeysMonitor,

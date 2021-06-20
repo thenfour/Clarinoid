@@ -283,6 +283,7 @@ namespace clarinoid
         {
             mDisplay.ClearState();
             mDisplay.mDisplay.println(String("PATCH->"));
+            mDisplay.mDisplay.println(String("") + GetAppSettings()->mGlobalSynthPreset);
             SettingsMenuApp::RenderFrontPage();
         }
     };
@@ -362,10 +363,8 @@ namespace clarinoid
         {
             //log(String("synth settings app settings = ") + (uint32_t)mAppSettings);
             mDisplay.ClearState();
-            mDisplay.mDisplay.println(String("SYNTH SETTINGS"));
-            mDisplay.mDisplay.println(String(""));
-            mDisplay.mDisplay.println(String(""));
-            mDisplay.mDisplay.println(String("                  -->"));
+            mDisplay.mDisplay.println(String("SYNTH > "));
+            mDisplay.mDisplay.println(String("#: ") + GetAppSettings()->mGlobalSynthPreset);
 
             SettingsMenuApp::RenderFrontPage();
         }

@@ -52,10 +52,19 @@ EnumInfo<NonDiatonicBehavior> gNonDiatonicBehaviorInfo ("NonDiatonicBehavior", g
 ////////////////////////////////////////////////////
 enum class NoteOOBBehavior : uint8_t
 {
-  Drop,
+  Mute,
   TransposeOctave
   // transposeoctave_but_drop_if_it_crosses_live
 };
+
+EnumItemInfo<NoteOOBBehavior> gNoteOOBBehaviorItems[2] = {
+  { NoteOOBBehavior::Mute, "Mute" },
+  { NoteOOBBehavior::TransposeOctave, "TransposeOctave" },
+};
+
+EnumInfo<NoteOOBBehavior> gNoteOOBBehaviorInfo ("NoteOOBBehavior", gNoteOOBBehaviorItems);
+
+
 
 ////////////////////////////////////////////////////
 enum class HarmSynthPresetRefType : uint8_t

@@ -41,19 +41,39 @@ NoteDesc const gNotes[12] = {
 
 enum class Note : uint8_t
 {
-  C,
-  Db,
-  D,
-  Eb,
-  E,
-  F_, // damned arduino.h getting in the way.
-  Gb,
-  G,
-  Ab,
-  A,
-  Bb,
-  B
+  C = 0,
+  Db = 1,
+  D = 2,
+  Eb = 3,
+  E = 4,
+  F_ = 5, // damned arduino.h getting in the way.
+  Gb = 6,
+  G = 7,
+  Ab = 8,
+  A = 9,
+  Bb = 10,
+  B = 11
 };
+
+
+EnumItemInfo<Note> gNoteItems[12] = {
+  { Note::C, "C" },
+  { Note::Db, "Db" },
+  { Note::D, "D" },
+  { Note::Eb, "Eb" },
+  { Note::E, "E" },
+  { Note::F_, "F_" },
+  { Note::Gb, "Gb" },
+  { Note::G, "G" },
+  { Note::Ab, "Ab" },
+  { Note::A, "A" },
+  { Note::Bb, "Bb" },
+  { Note::B, "B" },
+};
+
+EnumInfo<Note> gNoteInfo ("Note", gNoteItems);
+
+
 
 ////////////////////////////////////////////////////
 class MidiNote
@@ -126,6 +146,35 @@ enum class ScaleFlavorIndex : uint8_t // match index to gScaleFlavors
   // 11 chord: maj13 (maj minus 4th)
 };
 static constexpr size_t ScaleFlavorCount = (size_t)ScaleFlavorIndex::ScaleFlavorCount;
+
+
+// abbreviated.
+EnumItemInfo<ScaleFlavorIndex> gScaleFlavorIndexItems[ScaleFlavorCount] = {
+  { ScaleFlavorIndex::Chromatic, "Chrom" },
+  { ScaleFlavorIndex::Major, "Maj" },
+  { ScaleFlavorIndex::Minor, "Min" },
+  { ScaleFlavorIndex::MelodicMinor, "MelMin" },
+  { ScaleFlavorIndex::HarmonicMinor, "HarmMin" },
+  { ScaleFlavorIndex::MajorPentatonic, "MajPent" },
+  { ScaleFlavorIndex::MinorPentatonic, "MinPent" },
+  { ScaleFlavorIndex::WholeTone, "Whole" },
+  { ScaleFlavorIndex::HalfWholeDiminished, "HWDim" },
+  { ScaleFlavorIndex::WholeHalfDiminished, "WHDim" },
+  { ScaleFlavorIndex::Altered, "Alt" },
+  { ScaleFlavorIndex::Blues, "Blues" },
+  { ScaleFlavorIndex::Unison, "Unison" },
+  { ScaleFlavorIndex::Power, "Power" },
+};
+
+EnumInfo<ScaleFlavorIndex> gScaleFlavorIndexInfo ("ScaleFlavorIndex", gScaleFlavorIndexItems);
+
+
+
+
+
+
+
+
 
 ////////////////////////////////////////////////////
 // using this + Scale flavor allows you to construct an absolute MIDI note value.

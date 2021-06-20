@@ -412,6 +412,18 @@ namespace clarinoid
       mCourseStep = (T)(float(rangeMax - rangeMin) / DefaultCourseSteps);
       mNormalStep = (T)(float(rangeMax - rangeMin) / DefaultNormalSteps);
       mFineStep = (T)(float(rangeMax - rangeMin) / DefaultFineSteps);
+      if (mCourseStep == 0) {
+        if (std::is_integral<T>::value)
+          mCourseStep = 1;
+        else
+          mCourseStep = (T)1 / 100;
+      }
+      if (mNormalStep == 0) {
+        if (std::is_integral<T>::value)
+          mNormalStep = 1;
+        else
+          mNormalStep = (T)1 / 100;
+      }
       if (mFineStep == 0) {
         if (std::is_integral<T>::value)
           mFineStep = 1;

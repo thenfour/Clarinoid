@@ -119,8 +119,78 @@ struct NumericSettingItem : public ISettingItem
   }
 };
 
+
+
+
+template<typename T, typename TEditor>
+struct MultiNumericSettingItem : public ISettingItem
+{
+  cc::function<size_t(void*)>::ptr_t mGetItemCount;
+  cc::function<String(void*,size_t)>::ptr_t mLabelGetter;
+  cc::function<String(void*,size_t)>::ptr_t mValueStringGetter;
+
+  typename cc::function<T(void*, size_t) >::ptr_t mValueGetter;
+  typename cc::function<void(void*, size_t, const T& val)>::ptr_t mValueSetter;
+
+  size_t mEditingMultiIndex = 0; // which multi item index is currently being edited.
+
+  cc::function<bool(void*,size_t)>::ptr_t mIsEnabled;
+  void* mCapture;
+
+  TEditor mEditor;
+
+  MultiNumericSettingItem(
+    cc::function<size_t(void*)>::ptr_t getItemCount,
+    const NumericEditRangeSpec<T>& range_,
+    cc::function<String(void*, size_t)>::ptr_t labelGetter,
+    cc::function<String(void*,size_t)>::ptr_t valueStringGetter,
+    typename cc::function<T(void*, size_t multiIndex)>::ptr_t valueGetter,
+    typename cc::function<void(void*, size_t multiIndex, const T& val)>::ptr_t valueSetter,
+    cc::function<bool(void*, size_t)>::ptr_t isEnabled,
+    void* capture) :
+
+    mGetItemCount(getItemCount),
+    mLabelGetter(labelGetter),
+    mValueStringGetter(valueStringGetter),
+    mValueGetter(valueGetter),
+    mValueSetter(valueSetter),
+    mIsEnabled(isEnabled),
+    mCapture(capture),
+    mEditor(range_, Property<T>{
+      [](void* cap){ // get
+        auto* pThis = (MultiNumericSettingItem*)cap;
+        return pThis->mValueGetter(pThis->mCapture, pThis->mEditingMultiIndex);
+      },
+      [](void* cap, const T& val) { // set
+        auto* pThis = (MultiNumericSettingItem*)cap;
+        pThis->mValueSetter(pThis->mCapture, pThis->mEditingMultiIndex, val);
+      },
+      this// cap
+    })
+  {
+  }
+
+  virtual size_t GetMultiCount() { return mGetItemCount(mCapture); }
+  virtual String GetName(size_t multiIndex) { return mLabelGetter(mCapture, multiIndex); }
+  virtual String GetValueString(size_t multiIndex) { return mValueStringGetter(mCapture, multiIndex); }
+  virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Custom; }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(mCapture, multiIndex); }
+  virtual ISettingItemEditor* GetEditor(size_t multiIndex) {
+    mEditingMultiIndex = multiIndex;
+    return &mEditor;
+  }
+};
+
+
+
+
 using IntSettingItem = NumericSettingItem<int, IntEditor>;
 using FloatSettingItem = NumericSettingItem<float, FloatEditor>;
+
+
+using MultiIntSettingItem = MultiNumericSettingItem<int, IntEditor>;
+
+
 
 
 } // namespace clarinoid

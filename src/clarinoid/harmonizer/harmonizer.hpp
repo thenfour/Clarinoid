@@ -118,7 +118,7 @@ struct Harmonizer
         while (pout->mMidiNote > hv.mMaxOutpNote)
           pout->mMidiNote -= 12;
         break;
-      case NoteOOBBehavior::Drop:
+      case NoteOOBBehavior::Mute:
         if (pout->mMidiNote < hv.mMinOutpNote)
           continue;
         if (pout->mMidiNote > hv.mMaxOutpNote)
