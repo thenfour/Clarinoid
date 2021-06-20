@@ -42,7 +42,8 @@ namespace clarinoid
     struct Clarinoid2App : ILEDDataProvider
     {
         static constexpr size_t breathMappingIndex = 0;
-        static constexpr size_t pitchMappingIndex = 1;
+        static constexpr size_t pitchUpMappingIndex = 1;
+        static constexpr size_t pitchDownMappingIndex = 2;
 
         Clarinoid2LedsTask mLed;
         InputDelegator mInputDelegator;
@@ -67,13 +68,14 @@ namespace clarinoid
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
                           mSystemSettingsApp(
-                              mDisplay, breathMappingIndex, pitchMappingIndex/*joyPitchMappingIndex - not used for clarinoid2 */,
+                              mDisplay, breathMappingIndex, pitchUpMappingIndex, pitchDownMappingIndex,
                               [](void *cap) { // raw breath value getter
                                   Clarinoid2App *pThis = (Clarinoid2App *)cap;
                                   return pThis->mControlMapper.mBreath.CurrentValue01();
                               },
-                              [](void *cap) { // raw joy pitchbend value getter
-                                return 0.0f;
+                              [](void *cap) { // raw pitchbend value getter
+                                  Clarinoid2App *pThis = (Clarinoid2App *)cap;
+                                return pThis->mControlMapper.mPitchStrip.CurrentValue01();
                               },
                               this),
                           mSynthSettingsApp(mDisplay),
@@ -132,11 +134,21 @@ namespace clarinoid
             mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
             mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0;
 
-            mAppSettings.mControlMappings[pitchMappingIndex] = ControlMapping::MakeUnipolarMapping(PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);
-            mAppSettings.mControlMappings[pitchMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
-            mAppSettings.mControlMappings[pitchMappingIndex].mUnipolarMapping.mCurveS = 0;
+            mAppSettings.mControlMappings[pitchUpMappingIndex] = ControlMapping::MakeUnipolarMapping(PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mOperator = ControlMapping::Operator::Add;
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMin = 0.3f;
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMax = 0.0f;
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveS = 0;
 
-            size_t im = pitchMappingIndex + 1;
+            mAppSettings.mControlMappings[pitchDownMappingIndex] = ControlMapping::MakeUnipolarMapping(PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mOperator = ControlMapping::Operator::Add;
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mSrcMin = 1.0f;
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mSrcMax = 0.6f;
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mCurveS = 0;
+
+            size_t im = pitchDownMappingIndex + 1;
 
             mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
             mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);

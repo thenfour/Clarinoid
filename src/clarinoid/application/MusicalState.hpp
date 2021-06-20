@@ -91,9 +91,17 @@ CCThrottlerT<600> mth;
       mNewState.mBreath01 = mCurrentBreath01.GetValue();
       bool isPlayingNote = mNewState.mBreath01.GetFloatVal() > (.000001f); // rounding errors amplify; FLT_EPSILON would be too precise for this check.
 
-// if (mth.IsReady()) {
-//   Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" + (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
-// }
+      mCurrentPitchN11.Update(mInput->mPitchBend.CurrentValueN11());
+      mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
+      mNewState.mVelocity = 100;
+
+      mNewState.mHarmPatch = mAppSettings->mGlobalHarmPreset;
+      mNewState.mSynthPatch = mAppSettings->mGlobalSynthPreset;
+
+      // if (mth.IsReady()) {
+      //   //Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" + (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
+      //   Serial.println(String("pitch ") +  (mInput->mPitchBend.CurrentValueN11()));
+      // }
 
 // if (this->mLiveVoice.IsPlaying() && !isPlayingNote) {
 //   Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" + (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
@@ -105,14 +113,6 @@ CCThrottlerT<600> mth;
 //   Serial.println(String("transition to note ON"));
 // }
 
-
-
-      mCurrentPitchN11.Update(mInput->mPitchBend.CurrentValueN11());
-      mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
-      mNewState.mVelocity = 100;
-
-      mNewState.mHarmPatch = mAppSettings->mGlobalHarmPreset;
-      mNewState.mSynthPatch = mAppSettings->mGlobalSynthPreset;
 
       // the rules are rather weird for keys. open is a C#...
       // https://bretpimentel.com/flexible-ewi-fingerings/

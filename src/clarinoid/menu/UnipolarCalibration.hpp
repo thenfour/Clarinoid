@@ -271,13 +271,13 @@ namespace clarinoid
         }
     };
 
-    struct BreathCalibrationSettingItem : public ISettingItem
+    struct UnipolarCalibrationSettingItem : public ISettingItem
     {
         const char *mName;
         UnipolarCalibrationEditor mEditor;
         Property<UnipolarMapping> mCalibBinding;
 
-        BreathCalibrationSettingItem(const char *name, const Property<UnipolarMapping> &calibBinding,
+        UnipolarCalibrationSettingItem(const char *name, const Property<UnipolarMapping> &calibBinding,
                                      cc::function<float(void *)>::ptr_t rawValueGetter,
                                      void *capture) : mName(name),
                                                       mEditor(calibBinding, rawValueGetter, capture),

@@ -30,6 +30,9 @@ EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo ("GlobalScaleRefType", gGlo
 struct AppSettings
 {
   ControlMapping mControlMappings[MAX_CONTROL_MAPPINGS];
+
+  UnipolarMapping mPitchUpMapping;
+  UnipolarMapping mPitchDownMapping;
   
   bool mDisplayDim = true;
 
@@ -45,13 +48,6 @@ struct AppSettings
   float mBPM = 104.0f;
 
   int mTranspose = 0;
-
-  // uint8_t mLHKeyTouchThresholds[4];
-  // uint8_t mRHKeyTouchThresholds[4];
-  // uint8_t mOctKeyTouchThresholds[6];
-  // uint8_t mLHKeyReleaseThresholds[4];
-  // uint8_t mRHKeyReleaseThresholds[4];
-  // uint8_t mOctKeyReleaseThresholds[6];
 
   GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Deduced;
   Scale mGlobalScale = Scale { Note::E, ScaleFlavorIndex::MajorPentatonic }; // you can set this in menus

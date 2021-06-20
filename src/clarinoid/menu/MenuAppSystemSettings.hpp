@@ -14,15 +14,17 @@ struct SystemSettingsApp :
 {
   virtual const char *DisplayAppGetName() override { return "SystemSettingsApp"; }
   size_t mBreathMappingIndex;
-  size_t mJoyPitchMappingIndex;
+  size_t mPitchUpMappingIndex;
+  size_t mPitchDownMappingIndex;
   cc::function<float(void *)>::ptr_t mRawBreathGetter;
   cc::function<float(void *)>::ptr_t mRawPitchBendGetter;
   void* mpCapture;
 
-    SystemSettingsApp(CCDisplay& d, size_t breathMappingIndex, size_t joyPitchMappingIndex, cc::function<float(void *)>::ptr_t rawBreathGetter, cc::function<float(void *)>::ptr_t rawPitchBendGetter, void* capture) :
+    SystemSettingsApp(CCDisplay& d, size_t breathMappingIndex, size_t pitchUpMappingIndex, size_t pitchDownMappingIndex, cc::function<float(void *)>::ptr_t rawBreathGetter, cc::function<float(void *)>::ptr_t rawPitchBendGetter, void* capture) :
       SettingsMenuApp(d),
       mBreathMappingIndex(breathMappingIndex),
-      mJoyPitchMappingIndex(joyPitchMappingIndex),
+      mPitchUpMappingIndex(pitchUpMappingIndex),
+      mPitchDownMappingIndex(pitchDownMappingIndex),
       mRawBreathGetter(rawBreathGetter),
       mRawPitchBendGetter(rawPitchBendGetter),
       mpCapture(capture)
@@ -37,7 +39,7 @@ struct SystemSettingsApp :
     AlwaysEnabled
     };
 
-    BreathCalibrationSettingItem mBreath = {
+    UnipolarCalibrationSettingItem mBreath = {
       "Breath",
       Property<UnipolarMapping> {
         [](void* cap) { auto pThis = (SystemSettingsApp*)cap; UnipolarMapping ret = pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping; return ret; }, // getter
@@ -47,23 +49,16 @@ struct SystemSettingsApp :
       [](void* cap) {
         auto pThis = (SystemSettingsApp*)cap;
         return pThis->mRawBreathGetter(pThis->mpCapture);
-        //return pThis->mInput->mBreath.CurrentValue01();
       },
       this
     };
 
-// until we get REAL mappings, this is special cases per device.
-#ifdef BASSOONOID1
-    BreathCalibrationSettingItem mPitchBend = {
-      "Pitch bend",
+
+    UnipolarCalibrationSettingItem mPitchUp = {
+      "Pitch Up",
       Property<UnipolarMapping> {
-        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; UnipolarMapping ret = pThis->mAppSettings->mControlMappings[pThis->mJoyPitchMappingIndex].mNPolarMapping.Unipolar(); return ret; }, // getter
-        [](void* cap, const UnipolarMapping& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mControlMappings[pThis->mJoyPitchMappingIndex].mNPolarMapping.Unipolar() = x; },
-        this
-      },
-      Property<float> { // note on threshold... not relevent for pitch; for the moment just ignore it.
-        [](void* cap) { /*auto pThis = (SystemSettingsApp*)cap; */return 0.0f; }, // getter
-        [](void* cap, const float& x) { /*auto pThis = (SystemSettingsApp*)cap; */}, 
+        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; UnipolarMapping ret = pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping; return ret; }, // getter
+        [](void* cap, const UnipolarMapping& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping = x; },
         this
       },
       [](void* cap) {
@@ -72,22 +67,28 @@ struct SystemSettingsApp :
       },
       this
     };
-#endif
 
-#ifdef BASSOONOID1
-  ISettingItem* mArray[3] =
+    UnipolarCalibrationSettingItem mPitchDown = {
+      "Pitch Down",
+      Property<UnipolarMapping> {
+        [](void* cap) { auto pThis = (SystemSettingsApp*)cap; UnipolarMapping ret = pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping; return ret; }, // getter
+        [](void* cap, const UnipolarMapping& x) { auto pThis = (SystemSettingsApp*)cap; pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping = x; },
+        this
+      },
+      [](void* cap) {
+        auto pThis = (SystemSettingsApp*)cap;
+        return pThis->mRawPitchBendGetter(pThis->mpCapture);
+      },
+      this
+    };
+
+  ISettingItem* mArray[4] =
   {
     &mDimDisplay,
     &mBreath,
-    &mPitchBend,
+    &mPitchUp,
+    &mPitchDown,
   };
-#else
-  ISettingItem* mArray[2] =
-  {
-    &mDimDisplay,
-    &mBreath,
-  };
-#endif
 
   SettingsList mRootList = { mArray };
 

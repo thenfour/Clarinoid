@@ -328,6 +328,14 @@ namespace clarinoid
                                             this},
                                         AlwaysEnabled};
 
+        // there's a bit of a conflict here because it's defined as float but this is int.
+        IntSettingItem mPitchbendRange = {"Pitchbend range", NumericEditRangeSpec<int> { 0, 12},
+                                     Property<int>{
+                                         [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return (int)pThis->GetAppSettings()->mSynthSettings.mPitchBendRange; },
+                                         [](void *cap, const int &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetAppSettings()->mSynthSettings.mPitchBendRange = (float)v; },
+                                         this},
+                                     AlwaysEnabled};
+
         MultiSubmenuSettingItem mPatches = {
             [](void *cap) { return SYNTH_PRESET_COUNT; },
             [](void *cap, size_t n) {
@@ -343,12 +351,13 @@ namespace clarinoid
             (void *)this // capture
         };
 
-        ISettingItem *mArray[5] =
+        ISettingItem *mArray[6] =
             {
                 &mMasterGain,
                 &mGlobalSynthPreset,
                 &mTranspose,
                 &mReverbGain,
+                &mPitchbendRange,
                 &mPatches,
             };
         SettingsList mRootList = {mArray};
