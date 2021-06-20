@@ -80,7 +80,7 @@ struct AppSettings
   }
 };
 
-//static constexpr auto appsettingssize = sizeof(AppSettings);
+static constexpr auto appsettingssize = sizeof(AppSettings);
 //static constexpr auto rththth = sizeof(AppSettings::mControlMappings);
 
 

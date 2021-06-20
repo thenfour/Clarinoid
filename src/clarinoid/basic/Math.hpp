@@ -28,32 +28,6 @@ namespace clarinoid
     return (int)FloatRoundToInt(f) == n;
   }
 
-  // static float Lerp(float a, float b, float t)
-  // {
-  //   return a * (1.0f - t) + b * t;
-  // }
-
-  // remap so src min to max become [0-1]. results are NOT clamped.
-  // if min-max == 0, just return x to avoid bad behaviors
-  static float RemapTo01(float x, float xmin, float xmax)
-  {
-    if (FloatEquals(xmax - xmin, 0.0f))
-      return x;
-    x -= xmin;
-    x /= xmax - xmin;
-    return x;
-  }
-
-  // remap a 0-1 float val to a new min/max. no clamping performed anywhere so if the src is out of 0-1 range, the dest will be out of destMin-destMax range.
-  // if min-max == 0, just return x to avoid bad behaviors
-  static float Remap01ToRange(float x01, float destMin, float destMax)
-  {
-    if (FloatEquals(destMax - destMin, 0.0f))
-      return x01;
-    x01 *= destMax - destMin;
-    x01 += destMin;
-    return x01;
-  }
 
   static float Clamp(float x, float low, float hi)
   {
@@ -72,6 +46,43 @@ namespace clarinoid
     if (x >= maxInclusive)
       return maxInclusive;
     return x;
+  }
+
+  // static float Lerp(float a, float b, float t)
+  // {
+  //   return a * (1.0f - t) + b * t;
+  // }
+
+  // remap so src min to max become [0-1]. results are NOT clamped.
+  // if min-max == 0, just return x to avoid bad behaviors
+  // static float RemapTo01(float x, float xmin, float xmax)
+  // {
+  //   if (FloatEquals(xmax - xmin, 0.0f))
+  //     return x;
+  //   x -= xmin;
+  //   x /= xmax - xmin;
+  //   return x;
+  // }
+
+  // remap so src min to max become [0-1]. results are NOT clamped.
+  // if min-max == 0, just return x to avoid bad behaviors
+  static float RemapTo01Clamped(float x, float xmin, float xmax)
+  {
+    if (FloatEquals(xmax - xmin, 0.0f))
+      return x;
+    x -= xmin;
+    x /= xmax - xmin;
+    return Clamp(x, 0.0f, 1.0f);
+  }
+  // remap a 0-1 float val to a new min/max. no clamping performed anywhere so if the src is out of 0-1 range, the dest will be out of destMin-destMax range.
+  // if min-max == 0, just return x to avoid bad behaviors
+  static float Remap01ToRange(float x01, float destMin, float destMax)
+  {
+    if (FloatEquals(destMax - destMin, 0.0f))
+      return x01;
+    x01 *= destMax - destMin;
+    x01 += destMin;
+    return x01;
   }
 
   // this is all utilities for shaping curves using this style:
@@ -103,7 +114,7 @@ namespace clarinoid
         return 0;
       if (_x >= 1)
         return 1;
-      slope = clarinoid::Clamp(slope, -.999f, .999f);
+      slope = clarinoid::Clamp(slope, -.9999f, .9999f);
       float c = (2 / (1.0f - slope)) - 1;
       if (_x <= _p)
       {
@@ -159,9 +170,9 @@ namespace clarinoid
     float PerformMapping(float src) const
     {
       // remap src to 0-1 range.
-      float x = RemapTo01(src, mSrcMin, mSrcMax);
+      float x = RemapTo01Clamped(src, mSrcMin, mSrcMax);
       // apply curve
-      x = Curve2::Eval(x, mCurveP, mCurveS); // returns clamped.
+      x = Curve2::Eval(x, mCurveP, mCurveS);
       // remap 0-1 to dest
       x = Remap01ToRange(x, mDestMin, mDestMax);
       return x;
@@ -175,47 +186,47 @@ namespace clarinoid
   // looking at the whole source range,
   // |---------------------------------------------------------------|
   //    |neg_min------neg_max|-----|pos_min----------pos_max|
-  struct NPolarMapping
-  {
-    UnipolarMapping mNegative; // used for unipolar mapping.
-    UnipolarMapping mPositive;
+  // struct NPolarMapping
+  // {
+  //   UnipolarMapping mNegative; // used for unipolar mapping.
+  //   UnipolarMapping mPositive;
 
-    UnipolarMapping &Unipolar() { return mNegative; }
+  //   UnipolarMapping &Unipolar() { return mNegative; }
 
-    float PerformUnipolarMapping(float src) const
-    {
-      return mNegative.PerformMapping(src);
-    }
+  //   float PerformUnipolarMapping(float src) const
+  //   {
+  //     return mNegative.PerformMapping(src);
+  //   }
 
-    float PerformBipolarMapping(float src) const
-    {
-      // in fact it's not "bipolar" in any enforced sense. it's just 2 regions. if it's in the negative region, we use it.
-      // if it's in the positive region we use that.
-      // but you could in theory make overlapping regions or other nonsensical regions which here we just don't bother.
+  //   float PerformBipolarMapping(float src) const
+  //   {
+  //     // in fact it's not "bipolar" in any enforced sense. it's just 2 regions. if it's in the negative region, we use it.
+  //     // if it's in the positive region we use that.
+  //     // but you could in theory make overlapping regions or other nonsensical regions which here we just don't bother.
 
-      // determine which region to let evaluate this.
-      // if it's IN either range then it's clear.
-      if (mNegative.IsSrcInRegion(src))
-      {
-        return mNegative.PerformMapping(src);
-      }
-      if (mPositive.IsSrcInRegion(src))
-      {
-        return mPositive.PerformMapping(src);
-      }
+  //     // determine which region to let evaluate this.
+  //     // if it's IN either range then it's clear.
+  //     if (mNegative.IsSrcInRegion(src))
+  //     {
+  //       return mNegative.PerformMapping(src);
+  //     }
+  //     if (mPositive.IsSrcInRegion(src))
+  //     {
+  //       return mPositive.PerformMapping(src);
+  //     }
 
-      // so figure out if src is closer to the neg or positive region.
-      float negCenter = (mNegative.mSrcMin + mNegative.mSrcMax) / 2;
-      float posCenter = (mPositive.mSrcMin + mPositive.mSrcMax) / 2;
-      float distToNeg = fabs(src - negCenter);
-      float distToPos = fabs(src - posCenter);
-      if (distToNeg < distToPos)
-      {
-        return mNegative.PerformMapping(src);
-      }
-      return mPositive.PerformMapping(src);
-    }
-  };
+  //     // so figure out if src is closer to the neg or positive region.
+  //     float negCenter = (mNegative.mSrcMin + mNegative.mSrcMax) / 2;
+  //     float posCenter = (mPositive.mSrcMin + mPositive.mSrcMax) / 2;
+  //     float distToNeg = fabs(src - negCenter);
+  //     float distToPos = fabs(src - posCenter);
+  //     if (distToNeg < distToPos)
+  //     {
+  //       return mNegative.PerformMapping(src);
+  //     }
+  //     return mPositive.PerformMapping(src);
+  //   }
+  // };
 
   template <typename T, T divisor>
   void DivRem(T val, T &wholeParts, T &remainder)

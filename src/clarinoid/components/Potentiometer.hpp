@@ -25,6 +25,7 @@ struct AnalogPinControl :
   {
     int32_t a = analogRead(mPin);
     mValue01 = (float)a / 1024.0f;
+    //log(String("pitch: ") + a + " -> " + mValue01);
   }
 
   virtual float CurrentValue01() const override {

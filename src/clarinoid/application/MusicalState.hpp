@@ -8,7 +8,8 @@
 namespace clarinoid
 {
 
-  struct CCEWIMusicalState
+  struct CCEWIMusicalState : 
+    IModulationSourceSource
   {
     AppSettings *mAppSettings;
     InputDelegator *mInput;
@@ -23,9 +24,12 @@ namespace clarinoid
     LooperAndHarmonizer mLooper;
     CCEWIMIDIOut mMidiOut;
 
-    // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate. sounds fine today though.
-    SimpleMovingAverage<8> mCurrentBreath01;
-    SimpleMovingAverage<8> mCurrentPitchN11;
+    // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate because of variations in timing. sounds fine today though.
+    // BALANCE!
+    // - too many samples: you lose attack and things are sluggish
+    // - too few samples: noisy
+    SimpleMovingAverage<6> mCurrentBreath01;
+    SimpleMovingAverage<6> mCurrentPitchN11;
 
     SwitchControlReader mLoopGoReader;
     SwitchControlReader mLoopStopReader;
@@ -58,6 +62,24 @@ namespace clarinoid
       this->mCurrentBreath01.Update(0);
       this->mCurrentPitchN11.Update(0);
     }
+
+    virtual float GetCurrentModulationSourceValue(ModulationSource src) override {
+        switch (src) {
+        case ModulationSource::Breath:
+            return mCurrentBreath01.GetValue();
+        case ModulationSource::PitchBend:
+            return mCurrentPitchN11.GetValue();            
+        case ModulationSource::MidiNote:
+            return mLastPlayedNote;
+        case ModulationSource::None:
+            return 0;
+        default:
+            log("Mapping not supported.");
+            return 0;
+        }
+        return 0;
+    }
+
 
     void Update()
     {

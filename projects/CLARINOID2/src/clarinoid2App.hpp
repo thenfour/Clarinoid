@@ -42,6 +42,7 @@ namespace clarinoid
     struct Clarinoid2App : ILEDDataProvider
     {
         static constexpr size_t breathMappingIndex = 0;
+        static constexpr size_t pitchMappingIndex = 1;
 
         Clarinoid2LedsTask mLed;
         InputDelegator mInputDelegator;
@@ -64,7 +65,7 @@ namespace clarinoid
                           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
                           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
                           mSystemSettingsApp(
-                              mDisplay, breathMappingIndex, 0/*joyPitchMappingIndex - not used for clarinoid2 */,
+                              mDisplay, breathMappingIndex, pitchMappingIndex/*joyPitchMappingIndex - not used for clarinoid2 */,
                               [](void *cap) { // raw breath value getter
                                   Clarinoid2App *pThis = (Clarinoid2App *)cap;
                                   return pThis->mControlMapper.mBreath.CurrentValue01();
@@ -99,6 +100,7 @@ namespace clarinoid
             // initialize some settings.
             mAppSettings.mTranspose = 12;
             mAppSettings.mSynthSettings.mReverbGain = 0.25f;
+            mAppSettings.mSynthSettings.mPitchBendRange = 0.0f;
 
             TouchKeyMonitorApp mLHKeysMonitor(mDisplay, mControlMapper.mLHMPR, "LH Keys Monitor", 0, 10);
             TouchKeyMonitorApp mRHKeysMonitor(mDisplay, mControlMapper.mRHMPR, "RH Keys Monitor", 0, 4);
@@ -117,12 +119,15 @@ namespace clarinoid
 
             mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
-            size_t im = 0;
+            mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.10f, 0.5f);
+            mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
+            mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0;
 
-            mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::UnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.10f, 0.5f);
-            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveP = 0.50f;
-            mAppSettings.mControlMappings[breathMappingIndex].mNPolarMapping.Unipolar().mCurveS = 0;
-            CCASSERT(im == breathMappingIndex);
+            mAppSettings.mControlMappings[pitchMappingIndex] = ControlMapping::MakeUnipolarMapping(PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);
+            mAppSettings.mControlMappings[pitchMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
+            mAppSettings.mControlMappings[pitchMappingIndex].mUnipolarMapping.mCurveS = 0;
+
+            size_t im = pitchMappingIndex + 1;
 
             mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
             mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
@@ -159,18 +164,6 @@ namespace clarinoid
             mMusicalStateTask.Init();
 
             Wire1.setClock(400000); // use high speed mode. default speed = 100k
-
-            // for (int i = 0; i < 4; ++ i) {
-            //     mAppSettings.mLHKeyTouchThresholds[i] = 12;
-            //     mAppSettings.mRHKeyTouchThresholds[i] = 12;
-            //     mAppSettings.mLHKeyTouchThresholds[i] = 6;
-            //     mAppSettings.mRHKeyTouchThresholds[i] = 6;
-            // }
-
-            // for (int i = 0; i < 6; ++ i) {
-            //     mAppSettings.mOctKeyTouchThresholds[i] = 12;
-            //     mAppSettings.mOctKeyReleaseThresholds[i] = 6;
-            // }
 
             FunctionTask mDisplayTask1{this, [](void *cap) {
                                            Clarinoid2App *pThis = (Clarinoid2App *)cap;

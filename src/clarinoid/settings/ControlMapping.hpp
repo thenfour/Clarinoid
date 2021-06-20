@@ -59,7 +59,7 @@ namespace clarinoid
         {
           Passthrough,            // can be used as a "nop", or things like mapping a button input to a bool function
           RemapUnipolar,          // map the source value with {min,max} => float01
-          RemapBipolar,           // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11
+          //RemapBipolar,           // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11
           DeltaWithScale,// for encoders scrolling for example. if you just "set" the value, then it would interfere. it's more accurate like this.
           TriggerUpValue,         // when trigger up condition is met, set dest value to X.
           TriggerDownValue,         // when trigger down condition is met, set dest value to X.
@@ -86,7 +86,8 @@ namespace clarinoid
         float mTriggerBelowValue = 0.5f;
         float mTriggerAboveValue = 0.5f;
 
-        NPolarMapping mNPolarMapping;
+        //NPolarMapping mNPolarMapping;
+        UnipolarMapping mUnipolarMapping;
 
         float mDeltaScale = 1.0f; // for delta operators.
 
@@ -134,16 +135,16 @@ namespace clarinoid
                 return true;
             case MapStyle::RemapUnipolar: // map the source value with {min,max} => float01. breath would use this.
             {
-              float f = mNPolarMapping.PerformUnipolarMapping(mReader.GetCurrentFloatValue01());
+              float f = mUnipolarMapping.PerformMapping(mReader.GetCurrentFloatValue01());
               out = ControlValue::FloatValue(f);
               return true;
             }
-            case MapStyle::RemapBipolar: // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11. think pitch bend with positive & negative regions.
-            {
-              float f = mNPolarMapping.PerformBipolarMapping(mReader.GetCurrentFloatValue01());
-              out = ControlValue::FloatValue(f);
-              return true;
-            }
+            // case MapStyle::RemapBipolar: // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11. think pitch bend with positive & negative regions.
+            // {
+            //   float f = mNPolarMapping.PerformBipolarMapping(mReader.GetCurrentFloatValue01());
+            //   out = ControlValue::FloatValue(f);
+            //   return true;
+            // }
             case MapStyle::DeltaWithScale:
               out = ControlValue::FloatValue(this->mDeltaScale * mReader.GetFloatDelta());
               return true;
@@ -236,14 +237,14 @@ namespace clarinoid
             return ret;
         }
 
-        static ControlMapping UnipolarMapping(PhysicalControl source, Function d, float srcMin, float srcMax, float destMin = 0.0f, float destMax = 1.0f)
+        static ControlMapping MakeUnipolarMapping(PhysicalControl source, Function d, float srcMin, float srcMax, float destMin = 0.0f, float destMax = 1.0f)
         {
             ControlMapping ret;
             ret.mSource = source;
             ret.mFunction = d;
             ret.mStyle = MapStyle::RemapUnipolar;
             ret.mOperator = Operator::Set;
-            ret.mNPolarMapping.mNegative = clarinoid::UnipolarMapping { srcMin, srcMax, destMin, destMax, 0.5f, 0.0f };
+            ret.mUnipolarMapping = clarinoid::UnipolarMapping { srcMin, srcMax, destMin, destMax, 0.5f, 0.0f };
             return ret;
         }
     };

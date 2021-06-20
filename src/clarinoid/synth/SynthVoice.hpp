@@ -73,10 +73,12 @@ https://www.pjrc.com/teensy/gui/index.html
     SynthPreset *mPreset = nullptr;
 
     AppSettings *mAppSettings;
+    IModulationSourceSource* mModulationSourceSource;
 
-    void EnsurePatchConnections(AppSettings *appSettings)
+    void EnsurePatchConnections(AppSettings *appSettings, IModulationSourceSource* modulationSourceSource)
     {
       mAppSettings = appSettings;
+      mModulationSourceSource = modulationSourceSource;
 
       mPatchOsc1ToMix.connect();
       mPatchOsc2ToMix.connect();
@@ -101,21 +103,34 @@ https://www.pjrc.com/teensy/gui/index.html
       return filterFreq;
     }
 
+    float GetModulatedValue(float baseOutpVal /* in dest range */, ModulationDestination destType) {
+      float ret = baseOutpVal;
+      for (const SynthModulationSpec& modSpec : mPreset->mModulations) {
+        if (modSpec.mDest != destType) continue;
+        float srcVal = mModulationSourceSource->GetCurrentModulationSourceValue(modSpec.mSource);
+        ret += modSpec.mCurveSpec.PerformMapping(srcVal);
+      }
+      return ret;
+    }
+
     void Update(const MusicalVoice &mv)
     {
       mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatch);
+      auto transition = CalculateTransitionEvents(mRunningVoice, mv);
       bool voiceOrPatchChanged = (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatch != mv.mSynthPatch);
-      if (voiceOrPatchChanged)
+      if (voiceOrPatchChanged || transition.mNeedsNoteOff)
       {
         mOsc.removeNote();
-        mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
+      }
+      if (voiceOrPatchChanged || transition.mNeedsNoteOn) {
+        mOsc.addNote(); // this also engages portamento
       }
 
       if (mv.IsPlaying())
       {
-        mOsc.amplitude(1, mPreset->mOsc1Gain);
-        mOsc.amplitude(2, mPreset->mOsc2Gain);
-        mOsc.amplitude(3, mPreset->mOsc3Gain);
+        mOsc.amplitude(1, GetModulatedValue(mPreset->mOsc1Gain, ModulationDestination::Osc1Volume));
+        mOsc.amplitude(2, GetModulatedValue(mPreset->mOsc2Gain, ModulationDestination::Osc2Volume));
+        mOsc.amplitude(3, GetModulatedValue(mPreset->mOsc3Gain, ModulationDestination::Osc3Volume));
       }
       else
       {
@@ -124,18 +139,8 @@ https://www.pjrc.com/teensy/gui/index.html
         mOsc.amplitude(3, 0.0);
       }
 
-      auto transition = CalculateTransitionEvents(mRunningVoice, mv);
-      if (transition.mNeedsNoteOn)
-      {
-        mOsc.addNote(); // this enables portamento. we never need to do note-offs because this synth just plays a continuous single note.
-      }
-      else if (transition.mNeedsNoteOff)
-      {
-        mOsc.removeNote();
-      }
-
       // update
-      float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * pitchBendRange;
+      float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * mAppSettings->mSynthSettings.mPitchBendRange;
 
       mOsc.portamentoTime(1, mPreset->mPortamentoTime);
       mOsc.portamentoTime(2, mPreset->mPortamentoTime);
@@ -145,9 +150,9 @@ https://www.pjrc.com/teensy/gui/index.html
       mOsc.waveform(2, (uint8_t)mPreset->mOsc2Waveform);
       mOsc.waveform(3, (uint8_t)mPreset->mOsc3Waveform);
 
-      mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
-      mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
-      mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
+      mOsc.pulseWidth(1, GetModulatedValue(mPreset->mOsc1PulseWidth, ModulationDestination::Osc1PulseWidth));
+      mOsc.pulseWidth(2, GetModulatedValue(mPreset->mOsc2PulseWidth, ModulationDestination::Osc2PulseWidth));
+      mOsc.pulseWidth(3, GetModulatedValue(mPreset->mOsc3PulseWidth, ModulationDestination::Osc3PulseWidth));
 
       mOsc.frequency(1, MIDINoteToFreq(midiNote + mPreset->mOsc1PitchFine + mPreset->mOsc1PitchSemis - mPreset->mDetune));
       mOsc.frequency(3, MIDINoteToFreq(midiNote + mPreset->mOsc3PitchFine + mPreset->mOsc3PitchSemis + mPreset->mDetune));
@@ -223,7 +228,7 @@ https://www.pjrc.com/teensy/gui/index.html
     AppSettings *mAppSettings;
     Metronome *mMetronome;
 
-    void Setup(AppSettings *appSettings, Metronome *metronome)
+    void Setup(AppSettings *appSettings, Metronome *metronome, IModulationSourceSource* modulationSourceSource)
     {
       //AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
       AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
@@ -235,14 +240,14 @@ https://www.pjrc.com/teensy/gui/index.html
       // last in the initialization order. Here's a workaround to force them to connect.
       for (auto &v : gVoices)
       {
-        v.EnsurePatchConnections(appSettings);
+        v.EnsurePatchConnections(appSettings, modulationSourceSource);
       }
 
       //CCSynthGraph::audioShield.enable();
       //CCSynthGraph::audioShield.volume(.9); // headphone vol
       CCSynthGraph::ampLeft.gain(1);
       //CCSynthGraph::ampRight.gain(.9);
-      delay(300); // why?
+      //delay(100); // why?
 
       CCSynthGraph::metronomeEnv.delay(0);
       CCSynthGraph::metronomeEnv.attack(0);

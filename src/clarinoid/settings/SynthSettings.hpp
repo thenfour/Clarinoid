@@ -55,6 +55,106 @@ namespace clarinoid
 
 
 
+
+  enum class ModulationSource : uint8_t {
+    None,
+    Breath,
+    PitchBend,
+    MidiNote,
+    LFO1,
+    LFO2,
+    ENV1,
+    ENV2,
+  };
+
+    EnumItemInfo<ModulationSource> gModulationSourceItems[8] = {
+      {ModulationSource::None, "None"},
+      {ModulationSource::Breath, "Breath"},
+      {ModulationSource::PitchBend, "PitchBend"},
+      {ModulationSource::MidiNote, "MidiNote"},
+      {ModulationSource::LFO1, "LFO1"},
+      {ModulationSource::LFO2, "LFO2"},
+      {ModulationSource::ENV1, "ENV1"},
+      {ModulationSource::ENV2, "ENV2"},
+  };
+
+  EnumInfo<ModulationSource> gModulationSourceInfo("ModSource", gModulationSourceItems);
+
+  struct IModulationSourceSource {
+    virtual float GetCurrentModulationSourceValue(ModulationSource src) = 0;
+  };
+
+
+  enum class ModulationDestination : uint8_t {
+    None,
+    VoicePitchBend,
+    VoiceFilterCutoff,
+    VoiceFilterQ,
+    VoiceFilterSaturation,
+    VoiceVolume,
+    LFO1Rate,
+    LFO2Rate,
+    ENV1Delay,
+    ENV1Attack,
+    ENV1Decay,
+    ENV1Sustain,
+    ENV1Release,
+    ENV2Delay,
+    ENV2Attack,
+    ENV2Decay,
+    ENV2Sustain,
+    ENV2Release,
+    Osc1Pitch,
+    Osc2Pitch,
+    Osc3Pitch,
+    Osc1PulseWidth,
+    Osc2PulseWidth,
+    Osc3PulseWidth,
+    Osc1Volume,
+    Osc2Volume,
+    Osc3Volume,
+  };
+
+    EnumItemInfo<ModulationDestination> gModulationDestinationItems[27] = {
+      {ModulationDestination::None, "None"},
+      {ModulationDestination::VoicePitchBend, "VoicePitchBend"},
+      {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
+      {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
+      {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
+      {ModulationDestination::VoiceVolume, "VoiceVolume"},
+      {ModulationDestination::LFO1Rate, "LFO1Rate"},
+      {ModulationDestination::LFO2Rate, "LFO2Rate"},
+      {ModulationDestination::ENV1Delay, "ENV1Delay"},
+      {ModulationDestination::ENV1Attack, "ENV1Attack"},
+      {ModulationDestination::ENV1Decay, "ENV1Decay"},
+      {ModulationDestination::ENV1Sustain, "ENV1Sustain"},
+      {ModulationDestination::ENV1Release, "ENV1Release"},
+      {ModulationDestination::ENV2Delay, "ENV2Delay"},
+      {ModulationDestination::ENV2Attack, "ENV2Attack"},
+      {ModulationDestination::ENV2Decay, "ENV2Decay"},
+      {ModulationDestination::ENV2Sustain, "ENV2Sustain"},
+      {ModulationDestination::ENV2Release, "ENV2Release"},
+      {ModulationDestination::Osc1Pitch, "Osc1Pitch"},
+      {ModulationDestination::Osc2Pitch, "Osc2Pitch"},
+      {ModulationDestination::Osc3Pitch, "Osc3Pitch"},
+      {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
+      {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
+      {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
+      {ModulationDestination::Osc1Volume, "Osc1Volume"},
+      {ModulationDestination::Osc2Volume, "Osc2Volume"},
+      {ModulationDestination::Osc3Volume, "Osc3Volume"},
+  };
+
+  EnumInfo<ModulationDestination> gModulationDestinationInfo("ModDest", gModulationDestinationItems);
+
+
+  struct SynthModulationSpec {
+    ModulationSource mSource = ModulationSource::None;
+    ModulationDestination mDest = ModulationDestination::None;
+    UnipolarMapping mCurveSpec;
+  };
+
+
   struct SynthPreset
   {
     String mName;
@@ -92,15 +192,18 @@ namespace clarinoid
     float mFilterMinFreq = 0.0f;
     float mFilterSaturation = 0.2f;
     float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect applied (low notes get higher freq cutoff)
+
+    SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
   };
+
+  static constexpr auto synthpatchsize = sizeof(SynthPreset);
 
   struct SynthSettings
   {
     SynthPreset mPresets[SYNTH_PRESET_COUNT];
     float mReverbGain = 0.0f;
     float mMasterGain = 1.0f;
-
-
+    float mPitchBendRange = 2.0f;
 
     static void InitClarinoid2Preset(SynthPreset& p, const char* name, ClarinoidFilterType filt, float filterKeyScaling, float q, float filterMaxFreq)
     {
@@ -234,23 +337,6 @@ namespace clarinoid
       InitDetunedLeadPreset("Detuned tri 50", OscWaveformShape::VarTriangle, 0.5f, mPresets[i++]);
       InitFifthLeadPresetA(mPresets[i++]);
       InitFifthLeadPresetB(mPresets[i++]);
-
-      // InitClarinoid2Preset(mPresets[i++], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 10000);
-      // InitClarinoid2Preset(mPresets[i++], "Diode-ks7-q0", ClarinoidFilterType::LP_Diode, 0.7f, 0.0f, 10000);
-      // InitClarinoid2Preset(mPresets[i++], "Diode-ks9-q15", ClarinoidFilterType::LP_Diode, 0.9f, 0.15f, 10000);
-      // InitClarinoid2Preset(mPresets[i++], "Diode-ks9-q0", ClarinoidFilterType::LP_Diode, 0.9f, 0.0f, 10000);
-
-      // InitClarinoid2Preset(mPresets[i++], "Moog-ks7-q15", ClarinoidFilterType::LP_Moog4, 0.7f, 0.15f, 8000);
-      // InitClarinoid2Preset(mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f, 8000);
-      // InitClarinoid2Preset(mPresets[i++], "Moog-ks9-q15", ClarinoidFilterType::LP_Moog4, 0.9f, 0.15f, 8000);
-      // InitClarinoid2Preset(mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f, 8000);
-
-      // InitClarinoid2Preset(mPresets[i++], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);
-      // InitClarinoid2Preset(mPresets[i++], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f, 750);
-      // InitClarinoid2Preset(mPresets[i++], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f, 750);
-      // InitClarinoid2Preset(mPresets[i++], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f, 750);
-
-      //mPresets[i++].mName = "Sync";
     }    
   };
 

@@ -21,7 +21,6 @@ struct MusicalStateTask :
     CCEWIMusicalState mMusicalState;
     CCSynth mSynth;
     ScaleFollower mScaleFollower;
-    // MIDI here too eventually.
 
     // for timing subtasks
     SimpleMovingAverage<15> mInputTiming;
@@ -39,7 +38,7 @@ struct MusicalStateTask :
 
     void Init()
     {
-        mSynth.Init(mAppSettings, &mMetronome);
+        mSynth.Init(mAppSettings, &mMetronome, &mMusicalState);
     }
 
     virtual void TaskRun() override

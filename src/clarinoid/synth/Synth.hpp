@@ -24,11 +24,11 @@ namespace clarinoid
     AppSettings *mAppSettings;
     Metronome *mMetronome;
 
-    void Init(AppSettings *appSettings, Metronome *metronome)
+    void Init(AppSettings *appSettings, Metronome *metronome, IModulationSourceSource* modulationSourceSource)
     {
       mAppSettings = appSettings;
       mMetronome = metronome;
-      gSynthGraphControl.Setup(appSettings, metronome);
+      gSynthGraphControl.Setup(appSettings, metronome, modulationSourceSource);
     }
 
     // returns a voice that's either already assigned to this voice, or the best one to free up for it.
