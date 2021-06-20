@@ -146,6 +146,9 @@ struct Harmonizer
       case HarmSynthPresetRefType::Preset3:
         pout->mSynthPatch = preset.mSynthPreset3;
         break;
+      case HarmSynthPresetRefType::Preset4:
+        pout->mSynthPatch = preset.mSynthPreset4;
+        break;
       case HarmSynthPresetRefType::Voice:
         pout->mSynthPatch = hv.mVoiceSynthPreset;
         break;

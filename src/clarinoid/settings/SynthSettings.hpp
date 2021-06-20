@@ -320,11 +320,91 @@ namespace clarinoid
       p.mFilterKeytracking = 0.0f;
     }
 
+    static void InitHarmSyncLead(SynthPreset& p)
+    {
+      p.mName = "Sync for Harm";
+      p.mOsc1Gain = 0.0f;
+      p.mOsc3Gain = 0.0f;
+
+      p.mOsc2Gain = .35f;
+      p.mOsc3Gain = .35f;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 15000.0f;
+      p.mFilterSaturation = 0;
+      p.mFilterQ = 0.25f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
+    static void InitHarmTriLead(SynthPreset& p)
+    {
+      p.mName = "Tri for Harm";
+      p.mOsc1Gain = 0.0f;
+      p.mOsc3Gain = 0.0f;
+
+      p.mOsc2Waveform = OscWaveformShape::VarTriangle;
+      p.mOsc2Gain = .40f;
+      p.mOsc2PulseWidth = 0.5f;
+      p.mSync = false;
+      p.mDetune = 0.0f;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 15000.0f;
+      p.mFilterSaturation = 0;
+      p.mFilterQ = 0.1f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
+    static void InitHarmPulseLead(SynthPreset& p)
+    {
+      p.mName = "Pulse for Harm";
+      p.mOsc1Gain = 0.0f;
+      p.mOsc3Gain = 0.0f;
+
+      p.mOsc2Waveform = OscWaveformShape::Pulse;
+      p.mOsc2Gain = .40f;
+      p.mOsc2PulseWidth = 0.07f;
+      p.mSync = false;
+      p.mDetune = 0.0f;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 15000.0f;
+      p.mFilterSaturation = 0;
+      p.mFilterQ = 0.1f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
+    static void InitHarmSawLead(SynthPreset& p)
+    {
+      p.mName = "Saw for Harm";
+      p.mOsc1Gain = 0.0f;
+      p.mOsc3Gain = 0.0f;
+
+      p.mOsc2Waveform = OscWaveformShape::SawSync;
+      p.mOsc2Gain = .40f;
+      p.mSync = false;
+      p.mDetune = 0.0f;
+
+      p.mFilterType = ClarinoidFilterType::LP_Moog4;
+      p.mFilterMinFreq = 0.0f;
+      p.mFilterMaxFreq = 15000.0f;
+      p.mFilterSaturation = 0;
+      p.mFilterQ = 0.0f;
+      p.mFilterKeytracking = 0.0f;
+    }
+
     SynthSettings()
     {
       mPresets[0].mName = "Sync Lead"; // default.
 
       size_t i = 1; // 0 = default = sync
+      InitHarmSyncLead(mPresets[i++]); // 1 // harm-friendly sync
+      InitHarmTriLead(mPresets[i++]); // 2 // harm-friendly tri
+      InitHarmPulseLead(mPresets[i++]); // 3 // harm-friendly pulse
+      InitHarmSawLead(mPresets[i++]); // 4 // harm-friendly saw
       InitBasicLeadPreset("One Saw", OscWaveformShape::SawSync, 0.5f, mPresets[i++]);
       InitBasicLeadPreset("One Tri", OscWaveformShape::VarTriangle, 0.5f, mPresets[i++]);
       InitBasicLeadPreset("One Pulse 8%", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);

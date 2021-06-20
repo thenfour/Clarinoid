@@ -73,14 +73,16 @@ enum class HarmSynthPresetRefType : uint8_t
   Preset1, // at the preset level i can imagine setting a bass, comp, fx synth presets. they can be used for multiple layers then.
   Preset2,
   Preset3,
+  Preset4,
   Voice
 };
 
-EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[5] = {
+EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[6] = {
   { HarmSynthPresetRefType::Global, "Global" },
   { HarmSynthPresetRefType::Preset1, "Preset1" },
   { HarmSynthPresetRefType::Preset2, "Preset2" },
   { HarmSynthPresetRefType::Preset3, "Preset3" },
+  { HarmSynthPresetRefType::Preset4, "Preset4" },
   { HarmSynthPresetRefType::Voice, "Voice" },
 };
 
@@ -122,9 +124,10 @@ struct HarmPreset
   bool mEmitLiveNote = true;
   HarmVoiceSettings mVoiceSettings[HARM_VOICES];
   uint32_t mMinRotationTimeMS = 150;
-  uint16_t mSynthPreset1 = 0;
-  uint16_t mSynthPreset2 = 1;
-  uint16_t mSynthPreset3 = 2;
+  uint16_t mSynthPreset1 = 1; // harm-friendly sync
+  uint16_t mSynthPreset2 = 2; // harm-friendly tri
+  uint16_t mSynthPreset3 = 3; // harm-friendly pulse
+  uint16_t mSynthPreset4 = 4; // harm-friendly saw
 };
 
 struct HarmSettings
@@ -134,13 +137,24 @@ struct HarmSettings
 
   HarmSettings() 
   {
-    mPresets[1].mName = "sample";
+    mPresets[1].mName = "Big";
+    mPresets[1].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
     mPresets[1].mVoiceSettings[0].mSequenceLength = 1;
-    mPresets[1].mVoiceSettings[0].mSequence[0] = -2;
+    mPresets[1].mVoiceSettings[0].mSequence[0] = -7;
+    mPresets[1].mVoiceSettings[0].mMaxOutpNote = 80;
+    mPresets[1].mVoiceSettings[0].mMinOutpNote = 40;
 
-    mPresets[1].mVoiceSettings[1].mSequenceLength = 2;
-    mPresets[1].mVoiceSettings[1].mSequence[0] = -3;
-    mPresets[1].mVoiceSettings[1].mSequence[1] = -4;
+    mPresets[1].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+    mPresets[1].mVoiceSettings[1].mSequenceLength = 1;
+    mPresets[1].mVoiceSettings[1].mSequence[0] = -11;
+    mPresets[1].mVoiceSettings[1].mMaxOutpNote = 80;
+    mPresets[1].mVoiceSettings[1].mMinOutpNote = 40;
+
+    mPresets[1].mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+    mPresets[1].mVoiceSettings[2].mSequenceLength = 2;
+    mPresets[1].mVoiceSettings[2].mMaxOutpNote = 40;
+    mPresets[1].mVoiceSettings[2].mSequence[0] = -4;
+    mPresets[1].mVoiceSettings[2].mSequence[0] = -9;
 
     mPresets[2].mName = "maj inv2";
     mPresets[2].mVoiceSettings[0].mSequenceLength = 1;

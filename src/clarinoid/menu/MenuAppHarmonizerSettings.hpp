@@ -331,6 +331,21 @@ struct HarmPatchSettingsApp {
       },
       AlwaysEnabled};
 
+  IntSettingItem mSynthPreset4 = {
+      "Synth preset 4", NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
+      Property<int>{
+          [](void *cap) {
+            auto *pThis = (HarmPatchSettingsApp *)cap;
+            return (int)pThis->EditingPreset().mSynthPreset4;
+          }, // getter
+          [](void *cap, const int &val) {
+            auto *pThis = (HarmPatchSettingsApp *)cap;
+            pThis->EditingPreset().mSynthPreset4 = val;
+          },   // setter
+          this // capture val
+      },
+      AlwaysEnabled};
+
   // typename cc::function<SettingsList*(void*,size_t)>::ptr_t pGetSubmenu,
   // typename cc::function<bool(void*,size_t)>::ptr_t isEnabled, void* capture)
   // :
@@ -351,9 +366,9 @@ struct HarmPatchSettingsApp {
       [](void *cap, size_t mi) { return true; }, // is enabled
       this};                                     // capture
 
-  ISettingItem *mArray[6] = {
+  ISettingItem *mArray[7] = {
       &mEmitLiveNote, &mMinRotationTimeMS, &mSynthPreset1,
-      &mSynthPreset2, &mSynthPreset3,      &mVoiceSubmenu,
+      &mSynthPreset2, &mSynthPreset3, &mSynthPreset4,     &mVoiceSubmenu,
   };
   SettingsList mRootList = {mArray};
 };
