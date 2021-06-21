@@ -12,6 +12,7 @@
 
 #include "Patch.hpp"
 #include "FilterNode.hpp"
+#include "PannerNode.hpp"
 
 namespace clarinoid
 {
@@ -27,41 +28,41 @@ https://www.pjrc.com/teensy/gui/index.html
 
 
 
-
 // GUItool: begin automatically generated code
-AudioMixer4              voiceMix2;      //xy=322.9147529602051,696.9999820971861
-AudioMixer4              voiceMix4;      //xy=329.9147529602051,871.9999820971861
-AudioMixer4              voiceMix1;      //xy=331.9147529602051,622.9999820971861
-AudioMixer4              voiceMix3;      //xy=338.9147529602051,786.9999820971861
-AudioMixer4              voiceMixOutp;   //xy=551.9147415161133,673.9999055862427
-AudioMixer4              delayInputMixerLeft;         //xy=826.369384765625,238.00558948516846
-AudioMixer4              delayInputMixerRight; //xy=860.5513305664062,516.0056533813477
-AudioAmplifier           delayFeedbackAmpLeft;           //xy=899.3691177368164,93.00562858581543
-AudioAmplifier           delayFeedbackAmpRight; //xy=956.5510635375977,378.00558853149414
-AudioEffectDelay         delayLeft;         //xy=997.3692092895508,238.00556564331055
-AudioEffectDelay         delayRight; //xy=1039.5512008666992,516.0056304931641
-AudioMixer4              waveMixerLeft;      //xy=1362.914695739746,655.9999465942383
-AudioMixer4              waveMixerRight; //xy=1367.3693618774414,733.0056781768799
-AudioMixer4              verbInputMixer;         //xy=1583.3691940307617,534.0056552886963
-AudioSynthWaveformSine   metronomeOsc;   //xy=1628.9147644042969,947.9999897265807
-AudioEffectFreeverbStereo verb;           //xy=1742.9141845703125,524.9999160766602
-AudioEffectEnvelope      metronomeEnv;   //xy=1829.9147644042969,949.9999897265807
-AudioAmplifier           verbWetAmpLeft; //xy=1901.914405822754,505.9999418258667
-AudioAmplifier           verbWetAmpRight; //xy=1908.9144248962402,543.9999570846558
-AudioMixer4              postMixerLeft;  //xy=2083.914764404297,732.9999897265807
-AudioMixer4              postMixerRight; //xy=2085.914764404297,815.9999897265807
-AudioAmplifier           ampLeft;        //xy=2245.914810180664,733.0000047683716
-AudioAmplifier           ampRight;       //xy=2248.9147872924805,814.9999914169312
-AudioOutputI2S           i2s1;           //xy=2430.914936065674,766.9999485015869
-AudioAnalyzePeak         peak1;          //xy=2473.9147872924805,545.999963760376
-AudioConnection          patchCord1(voiceMix2, 0, voiceMixOutp, 1);
-AudioConnection          patchCord2(voiceMix4, 0, voiceMixOutp, 3);
-AudioConnection          patchCord3(voiceMix1, 0, voiceMixOutp, 0);
-AudioConnection          patchCord4(voiceMix3, 0, voiceMixOutp, 2);
-AudioConnection          patchCord5(voiceMixOutp, 0, waveMixerLeft, 1);
-AudioConnection          patchCord6(voiceMixOutp, 0, delayInputMixerLeft, 3);
-AudioConnection          patchCord7(voiceMixOutp, 0, delayInputMixerRight, 1);
-AudioConnection          patchCord8(voiceMixOutp, 0, waveMixerRight, 1);
+AudioMixer4              voiceMix2Left;      //xy=224.00569915771484,595.9999580383301
+AudioMixer4              voiceMix1Left;      //xy=225.0056915283203,527.9999923706055
+AudioMixer4              voiceMix2Right; //xy=230.0056915283203,782.0056762695312
+AudioMixer4              voiceMix1Right; //xy=231.00568389892578,714.0057106018066
+AudioMixer4              voiceMixOutpLeft;   //xy=436.00565338134766,559.9999732971191
+AudioMixer4              voiceMixOutpRight; //xy=442.0056457519531,746.0056915283203
+AudioMixer4              delayInputMixerLeft; //xy=734.0056915283203,230
+AudioMixer4              delayInputMixerRight; //xy=768.0056915283203,508
+AudioAmplifier           delayFeedbackAmpLeft; //xy=807.0056915283203,85
+AudioAmplifier           delayFeedbackAmpRight; //xy=864.0056915283203,370
+AudioEffectDelay         delayLeft;      //xy=905.0056915283203,230
+AudioEffectDelay         delayRight;     //xy=947.0056915283203,508
+AudioMixer4              waveMixerLeft;  //xy=1270.0056915283203,647
+AudioMixer4              waveMixerRight; //xy=1275.0056915283203,725
+AudioMixer4              verbInputMixer; //xy=1491.0056915283203,526
+AudioSynthWaveformSine   metronomeOsc;   //xy=1536.0056915283203,939
+AudioEffectFreeverbStereo verb;           //xy=1650.0056915283203,516
+AudioEffectEnvelope      metronomeEnv;   //xy=1737.0056915283203,941
+AudioAmplifier           verbWetAmpLeft; //xy=1809.0056915283203,497
+AudioAmplifier           verbWetAmpRight; //xy=1816.0056915283203,535
+AudioMixer4              postMixerLeft;  //xy=1991.0056915283203,724
+AudioMixer4              postMixerRight; //xy=1993.0056915283203,807
+AudioAmplifier           ampLeft;        //xy=2153.0056915283203,725
+AudioAmplifier           ampRight;       //xy=2156.0056915283203,806
+AudioOutputI2S           i2s1;           //xy=2338.0056915283203,758
+AudioAnalyzePeak         peak1;          //xy=2381.0056915283203,537
+AudioConnection          patchCord1(voiceMix2Left, 0, voiceMixOutpLeft, 1);
+AudioConnection          patchCord2(voiceMix1Left, 0, voiceMixOutpLeft, 0);
+AudioConnection          patchCord3(voiceMix2Right, 0, voiceMixOutpRight, 1);
+AudioConnection          patchCord4(voiceMix1Right, 0, voiceMixOutpRight, 0);
+AudioConnection          patchCord5(voiceMixOutpLeft, 0, waveMixerLeft, 1);
+AudioConnection          patchCord6(voiceMixOutpLeft, 0, delayInputMixerLeft, 3);
+AudioConnection          patchCord7(voiceMixOutpRight, 0, delayInputMixerRight, 1);
+AudioConnection          patchCord8(voiceMixOutpRight, 0, waveMixerRight, 1);
 AudioConnection          patchCord9(delayInputMixerLeft, delayLeft);
 AudioConnection          patchCord10(delayInputMixerRight, delayRight);
 AudioConnection          patchCord11(delayFeedbackAmpLeft, 0, delayInputMixerLeft, 0);
@@ -91,6 +92,9 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
 
   struct Voice
   {
+    //
+    // [mOsc] --> [mOscMixer] --> [mFilter] -> [panner]
+    //
     AudioBandlimitedOsci mOsc;
     CCPatch mPatchOsc1ToMix;
     CCPatch mPatchOsc2ToMix;
@@ -98,7 +102,12 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
     AudioMixer4 mOscMixer;     // mixes down the 3 oscillators
     CCPatch mPatchMixToFilter; // then into filter.
     ::clarinoid::FilterNode mFilter;
-    CCPatch mPatchOut;
+
+    CCPatch mPatchFilterToPanner;
+    ::clarinoid::PannerNode mPanner;
+
+    CCPatch mPatchOutLeft;
+    CCPatch mPatchOutRight;
 
     MusicalVoice mRunningVoice;
     SynthPreset *mPreset = nullptr;
@@ -115,7 +124,9 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
       mPatchOsc2ToMix.connect();
       mPatchOsc3ToMix.connect();
       mPatchMixToFilter.connect();
-      mPatchOut.connect();
+      mPatchFilterToPanner.connect();
+      mPatchOutLeft.connect();
+      mPatchOutRight.connect();
     }
 
     static float CalcFilterCutoffFreq(float breath01, float midiNote, float keyTrackingAmt, float freqMin, float freqMax)
@@ -210,6 +221,8 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
       mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
       mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);
 
+      mPanner.SetPan(mv.mPan + mPreset->mPan);
+
       mRunningVoice = mv;
     }
 
@@ -224,33 +237,25 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
       mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
     }
 
-    Voice(int16_t vid, AudioMixer4 &dest, int destPort) : mPatchOsc1ToMix(mOsc, 0, mOscMixer, 0),
+    Voice(int16_t vid, AudioMixer4 &destLeft, int destPortLeft, AudioMixer4 &destRight, int destPortRight) : mPatchOsc1ToMix(mOsc, 0, mOscMixer, 0),
                                                           mPatchOsc2ToMix(mOsc, 1, mOscMixer, 1),
                                                           mPatchOsc3ToMix(mOsc, 2, mOscMixer, 2),
                                                           mPatchMixToFilter(mOscMixer, 0, mFilter, 0),
-                                                          mPatchOut(mFilter, 0, dest, destPort) //,
+                                                          mPatchFilterToPanner(mFilter, 0, mPanner, 0),
+                                                          mPatchOutLeft(mPanner, 0, destLeft, destPortLeft),
+                                                          mPatchOutRight(mPanner, 1, destRight, destPortRight)
     {
     }
   };
 
   Voice gVoices[MAX_SYNTH_VOICES] =
       {
-          {0, CCSynthGraph::voiceMix1, 0},
-          {1, CCSynthGraph::voiceMix1, 1},
-          {2, CCSynthGraph::voiceMix1, 2},
-          {3, CCSynthGraph::voiceMix1, 3}, // 4
-          {4, CCSynthGraph::voiceMix2, 0},
-          {5, CCSynthGraph::voiceMix2, 1},
-          // { 6, CCSynthGraph::voiceMix2, 2 },
-          //{ 7, CCSynthGraph::voiceMix2, 3 }, // 8
-          //    { 8, mix3, 0 },
-          //    { 9, mix3, 1 },
-          //    { 10, mix3, 2 },
-          //    { 11, mix3, 3 }, // 12
-          //    { 12, mix4, 0 },
-          //    { 13, mix4, 1 },
-          //    { 14, mix4, 2 },
-          //    { 15, mix4, 3 },
+          {0, CCSynthGraph::voiceMix1Left, 0, CCSynthGraph::voiceMix1Right, 0},
+          {1, CCSynthGraph::voiceMix1Left, 1, CCSynthGraph::voiceMix1Right, 1},
+          {2, CCSynthGraph::voiceMix1Left, 2, CCSynthGraph::voiceMix1Right, 2},
+          {3, CCSynthGraph::voiceMix1Left, 3, CCSynthGraph::voiceMix1Right, 3}, // 4
+          {4, CCSynthGraph::voiceMix2Left, 0, CCSynthGraph::voiceMix2Right, 0},
+          {5, CCSynthGraph::voiceMix2Left, 1, CCSynthGraph::voiceMix2Right, 1},
   };
 
   struct SynthGraphControl

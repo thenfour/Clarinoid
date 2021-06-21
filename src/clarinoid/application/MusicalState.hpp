@@ -97,6 +97,7 @@ CCThrottlerT<600> mth;
 
       mNewState.mHarmPatch = mAppSettings->mGlobalHarmPreset;
       mNewState.mSynthPatch = mAppSettings->mGlobalSynthPreset;
+      mNewState.mPan = 0;// panning is part of musical state because harmonizer needs it per voice, but it's actually calculated by the synth based on synth preset.
 
       // if (mth.IsReady()) {
       //   //Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" + (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));

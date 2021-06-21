@@ -45,6 +45,13 @@ namespace clarinoid
                                                 this},
                                             AlwaysEnabled};
 
+        FloatSettingItem mPan = {"Pan", StandardRangeSpecs::gFloat_N1_1,
+                                      Property<float>{
+                                          [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mPan; },
+                                          [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mPan = v; },
+                                          this},
+                                      AlwaysEnabled};
+
         BoolSettingItem mSync = {"Sync", "On", "Off",
                                  Property<bool>{
                                      [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mSync; },
@@ -248,7 +255,7 @@ namespace clarinoid
   };
 
 
-        ISettingItem *mArray[30] =
+        ISettingItem *mArray[31] =
             {
                 &mBigSeparator,
                 &mBreathFiltType,
@@ -261,6 +268,7 @@ namespace clarinoid
                 &mDCCutoff,
                 &mDetune,
                 &mPortamentoTime,
+                &mPan,
                 &mSync,
                 &mSyncMultMin,
                 &mSyncMultMax,

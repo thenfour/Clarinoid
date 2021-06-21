@@ -40,6 +40,7 @@ struct MusicalVoice
   uint8_t mVelocity = 0;
   AnalogValue01<> mBreath01;
   AnalogValueN11<> mPitchBendN11;
+  float mPan = 0;
   int16_t mSynthPatch = 0;
   int16_t mHarmPatch = 0;
 };

@@ -296,6 +296,14 @@ struct HarmPatchSettingsApp {
       },
       AlwaysEnabled};
 
+        FloatSettingItem mStereoSeparation = {"Stereo Sep", StandardRangeSpecs::gFloat_0_1,
+                                            Property<float>{
+                                                [](void *cap) { auto* pThis = (HarmPatchSettingsApp*)cap; return pThis->EditingPreset().mStereoSeparation; },
+                                                [](void *cap, const float &v) { auto* pThis = (HarmPatchSettingsApp*)cap; pThis->EditingPreset().mStereoSeparation = v; },
+                                                this},
+                                            AlwaysEnabled};
+
+
   IntSettingItem mMinRotationTimeMS = {
       "Min Rotation MS", NumericEditRangeSpec<int>{0, 10000},
       Property<int>{
@@ -410,8 +418,8 @@ struct HarmPatchSettingsApp {
     this
   };
 
-  ISettingItem *mArray[8] = {
-      &mEmitLiveNote, &mMinRotationTimeMS, &mSynthPreset1,
+  ISettingItem *mArray[9] = {
+      &mEmitLiveNote, &mStereoSeparation, &mMinRotationTimeMS, &mSynthPreset1,
       &mSynthPreset2, &mSynthPreset3, &mSynthPreset4,     &mVoiceSubmenu,
       &mCopyPreset,
   };

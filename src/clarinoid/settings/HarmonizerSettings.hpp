@@ -143,6 +143,7 @@ struct HarmPreset
 {
   String mName = "<init>";
   bool mEmitLiveNote = true;
+  float mStereoSeparation = 0.1f; // spreads stereo signal of the voices.
   HarmVoiceSettings mVoiceSettings[HARM_VOICES];
   uint32_t mMinRotationTimeMS = 150;
   uint16_t mSynthPreset1 = 1; // harm-friendly sync

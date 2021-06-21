@@ -160,6 +160,8 @@ namespace clarinoid
   {
     String mName;
     float mPortamentoTime = 0.005f;
+    float mPan = 0;
+
     float mOsc1Gain = 0;
     float mOsc2Gain = ReasonableOscillatorGain;
     float mOsc3Gain = ReasonableOscillatorGain;
