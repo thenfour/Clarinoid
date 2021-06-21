@@ -24,37 +24,68 @@ https://www.pjrc.com/teensy/gui/index.html
 
 */
 
-    // GUItool: begin automatically generated code
-    AudioMixer4 voiceMix2;               //xy=787.2500190734863,825.0000057220459
-    AudioMixer4 voiceMix4;               //xy=794.7500190734863,1000.0000171661377
-    AudioMixer4 voiceMix1;               //xy=796.0000190734863,751.250020980835
-    AudioMixer4 voiceMix3;               //xy=803.5000267028809,915.0000076293945
-    AudioMixer4 voiceMixOutp;            //xy=1067.2500267028809,872.5000228881836
-    AudioMixer4 waveMixer;               //xy=1289.7500343322754,873.5000228881836
-    AudioEffectFreeverbStereo verb;      //xy=1459.50004196167,777.5000190734863
-    AudioSynthWaveformSine metronomeOsc; //xy=1478.0000381469727,964.5001258850098
-    AudioAmplifier verbWetAmpLeft;       //xy=1654.2500457763672,774.7500228881836
-    AudioEffectEnvelope metronomeEnv;    //xy=1679.0000457763672,966.0000286102295
-    AudioMixer4 postMixerLeft;           //xy=1942,885
-    AudioAmplifier ampLeft;              //xy=2151.5000648498535,891.2500267028809
-    AudioOutputI2S i2s1;                 //xy=2389.750068664551,901.2500267028809
-    AudioAnalyzePeak peak1;              //xy=2393.500068664551,1005.0000290870667
-    AudioConnection patchCord1(voiceMix2, 0, voiceMixOutp, 1);
-    AudioConnection patchCord2(voiceMix4, 0, voiceMixOutp, 3);
-    AudioConnection patchCord3(voiceMix1, 0, voiceMixOutp, 0);
-    AudioConnection patchCord4(voiceMix3, 0, voiceMixOutp, 2);
-    AudioConnection patchCord5(voiceMixOutp, 0, waveMixer, 1);
-    AudioConnection patchCord6(waveMixer, 0, postMixerLeft, 1);
-    AudioConnection patchCord7(waveMixer, verb);
-    AudioConnection patchCord8(verb, 0, verbWetAmpLeft, 0);
-    AudioConnection patchCord9(metronomeOsc, metronomeEnv);
-    AudioConnection patchCord10(verbWetAmpLeft, 0, postMixerLeft, 0);
-    AudioConnection patchCord11(metronomeEnv, 0, postMixerLeft, 2);
-    AudioConnection patchCord12(postMixerLeft, ampLeft);
-    AudioConnection patchCord13(ampLeft, 0, i2s1, 0);
-    AudioConnection patchCord14(ampLeft, peak1);
-    AudioConnection patchCord16(ampLeft, 0, i2s1, 1);
-    // GUItool: end automatically generated code
+
+
+
+
+// GUItool: begin automatically generated code
+AudioMixer4              voiceMix2;      //xy=322.9147529602051,696.9999820971861
+AudioMixer4              voiceMix4;      //xy=329.9147529602051,871.9999820971861
+AudioMixer4              voiceMix1;      //xy=331.9147529602051,622.9999820971861
+AudioMixer4              voiceMix3;      //xy=338.9147529602051,786.9999820971861
+AudioMixer4              voiceMixOutp;   //xy=551.9147415161133,673.9999055862427
+AudioMixer4              delayInputMixerLeft;         //xy=826.369384765625,238.00558948516846
+AudioMixer4              delayInputMixerRight; //xy=860.5513305664062,516.0056533813477
+AudioAmplifier           delayFeedbackAmpLeft;           //xy=899.3691177368164,93.00562858581543
+AudioAmplifier           delayFeedbackAmpRight; //xy=956.5510635375977,378.00558853149414
+AudioEffectDelay         delayLeft;         //xy=997.3692092895508,238.00556564331055
+AudioEffectDelay         delayRight; //xy=1039.5512008666992,516.0056304931641
+AudioMixer4              waveMixerLeft;      //xy=1362.914695739746,655.9999465942383
+AudioMixer4              waveMixerRight; //xy=1367.3693618774414,733.0056781768799
+AudioMixer4              verbInputMixer;         //xy=1583.3691940307617,534.0056552886963
+AudioSynthWaveformSine   metronomeOsc;   //xy=1628.9147644042969,947.9999897265807
+AudioEffectFreeverbStereo verb;           //xy=1742.9141845703125,524.9999160766602
+AudioEffectEnvelope      metronomeEnv;   //xy=1829.9147644042969,949.9999897265807
+AudioAmplifier           verbWetAmpLeft; //xy=1901.914405822754,505.9999418258667
+AudioAmplifier           verbWetAmpRight; //xy=1908.9144248962402,543.9999570846558
+AudioMixer4              postMixerLeft;  //xy=2083.914764404297,732.9999897265807
+AudioMixer4              postMixerRight; //xy=2085.914764404297,815.9999897265807
+AudioAmplifier           ampLeft;        //xy=2245.914810180664,733.0000047683716
+AudioAmplifier           ampRight;       //xy=2248.9147872924805,814.9999914169312
+AudioOutputI2S           i2s1;           //xy=2430.914936065674,766.9999485015869
+AudioAnalyzePeak         peak1;          //xy=2473.9147872924805,545.999963760376
+AudioConnection          patchCord1(voiceMix2, 0, voiceMixOutp, 1);
+AudioConnection          patchCord2(voiceMix4, 0, voiceMixOutp, 3);
+AudioConnection          patchCord3(voiceMix1, 0, voiceMixOutp, 0);
+AudioConnection          patchCord4(voiceMix3, 0, voiceMixOutp, 2);
+AudioConnection          patchCord5(voiceMixOutp, 0, waveMixerLeft, 1);
+AudioConnection          patchCord6(voiceMixOutp, 0, delayInputMixerLeft, 3);
+AudioConnection          patchCord7(voiceMixOutp, 0, delayInputMixerRight, 1);
+AudioConnection          patchCord8(voiceMixOutp, 0, waveMixerRight, 1);
+AudioConnection          patchCord9(delayInputMixerLeft, delayLeft);
+AudioConnection          patchCord10(delayInputMixerRight, delayRight);
+AudioConnection          patchCord11(delayFeedbackAmpLeft, 0, delayInputMixerLeft, 0);
+AudioConnection          patchCord12(delayFeedbackAmpRight, 0, delayInputMixerRight, 0);
+AudioConnection          patchCord13(waveMixerLeft, 0, postMixerLeft, 1);
+AudioConnection          patchCord14(waveMixerLeft, 0, verbInputMixer, 0);
+AudioConnection          patchCord15(waveMixerRight, 0, verbInputMixer, 1);
+AudioConnection          patchCord16(waveMixerRight, 0, postMixerRight, 0);
+AudioConnection          patchCord17(verbInputMixer, verb);
+AudioConnection          patchCord18(metronomeOsc, metronomeEnv);
+AudioConnection          patchCord19(verb, 0, verbWetAmpLeft, 0);
+AudioConnection          patchCord20(verb, 1, verbWetAmpRight, 0);
+AudioConnection          patchCord21(metronomeEnv, 0, postMixerLeft, 2);
+AudioConnection          patchCord22(metronomeEnv, 0, postMixerRight, 2);
+AudioConnection          patchCord23(verbWetAmpLeft, 0, postMixerLeft, 0);
+AudioConnection          patchCord24(verbWetAmpRight, 0, postMixerRight, 1);
+AudioConnection          patchCord25(postMixerLeft, ampLeft);
+AudioConnection          patchCord26(postMixerRight, ampRight);
+AudioConnection          patchCord27(ampLeft, peak1);
+AudioConnection          patchCord28(ampLeft, 0, i2s1, 1);
+AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
+// GUItool: end automatically generated code
+
+
 
   } // namespace CCSynthGraph
 
@@ -228,6 +259,18 @@ https://www.pjrc.com/teensy/gui/index.html
     AppSettings *mAppSettings;
     Metronome *mMetronome;
 
+    // ...[delayLeft]---->[mDelayFilterLeft]--------------->[delayFeedbackAmpLeft]...
+    //                                     \-------------->[waveMixerLeft]...
+    ::clarinoid::FilterNode mDelayFilterLeft;
+    CCPatch mPatchDelayToFilterLeft = { CCSynthGraph::delayLeft, 0, mDelayFilterLeft, 0 };
+    CCPatch mPatchDelayFilterToFeedbackAmpLeft = { mDelayFilterLeft, 0, CCSynthGraph::delayFeedbackAmpLeft, 0 };
+    CCPatch mPatchDelayFilterToWaveMixerLeft = { mDelayFilterLeft, 0, CCSynthGraph::waveMixerLeft, 0 };
+
+    ::clarinoid::FilterNode mDelayFilterRight;
+    CCPatch mPatchDelayToFilterRight = { CCSynthGraph::delayRight, 0, mDelayFilterRight, 0 };
+    CCPatch mPatchDelayFilterToFeedbackAmpRight = { mDelayFilterRight, 0, CCSynthGraph::delayFeedbackAmpRight, 0 };
+    CCPatch mPatchDelayFilterToWaveMixerRight = { mDelayFilterRight, 0, CCSynthGraph::waveMixerRight, 0 };
+
     void Setup(AppSettings *appSettings, Metronome *metronome, IModulationSourceSource* modulationSourceSource)
     {
       //AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
@@ -243,11 +286,8 @@ https://www.pjrc.com/teensy/gui/index.html
         v.EnsurePatchConnections(appSettings, modulationSourceSource);
       }
 
-      //CCSynthGraph::audioShield.enable();
-      //CCSynthGraph::audioShield.volume(.9); // headphone vol
       CCSynthGraph::ampLeft.gain(1);
-      //CCSynthGraph::ampRight.gain(.9);
-      //delay(100); // why?
+      CCSynthGraph::ampRight.gain(1);
 
       CCSynthGraph::metronomeEnv.delay(0);
       CCSynthGraph::metronomeEnv.attack(0);
@@ -255,12 +295,6 @@ https://www.pjrc.com/teensy/gui/index.html
       CCSynthGraph::metronomeEnv.releaseNoteOn(0);
       CCSynthGraph::metronomeEnv.sustain(0);
     }
-
-    // void SetGain(float f) {
-    //   //Serial.println(String("SetGain: ") + f);
-    //   CCSynthGraph::ampLeft.gain(f);
-    //   //CCSynthGraph::ampRight.gain(f);
-    // }
 
     void BeginUpdate()
     {
@@ -274,10 +308,22 @@ https://www.pjrc.com/teensy/gui/index.html
 
     void UpdatePostFx()
     {
-      CCSynthGraph::verb.roomsize(.6f);
-      CCSynthGraph::verb.damping(.7f);
+      CCSynthGraph::delayFeedbackAmpLeft.gain(mAppSettings->mSynthSettings.mDelayFeedbackLevel);
+      CCSynthGraph::delayFeedbackAmpRight.gain(mAppSettings->mSynthSettings.mDelayFeedbackLevel);
+      CCSynthGraph::delayLeft.delay(0, mAppSettings->mSynthSettings.mDelayMS);
+      CCSynthGraph::delayRight.delay(0, mAppSettings->mSynthSettings.mDelayMS + mAppSettings->mSynthSettings.mDelayStereoSep);
+
+      mDelayFilterLeft.SetParams(mAppSettings->mSynthSettings.mDelayFilterType, mAppSettings->mSynthSettings.mDelayCutoffFrequency, mAppSettings->mSynthSettings.mDelayQ, mAppSettings->mSynthSettings.mDelaySaturation);
+      mDelayFilterRight.SetParams(mAppSettings->mSynthSettings.mDelayFilterType, mAppSettings->mSynthSettings.mDelayCutoffFrequency, mAppSettings->mSynthSettings.mDelayQ, mAppSettings->mSynthSettings.mDelaySaturation);
+
+      CCSynthGraph::verb.roomsize(mAppSettings->mSynthSettings.mReverbSize);
+      CCSynthGraph::verb.damping(mAppSettings->mSynthSettings.mReverbDamping);
+
       CCSynthGraph::verbWetAmpLeft.gain(mAppSettings->mSynthSettings.mReverbGain);
+      CCSynthGraph::verbWetAmpRight.gain(mAppSettings->mSynthSettings.mReverbGain);
+
       CCSynthGraph::ampLeft.gain(mAppSettings->mSynthSettings.mMasterGain);
+      CCSynthGraph::ampRight.gain(mAppSettings->mSynthSettings.mMasterGain);
 
       if (!mAppSettings->mMetronomeSoundOn)
       {

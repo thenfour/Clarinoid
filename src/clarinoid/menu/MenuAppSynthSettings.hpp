@@ -344,13 +344,6 @@ namespace clarinoid
                                          this},
                                      AlwaysEnabled};
 
-        FloatSettingItem mReverbGain = {"Reverb gain", StandardRangeSpecs::gFloat_0_1,
-                                        Property<float>{
-                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mReverbGain; },
-                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mReverbGain = v; },
-                                            this},
-                                        AlwaysEnabled};
-
         // there's a bit of a conflict here because it's defined as float but this is int.
         IntSettingItem mPitchbendRange = {"Pitchbend range", NumericEditRangeSpec<int> { 0, 12},
                                      Property<int>{
@@ -374,14 +367,121 @@ namespace clarinoid
             (void *)this // capture
         };
 
-        ISettingItem *mArray[6] =
+
+
+
+        FloatSettingItem mReverbGain = {"Reverb gain", StandardRangeSpecs::gFloat_0_1,
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mReverbGain; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mReverbGain = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+        FloatSettingItem mReverbDamping = {"Reverb damp", StandardRangeSpecs::gFloat_0_1,
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mReverbDamping; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mReverbDamping = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+        FloatSettingItem mReverbSize = {"Reverb size", StandardRangeSpecs::gFloat_0_1,
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mReverbSize; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mReverbSize = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+        LabelSettingItem mSeparator = {
+                    Property<String> { [](void*){ return String("----"); } },
+                    AlwaysEnabled };
+
+        FloatSettingItem mDelayTimeMS = {"Delay Time", NumericEditRangeSpec<float>(1, 300),
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mDelayMS; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mDelayMS = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+        FloatSettingItem mDelayStereoSep = {" >Width", NumericEditRangeSpec<float>(1, 100),
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mDelayStereoSep; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mDelayStereoSep = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+        FloatSettingItem mDelayFeedbackLevel = {" >FB", StandardRangeSpecs::gFloat_0_1,
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mDelayFeedbackLevel; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mDelayFeedbackLevel = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+
+        EnumSettingItem<ClarinoidFilterType> mDelayFilterType = {" >Filter", gClarinoidFilterTypeInfo,
+                Property<ClarinoidFilterType>{
+                    [](void *cap) { auto* pThis = (SynthSettingsApp*)cap; return pThis->GetSynthSettings().mDelayFilterType; },
+                    [](void *cap, const ClarinoidFilterType &v) { auto* pThis = (SynthSettingsApp*)cap; pThis->GetSynthSettings().mDelayFilterType = v; },
+                    this},
+                AlwaysEnabled};
+
+
+        FloatSettingItem mDelayCutoffFrequency = {" > >Freq", NumericEditRangeSpec<float>(0, 22050),
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mDelayCutoffFrequency; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mDelayCutoffFrequency = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+        FloatSettingItem mDelaySaturation = {" > >Sat", StandardRangeSpecs::gFloat_0_1,
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mDelaySaturation; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mDelaySaturation = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+        FloatSettingItem mDelayQ = {" > >Q", StandardRangeSpecs::gFloat_0_1,
+                                        Property<float>{
+                                            [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mDelayQ; },
+                                            [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mDelayQ = v; },
+                                            this},
+                                        AlwaysEnabled};
+
+    // ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog4;
+
+        ISettingItem *mMasterFXSubmenuItems[12] =
+            {
+                &mReverbGain,
+                &mReverbDamping,
+                &mReverbSize,
+                &mSeparator,
+                &mDelayTimeMS,
+                &mDelayStereoSep,
+                &mDelayFeedbackLevel,
+                &mDelayFilterType,
+                &mDelayCutoffFrequency,
+                &mDelaySaturation,
+                &mDelayQ,
+                &mSeparator,
+            };
+        SettingsList mMasterFXList = {mMasterFXSubmenuItems};
+
+        SubmenuSettingItem mMasterFX = {
+            String("Master FX"),
+            &mMasterFXList,
+            AlwaysEnabled
+        };
+//  SubmenuSettingItem(const String& name, SettingsList* pSubmenu, typename cc::function<bool()>::ptr_t isEnabled) :
+
+        ISettingItem *mArray[7] =
             {
                 &mMasterGain,
-                &mGlobalSynthPreset,
                 &mTranspose,
-                &mReverbGain,
                 &mPitchbendRange,
+                &mGlobalSynthPreset,
+                &mMasterFX,
+                //&mReverbGain,
                 &mPatches,
+                &mSeparator,
             };
         SettingsList mRootList = {mArray};
 

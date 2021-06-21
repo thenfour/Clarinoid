@@ -136,9 +136,9 @@ struct SubmenuSettingItem : public ISettingItem
 {
   String mName;
   SettingsList* mSubmenu;
-  typename cc::function<bool()>::ptr_t mIsEnabled;
+  Property<bool> mIsEnabled;
   
-  SubmenuSettingItem(const String& name, SettingsList* pSubmenu, typename cc::function<bool()>::ptr_t isEnabled) :
+  SubmenuSettingItem(const String& name, SettingsList* pSubmenu, const Property<bool>& isEnabled) :
     mName(name),
     mSubmenu(pSubmenu),
     mIsEnabled(isEnabled)
@@ -147,7 +147,7 @@ struct SubmenuSettingItem : public ISettingItem
 
   virtual String GetName(size_t multiIndex) { return mName; }
   virtual SettingItemType GetType(size_t multiIndex) { return SettingItemType::Submenu; }
-  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled(); }
+  virtual bool IsEnabled(size_t multiIndex) const { return mIsEnabled.GetValue(); }
   virtual struct SettingsList* GetSubmenu(size_t multiIndex)
   {
     return mSubmenu;
@@ -199,16 +199,6 @@ struct LabelSettingItem : public ISettingItem
 {
   Property<String> mText;
   Property<bool> mIsEnabled;
-
-  //cc::function<String(void*)>::ptr_t mTextWithCapture = nullptr;
-  //cc::function<bool(void*)>::ptr_t mIsEnabledWithCapture = nullptr;
-  //void* mCapture = nullptr;
-
-  // LabelSettingItem(cc::function<String()>::ptr_t text, const Property<bool>& isEnabled) :
-  //   mText(text),
-  //   mIsEnabled(isEnabled)
-  // {
-  // }
 
   LabelSettingItem(const Property<String>& text, const Property<bool>& isEnabled) :
     mText(text),
