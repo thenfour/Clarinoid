@@ -4,6 +4,7 @@
 #include "MenuSettings.hpp"
 #include "NumericSettingItem.hpp"
 #include "EnumSettingItem.hpp"
+#include "FunctionListSettingItem.hpp"
 
 namespace clarinoid
 {
@@ -226,7 +227,28 @@ namespace clarinoid
                                                 this},
                                             AlwaysEnabled};
 
-        ISettingItem *mArray[29] =
+
+  FunctionListSettingItem mCopyPreset = {
+    "Copy to ...",
+    SYNTH_PRESET_COUNT,
+    [](void* cap, size_t i) {//itemNameGetter,
+        auto *pThis = (SynthPatchMenuApp *)cap;
+      return String(String("") + i + ":" + pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[i].mName);
+    },
+    [](void* cap, size_t i) {//cc::function<void(void*,size_t)>::ptr_t onClick,
+      auto *pThis = (SynthPatchMenuApp *)cap;
+      pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[i] = pThis->GetBinding();
+      pThis->mDisplay.ShowToast(String("Copied ") +
+        pThis->GetAppSettings()->mGlobalSynthPreset + ":" + pThis->GetAppSettings()->mSynthSettings.mPresets[pThis->GetAppSettings()->mGlobalSynthPreset].mName
+        + "\r\nto\r\n"
+        + i + ":" + pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[i].mName);
+    },
+    AlwaysEnabled,
+    this
+  };
+
+
+        ISettingItem *mArray[30] =
             {
                 &mBigSeparator,
                 &mBreathFiltType,
@@ -257,6 +279,7 @@ namespace clarinoid
                 &mOsc3PitchSemis,
                 &mOsc3PitchFine,
                 &mOsc3PulseWidth,
+                &mCopyPreset,
         };
         SettingsList mRootList = {mArray};
 

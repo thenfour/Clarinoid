@@ -55,6 +55,8 @@ enum class NoteOOBBehavior : uint8_t
   Mute,
   TransposeOctave
   // transposeoctave_but_drop_if_it_crosses_live
+  // keep below live
+  // keep above live
 };
 
 EnumItemInfo<NoteOOBBehavior> gNoteOOBBehaviorItems[2] = {

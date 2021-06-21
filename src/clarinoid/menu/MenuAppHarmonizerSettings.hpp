@@ -5,6 +5,7 @@
 #include "MenuAppBase.hpp"
 #include "MenuSettings.hpp"
 #include "NumericSettingItem.hpp"
+#include "FunctionListSettingItem.hpp"
 
 namespace clarinoid {
 
@@ -390,9 +391,29 @@ struct HarmPatchSettingsApp {
       [](void *cap, size_t mi) { return true; }, // is enabled
       this};                                     // capture
 
-  ISettingItem *mArray[7] = {
+  FunctionListSettingItem mCopyPreset = {
+    "Copy to ...",
+    HARM_PRESET_COUNT,
+    [](void* cap, size_t i) {//itemNameGetter,
+        auto *pThis = (HarmPatchSettingsApp *)cap;
+      return String(String("") + i + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
+    },
+    [](void* cap, size_t i) {//cc::function<void(void*,size_t)>::ptr_t onClick,
+      auto *pThis = (HarmPatchSettingsApp *)cap;
+      pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
+      pThis->mDisplay.ShowToast(String("Copied ") +
+        pThis->mDisplay.mAppSettings->mGlobalHarmPreset + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset].mName
+        + " to "
+        + i + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
+    },
+    AlwaysEnabled,
+    this
+  };
+
+  ISettingItem *mArray[8] = {
       &mEmitLiveNote, &mMinRotationTimeMS, &mSynthPreset1,
       &mSynthPreset2, &mSynthPreset3, &mSynthPreset4,     &mVoiceSubmenu,
+      &mCopyPreset,
   };
   SettingsList mRootList = {mArray};
 };
