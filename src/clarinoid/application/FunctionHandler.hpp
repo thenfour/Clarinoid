@@ -10,6 +10,7 @@ namespace clarinoid
   struct FunctionHandler
   {
     ControlValue mAggregateValue;
+
     virtual void BeginUpdate()
     {
       mAggregateValue = FunctionHandler_GetCurrentValue();
@@ -18,10 +19,10 @@ namespace clarinoid
     {
       ControlValue out;
       auto used = mapping.UpdateAndMapValue(src.p, out);
-      if (!used)
+      if (!used) {
         return;
-
-      mAggregateValue = ControlMapping::ApplyValue(mAggregateValue, out, mapping.mOperator);// FunctionHandler_ApplyValue(mAggregateValue, out, mapping.mOperator);
+      }
+      mAggregateValue = ControlMapping::ApplyValue(&mAggregateValue, out, mapping.mOperator);// FunctionHandler_ApplyValue(mAggregateValue, out, mapping.mOperator);
     }
     virtual void EndUpdate()
     {

@@ -162,6 +162,38 @@ struct HarmSettings
 
     mPresets[2].mVoiceSettings[1].mSequenceLength = 1;
     mPresets[2].mVoiceSettings[1].mSequence[0] = -5;
+
+    mPresets[2].mName = "Min6/9";
+    mPresets[2].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+    mPresets[2].mVoiceSettings[0].mSequenceLength = 1;
+    mPresets[2].mVoiceSettings[0].mSequence[0] = -2; // Bb
+    mPresets[2].mVoiceSettings[0].mMaxOutpNote = 80;
+    mPresets[2].mVoiceSettings[0].mMinOutpNote = 40;
+
+    mPresets[2].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+    mPresets[2].mVoiceSettings[1].mSequenceLength = 4;
+    mPresets[2].mVoiceSettings[1].mSequence[0] = -6; // Gb
+    mPresets[2].mVoiceSettings[1].mSequence[1] = -6;
+    mPresets[2].mVoiceSettings[1].mSequence[2] = -5; // G
+    mPresets[2].mVoiceSettings[1].mSequence[3] = -5;
+    mPresets[2].mVoiceSettings[1].mMaxOutpNote = 80;
+    mPresets[2].mVoiceSettings[1].mMinOutpNote = 40;
+
+    mPresets[2].mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+    mPresets[2].mVoiceSettings[2].mSequenceLength = 4;
+    mPresets[2].mVoiceSettings[2].mSequence[0] = -11; // Db
+    mPresets[2].mVoiceSettings[2].mSequence[1] = -11;
+    mPresets[2].mVoiceSettings[2].mSequence[2] = -9; // Eb
+    mPresets[2].mVoiceSettings[2].mSequence[3] = -9;
+    mPresets[2].mVoiceSettings[2].mMaxOutpNote = 80;
+    mPresets[2].mVoiceSettings[2].mMinOutpNote = 40;
+
+    mPresets[2].mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+    mPresets[2].mVoiceSettings[3].mSequenceLength = 3;
+    mPresets[2].mVoiceSettings[3].mMaxOutpNote = 40;
+    mPresets[2].mVoiceSettings[3].mSequence[0] = -9; // Eb
+    mPresets[2].mVoiceSettings[3].mSequence[1] = -3; // A
+    mPresets[2].mVoiceSettings[3].mSequence[2] = -9; // C
   }
 };
 

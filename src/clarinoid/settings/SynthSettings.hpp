@@ -215,7 +215,7 @@ namespace clarinoid
       p.mOsc1Waveform = OscWaveformShape::SawSync;
       p.mOsc2Waveform = OscWaveformShape::SawSync;
       p.mOsc3Waveform = OscWaveformShape::SawSync;
-      p.mOsc2Gain = .99f;
+      p.mOsc2Gain = 0.3f;
       p.mSync = false;
       p.mDetune = 0.0f;
 
@@ -234,7 +234,7 @@ namespace clarinoid
       p.mSync = false;
       p.mDetune = 0.0f;
 
-      p.mOsc2Gain = .99f;
+      p.mOsc2Gain = 0.3f;
       p.mOsc2Waveform = shape;
       p.mOsc2PulseWidth = pulseWidth;
 
@@ -251,15 +251,15 @@ namespace clarinoid
       p.mDetune = 0.1f;
       p.mSync = false;
 
-      p.mOsc1Gain = 0.99f;
+      p.mOsc1Gain = 0.3f;
       p.mOsc1Waveform = shape;
       p.mOsc1PulseWidth = pulseWidth;
 
-      p.mOsc2Gain = .99f;
+      p.mOsc2Gain = 0.3f;
       p.mOsc2Waveform = shape;
       p.mOsc2PulseWidth = 1.0f - pulseWidth;
 
-      p.mOsc3Gain = .99f;
+      p.mOsc3Gain = 0.3f;
       p.mOsc3Waveform = shape;
       p.mOsc2PulseWidth = pulseWidth;
 
@@ -276,14 +276,14 @@ namespace clarinoid
       p.mSync = false;
       p.mDetune = 0.0f;
 
-      p.mOsc1Gain = 0.99f;
+      p.mOsc1Gain = 0.3f;
       p.mOsc1Waveform = OscWaveformShape::Pulse;
       p.mOsc1PulseWidth = 0.08f;
       p.mOsc1PitchSemis = -5;
 
       p.mOsc3Gain = 0.0f;
 
-      p.mOsc2Gain = .99f;
+      p.mOsc2Gain = 0.3f;
       p.mOsc2Waveform = OscWaveformShape::Pulse;
       p.mOsc2PulseWidth = 0.92f;
       p.mOsc2PitchSemis = -12;
@@ -301,14 +301,14 @@ namespace clarinoid
       p.mSync = false;
       p.mDetune = 0.0f;
 
-      p.mOsc1Gain = 0.99f;
+      p.mOsc1Gain = 0.3f;
       p.mOsc1Waveform = OscWaveformShape::Pulse;
       p.mOsc1PulseWidth = 0.4f;
       p.mOsc1PitchSemis = -5;
 
       p.mOsc3Gain = 0.0f;
 
-      p.mOsc2Gain = .99f;
+      p.mOsc2Gain = 0.3f;
       p.mOsc2Waveform = OscWaveformShape::Pulse;
       p.mOsc2PitchSemis = -12;
 
@@ -326,8 +326,8 @@ namespace clarinoid
       p.mOsc1Gain = 0.0f;
       p.mOsc3Gain = 0.0f;
 
-      p.mOsc2Gain = .35f;
-      p.mOsc3Gain = .35f;
+      p.mOsc2Gain = .3f;
+      p.mOsc3Gain = .3f;
 
       p.mFilterType = ClarinoidFilterType::LP_Moog4;
       p.mFilterMinFreq = 0.0f;
@@ -344,7 +344,7 @@ namespace clarinoid
       p.mOsc3Gain = 0.0f;
 
       p.mOsc2Waveform = OscWaveformShape::VarTriangle;
-      p.mOsc2Gain = .40f;
+      p.mOsc2Gain = .30f;
       p.mOsc2PulseWidth = 0.5f;
       p.mSync = false;
       p.mDetune = 0.0f;
@@ -364,7 +364,7 @@ namespace clarinoid
       p.mOsc3Gain = 0.0f;
 
       p.mOsc2Waveform = OscWaveformShape::Pulse;
-      p.mOsc2Gain = .40f;
+      p.mOsc2Gain = .30f;
       p.mOsc2PulseWidth = 0.07f;
       p.mSync = false;
       p.mDetune = 0.0f;
@@ -384,7 +384,7 @@ namespace clarinoid
       p.mOsc3Gain = 0.0f;
 
       p.mOsc2Waveform = OscWaveformShape::SawSync;
-      p.mOsc2Gain = .40f;
+      p.mOsc2Gain = .30f;
       p.mSync = false;
       p.mDetune = 0.0f;
 

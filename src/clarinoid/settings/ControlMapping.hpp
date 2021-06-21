@@ -72,6 +72,7 @@ namespace clarinoid
         {
             Set,
             Add,
+            Subtract,
             Multiply,
             COUNT,
         };
@@ -186,16 +187,23 @@ namespace clarinoid
             }
         }
 
-        static ControlValue ApplyValue(const ControlValue &lhs, const ControlValue &rhs, Operator op)
+        // if this is the first operand, then lhs will be null.
+        static ControlValue ApplyValue(const ControlValue *lhs, const ControlValue &rhs, Operator op)
         {
+            if (!lhs) {
+                // this makes sense for all operators so far except maybe Multiply or Subtract
+                return rhs;
+            }
             switch (op)
             {
             case ControlMapping::Operator::Add:
-                return ControlValue::FloatValue(lhs.AsFloat01() + rhs.AsFloat01());
+                return ControlValue::FloatValue(lhs->AsFloat01() + rhs.AsFloat01());
+            case ControlMapping::Operator::Subtract:
+                return ControlValue::FloatValue(lhs->AsFloat01() - rhs.AsFloat01());
             case ControlMapping::Operator::Set:
                 return rhs;
             case ControlMapping::Operator::Multiply:
-                return ControlValue::FloatValue(lhs.AsFloat01() * rhs.AsFloat01());
+                return ControlValue::FloatValue(lhs->AsFloat01() * rhs.AsFloat01());
             default:
                 CCDIE("unsupported operator");
             }

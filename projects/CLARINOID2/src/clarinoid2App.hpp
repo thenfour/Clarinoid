@@ -105,8 +105,8 @@ namespace clarinoid
 
             // initialize some settings.
             mAppSettings.mTranspose = 12;
-            mAppSettings.mSynthSettings.mReverbGain = 0.25f;
-            mAppSettings.mSynthSettings.mPitchBendRange = 0.0f;
+            mAppSettings.mSynthSettings.mReverbGain = 0.28f;
+            mAppSettings.mSynthSettings.mPitchBendRange = 2.0f;
 
             TouchKeyMonitorApp mLHKeysMonitor(mDisplay, mControlMapper.mLHMPR, "LH Keys Monitor", 0, 10);
             TouchKeyMonitorApp mRHKeysMonitor(mDisplay, mControlMapper.mRHMPR, "RH Keys Monitor", 0, 4);
@@ -135,16 +135,16 @@ namespace clarinoid
             mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0;
 
             mAppSettings.mControlMappings[pitchUpMappingIndex] = ControlMapping::MakeUnipolarMapping(PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);
-            mAppSettings.mControlMappings[pitchUpMappingIndex].mOperator = ControlMapping::Operator::Add;
-            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMin = 0.3f;
-            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMax = 0.0f;
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mOperator = ControlMapping::Operator::Set;
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMin = 0.43f;
+            mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMax = 0.06f;
             mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
             mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveS = 0;
 
             mAppSettings.mControlMappings[pitchDownMappingIndex] = ControlMapping::MakeUnipolarMapping(PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);
-            mAppSettings.mControlMappings[pitchDownMappingIndex].mOperator = ControlMapping::Operator::Add;
-            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mSrcMin = 1.0f;
-            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mSrcMax = 0.6f;
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mOperator = ControlMapping::Operator::Subtract;
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mSrcMin = 0.66f;
+            mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mSrcMax = 0.92f;
             mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
             mAppSettings.mControlMappings[pitchDownMappingIndex].mUnipolarMapping.mCurveS = 0;
 
