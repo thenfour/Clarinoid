@@ -103,6 +103,19 @@ struct Harmonizer
       pout->mIsNoteCurrentlyMuted = false;
       pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)(nVoice + 1)); // +1 because live voice is id 0.
 
+      switch (hv.mPitchBendParticipation) {
+        case PitchBendParticipation::Off:
+          pout->mPitchBendN11.SetFloat(0);
+          break;
+        case PitchBendParticipation::Invert:
+          pout->mPitchBendN11.SetFloat(-pout->mPitchBendN11.GetFloatVal());
+          break;
+        case PitchBendParticipation::Same:
+        default:
+          // already fine.
+          break;
+      }
+
       // todo: use hv.mNonDiatonicBehavior
       auto newNote = scale.AdjustNoteByInterval(pout->mMidiNote, hv.mSequence[mSequencePos % hv.mSequenceLength], EnharmonicDirection::Sharp);
       if (!newNote) {

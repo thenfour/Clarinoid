@@ -227,7 +227,29 @@ struct HarmVoiceSettingsApp {
       },
       AlwaysEnabled};
 
-  ISettingItem *mArray[11] = {
+
+  EnumSettingItem<PitchBendParticipation> mPitchbendBehav = {
+      "PB behav", gPitchBendParticipationInfo,
+      Property<PitchBendParticipation>{
+          [](void *cap) {
+            auto *pThis = (HarmVoiceSettingsApp *)cap;
+            return pThis->EditingVoice().mPitchBendParticipation;
+          }, // getter
+          [](void *cap, const PitchBendParticipation &val) {
+            auto *pThis = (HarmVoiceSettingsApp *)cap;
+            pThis->EditingVoice().mPitchBendParticipation = val;
+          },   // setter
+          this // capture val
+      },
+      AlwaysEnabled};
+
+
+  LabelSettingItem mEndSeparator = {
+            Property<String> { [](void*){ return String("----"); } },
+            AlwaysEnabled };
+
+
+  ISettingItem *mArray[13] = {
       &mSynthPresetRef,
       &mOwnSynthPatch,
       &mSequenceLength,
@@ -235,10 +257,12 @@ struct HarmVoiceSettingsApp {
       &mMinOutpNote,
       &mMaxOutpNote,
       &mOOBBehavior,
+      &mPitchbendBehav,
       &mScaleRefType,
       &mLocalScaleNote,
       &mLocalScaleFlavor,
       &mNonDiatonicBehavior,
+      &mEndSeparator,
       };
   SettingsList mRootList = {mArray};
 };

@@ -89,6 +89,24 @@ EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[6] = {
 EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo ("HarmSynthPresetRefType", gHarmSynthPresetRefTypeItems);
 
 
+
+////////////////////////////////////////////////////
+enum class PitchBendParticipation : uint8_t
+{
+  Same,
+  Invert,
+  Off,
+};
+
+EnumItemInfo<PitchBendParticipation> gPitchBendParticipationItems[3] = {
+  { PitchBendParticipation::Same, "Same" },
+  { PitchBendParticipation::Invert, "Invert" },
+  { PitchBendParticipation::Off, "Off" },
+};
+
+EnumInfo<PitchBendParticipation> gPitchBendParticipationInfo ("PitchBendParticipation", gPitchBendParticipationItems);
+
+
 ////////////////////////////////////////////////////
 struct HarmVoiceSettings
 {
@@ -104,6 +122,7 @@ struct HarmVoiceSettings
   uint8_t mMaxOutpNote = 127;
   NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::TransposeOctave;
   NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+  PitchBendParticipation mPitchBendParticipation = PitchBendParticipation::Same;
 
   String GetMenuDetailString() const {
     if (mSequenceLength < 1) return "<off>";
