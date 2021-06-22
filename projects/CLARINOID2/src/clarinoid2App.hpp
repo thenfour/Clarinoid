@@ -105,7 +105,7 @@ namespace clarinoid
 
             // initialize some settings.
             mAppSettings.mTranspose = 12;
-            mAppSettings.mSynthSettings.mReverbGain = 0.28f;
+            mAppSettings.mSynthSettings.mReverbGain = 0.9f;
             mAppSettings.mSynthSettings.mPitchBendRange = 2.0f;
 
             TouchKeyMonitorApp mLHKeysMonitor(mDisplay, mControlMapper.mLHMPR, "LH Keys Monitor", 0, 10);

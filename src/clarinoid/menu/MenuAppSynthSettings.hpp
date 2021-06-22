@@ -52,6 +52,20 @@ namespace clarinoid
                                           this},
                                       AlwaysEnabled};
 
+        FloatSettingItem mVerbSend = {"Verb Send", StandardRangeSpecs::gFloat_0_1,
+                                      Property<float>{
+                                          [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mVerbSend; },
+                                          [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mVerbSend = v; },
+                                          this},
+                                      AlwaysEnabled};
+
+        FloatSettingItem mDelaySend = {"Dly Send", StandardRangeSpecs::gFloat_0_1,
+                                      Property<float>{
+                                          [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mDelaySend; },
+                                          [](void *cap, const float &v) { auto* pThis = (SynthPatchMenuApp*)cap; pThis->GetBinding().mDelaySend = v; },
+                                          this},
+                                      AlwaysEnabled};
+
         BoolSettingItem mSync = {"Sync", "On", "Off",
                                  Property<bool>{
                                      [](void *cap) { auto* pThis = (SynthPatchMenuApp*)cap; return pThis->GetBinding().mSync; },
@@ -255,7 +269,7 @@ namespace clarinoid
   };
 
 
-        ISettingItem *mArray[31] =
+        ISettingItem *mArray[33] =
             {
                 &mBigSeparator,
                 &mBreathFiltType,
@@ -269,6 +283,8 @@ namespace clarinoid
                 &mDetune,
                 &mPortamentoTime,
                 &mPan,
+                &mDelaySend,
+                &mVerbSend,
                 &mSync,
                 &mSyncMultMin,
                 &mSyncMultMax,
@@ -403,7 +419,7 @@ namespace clarinoid
                     Property<String> { [](void*){ return String("----"); } },
                     AlwaysEnabled };
 
-        FloatSettingItem mDelayTimeMS = {"Delay Time", NumericEditRangeSpec<float>(1, 300),
+        FloatSettingItem mDelayTimeMS = {"Delay Time", NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
                                         Property<float>{
                                             [](void *cap) { auto *pThis = (SynthSettingsApp *)cap; return pThis->GetSynthSettings().mDelayMS; },
                                             [](void *cap, const float &v) { auto *pThis = (SynthSettingsApp *)cap; pThis->GetSynthSettings().mDelayMS = v; },

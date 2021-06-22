@@ -25,68 +25,82 @@ https://www.pjrc.com/teensy/gui/index.html
 
 */
 
-
-
-
 // GUItool: begin automatically generated code
-AudioMixer4              voiceMix2Left;      //xy=224.00569915771484,595.9999580383301
-AudioMixer4              voiceMix1Left;      //xy=225.0056915283203,527.9999923706055
-AudioMixer4              voiceMix2Right; //xy=230.0056915283203,782.0056762695312
-AudioMixer4              voiceMix1Right; //xy=231.00568389892578,714.0057106018066
-AudioMixer4              voiceMixOutpLeft;   //xy=436.00565338134766,559.9999732971191
-AudioMixer4              voiceMixOutpRight; //xy=442.0056457519531,746.0056915283203
-AudioMixer4              delayInputMixerLeft; //xy=734.0056915283203,230
-AudioMixer4              delayInputMixerRight; //xy=768.0056915283203,508
-AudioAmplifier           delayFeedbackAmpLeft; //xy=807.0056915283203,85
-AudioAmplifier           delayFeedbackAmpRight; //xy=864.0056915283203,370
-AudioEffectDelay         delayLeft;      //xy=905.0056915283203,230
-AudioEffectDelay         delayRight;     //xy=947.0056915283203,508
-AudioMixer4              waveMixerLeft;  //xy=1270.0056915283203,647
-AudioMixer4              waveMixerRight; //xy=1275.0056915283203,725
-AudioMixer4              verbInputMixer; //xy=1491.0056915283203,526
-AudioSynthWaveformSine   metronomeOsc;   //xy=1536.0056915283203,939
-AudioEffectFreeverbStereo verb;           //xy=1650.0056915283203,516
-AudioEffectEnvelope      metronomeEnv;   //xy=1737.0056915283203,941
-AudioAmplifier           verbWetAmpLeft; //xy=1809.0056915283203,497
-AudioAmplifier           verbWetAmpRight; //xy=1816.0056915283203,535
-AudioMixer4              postMixerLeft;  //xy=1991.0056915283203,724
-AudioMixer4              postMixerRight; //xy=1993.0056915283203,807
-AudioAmplifier           ampLeft;        //xy=2153.0056915283203,725
-AudioAmplifier           ampRight;       //xy=2156.0056915283203,806
-AudioOutputI2S           i2s1;           //xy=2338.0056915283203,758
-AudioAnalyzePeak         peak1;          //xy=2381.0056915283203,537
-AudioConnection          patchCord1(voiceMix2Left, 0, voiceMixOutpLeft, 1);
-AudioConnection          patchCord2(voiceMix1Left, 0, voiceMixOutpLeft, 0);
-AudioConnection          patchCord3(voiceMix2Right, 0, voiceMixOutpRight, 1);
-AudioConnection          patchCord4(voiceMix1Right, 0, voiceMixOutpRight, 0);
-AudioConnection          patchCord5(voiceMixOutpLeft, 0, waveMixerLeft, 1);
-AudioConnection          patchCord6(voiceMixOutpLeft, 0, delayInputMixerLeft, 3);
-AudioConnection          patchCord7(voiceMixOutpRight, 0, delayInputMixerRight, 1);
-AudioConnection          patchCord8(voiceMixOutpRight, 0, waveMixerRight, 1);
-AudioConnection          patchCord9(delayInputMixerLeft, delayLeft);
-AudioConnection          patchCord10(delayInputMixerRight, delayRight);
-AudioConnection          patchCord11(delayFeedbackAmpLeft, 0, delayInputMixerLeft, 0);
-AudioConnection          patchCord12(delayFeedbackAmpRight, 0, delayInputMixerRight, 0);
-AudioConnection          patchCord13(waveMixerLeft, 0, postMixerLeft, 1);
-AudioConnection          patchCord14(waveMixerLeft, 0, verbInputMixer, 0);
-AudioConnection          patchCord15(waveMixerRight, 0, verbInputMixer, 1);
-AudioConnection          patchCord16(waveMixerRight, 0, postMixerRight, 0);
-AudioConnection          patchCord17(verbInputMixer, verb);
-AudioConnection          patchCord18(metronomeOsc, metronomeEnv);
-AudioConnection          patchCord19(verb, 0, verbWetAmpLeft, 0);
-AudioConnection          patchCord20(verb, 1, verbWetAmpRight, 0);
-AudioConnection          patchCord21(metronomeEnv, 0, postMixerLeft, 2);
-AudioConnection          patchCord22(metronomeEnv, 0, postMixerRight, 2);
-AudioConnection          patchCord23(verbWetAmpLeft, 0, postMixerLeft, 0);
-AudioConnection          patchCord24(verbWetAmpRight, 0, postMixerRight, 1);
-AudioConnection          patchCord25(postMixerLeft, ampLeft);
-AudioConnection          patchCord26(postMixerRight, ampRight);
-AudioConnection          patchCord27(ampLeft, peak1);
-AudioConnection          patchCord28(ampLeft, 0, i2s1, 1);
-AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
+AudioAmplifier           delayFeedbackAmpLeft; //xy=2906.6818466186523,634.6817741394043
+AudioEffectDelay         delayLeft;      //xy=2908.681854248047,725.6817779541016
+AudioEffectDelay         delayRight;     //xy=2918.6816749572754,955.6817398071289
+AudioAmplifier           delayFeedbackAmpRight; //xy=2919.681671142578,867.6817388534546
+AudioMixer4              verbInputMixer; //xy=3291.4318046569824,1025.6818313598633
+AudioSynthWaveformSine   metronomeOsc;   //xy=3327.6817626953125,1454.6817626953125
+AudioEffectFreeverbStereo verb;           //xy=3441.6817626953125,1031.6817626953125
+AudioEffectEnvelope      metronomeEnv;   //xy=3528.6817626953125,1456.6817626953125
+AudioAmplifier           verbWetAmpLeft; //xy=3600.6817626953125,1012.6817626953125
+AudioAmplifier           verbWetAmpRight; //xy=3607.6817626953125,1050.6817626953125
+AudioMixer4              postMixerLeft;  //xy=3782.6817626953125,1239.6817626953125
+AudioMixer4              postMixerRight; //xy=3784.6817626953125,1322.6817626953125
+AudioAmplifier           ampLeft;        //xy=3944.6817626953125,1240.6817626953125
+AudioAmplifier           ampRight;       //xy=3947.6817626953125,1321.6817626953125
+AudioOutputI2S           i2s1;           //xy=4129.6817626953125,1273.6817626953125
+AudioAnalyzePeak         peak1;          //xy=4172.6817626953125,1052.6817626953125
+AudioConnection          patchCord1(verbInputMixer, verb);
+AudioConnection          patchCord2(metronomeOsc, metronomeEnv);
+AudioConnection          patchCord3(verb, 0, verbWetAmpLeft, 0);
+AudioConnection          patchCord4(verb, 1, verbWetAmpRight, 0);
+AudioConnection          patchCord5(metronomeEnv, 0, postMixerRight, 3);
+AudioConnection          patchCord6(metronomeEnv, 0, postMixerLeft, 3);
+AudioConnection          patchCord7(verbWetAmpLeft, 0, postMixerLeft, 2);
+AudioConnection          patchCord8(verbWetAmpRight, 0, postMixerRight, 2);
+AudioConnection          patchCord9(postMixerLeft, ampLeft);
+AudioConnection          patchCord10(postMixerRight, ampRight);
+//AudioConnection          patchCord11(ampLeft, peak1);
+//AudioConnection          patchCord11(verbInputMixer, peak1);
+AudioConnection          patchCord12(ampLeft, 0, i2s1, 1);
+AudioConnection          patchCord13(ampRight, 0, i2s1, 0);
 // GUItool: end automatically generated code
 
 
+    // insert the delay filters.
+    // ...[delayLeft]---->[delayFilterLeft]--------------->[delayFeedbackAmpLeft]...
+    //                                     \-------------->[waveMixerLeft]...
+    ::clarinoid::FilterNode delayFilterLeft;
+    AudioConnection mPatchDelayToFilterLeft = { delayLeft, 0, delayFilterLeft, 0 };
+    AudioConnection mPatchDelayFilterToFeedbackAmpLeft = { delayFilterLeft, 0, delayFeedbackAmpLeft, 0 };
+
+    ::clarinoid::FilterNode delayFilterRight;
+    AudioConnection mPatchDelayToFilterRight = { delayRight, 0, delayFilterRight, 0 };
+    AudioConnection mPatchDelayFilterToFeedbackAmpRight = { delayFilterRight, 0, delayFeedbackAmpRight, 0 };
+
+    // delay output connection
+    AudioConnection mPatchDelayFilterToWaveMixerLeft = { delayFilterLeft, 0, postMixerLeft, 1 };
+    AudioConnection mPatchDelayFilterToWaveMixerRight = { delayFilterRight, 0, postMixerRight, 1 };
+
+    // voice mixer & dry output connection
+    ::clarinoid::MultiMixer<MAX_SYNTH_VOICES> voiceMixerDryLeft; // all voices input here.
+    ::clarinoid::MultiMixer<MAX_SYNTH_VOICES> voiceMixerDryRight; // all voices input here.
+    AudioConnection patchVoicesDryToOutpLeft = { voiceMixerDryLeft, 0, postMixerLeft, 0 };
+    AudioConnection patchVoicesDryToOutpRight = { voiceMixerDryRight, 0, postMixerRight, 0 };
+
+    // delay input mix
+    ::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> delayInputMixerLeft; // +1 to account for the delay feedback signal
+    ::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> delayInputMixerRight; // +1 to account for the delay feedback signal
+    AudioConnection patchDelayInputMixToDelayL = { delayInputMixerLeft, 0, delayLeft, 0 };
+    AudioConnection patchDelayInputMixToDelayR = { delayInputMixerRight, 0, delayRight, 0 };
+
+    // delay fb
+    AudioConnection patchDelayFBBackToInputLeft = { delayFeedbackAmpLeft, 0, delayInputMixerLeft, MAX_SYNTH_VOICES };
+    AudioConnection patchDelayFBBackToInputRight = { delayFeedbackAmpRight, 0, delayInputMixerRight, MAX_SYNTH_VOICES };
+
+    // verb input mix
+    ::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> verbInputMixerLeft; // all voices input here + 1 for delay line
+    ::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> verbInputMixerRight; // all voices input here + 1 for delay line
+    AudioConnection patchVerbInputToVerbL = { verbInputMixerLeft, 0, verbInputMixer, 0 };
+    AudioConnection patchVerbInputToVerbR = { verbInputMixerRight, 0, verbInputMixer, 1 };
+
+    // delay verb
+    AudioConnection patchDelayVerbInputLeft = { delayFilterLeft, 0, verbInputMixerLeft, MAX_SYNTH_VOICES };
+    AudioConnection patchDelayVerbInputRight = { delayFilterRight, 0, verbInputMixerRight, MAX_SYNTH_VOICES };
+
+//AudioConnection          patchCord11(verbInputMixerLeft, peak1);
 
   } // namespace CCSynthGraph
 
@@ -103,11 +117,17 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
     CCPatch mPatchMixToFilter; // then into filter.
     ::clarinoid::FilterNode mFilter;
 
-    CCPatch mPatchFilterToPanner;
-    ::clarinoid::PannerNode mPanner;
+    CCPatch mPatchFilterToPannerSplitter;
+    ::clarinoid::GainAndPanSplitterNode<3> mPannerSplitter; // handles panning and send levels to delay/verb/dry
 
-    CCPatch mPatchOutLeft;
-    CCPatch mPatchOutRight;
+    CCPatch mPatchOutDryLeft;
+    CCPatch mPatchOutDryRight;
+
+    CCPatch mPatchOutDelayLeft;
+    CCPatch mPatchOutDelayRight;
+
+    CCPatch mPatchOutVerbLeft;
+    CCPatch mPatchOutVerbRight;
 
     MusicalVoice mRunningVoice;
     SynthPreset *mPreset = nullptr;
@@ -124,9 +144,14 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
       mPatchOsc2ToMix.connect();
       mPatchOsc3ToMix.connect();
       mPatchMixToFilter.connect();
-      mPatchFilterToPanner.connect();
-      mPatchOutLeft.connect();
-      mPatchOutRight.connect();
+      mPatchFilterToPannerSplitter.connect();
+
+      mPatchOutDryLeft.connect();
+      mPatchOutDryRight.connect();
+      mPatchOutDelayLeft.connect();
+      mPatchOutDelayRight.connect();
+      mPatchOutVerbLeft.connect();
+      mPatchOutVerbRight.connect();
     }
 
     static float CalcFilterCutoffFreq(float breath01, float midiNote, float keyTrackingAmt, float freqMin, float freqMax)
@@ -221,7 +246,9 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
       mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
       mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);
 
-      mPanner.SetPan(mv.mPan + mPreset->mPan);
+      mPannerSplitter.SetPanAndGain(0, 1.0f, mv.mPan + mPreset->mPan);
+      mPannerSplitter.SetPanAndGain(1, mPreset->mDelaySend, mv.mPan + mPreset->mPan);
+      mPannerSplitter.SetPanAndGain(2, mPreset->mVerbSend, mv.mPan + mPreset->mPan);
 
       mRunningVoice = mv;
     }
@@ -237,25 +264,30 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
       mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
     }
 
-    Voice(int16_t vid, AudioMixer4 &destLeft, int destPortLeft, AudioMixer4 &destRight, int destPortRight) : mPatchOsc1ToMix(mOsc, 0, mOscMixer, 0),
-                                                          mPatchOsc2ToMix(mOsc, 1, mOscMixer, 1),
-                                                          mPatchOsc3ToMix(mOsc, 2, mOscMixer, 2),
-                                                          mPatchMixToFilter(mOscMixer, 0, mFilter, 0),
-                                                          mPatchFilterToPanner(mFilter, 0, mPanner, 0),
-                                                          mPatchOutLeft(mPanner, 0, destLeft, destPortLeft),
-                                                          mPatchOutRight(mPanner, 1, destRight, destPortRight)
+    Voice(int16_t vid) :
+        mPatchOsc1ToMix(mOsc, 0, mOscMixer, 0),
+        mPatchOsc2ToMix(mOsc, 1, mOscMixer, 1),
+        mPatchOsc3ToMix(mOsc, 2, mOscMixer, 2),
+        mPatchMixToFilter(mOscMixer, 0, mFilter, 0),
+        mPatchFilterToPannerSplitter(mFilter, 0, mPannerSplitter, 0),
+        mPatchOutDryLeft(mPannerSplitter, 0, CCSynthGraph::voiceMixerDryLeft, vid),
+        mPatchOutDryRight(mPannerSplitter, 1, CCSynthGraph::voiceMixerDryRight, vid),
+        mPatchOutDelayLeft(mPannerSplitter, 2, CCSynthGraph::delayInputMixerLeft, vid),
+        mPatchOutDelayRight(mPannerSplitter, 3, CCSynthGraph::delayInputMixerRight, vid),
+        mPatchOutVerbLeft(mPannerSplitter, 4, CCSynthGraph::verbInputMixerLeft, vid),
+        mPatchOutVerbRight(mPannerSplitter, 5, CCSynthGraph::verbInputMixerLeft, vid)
     {
     }
   };
 
   Voice gVoices[MAX_SYNTH_VOICES] =
       {
-          {0, CCSynthGraph::voiceMix1Left, 0, CCSynthGraph::voiceMix1Right, 0},
-          {1, CCSynthGraph::voiceMix1Left, 1, CCSynthGraph::voiceMix1Right, 1},
-          {2, CCSynthGraph::voiceMix1Left, 2, CCSynthGraph::voiceMix1Right, 2},
-          {3, CCSynthGraph::voiceMix1Left, 3, CCSynthGraph::voiceMix1Right, 3}, // 4
-          {4, CCSynthGraph::voiceMix2Left, 0, CCSynthGraph::voiceMix2Right, 0},
-          {5, CCSynthGraph::voiceMix2Left, 1, CCSynthGraph::voiceMix2Right, 1},
+          {0},
+          {1},
+          {2},
+          {3},
+          {4},
+          {5},
   };
 
   struct SynthGraphControl
@@ -263,18 +295,6 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
     float mPrevMetronomeBeatFrac = 0;
     AppSettings *mAppSettings;
     Metronome *mMetronome;
-
-    // ...[delayLeft]---->[mDelayFilterLeft]--------------->[delayFeedbackAmpLeft]...
-    //                                     \-------------->[waveMixerLeft]...
-    ::clarinoid::FilterNode mDelayFilterLeft;
-    CCPatch mPatchDelayToFilterLeft = { CCSynthGraph::delayLeft, 0, mDelayFilterLeft, 0 };
-    CCPatch mPatchDelayFilterToFeedbackAmpLeft = { mDelayFilterLeft, 0, CCSynthGraph::delayFeedbackAmpLeft, 0 };
-    CCPatch mPatchDelayFilterToWaveMixerLeft = { mDelayFilterLeft, 0, CCSynthGraph::waveMixerLeft, 0 };
-
-    ::clarinoid::FilterNode mDelayFilterRight;
-    CCPatch mPatchDelayToFilterRight = { CCSynthGraph::delayRight, 0, mDelayFilterRight, 0 };
-    CCPatch mPatchDelayFilterToFeedbackAmpRight = { mDelayFilterRight, 0, CCSynthGraph::delayFeedbackAmpRight, 0 };
-    CCPatch mPatchDelayFilterToWaveMixerRight = { mDelayFilterRight, 0, CCSynthGraph::waveMixerRight, 0 };
 
     void Setup(AppSettings *appSettings, Metronome *metronome, IModulationSourceSource* modulationSourceSource)
     {
@@ -318,8 +338,8 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
       CCSynthGraph::delayLeft.delay(0, mAppSettings->mSynthSettings.mDelayMS);
       CCSynthGraph::delayRight.delay(0, mAppSettings->mSynthSettings.mDelayMS + mAppSettings->mSynthSettings.mDelayStereoSep);
 
-      mDelayFilterLeft.SetParams(mAppSettings->mSynthSettings.mDelayFilterType, mAppSettings->mSynthSettings.mDelayCutoffFrequency, mAppSettings->mSynthSettings.mDelayQ, mAppSettings->mSynthSettings.mDelaySaturation);
-      mDelayFilterRight.SetParams(mAppSettings->mSynthSettings.mDelayFilterType, mAppSettings->mSynthSettings.mDelayCutoffFrequency, mAppSettings->mSynthSettings.mDelayQ, mAppSettings->mSynthSettings.mDelaySaturation);
+      CCSynthGraph::delayFilterLeft.SetParams(mAppSettings->mSynthSettings.mDelayFilterType, mAppSettings->mSynthSettings.mDelayCutoffFrequency, mAppSettings->mSynthSettings.mDelayQ, mAppSettings->mSynthSettings.mDelaySaturation);
+      CCSynthGraph::delayFilterRight.SetParams(mAppSettings->mSynthSettings.mDelayFilterType, mAppSettings->mSynthSettings.mDelayCutoffFrequency, mAppSettings->mSynthSettings.mDelayQ, mAppSettings->mSynthSettings.mDelaySaturation);
 
       CCSynthGraph::verb.roomsize(mAppSettings->mSynthSettings.mReverbSize);
       CCSynthGraph::verb.damping(mAppSettings->mSynthSettings.mReverbDamping);

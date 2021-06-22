@@ -161,6 +161,8 @@ namespace clarinoid
     String mName;
     float mPortamentoTime = 0.005f;
     float mPan = 0;
+    float mDelaySend = 0.3f;
+    float mVerbSend = 0.3f;
 
     float mOsc1Gain = 0;
     float mOsc2Gain = ReasonableOscillatorGain;
@@ -210,14 +212,14 @@ namespace clarinoid
 
     float mReverbGain = 0.0f;
     float mReverbDamping = 0.7f;
-    float mReverbSize = 0.6f;
+    float mReverbSize = 0.7f;
 
     float mDelayMS = 300;
     float mDelayStereoSep = 30;
-    float mDelayFeedbackLevel = 0.3f;
-    ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog4;
-    float mDelayCutoffFrequency = 3000;
-    float mDelaySaturation = 0.30f;
+    float mDelayFeedbackLevel = 0.15f;
+    ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog2;
+    float mDelayCutoffFrequency = 1000;
+    float mDelaySaturation = 0.15f;
     float mDelayQ = 0.1f;
 
 
