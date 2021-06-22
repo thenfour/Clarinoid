@@ -168,18 +168,18 @@ AudioConnection          patchCord29(ampRight, 0, i2s1, 0);
         mOsc.addNote(); // this also engages portamento
       }
 
-      if (mv.IsPlaying() && !mv.mIsNoteCurrentlyMuted)
-      {
-        mOsc.amplitude(1, GetModulatedValue(mPreset->mOsc1Gain, ModulationDestination::Osc1Volume));
-        mOsc.amplitude(2, GetModulatedValue(mPreset->mOsc2Gain, ModulationDestination::Osc2Volume));
-        mOsc.amplitude(3, GetModulatedValue(mPreset->mOsc3Gain, ModulationDestination::Osc3Volume));
-      }
-      else
+      if (!mv.IsPlaying() || mv.mIsNoteCurrentlyMuted)
       {
         mOsc.amplitude(1, 0.0);
         mOsc.amplitude(2, 0.0);
         mOsc.amplitude(3, 0.0);
+        mRunningVoice = mv;
+        return;
       }
+
+      mOsc.amplitude(1, GetModulatedValue(mPreset->mOsc1Gain, ModulationDestination::Osc1Volume));
+      mOsc.amplitude(2, GetModulatedValue(mPreset->mOsc2Gain, ModulationDestination::Osc2Volume));
+      mOsc.amplitude(3, GetModulatedValue(mPreset->mOsc3Gain, ModulationDestination::Osc3Volume));
 
       // update
       float midiNote = (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * mAppSettings->mSynthSettings.mPitchBendRange;

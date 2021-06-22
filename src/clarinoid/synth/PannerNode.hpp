@@ -71,7 +71,7 @@ namespace clarinoid
             //Serial.println(String("pan ") + n11 + " -> norm=" + normPan + " lgain=" + leftChannel + " rgain=" + rightChannel + " lmult32=" + mMultiplierLeft + " rmult32=" + mMultiplierRight);
         }
 
-        float mPanN11 = 0.0f; // center
+        float mPanN11 = -10.0; // so ctor will initialize properly.
         int32_t mMultiplierLeft;
         int32_t mMultiplierRight;
 
@@ -84,11 +84,6 @@ namespace clarinoid
             audio_block_t *outputBufRight = allocate();
 
             audioBufferCopyAndApplyGainTwice(inputBuf->data, outputBufLeft->data, mMultiplierLeft, outputBufRight->data, mMultiplierRight);
-
-            // for (int i = 0; i < AUDIO_BLOCK_SAMPLES; ++ i) {
-            //     outputBufLeft->data[i] = inputBuf->data[i];
-            //     outputBufRight->data[i] = inputBuf->data[i];
-            // }
 
             transmit(outputBufLeft, 0);
             transmit(outputBufRight, 1);

@@ -212,11 +212,11 @@ namespace clarinoid
     float mReverbDamping = 0.7f;
     float mReverbSize = 0.6f;
 
-    float mDelayMS = 200;
-    float mDelayStereoSep = 10;
-    float mDelayFeedbackLevel = 0.5f;
+    float mDelayMS = 300;
+    float mDelayStereoSep = 30;
+    float mDelayFeedbackLevel = 0.3f;
     ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog4;
-    float mDelayCutoffFrequency = 2000;
+    float mDelayCutoffFrequency = 3000;
     float mDelaySaturation = 0.30f;
     float mDelayQ = 0.1f;
 
