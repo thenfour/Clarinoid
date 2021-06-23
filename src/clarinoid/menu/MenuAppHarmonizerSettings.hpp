@@ -2,10 +2,11 @@
 
 #include "BoolSettingItem.hpp"
 #include "EnumSettingItem.hpp"
+#include "FunctionListSettingItem.hpp"
 #include "MenuAppBase.hpp"
 #include "MenuSettings.hpp"
 #include "NumericSettingItem.hpp"
-#include "FunctionListSettingItem.hpp"
+
 
 namespace clarinoid {
 
@@ -55,13 +56,13 @@ struct HarmVoiceSettingsApp {
           },   // setter
           this // capture val
       },
-      Property<bool>{ // enabled only if ref type = voice.
-          [](void *cap) {
-              auto *pThis = (HarmVoiceSettingsApp *)cap;
-              return pThis->EditingVoice().mSynthPresetRef == HarmSynthPresetRefType::Voice;
-              },
-          this}
-  };
+      Property<bool>{// enabled only if ref type = voice.
+                     [](void *cap) {
+                       auto *pThis = (HarmVoiceSettingsApp *)cap;
+                       return pThis->EditingVoice().mSynthPresetRef ==
+                              HarmSynthPresetRefType::Voice;
+                     },
+                     this}};
 
   IntSettingItem mSequenceLength = {
       "Seq length",
@@ -77,36 +78,39 @@ struct HarmVoiceSettingsApp {
           },   // setter
           this // capture val
       },
-      AlwaysEnabled
-  };
+      AlwaysEnabled};
 
-  MultiIntSettingItem mSequence = { // actually signed int8_t
-    [](void*) { return (size_t)clarinoid::HARM_SEQUENCE_LEN; }, // get item count
-    NumericEditRangeSpec<int>(-48, 48),
-    [](void*, size_t multiIndex) { return String(String("#") + multiIndex); }, // label getter
-    [](void* cap, size_t multiIndex) { // value as string getter
+  MultiIntSettingItem mSequence = {
+      // actually signed int8_t
+      [](void *) {
+        return (size_t)clarinoid::HARM_SEQUENCE_LEN;
+      }, // get item count
+      NumericEditRangeSpec<int>(-48, 48),
+      [](void *, size_t multiIndex) {
+        return String(String("#") + multiIndex);
+      },                                 // label getter
+      [](void *cap, size_t multiIndex) { // value as string getter
         auto *pThis = (HarmVoiceSettingsApp *)cap;
         return String(pThis->EditingVoice().mSequence[multiIndex]);
-    },
-    [](void* cap, size_t multiIndex) // value getter
-    {
+      },
+      [](void *cap, size_t multiIndex) // value getter
+      {
         auto *pThis = (HarmVoiceSettingsApp *)cap;
         return (int)pThis->EditingVoice().mSequence[multiIndex];
-    },
-    [](void* cap, size_t multiIndex, const int& val) { // value setter
+      },
+      [](void *cap, size_t multiIndex, const int &val) { // value setter
         auto *pThis = (HarmVoiceSettingsApp *)cap;
         pThis->EditingVoice().mSequence[multiIndex] = (int8_t)val;
-    },
-    [](void* cap, size_t multiIndex) { // is enabled
+      },
+      [](void *cap, size_t multiIndex) { // is enabled
         auto *pThis = (HarmVoiceSettingsApp *)cap;
         return (multiIndex + 1) <= pThis->EditingVoice().mSequenceLength;
-    },
-    this // capture
+      },
+      this // capture
   };
 
   IntSettingItem mMinOutpNote = {
-      "Min note",
-      NumericEditRangeSpec<int>{0, 127},
+      "Min note", NumericEditRangeSpec<int>{0, 127},
       Property<int>{
           [](void *cap) {
             auto *pThis = (HarmVoiceSettingsApp *)cap;
@@ -118,12 +122,10 @@ struct HarmVoiceSettingsApp {
           },   // setter
           this // capture val
       },
-      AlwaysEnabled
-  };
+      AlwaysEnabled};
 
   IntSettingItem mMaxOutpNote = {
-      "Max note",
-      NumericEditRangeSpec<int>{0, 127},
+      "Max note", NumericEditRangeSpec<int>{0, 127},
       Property<int>{
           [](void *cap) {
             auto *pThis = (HarmVoiceSettingsApp *)cap;
@@ -135,9 +137,7 @@ struct HarmVoiceSettingsApp {
           },   // setter
           this // capture val
       },
-      AlwaysEnabled
-  };
-
+      AlwaysEnabled};
 
   EnumSettingItem<NoteOOBBehavior> mOOBBehavior = {
       "OOB behav", gNoteOOBBehaviorInfo,
@@ -154,7 +154,6 @@ struct HarmVoiceSettingsApp {
       },
       AlwaysEnabled};
 
-
   EnumSettingItem<HarmScaleRefType> mScaleRefType = {
       "Scale ref", gHarmScaleRefTypeInfo,
       Property<HarmScaleRefType>{
@@ -170,7 +169,6 @@ struct HarmVoiceSettingsApp {
       },
       AlwaysEnabled};
 
-
   EnumSettingItem<Note> mLocalScaleNote = {
       "My Scale Root", gNoteInfo,
       Property<Note>{
@@ -185,12 +183,12 @@ struct HarmVoiceSettingsApp {
           this // capture val
       },
       AlwaysEnabled
-    //   [](void* cap) {
-    //         auto *pThis = (HarmVoiceSettingsApp *)cap;
-    //         return pThis->EditingVoice().mScaleRef == HarmScaleRefType::Voice;
-    //   }
-      };
-
+      //   [](void* cap) {
+      //         auto *pThis = (HarmVoiceSettingsApp *)cap;
+      //         return pThis->EditingVoice().mScaleRef ==
+      //         HarmScaleRefType::Voice;
+      //   }
+  };
 
   EnumSettingItem<ScaleFlavorIndex> mLocalScaleFlavor = {
       " ->Flav", gScaleFlavorIndexInfo,
@@ -206,28 +204,27 @@ struct HarmVoiceSettingsApp {
           this // capture val
       },
       AlwaysEnabled
-    //   [](void* cap) {
-    //         auto *pThis = (HarmVoiceSettingsApp *)cap;
-    //         return pThis->EditingVoice().mScaleRef == HarmScaleRefType::Voice;
-    //   }
-      };
-
+      //   [](void* cap) {
+      //         auto *pThis = (HarmVoiceSettingsApp *)cap;
+      //         return pThis->EditingVoice().mScaleRef ==
+      //         HarmScaleRefType::Voice;
+      //   }
+  };
 
   EnumSettingItem<NonDiatonicBehavior> mNonDiatonicBehavior = {
       "OOS behav", gNonDiatonicBehaviorInfo,
       Property<NonDiatonicBehavior>{
           [](void *cap) {
             auto *pThis = (HarmVoiceSettingsApp *)cap;
-            return pThis->EditingVoice().mNonDiatonicBehavior ;
+            return pThis->EditingVoice().mNonDiatonicBehavior;
           }, // getter
           [](void *cap, const NonDiatonicBehavior &val) {
             auto *pThis = (HarmVoiceSettingsApp *)cap;
-            pThis->EditingVoice().mNonDiatonicBehavior= val;
+            pThis->EditingVoice().mNonDiatonicBehavior = val;
           },   // setter
           this // capture val
       },
       AlwaysEnabled};
-
 
   EnumSettingItem<PitchBendParticipation> mPitchbendBehav = {
       "PB behav", gPitchBendParticipationInfo,
@@ -244,27 +241,16 @@ struct HarmVoiceSettingsApp {
       },
       AlwaysEnabled};
 
-
   LabelSettingItem mEndSeparator = {
-            Property<String> { [](void*){ return String("----"); } },
-            AlwaysEnabled };
-
+      Property<String>{[](void *) { return String("----"); }}, AlwaysEnabled};
 
   ISettingItem *mArray[13] = {
-      &mSynthPresetRef,
-      &mOwnSynthPatch,
-      &mSequenceLength,
-      &mSequence,
-      &mMinOutpNote,
-      &mMaxOutpNote,
-      &mOOBBehavior,
-      &mPitchbendBehav,
-      &mScaleRefType,
-      &mLocalScaleNote,
-      &mLocalScaleFlavor,
-      &mNonDiatonicBehavior,
+      &mSynthPresetRef, &mOwnSynthPatch,    &mSequenceLength,
+      &mSequence,       &mMinOutpNote,      &mMaxOutpNote,
+      &mOOBBehavior,    &mPitchbendBehav,   &mScaleRefType,
+      &mLocalScaleNote, &mLocalScaleFlavor, &mNonDiatonicBehavior,
       &mEndSeparator,
-      };
+  };
   SettingsList mRootList = {mArray};
 };
 
@@ -296,13 +282,18 @@ struct HarmPatchSettingsApp {
       },
       AlwaysEnabled};
 
-        FloatSettingItem mStereoSeparation = {"Stereo Sep", StandardRangeSpecs::gFloat_0_1,
-                                            Property<float>{
-                                                [](void *cap) { auto* pThis = (HarmPatchSettingsApp*)cap; return pThis->EditingPreset().mStereoSeparation; },
-                                                [](void *cap, const float &v) { auto* pThis = (HarmPatchSettingsApp*)cap; pThis->EditingPreset().mStereoSeparation = v; },
-                                                this},
-                                            AlwaysEnabled};
-
+  FloatSettingItem mStereoSeparation = {
+      "Stereo Sep", StandardRangeSpecs::gFloat_0_1,
+      Property<float>{[](void *cap) {
+                        auto *pThis = (HarmPatchSettingsApp *)cap;
+                        return pThis->EditingPreset().mStereoSeparation;
+                      },
+                      [](void *cap, const float &v) {
+                        auto *pThis = (HarmPatchSettingsApp *)cap;
+                        pThis->EditingPreset().mStereoSeparation = v;
+                      },
+                      this},
+      AlwaysEnabled};
 
   IntSettingItem mMinRotationTimeMS = {
       "Min Rotation MS", NumericEditRangeSpec<int>{0, 10000},
@@ -389,7 +380,9 @@ struct HarmPatchSettingsApp {
         auto *pThis = (HarmPatchSettingsApp *)cap;
         // like
         // Voice 5 [-2,2]
-        return (String)(String("Voice ") + mi + "" + pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
+        return (String)(
+            String("Voice ") + mi + "" +
+            pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
       },                         // return string name
       [](void *cap, size_t mi) { // get submenu for item
         auto *pThis = (HarmPatchSettingsApp *)cap;
@@ -400,28 +393,35 @@ struct HarmPatchSettingsApp {
       this};                                     // capture
 
   FunctionListSettingItem mCopyPreset = {
-    "Copy to ...",
-    HARM_PRESET_COUNT,
-    [](void* cap, size_t i) {//itemNameGetter,
+      "Copy to ...",
+      HARM_PRESET_COUNT,
+      [](void *cap, size_t i) { // itemNameGetter,
         auto *pThis = (HarmPatchSettingsApp *)cap;
-      return String(String("") + i + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
-    },
-    [](void* cap, size_t i) {//cc::function<void(void*,size_t)>::ptr_t onClick,
-      auto *pThis = (HarmPatchSettingsApp *)cap;
-      pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
-      pThis->mDisplay.ShowToast(String("Copied ") +
-        pThis->mDisplay.mAppSettings->mGlobalHarmPreset + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset].mName
-        + " to "
-        + i + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
-    },
-    AlwaysEnabled,
-    this
-  };
+        return String(
+            String("") + i + ":" +
+            pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
+      },
+      [](void *cap,
+         size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
+        auto *pThis = (HarmPatchSettingsApp *)cap;
+        pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i] =
+            pThis->EditingPreset();
+        pThis->mDisplay.ShowToast(
+            String("Copied ") +
+            pThis->mDisplay.mAppSettings->mGlobalHarmPreset + ":" +
+            pThis->mDisplay.mAppSettings->mHarmSettings
+                .mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset]
+                .mName +
+            " to " + i + ":" +
+            pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
+      },
+      AlwaysEnabled,
+      this};
 
   ISettingItem *mArray[9] = {
-      &mEmitLiveNote, &mStereoSeparation, &mMinRotationTimeMS, &mSynthPreset1,
-      &mSynthPreset2, &mSynthPreset3, &mSynthPreset4,     &mVoiceSubmenu,
-      &mCopyPreset,
+      &mEmitLiveNote, &mStereoSeparation, &mMinRotationTimeMS,
+      &mSynthPreset1, &mSynthPreset2,     &mSynthPreset3,
+      &mSynthPreset4, &mVoiceSubmenu,     &mCopyPreset,
   };
   SettingsList mRootList = {mArray};
 };

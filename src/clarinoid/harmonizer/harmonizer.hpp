@@ -1,26 +1,22 @@
 
 #pragma once
 
-#include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/settings/AppSettings.hpp>
 #include "AnalogValue.hpp"
 #include "MusicalVoice.hpp"
+#include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/settings/AppSettings.hpp>
 
-namespace clarinoid
-{
 
-struct Harmonizer
-{
-  AppSettings* mAppSettings;
+namespace clarinoid {
 
-  explicit Harmonizer(AppSettings* appSettings) : mAppSettings(appSettings)
-  {
-  }
+struct Harmonizer {
+  AppSettings *mAppSettings;
+
+  explicit Harmonizer(AppSettings *appSettings) : mAppSettings(appSettings) {}
 
   // state & processing for harmonizer.
 
-  enum class VoiceFilterOptions : uint8_t
-  {
+  enum class VoiceFilterOptions : uint8_t {
     AllExceptDeducedVoices,
     OnlyDeducedVoices,
   };
@@ -28,45 +24,52 @@ struct Harmonizer
   size_t mSequencePos = 0;
   Stopwatch mRotationTriggerTimer;
 
-  // called each frame to add harmonizer voices to the output, given the live playing voice.
-  // liveVoice is considered a part of the output. It will be muted or unmuted whether it should be part of playback
-  // returns the number of voices added (including live voice, even if muted)
-  // layerID is needed in order to create the voiceID
-  size_t Harmonize(uint8_t loopLayerID, MusicalVoice* liveVoice, const MusicalVoiceTransitionEvents& transitionEvents, MusicalVoice* outp, MusicalVoice* end, VoiceFilterOptions voiceFilter) {
-    HarmPreset& preset = mAppSettings->FindHarmPreset(liveVoice->mHarmPatch);
+  // called each frame to add harmonizer voices to the output, given the live
+  // playing voice. liveVoice is considered a part of the output. It will be
+  // muted or unmuted whether it should be part of playback returns the number
+  // of voices added (including live voice, even if muted) layerID is needed in
+  // order to create the voiceID
+  size_t Harmonize(uint8_t loopLayerID, MusicalVoice *liveVoice,
+                   const MusicalVoiceTransitionEvents &transitionEvents,
+                   MusicalVoice *outp, MusicalVoice *end,
+                   VoiceFilterOptions voiceFilter) {
+    HarmPreset &preset = mAppSettings->FindHarmPreset(liveVoice->mHarmPatch);
 
     size_t ret = 0;
 
     // advance sequence pointer?
     if (transitionEvents.mNeedsNoteOn) {
-      if (mRotationTriggerTimer.ElapsedTime().ElapsedMillisI() >= preset.mMinRotationTimeMS)
-      {
+      if (mRotationTriggerTimer.ElapsedTime().ElapsedMillisI() >=
+          preset.mMinRotationTimeMS) {
         mRotationTriggerTimer.Restart();
-        mSequencePos ++;
-        //Serial.println(String("seq") + mSequencePos);
+        mSequencePos++;
+        // Serial.println(String("seq") + mSequencePos);
       }
     }
 
     // LIVE note:
-    // harmonizing should always output the live note; if it's not part of the real harmonized output,
-    // then mark it as muted. it needs to be there so the scale deducer can use it.
+    // harmonizing should always output the live note; if it's not part of the
+    // real harmonized output, then mark it as muted. it needs to be there so
+    // the scale deducer can use it.
     liveVoice->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote;
     liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, 0);
-    if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices)
-    {
-      ++ ret; // live voice is a non-deduced voice.
+    if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices) {
+      ++ret; // live voice is a non-deduced voice.
     }
 
-    MusicalVoice* pout = outp;
-    
-    bool globalDeduced = mAppSettings->mGlobalScaleRef == GlobalScaleRefType::Deduced;
-    Scale globalScale = globalDeduced ? mAppSettings->mDeducedScale : mAppSettings->mGlobalScale;
+    MusicalVoice *pout = outp;
 
-            //CCPlot(String("globalScale:") + globalScale.ToString() + ", isdeduced=" + (globalDeduced ? "yes" : "no"));
+    bool globalDeduced =
+        mAppSettings->mGlobalScaleRef == GlobalScaleRefType::Deduced;
+    Scale globalScale = globalDeduced ? mAppSettings->mDeducedScale
+                                      : mAppSettings->mGlobalScale;
 
-    for (size_t nVoice = 0; nVoice < SizeofStaticArray(preset.mVoiceSettings); ++ nVoice)
-    {
-      auto& hv = preset.mVoiceSettings[nVoice];
+    // CCPlot(String("globalScale:") + globalScale.ToString() + ", isdeduced=" +
+    // (globalDeduced ? "yes" : "no"));
+
+    for (size_t nVoice = 0; nVoice < SizeofStaticArray(preset.mVoiceSettings);
+         ++nVoice) {
+      auto &hv = preset.mVoiceSettings[nVoice];
 
       // can we skip straight away?
       if (hv.mSequenceLength == 0)
@@ -75,7 +78,8 @@ struct Harmonizer
         return ret;
       }
 
-      // is it a deduced voice? in other words, one that a scale follower selects? we may need to filter it.
+      // is it a deduced voice? in other words, one that a scale follower
+      // selects? we may need to filter it.
       bool deduced = false;
       Scale scale;
 
@@ -87,34 +91,39 @@ struct Harmonizer
         deduced = globalDeduced;
         scale = globalScale;
         break;
-      } 
+      }
 
       bool wantDeduced = (voiceFilter == VoiceFilterOptions::OnlyDeducedVoices);
-      //CCPlot(String("wantdeduced:") + (wantDeduced ? "yes" : "no") + "voiceFilter=" + (int)(voiceFilter));
+      // CCPlot(String("wantdeduced:") + (wantDeduced ? "yes" : "no") +
+      // "voiceFilter=" + (int)(voiceFilter));
       if (wantDeduced != deduced)
         continue;
 
       *pout = *liveVoice; // copy from live voice to get started.
       pout->mIsNoteCurrentlyMuted = false;
-      pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)(nVoice + 1)); // +1 because live voice is id 0.
+      pout->mVoiceId = MakeMusicalVoiceID(
+          loopLayerID, (uint8_t)(nVoice + 1)); // +1 because live voice is id 0.
 
-      pout->mPan += preset.mStereoSeparation * ((((int)nVoice & 1) * 2) - 1); // turns bit 0 to -1 or 1
+      pout->mPan += preset.mStereoSeparation *
+                    ((((int)nVoice & 1) * 2) - 1); // turns bit 0 to -1 or 1
 
       switch (hv.mPitchBendParticipation) {
-        case PitchBendParticipation::Off:
-          pout->mPitchBendN11.SetFloat(0);
-          break;
-        case PitchBendParticipation::Invert:
-          pout->mPitchBendN11.SetFloat(-pout->mPitchBendN11.GetFloatVal());
-          break;
-        case PitchBendParticipation::Same:
-        default:
-          // already fine.
-          break;
+      case PitchBendParticipation::Off:
+        pout->mPitchBendN11.SetFloat(0);
+        break;
+      case PitchBendParticipation::Invert:
+        pout->mPitchBendN11.SetFloat(-pout->mPitchBendN11.GetFloatVal());
+        break;
+      case PitchBendParticipation::Same:
+      default:
+        // already fine.
+        break;
       }
 
       // todo: use hv.mNonDiatonicBehavior
-      auto newNote = scale.AdjustNoteByInterval(pout->mMidiNote, hv.mSequence[mSequencePos % hv.mSequenceLength], EnharmonicDirection::Sharp);
+      auto newNote = scale.AdjustNoteByInterval(
+          pout->mMidiNote, hv.mSequence[mSequencePos % hv.mSequenceLength],
+          EnharmonicDirection::Sharp);
       if (!newNote) {
         continue;
       }
@@ -142,8 +151,7 @@ struct Harmonizer
       if (pout->mVelocity == 0)
         continue;
 
-      switch (hv.mSynthPresetRef)
-      {
+      switch (hv.mSynthPresetRef) {
       case HarmSynthPresetRefType::Global:
         pout->mSynthPatch = mAppSettings->mGlobalSynthPreset;
         break;
@@ -164,10 +172,10 @@ struct Harmonizer
         break;
       }
 
-      ++ pout;
-      ++ ret;
+      ++pout;
+      ++ret;
     } // for voice
-    
+
     return ret;
   }
 };

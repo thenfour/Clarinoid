@@ -20,12 +20,13 @@ static inline int32_t gainToSignedMultiply32x16(float n) {
   return n * 65536.0f;
 }
 
-
 template <size_t NOutputs>
 inline static void
-audioBufferCopyAndApplyGainMulti(int16_t *inp, int16_t *outputs[NOutputs], int32_t multipliers[NOutputs]) {
-  uint32_t* pInp32 = (uint32_t*)inp;
-  for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES / 2; ++ i) // because we read 2 samples at a time, count in DWORDs
+audioBufferCopyAndApplyGainMulti(int16_t *inp, int16_t *outputs[NOutputs],
+                                 int32_t multipliers[NOutputs]) {
+  uint32_t *pInp32 = (uint32_t *)inp;
+  for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES / 2;
+       ++i) // because we read 2 samples at a time, count in DWORDs
   {
     uint32_t tmp32 = pInp32[i]; // reads 2 packed samples.
 
@@ -34,14 +35,11 @@ audioBufferCopyAndApplyGainMulti(int16_t *inp, int16_t *outputs[NOutputs], int32
       int32_t val2 = signed_multiply_32x16t(multipliers[io], tmp32);
       val1 = signed_saturate_rshift(val1, 16, 0);
       val2 = signed_saturate_rshift(val2, 16, 0);
-      uint32_t* pOutp32 = (uint32_t*)outputs[io];
+      uint32_t *pOutp32 = (uint32_t *)outputs[io];
       pOutp32[i] = pack_16b_16b(val2, val1);
     }
   }
 }
-
-
-
 
 inline static void applyGainThenAdd(int16_t *data, const int16_t *in) {
   uint32_t *dst = (uint32_t *)data;
@@ -108,8 +106,8 @@ struct PannerNode : public AudioStream {
     mMultiplierRight = gainToSignedMultiply32x16(rightChannel);
 
     // Serial.println(String("pan ") + n11 + " -> norm=" + normPan + " lgain=" +
-    // leftChannel + " rgain=" + rightChannel + " lmult32=" + mMultiplierLeft + "
-    // rmult32=" + mMultiplierRight);
+    // leftChannel + " rgain=" + rightChannel + " lmult32=" + mMultiplierLeft +
+    // " rmult32=" + mMultiplierRight);
   }
 
   float mPanN11 = -10.0; // so ctor will initialize properly.
@@ -140,8 +138,7 @@ struct PannerNode : public AudioStream {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Takes a single mono input, splits into N outputs * 2 (stereo), with gain &
 // pan applied to each split individually.
-template <size_t NSplits>
-struct GainAndPanSplitterNode : public AudioStream {
+template <size_t NSplits> struct GainAndPanSplitterNode : public AudioStream {
   float mPanN11[NSplits];
   float mGain01[NSplits];
   static constexpr size_t OutputBufferCount = NSplits * 2;
@@ -165,7 +162,8 @@ struct GainAndPanSplitterNode : public AudioStream {
     float rightChannel = sqrtf(1.0f - normPan);
 
     mMultipliers[chan * 2] = gainToSignedMultiply32x16(leftChannel * gain01);
-    mMultipliers[(chan * 2) + 1] = gainToSignedMultiply32x16(rightChannel * gain01);
+    mMultipliers[(chan * 2) + 1] =
+        gainToSignedMultiply32x16(rightChannel * gain01);
   }
 
   void SetPanAndGain(size_t chan, float gain01, float panN11) {
@@ -210,8 +208,7 @@ struct GainAndPanSplitterNode : public AudioStream {
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template <size_t NInputs>
-struct MultiMixer : public AudioStream {
+template <size_t NInputs> struct MultiMixer : public AudioStream {
   MultiMixer() : AudioStream(NInputs, inputQueueArray) {}
 
   virtual void update() override {

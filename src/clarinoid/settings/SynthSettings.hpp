@@ -64,19 +64,23 @@ namespace clarinoid
     MidiNote,
     LFO1,
     LFO2,
+    LFO3,
     ENV1,
     ENV2,
+    ENV3,
   };
 
-    EnumItemInfo<ModulationSource> gModulationSourceItems[8] = {
+    EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
       {ModulationSource::None, "None"},
       {ModulationSource::Breath, "Breath"},
       {ModulationSource::PitchBend, "PitchBend"},
       {ModulationSource::MidiNote, "MidiNote"},
       {ModulationSource::LFO1, "LFO1"},
       {ModulationSource::LFO2, "LFO2"},
+      {ModulationSource::LFO3, "LFO3"},
       {ModulationSource::ENV1, "ENV1"},
       {ModulationSource::ENV2, "ENV2"},
+      {ModulationSource::ENV3, "ENV3"},
   };
 
   EnumInfo<ModulationSource> gModulationSourceInfo("ModSource", gModulationSourceItems);
@@ -88,26 +92,24 @@ namespace clarinoid
 
   enum class ModulationDestination : uint8_t {
     None,
-    VoicePitchBend,
-    VoiceFilterCutoff,
-    VoiceFilterQ,
-    VoiceFilterSaturation,
-    VoiceVolume,
-    LFO1Rate,
-    LFO2Rate,
-    ENV1Delay,
-    ENV1Attack,
-    ENV1Decay,
-    ENV1Sustain,
-    ENV1Release,
-    ENV2Delay,
-    ENV2Attack,
-    ENV2Decay,
-    ENV2Sustain,
-    ENV2Release,
-    Osc1Pitch,
-    Osc2Pitch,
-    Osc3Pitch,
+    //VoiceFilterCutoff,
+    //Osc1PitchMultiplier,
+    //Osc1PitchOffset,
+    //Osc1PWM,
+    //Osc1,
+    // VoiceFilterQ,
+    // VoiceFilterSaturation,
+    // VoicePitchCourse,
+    // VoicePan,
+    // VoiceDelaySend,
+    // VoiceVerbSend,
+    // VoiceVolume,
+    // LFO1Rate,
+    // LFO2Rate,
+    // LFO3Rate,
+    // Osc1Pitch,
+    // Osc2Pitch,
+    // Osc3Pitch,
     Osc1PulseWidth,
     Osc2PulseWidth,
     Osc3PulseWidth,
@@ -116,28 +118,28 @@ namespace clarinoid
     Osc3Volume,
   };
 
-    EnumItemInfo<ModulationDestination> gModulationDestinationItems[27] = {
+    EnumItemInfo<ModulationDestination> gModulationDestinationItems[7] = {
       {ModulationDestination::None, "None"},
-      {ModulationDestination::VoicePitchBend, "VoicePitchBend"},
-      {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
-      {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
-      {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
-      {ModulationDestination::VoiceVolume, "VoiceVolume"},
-      {ModulationDestination::LFO1Rate, "LFO1Rate"},
-      {ModulationDestination::LFO2Rate, "LFO2Rate"},
-      {ModulationDestination::ENV1Delay, "ENV1Delay"},
-      {ModulationDestination::ENV1Attack, "ENV1Attack"},
-      {ModulationDestination::ENV1Decay, "ENV1Decay"},
-      {ModulationDestination::ENV1Sustain, "ENV1Sustain"},
-      {ModulationDestination::ENV1Release, "ENV1Release"},
-      {ModulationDestination::ENV2Delay, "ENV2Delay"},
-      {ModulationDestination::ENV2Attack, "ENV2Attack"},
-      {ModulationDestination::ENV2Decay, "ENV2Decay"},
-      {ModulationDestination::ENV2Sustain, "ENV2Sustain"},
-      {ModulationDestination::ENV2Release, "ENV2Release"},
-      {ModulationDestination::Osc1Pitch, "Osc1Pitch"},
-      {ModulationDestination::Osc2Pitch, "Osc2Pitch"},
-      {ModulationDestination::Osc3Pitch, "Osc3Pitch"},
+      // {ModulationDestination::VoicePitchBend, "VoicePitchBend"},
+      // {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
+      // {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
+      // {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
+      // {ModulationDestination::VoiceVolume, "VoiceVolume"},
+      // {ModulationDestination::LFO1Rate, "LFO1Rate"},
+      // {ModulationDestination::LFO2Rate, "LFO2Rate"},
+      // {ModulationDestination::ENV1Delay, "ENV1Delay"},
+      // {ModulationDestination::ENV1Attack, "ENV1Attack"},
+      // {ModulationDestination::ENV1Decay, "ENV1Decay"},
+      // {ModulationDestination::ENV1Sustain, "ENV1Sustain"},
+      // {ModulationDestination::ENV1Release, "ENV1Release"},
+      // {ModulationDestination::ENV2Delay, "ENV2Delay"},
+      // {ModulationDestination::ENV2Attack, "ENV2Attack"},
+      // {ModulationDestination::ENV2Decay, "ENV2Decay"},
+      // {ModulationDestination::ENV2Sustain, "ENV2Sustain"},
+      // {ModulationDestination::ENV2Release, "ENV2Release"},
+      // {ModulationDestination::Osc1Pitch, "Osc1Pitch"},
+      // {ModulationDestination::Osc2Pitch, "Osc2Pitch"},
+      // {ModulationDestination::Osc3Pitch, "Osc3Pitch"},
       {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
       {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
       {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
@@ -182,6 +184,25 @@ namespace clarinoid
     float mOsc2PulseWidth = 0.5f;
     float mOsc3PulseWidth = 0.5f;
 
+    float mOsc1EnvDelay = 0.0f;
+    float mOsc1EnvAttack = 0.0f;
+    float mOsc1EnvDecay = 0.0f;
+    float mOsc1EnvSustain = 1.0f;
+    float mOsc1EnvRelease = 0.0f;
+
+    float mOsc2EnvDelay = 0.0f;
+    float mOsc2EnvAttack = 0.0f;
+    float mOsc2EnvDecay = 0.0f;
+    float mOsc2EnvSustain = 1.0f;
+    float mOsc2EnvRelease = 0.0f;
+
+    float mOsc3EnvDelay = 0.0f;
+    float mOsc3EnvAttack = 0.0f;
+    float mOsc3EnvDecay = 0.0f;
+    float mOsc3EnvSustain = 1.0f;
+    float mOsc3EnvRelease = 0.0f;
+
+
     bool mSync = true;
     float mSyncMultMin = 2.0f;
     float mSyncMultMax = 7.0f;
@@ -221,6 +242,11 @@ namespace clarinoid
     float mDelayCutoffFrequency = 1000;
     float mDelaySaturation = 0.15f;
     float mDelayQ = 0.1f;
+
+    OscWaveformShape mLfo1Shape = OscWaveformShape::Sine;
+    float mLfo1Rate = 2.0f;
+    OscWaveformShape mLfo2Shape = OscWaveformShape::Sine;
+    float mLfo2Rate = 2.0f;
 
 
     static void InitClarinoid2Preset(SynthPreset& p, const char* name, ClarinoidFilterType filt, float filterKeyScaling, float q, float filterMaxFreq)

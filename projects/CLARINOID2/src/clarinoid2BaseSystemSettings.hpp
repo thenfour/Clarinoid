@@ -13,18 +13,21 @@ const char gClarinoidVersion[] = "CLARINOID 2";
 static const size_t MAX_SYNTH_VOICES = 6;
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 192000; // should be enough right?
-static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;// a smaller buffer that's just used for intermediate copy ops
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;    // a smaller buffer that's just used for intermediate copy ops
 
- // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on how the graph is processed i believe so just check the value.
- static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
- static constexpr float MAX_DELAY_MS = 500;
+// check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
+// how the graph is processed i believe so just check the value.
+static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
+static constexpr float MAX_DELAY_MS = 500;
 
 static const size_t HARM_PRESET_COUNT = 32;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 6;
 
 static const size_t LOOP_LAYERS = 6;
-static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
+static constexpr size_t MAX_MUSICAL_VOICES =
+    LOOP_LAYERS *
+    (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
 
 static const size_t PRESET_NAME_LEN = 16;
 
@@ -37,7 +40,6 @@ static const size_t MAX_DISPLAY_WIDTH = 128; // in order to maintain some static
 
 // assignable slots.
 static const size_t MAX_CONTROL_MAPPINGS = 64;
-
 
 enum class PhysicalControl : uint8_t
 {
@@ -54,7 +56,7 @@ enum class PhysicalControl : uint8_t
     Oct4,
     Oct5,
     Oct6,
-    
+
     LHKey1,
     LHKey2,
     LHKey3,
