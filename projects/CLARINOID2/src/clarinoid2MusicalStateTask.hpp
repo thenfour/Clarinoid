@@ -10,12 +10,11 @@ namespace clarinoid
 // this is a task which performs the meat of the musical state.
 // 1. converting input data to musical data
 // 2. updating the synth state
-struct MusicalStateTask :
-    ITask
+struct MusicalStateTask : ITask
 {
-    AppSettings* mAppSettings;
+    AppSettings *mAppSettings;
     Clarinoid2ControlMapper *mControlMapper;
-    InputDelegator* mpInput;
+    InputDelegator *mpInput;
 
     Metronome mMetronome;
     CCEWIMusicalState mMusicalState;
@@ -27,12 +26,9 @@ struct MusicalStateTask :
     SimpleMovingAverage<15> mMusicalStateTiming;
     SimpleMovingAverage<15> mSynthStateTiming;
 
-    MusicalStateTask(AppSettings* appSettings, InputDelegator* input, Clarinoid2ControlMapper *controlMapper) : 
-        mAppSettings(appSettings),
-        mControlMapper(controlMapper),
-        mpInput(input),
-        mMetronome(appSettings),
-        mMusicalState(appSettings, mpInput, &mMetronome, &mScaleFollower, controlMapper)
+    MusicalStateTask(AppSettings *appSettings, InputDelegator *input, Clarinoid2ControlMapper *controlMapper)
+        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(appSettings),
+          mMusicalState(appSettings, mpInput, &mMetronome, &mScaleFollower, controlMapper)
     {
     }
 
@@ -56,7 +52,7 @@ struct MusicalStateTask :
             int m2 = micros();
             mMusicalStateTiming.Update((float)(m2 - m1));
         }
-        
+
         {
             // does its own interrupt disabling.
             int m1 = micros();

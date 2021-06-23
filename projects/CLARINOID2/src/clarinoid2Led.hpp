@@ -18,7 +18,6 @@ double max(const float &a, const double &b)
 #include "clarinoid/components/Leds.hpp"
 #include <random>
 
-
 namespace clarinoid
 {
 struct ILEDDataProvider

@@ -6,7 +6,6 @@
 namespace clarinoid
 {
 
-
 // struct Adafruit_MCP23017 {
 
 //   static constexpr int MCP23017_DEFAULT_ADDRESS = 0x20; //!< default MCP23017 Address
@@ -46,7 +45,6 @@ namespace clarinoid
 //   static inline uint8_t wirerecv(TwoWire *theWire) {
 //     return theWire->read();
 //   }
-
 
 // /**
 //  * Bit number associated to a give Pin
@@ -164,7 +162,6 @@ namespace clarinoid
 //   return ba;
 // }
 
-
 // /*!
 //  * @brief Enables the pull-up resistor on the specified pin
 //  * @param p Pin to set
@@ -174,110 +171,74 @@ namespace clarinoid
 //   updateRegisterBit(p, d, MCP23017_GPPUA, MCP23017_GPPUB);
 // }
 
-
-
 // private:
 //   uint8_t i2caddr;
 //   TwoWire *_wire; //!< pointer to a TwoWire object
 
 // };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // attach to a CCMCP23017 value to represent a single switch
-struct BitButton :
-  ISwitch
+struct BitButton : ISwitch
 {
-  uint16_t& mMcpCurrentValue;
-  int mKeyMask;
+    uint16_t &mMcpCurrentValue;
+    int mKeyMask;
 
-  explicit BitButton(uint16_t& mcpCurrentValue, int keyIndex /* 0-15 */) :
-    mMcpCurrentValue(mcpCurrentValue),
-    mKeyMask(1 << keyIndex)
-  {
-    CCASSERT(keyIndex >= 0 && keyIndex < 16);
-  }
+    explicit BitButton(uint16_t &mcpCurrentValue, int keyIndex /* 0-15 */)
+        : mMcpCurrentValue(mcpCurrentValue), mKeyMask(1 << keyIndex)
+    {
+        CCASSERT(keyIndex >= 0 && keyIndex < 16);
+    }
 
-  virtual bool CurrentValue() const override { return !(mMcpCurrentValue & mKeyMask); }
+    virtual bool CurrentValue() const override
+    {
+        return !(mMcpCurrentValue & mKeyMask);
+    }
 };
-
-
 
 struct CCMCP23017
 {
-  Adafruit_MCP23017 mMcp;
-  uint16_t mCurrentValue = 0;
-  uint16_t mPreviousValue = 0;
+    Adafruit_MCP23017 mMcp;
+    uint16_t mCurrentValue = 0;
+    uint16_t mPreviousValue = 0;
 
-  BitButton mButtons[16] = {
-    BitButton{ mCurrentValue, 0 },
-    BitButton{ mCurrentValue, 1 },
-    BitButton{ mCurrentValue, 2 },
-    BitButton{ mCurrentValue, 3 },
-    BitButton{ mCurrentValue, 4 },
-    BitButton{ mCurrentValue, 5 },
-    BitButton{ mCurrentValue, 6 },
-    BitButton{ mCurrentValue, 7 },
-    BitButton{ mCurrentValue, 8 },
-    BitButton{ mCurrentValue, 9 },
-    BitButton{ mCurrentValue, 10 },
-    BitButton{ mCurrentValue, 11 },
-    BitButton{ mCurrentValue, 12 },
-    BitButton{ mCurrentValue, 13 },
-    BitButton{ mCurrentValue, 14 },
-    BitButton{ mCurrentValue, 15 },
-  };
+    BitButton mButtons[16] = {
+        BitButton{mCurrentValue, 0},
+        BitButton{mCurrentValue, 1},
+        BitButton{mCurrentValue, 2},
+        BitButton{mCurrentValue, 3},
+        BitButton{mCurrentValue, 4},
+        BitButton{mCurrentValue, 5},
+        BitButton{mCurrentValue, 6},
+        BitButton{mCurrentValue, 7},
+        BitButton{mCurrentValue, 8},
+        BitButton{mCurrentValue, 9},
+        BitButton{mCurrentValue, 10},
+        BitButton{mCurrentValue, 11},
+        BitButton{mCurrentValue, 12},
+        BitButton{mCurrentValue, 13},
+        BitButton{mCurrentValue, 14},
+        BitButton{mCurrentValue, 15},
+    };
 
-  explicit CCMCP23017(TwoWire *theWire, int address = 0x20)
-  {
-    NoInterrupts _ni;
-    mMcp.begin(theWire);
-    //theWire->setClock(400000); // use high speed mode. default speed = 100k
-    for (int i  = 0; i < 16; ++ i) {
-      mMcp.pinMode(i, INPUT);
-      mMcp.pullUp(i, HIGH);  // turn on a 100K pullup internally
+    explicit CCMCP23017(TwoWire *theWire, int address = 0x20)
+    {
+        NoInterrupts _ni;
+        mMcp.begin(theWire);
+        // theWire->setClock(400000); // use high speed mode. default speed = 100k
+        for (int i = 0; i < 16; ++i)
+        {
+            mMcp.pinMode(i, INPUT);
+            mMcp.pullUp(i, HIGH); // turn on a 100K pullup internally
+        }
     }
-  }
 
-  void Update()
-  {
-    NoInterrupts _ni;
-    auto newCurrentVal = mMcp.readGPIOAB();
-    mPreviousValue = mCurrentValue;
-    mCurrentValue = newCurrentVal;
-  }
+    void Update()
+    {
+        NoInterrupts _ni;
+        auto newCurrentVal = mMcp.readGPIOAB();
+        mPreviousValue = mCurrentValue;
+        mCurrentValue = newCurrentVal;
+    }
 };
 
 } // namespace clarinoid

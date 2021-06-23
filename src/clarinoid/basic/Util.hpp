@@ -7,121 +7,118 @@
 
 namespace clarinoid
 {
-    struct PointF
-    {
-      float x;
-      float y;
-    };
-    struct PointI
-    {
-      int x;
-      int y;
-    };
-
-    struct RectF
-    {
-      float x;
-      float y;
-      float width;
-      float height;
-    };
-    struct RectI
-    {
-      int x;
-      int y;
-      int width;
-      int height;
-    };
-
-    struct ColorF
-    {
-        float r;
-        float g;
-        float b;
-    };
-    struct ColorByte
-    {
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
-    };
-
-    template<typename T, T minOutput, T maxOutput>
-    static T Float01ToInt(float f)
-    {
-        if (f <= 0.0f)
-            return minOutput;
-        if (f >= 1.0f)
-            return maxOutput;
-        T ret = (T)(f * (maxOutput - minOutput));
-        return ret;
-    }
-
-
-// use as a global var to run init code 
-struct StaticInit
+struct PointF
 {
-  template<typename T>
-  StaticInit(T&& x) { 
-    x();
-  }
+    float x;
+    float y;
+};
+struct PointI
+{
+    int x;
+    int y;
 };
 
+struct RectF
+{
+    float x;
+    float y;
+    float width;
+    float height;
+};
+struct RectI
+{
+    int x;
+    int y;
+    int width;
+    int height;
+};
 
-  template<typename T>
-  struct array_view
-  {
+struct ColorF
+{
+    float r;
+    float g;
+    float b;
+};
+struct ColorByte
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+};
+
+template <typename T, T minOutput, T maxOutput>
+static T Float01ToInt(float f)
+{
+    if (f <= 0.0f)
+        return minOutput;
+    if (f >= 1.0f)
+        return maxOutput;
+    T ret = (T)(f * (maxOutput - minOutput));
+    return ret;
+}
+
+// use as a global var to run init code
+struct StaticInit
+{
+    template <typename T>
+    StaticInit(T &&x)
+    {
+        x();
+    }
+};
+
+template <typename T>
+struct array_view
+{
     size_t mSize = 0;
-    T* mData = nullptr;
+    T *mData = nullptr;
 
     array_view() = default;
 
-    template<size_t N>
-    array_view(T(&a)[N]) :
-      mSize(N),
-      mData(a)
+    template <size_t N>
+    array_view(T (&a)[N]) : mSize(N), mData(a)
     {
     }
-  };
+};
 
-  template<typename T, size_t N>
-  array_view<T> make_array_view(T(&a)[N])
-  {
+template <typename T, size_t N>
+array_view<T> make_array_view(T (&a)[N])
+{
     return array_view<T>(a);
-  }
+}
 
 // https://stackoverflow.com/questions/26351587/how-to-create-stdarray-with-initialization-list-without-providing-size-directl
 template <typename V, typename... T>
-constexpr auto array_of(T&&... t)
-    -> std::array < V, sizeof...(T) >
+constexpr auto array_of(T &&... t) -> std::array<V, sizeof...(T)>
 {
-    return {{ std::forward<T>(t)... }};
+    return {{std::forward<T>(t)...}};
 }
-
-
 
 struct NoInterrupts
 {
-  static int gNoInterruptRefs;
-  NoInterrupts() {
+    static int gNoInterruptRefs;
+    NoInterrupts()
+    {
 #ifndef CLARINOID_PLATFORM_X86
-    if (0 == gNoInterruptRefs) {
-      // __disable_irq(); // not sure which one to use honestly...
-      NVIC_DISABLE_IRQ(IRQ_SOFTWARE);
-    }
+        if (0 == gNoInterruptRefs)
+        {
+            // __disable_irq(); // not sure which one to use honestly...
+            NVIC_DISABLE_IRQ(IRQ_SOFTWARE);
+        }
 #endif
-    gNoInterruptRefs ++;
-  }
-  ~NoInterrupts()
-  {
-    gNoInterruptRefs --;
+        gNoInterruptRefs++;
+    }
+    ~NoInterrupts()
+    {
+        gNoInterruptRefs--;
 #ifndef CLARINOID_PLATFORM_X86
-    if (0 == gNoInterruptRefs) {
-      // __enable_irq(); // not sure which one to use honestly...
-      NVIC_ENABLE_IRQ(IRQ_SOFTWARE);
-    }
+        if (0 == gNoInterruptRefs)
+        {
+            // __enable_irq(); // not sure which one to use honestly...
+            NVIC_ENABLE_IRQ(IRQ_SOFTWARE);
+        }
 #endif
-  }
+    }
 };
 
 int NoInterrupts::gNoInterruptRefs = 0;
@@ -158,8 +155,6 @@ int NoInterrupts::gNoInterruptRefs = 0;
 //   gPlot.AppendField(val);
 // }
 
-
-
 // // helps interpreting touch keys like buttons. like a computer keyboard, starts repeating after an initial delay.
 // // untouching the key will reset the delays
 // template<int TrepeatInitialDelayMS, int TrepeatPeriodMS>
@@ -172,13 +167,13 @@ int NoInterrupts::gNoInterruptRefs = 0;
 //   bool mIsTriggered = false; // one-frame
 // public:
 //   void Update(bool pressed) { // call once a frame. each call to this will reset IsTriggered
-    
+
 //     if (!mPrevState && !pressed) {
 //       // typical idle state; nothing to do.
 //       mIsTriggered = false;
 //       return;
 //     }
-    
+
 //     if (mPrevState && pressed) {
 //       // key repeat?
 //       if (!mInitialDelayPassed) {
@@ -203,16 +198,16 @@ int NoInterrupts::gNoInterruptRefs = 0;
 //       mIsTriggered = false;
 //       return;
 //     }
-    
+
 //     if (!mPrevState && pressed) {
 //       // newly pressed. reset initial repeat delay
 //       mInitialDelayTimer.Reset();
 //       mInitialDelayPassed = false;
 //       mPrevState = true;
 //       mIsTriggered = true;
-//       return;      
+//       return;
 //     }
-    
+
 //     if (mPrevState && !pressed) {
 //       // newly released.
 //       mIsTriggered = false;
@@ -227,7 +222,4 @@ int NoInterrupts::gNoInterruptRefs = 0;
 //   }
 // };
 
-
-
 } // namespace clarinoid
-

@@ -4,7 +4,8 @@
 #include "Enum.hpp"
 #include "Stopwatch.hpp"
 
-namespace clarinoid {
+namespace clarinoid
+{
 
 // //////////////////////////////////////////////////////////////////////
 // enum class ProfileObjectType
@@ -29,7 +30,6 @@ namespace clarinoid {
 
 // EnumInfo<ProfileObjectType> gProfileObjectTypeInfo ("ProfileObjectType", gProfileObjectTypeItems);
 
-
 // struct ProfileTiming
 // {
 //   ProfileObjectType mType;
@@ -38,14 +38,13 @@ namespace clarinoid {
 //   uint32_t mLoopMillis = 0;
 // };
 
-
 // struct Profiler
 // {
 //   ProfileTiming mTimings[gProfileObjectTypeCount];
 
 //   Profiler() {
 //     for (size_t i = 0; i < gProfileObjectTypeCount; ++ i) {
-//       mTimings[i].mType = (ProfileObjectType)i;  
+//       mTimings[i].mType = (ProfileObjectType)i;
 //     }
 //   }
 // };
@@ -69,6 +68,4 @@ namespace clarinoid {
 //   }
 // };
 
-
 } // namespace clarinoid
-

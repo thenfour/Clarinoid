@@ -7,53 +7,57 @@
 namespace clarinoid
 {
 
-
 struct Voice
 {
-  //int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-  //bool mTouched = false;
+    // int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+    // bool mTouched = false;
 
-  MusicalVoice mRunningVoice;
+    MusicalVoice mRunningVoice;
 
-  void EnsurePatchConnections()
-  {
-  }
-  
-  void Update(const MusicalVoice& mv)
-  {
-    mRunningVoice = mv;
-  }
+    void EnsurePatchConnections()
+    {
+    }
 
-  bool IsPlaying() const {
-    return mRunningVoice.IsPlaying();
-  }
-  void Unassign() {
-    mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-  }
+    void Update(const MusicalVoice &mv)
+    {
+        mRunningVoice = mv;
+    }
+
+    bool IsPlaying() const
+    {
+        return mRunningVoice.IsPlaying();
+    }
+    void Unassign()
+    {
+        mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+    }
 };
 
 Voice gVoices[MAX_SYNTH_VOICES];
 
-
 struct SynthGraphControl
 {
-  CCThrottlerT<500> mMetronomeTimer;
+    CCThrottlerT<500> mMetronomeTimer;
 
-  void Setup(...)
-  {
-  }
+    void Setup(...)
+    {
+    }
 
-  void SetGain(float f) {
-  }
+    void SetGain(float f)
+    {
+    }
 
-  void BeginUpdate() {
-  }
+    void BeginUpdate()
+    {
+    }
 
-  void EndUpdate() {
-  }
+    void EndUpdate()
+    {
+    }
 
-  void UpdatePostFx() {
-  }
+    void UpdatePostFx()
+    {
+    }
 };
 
 SynthGraphControl gSynthGraphControl;

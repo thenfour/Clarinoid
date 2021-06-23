@@ -6,7 +6,6 @@
 namespace clarinoid
 {
 
-
 // enum class ProfileMenuMode
 // {
 //   Loop,
@@ -17,7 +16,7 @@ namespace clarinoid
 // struct ProfileTimingsMenuList : IList
 // {
 //   ProfileMenuMode mMode = ProfileMenuMode::Total;
-  
+
 //   virtual int List_GetItemCount() const {
 //     return gProfileObjectTypeCount;
 //   }
@@ -69,7 +68,7 @@ namespace clarinoid
 //   ProfileMenuApp() :
 //     mList(&mListAdapter, mSelectedItem, 0, 0, 4)
 //   {}
-  
+
 //   virtual void RenderFrontPage() {
 //     gDisplay.mDisplay.setTextSize(1);
 //     gDisplay.mDisplay.setTextColor(WHITE);
@@ -111,6 +110,5 @@ namespace clarinoid
 //     mList.Update();
 //   }
 // };
-
 
 } // namespace clarinoid

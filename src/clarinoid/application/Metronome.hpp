@@ -7,8 +7,8 @@
 namespace clarinoid
 {
 
-  struct Metronome
-  {
+struct Metronome
+{
     AppSettings *mAppSettings;
 
     explicit Metronome(AppSettings *appSettings) : mAppSettings(appSettings)
@@ -19,24 +19,24 @@ namespace clarinoid
 
     void SyncPeriod()
     {
-      mTimer.SetPeriod(TimeSpan::FromBPM(mAppSettings->mBPM));
+        mTimer.SetPeriod(TimeSpan::FromBPM(mAppSettings->mBPM));
     }
 
     int GetBeatInt()
     {
-      SyncPeriod();
-      return mTimer.GetBeatInt();
+        SyncPeriod();
+        return mTimer.GetBeatInt();
     }
     float GetBeatFloat()
     {
-      SyncPeriod();
-      return mTimer.GetBeatFloat();
+        SyncPeriod();
+        return mTimer.GetBeatFloat();
     }
     float GetBeatFrac()
     {
-      SyncPeriod();
-      return mTimer.GetBeatFrac();
+        SyncPeriod();
+        return mTimer.GetBeatFrac();
     }
-  };
+};
 
 } // namespace clarinoid

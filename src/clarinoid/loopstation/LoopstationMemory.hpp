@@ -12,14 +12,13 @@ namespace clarinoid
 // one cheap solution is to just put all our DMAMEM stuff in 1 struct like this.
 struct DMAClarinoidMemory
 {
-  uint8_t gLoopStationBuffer[LOOPER_MEMORY_TOTAL_BYTES];
-  uint8_t gLoopStationTempBuffer[LOOPER_TEMP_BUFFER_BYTES];
+    uint8_t gLoopStationBuffer[LOOPER_MEMORY_TOTAL_BYTES];
+    uint8_t gLoopStationTempBuffer[LOOPER_TEMP_BUFFER_BYTES];
 #ifndef CLARINOID_MODULE_TEST
-  audio_block_t gAudioMemory[AUDIO_MEMORY_TO_ALLOCATE];
+    audio_block_t gAudioMemory[AUDIO_MEMORY_TO_ALLOCATE];
 #endif // CLARINOID_MODULE_TEST
 };
 static DMAMEM DMAClarinoidMemory gClarinoidDmaMem;
-
 
 // #define LOOPSTATION_BUFFER (gLoopStationBuffer)
 // #define LOOPSTATION_TEMP_BUFFER (gLoopStationTempBuffer)

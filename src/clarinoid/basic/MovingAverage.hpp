@@ -18,26 +18,35 @@ class SimpleMovingAverage
         }
         else
         {
-            float& oldest = samples_[num_samples_++ % N];
+            float &oldest = samples_[num_samples_++ % N];
             total_ += sample - oldest;
             oldest = sample;
         }
     }
 
-    float GetValue() const {
-      return total_ / std::min(num_samples_, N);
+    float GetValue() const
+    {
+        return total_ / std::min(num_samples_, N);
     }
 
-    size_t GetValidSampleCount() const { return std::min(num_samples_, N); }
-    size_t GetTotalSamplesTaken() const { return num_samples_; }
-
-    void Clear() {
-      total_ = 0;
-      num_samples_ = 0;
+    size_t GetValidSampleCount() const
+    {
+        return std::min(num_samples_, N);
+    }
+    size_t GetTotalSamplesTaken() const
+    {
+        return num_samples_;
     }
 
-    float GetSample(size_t n) const {
-      return samples_[n % N];
+    void Clear()
+    {
+        total_ = 0;
+        num_samples_ = 0;
+    }
+
+    float GetSample(size_t n) const
+    {
+        return samples_[n % N];
     }
 
   private:

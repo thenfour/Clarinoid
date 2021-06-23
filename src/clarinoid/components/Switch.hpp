@@ -9,38 +9,38 @@
 namespace clarinoid
 {
 
-struct NullSwitch :
-  ISwitch
+struct NullSwitch : ISwitch
 {
-  NullSwitch()
-  {
-  }
+    NullSwitch()
+    {
+    }
 
-  virtual bool CurrentValue() const override { return false; }
-
+    virtual bool CurrentValue() const override
+    {
+        return false;
+    }
 };
 
-
-
 // assume pullup required
-struct DigitalPinSwitch :
-  ISwitch
+struct DigitalPinSwitch : ISwitch
 {
-  uint8_t mPin;
-  bool mCurrentValue = false;
+    uint8_t mPin;
+    bool mCurrentValue = false;
 
-  explicit DigitalPinSwitch(uint8_t pin) :
-    mPin(pin)
-  {
-    pinMode(pin, INPUT_PULLUP);
-  }
+    explicit DigitalPinSwitch(uint8_t pin) : mPin(pin)
+    {
+        pinMode(pin, INPUT_PULLUP);
+    }
 
-  void Update() 
-  {
-    mCurrentValue = !!digitalReadFast(mPin);
-  }
+    void Update()
+    {
+        mCurrentValue = !!digitalReadFast(mPin);
+    }
 
-  virtual bool CurrentValue() const override { return mCurrentValue; }
+    virtual bool CurrentValue() const override
+    {
+        return mCurrentValue;
+    }
 };
 
 } // namespace clarinoid
