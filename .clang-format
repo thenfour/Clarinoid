@@ -1,0 +1,16 @@
+﻿---
+BasedOnStyle: Microsoft
+AlignAfterOpenBracket: Align
+AlignEscapedNewlines: Right
+AllowAllConstructorInitializersOnNextLine: 'false'
+AllowAllParametersOfDeclarationOnNextLine: 'false'
+AlwaysBreakTemplateDeclarations: 'Yes'
+BinPackArguments: 'false'
+BinPackParameters: 'false'
+IncludeBlocks: Preserve
+SortIncludes: 'false'
+SortUsingDeclarations: 'false'
+SpaceInEmptyParentheses: 'false'
+SpacesInSquareBrackets: 'false'
+
+...
