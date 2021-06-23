@@ -56,90 +56,93 @@ EnumInfo<ClarinoidFilterType> gClarinoidFilterTypeInfo("FilterType", gClarinoidF
 
 enum class ModulationSource : uint8_t
 {
-    None,
+    None, // Gets special handling. see below.
     Breath,
     PitchStrip,
     LFO1,
     LFO2,
-    LFO3,
     ENV1,
     ENV2,
-    ENV3,
 };
 
-EnumItemInfo<ModulationSource> gModulationSourceItems[9] = {
+EnumItemInfo<ModulationSource> gModulationSourceItems[7] = {
     {ModulationSource::None, "None"},
     {ModulationSource::Breath, "Breath"},
     {ModulationSource::PitchStrip, "PitchStrip"},
     {ModulationSource::LFO1, "LFO1"},
     {ModulationSource::LFO2, "LFO2"},
-    {ModulationSource::LFO3, "LFO3"},
     {ModulationSource::ENV1, "ENV1"},
     {ModulationSource::ENV2, "ENV2"},
-    {ModulationSource::ENV3, "ENV3"},
 };
-static constexpr size_t ModulationSourceViableCount = SizeofStaticArray(gModulationSourceItems); // -1 because "none" is not actually a valid value.
-
+static constexpr size_t ModulationSourceSkip = 1; // 1 for the None value.
+static constexpr size_t ModulationSourceViableCount = SizeofStaticArray(gModulationSourceItems) - ModulationSourceSkip; // -1 because "none" is not actually a valid value.
+static constexpr bool ModulationSourceToIndex(ModulationSource s, size_t& i) {
+    i = (size_t)s;
+    if (i < ModulationSourceSkip) return false;
+    i -= ModulationSourceSkip;
+    if (i >= ModulationSourceViableCount) return false;
+    return true;
+}
+static constexpr size_t ModulationSourceToIndex(ModulationSource s) {
+    size_t i = 0;
+    ModulationSourceToIndex(s, i);
+    return i;
+}
 
 EnumInfo<ModulationSource> gModulationSourceInfo("ModSource", gModulationSourceItems);
 
 enum class ModulationDestination : uint8_t
 {
-    None,
-    // VoiceFilterCutoff,
-    // Osc1PitchMultiplier,
-    // Osc1PitchOffset,
-    // Osc1,
-    // VoiceFilterQ,
-    // VoiceFilterSaturation,
-    // VoicePitchCourse,
-    // VoicePan,
-    // VoiceDelaySend,
-    // VoiceVerbSend,
-    // VoiceVolume,
-    // LFO1Rate,
-    // LFO2Rate,
-    // LFO3Rate,
-    // Osc1Pitch,
-    // Osc2Pitch,
-    // Osc3Pitch,
+    None,// Gets special handling. see below.
+    VoiceFilterCutoff,
+    VoiceFilterQ,
+    VoiceFilterSaturation,
+    Osc1PitchMultiplier,
+    Osc1PitchOffset,
     Osc1PulseWidth,
-    Osc2PulseWidth,
-    Osc3PulseWidth,
     Osc1Volume,
+    Osc2PitchMultiplier,
+    Osc2PitchOffset,
+    Osc2PulseWidth,
     Osc2Volume,
+    Osc3PitchMultiplier,
+    Osc3PitchOffset,
+    Osc3PulseWidth,
     Osc3Volume,
 };
 
-EnumItemInfo<ModulationDestination> gModulationDestinationItems[7] = {
+EnumItemInfo<ModulationDestination> gModulationDestinationItems[16] = {
     {ModulationDestination::None, "None"},
-    // {ModulationDestination::VoicePitchBend, "VoicePitchBend"},
-    // {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
-    // {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
-    // {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
-    // {ModulationDestination::VoiceVolume, "VoiceVolume"},
-    // {ModulationDestination::LFO1Rate, "LFO1Rate"},
-    // {ModulationDestination::LFO2Rate, "LFO2Rate"},
-    // {ModulationDestination::ENV1Delay, "ENV1Delay"},
-    // {ModulationDestination::ENV1Attack, "ENV1Attack"},
-    // {ModulationDestination::ENV1Decay, "ENV1Decay"},
-    // {ModulationDestination::ENV1Sustain, "ENV1Sustain"},
-    // {ModulationDestination::ENV1Release, "ENV1Release"},
-    // {ModulationDestination::ENV2Delay, "ENV2Delay"},
-    // {ModulationDestination::ENV2Attack, "ENV2Attack"},
-    // {ModulationDestination::ENV2Decay, "ENV2Decay"},
-    // {ModulationDestination::ENV2Sustain, "ENV2Sustain"},
-    // {ModulationDestination::ENV2Release, "ENV2Release"},
-    // {ModulationDestination::Osc1Pitch, "Osc1Pitch"},
-    // {ModulationDestination::Osc2Pitch, "Osc2Pitch"},
-    // {ModulationDestination::Osc3Pitch, "Osc3Pitch"},
+    {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
+    {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
+    {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
+    {ModulationDestination::Osc1PitchMultiplier, "Osc1PitchMultiplier"},
+    {ModulationDestination::Osc1PitchOffset, "Osc1PitchOffset"},
     {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
-    {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
-    {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
     {ModulationDestination::Osc1Volume, "Osc1Volume"},
+    {ModulationDestination::Osc2PitchMultiplier, "Osc2PitchMultiplier"},
+    {ModulationDestination::Osc2PitchOffset, "Osc2PitchOffset"},
+    {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
     {ModulationDestination::Osc2Volume, "Osc2Volume"},
+    {ModulationDestination::Osc3PitchMultiplier, "Osc3PitchMultiplier"},
+    {ModulationDestination::Osc3PitchOffset, "Osc3PitchOffset"},
+    {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
     {ModulationDestination::Osc3Volume, "Osc3Volume"},
 };
+static constexpr size_t ModulationDestinationSkip = 1; // 1 for the None value.
+static constexpr size_t ModulationDestinationViableCount = SizeofStaticArray(gModulationDestinationItems) - ModulationDestinationSkip; // -1 because "none" is not actually a valid value.
+static constexpr bool ModulationDestinationToIndex(ModulationDestination d, size_t& i) {
+    i = (size_t)d;
+    if (i < ModulationDestinationSkip) return false;
+    i -= ModulationDestinationSkip;
+    if (i >= ModulationDestinationViableCount) return false;
+    return true;
+}
+static constexpr size_t ModulationDestinationToIndex(ModulationDestination d) {
+    size_t i = 0;
+    ModulationDestinationToIndex(d, i);
+    return i;
+}
 
 EnumInfo<ModulationDestination> gModulationDestinationInfo("ModDest", gModulationDestinationItems);
 
@@ -176,11 +179,11 @@ struct SynthPreset
     float mOsc2PulseWidth = 0.5f;
     float mOsc3PulseWidth = 0.5f;
 
-    float mOsc1EnvDelay = 0.0f;
-    float mOsc1EnvAttack = 0.0f;
-    float mOsc1EnvDecay = 0.0f;
-    float mOsc1EnvSustain = 1.0f;
-    float mOsc1EnvRelease = 0.0f;
+    float mEnv1Delay = 0.0f;
+    float mEnv1Attack = 0.0f;
+    float mEnv1Decay = 0.0f;
+    float mEnv1Sustain = 1.0f;
+    float mEnv1Release = 0.0f;
 
     float mOsc2EnvDelay = 0.0f;
     float mOsc2EnvAttack = 0.0f;
@@ -188,15 +191,14 @@ struct SynthPreset
     float mOsc2EnvSustain = 1.0f;
     float mOsc2EnvRelease = 0.0f;
 
-    float mOsc3EnvDelay = 0.0f;
-    float mOsc3EnvAttack = 0.0f;
-    float mOsc3EnvDecay = 0.0f;
-    float mOsc3EnvSustain = 1.0f;
-    float mOsc3EnvRelease = 0.0f;
-
     bool mSync = true;
     float mSyncMultMin = 2.0f;
     float mSyncMultMax = 7.0f;
+
+    OscWaveformShape mLfo1Shape = OscWaveformShape::Sine;
+    float mLfo1Rate = 0.8f;
+    OscWaveformShape mLfo2Shape = OscWaveformShape::Sine;
+    float mLfo2Rate = 3.5f;
 
     float mDetune = 0;
 
@@ -234,13 +236,6 @@ struct SynthSettings
     float mDelayCutoffFrequency = 1000;
     float mDelaySaturation = 0.15f;
     float mDelayQ = 0.1f;
-
-    OscWaveformShape mLfo1Shape = OscWaveformShape::Sine;
-    float mLfo1Rate = 2.0f;
-    OscWaveformShape mLfo2Shape = OscWaveformShape::Sine;
-    float mLfo2Rate = 0.5f;
-    OscWaveformShape mLfo3Shape = OscWaveformShape::Sine;
-    float mLfo3Rate = 4.5f;
 
     static void InitClarinoid2Preset(SynthPreset &p,
                                      const char *name,
@@ -454,7 +449,23 @@ struct SynthSettings
         InitBasicLeadPreset("One Saw", OscWaveformShape::SawSync, 0.5f, mPresets[i++]);
         InitBasicLeadPreset("One Tri", OscWaveformShape::VarTriangle, 0.5f, mPresets[i++]);
         InitBasicLeadPreset("One Pulse 8%", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
+
         InitBasicLeadPreset("One Pulse 50%", OscWaveformShape::Pulse, 0.50f, mPresets[i++]);
+
+        InitBasicLeadPreset("PWM 1", OscWaveformShape::Pulse, 0.40f, mPresets[i]);
+        mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
+        mPresets[i].mModulations[0].mDest = ModulationDestination::Osc1PulseWidth;
+        mPresets[i].mModulations[0].mScaleN11 = 0.1f;
+
+        mPresets[i].mModulations[1].mSource = ModulationSource::LFO1;
+        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
+        mPresets[i].mModulations[1].mScaleN11 = 0.1f;
+
+        mPresets[i].mModulations[2].mSource = ModulationSource::LFO1;
+        mPresets[i].mModulations[2].mDest = ModulationDestination::Osc1PulseWidth;
+        mPresets[i].mModulations[2].mScaleN11 = 0.1f;
+
+        ++ i;
         InitDetunedLeadPreset("Detuned saws", OscWaveformShape::SawSync, 0.5f, mPresets[i++]);
         InitDetunedLeadPreset("Detuned sine", OscWaveformShape::Sine, 0.5f, mPresets[i++]);
         InitDetunedLeadPreset("Detuned pulse 10", OscWaveformShape::Pulse, 0.1f, mPresets[i++]);

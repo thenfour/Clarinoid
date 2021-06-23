@@ -1,6 +1,3 @@
-// PannerNode
-// GainAndPanSplitterNode
-// MultiMixer
 
 #pragma once
 
@@ -11,53 +8,10 @@
 #include <clarinoid/loopstation/LoopstationMemory.hpp>
 #include <clarinoid/synth/filters/filters.hpp>
 
+#include "AudioBufferUtils.hpp"
+
 namespace clarinoid
 {
-static inline int32_t gainToSignedMultiply32x16(float n)
-{
-    if (n > 32767.0f)
-        n = 32767.0f;
-    else if (n < -32767.0f)
-        n = -32767.0f;
-    return n * 65536.0f;
-}
-
-template <size_t NOutputs>
-inline static void audioBufferCopyAndApplyGainMulti(int16_t *inp,
-                                                    int16_t *outputs[NOutputs],
-                                                    int32_t multipliers[NOutputs])
-{
-    uint32_t *pInp32 = (uint32_t *)inp;
-    for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES / 2; ++i) // because we read 2 samples at a time, count in DWORDs
-    {
-        uint32_t tmp32 = pInp32[i]; // reads 2 packed samples.
-
-        for (size_t io = 0; io < NOutputs; ++io)
-        {
-            int32_t val1 = signed_multiply_32x16b(multipliers[io], tmp32);
-            int32_t val2 = signed_multiply_32x16t(multipliers[io], tmp32);
-            val1 = signed_saturate_rshift(val1, 16, 0);
-            val2 = signed_saturate_rshift(val2, 16, 0);
-            uint32_t *pOutp32 = (uint32_t *)outputs[io];
-            pOutp32[i] = pack_16b_16b(val2, val1);
-        }
-    }
-}
-
-inline static void audioBufferMixInPlace(int16_t *data /* in/out */, const int16_t *in)
-{
-    uint32_t *dst = (uint32_t *)data;
-    const uint32_t *src = (uint32_t *)in;
-    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);
-
-    do
-    {
-        uint32_t tmp32 = *dst;
-        *dst++ = signed_add_16_and_16(tmp32, *src++);
-        tmp32 = *dst;
-        *dst++ = signed_add_16_and_16(tmp32, *src++);
-    } while (dst < end);
-}
 
 // inline static void audioBufferCopyAndApplyGainTwice(int16_t *inp,
 //                                                     int16_t *outp1,
@@ -227,82 +181,6 @@ struct GainAndPanSplitterNode : public AudioStream
     }
 
     audio_block_t *inputQueueArray[1];
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template <size_t NInputs>
-struct MultiMixer : public AudioStream
-{
-    MultiMixer() : AudioStream(NInputs, inputQueueArray)
-    {
-    }
-
-    virtual void update() override
-    {
-        audio_block_t *out = nullptr;
-
-        for (size_t ichannel = 0; ichannel < NInputs; ++ichannel)
-        {
-            if (!out)
-            {
-                // take the 1st connected channel as writable. no mixing yet to be applied.
-                out = receiveWritable(ichannel); // may return null if not connected!
-            }
-            else
-            {
-                // subsequent iterations, receive read only & apply to out buffer.
-                audio_block_t *in = receiveReadOnly(ichannel);
-                if (in)
-                {
-                    audioBufferMixInPlace(out->data, in->data);
-                    release(in);
-                }
-            }
-        }
-
-        if (out)
-        {
-            transmit(out);
-            release(out);
-        }
-    }
-
-    audio_block_t *inputQueueArray[NInputs];
-};
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// handles modulation routing (which modulation sources apply to which destinations) for VOICES.
-// inputs are modulation sources,
-// destinations are modulation destinations.
-// 
-struct VoiceModulationMatrixNode : public AudioStream
-{
-    audio_block_t *inputQueueArray[ModulationSourceViableCount];
-    int16_t mBaseValues[ModulationSourceViableCount];
-    SynthPreset& mSynthPatch;
-
-    VoiceModulationMatrixNode(SynthPreset& patch) :
-        AudioStream(ModulationSourceViableCount, inputQueueArray),
-        mSynthPatch(patch)
-    {
-    }
-
-    void SetBaseValues(float baseValues[ModulationSourceViableCount]) {
-        //
-    }
-
-    virtual void update() override
-    {
-        // audio_block_t * sources[ModulationSourceViableCount] = {nullptr};
-        // audio_block_t * destination[ModulationSourceViableCount] = {nullptr};
-
-        // for (auto& modulation : mSynthPatch.mModulations) {
-        //     // switch (modulation.mSource) {
-        //     //     //
-        //     // }
-        // }
-    }
 };
 
 } // namespace clarinoid

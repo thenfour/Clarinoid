@@ -12,6 +12,8 @@
 
 #include "FilterNode.hpp"
 #include "PannerNode.hpp"
+#include "MultiMixer.hpp"
+#include "ModulationMatrixNode.hpp"
 #include "Patch.hpp"
 
 namespace clarinoid
@@ -26,9 +28,6 @@ https://www.pjrc.com/teensy/gui/index.html
 */
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform lfo1;              // xy=331.00567626953125,581
-AudioSynthWaveform lfo2;              // xy=332.00567626953125,616
-AudioSynthWaveform lfo3;              // xy=332.00567626953125,654.0056762695312
 AudioAmplifier delayFeedbackAmpLeft;  // xy=376.00567626953125,85
 AudioEffectDelay delayLeft;           // xy=378.00567626953125,176
 AudioEffectDelay delayRight;          // xy=388.00567626953125,406
@@ -76,14 +75,14 @@ AudioConnection mPatchDelayFilterToWaveMixerLeft = {delayFilterLeft, 0, postMixe
 AudioConnection mPatchDelayFilterToWaveMixerRight = {delayFilterRight, 0, postMixerRight, 1};
 
 // voice mixer & dry output connection
-::clarinoid::MultiMixer<MAX_SYNTH_VOICES> voiceMixerDryLeft;  // all voices input here.
-::clarinoid::MultiMixer<MAX_SYNTH_VOICES> voiceMixerDryRight; // all voices input here.
+::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryLeft;  // all voices input here.
+::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryRight; // all voices input here.
 AudioConnection patchVoicesDryToOutpLeft = {voiceMixerDryLeft, 0, postMixerLeft, 0};
 AudioConnection patchVoicesDryToOutpRight = {voiceMixerDryRight, 0, postMixerRight, 0};
 
 // delay input mix
-::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> delayInputMixerLeft;  // +1 to account for the delay feedback signal
-::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> delayInputMixerRight; // +1 to account for the delay feedback signal
+::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> delayInputMixerLeft;  // +1 to account for the delay feedback signal
+::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> delayInputMixerRight; // +1 to account for the delay feedback signal
 AudioConnection patchDelayInputMixToDelayL = {delayInputMixerLeft, 0, delayLeft, 0};
 AudioConnection patchDelayInputMixToDelayR = {delayInputMixerRight, 0, delayRight, 0};
 
@@ -92,8 +91,8 @@ AudioConnection patchDelayFBBackToInputLeft = {delayFeedbackAmpLeft, 0, delayInp
 AudioConnection patchDelayFBBackToInputRight = {delayFeedbackAmpRight, 0, delayInputMixerRight, MAX_SYNTH_VOICES};
 
 // verb input mix
-::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> verbInputMixerLeft;  // all voices input here + 1 for delay line
-::clarinoid::MultiMixer<MAX_SYNTH_VOICES + 1> verbInputMixerRight; // all voices input here + 1 for delay line
+::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerLeft;  // all voices input here + 1 for delay line
+::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerRight; // all voices input here + 1 for delay line
 AudioConnection patchVerbInputToVerbL = {verbInputMixerLeft, 0, verbInputMixer, 0};
 AudioConnection patchVerbInputToVerbR = {verbInputMixerRight, 0, verbInputMixer, 1};
 
@@ -113,18 +112,43 @@ struct Voice
     //
     AudioBandlimitedOsci mOsc;
 
+    // Modulation sources
+    VoiceModulationMatrixNode mModMatrix;
     AudioEffectEnvelope mEnv1;
     AudioEffectEnvelope mEnv2;
-    AudioEffectEnvelope mEnv3;
+    AudioSynthWaveform mLfo1;
+    AudioSynthWaveform mLfo2;
+    AudioSynthWaveformDc mBreathModSource;
+    AudioSynthWaveformDc mPitchBendModSource;
 
-    // CCPatch mPatchOsc1ToEnv = {mOsc, 0, mEnv1, 0};
-    // CCPatch mPatchOsc2ToEnv = {mOsc, 1, mEnv2, 0};
-    // CCPatch mPatchOsc3ToEnv = {mOsc, 2, mEnv3, 0};
+    // have to track these because they're private members of AudioWaveform.
+    short mLfo1Waveshape = 0xff; // invalid so 1st run will always set the shape.
+    short mLfo2Waveshape = 0xff; // invalid so 1st run will always set the shape.
 
-    MultiMixer<3> mOscMixer;
-    // CCPatch mPatchEnv1ToMixer = {mEnv1, 0, mOscMixer, 0};
-    // CCPatch mPatchEnv2ToMixer = {mEnv2, 0, mOscMixer, 1};
-    // CCPatch mPatchEnv3ToMixer = {mEnv3, 0, mOscMixer, 2};
+    // patch modulation sources in
+    CCPatch mPatchEnv1ToMod = {mEnv1, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::ENV1)};
+    CCPatch mPatchEnv2ToMod = {mEnv2, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::ENV2)};
+    CCPatch mPatchLfo1ToMod = {mLfo1, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO1)};
+    CCPatch mPatchLfo2ToMod = {mLfo2, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO2)};
+
+    CCPatch mPatchBreathToMod = {mBreathModSource, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Breath)};
+    CCPatch mPatchPitchStripToMod = {mPitchBendModSource, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::PitchStrip)};
+
+    // Patch modulation destinations
+    /*
+Input 0: Frequency Modulation for Oscillator 1
+Input 1: Pulse Width Modulation for Oscillator 1
+Input 2: Frequency Modulation for Oscillator 2
+Input 3: Pulse Width Modulation for Oscillator 2
+Input 4: Frequency Modulation for Oscillator 3
+Input 5: Pulse Width Modulation for Oscillator 3
+    */
+    CCPatch mPatchModToOsc1PWM = {mModMatrix, (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth), mOsc, 1};
+    CCPatch mPatchModToOsc2PWM = {mModMatrix, (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth), mOsc, 3};
+    CCPatch mPatchModToOsc3PWM = {mModMatrix, (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth), mOsc, 5};
+
+    // ...
+    MultiMixerNode<3> mOscMixer;
 
     CCPatch mPatchOsc1ToMixer = {mOsc, 0, mOscMixer, 0};
     CCPatch mPatchOsc2ToMixer = {mOsc, 1, mOscMixer, 1};
@@ -148,12 +172,10 @@ struct Voice
     MusicalVoice mRunningVoice;
     SynthPreset *mPreset = nullptr;
     AppSettings *mAppSettings;
-    //IModulationSourceSource *mModulationSourceSource;
 
-    void EnsurePatchConnections(AppSettings *appSettings/*, IModulationSourceSource *modulationSourceSource*/)
+    void EnsurePatchConnections(AppSettings *appSettings)
     {
         mAppSettings = appSettings;
-        //mModulationSourceSource = modulationSourceSource;
 
         mPatchOsc1ToMixer.connect();
         mPatchOsc2ToMixer.connect();
@@ -166,6 +188,19 @@ struct Voice
         mPatchOutDelayRight.connect();
         mPatchOutVerbLeft.connect();
         mPatchOutVerbRight.connect();
+
+        mPatchEnv1ToMod.connect();
+        mPatchEnv2ToMod.connect();
+        mPatchLfo1ToMod.connect();
+        mPatchLfo2ToMod.connect();
+
+        mPatchBreathToMod.connect();
+        mPatchPitchStripToMod.connect();
+
+        mPatchModToOsc1PWM.connect();
+        mPatchModToOsc2PWM.connect();
+        mPatchModToOsc3PWM.connect();
+
     }
 
     static float CalcFilterCutoffFreq(float breath01,
@@ -191,34 +226,10 @@ struct Voice
         return filterFreq;
     }
 
-    // float GetModulatedValue(const MusicalVoice &mv, float baseOutpVal /* in dest range */, ModulationDestination destType)
-    // {
-    //     float ret = baseOutpVal;
-    //     for (const SynthModulationSpec &modSpec : mPreset->mModulations)
-    //     {
-    //         switch (modSpec.mSource)
-    //         {
-    //         case ModulationSource::Breath:
-    //             return mv.mBreath01;
-    //         case ModulationSource::PitchStrip:
-    //             return mv.mPitchBendN11;
-    //         case ModulationSource::None:
-    //             return 0;
-    //         default:
-    //             log("Mapping not supported.");
-    //             return 0;
-    //         }
-    //         // if (modSpec.mDest != destType)
-    //         //     continue;
-    //         // float srcVal = mModulationSourceSource->GetCurrentModulationSourceValue(modSpec.mSource);
-    //         // ret += modSpec.mCurveSpec.PerformMapping(srcVal);
-    //     }
-    //     return ret;
-    // }
-
     void Update(const MusicalVoice &mv)
     {
         mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatch);
+        mModMatrix.SetSynthPatch(mPreset);
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
         bool voiceOrPatchChanged =
             (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatch != mv.mSynthPatch);
@@ -241,36 +252,64 @@ struct Voice
         }
 
         // configure envelopes (DADSR x 3)
-        // mEnv1.delay(mPreset->mOsc1EnvDelay);
-        // mEnv1.attack(mPreset->mOsc1EnvAttack);
-        // mEnv1.decay(mPreset->mOsc1EnvDecay);
-        // mEnv1.sustain(mPreset->mOsc1EnvSustain);
-        // mEnv1.release(mPreset->mOsc1EnvRelease);
+        mEnv1.delay(mPreset->mEnv1Delay);
+        mEnv1.attack(mPreset->mEnv1Attack);
+        mEnv1.decay(mPreset->mEnv1Decay);
+        mEnv1.sustain(mPreset->mEnv1Sustain);
+        mEnv1.release(mPreset->mEnv1Release);
 
-        // mEnv2.delay(mPreset->mOsc2EnvDelay);
-        // mEnv2.attack(mPreset->mOsc2EnvAttack);
-        // mEnv2.decay(mPreset->mOsc2EnvDecay);
-        // mEnv2.sustain(mPreset->mOsc2EnvSustain);
-        // mEnv2.release(mPreset->mOsc2EnvRelease);
+        mEnv2.delay(mPreset->mEnv1Delay);
+        mEnv2.attack(mPreset->mEnv1Attack);
+        mEnv2.decay(mPreset->mEnv1Decay);
+        mEnv2.sustain(mPreset->mEnv1Sustain);
+        mEnv2.release(mPreset->mEnv1Release);
 
-        // mEnv3.delay(mPreset->mOsc3EnvDelay);
-        // mEnv3.attack(mPreset->mOsc3EnvAttack);
-        // mEnv3.decay(mPreset->mOsc3EnvDecay);
-        // mEnv3.sustain(mPreset->mOsc3EnvSustain);
-        // mEnv3.release(mPreset->mOsc3EnvRelease);
+
+        auto convertWaveType = [](OscWaveformShape s) {
+            switch (s)
+            {
+            case OscWaveformShape::Pulse:
+                return WAVEFORM_PULSE;
+            case OscWaveformShape::SawSync:
+                return WAVEFORM_SAWTOOTH;
+            case OscWaveformShape::VarTriangle:
+                return WAVEFORM_TRIANGLE;
+            case OscWaveformShape::Sine:
+                break;
+            }
+            return WAVEFORM_SINE;
+        };
+
+        short wantsWaveType1 = convertWaveType(mPreset->mLfo1Shape);
+        short wantsWaveType2 = convertWaveType(mPreset->mLfo2Shape);
+        if (mLfo1Waveshape != wantsWaveType1)
+        {
+            mLfo1.begin(wantsWaveType1);
+            mLfo1.amplitude(1.0f);
+        }
+        if (mLfo2Waveshape != wantsWaveType2)
+        {
+            mLfo2.begin(wantsWaveType2);
+            mLfo2.amplitude(1.0f);
+        }
+
+        mLfo1.frequency(mPreset->mLfo1Rate);
+        mLfo2.frequency(mPreset->mLfo2Rate);
+
+
+        mBreathModSource.amplitude(mv.mBreath01.GetFloatVal());
+        mPitchBendModSource.amplitude(mv.mPitchBendN11.GetFloatVal());
 
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
             mEnv1.noteOff();
             mEnv2.noteOff();
-            mEnv3.noteOff();
         }
 
         if (voiceOrPatchChanged || transition.mNeedsNoteOn)
         {
             mEnv1.noteOn();
             mEnv2.noteOn();
-            mEnv3.noteOn();
         }
 
         mOsc.amplitude(1,mPreset->mOsc1Gain);
@@ -292,6 +331,11 @@ struct Voice
         mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
         mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
         mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
+
+        // pwm amount is always 1 within the polyblep osc; actual PWM amount is controlled by modulation matrix.
+        mOsc.pwmAmount(1, 1);
+        mOsc.pwmAmount(2, 1);
+        mOsc.pwmAmount(3, 1);
 
         mOsc.frequency(
             1, MIDINoteToFreq(midiNote + mPreset->mOsc1PitchFine + mPreset->mOsc1PitchSemis - mPreset->mDetune));
@@ -366,11 +410,6 @@ struct SynthGraphControl
     AppSettings *mAppSettings;
     Metronome *mMetronome;
 
-    // have to track these because they're private members of AudioWaveform.
-    short mLfo1Waveshape = 0xff; // invalid so 1st run will always set the shape.
-    short mLfo2Waveshape = 0xff; // invalid so 1st run will always set the shape.
-    short mLfo3Waveshape = 0xff; // invalid so 1st run will always set the shape.
-
     void Setup(AppSettings *appSettings, Metronome *metronome/*, IModulationSourceSource *modulationSourceSource*/)
     {
         // AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
@@ -432,41 +471,6 @@ struct SynthGraphControl
 
         CCSynthGraph::ampLeft.gain(mAppSettings->mSynthSettings.mMasterGain);
         CCSynthGraph::ampRight.gain(mAppSettings->mSynthSettings.mMasterGain);
-
-        auto convertWaveType = [](OscWaveformShape s) {
-            switch (s)
-            {
-            case OscWaveformShape::Pulse:
-                return WAVEFORM_PULSE;
-            case OscWaveformShape::SawSync:
-                return WAVEFORM_SAWTOOTH;
-            case OscWaveformShape::VarTriangle:
-                return WAVEFORM_TRIANGLE;
-            case OscWaveformShape::Sine:
-                break;
-            }
-            return WAVEFORM_SINE;
-        };
-
-        short wantsWaveType1 = convertWaveType(mAppSettings->mSynthSettings.mLfo1Shape);
-        short wantsWaveType2 = convertWaveType(mAppSettings->mSynthSettings.mLfo2Shape);
-        short wantsWaveType3 = convertWaveType(mAppSettings->mSynthSettings.mLfo3Shape);
-        if (mLfo1Waveshape != wantsWaveType1)
-        {
-            CCSynthGraph::lfo1.begin(wantsWaveType1);
-        }
-        if (mLfo2Waveshape != wantsWaveType2)
-        {
-            CCSynthGraph::lfo2.begin(wantsWaveType2);
-        }
-        if (mLfo3Waveshape != wantsWaveType3)
-        {
-            CCSynthGraph::lfo3.begin(wantsWaveType3);
-        }
-
-        CCSynthGraph::lfo1.frequency(mAppSettings->mSynthSettings.mLfo1Rate);
-        CCSynthGraph::lfo2.frequency(mAppSettings->mSynthSettings.mLfo2Rate);
-        CCSynthGraph::lfo3.frequency(mAppSettings->mSynthSettings.mLfo3Rate);
 
         if (!mAppSettings->mMetronomeSoundOn)
         {

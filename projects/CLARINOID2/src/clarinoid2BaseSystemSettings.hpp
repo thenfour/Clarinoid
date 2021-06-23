@@ -32,7 +32,7 @@ static constexpr size_t MAX_MUSICAL_VOICES =
 static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 32;
-static const size_t SYNTH_MODULATIONS_MAX = 8;
+static const size_t SYNTH_MODULATIONS_MAX = 16;
 
 static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
 
