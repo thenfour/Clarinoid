@@ -34,7 +34,7 @@ struct MusicalStateTask : ITask
 
     void Init()
     {
-        mSynth.Init(mAppSettings, &mMetronome, &mMusicalState);
+        mSynth.Init(mAppSettings, &mMetronome);
     }
 
     virtual void TaskRun() override

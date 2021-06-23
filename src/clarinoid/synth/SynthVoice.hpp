@@ -25,31 +25,26 @@ https://www.pjrc.com/teensy/gui/index.html
 
 */
 
-#include <Audio.h>
-#include <SD.h>
-#include <SPI.h>
-#include <SerialFlash.h>
-#include <Wire.h>
-
 // GUItool: begin automatically generated code
-AudioSynthWaveform lfo1;              // xy=254.00570678710938,578.005654335022
-AudioSynthWaveform lfo2;              // xy=255.0056915283203,613.0056762695312
-AudioAmplifier delayFeedbackAmpLeft;  // xy=299.00567626953125,82
-AudioEffectDelay delayLeft;           // xy=301.00567626953125,173
-AudioEffectDelay delayRight;          // xy=311.00567626953125,403
-AudioAmplifier delayFeedbackAmpRight; // xy=312.00567626953125,315
-AudioMixer4 verbInputMixer;           // xy=684.0056762695312,473
-AudioSynthWaveformSine metronomeOsc;  // xy=720.0056762695312,902
-AudioEffectFreeverbStereo verb;       // xy=834.0056762695312,479
-AudioEffectEnvelope metronomeEnv;     // xy=921.0056762695312,904
-AudioAmplifier verbWetAmpLeft;        // xy=993.0056762695312,460
-AudioAmplifier verbWetAmpRight;       // xy=1000.0056762695312,498
-AudioMixer4 postMixerLeft;            // xy=1175.0056762695312,687
-AudioMixer4 postMixerRight;           // xy=1177.0056762695312,770
-AudioAmplifier ampLeft;               // xy=1337.0056762695312,688
-AudioAmplifier ampRight;              // xy=1340.0056762695312,769
-AudioOutputI2S i2s1;                  // xy=1522.0056762695312,721
-AudioAnalyzePeak peak1;               // xy=1565.0056762695312,500
+AudioSynthWaveform lfo1;              // xy=331.00567626953125,581
+AudioSynthWaveform lfo2;              // xy=332.00567626953125,616
+AudioSynthWaveform lfo3;              // xy=332.00567626953125,654.0056762695312
+AudioAmplifier delayFeedbackAmpLeft;  // xy=376.00567626953125,85
+AudioEffectDelay delayLeft;           // xy=378.00567626953125,176
+AudioEffectDelay delayRight;          // xy=388.00567626953125,406
+AudioAmplifier delayFeedbackAmpRight; // xy=389.00567626953125,318
+AudioMixer4 verbInputMixer;           // xy=761.0056762695312,476
+AudioSynthWaveformSine metronomeOsc;  // xy=797.0056762695312,905
+AudioEffectFreeverbStereo verb;       // xy=911.0056762695312,482
+AudioEffectEnvelope metronomeEnv;     // xy=998.0056762695312,907
+AudioAmplifier verbWetAmpLeft;        // xy=1070.0056762695312,463
+AudioAmplifier verbWetAmpRight;       // xy=1077.0056762695312,501
+AudioMixer4 postMixerLeft;            // xy=1252.0056762695312,690
+AudioMixer4 postMixerRight;           // xy=1254.0056762695312,773
+AudioAmplifier ampLeft;               // xy=1414.0056762695312,691
+AudioAmplifier ampRight;              // xy=1417.0056762695312,772
+AudioOutputI2S i2s1;                  // xy=1599.0056762695312,724
+AudioAnalyzePeak peak1;               // xy=1642.0056762695312,503
 AudioConnection patchCord1(verbInputMixer, verb);
 AudioConnection patchCord2(metronomeOsc, metronomeEnv);
 AudioConnection patchCord3(verb, 0, verbWetAmpLeft, 0);
@@ -106,14 +101,15 @@ AudioConnection patchVerbInputToVerbR = {verbInputMixerRight, 0, verbInputMixer,
 AudioConnection patchDelayVerbInputLeft = {delayFilterLeft, 0, verbInputMixerLeft, MAX_SYNTH_VOICES};
 AudioConnection patchDelayVerbInputRight = {delayFilterRight, 0, verbInputMixerRight, MAX_SYNTH_VOICES};
 
+
 } // namespace CCSynthGraph
 
 struct Voice
 {
     //
-    // [mOsc osc1] --> [mEnv1]--->
-    // [mOsc osc2] --> [mEnv2] --> [mOscMixer] --> [mFilter] -> [mPannerSplitter]
-    // [mOsc osc3] --> [mEnv3] -->
+    // [mOsc osc1] --> 
+    // [mOsc osc2] --> [mOscMixer] --> [mFilter] -> [mPannerSplitter]
+    // [mOsc osc3] --> 
     //
     AudioBandlimitedOsci mOsc;
 
@@ -121,14 +117,18 @@ struct Voice
     AudioEffectEnvelope mEnv2;
     AudioEffectEnvelope mEnv3;
 
-    CCPatch mPatchOsc1ToEnv = {mOsc, 0, mEnv1, 0};
-    CCPatch mPatchOsc2ToEnv = {mOsc, 1, mEnv2, 0};
-    CCPatch mPatchOsc3ToEnv = {mOsc, 2, mEnv3, 0};
+    // CCPatch mPatchOsc1ToEnv = {mOsc, 0, mEnv1, 0};
+    // CCPatch mPatchOsc2ToEnv = {mOsc, 1, mEnv2, 0};
+    // CCPatch mPatchOsc3ToEnv = {mOsc, 2, mEnv3, 0};
 
     MultiMixer<3> mOscMixer;
-    CCPatch mPatchEnv1ToMixer = {mEnv1, 0, mOscMixer, 0};
-    CCPatch mPatchEnv2ToMixer = {mEnv2, 0, mOscMixer, 1};
-    CCPatch mPatchEnv3ToMixer = {mEnv3, 0, mOscMixer, 2};
+    // CCPatch mPatchEnv1ToMixer = {mEnv1, 0, mOscMixer, 0};
+    // CCPatch mPatchEnv2ToMixer = {mEnv2, 0, mOscMixer, 1};
+    // CCPatch mPatchEnv3ToMixer = {mEnv3, 0, mOscMixer, 2};
+
+    CCPatch mPatchOsc1ToMixer = {mOsc, 0, mOscMixer, 0};
+    CCPatch mPatchOsc2ToMixer = {mOsc, 1, mOscMixer, 1};
+    CCPatch mPatchOsc3ToMixer = {mOsc, 2, mOscMixer, 2};
 
     ::clarinoid::FilterNode mFilter;
     CCPatch mPatchMixToFilter = {mOscMixer, 0, mFilter, 0};
@@ -148,19 +148,16 @@ struct Voice
     MusicalVoice mRunningVoice;
     SynthPreset *mPreset = nullptr;
     AppSettings *mAppSettings;
-    IModulationSourceSource *mModulationSourceSource;
+    //IModulationSourceSource *mModulationSourceSource;
 
-    void EnsurePatchConnections(AppSettings *appSettings, IModulationSourceSource *modulationSourceSource)
+    void EnsurePatchConnections(AppSettings *appSettings/*, IModulationSourceSource *modulationSourceSource*/)
     {
         mAppSettings = appSettings;
-        mModulationSourceSource = modulationSourceSource;
+        //mModulationSourceSource = modulationSourceSource;
 
-        mPatchOsc1ToEnv.connect();
-        mPatchOsc2ToEnv.connect();
-        mPatchOsc3ToEnv.connect();
-        mPatchEnv1ToMixer.connect();
-        mPatchEnv2ToMixer.connect();
-        mPatchEnv3ToMixer.connect();
+        mPatchOsc1ToMixer.connect();
+        mPatchOsc2ToMixer.connect();
+        mPatchOsc3ToMixer.connect();
         mPatchMixToFilter.connect();
         mPatchFilterToPannerSplitter.connect();
         mPatchOutDryLeft.connect();
@@ -194,18 +191,30 @@ struct Voice
         return filterFreq;
     }
 
-    float GetModulatedValue(float baseOutpVal /* in dest range */, ModulationDestination destType)
-    {
-        float ret = baseOutpVal;
-        for (const SynthModulationSpec &modSpec : mPreset->mModulations)
-        {
-            if (modSpec.mDest != destType)
-                continue;
-            float srcVal = mModulationSourceSource->GetCurrentModulationSourceValue(modSpec.mSource);
-            ret += modSpec.mCurveSpec.PerformMapping(srcVal);
-        }
-        return ret;
-    }
+    // float GetModulatedValue(const MusicalVoice &mv, float baseOutpVal /* in dest range */, ModulationDestination destType)
+    // {
+    //     float ret = baseOutpVal;
+    //     for (const SynthModulationSpec &modSpec : mPreset->mModulations)
+    //     {
+    //         switch (modSpec.mSource)
+    //         {
+    //         case ModulationSource::Breath:
+    //             return mv.mBreath01;
+    //         case ModulationSource::PitchStrip:
+    //             return mv.mPitchBendN11;
+    //         case ModulationSource::None:
+    //             return 0;
+    //         default:
+    //             log("Mapping not supported.");
+    //             return 0;
+    //         }
+    //         // if (modSpec.mDest != destType)
+    //         //     continue;
+    //         // float srcVal = mModulationSourceSource->GetCurrentModulationSourceValue(modSpec.mSource);
+    //         // ret += modSpec.mCurveSpec.PerformMapping(srcVal);
+    //     }
+    //     return ret;
+    // }
 
     void Update(const MusicalVoice &mv)
     {
@@ -232,23 +241,23 @@ struct Voice
         }
 
         // configure envelopes (DADSR x 3)
-        mEnv1.delay(mPreset->mOsc1EnvDelay);
-        mEnv1.attack(mPreset->mOsc1EnvAttack);
-        mEnv1.decay(mPreset->mOsc1EnvDecay);
-        mEnv1.sustain(mPreset->mOsc1EnvSustain);
-        mEnv1.release(mPreset->mOsc1EnvRelease);
+        // mEnv1.delay(mPreset->mOsc1EnvDelay);
+        // mEnv1.attack(mPreset->mOsc1EnvAttack);
+        // mEnv1.decay(mPreset->mOsc1EnvDecay);
+        // mEnv1.sustain(mPreset->mOsc1EnvSustain);
+        // mEnv1.release(mPreset->mOsc1EnvRelease);
 
-        mEnv2.delay(mPreset->mOsc2EnvDelay);
-        mEnv2.attack(mPreset->mOsc2EnvAttack);
-        mEnv2.decay(mPreset->mOsc2EnvDecay);
-        mEnv2.sustain(mPreset->mOsc2EnvSustain);
-        mEnv2.release(mPreset->mOsc2EnvRelease);
+        // mEnv2.delay(mPreset->mOsc2EnvDelay);
+        // mEnv2.attack(mPreset->mOsc2EnvAttack);
+        // mEnv2.decay(mPreset->mOsc2EnvDecay);
+        // mEnv2.sustain(mPreset->mOsc2EnvSustain);
+        // mEnv2.release(mPreset->mOsc2EnvRelease);
 
-        mEnv3.delay(mPreset->mOsc3EnvDelay);
-        mEnv3.attack(mPreset->mOsc3EnvAttack);
-        mEnv3.decay(mPreset->mOsc3EnvDecay);
-        mEnv3.sustain(mPreset->mOsc3EnvSustain);
-        mEnv3.release(mPreset->mOsc3EnvRelease);
+        // mEnv3.delay(mPreset->mOsc3EnvDelay);
+        // mEnv3.attack(mPreset->mOsc3EnvAttack);
+        // mEnv3.decay(mPreset->mOsc3EnvDecay);
+        // mEnv3.sustain(mPreset->mOsc3EnvSustain);
+        // mEnv3.release(mPreset->mOsc3EnvRelease);
 
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
@@ -264,9 +273,9 @@ struct Voice
             mEnv3.noteOn();
         }
 
-        mOsc.amplitude(1, GetModulatedValue(mPreset->mOsc1Gain, ModulationDestination::Osc1Volume));
-        mOsc.amplitude(2, GetModulatedValue(mPreset->mOsc2Gain, ModulationDestination::Osc2Volume));
-        mOsc.amplitude(3, GetModulatedValue(mPreset->mOsc3Gain, ModulationDestination::Osc3Volume));
+        mOsc.amplitude(1,mPreset->mOsc1Gain);
+        mOsc.amplitude(2,mPreset->mOsc2Gain);
+        mOsc.amplitude(3,mPreset->mOsc3Gain);
 
         // update
         float midiNote =
@@ -280,9 +289,9 @@ struct Voice
         mOsc.waveform(2, (uint8_t)mPreset->mOsc2Waveform);
         mOsc.waveform(3, (uint8_t)mPreset->mOsc3Waveform);
 
-        mOsc.pulseWidth(1, GetModulatedValue(mPreset->mOsc1PulseWidth, ModulationDestination::Osc1PulseWidth));
-        mOsc.pulseWidth(2, GetModulatedValue(mPreset->mOsc2PulseWidth, ModulationDestination::Osc2PulseWidth));
-        mOsc.pulseWidth(3, GetModulatedValue(mPreset->mOsc3PulseWidth, ModulationDestination::Osc3PulseWidth));
+        mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
+        mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
+        mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
 
         mOsc.frequency(
             1, MIDINoteToFreq(midiNote + mPreset->mOsc1PitchFine + mPreset->mOsc1PitchSemis - mPreset->mDetune));
@@ -360,8 +369,9 @@ struct SynthGraphControl
     // have to track these because they're private members of AudioWaveform.
     short mLfo1Waveshape = 0xff; // invalid so 1st run will always set the shape.
     short mLfo2Waveshape = 0xff; // invalid so 1st run will always set the shape.
+    short mLfo3Waveshape = 0xff; // invalid so 1st run will always set the shape.
 
-    void Setup(AppSettings *appSettings, Metronome *metronome, IModulationSourceSource *modulationSourceSource)
+    void Setup(AppSettings *appSettings, Metronome *metronome/*, IModulationSourceSource *modulationSourceSource*/)
     {
         // AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
         AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
@@ -374,7 +384,7 @@ struct SynthGraphControl
         // connect.
         for (auto &v : gVoices)
         {
-            v.EnsurePatchConnections(appSettings, modulationSourceSource);
+            v.EnsurePatchConnections(appSettings/*, modulationSourceSource*/);
         }
 
         CCSynthGraph::ampLeft.gain(1);
@@ -440,6 +450,7 @@ struct SynthGraphControl
 
         short wantsWaveType1 = convertWaveType(mAppSettings->mSynthSettings.mLfo1Shape);
         short wantsWaveType2 = convertWaveType(mAppSettings->mSynthSettings.mLfo2Shape);
+        short wantsWaveType3 = convertWaveType(mAppSettings->mSynthSettings.mLfo3Shape);
         if (mLfo1Waveshape != wantsWaveType1)
         {
             CCSynthGraph::lfo1.begin(wantsWaveType1);
@@ -448,9 +459,14 @@ struct SynthGraphControl
         {
             CCSynthGraph::lfo2.begin(wantsWaveType2);
         }
+        if (mLfo3Waveshape != wantsWaveType3)
+        {
+            CCSynthGraph::lfo3.begin(wantsWaveType3);
+        }
 
         CCSynthGraph::lfo1.frequency(mAppSettings->mSynthSettings.mLfo1Rate);
         CCSynthGraph::lfo2.frequency(mAppSettings->mSynthSettings.mLfo2Rate);
+        CCSynthGraph::lfo3.frequency(mAppSettings->mSynthSettings.mLfo3Rate);
 
         if (!mAppSettings->mMetronomeSoundOn)
         {

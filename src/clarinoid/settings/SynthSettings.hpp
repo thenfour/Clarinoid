@@ -58,8 +58,7 @@ enum class ModulationSource : uint8_t
 {
     None,
     Breath,
-    PitchBend,
-    MidiNote,
+    PitchStrip,
     LFO1,
     LFO2,
     LFO3,
@@ -68,11 +67,10 @@ enum class ModulationSource : uint8_t
     ENV3,
 };
 
-EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
+EnumItemInfo<ModulationSource> gModulationSourceItems[9] = {
     {ModulationSource::None, "None"},
     {ModulationSource::Breath, "Breath"},
-    {ModulationSource::PitchBend, "PitchBend"},
-    {ModulationSource::MidiNote, "MidiNote"},
+    {ModulationSource::PitchStrip, "PitchStrip"},
     {ModulationSource::LFO1, "LFO1"},
     {ModulationSource::LFO2, "LFO2"},
     {ModulationSource::LFO3, "LFO3"},
@@ -80,13 +78,10 @@ EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
     {ModulationSource::ENV2, "ENV2"},
     {ModulationSource::ENV3, "ENV3"},
 };
+static constexpr size_t ModulationSourceViableCount = SizeofStaticArray(gModulationSourceItems); // -1 because "none" is not actually a valid value.
+
 
 EnumInfo<ModulationSource> gModulationSourceInfo("ModSource", gModulationSourceItems);
-
-struct IModulationSourceSource
-{
-    virtual float GetCurrentModulationSourceValue(ModulationSource src) = 0;
-};
 
 enum class ModulationDestination : uint8_t
 {
@@ -94,7 +89,6 @@ enum class ModulationDestination : uint8_t
     // VoiceFilterCutoff,
     // Osc1PitchMultiplier,
     // Osc1PitchOffset,
-    // Osc1PWM,
     // Osc1,
     // VoiceFilterQ,
     // VoiceFilterSaturation,
@@ -153,7 +147,7 @@ struct SynthModulationSpec
 {
     ModulationSource mSource = ModulationSource::None;
     ModulationDestination mDest = ModulationDestination::None;
-    UnipolarMapping mCurveSpec;
+    float mScaleN11; // -1 to 1
 };
 
 struct SynthPreset
@@ -244,7 +238,9 @@ struct SynthSettings
     OscWaveformShape mLfo1Shape = OscWaveformShape::Sine;
     float mLfo1Rate = 2.0f;
     OscWaveformShape mLfo2Shape = OscWaveformShape::Sine;
-    float mLfo2Rate = 2.0f;
+    float mLfo2Rate = 0.5f;
+    OscWaveformShape mLfo3Shape = OscWaveformShape::Sine;
+    float mLfo3Rate = 4.5f;
 
     static void InitClarinoid2Preset(SynthPreset &p,
                                      const char *name,

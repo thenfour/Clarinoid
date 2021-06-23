@@ -44,7 +44,7 @@ inline static void audioBufferCopyAndApplyGainMulti(int16_t *inp,
     }
 }
 
-inline static void applyGainThenAdd(int16_t *data, const int16_t *in)
+inline static void audioBufferMixInPlace(int16_t *data /* in/out */, const int16_t *in)
 {
     uint32_t *dst = (uint32_t *)data;
     const uint32_t *src = (uint32_t *)in;
@@ -59,96 +59,96 @@ inline static void applyGainThenAdd(int16_t *data, const int16_t *in)
     } while (dst < end);
 }
 
-inline static void audioBufferCopyAndApplyGainTwice(int16_t *inp,
-                                                    int16_t *outp1,
-                                                    int32_t mult1,
-                                                    int16_t *outp2,
-                                                    int32_t mult2)
-{
-    uint32_t *pIn = (uint32_t *)inp;
-    uint32_t *pOut1 = (uint32_t *)outp1;
-    uint32_t *pOut2 = (uint32_t *)outp2;
-    const uint32_t *inpEnd = (uint32_t *)(inp + AUDIO_BLOCK_SAMPLES);
+// inline static void audioBufferCopyAndApplyGainTwice(int16_t *inp,
+//                                                     int16_t *outp1,
+//                                                     int32_t mult1,
+//                                                     int16_t *outp2,
+//                                                     int32_t mult2)
+// {
+//     uint32_t *pIn = (uint32_t *)inp;
+//     uint32_t *pOut1 = (uint32_t *)outp1;
+//     uint32_t *pOut2 = (uint32_t *)outp2;
+//     const uint32_t *inpEnd = (uint32_t *)(inp + AUDIO_BLOCK_SAMPLES);
 
-    do
-    {
-        uint32_t tmp32 = *pIn; // read 2 samples from *inp
-        int32_t val1 = signed_multiply_32x16b(mult1, tmp32);
-        int32_t val2 = signed_multiply_32x16t(mult1, tmp32);
-        val1 = signed_saturate_rshift(val1, 16, 0);
-        val2 = signed_saturate_rshift(val2, 16, 0);
-        *pOut1++ = pack_16b_16b(val2, val1);
+//     do
+//     {
+//         uint32_t tmp32 = *pIn; // read 2 samples from *inp
+//         int32_t val1 = signed_multiply_32x16b(mult1, tmp32);
+//         int32_t val2 = signed_multiply_32x16t(mult1, tmp32);
+//         val1 = signed_saturate_rshift(val1, 16, 0);
+//         val2 = signed_saturate_rshift(val2, 16, 0);
+//         *pOut1++ = pack_16b_16b(val2, val1);
 
-        val1 = signed_multiply_32x16b(mult2, tmp32);
-        val2 = signed_multiply_32x16t(mult2, tmp32);
-        val1 = signed_saturate_rshift(val1, 16, 0);
-        val2 = signed_saturate_rshift(val2, 16, 0);
-        *pOut2++ = pack_16b_16b(val2, val1);
+//         val1 = signed_multiply_32x16b(mult2, tmp32);
+//         val2 = signed_multiply_32x16t(mult2, tmp32);
+//         val1 = signed_saturate_rshift(val1, 16, 0);
+//         val2 = signed_saturate_rshift(val2, 16, 0);
+//         *pOut2++ = pack_16b_16b(val2, val1);
 
-        ++pIn;
-    } while (pIn < inpEnd);
-}
+//         ++pIn;
+//     } while (pIn < inpEnd);
+// }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct PannerNode : public AudioStream
-{
-    PannerNode() : AudioStream(1, inputQueueArray)
-    {
-        SetPan(0);
-    }
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// struct PannerNode : public AudioStream
+// {
+//     PannerNode() : AudioStream(1, inputQueueArray)
+//     {
+//         SetPan(0);
+//     }
 
-    // -1 = left, 1 = right
-    void SetPan(float n11)
-    {
-        if (n11 < -1)
-            n11 = -1;
-        if (n11 > 1)
-            n11 = 1;
-        if (FloatEquals(n11, mPanN11, 0.00001))
-        {
-            return;
-        }
+//     // -1 = left, 1 = right
+//     void SetPan(float n11)
+//     {
+//         if (n11 < -1)
+//             n11 = -1;
+//         if (n11 > 1)
+//             n11 = 1;
+//         if (FloatEquals(n11, mPanN11, 0.00001))
+//         {
+//             return;
+//         }
 
-        mPanN11 = n11;
+//         mPanN11 = n11;
 
-        // SQRT pan law
-        // -1..+1  -> 1..0
-        float normPan = (-n11 + 1) / 2;
-        float leftChannel = sqrtf(normPan);
-        float rightChannel = sqrtf(1.0f - normPan);
+//         // SQRT pan law
+//         // -1..+1  -> 1..0
+//         float normPan = (-n11 + 1) / 2;
+//         float leftChannel = sqrtf(normPan);
+//         float rightChannel = sqrtf(1.0f - normPan);
 
-        mMultiplierLeft = gainToSignedMultiply32x16(leftChannel);
-        mMultiplierRight = gainToSignedMultiply32x16(rightChannel);
+//         mMultiplierLeft = gainToSignedMultiply32x16(leftChannel);
+//         mMultiplierRight = gainToSignedMultiply32x16(rightChannel);
 
-        // Serial.println(String("pan ") + n11 + " -> norm=" + normPan + " lgain=" +
-        // leftChannel + " rgain=" + rightChannel + " lmult32=" + mMultiplierLeft +
-        // " rmult32=" + mMultiplierRight);
-    }
+//         // Serial.println(String("pan ") + n11 + " -> norm=" + normPan + " lgain=" +
+//         // leftChannel + " rgain=" + rightChannel + " lmult32=" + mMultiplierLeft +
+//         // " rmult32=" + mMultiplierRight);
+//     }
 
-    float mPanN11 = -10.0; // so ctor will initialize properly.
-    int32_t mMultiplierLeft;
-    int32_t mMultiplierRight;
+//     float mPanN11 = -10.0; // so ctor will initialize properly.
+//     int32_t mMultiplierLeft;
+//     int32_t mMultiplierRight;
 
-    virtual void update() override
-    {
-        audio_block_t *inputBuf = receiveReadOnly();
-        if (!inputBuf)
-            return;
-        audio_block_t *outputBufLeft = allocate();
-        audio_block_t *outputBufRight = allocate();
+//     virtual void update() override
+//     {
+//         audio_block_t *inputBuf = receiveReadOnly();
+//         if (!inputBuf)
+//             return;
+//         audio_block_t *outputBufLeft = allocate();
+//         audio_block_t *outputBufRight = allocate();
 
-        audioBufferCopyAndApplyGainTwice(
-            inputBuf->data, outputBufLeft->data, mMultiplierLeft, outputBufRight->data, mMultiplierRight);
+//         audioBufferCopyAndApplyGainTwice(
+//             inputBuf->data, outputBufLeft->data, mMultiplierLeft, outputBufRight->data, mMultiplierRight);
 
-        transmit(outputBufLeft, 0);
-        transmit(outputBufRight, 1);
-        release(outputBufLeft);
-        release(outputBufRight);
-        release(inputBuf);
-    }
+//         transmit(outputBufLeft, 0);
+//         transmit(outputBufRight, 1);
+//         release(outputBufLeft);
+//         release(outputBufRight);
+//         release(inputBuf);
+//     }
 
-    audio_block_t *inputQueueArray[1];
-};
+//     audio_block_t *inputQueueArray[1];
+// };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Takes a single mono input, splits into N outputs * 2 (stereo), with gain &
@@ -243,12 +243,10 @@ struct MultiMixer : public AudioStream
 
         for (size_t ichannel = 0; ichannel < NInputs; ++ichannel)
         {
-            if (ichannel == 0)
+            if (!out)
             {
-                // take the 1st channel as writable. no mixing yet to be applied.
-                out = receiveWritable(0);
-                if (!out)
-                    return;
+                // take the 1st connected channel as writable. no mixing yet to be applied.
+                out = receiveWritable(ichannel); // may return null if not connected!
             }
             else
             {
@@ -256,7 +254,7 @@ struct MultiMixer : public AudioStream
                 audio_block_t *in = receiveReadOnly(ichannel);
                 if (in)
                 {
-                    applyGainThenAdd(out->data, in->data);
+                    audioBufferMixInPlace(out->data, in->data);
                     release(in);
                 }
             }
@@ -270,6 +268,41 @@ struct MultiMixer : public AudioStream
     }
 
     audio_block_t *inputQueueArray[NInputs];
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// handles modulation routing (which modulation sources apply to which destinations) for VOICES.
+// inputs are modulation sources,
+// destinations are modulation destinations.
+// 
+struct VoiceModulationMatrixNode : public AudioStream
+{
+    audio_block_t *inputQueueArray[ModulationSourceViableCount];
+    int16_t mBaseValues[ModulationSourceViableCount];
+    SynthPreset& mSynthPatch;
+
+    VoiceModulationMatrixNode(SynthPreset& patch) :
+        AudioStream(ModulationSourceViableCount, inputQueueArray),
+        mSynthPatch(patch)
+    {
+    }
+
+    void SetBaseValues(float baseValues[ModulationSourceViableCount]) {
+        //
+    }
+
+    virtual void update() override
+    {
+        // audio_block_t * sources[ModulationSourceViableCount] = {nullptr};
+        // audio_block_t * destination[ModulationSourceViableCount] = {nullptr};
+
+        // for (auto& modulation : mSynthPatch.mModulations) {
+        //     // switch (modulation.mSource) {
+        //     //     //
+        //     // }
+        // }
+    }
 };
 
 } // namespace clarinoid

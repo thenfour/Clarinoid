@@ -8,7 +8,7 @@
 namespace clarinoid
 {
 
-struct CCEWIMusicalState : IModulationSourceSource
+struct CCEWIMusicalState
 {
     AppSettings *mAppSettings;
     InputDelegator *mInput;
@@ -64,25 +64,6 @@ struct CCEWIMusicalState : IModulationSourceSource
 
         this->mCurrentBreath01.Update(0);
         this->mCurrentPitchN11.Update(0);
-    }
-
-    virtual float GetCurrentModulationSourceValue(ModulationSource src) override
-    {
-        switch (src)
-        {
-        case ModulationSource::Breath:
-            return mCurrentBreath01.GetValue();
-        case ModulationSource::PitchBend:
-            return mCurrentPitchN11.GetValue();
-        case ModulationSource::MidiNote:
-            return mLastPlayedNote;
-        case ModulationSource::None:
-            return 0;
-        default:
-            log("Mapping not supported.");
-            return 0;
-        }
-        return 0;
     }
 
     CCThrottlerT<600> mth;
