@@ -9,7 +9,6 @@ namespace clarinoid
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // handles modulation routing (which modulation sources apply to which destinations) for VOICES.
 // inputs are modulation sources,
-// destinations are modulation destinations
 struct VoiceModulationMatrixNode : public AudioStream
 {
     audio_block_t *inputQueueArray[ModulationSourceViableCount];

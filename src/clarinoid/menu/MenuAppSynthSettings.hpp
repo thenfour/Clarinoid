@@ -467,7 +467,148 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         AlwaysEnabled,
         this};
 
-    ISettingItem *mArray[33] = {
+
+    FloatSettingItem mLfo1Frequency = {"LFO1 Freq",
+                                  StandardRangeSpecs::gFloat_N1_1,
+                                  Property<float>{[](void *cap) {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      return pThis->GetBinding().mLfo1Rate;
+                                                  },
+                                                  [](void *cap, const float &v) {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      pThis->GetBinding().mLfo1Rate = v;
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
+
+
+    EnumSettingItem<OscWaveformShape> mLfo1Waveform = {
+        " >Wave",
+        gOscWaveformShapeInfo,
+        Property<OscWaveformShape>{[](void *cap) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       return pThis->GetBinding().mLfo1Shape;
+                                   },
+                                   [](void *cap, const OscWaveformShape &v) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       pThis->GetBinding().mLfo1Shape = v;
+                                   },
+                                   this},
+        AlwaysEnabled};
+
+
+
+    FloatSettingItem mLfo2Frequency = {"LFO2 Freq",
+                                  StandardRangeSpecs::gFloat_N1_1,
+                                  Property<float>{[](void *cap) {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      return pThis->GetBinding().mLfo2Rate;
+                                                  },
+                                                  [](void *cap, const float &v) {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      pThis->GetBinding().mLfo2Rate = v;
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
+
+
+    EnumSettingItem<OscWaveformShape> mLfo2Waveform = {
+        " >Wave",
+        gOscWaveformShapeInfo,
+        Property<OscWaveformShape>{[](void *cap) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       return pThis->GetBinding().mLfo2Shape;
+                                   },
+                                   [](void *cap, const OscWaveformShape &v) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       pThis->GetBinding().mLfo2Shape = v;
+                                   },
+                                   this},
+        AlwaysEnabled};
+
+    size_t mEditingModulationIndex = 0;
+    SynthModulationSpec& GetModulationBinding() {
+        return GetBinding().mModulations[mEditingModulationIndex];
+    }
+
+    EnumSettingItem<ModulationSource> mModSource = {
+        "Source",
+        gModulationSourceInfo,
+        Property<ModulationSource>{[](void *cap) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       return pThis->GetModulationBinding().mSource;
+                                   },
+                                   [](void *cap, const ModulationSource &v) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       pThis->GetModulationBinding().mSource = v;
+                                   },
+                                   this},
+        AlwaysEnabled};
+
+
+    EnumSettingItem<ModulationDestination> mModDest = {
+        "Dest",
+        gModulationDestinationInfo,
+        Property<ModulationDestination>{[](void *cap) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       return pThis->GetModulationBinding().mDest;
+                                   },
+                                   [](void *cap, const ModulationDestination &v) {
+                                       auto *pThis = (SynthPatchMenuApp *)cap;
+                                       pThis->GetModulationBinding().mDest = v;
+                                   },
+                                   this},
+        AlwaysEnabled};
+
+
+
+    FloatSettingItem mModScale = {"Scale",
+                                  StandardRangeSpecs::gFloat_N1_1,
+                                  Property<float>{[](void *cap) {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      return pThis->GetModulationBinding().mScaleN11;
+                                                  },
+                                                  [](void *cap, const float &v) {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      pThis->GetModulationBinding().mScaleN11 = v;
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
+
+    ISettingItem* mModulationSubmenu[3] = {
+        &mModSource,
+        &mModDest,
+        &mModScale,
+    };
+    SettingsList mModulationSubmenuList = {mModulationSubmenu};
+
+    MultiSubmenuSettingItem mModulationsList = {
+        [](void* cap) { return SYNTH_MODULATIONS_MAX; },
+        [](void* cap, size_t i) {
+            return String(String("mod ") + i + ":"); // <-- todo: better naming
+        },
+        [](void* cap, size_t i) { // get submenu
+            auto *pThis = (SynthPatchMenuApp *)cap;
+            pThis->mEditingModulationIndex = i;
+            return &pThis->mModulationSubmenuList;
+        },
+        [](void* cap, size_t i) { return true; }, // isEnabled
+        this
+    };
+
+    ISettingItem* mModulationsSubmenuArray[5] = {
+        &mLfo1Frequency,
+        &mLfo1Waveform,
+        &mLfo2Frequency,
+        &mLfo2Waveform,
+        // env...
+        &mModulationsList,
+    };
+    SettingsList mModulationsSubmenuList = {mModulationsSubmenuArray};
+
+    SubmenuSettingItem mModulationsSubmenuItem = {String("Modulations"), &mModulationsSubmenuList, AlwaysEnabled};
+
+    ISettingItem *mArray[32] = {
         &mBigSeparator,
         &mBreathFiltType,
         &mBreathFiltMin,
@@ -475,8 +616,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         &mBreathFiltKS,
         &mBreathFiltQ,
         &mBreathFiltSaturation,
-        &mDCEnabled,
-        &mDCCutoff,
+        //&mDCEnabled,
+        //&mDCCutoff,
         &mDetune,
         &mPortamentoTime,
         &mPan,
@@ -500,6 +641,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         &mOsc3PitchSemis,
         &mOsc3PitchFine,
         &mOsc3PulseWidth,
+        &mModulationsSubmenuItem,
         &mCopyPreset,
     };
     SettingsList mRootList = {mArray};
