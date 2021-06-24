@@ -57,7 +57,7 @@ void AudioBandlimitedOsci::update() {
       osc1_freq = frequency1;
     }
 
-    osc1_dt = osc1_freq / AUDIO_SAMPLE_RATE_EXACT;
+    osc1_dt = osc1_freq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each sample. very small.
 
     //pulse Width Modulation:
     if (pwm1) {
@@ -201,7 +201,7 @@ inline void AudioBandlimitedOsci::osc3Step() {
 
   //triangle and sawtooth wave
   switch (osc3_waveform) {
-    case 0: {
+    case WaveformType::Sine: {
         /*
           The sine function is a bit processor intensive, I just added it for the sake of completeness.
           If you depend on fast sine oscillators, use the ones in the Teensy Audio Library, sinewaves are naturally bandlimited
@@ -211,7 +211,7 @@ inline void AudioBandlimitedOsci::osc3Step() {
       }
       break;
 
-    case 1: {
+    case WaveformType::VarTriangle: {
         while (true) {
 
           if (!osc3_pulseStage) {
@@ -254,7 +254,7 @@ inline void AudioBandlimitedOsci::osc3Step() {
       }
       break;
 
-    case 2:
+    case WaveformType::Pulse:
       {
         //Pulse code
         while (true)
@@ -298,7 +298,7 @@ inline void AudioBandlimitedOsci::osc3Step() {
       }
       break;
 
-    case 3: {
+    case WaveformType::SyncSaw: {
         //sync saw code
         osc3_t -= floorf(osc3_t);
 
@@ -369,13 +369,13 @@ inline void AudioBandlimitedOsci::osc2Step() {
 
   //triangle and sawtooth wave
   switch (osc2_waveform) {
-    case 0: {
+    case WaveformType::Sine: {
         osc2_t -= floorf(osc2_t);
         osc2_output = arm_sin_f32(osc2_t * TWO_PI);
       }
       break;
 
-    case 1: {
+    case WaveformType::VarTriangle: {
         while (true) {
 
           if (!osc2_pulseStage) {
@@ -418,7 +418,7 @@ inline void AudioBandlimitedOsci::osc2Step() {
       }
       break;
 
-    case 2:
+    case WaveformType::Pulse:
       {
         //Pulse code
         while (true)
@@ -462,7 +462,7 @@ inline void AudioBandlimitedOsci::osc2Step() {
       }
       break;
 
-    case 3: {
+    case WaveformType::SyncSaw: {
         //sync saw code
         osc2_t -= floorf(osc2_t);
 
@@ -535,28 +535,31 @@ inline void AudioBandlimitedOsci::osc1Step() {
 
   osc1_t += osc1_dt;
 
+  // what is this?? it seems to do nothing but make osc2 & 3's Pulse wave out of tune
+  // if (osc2_waveform != WaveformType::Pulse) {
+  //   osc2Step();
+  // } else if (osc1_t < 1) {
+  //   osc2Step();
+  // }
 
-  if (osc2_waveform != 2) {
-    osc2Step();
-  } else if (osc1_t < 1) {
-    osc2Step();
-  }
+  // if (osc3_waveform != WaveformType::Pulse) {
+  //   osc3Step();
+  // } else if (osc1_t < 1) {
+  //   osc3Step();
+  // }
 
-  if (osc3_waveform != 2) {
-    osc3Step();
-  } else if (osc1_t < 1) {
-    osc3Step();
-  }
+  osc2Step();
+  osc3Step();
 
   //triangle and sawtooth wave
   switch (osc1_waveform) {
-    case 0: {
+    case WaveformType::Sine: {
         osc1_t -= floorf(osc1_t);
         osc1_output = arm_sin_f32(osc1_t * TWO_PI);
       }
       break;
 
-    case 1 :
+    case WaveformType::VarTriangle:
       {
         while (true) {
 
@@ -576,10 +579,10 @@ inline void AudioBandlimitedOsci::osc1Step() {
 
             float x = (osc1_t - 1) / osc1_dt;
 
-            if (osc2_waveform == 3) {
+            if (osc2_waveform == WaveformType::SyncSaw) {
               osc2Sync(x);
             }
-            if (osc3_waveform == 3) {
+            if (osc3_waveform == WaveformType::SyncSaw) {
               osc3Sync(x);
             }
 
@@ -607,7 +610,7 @@ inline void AudioBandlimitedOsci::osc1Step() {
       }
       break;
 
-    case 2:
+    case WaveformType::Pulse:
       {
         //Pulse code
         while (true)
@@ -629,10 +632,10 @@ inline void AudioBandlimitedOsci::osc1Step() {
 
             float x = (osc1_t - 1) / osc1_dt;
 
-            if (osc2_waveform == 3) {
+            if (osc2_waveform == WaveformType::SyncSaw) {
               osc2Sync(x);
             }
-            if (osc3_waveform == 3) {
+            if (osc3_waveform == WaveformType::SyncSaw) {
               osc3Sync(x);
             }
 

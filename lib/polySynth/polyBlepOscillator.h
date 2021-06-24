@@ -32,9 +32,15 @@
 
 
 
-class AudioBandlimitedOsci : public AudioStream
+struct AudioBandlimitedOsci : public AudioStream
 {
-  public:
+    enum class WaveformType : uint8_t {
+      Sine = 0,
+      VarTriangle = 1,
+      Pulse = 2,
+      SyncSaw = 3,
+    };
+
     AudioBandlimitedOsci() : AudioStream(6, inputQueueArray) {
     }
 
@@ -152,17 +158,17 @@ class AudioBandlimitedOsci : public AudioStream
       */
       switch (oscillator) {
         case 1: {
-            osc1_waveform = wform;
+            osc1_waveform = (WaveformType)wform;
           }
           break;
 
         case 2: {
-            osc2_waveform = wform;
+            osc2_waveform = (WaveformType)wform;
           }
           break;
 
         case 3: {
-            osc3_waveform = wform;
+            osc3_waveform = (WaveformType)wform;
           }
           break;
 
@@ -292,11 +298,11 @@ class AudioBandlimitedOsci : public AudioStream
     float osc1_freq = 0;
     float osc1_pulseWidth = 0.5;
     float osc1_gain = 0;
-    uint8_t osc1_waveform = 0;
+    WaveformType osc1_waveform = WaveformType::Sine;
     float osc1_output = 0;
     float osc1_blepDelay = 0;
-    float osc1_t = 0;
-    float osc1_dt = 0;
+    float osc1_t = 0;// position in cycle, [0-1)
+    float osc1_dt = 0;// cycles per sample, very small. amount of cycle to advance each sample.
     float osc1_widthDelay = 0;
     bool osc1_pulseStage = false;
     float osc1_pwmAmount = 0.5;
@@ -313,7 +319,7 @@ class AudioBandlimitedOsci : public AudioStream
     float osc2_freq = 0;
     float osc2_pulseWidth = 0.5;
     float osc2_gain = 0;
-    uint8_t osc2_waveform = 0;
+    WaveformType osc2_waveform = WaveformType::Sine;
     float osc2_output = 0;
     float osc2_blepDelay = 0;
     float osc2_t = 0;
@@ -333,7 +339,7 @@ class AudioBandlimitedOsci : public AudioStream
     float osc3_freq = 0;
     float osc3_pulseWidth = 0.5;
     float osc3_gain = 0;
-    uint8_t osc3_waveform = 0;
+    WaveformType osc3_waveform = WaveformType::Sine;
     float osc3_output = 0;
     float osc3_blepDelay = 0;
     float osc3_t = 0;
