@@ -12,7 +12,15 @@ const char gClarinoidVersion[] = "BASSOONOID v0.02";
 
 static const size_t MAX_SYNTH_VOICES = 6;
 
-static const size_t HARM_PRESET_COUNT = 32;
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 192000; // should be enough right?
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;    // a smaller buffer that's just used for intermediate copy ops
+
+// check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
+// how the graph is processed i believe so just check the value.
+static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
+static constexpr float MAX_DELAY_MS = 500;
+
+static const size_t HARM_PRESET_COUNT = 16;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;
 

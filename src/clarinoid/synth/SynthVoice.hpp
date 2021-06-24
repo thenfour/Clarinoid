@@ -131,6 +131,10 @@ struct Voice
     CCPatch mPatchLfo1ToMod = {mLfo1, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO1)};
     CCPatch mPatchLfo2ToMod = {mLfo2, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO2)};
 
+    CCPatch mPatchOsc1ToMod = {mOsc, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc1FB)};
+    CCPatch mPatchOsc2ToMod = {mOsc, 1, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc2FB)};
+    CCPatch mPatchOsc3ToMod = {mOsc, 2, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc3FB)};
+
     CCPatch mPatchBreathToMod = {mBreathModSource, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Breath)};
     CCPatch mPatchPitchStripToMod = {mPitchBendModSource, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::PitchStrip)};
 
@@ -193,6 +197,10 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchEnv2ToMod.connect();
         mPatchLfo1ToMod.connect();
         mPatchLfo2ToMod.connect();
+
+        mPatchOsc1ToMod.connect();
+        mPatchOsc2ToMod.connect();
+        mPatchOsc3ToMod.connect();
 
         mPatchBreathToMod.connect();
         mPatchPitchStripToMod.connect();

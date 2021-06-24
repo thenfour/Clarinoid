@@ -63,9 +63,12 @@ enum class ModulationSource : uint8_t
     LFO2,
     ENV1,
     ENV2,
+    Osc1FB,
+    Osc2FB,
+    Osc3FB,
 };
 
-EnumItemInfo<ModulationSource> gModulationSourceItems[7] = {
+EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
     {ModulationSource::None, "None"},
     {ModulationSource::Breath, "Breath"},
     {ModulationSource::PitchStrip, "PitchStrip"},
@@ -73,6 +76,9 @@ EnumItemInfo<ModulationSource> gModulationSourceItems[7] = {
     {ModulationSource::LFO2, "LFO2"},
     {ModulationSource::ENV1, "ENV1"},
     {ModulationSource::ENV2, "ENV2"},
+    {ModulationSource::Osc1FB, "Osc1FB"},
+    {ModulationSource::Osc2FB, "Osc2FB"},
+    {ModulationSource::Osc3FB, "Osc3FB"},
 };
 static constexpr size_t ModulationSourceSkip = 1; // 1 for the None value.
 static constexpr size_t ModulationSourceViableCount = SizeofStaticArray(gModulationSourceItems) - ModulationSourceSkip; // -1 because "none" is not actually a valid value.
