@@ -59,10 +59,10 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
         mControlInfo[(size_t)PhysicalControl::LHKey3] = ControlInfo{"LHKey3", &mLHMPR.mButtons[6]};
         mControlInfo[(size_t)PhysicalControl::LHKey4] = ControlInfo{"LHKey4", &mLHMPR.mButtons[9]};
 
-        mControlInfo[(size_t)PhysicalControl::RHx1] = ControlInfo{"RHx1", &mMCP.mButtons[14]};
+        mControlInfo[(size_t)PhysicalControl::RHx1] = ControlInfo{"RHx1", &mMCP.mButtons[14]}; // closest to bell
         mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo{"RHx2", &mMCP.mButtons[13]};
         mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo{"RHx3", &mMCP.mButtons[12]};
-        mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo{"RHx4", &mMCP.mButtons[11]};
+        mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo{"RHx4", &mMCP.mButtons[11]}; // closest to mouthpiec
 
         mControlInfo[(size_t)PhysicalControl::RHKey1] = ControlInfo{"RHKey1", &mRHMPR.mButtons[3]};
         mControlInfo[(size_t)PhysicalControl::RHKey2] = ControlInfo{"RHKey2", &mRHMPR.mButtons[2]};

@@ -7,6 +7,7 @@
 
 namespace clarinoid
 {
+
 struct SynthPresetMappableFunction : FunctionHandler
 {
     IInputSource *mInputSrc;
@@ -33,6 +34,36 @@ struct SynthPresetMappableFunction : FunctionHandler
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
         int v = mAppSettings->mGlobalSynthPreset;
+        return ControlValue::IntValue(v);
+    }
+};
+
+struct HarmPresetMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        int nv = v.AsRoundedInt();
+        nv = RotateIntoRange(nv, HARM_PRESET_COUNT);
+        int old = mAppSettings->mGlobalHarmPreset;
+        if (old != nv)
+        {
+            auto &p = mAppSettings->FindHarmPreset(nv);
+            mInputSrc->InputSource_ShowToast(String("Harmonizer: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
+            mAppSettings->mGlobalHarmPreset = nv;
+        }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        int v = mAppSettings->mGlobalHarmPreset;
         return ControlValue::IntValue(v);
     }
 };
@@ -114,6 +145,7 @@ struct InputDelegator
     VirtualSwitch mModifierCtrl;
 
     SynthPresetMappableFunction mSynthPresetFn;
+    HarmPresetMappableFunction mHarmPresetFn;
     TransposeMappableFunction mTransposeFn;
     VirtualSwitch mLoopStopButton;
     VirtualSwitch mLoopGoButton;
@@ -127,6 +159,7 @@ struct InputDelegator
         mpSrc = psrc;
 
         mSynthPresetFn.Init(appSettings, psrc);
+        mHarmPresetFn.Init(appSettings, psrc);
         mTransposeFn.Init(appSettings, psrc);
 
         RegisterFunction(ControlMapping::Function::Nop,
@@ -162,6 +195,7 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::PitchBend, &mPitchBend);
 
         RegisterFunction(ControlMapping::Function::SynthPreset, &mSynthPresetFn);
+        RegisterFunction(ControlMapping::Function::HarmPreset, &mHarmPresetFn);
         RegisterFunction(ControlMapping::Function::Transpose, &mTransposeFn);
 
         RegisterFunction(ControlMapping::Function::LoopStop, &mLoopStopButton);

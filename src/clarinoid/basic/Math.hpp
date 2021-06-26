@@ -468,6 +468,16 @@ static const NumericEditRangeSpec<float> gPortamentoRange = NumericEditRangeSpec
 
 // osc pitch and global transpose
 static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int>{-48, 48, 6, 1, 1};
+static const NumericEditRangeSpec<float> gFreqMulRange = NumericEditRangeSpec<float>{0, 24, 1.0f, 0.10f, 0.05f};
+static const NumericEditRangeSpec<float> gFreqOffsetRange = NumericEditRangeSpec<float>{-5000, 5000, 500, 100, 10};
+
+// envelope
+static const NumericEditRangeSpec<float> gEnvDelayMS = NumericEditRangeSpec<float>{0.0f, 2000.0f};
+static const NumericEditRangeSpec<float> gEnvAttackMS = NumericEditRangeSpec<float>{0.0f, 2000.0f};
+static const NumericEditRangeSpec<float> gEnvDecayMS = NumericEditRangeSpec<float>{0.0f, 10000.0f};
+static const NumericEditRangeSpec<float> gEnvSustainLevel = gFloat_0_1;
+static const NumericEditRangeSpec<float> gEnvReleaseMS = NumericEditRangeSpec<float>{0.0f, 10000.0f};
+
 
 static const NumericEditRangeSpec<float> gBPMRange = NumericEditRangeSpec<float>{20, 300, 10, 2, 1};
 static const NumericEditRangeSpec<int> gMetronomeNoteRange = NumericEditRangeSpec<int>{20, 120, 10, 1, 1};

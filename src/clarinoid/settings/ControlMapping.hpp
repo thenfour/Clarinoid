@@ -46,6 +46,7 @@ struct ControlMapping
         PitchBend,
         MenuScrollA,
         SynthPreset,
+        HarmPreset,
         Transpose,
         // Volume,
         LoopGo,

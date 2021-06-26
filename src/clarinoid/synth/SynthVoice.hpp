@@ -100,15 +100,14 @@ AudioConnection patchVerbInputToVerbR = {verbInputMixerRight, 0, verbInputMixer,
 AudioConnection patchDelayVerbInputLeft = {delayFilterLeft, 0, verbInputMixerLeft, MAX_SYNTH_VOICES};
 AudioConnection patchDelayVerbInputRight = {delayFilterRight, 0, verbInputMixerRight, MAX_SYNTH_VOICES};
 
-
 } // namespace CCSynthGraph
 
 struct Voice
 {
     //
-    // [mOsc osc1] --> 
+    // [mOsc osc1] -->
     // [mOsc osc2] --> [mOscMixer] --> [mFilter] -> [mPannerSplitter]
-    // [mOsc osc3] --> 
+    // [mOsc osc3] -->
     //
     AudioBandlimitedOsci mOsc;
 
@@ -116,6 +115,10 @@ struct Voice
     VoiceModulationMatrixNode mModMatrix;
     AudioEffectEnvelope mEnv1;
     AudioEffectEnvelope mEnv2;
+    AudioSynthWaveformDc mEnv1PeakDC;
+    AudioSynthWaveformDc mEnv2PeakDC;
+    CCPatch mPatchDCToEnv1 = {mEnv1PeakDC, 0, mEnv1, 0};
+    CCPatch mPatchDCToEnv2 = {mEnv2PeakDC, 0, mEnv2, 0};
     AudioSynthWaveform mLfo1;
     AudioSynthWaveform mLfo2;
     AudioSynthWaveformDc mBreathModSource;
@@ -131,12 +134,14 @@ struct Voice
     CCPatch mPatchLfo1ToMod = {mLfo1, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO1)};
     CCPatch mPatchLfo2ToMod = {mLfo2, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO2)};
 
-    CCPatch mPatchOsc1ToMod = {mOsc, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc1FB)};
-    CCPatch mPatchOsc2ToMod = {mOsc, 1, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc2FB)};
-    CCPatch mPatchOsc3ToMod = {mOsc, 2, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc3FB)};
-
-    CCPatch mPatchBreathToMod = {mBreathModSource, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Breath)};
-    CCPatch mPatchPitchStripToMod = {mPitchBendModSource, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::PitchStrip)};
+    CCPatch mPatchBreathToMod = {mBreathModSource,
+                                 0,
+                                 mModMatrix,
+                                 (uint8_t)ModulationSourceToIndex(ModulationSource::Breath)};
+    CCPatch mPatchPitchStripToMod = {mPitchBendModSource,
+                                     0,
+                                     mModMatrix,
+                                     (uint8_t)ModulationSourceToIndex(ModulationSource::PitchStrip)};
 
     // Patch modulation destinations
     /*
@@ -147,9 +152,31 @@ Input 3: Pulse Width Modulation for Oscillator 2
 Input 4: Frequency Modulation for Oscillator 3
 Input 5: Pulse Width Modulation for Oscillator 3
     */
-    CCPatch mPatchModToOsc1PWM = {mModMatrix, (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth), mOsc, 1};
-    CCPatch mPatchModToOsc2PWM = {mModMatrix, (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth), mOsc, 3};
-    CCPatch mPatchModToOsc3PWM = {mModMatrix, (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth), mOsc, 5};
+    CCPatch mPatchModToOsc1PWM = {mModMatrix,
+                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth),
+                                  mOsc,
+                                  1};
+    CCPatch mPatchModToOsc2PWM = {mModMatrix,
+                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2PulseWidth),
+                                  mOsc,
+                                  3};
+    CCPatch mPatchModToOsc3PWM = {mModMatrix,
+                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3PulseWidth),
+                                  mOsc,
+                                  5};
+
+    CCPatch mPatchModToOsc1Freq = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Frequency),
+                                   mOsc,
+                                   0};
+    CCPatch mPatchModToOsc2Freq = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Frequency),
+                                   mOsc,
+                                   2};
+    CCPatch mPatchModToOsc3Freq = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Frequency),
+                                   mOsc,
+                                   4};
 
     // ...
     MultiMixerNode<3> mOscMixer;
@@ -181,6 +208,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
     {
         mAppSettings = appSettings;
 
+        mEnv1PeakDC.amplitude(1.0f);
+        mEnv2PeakDC.amplitude(1.0f);
+
         mPatchOsc1ToMixer.connect();
         mPatchOsc2ToMixer.connect();
         mPatchOsc3ToMixer.connect();
@@ -198,10 +228,6 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchLfo1ToMod.connect();
         mPatchLfo2ToMod.connect();
 
-        mPatchOsc1ToMod.connect();
-        mPatchOsc2ToMod.connect();
-        mPatchOsc3ToMod.connect();
-
         mPatchBreathToMod.connect();
         mPatchPitchStripToMod.connect();
 
@@ -209,6 +235,12 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchModToOsc2PWM.connect();
         mPatchModToOsc3PWM.connect();
 
+        mPatchModToOsc1Freq.connect();
+        mPatchModToOsc2Freq.connect();
+        mPatchModToOsc3Freq.connect();
+
+        mPatchDCToEnv1.connect();
+        mPatchDCToEnv2.connect();
     }
 
     static float CalcFilterCutoffFreq(float breath01,
@@ -260,18 +292,21 @@ Input 5: Pulse Width Modulation for Oscillator 3
         }
 
         // configure envelopes (DADSR x 3)
-        mEnv1.delay(mPreset->mEnv1Delay);
-        mEnv1.attack(mPreset->mEnv1Attack);
-        mEnv1.decay(mPreset->mEnv1Decay);
-        mEnv1.sustain(mPreset->mEnv1Sustain);
-        mEnv1.release(mPreset->mEnv1Release);
+        mEnv1.delay(mPreset->mEnv1.mDelayMS);
+        mEnv1.attack(mPreset->mEnv1.mAttackMS);
+        mEnv1.hold(0);
+        mEnv1.decay(mPreset->mEnv1.mDecayMS);
+        mEnv1.sustain(mPreset->mEnv1.mSustainLevel);
+        mEnv1.release(mPreset->mEnv1.mReleaseMS);
+        mEnv1.releaseNoteOn(0);
 
-        mEnv2.delay(mPreset->mEnv1Delay);
-        mEnv2.attack(mPreset->mEnv1Attack);
-        mEnv2.decay(mPreset->mEnv1Decay);
-        mEnv2.sustain(mPreset->mEnv1Sustain);
-        mEnv2.release(mPreset->mEnv1Release);
-
+        mEnv2.delay(mPreset->mEnv2.mDelayMS);
+        mEnv2.attack(mPreset->mEnv2.mAttackMS);
+        mEnv2.hold(0);
+        mEnv2.decay(mPreset->mEnv2.mDecayMS);
+        mEnv2.sustain(mPreset->mEnv2.mSustainLevel);
+        mEnv2.release(mPreset->mEnv2.mReleaseMS);
+        mEnv2.releaseNoteOn(0);
 
         auto convertWaveType = [](OscWaveformShape s) {
             switch (s)
@@ -304,7 +339,6 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mLfo1.frequency(mPreset->mLfo1Rate);
         mLfo2.frequency(mPreset->mLfo2Rate);
 
-
         mBreathModSource.amplitude(mv.mBreath01.GetFloatVal());
         mPitchBendModSource.amplitude(mv.mPitchBendN11.GetFloatVal());
 
@@ -320,9 +354,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
             mEnv2.noteOn();
         }
 
-        mOsc.amplitude(1,mPreset->mOsc1Gain);
-        mOsc.amplitude(2,mPreset->mOsc2Gain);
-        mOsc.amplitude(3,mPreset->mOsc3Gain);
+        mOsc.amplitude(1, mPreset->mOsc1Gain);
+        mOsc.amplitude(2, mPreset->mOsc2Gain);
+        mOsc.amplitude(3, mPreset->mOsc3Gain);
 
         // update
         float midiNote =
@@ -345,21 +379,53 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mOsc.pwmAmount(2, 1);
         mOsc.pwmAmount(3, 1);
 
-        mOsc.frequency(
-            1, MIDINoteToFreq(midiNote + mPreset->mOsc1PitchFine + mPreset->mOsc1PitchSemis - mPreset->mDetune));
-        mOsc.frequency(
-            3, MIDINoteToFreq(midiNote + mPreset->mOsc3PitchFine + mPreset->mOsc3PitchSemis + mPreset->mDetune));
+        mOsc.fmAmount(1, 1);
+        mOsc.fmAmount(2, 1);
+        mOsc.fmAmount(3, 1);
+
+        auto calcFreq =
+            [](float midiNote, float pitchFine, int pitchSemis, float detune, float freqMul, float freqOffset) {
+                float ret = midiNote + pitchFine + pitchSemis + detune;
+                ret = (MIDINoteToFreq(ret) * freqMul) + freqOffset;
+                return Clamp(ret, 0.0f, 22050.0f);
+            };
+
+        mOsc.frequency(1,
+                       calcFreq(midiNote,
+                                mPreset->mOsc1PitchFine,
+                                mPreset->mOsc1PitchSemis,
+                                -mPreset->mDetune,
+                                mPreset->mOsc1FreqMultiplier,
+                                mPreset->mOsc1FreqOffset));
+        mOsc.frequency(3,
+                       calcFreq(midiNote,
+                                mPreset->mOsc3PitchFine,
+                                mPreset->mOsc3PitchSemis,
+                                mPreset->mDetune,
+                                mPreset->mOsc3FreqMultiplier,
+                                mPreset->mOsc3FreqOffset));
 
         if (mPreset->mSync)
         {
-            float freq = MIDINoteToFreq(midiNote + mPreset->mOsc2PitchFine + mPreset->mOsc2PitchSemis);
+            float freq = calcFreq(midiNote,
+                                  mPreset->mOsc2PitchFine,
+                                  mPreset->mOsc2PitchSemis,
+                                  0,
+                                  mPreset->mOsc2FreqMultiplier,
+                                  mPreset->mOsc2FreqOffset);
             float freqSync =
                 map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * mPreset->mSyncMultMin, freq * mPreset->mSyncMultMax);
             mOsc.frequency(2, freqSync);
         }
         else
         {
-            mOsc.frequency(2, MIDINoteToFreq(midiNote + mPreset->mOsc2PitchFine + mPreset->mOsc2PitchSemis));
+            mOsc.frequency(2,
+                           calcFreq(midiNote,
+                                    mPreset->mOsc2PitchFine,
+                                    mPreset->mOsc2PitchSemis,
+                                    0,
+                                    mPreset->mOsc2FreqMultiplier,
+                                    mPreset->mOsc2FreqOffset));
         }
 
         // perform breath & key tracking for filter. we will basically multiply the
@@ -418,7 +484,7 @@ struct SynthGraphControl
     AppSettings *mAppSettings;
     Metronome *mMetronome;
 
-    void Setup(AppSettings *appSettings, Metronome *metronome/*, IModulationSourceSource *modulationSourceSource*/)
+    void Setup(AppSettings *appSettings, Metronome *metronome /*, IModulationSourceSource *modulationSourceSource*/)
     {
         // AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
         AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
@@ -431,7 +497,7 @@ struct SynthGraphControl
         // connect.
         for (auto &v : gVoices)
         {
-            v.EnsurePatchConnections(appSettings/*, modulationSourceSource*/);
+            v.EnsurePatchConnections(appSettings /*, modulationSourceSource*/);
         }
 
         CCSynthGraph::ampLeft.gain(1);

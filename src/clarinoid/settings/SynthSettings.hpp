@@ -63,22 +63,22 @@ enum class ModulationSource : uint8_t
     LFO2,
     ENV1,
     ENV2,
-    Osc1FB,
-    Osc2FB,
-    Osc3FB,
+    // Osc1FB,
+    // Osc2FB,
+    // Osc3FB,
 };
 
-EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
-    {ModulationSource::None, "None"},
+EnumItemInfo<ModulationSource> gModulationSourceItems[7] = {
+    {ModulationSource::None, "None"}, // Gets special handling. see below.
     {ModulationSource::Breath, "Breath"},
     {ModulationSource::PitchStrip, "PitchStrip"},
     {ModulationSource::LFO1, "LFO1"},
     {ModulationSource::LFO2, "LFO2"},
     {ModulationSource::ENV1, "ENV1"},
     {ModulationSource::ENV2, "ENV2"},
-    {ModulationSource::Osc1FB, "Osc1FB"},
-    {ModulationSource::Osc2FB, "Osc2FB"},
-    {ModulationSource::Osc3FB, "Osc3FB"},
+    // {ModulationSource::Osc1FB, "Osc1FB"},
+    // {ModulationSource::Osc2FB, "Osc2FB"},
+    // {ModulationSource::Osc3FB, "Osc3FB"},
 };
 static constexpr size_t ModulationSourceSkip = 1; // 1 for the None value.
 static constexpr size_t ModulationSourceViableCount = SizeofStaticArray(gModulationSourceItems) - ModulationSourceSkip; // -1 because "none" is not actually a valid value.
@@ -103,35 +103,29 @@ enum class ModulationDestination : uint8_t
     VoiceFilterCutoff,
     VoiceFilterQ,
     VoiceFilterSaturation,
-    Osc1PitchMultiplier,
-    Osc1PitchOffset,
-    Osc1PulseWidth,
+    Osc1Frequency,
     Osc1Volume,
-    Osc2PitchMultiplier,
-    Osc2PitchOffset,
+    Osc1PulseWidth,
+    Osc2Frequency,
     Osc2PulseWidth,
     Osc2Volume,
-    Osc3PitchMultiplier,
-    Osc3PitchOffset,
+    Osc3Frequency,
     Osc3PulseWidth,
     Osc3Volume,
 };
 
-EnumItemInfo<ModulationDestination> gModulationDestinationItems[16] = {
+EnumItemInfo<ModulationDestination> gModulationDestinationItems[13] = {
     {ModulationDestination::None, "None"},
     {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
     {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
     {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
-    {ModulationDestination::Osc1PitchMultiplier, "Osc1PitchMultiplier"},
-    {ModulationDestination::Osc1PitchOffset, "Osc1PitchOffset"},
-    {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
+    {ModulationDestination::Osc1Frequency, "Osc1Frequency"},
     {ModulationDestination::Osc1Volume, "Osc1Volume"},
-    {ModulationDestination::Osc2PitchMultiplier, "Osc2PitchMultiplier"},
-    {ModulationDestination::Osc2PitchOffset, "Osc2PitchOffset"},
+    {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
+    {ModulationDestination::Osc2Frequency, "Osc2Frequency"},
     {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
     {ModulationDestination::Osc2Volume, "Osc2Volume"},
-    {ModulationDestination::Osc3PitchMultiplier, "Osc3PitchMultiplier"},
-    {ModulationDestination::Osc3PitchOffset, "Osc3PitchOffset"},
+    {ModulationDestination::Osc3Frequency, "Osc3Frequency"},
     {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
     {ModulationDestination::Osc3Volume, "Osc3Volume"},
 };
@@ -156,7 +150,16 @@ struct SynthModulationSpec
 {
     ModulationSource mSource = ModulationSource::None;
     ModulationDestination mDest = ModulationDestination::None;
-    float mScaleN11; // -1 to 1
+    float mScaleN11 = 0.5f; // -1 to 1
+};
+
+struct EnvelopeSpec
+{
+    float mDelayMS = 0.0f;
+    float mAttackMS = 4.0f;
+    float mDecayMS = 500.0f;
+    float mSustainLevel = 0.0f;
+    float mReleaseMS = 100.0f;
 };
 
 struct SynthPreset
@@ -171,10 +174,21 @@ struct SynthPreset
     float mOsc2Gain = ReasonableOscillatorGain;
     float mOsc3Gain = ReasonableOscillatorGain;
 
-    int mOsc1PitchSemis = 0;
+    // so frequency is calculated like,
+    // frequencyof(midinote + pitchsemis + pitchfine) * multiplier + freqoffset
+
+    float mOsc1FreqMultiplier = 1.0f; // midinotefreq * this
+    float mOsc2FreqMultiplier = 1.0f;
+    float mOsc3FreqMultiplier = 1.0f;
+
+    float mOsc1FreqOffset = 0.0f; // midinotefreq * this
+    float mOsc2FreqOffset = 0.0f;
+    float mOsc3FreqOffset = 0.0f;
+
+    int mOsc1PitchSemis = 0; // semis = integral, transposition. want to keep this integral because the menu system is not so great at being very precise.
     int mOsc2PitchSemis = 0;
     int mOsc3PitchSemis = 0;
-    float mOsc1PitchFine = 0;
+    float mOsc1PitchFine = 0; // in semitones, just for detuning
     float mOsc2PitchFine = 0;
     float mOsc3PitchFine = 0;
 
@@ -185,17 +199,8 @@ struct SynthPreset
     float mOsc2PulseWidth = 0.5f;
     float mOsc3PulseWidth = 0.5f;
 
-    float mEnv1Delay = 0.0f;
-    float mEnv1Attack = 0.0f;
-    float mEnv1Decay = 0.0f;
-    float mEnv1Sustain = 1.0f;
-    float mEnv1Release = 0.0f;
-
-    float mOsc2EnvDelay = 0.0f;
-    float mOsc2EnvAttack = 0.0f;
-    float mOsc2EnvDecay = 0.0f;
-    float mOsc2EnvSustain = 1.0f;
-    float mOsc2EnvRelease = 0.0f;
+    EnvelopeSpec mEnv1;
+    EnvelopeSpec mEnv2;
 
     bool mSync = true;
     float mSyncMultMin = 2.0f;

@@ -190,20 +190,30 @@ struct Clarinoid2App : ILEDDataProvider
         mAppSettings.mControlMappings[++im] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx2, ControlMapping::Function::SynthPreset, 1.0f);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx3, ControlMapping::Function::SynthPreset, -1.0f);
+        // mAppSettings.mControlMappings[++im] =
+        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx2, ControlMapping::Function::SynthPreset, 1.0f);
+        // mAppSettings.mControlMappings[++im] =
+        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx3, ControlMapping::Function::SynthPreset, -1.0f);
 
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHx1, ControlMapping::Function::ModifierFine);
+            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx1, ControlMapping::Function::SynthPreset, 1.0f);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierCourse);
+            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx2, ControlMapping::Function::SynthPreset, -1.0f);
 
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::LoopGo);
+            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
+            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f);
+
+        // mAppSettings.mControlMappings[++im] =
+        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx1, ControlMapping::Function::ModifierFine);
+        // mAppSettings.mControlMappings[++im] =
+        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierCourse);
+
+        // mAppSettings.mControlMappings[++im] =
+        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::LoopGo);
+        // mAppSettings.mControlMappings[++im] =
+        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
         mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
         mMusicalStateTask.Init();

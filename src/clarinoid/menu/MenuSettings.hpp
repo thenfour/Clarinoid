@@ -162,11 +162,18 @@ struct TriggerSettingItem : public ISettingItem
 struct SubmenuSettingItem : public ISettingItem
 {
     String mName;
-    SettingsList *mSubmenu;
+    SettingsList *mSubmenu = nullptr;
+    typename cc::function<SettingsList *(void *)>::ptr_t mGetSubmenu = nullptr; // SettingsList* mSubmenu;
     Property<bool> mIsEnabled;
+    void* mpCapture = nullptr;
 
     SubmenuSettingItem(const String &name, SettingsList *pSubmenu, const Property<bool> &isEnabled)
         : mName(name), mSubmenu(pSubmenu), mIsEnabled(isEnabled)
+    {
+    }
+
+    SubmenuSettingItem(const String &name, typename cc::function<SettingsList *(void *)>::ptr_t pGetSubmenu, const Property<bool> &isEnabled, void* capture)
+        : mName(name), mGetSubmenu(pGetSubmenu), mIsEnabled(isEnabled), mpCapture(capture)
     {
     }
 
@@ -184,7 +191,11 @@ struct SubmenuSettingItem : public ISettingItem
     }
     virtual struct SettingsList *GetSubmenu(size_t multiIndex)
     {
-        return mSubmenu;
+        if (mGetSubmenu) {
+            return mGetSubmenu(mpCapture);
+        } else {
+            return mSubmenu;
+        }
     }
 };
 
