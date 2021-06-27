@@ -12,7 +12,6 @@ static constexpr size_t SynthPresetID_HarmDetunedSaws = SYNTH_PRESET_COUNT - 3;
 static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
 static constexpr size_t SynthPresetID_HarmTri = SYNTH_PRESET_COUNT - 1;
 
-
 enum class HarmScaleRefType : uint8_t
 {
     Global,
@@ -150,12 +149,13 @@ struct HarmPreset
     Scale mPresetScale = {0, ScaleFlavorIndex::Chromatic};
     HarmVoiceSettings mVoiceSettings[HARM_VOICES];
     uint32_t mMinRotationTimeMS = 150;
-    uint16_t mSynthPreset1 = SynthPresetID_HarmSync; // harm-friendly sync
-    uint16_t mSynthPreset2 = SynthPresetID_HarmTri; // harm-friendly tri
+    uint16_t mSynthPreset1 = SynthPresetID_HarmSync;  // harm-friendly sync
+    uint16_t mSynthPreset2 = SynthPresetID_HarmTri;   // harm-friendly tri
     uint16_t mSynthPreset3 = SynthPresetID_HarmPulse; // harm-friendly pulse
-    uint16_t mSynthPreset4 = SynthPresetID_HarmSaw; // harm-friendly saw
+    uint16_t mSynthPreset4 = SynthPresetID_HarmSaw;   // harm-friendly saw
 
-    String ToString(uint8_t index) const {
+    String ToString(uint8_t index) const
+    {
         return String("") + index + ":" + mName;
     }
 };
@@ -236,6 +236,30 @@ struct HarmSettings
         p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
     }
 
+    static void InitFunkyHarmPreset(HarmPreset &p)
+    {
+        p.mName = "Funky D blues";
+        p.mPresetScale.mRootNoteIndex = Note::D;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Blues;
+        p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -3;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -4;
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[2].mSequenceLength = 2;
+        p.mVoiceSettings[2].mSequence[0] = -5;
+        p.mVoiceSettings[2].mSequence[1] = -6;
+    }
+
     HarmSettings()
     {
         mPresets[1].mName = "Big";
@@ -301,6 +325,8 @@ struct HarmSettings
         InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
         InitSlumsHarmPreset(mPresets[iPreset++]);
         InitBotanicalHarmPreset(mPresets[iPreset++]);
+
+        InitFunkyHarmPreset(mPresets[iPreset++]);
     }
 };
 
