@@ -26,11 +26,11 @@ struct CCSynth
 
     MusicalVoice mUnassignedVoice;
 
-    void Init(AppSettings *appSettings, Metronome *metronome/*, IModulationSourceSource *modulationSourceSource*/)
+    void Init(AppSettings *appSettings, Metronome *metronome /*, IModulationSourceSource *modulationSourceSource*/)
     {
         mAppSettings = appSettings;
         mMetronome = metronome;
-        gSynthGraphControl.Setup(appSettings, metronome/*, modulationSourceSource*/);
+        gSynthGraphControl.Setup(appSettings, metronome /*, modulationSourceSource*/);
 
         mUnassignedVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
     }
@@ -95,9 +95,10 @@ struct CCSynth
         // any voice that wasn't assigned should be muted.
         for (auto &v : gVoices)
         {
-            if (v.mTouched) continue;
+            if (v.mTouched)
+                continue;
             v.Update(mUnassignedVoice);
-            //v.Unassign();
+            // v.Unassign();
         }
 
         for (auto &v : gVoices)

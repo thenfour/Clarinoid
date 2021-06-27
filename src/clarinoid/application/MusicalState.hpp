@@ -39,7 +39,8 @@ struct CCEWIMusicalState
     SwitchControlReader mMetronomeLEDToggleReader;
 
     SwitchControlReader mHarmPresetOnOffToggleReader;
-    size_t mNonZeroHarmPresetID = 0; // while harm preset is toggled "on", save it here. when it's OFF, set to zero. When toggled back ON, set to this.
+    size_t mNonZeroHarmPresetID = 0; // while harm preset is toggled "on", save it here. when it's OFF, set to zero.
+                                     // When toggled back ON, set to this.
     bool mHarmIsOn = false;
 
     int nUpdates = 0;
@@ -272,17 +273,24 @@ struct CCEWIMusicalState
         }
 
         mHarmPresetOnOffToggleReader.Update(&mInput->mHarmPresetOnOffToggle);
-        if (mHarmPresetOnOffToggleReader.IsNewlyPressed()) {
-            if (mHarmIsOn && mAppSettings->mGlobalHarmPreset) { // it's non-zero.
+        if (mHarmPresetOnOffToggleReader.IsNewlyPressed())
+        {
+            if (mHarmIsOn && mAppSettings->mGlobalHarmPreset)
+            { // it's non-zero.
                 mHarmIsOn = false;
                 mAppSettings->mGlobalHarmPreset = 0;
-            } else {
+            }
+            else
+            {
                 // harm is 0 or is off.
                 mAppSettings->mGlobalHarmPreset = this->mNonZeroHarmPresetID;
             }
-        } else {
+        }
+        else
+        {
             // normal, non-newly-pressed operation
-            if (!!mAppSettings->mGlobalHarmPreset) {
+            if (!!mAppSettings->mGlobalHarmPreset)
+            {
                 mNonZeroHarmPresetID = mAppSettings->mGlobalHarmPreset;
             }
         }

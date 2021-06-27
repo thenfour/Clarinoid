@@ -47,6 +47,4 @@ struct MultiMixerNode : public AudioStream
     audio_block_t *inputQueueArray[NInputs];
 };
 
-
 } // namespace clarinoid
-

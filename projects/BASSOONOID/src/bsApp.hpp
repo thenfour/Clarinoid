@@ -169,8 +169,8 @@ struct BassoonoidApp : ILEDDataProvider
         mAppSettings.mControlMappings[23] =
             ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
-        // this is a cool feature but would take a lot of practice to get right, plus accidentally hitting this key causes chaos.
-        // mAppSettings.mControlMappings[24] =
+        // this is a cool feature but would take a lot of practice to get right, plus accidentally hitting this key
+        // causes chaos. mAppSettings.mControlMappings[24] =
         //     ControlMapping::MomentaryMapping(PhysicalControl::RHTh3, ControlMapping::Function::BaseNoteHoldToggle);
         mAppSettings.mControlMappings[25] =
             ControlMapping::MomentaryMapping(PhysicalControl::RHTh2, ControlMapping::Function::MetronomeLEDToggle);
@@ -254,7 +254,8 @@ struct BassoonoidApp : ILEDDataProvider
         //                      0.15f,
         //                      4000);
         // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f, 4000);
+        //     mAppSettings.mSynthSettings.mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f,
+        //     4000);
         // InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[i++],
         //                      "Moog-ks9-q15",
         //                      ClarinoidFilterType::LP_Moog4,
@@ -262,7 +263,8 @@ struct BassoonoidApp : ILEDDataProvider
         //                      0.15f,
         //                      4000);
         // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f, 4000);
+        //     mAppSettings.mSynthSettings.mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f,
+        //     4000);
 
         // InitBassoonoidPreset(
         //     mAppSettings.mSynthSettings.mPresets[i++], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);

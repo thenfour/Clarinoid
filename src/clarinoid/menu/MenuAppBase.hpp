@@ -80,7 +80,7 @@ struct DisplayApp : IDisplayApp
         mEnc.Update(&mInput->mMenuScrollA);
 
         //=Serial.println(String("OK for appobj ") + ((uintptr_t)this) + " delta: " + mEnc.GetIntDelta() + ", val=" +
-        //mEnc.GetIntValue());
+        // mEnc.GetIntValue());
 
         if (!mShowingFrontPage)
         {

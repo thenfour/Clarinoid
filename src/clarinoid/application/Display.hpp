@@ -189,13 +189,15 @@ struct CCDisplay
     void DisplayTask()
     {
         ClearState();
-        if (this->mInput->mModifierFine.CurrentValue()) {
-            mDisplay.setCursor(0,0);
+        if (this->mInput->mModifierFine.CurrentValue())
+        {
+            mDisplay.setCursor(0, 0);
             mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
             mDisplay.print("F");
         }
-        if (this->mInput->mModifierCourse.CurrentValue()) {
-            mDisplay.setCursor(0,0);
+        if (this->mInput->mModifierCourse.CurrentValue())
+        {
+            mDisplay.setCursor(0, 0);
             mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
             mDisplay.print("C");
         }
