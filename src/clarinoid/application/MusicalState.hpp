@@ -38,6 +38,10 @@ struct CCEWIMusicalState
 
     SwitchControlReader mMetronomeLEDToggleReader;
 
+    SwitchControlReader mHarmPresetOnOffToggleReader;
+    size_t mNonZeroHarmPresetID = 0; // while harm preset is toggled "on", save it here. when it's OFF, set to zero. When toggled back ON, set to this.
+    bool mHarmIsOn = false;
+
     int nUpdates = 0;
     int noteOns = 0;
 
@@ -86,24 +90,6 @@ struct CCEWIMusicalState
         mNewState.mSynthPatch = mAppSettings->mGlobalSynthPreset;
         mNewState.mPan = 0; // panning is part of musical state because harmonizer needs it per voice, but it's actually
                             // calculated by the synth based on synth preset.
-
-        // if (mth.IsReady()) {
-        //   //Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" +
-        //   (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
-        //   Serial.println(String("pitch ") +  (mInput->mPitchBend.CurrentValueN11()));
-        // }
-
-        // if (this->mLiveVoice.IsPlaying() && !isPlayingNote) {
-        //   Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 10000) + " isplaying=" +
-        //   (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
-        //   Serial.println(String("transition to note OFF"));
-        // }
-
-        // if (!this->mLiveVoice.IsPlaying() && isPlayingNote) {
-        //   Serial.println(String("breath ") +  (mNewState.mBreath01.GetFloatVal() * 1000) + " isplaying=" +
-        //   (isPlayingNote ? "yes" : "no") + "  live voice playing=" + (this->mLiveVoice.IsPlaying() ? "yes" : "no"));
-        //   Serial.println(String("transition to note ON"));
-        // }
 
         // the rules are rather weird for keys. open is a C#...
         // https://bretpimentel.com/flexible-ewi-fingerings/
@@ -284,6 +270,23 @@ struct CCEWIMusicalState
             mInputSrc->InputSource_ShowToast(String("Metronome LED: ") +
                                              ((mAppSettings->mMetronomeLED) ? "on" : "off"));
         }
+
+        mHarmPresetOnOffToggleReader.Update(&mInput->mHarmPresetOnOffToggle);
+        if (mHarmPresetOnOffToggleReader.IsNewlyPressed()) {
+            if (mHarmIsOn && mAppSettings->mGlobalHarmPreset) { // it's non-zero.
+                mHarmIsOn = false;
+                mAppSettings->mGlobalHarmPreset = 0;
+            } else {
+                // harm is 0 or is off.
+                mAppSettings->mGlobalHarmPreset = this->mNonZeroHarmPresetID;
+            }
+        } else {
+            // normal, non-newly-pressed operation
+            if (!!mAppSettings->mGlobalHarmPreset) {
+                mNonZeroHarmPresetID = mAppSettings->mGlobalHarmPreset;
+            }
+        }
+        mHarmIsOn = !!mAppSettings->mGlobalHarmPreset; // only consider it on when we actually are on a harm preset
 
         // we have calculated mLiveVoice, converting physical to live musical state.
         // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.

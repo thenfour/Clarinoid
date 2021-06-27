@@ -9,13 +9,13 @@ namespace clarinoid
 enum class HarmScaleRefType : uint8_t
 {
     Global,
-    // Preset, // you don't really need a scale at the preset level. set it globally, or use local scales for things
-    // like chromatic etc.
+    Preset,
     Voice,
 };
 
-EnumItemInfo<HarmScaleRefType> gHarmScaleRefTypeItems[2] = {
+EnumItemInfo<HarmScaleRefType> gHarmScaleRefTypeItems[3] = {
     {HarmScaleRefType::Global, "Global"},
+    {HarmScaleRefType::Preset, "Preset"},
     {HarmScaleRefType::Voice, "Voice"},
 };
 
@@ -137,21 +137,97 @@ struct HarmVoiceSettings
 
 struct HarmPreset
 {
-    String mName = "<init>";
+    String mName = "--";
     bool mEmitLiveNote = true;
     float mStereoSeparation = 0.1f; // spreads stereo signal of the voices.
+    Scale mPresetScale = {0, ScaleFlavorIndex::Chromatic};
     HarmVoiceSettings mVoiceSettings[HARM_VOICES];
     uint32_t mMinRotationTimeMS = 150;
     uint16_t mSynthPreset1 = 1; // harm-friendly sync
     uint16_t mSynthPreset2 = 2; // harm-friendly tri
     uint16_t mSynthPreset3 = 3; // harm-friendly pulse
     uint16_t mSynthPreset4 = 4; // harm-friendly saw
+
+    String ToString(uint8_t index) const {
+        return String("") + index + ":" + mName;
+    }
 };
 
 struct HarmSettings
 {
     HarmPreset mPresets[HARM_PRESET_COUNT];
     HarmPreset mDisabledPreset; // the preset that is used when harmonizer is disabled.
+
+    static void InitSlumsHarmPreset(HarmPreset &p)
+    {
+        p.mName = "Slums Dm";
+        p.mPresetScale.mRootNoteIndex = Note::D;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Minor;
+        p.mStereoSeparation = 0.5f;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -5;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::PrevDiatonicNote;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -3;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+    }
+
+    static void InitBotanicalHarmPreset(HarmPreset &p)
+    {
+        p.mName = "Botanical F#m";
+        p.mPresetScale.mRootNoteIndex = Note::Gb;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::HarmonicMinor;
+        p.mStereoSeparation = 0.5f;
+        p.mSynthPreset2 = 8;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -5;
+        p.mVoiceSettings[0].mMaxOutpNote = 80;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::PrevDiatonicNote;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -3;
+        p.mVoiceSettings[1].mMaxOutpNote = 80;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+    }
+
+    static void InitCrystalFieldsHarmPreset(HarmPreset &p)
+    {
+        p.mName = "Crystal F#HW";
+        p.mPresetScale.mRootNoteIndex = Note::Gb;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::HalfWholeDiminished;
+        p.mStereoSeparation = 0.5f;
+        p.mSynthPreset2 = 8;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 3;
+        p.mVoiceSettings[0].mSequence[0] = -1;
+        p.mVoiceSettings[0].mSequence[1] = -2;
+        p.mVoiceSettings[0].mSequence[2] = -3;
+        p.mVoiceSettings[0].mMaxOutpNote = 80;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::PrevDiatonicNote;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[1].mSequenceLength = 4;
+        p.mVoiceSettings[1].mSequence[0] = -4;
+        p.mVoiceSettings[1].mSequence[1] = -4;
+        p.mVoiceSettings[1].mSequence[2] = -5;
+        p.mVoiceSettings[1].mSequence[3] = -5;
+        p.mVoiceSettings[1].mMaxOutpNote = 80;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+    }
 
     HarmSettings()
     {
@@ -181,37 +257,43 @@ struct HarmSettings
         mPresets[2].mVoiceSettings[1].mSequenceLength = 1;
         mPresets[2].mVoiceSettings[1].mSequence[0] = -5;
 
-        mPresets[2].mName = "Min6/9";
-        mPresets[2].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        mPresets[2].mVoiceSettings[0].mSequenceLength = 1;
-        mPresets[2].mVoiceSettings[0].mSequence[0] = -2; // Bb
-        mPresets[2].mVoiceSettings[0].mMaxOutpNote = 80;
-        mPresets[2].mVoiceSettings[0].mMinOutpNote = 40;
+        mPresets[3].mName = "Min6/9";
+        mPresets[3].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        mPresets[3].mVoiceSettings[0].mSequenceLength = 1;
+        mPresets[3].mVoiceSettings[0].mSequence[0] = -2; // Bb
+        mPresets[3].mVoiceSettings[0].mMaxOutpNote = 80;
+        mPresets[3].mVoiceSettings[0].mMinOutpNote = 40;
 
-        mPresets[2].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
-        mPresets[2].mVoiceSettings[1].mSequenceLength = 4;
-        mPresets[2].mVoiceSettings[1].mSequence[0] = -6; // Gb
-        mPresets[2].mVoiceSettings[1].mSequence[1] = -6;
-        mPresets[2].mVoiceSettings[1].mSequence[2] = -5; // G
-        mPresets[2].mVoiceSettings[1].mSequence[3] = -5;
-        mPresets[2].mVoiceSettings[1].mMaxOutpNote = 80;
-        mPresets[2].mVoiceSettings[1].mMinOutpNote = 40;
+        mPresets[3].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+        mPresets[3].mVoiceSettings[1].mSequenceLength = 4;
+        mPresets[3].mVoiceSettings[1].mSequence[0] = -6; // Gb
+        mPresets[3].mVoiceSettings[1].mSequence[1] = -6;
+        mPresets[3].mVoiceSettings[1].mSequence[2] = -5; // G
+        mPresets[3].mVoiceSettings[1].mSequence[3] = -5;
+        mPresets[3].mVoiceSettings[1].mMaxOutpNote = 80;
+        mPresets[3].mVoiceSettings[1].mMinOutpNote = 40;
 
-        mPresets[2].mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        mPresets[2].mVoiceSettings[2].mSequenceLength = 4;
-        mPresets[2].mVoiceSettings[2].mSequence[0] = -11; // Db
-        mPresets[2].mVoiceSettings[2].mSequence[1] = -11;
-        mPresets[2].mVoiceSettings[2].mSequence[2] = -9; // Eb
-        mPresets[2].mVoiceSettings[2].mSequence[3] = -9;
-        mPresets[2].mVoiceSettings[2].mMaxOutpNote = 80;
-        mPresets[2].mVoiceSettings[2].mMinOutpNote = 40;
+        mPresets[3].mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        mPresets[3].mVoiceSettings[2].mSequenceLength = 4;
+        mPresets[3].mVoiceSettings[2].mSequence[0] = -11; // Db
+        mPresets[3].mVoiceSettings[2].mSequence[1] = -11;
+        mPresets[3].mVoiceSettings[2].mSequence[2] = -9; // Eb
+        mPresets[3].mVoiceSettings[2].mSequence[3] = -9;
+        mPresets[3].mVoiceSettings[2].mMaxOutpNote = 80;
+        mPresets[3].mVoiceSettings[2].mMinOutpNote = 40;
 
-        mPresets[2].mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
-        mPresets[2].mVoiceSettings[3].mSequenceLength = 3;
-        mPresets[2].mVoiceSettings[3].mMaxOutpNote = 40;
-        mPresets[2].mVoiceSettings[3].mSequence[0] = -9; // Eb
-        mPresets[2].mVoiceSettings[3].mSequence[1] = -3; // A
-        mPresets[2].mVoiceSettings[3].mSequence[2] = -9; // C
+        mPresets[3].mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+        mPresets[3].mVoiceSettings[3].mSequenceLength = 3;
+        mPresets[3].mVoiceSettings[3].mMaxOutpNote = 40;
+        mPresets[3].mVoiceSettings[3].mSequence[0] = -9; // Eb
+        mPresets[3].mVoiceSettings[3].mSequence[1] = -3; // A
+        mPresets[3].mVoiceSettings[3].mSequence[2] = -9; // C
+
+        size_t iPreset = 4;
+
+        InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
+        InitSlumsHarmPreset(mPresets[iPreset++]);
+        InitBotanicalHarmPreset(mPresets[iPreset++]);
     }
 };
 

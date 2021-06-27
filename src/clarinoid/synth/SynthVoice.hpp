@@ -203,6 +203,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
     MusicalVoice mRunningVoice;
     SynthPreset *mPreset = nullptr;
     AppSettings *mAppSettings;
+    bool mTouched = false;
 
     void EnsurePatchConnections(AppSettings *appSettings)
     {

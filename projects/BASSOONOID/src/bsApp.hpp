@@ -169,8 +169,9 @@ struct BassoonoidApp : ILEDDataProvider
         mAppSettings.mControlMappings[23] =
             ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
-        mAppSettings.mControlMappings[24] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHTh3, ControlMapping::Function::BaseNoteHoldToggle);
+        // this is a cool feature but would take a lot of practice to get right, plus accidentally hitting this key causes chaos.
+        // mAppSettings.mControlMappings[24] =
+        //     ControlMapping::MomentaryMapping(PhysicalControl::RHTh3, ControlMapping::Function::BaseNoteHoldToggle);
         mAppSettings.mControlMappings[25] =
             ControlMapping::MomentaryMapping(PhysicalControl::RHTh2, ControlMapping::Function::MetronomeLEDToggle);
 

@@ -96,6 +96,9 @@ struct Harmonizer
             case HarmScaleRefType::Voice:
                 scale = hv.mLocalScale;
                 break;
+            case HarmScaleRefType::Preset:
+                scale = preset.mPresetScale;
+                break;
             case HarmScaleRefType::Global:
                 deduced = globalDeduced;
                 scale = globalScale;

@@ -147,11 +147,13 @@ struct InputDelegator
     SynthPresetMappableFunction mSynthPresetFn;
     HarmPresetMappableFunction mHarmPresetFn;
     TransposeMappableFunction mTransposeFn;
+
     VirtualSwitch mLoopStopButton;
     VirtualSwitch mLoopGoButton;
 
     VirtualSwitch mBaseNoteHoldToggle;
     VirtualSwitch mMetronomeLEDToggle;
+    VirtualSwitch mHarmPresetOnOffToggle;
 
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
@@ -203,6 +205,7 @@ struct InputDelegator
 
         RegisterFunction(ControlMapping::Function::BaseNoteHoldToggle, &mBaseNoteHoldToggle);
         RegisterFunction(ControlMapping::Function::MetronomeLEDToggle, &mMetronomeLEDToggle);
+        RegisterFunction(ControlMapping::Function::HarmPresetOnOffToggle, &mHarmPresetOnOffToggle);
 
         mpSrc->InputSource_Init(this);
     }
@@ -218,30 +221,9 @@ struct InputDelegator
     bool MatchesModifierKeys(const ControlMapping &m)
     {
         return true;
-
         // todo: this needs to be fully thought-out. we have modifier keys but,
         // criteria for matching them is not super basic, so it should be done
         // right. maybe also, mod keys mapping should be handled specially
-
-        // if (m.mModifier == ModifierKey::Any)
-        //   return true;
-        // bool course = mModifierCourse.CurrentValue();
-        // if (HasFlag(m.mModifier, ModifierKey::Course) && !course) // requires
-        // course but course not set.
-        //   return false;
-        // bool fine = mModifierFine.CurrentValue();
-        // if (HasFlag(m.mModifier, ModifierKey::Fine) && !fine)
-        //   return false;
-        // bool shift = mModifierShift.CurrentValue();
-        // if (HasFlag(m.mModifier, ModifierKey::Shift) && !shift)
-        //   return false;
-        // bool ctrl = mModifierCtrl.CurrentValue();
-        // if (HasFlag(m.mModifier, ModifierKey::Ctrl) && !ctrl)
-        //   return false;
-        // if ((m.mModifier == ModifierKey::None) && (course || fine || shift ||
-        // ctrl))
-        //   return false;
-        // return true;
     }
 
     // for test code.

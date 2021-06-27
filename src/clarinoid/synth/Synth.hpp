@@ -24,11 +24,15 @@ struct CCSynth
     AppSettings *mAppSettings;
     Metronome *mMetronome;
 
+    MusicalVoice mUnassignedVoice;
+
     void Init(AppSettings *appSettings, Metronome *metronome/*, IModulationSourceSource *modulationSourceSource*/)
     {
         mAppSettings = appSettings;
         mMetronome = metronome;
         gSynthGraphControl.Setup(appSettings, metronome/*, modulationSourceSource*/);
+
+        mUnassignedVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
     }
 
     // returns a voice that's either already assigned to this voice, or the best one to free up for it.
@@ -70,16 +74,30 @@ struct CCSynth
             gPeak = CCSynthGraph::peak1.read();
         }
 
+        for (auto &v : gVoices)
+        {
+            v.mTouched = false;
+        }
+
         for (const MusicalVoice *pvoice = pVoicesBegin; pvoice != pVoicesEnd; ++pvoice)
         {
             auto &mv = *pvoice;
             Voice *pv = FindAssignedOrAvailable(mv.mVoiceId);
             CCASSERT(!!pv);
             pv->Update(mv);
+            pv->mTouched = true;
             if (mv.IsPlaying())
             {
                 mCurrentPolyphony++;
             }
+        }
+
+        // any voice that wasn't assigned should be muted.
+        for (auto &v : gVoices)
+        {
+            if (v.mTouched) continue;
+            v.Update(mUnassignedVoice);
+            //v.Unassign();
         }
 
         for (auto &v : gVoices)

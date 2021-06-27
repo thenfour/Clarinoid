@@ -191,9 +191,11 @@ struct Clarinoid2App : ILEDDataProvider
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
         // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx2, ControlMapping::Function::SynthPreset, 1.0f);
+        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx2,
+        //     ControlMapping::Function::SynthPreset, 1.0f);
         // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx3, ControlMapping::Function::SynthPreset, -1.0f);
+        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx3, ControlMapping::Function::SynthPreset,
+        //     -1.0f);
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx1, ControlMapping::Function::SynthPreset, 1.0f);
@@ -205,8 +207,10 @@ struct Clarinoid2App : ILEDDataProvider
         mAppSettings.mControlMappings[++im] =
             ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f);
 
-        // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx1, ControlMapping::Function::ModifierFine);
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::LHx1, ControlMapping::Function::ModifierFine);
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::HarmPresetOnOffToggle);
         // mAppSettings.mControlMappings[++im] =
         //     ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierCourse);
 

@@ -381,9 +381,36 @@ struct HarmPatchSettingsApp
                                     },
                                     AlwaysEnabled};
 
-    // typename cc::function<SettingsList*(void*,size_t)>::ptr_t pGetSubmenu,
-    // typename cc::function<bool(void*,size_t)>::ptr_t isEnabled, void* capture)
-    // :
+    EnumSettingItem<Note> mPresetScaleNote = {"Scale Root",
+                                              gNoteInfo,
+                                              Property<Note>{
+                                                  [](void *cap) {
+                                                      auto *pThis = (HarmPatchSettingsApp *)cap;
+                                                      return pThis->EditingPreset().mPresetScale.mRootNoteIndex;
+                                                  }, // getter
+                                                  [](void *cap, const Note &val) {
+                                                      auto *pThis = (HarmPatchSettingsApp *)cap;
+                                                      pThis->EditingPreset().mPresetScale.mRootNoteIndex = val;
+                                                  },   // setter
+                                                  this // capture val
+                                              },
+                                              AlwaysEnabled};
+
+    EnumSettingItem<ScaleFlavorIndex> mPresetScaleFlavor = {
+        " ->Flav",
+        gScaleFlavorIndexInfo,
+        Property<ScaleFlavorIndex>{
+            [](void *cap) {
+                auto *pThis = (HarmPatchSettingsApp *)cap;
+                return pThis->EditingPreset().mPresetScale.mFlavorIndex;
+            }, // getter
+            [](void *cap, const ScaleFlavorIndex &val) {
+                auto *pThis = (HarmPatchSettingsApp *)cap;
+                pThis->EditingPreset().mPresetScale.mFlavorIndex = val;
+            },   // setter
+            this // capture val
+        },
+        AlwaysEnabled};
 
     MultiSubmenuSettingItem mVoiceSubmenu = {[](void *cap) { return clarinoid::HARM_VOICES; },
                                              [](void *cap, size_t mi) { // name
@@ -414,18 +441,21 @@ struct HarmPatchSettingsApp
             auto *pThis = (HarmPatchSettingsApp *)cap;
             pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
             pThis->mDisplay.ShowToast(
-                String("Copied ") + pThis->mDisplay.mAppSettings->mGlobalHarmPreset + ":" +
-                pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset]
-                    .mName +
-                " to " + i + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
+                String("Copied ")
+                + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset].ToString(pThis->mDisplay.mAppSettings->mGlobalHarmPreset)
+                + "\nto\n"
+                + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].ToString(i)
+                );
         },
         AlwaysEnabled,
         this};
 
-    ISettingItem *mArray[9] = {
+    ISettingItem *mArray[11] = {
         &mEmitLiveNote,
         &mStereoSeparation,
         &mMinRotationTimeMS,
+        &mPresetScaleNote,
+        &mPresetScaleFlavor,
         &mSynthPreset1,
         &mSynthPreset2,
         &mSynthPreset3,
@@ -476,7 +506,9 @@ struct HarmSettingsApp : public SettingsMenuApp
     {
         this->mDisplay.ClearState();
         this->mDisplay.mDisplay.println("Harmonizer >");
-        this->mDisplay.mDisplay.println(String("#: ") + this->GetAppSettings()->mGlobalHarmPreset);
+        this->mDisplay.mDisplay.println(
+            this->GetAppSettings()->mHarmSettings.mPresets[this->GetAppSettings()->mGlobalHarmPreset].ToString(this->GetAppSettings()->mGlobalHarmPreset)
+        );
         SettingsMenuApp::RenderFrontPage();
     }
 };

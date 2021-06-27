@@ -48,11 +48,11 @@ struct ControlMapping
         SynthPreset,
         HarmPreset,
         Transpose,
-        // Volume,
         LoopGo,
         LoopStop,
         BaseNoteHoldToggle,
         MetronomeLEDToggle,
+        HarmPresetOnOffToggle,
         COUNT,
     };
 
