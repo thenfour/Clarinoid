@@ -884,8 +884,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         mDisplay.ClearState();
         mDisplay.mDisplay.println(String("PATCH >"));
         mDisplay.mDisplay.println(
-            GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(GetAppSettings()->mGlobalSynthPreset)
-        );
+            GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(
+                GetAppSettings()->mGlobalSynthPreset));
         SettingsMenuApp::RenderFrontPage();
     }
 };
@@ -1020,6 +1020,19 @@ struct SynthSettingsApp : public SettingsMenuApp
 
     LabelSettingItem mSeparator = {Property<String>{[](void *) { return String("----"); }}, AlwaysEnabled};
 
+    FloatSettingItem mDelayGain = {"Delay gain",
+                                   StandardRangeSpecs::gFloat_0_1,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (SynthSettingsApp *)cap;
+                                                       return pThis->GetSynthSettings().mDelayGain;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (SynthSettingsApp *)cap;
+                                                       pThis->GetSynthSettings().mDelayGain = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
+
     FloatSettingItem mDelayTimeMS = {"Delay Time",
                                      NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
                                      Property<float>{[](void *cap) {
@@ -1115,11 +1128,26 @@ struct SynthSettingsApp : public SettingsMenuApp
 
     // ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog4;
 
-    ISettingItem *mMasterFXSubmenuItems[12] = {
+    BoolSettingItem mMasterFXEnable = {"MasterFX Enable",
+                                       "Yes",
+                                       "No",
+                                       Property<bool>{[](void *cap) {
+                                                          auto *pThis = (SynthSettingsApp *)cap;
+                                                          return pThis->GetSynthSettings().mMasterFXEnable;
+                                                      },
+                                                      [](void *cap, const bool &v) {
+                                                          auto *pThis = (SynthSettingsApp *)cap;
+                                                          pThis->GetSynthSettings().mMasterFXEnable = v;
+                                                      },
+                                                      this},
+                                       AlwaysEnabled};
+
+    ISettingItem *mMasterFXSubmenuItems[13] = {
         &mReverbGain,
         &mReverbDamping,
         &mReverbSize,
         &mSeparator,
+        &mDelayGain,
         &mDelayTimeMS,
         &mDelayStereoSep,
         &mDelayFeedbackLevel,
@@ -1137,7 +1165,8 @@ struct SynthSettingsApp : public SettingsMenuApp
         &mMasterGain,
         &mTranspose,
         &mPitchbendRange,
-        &mGlobalSynthPreset,
+        //&mGlobalSynthPreset,
+        &mMasterFXEnable,
         &mMasterFX,
         &mPatches,
         &mSeparator,
@@ -1156,8 +1185,8 @@ struct SynthSettingsApp : public SettingsMenuApp
         mDisplay.ClearState();
         mDisplay.mDisplay.println(String("SYNTH > "));
         mDisplay.mDisplay.println(
-            GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(GetAppSettings()->mGlobalSynthPreset)
-        );
+            GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(
+                GetAppSettings()->mGlobalSynthPreset));
 
         SettingsMenuApp::RenderFrontPage();
     }

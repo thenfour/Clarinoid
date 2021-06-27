@@ -250,7 +250,8 @@ struct SynthPreset
 
     SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
 
-    String ToString(uint8_t index) const {
+    String ToString(uint8_t index) const
+    {
         return String("") + index + ":" + mName;
     }
 };
@@ -264,10 +265,13 @@ struct SynthSettings
     float mMasterGain = 1.0f;
     float mPitchBendRange = 2.0f;
 
+    bool mMasterFXEnable = true;
+
     float mReverbGain = 0.0f;
     float mReverbDamping = 0.6f;
     float mReverbSize = 0.6f;
 
+    float mDelayGain = 1.0f;
     float mDelayMS = 300;
     float mDelayStereoSep = 30;
     float mDelayFeedbackLevel = 0.3f;
@@ -571,7 +575,8 @@ struct SynthSettings
         p.mModulations[1].mDest = ModulationDestination::Osc1Frequency;
     }
 
-    static void InitPanFlutePreset(SynthPreset &p) {
+    static void InitPanFlutePreset(SynthPreset &p)
+    {
 
         InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, p);
         // make osc1 and osc2 equal
@@ -586,7 +591,8 @@ struct SynthSettings
         p.mModulations[1].mScaleN11 = 0.05f;
     }
 
-    static void InitFunkyLeadPreset(SynthPreset& p) {
+    static void InitFunkyLeadPreset(SynthPreset &p)
+    {
         p.mName = "Funky";
         p.mSync = true;
         p.mSyncMultMax = 4.0f;
@@ -646,9 +652,9 @@ struct SynthSettings
         InitFifthLeadPresetA(mPresets[i++]);
         InitFifthLeadPresetB(mPresets[i++]);
 
-
         // harmonizer-friendly patches
-        InitDetunedLeadPreset("Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[SynthPresetID_HarmDetunedSaws]);
+        InitDetunedLeadPreset(
+            "Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[SynthPresetID_HarmDetunedSaws]);
         mPresets[SynthPresetID_HarmDetunedSaws].mOsc1Gain = 0.15f;
         mPresets[SynthPresetID_HarmDetunedSaws].mOsc2Gain = 0.15f;
         mPresets[SynthPresetID_HarmDetunedSaws].mOsc3Gain = 0.15f;
@@ -660,7 +666,6 @@ struct SynthSettings
         InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);
         InitHarmPulseLead(mPresets[SynthPresetID_HarmPulse]);
         InitHarmSawLead(mPresets[SynthPresetID_HarmSaw]);
-
     }
 };
 

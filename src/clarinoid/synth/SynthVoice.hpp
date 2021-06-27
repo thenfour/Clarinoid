@@ -26,42 +26,45 @@ https://www.pjrc.com/teensy/gui/index.html
 // this is the after-oscillator processing.
 
 */
-
 // GUItool: begin automatically generated code
-AudioAmplifier delayFeedbackAmpLeft;  // xy=376.00567626953125,85
-AudioEffectDelay delayLeft;           // xy=378.00567626953125,176
-AudioEffectDelay delayRight;          // xy=388.00567626953125,406
-AudioAmplifier delayFeedbackAmpRight; // xy=389.00567626953125,318
-AudioMixer4 verbInputMixer;           // xy=761.0056762695312,476
-AudioSynthWaveformSine metronomeOsc;  // xy=797.0056762695312,905
-AudioEffectFreeverbStereo verb;       // xy=911.0056762695312,482
-AudioEffectEnvelope metronomeEnv;     // xy=998.0056762695312,907
-AudioAmplifier verbWetAmpLeft;        // xy=1070.0056762695312,463
-AudioAmplifier verbWetAmpRight;       // xy=1077.0056762695312,501
-AudioMixer4 postMixerLeft;            // xy=1252.0056762695312,690
-AudioMixer4 postMixerRight;           // xy=1254.0056762695312,773
-AudioAmplifier ampLeft;               // xy=1414.0056762695312,691
-AudioAmplifier ampRight;              // xy=1417.0056762695312,772
-AudioOutputI2S i2s1;                  // xy=1599.0056762695312,724
-AudioAnalyzePeak peak1;               // xy=1642.0056762695312,503
-AudioConnection patchCord1(verbInputMixer, verb);
-AudioConnection patchCord2(metronomeOsc, metronomeEnv);
-AudioConnection patchCord3(verb, 0, verbWetAmpLeft, 0);
-AudioConnection patchCord4(verb, 1, verbWetAmpRight, 0);
-AudioConnection patchCord5(metronomeEnv, 0, postMixerRight, 3);
-AudioConnection patchCord6(metronomeEnv, 0, postMixerLeft, 3);
-AudioConnection patchCord7(verbWetAmpLeft, 0, postMixerLeft, 2);
-AudioConnection patchCord8(verbWetAmpRight, 0, postMixerRight, 2);
-AudioConnection patchCord9(postMixerLeft, ampLeft);
-AudioConnection patchCord10(postMixerRight, ampRight);
-AudioConnection patchCord11(ampLeft, peak1);
-AudioConnection patchCord12(ampLeft, 0, i2s1, 1);
-AudioConnection patchCord13(ampRight, 0, i2s1, 0);
+AudioAmplifier delayFeedbackAmpLeft;  // xy=535,170
+AudioEffectDelay delayRight;          // xy=536,478
+AudioEffectDelay delayLeft;           // xy=537,261
+AudioAmplifier delayFeedbackAmpRight; // xy=537,390
+AudioAmplifier delayWetAmpLeft;       // xy=781,234
+AudioAmplifier delayWetAmpRight;      // xy=802,469
+AudioMixer4 verbInputMixer;           // xy=920,561
+AudioSynthWaveformSine metronomeOsc;  // xy=956,990
+AudioEffectFreeverbStereo verb;       // xy=1070,567
+AudioEffectEnvelope metronomeEnv;     // xy=1157,992
+AudioAmplifier verbWetAmpLeft;        // xy=1229,548
+AudioAmplifier verbWetAmpRight;       // xy=1236,586
+AudioMixer4 postMixerLeft;            // xy=1411,775
+AudioMixer4 postMixerRight;           // xy=1413,858
+AudioAmplifier ampLeft;               // xy=1573,776
+AudioAmplifier ampRight;              // xy=1576,857
+AudioOutputI2S i2s1;                  // xy=1758,809
+AudioAnalyzePeak peak1;               // xy=1801,588
+AudioConnection patchCord1(delayWetAmpLeft, 0, postMixerLeft, 1);
+AudioConnection patchCord2(delayWetAmpRight, 0, postMixerRight, 1);
+AudioConnection patchCord3(verbInputMixer, verb);
+AudioConnection patchCord4(metronomeOsc, metronomeEnv);
+AudioConnection patchCord5(verb, 0, verbWetAmpLeft, 0);
+AudioConnection patchCord6(verb, 1, verbWetAmpRight, 0);
+AudioConnection patchCord7(metronomeEnv, 0, postMixerRight, 3);
+AudioConnection patchCord8(metronomeEnv, 0, postMixerLeft, 3);
+AudioConnection patchCord9(verbWetAmpLeft, 0, postMixerLeft, 2);
+AudioConnection patchCord10(verbWetAmpRight, 0, postMixerRight, 2);
+AudioConnection patchCord11(postMixerLeft, ampLeft);
+AudioConnection patchCord12(postMixerRight, ampRight);
+AudioConnection patchCord13(ampLeft, peak1);
+AudioConnection patchCord14(ampLeft, 0, i2s1, 1);
+AudioConnection patchCord15(ampRight, 0, i2s1, 0);
 // GUItool: end automatically generated code
 
 // insert the delay filters.
 // ...[delayLeft]---->[delayFilterLeft]--------------->[delayFeedbackAmpLeft]...
-//                                     \-------------->[waveMixerLeft]...
+//                                     \-------------->[delayWetAmpLeft]...
 ::clarinoid::FilterNode delayFilterLeft;
 AudioConnection mPatchDelayToFilterLeft = {delayLeft, 0, delayFilterLeft, 0};
 AudioConnection mPatchDelayFilterToFeedbackAmpLeft = {delayFilterLeft, 0, delayFeedbackAmpLeft, 0};
@@ -71,8 +74,8 @@ AudioConnection mPatchDelayToFilterRight = {delayRight, 0, delayFilterRight, 0};
 AudioConnection mPatchDelayFilterToFeedbackAmpRight = {delayFilterRight, 0, delayFeedbackAmpRight, 0};
 
 // delay output connection
-AudioConnection mPatchDelayFilterToWaveMixerLeft = {delayFilterLeft, 0, postMixerLeft, 1};
-AudioConnection mPatchDelayFilterToWaveMixerRight = {delayFilterRight, 0, postMixerRight, 1};
+AudioConnection mPatchDelayFilterToAmpLeft = {delayFilterLeft, 0, delayWetAmpLeft, 0};
+AudioConnection mPatchDelayFilterToAmpRight = {delayFilterRight, 0, delayWetAmpRight, 0};
 
 // voice mixer & dry output connection
 ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryLeft;  // all voices input here.
@@ -538,11 +541,18 @@ struct SynthGraphControl
                                                  mAppSettings->mSynthSettings.mDelayQ,
                                                  mAppSettings->mSynthSettings.mDelaySaturation);
 
+        CCSynthGraph::delayWetAmpLeft.gain(
+            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mDelayGain : 0.0f);
+        CCSynthGraph::delayWetAmpRight.gain(
+            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mDelayGain : 0.0f);
+
         CCSynthGraph::verb.roomsize(mAppSettings->mSynthSettings.mReverbSize);
         CCSynthGraph::verb.damping(mAppSettings->mSynthSettings.mReverbDamping);
 
-        CCSynthGraph::verbWetAmpLeft.gain(mAppSettings->mSynthSettings.mReverbGain);
-        CCSynthGraph::verbWetAmpRight.gain(mAppSettings->mSynthSettings.mReverbGain);
+        CCSynthGraph::verbWetAmpLeft.gain(
+            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mReverbGain : 0.0f);
+        CCSynthGraph::verbWetAmpRight.gain(
+            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mReverbGain : 0.0f);
 
         CCSynthGraph::ampLeft.gain(mAppSettings->mSynthSettings.mMasterGain);
         CCSynthGraph::ampRight.gain(mAppSettings->mSynthSettings.mMasterGain);
