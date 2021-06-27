@@ -6,6 +6,13 @@
 namespace clarinoid
 {
 
+static constexpr size_t SynthPresetID_HarmSync = SYNTH_PRESET_COUNT - 5;
+static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
+static constexpr size_t SynthPresetID_HarmDetunedSaws = SYNTH_PRESET_COUNT - 3;
+static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
+static constexpr size_t SynthPresetID_HarmTri = SYNTH_PRESET_COUNT - 1;
+
+
 enum class HarmScaleRefType : uint8_t
 {
     Global,
@@ -143,10 +150,10 @@ struct HarmPreset
     Scale mPresetScale = {0, ScaleFlavorIndex::Chromatic};
     HarmVoiceSettings mVoiceSettings[HARM_VOICES];
     uint32_t mMinRotationTimeMS = 150;
-    uint16_t mSynthPreset1 = 1; // harm-friendly sync
-    uint16_t mSynthPreset2 = 2; // harm-friendly tri
-    uint16_t mSynthPreset3 = 3; // harm-friendly pulse
-    uint16_t mSynthPreset4 = 4; // harm-friendly saw
+    uint16_t mSynthPreset1 = SynthPresetID_HarmSync; // harm-friendly sync
+    uint16_t mSynthPreset2 = SynthPresetID_HarmTri; // harm-friendly tri
+    uint16_t mSynthPreset3 = SynthPresetID_HarmPulse; // harm-friendly pulse
+    uint16_t mSynthPreset4 = SynthPresetID_HarmSaw; // harm-friendly saw
 
     String ToString(uint8_t index) const {
         return String("") + index + ":" + mName;
@@ -184,7 +191,7 @@ struct HarmSettings
         p.mPresetScale.mRootNoteIndex = Note::Gb;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::HarmonicMinor;
         p.mStereoSeparation = 0.5f;
-        p.mSynthPreset2 = 8;
+        p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
 
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
@@ -207,7 +214,7 @@ struct HarmSettings
         p.mPresetScale.mRootNoteIndex = Note::Gb;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::HalfWholeDiminished;
         p.mStereoSeparation = 0.5f;
-        p.mSynthPreset2 = 8;
+        p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
 
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;

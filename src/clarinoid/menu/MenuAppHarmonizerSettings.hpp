@@ -57,13 +57,18 @@ struct HarmVoiceSettingsApp
                                          },   // setter
                                          this // capture val
                                      },
+                                     [](void *cap, int n) { // formatter
+                                         auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                         return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                     },
                                      Property<bool>{// enabled only if ref type = voice.
                                                     [](void *cap) {
                                                         auto *pThis = (HarmVoiceSettingsApp *)cap;
                                                         return pThis->EditingVoice().mSynthPresetRef ==
                                                                HarmSynthPresetRefType::Voice;
                                                     },
-                                                    this}};
+                                                    this},
+                                     this};
 
     IntSettingItem mSequenceLength = {"Seq length",
                                       NumericEditRangeSpec<int>{0, clarinoid::HARM_SEQUENCE_LEN - 1},
@@ -259,7 +264,7 @@ struct HarmVoiceSettingsApp
         &mEndSeparator,
     };
     SettingsList mRootList = {mArray};
-};
+}; // namespace clarinoid
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct HarmPatchSettingsApp
@@ -334,7 +339,12 @@ struct HarmPatchSettingsApp
                                         },   // setter
                                         this // capture val
                                     },
-                                    AlwaysEnabled};
+                                    [](void *cap, int n) { // formatter
+                                        auto *pThis = (HarmPatchSettingsApp *)cap;
+                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                    },
+                                    AlwaysEnabled,
+                                    this};
 
     IntSettingItem mSynthPreset2 = {"Synth preset 2",
                                     NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
@@ -349,7 +359,12 @@ struct HarmPatchSettingsApp
                                         },   // setter
                                         this // capture val
                                     },
-                                    AlwaysEnabled};
+                                    [](void *cap, int n) { // formatter
+                                        auto *pThis = (HarmPatchSettingsApp *)cap;
+                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                    },
+                                    AlwaysEnabled,
+                                    this};
 
     IntSettingItem mSynthPreset3 = {"Synth preset 3",
                                     NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
@@ -364,7 +379,12 @@ struct HarmPatchSettingsApp
                                         },   // setter
                                         this // capture val
                                     },
-                                    AlwaysEnabled};
+                                    [](void *cap, int n) { // formatter
+                                        auto *pThis = (HarmPatchSettingsApp *)cap;
+                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                    },
+                                    AlwaysEnabled,
+                                    this};
 
     IntSettingItem mSynthPreset4 = {"Synth preset 4",
                                     NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
@@ -379,7 +399,12 @@ struct HarmPatchSettingsApp
                                         },   // setter
                                         this // capture val
                                     },
-                                    AlwaysEnabled};
+                                    [](void *cap, int n) { // formatter
+                                        auto *pThis = (HarmPatchSettingsApp *)cap;
+                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                    },
+                                    AlwaysEnabled,
+                                    this};
 
     EnumSettingItem<Note> mPresetScaleNote = {"Scale Root",
                                               gNoteInfo,
@@ -441,11 +466,10 @@ struct HarmPatchSettingsApp
             auto *pThis = (HarmPatchSettingsApp *)cap;
             pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
             pThis->mDisplay.ShowToast(
-                String("Copied ")
-                + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset].ToString(pThis->mDisplay.mAppSettings->mGlobalHarmPreset)
-                + "\nto\n"
-                + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].ToString(i)
-                );
+                String("Copied ") +
+                pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset]
+                    .ToString(pThis->mDisplay.mAppSettings->mGlobalHarmPreset) +
+                "\nto\n" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].ToString(i));
         },
         AlwaysEnabled,
         this};
@@ -507,8 +531,8 @@ struct HarmSettingsApp : public SettingsMenuApp
         this->mDisplay.ClearState();
         this->mDisplay.mDisplay.println("Harmonizer >");
         this->mDisplay.mDisplay.println(
-            this->GetAppSettings()->mHarmSettings.mPresets[this->GetAppSettings()->mGlobalHarmPreset].ToString(this->GetAppSettings()->mGlobalHarmPreset)
-        );
+            this->GetAppSettings()->mHarmSettings.mPresets[this->GetAppSettings()->mGlobalHarmPreset].ToString(
+                this->GetAppSettings()->mGlobalHarmPreset));
         SettingsMenuApp::RenderFrontPage();
     }
 };

@@ -14,6 +14,7 @@ struct NumericEditor : ISettingItemEditor
     int x;
     int y;
     NumericEditRangeSpec<T> mRange;
+
     Property<T> mBinding;
     T oldVal;
 
@@ -70,13 +71,31 @@ struct NumericEditor : ISettingItemEditor
 
 struct IntEditor : NumericEditor<int>
 {
+    typename cc::function<String(void *, int)>::ptr_t mValueFormatter = nullptr;
+    void *mpCapture = nullptr;
+
     IntEditor(const NumericEditRangeSpec<int> &range_, const Property<int> &binding) : NumericEditor(range_, binding)
+    {
+    }
+
+    IntEditor(const NumericEditRangeSpec<int> &range_,
+              const Property<int> &binding,
+              typename cc::function<String(void *, int)>::ptr_t valueFormatter,
+              void *cap)
+        : NumericEditor(range_, binding), mValueFormatter(valueFormatter), mpCapture(cap)
     {
     }
 
     virtual void DrawValue(int n, int oldVal)
     {
-        this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
+        if (mValueFormatter)
+        {
+            this->mpApi->GetDisplay()->mDisplay.print(mValueFormatter(mpCapture, n));
+        }
+        else
+        {
+            this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
+        }
         int delta = n - oldVal;
         this->mpApi->GetDisplay()->mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
     }
@@ -110,6 +129,16 @@ struct NumericSettingItem : public ISettingItem
                        const Property<T> &binding,
                        const Property<bool> &isEnabled)
         : mName(name), mEditor(range_, binding), mBinding(binding), mIsEnabled(isEnabled)
+    {
+    }
+
+    NumericSettingItem(const String &name,
+                       const NumericEditRangeSpec<T> &range_,
+                       const Property<T> &binding,
+                       typename cc::function<String(void *, T)>::ptr_t mValueFormatter,
+                       const Property<bool> &isEnabled,
+                       void *cap)
+        : mName(name), mEditor(range_, binding, mValueFormatter, cap), mBinding(binding), mIsEnabled(isEnabled)
     {
     }
 

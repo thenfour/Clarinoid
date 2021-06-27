@@ -5,6 +5,7 @@
 
 namespace clarinoid
 {
+
 static constexpr float ReasonableOscillatorGain = 0.25f;
 
 enum class OscWaveformShape
@@ -570,9 +571,36 @@ struct SynthSettings
         p.mModulations[1].mDest = ModulationDestination::Osc1Frequency;
     }
 
+    static void InitPanFlutePreset(SynthPreset &p) {
+
+        InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, p);
+        // make osc1 and osc2 equal
+        p.mOsc2Gain = p.mOsc1Gain = ReasonableOscillatorGain;
+        p.mOsc2Waveform = p.mOsc1Waveform = OscWaveformShape::Pulse;
+        p.mDetune = 0.04f;
+
+        p.mEnv1.mDecayMS = 100;
+
+        p.mModulations[1].mSource = ModulationSource::ENV1;
+        p.mModulations[1].mDest = ModulationDestination::Osc2Frequency;
+        p.mModulations[1].mScaleN11 = 0.05f;
+    }
+
+    static void InitFunkyLeadPreset(SynthPreset& p) {
+        p.mName = "Funky";
+        p.mSync = true;
+        p.mSyncMultMax = 4.0f;
+        p.mDetune = 0;
+        p.mFilterQ = 0.40f;
+        p.mFilterMaxFreq = 11500;
+        p.mOsc3Waveform = OscWaveformShape::Pulse;
+        p.mOsc3PulseWidth = 0.1f;
+        p.mOsc3Gain = ReasonableOscillatorGain;
+    }
+
     SynthSettings()
     {
-        mPresets[0].mName = "Sync Lead"; // default.
+        mPresets[0].mName = "Synccy Lead"; // default.
         mPresets[0].mModulations[0].mScaleN11 = 0.9f;
         mPresets[0].mModulations[0].mSource = ModulationSource::LFO1;
         mPresets[0].mModulations[0].mDest = ModulationDestination::Osc2Frequency;
@@ -583,34 +611,20 @@ struct SynthSettings
 
         size_t i = 1; // 0 = default = sync
 
-        InitHarmSyncLead(mPresets[i++]);  // 1 // harm-friendly sync
-        InitHarmTriLead(mPresets[i++]);   // 2 // harm-friendly tri
-        InitHarmPulseLead(mPresets[i++]); // 3 // harm-friendly pulse
-        InitHarmSawLead(mPresets[i++]);   // 4 // harm-friendly saw
-        // InitBasicLeadPreset("One Saw", OscWaveformShape::SawSync, 0.5f, mPresets[i++]);
-        // InitBasicLeadPreset("One Tri", OscWaveformShape::VarTriangle, 0.5f, mPresets[i++]);
-        // InitBasicLeadPreset("One Pulse 8%", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
-
-        // InitBasicLeadPreset("One Pulse 50%", OscWaveformShape::Pulse, 0.50f, mPresets[i++]);
-
         InitBasicLeadPreset("PWM 1", OscWaveformShape::Pulse, 0.40f, mPresets[i]);
         mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
         mPresets[i].mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
         mPresets[i].mModulations[0].mScaleN11 = 0.14f;
         ++i;
 
-        InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
-        // make osc1 and osc2 equal
-        mPresets[i].mOsc2Gain = mPresets[i].mOsc1Gain = ReasonableOscillatorGain;
-        mPresets[i].mOsc2Waveform = mPresets[i].mOsc1Waveform = OscWaveformShape::Pulse;
-        mPresets[i].mDetune = 0.04f;
+        InitCrystalFieldsPatch(mPresets[i++]);
+        InitCinematicTagPatch(mPresets[i++]);
+        InitSpacecarPreset(mPresets[i++]);
+        InitBellycrawlPreset(mPresets[i++]);
 
-        mPresets[i].mEnv1.mDecayMS = 100;
+        InitPanFlutePreset(mPresets[i++]);
 
-        mPresets[i].mModulations[1].mSource = ModulationSource::ENV1;
-        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc2Frequency;
-        mPresets[i].mModulations[1].mScaleN11 = 0.05f;
-        ++i;
+        InitFunkyLeadPreset(mPresets[i++]);
 
         InitBasicLeadPreset("Saw Brass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
         // make osc1 and osc2 equal
@@ -627,24 +641,26 @@ struct SynthSettings
         mPresets[i].mModulations[1].mScaleN11 = 0.16f;
         ++i;
 
-        InitDetunedLeadPreset("Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[i]);
-        mPresets[i].mOsc1Gain = 0.15f;
-        mPresets[i].mOsc2Gain = 0.15f;
-        mPresets[i].mOsc3Gain = 0.15f;
-        mPresets[i].mFilterQ = 0;
-        mPresets[i].mFilterType = ClarinoidFilterType::BP_Moog4;
-        mPresets[i].mFilterMaxFreq = 1800;
-        ++i;
+        InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
 
-        InitDetunedLeadPreset("Detuned pulse 10", OscWaveformShape::Pulse, 0.1f, mPresets[i++]);
-        //InitDetunedLeadPreset("Detuned tri 10", OscWaveformShape::VarTriangle, 0.1f, mPresets[i++]);
         InitFifthLeadPresetA(mPresets[i++]);
         InitFifthLeadPresetB(mPresets[i++]);
 
-        InitCrystalFieldsPatch(mPresets[i++]);
-        InitCinematicTagPatch(mPresets[i++]);
-        InitSpacecarPreset(mPresets[i++]);
-        InitBellycrawlPreset(mPresets[i++]);
+
+        // harmonizer-friendly patches
+        InitDetunedLeadPreset("Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[SynthPresetID_HarmDetunedSaws]);
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc1Gain = 0.15f;
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc2Gain = 0.15f;
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc3Gain = 0.15f;
+        mPresets[SynthPresetID_HarmDetunedSaws].mFilterQ = 0;
+        mPresets[SynthPresetID_HarmDetunedSaws].mFilterType = ClarinoidFilterType::BP_Moog4;
+        mPresets[SynthPresetID_HarmDetunedSaws].mFilterMaxFreq = 1800;
+
+        InitHarmSyncLead(mPresets[SynthPresetID_HarmSync]);
+        InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);
+        InitHarmPulseLead(mPresets[SynthPresetID_HarmPulse]);
+        InitHarmSawLead(mPresets[SynthPresetID_HarmSaw]);
+
     }
 };
 
