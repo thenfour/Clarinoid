@@ -537,31 +537,6 @@ struct SynthSettings
         p.mOsc3Gain = ReasonableOscillatorGain;
     }
 
-    static void InitSpacecarPreset(SynthPreset &p)
-    {
-        InitBasicLeadPreset("SpaceGuitar", OscWaveformShape::Pulse, 0.40f, p);
-
-        p.mLfo2Rate = 0.7f;
-
-        p.mFilterKeytracking = 0;
-        p.mFilterMaxFreq = 12000;
-        p.mFilterQ = 0.2f;
-        p.mFilterType = ClarinoidFilterType::LP_SEM12;
-
-        // p.mOsc1Gain = p.mOsc2Gain; // set up osc1 but don't enable it yet.
-        p.mOsc1Waveform = OscWaveformShape::Pulse;
-        p.mOsc1PulseWidth = 0.5f;
-        p.mOsc1PitchSemis = -5;
-
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        p.mModulations[0].mScaleN11 = 0.14f;
-
-        p.mModulations[1].mSource = ModulationSource::LFO2;
-        p.mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[1].mScaleN11 = 0.20f;
-    }
-
     static void InitBellycrawlPreset(SynthPreset &p)
     {
         // start with defaults
@@ -577,12 +552,17 @@ struct SynthSettings
 
     static void InitPanFlutePreset(SynthPreset &p)
     {
-
         InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, p);
         // make osc1 and osc2 equal
-        p.mOsc2Gain = p.mOsc1Gain = ReasonableOscillatorGain;
+        p.mOsc2Gain = p.mOsc1Gain = ReasonableOscillatorGain * 0.75f;
         p.mOsc2Waveform = p.mOsc1Waveform = OscWaveformShape::Pulse;
         p.mDetune = 0.04f;
+
+        p.mFilterType = ClarinoidFilterType::BP_Moog4;
+        p.mFilterMaxFreq = 7000;
+        p.mFilterKeytracking = 1.0f;
+        p.mFilterQ = 0.1f;
+        p.mFilterSaturation = 0.3f;
 
         p.mEnv1.mDecayMS = 100;
 
@@ -604,6 +584,49 @@ struct SynthSettings
         p.mOsc3Gain = ReasonableOscillatorGain;
     }
 
+    static void InitDetunePWMLead(SynthPreset &p)
+    {
+        p.mName = "Detune PWM";
+        p.mDetune = 0.09f;
+        p.mSync = false;
+
+        p.mFilterSaturation = 0.1f;
+        p.mFilterQ = 0.12f;
+        // lp moog 4 16k
+
+        p.mOsc1Waveform = OscWaveformShape::Pulse;
+        p.mOsc1PulseWidth = 0.3f;
+        p.mOsc1Gain = ReasonableOscillatorGain / 2.0f;
+
+        p.mOsc2Waveform = OscWaveformShape::Pulse;
+        p.mOsc2PulseWidth = 0.3f;
+        p.mOsc2Gain = ReasonableOscillatorGain / 2.0f;
+
+        p.mOsc3Waveform = OscWaveformShape::Pulse;
+        p.mOsc3PulseWidth = 0.3f;
+        p.mOsc3Gain = ReasonableOscillatorGain / 2.0f;
+
+        p.mLfo2Rate = p.mLfo1Rate;
+
+        p.mModulations[0].mDest = ModulationDestination::Osc1PulseWidth;
+        p.mModulations[0].mSource = ModulationSource::LFO1;
+        p.mModulations[0].mScaleN11 = 0.2f;
+        p.mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
+        p.mModulations[1].mSource = ModulationSource::LFO2;
+        p.mModulations[1].mScaleN11 = 0.2f;
+        p.mModulations[2].mDest = ModulationDestination::Osc1PulseWidth;
+        p.mModulations[2].mSource = ModulationSource::LFO1;
+        p.mModulations[2].mScaleN11 = 0.2f;
+
+        p.mModulations[3].mDest = ModulationDestination::Osc3Frequency;
+        p.mModulations[3].mSource = ModulationSource::Breath;
+        p.mModulations[3].mScaleN11 = -0.03f;
+
+        p.mModulations[4].mDest = ModulationDestination::Osc1Frequency;
+        p.mModulations[4].mSource = ModulationSource::ENV1;
+        p.mModulations[4].mScaleN11 = 0.03f;
+    }
+
     SynthSettings()
     {
         mPresets[0].mName = "Synccy Lead"; // default.
@@ -617,15 +640,27 @@ struct SynthSettings
 
         size_t i = 1; // 0 = default = sync
 
-        InitBasicLeadPreset("PWM 1", OscWaveformShape::Pulse, 0.40f, mPresets[i]);
+        InitBasicLeadPreset("PWM Lead 1", OscWaveformShape::Pulse, 0.35f, mPresets[i]);
         mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
         mPresets[i].mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        mPresets[i].mModulations[0].mScaleN11 = 0.14f;
+        mPresets[i].mModulations[0].mScaleN11 = 0.20f;
         ++i;
+
+        InitBasicLeadPreset("PWM Lead 2", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
+        mPresets[i].mFilterMaxFreq = 12000;
+        mPresets[i].mFilterType = ClarinoidFilterType::LP_SEM12;
+        mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
+        mPresets[i].mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
+        mPresets[i].mModulations[0].mScaleN11 = 0.20f;
+        mPresets[i].mModulations[1].mSource = ModulationSource::Breath;
+        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc2PulseWidth;
+        mPresets[i].mModulations[1].mScaleN11 = 0.20f;
+        ++i;
+
+        InitDetunePWMLead(mPresets[i++]);
 
         InitCrystalFieldsPatch(mPresets[i++]);
         InitCinematicTagPatch(mPresets[i++]);
-        InitSpacecarPreset(mPresets[i++]);
         InitBellycrawlPreset(mPresets[i++]);
 
         InitPanFlutePreset(mPresets[i++]);
