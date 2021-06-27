@@ -71,7 +71,7 @@ enum class ModulationSource : uint8_t
 EnumItemInfo<ModulationSource> gModulationSourceItems[7] = {
     {ModulationSource::None, "None"}, // Gets special handling. see below.
     {ModulationSource::Breath, "Breath"},
-    {ModulationSource::PitchStrip, "PitchStrip"},
+    {ModulationSource::PitchStrip, "PitchBend"},
     {ModulationSource::LFO1, "LFO1"},
     {ModulationSource::LFO2, "LFO2"},
     {ModulationSource::ENV1, "ENV1"},
@@ -100,34 +100,34 @@ EnumInfo<ModulationSource> gModulationSourceInfo("ModSource", gModulationSourceI
 enum class ModulationDestination : uint8_t
 {
     None,// Gets special handling. see below.
-    VoiceFilterCutoff,
-    VoiceFilterQ,
-    VoiceFilterSaturation,
+    // VoiceFilterCutoff,
+    // VoiceFilterQ,
+    // VoiceFilterSaturation,
     Osc1Frequency,
-    Osc1Volume,
+    //Osc1Volume,
     Osc1PulseWidth,
     Osc2Frequency,
     Osc2PulseWidth,
-    Osc2Volume,
+    //Osc2Volume,
     Osc3Frequency,
     Osc3PulseWidth,
-    Osc3Volume,
+    //Osc3Volume,
 };
 
-EnumItemInfo<ModulationDestination> gModulationDestinationItems[13] = {
+EnumItemInfo<ModulationDestination> gModulationDestinationItems[7] = {
     {ModulationDestination::None, "None"},
-    {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
-    {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
-    {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
+    // {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
+    // {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
+    // {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
     {ModulationDestination::Osc1Frequency, "Osc1Frequency"},
-    {ModulationDestination::Osc1Volume, "Osc1Volume"},
+    //{ModulationDestination::Osc1Volume, "Osc1Volume"},
     {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
     {ModulationDestination::Osc2Frequency, "Osc2Frequency"},
     {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
-    {ModulationDestination::Osc2Volume, "Osc2Volume"},
+    //{ModulationDestination::Osc2Volume, "Osc2Volume"},
     {ModulationDestination::Osc3Frequency, "Osc3Frequency"},
     {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
-    {ModulationDestination::Osc3Volume, "Osc3Volume"},
+    //{ModulationDestination::Osc3Volume, "Osc3Volume"},
 };
 static constexpr size_t ModulationDestinationSkip = 1; // 1 for the None value.
 static constexpr size_t ModulationDestinationViableCount = SizeofStaticArray(gModulationDestinationItems) - ModulationDestinationSkip; // -1 because "none" is not actually a valid value.
@@ -151,6 +151,12 @@ struct SynthModulationSpec
     ModulationSource mSource = ModulationSource::None;
     ModulationDestination mDest = ModulationDestination::None;
     float mScaleN11 = 0.5f; // -1 to 1
+
+    String ToString() const {
+        if (mSource == ModulationSource::None) return "--";
+        if (mDest == ModulationDestination::None) return "--";
+        return String(gModulationSourceInfo.GetValueString(mSource)) + ">" + gModulationDestinationInfo.GetValueString(mDest);
+    }
 };
 
 struct EnvelopeSpec
@@ -167,8 +173,8 @@ struct SynthPreset
     String mName;
     float mPortamentoTime = 0.005f;
     float mPan = 0;
-    float mDelaySend = 0.3f;
-    float mVerbSend = 0.3f;
+    float mDelaySend = 0.16f;
+    float mVerbSend = 0.16f;
 
     float mOsc1Gain = 0;
     float mOsc2Gain = ReasonableOscillatorGain;
@@ -451,7 +457,6 @@ struct SynthSettings
     SynthSettings()
     {
         mPresets[0].mName = "Sync Lead"; // default.
-
         size_t i = 1;                     // 0 = default = sync
         InitHarmSyncLead(mPresets[i++]);  // 1 // harm-friendly sync
         InitHarmTriLead(mPresets[i++]);   // 2 // harm-friendly tri
@@ -465,18 +470,41 @@ struct SynthSettings
 
         InitBasicLeadPreset("PWM 1", OscWaveformShape::Pulse, 0.40f, mPresets[i]);
         mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
-        mPresets[i].mModulations[0].mDest = ModulationDestination::Osc1PulseWidth;
-        mPresets[i].mModulations[0].mScaleN11 = 0.1f;
-
-        mPresets[i].mModulations[1].mSource = ModulationSource::LFO1;
-        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
-        mPresets[i].mModulations[1].mScaleN11 = 0.1f;
-
-        mPresets[i].mModulations[2].mSource = ModulationSource::LFO1;
-        mPresets[i].mModulations[2].mDest = ModulationDestination::Osc1PulseWidth;
-        mPresets[i].mModulations[2].mScaleN11 = 0.1f;
-
+        mPresets[i].mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
+        mPresets[i].mModulations[0].mScaleN11 = 0.14f;
         ++ i;
+
+        InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
+        // make osc1 and osc2 equal
+        mPresets[i].mOsc2Gain = mPresets[i].mOsc1Gain = ReasonableOscillatorGain;
+        mPresets[i].mOsc2Waveform = mPresets[i].mOsc1Waveform = OscWaveformShape::Pulse;
+
+        mPresets[i].mEnv1.mDecayMS = 100;
+
+        mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
+        mPresets[i].mModulations[0].mDest = ModulationDestination::Osc1Frequency;
+        mPresets[i].mModulations[0].mScaleN11 = 0.02f;
+
+        mPresets[i].mModulations[1].mSource = ModulationSource::ENV1;
+        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc2Frequency;
+        mPresets[i].mModulations[1].mScaleN11 = 0.16f;
+        ++ i;
+
+        InitBasicLeadPreset("Saw Brass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
+        // make osc1 and osc2 equal
+        mPresets[i].mOsc3Gain = mPresets[i].mOsc2Gain = mPresets[i].mOsc1Gain = ReasonableOscillatorGain;
+        mPresets[i].mOsc3Waveform = mPresets[i].mOsc2Waveform = mPresets[i].mOsc1Waveform = OscWaveformShape::SawSync;
+        mPresets[i].mOsc1Waveform = OscWaveformShape::Pulse;
+        mPresets[i].mOsc3FreqMultiplier = 2.0f;
+        mPresets[i].mDetune = 0.14f;
+
+        mPresets[i].mEnv1.mDecayMS = 100;
+
+        mPresets[i].mModulations[1].mSource = ModulationSource::ENV1;
+        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc2Frequency;
+        mPresets[i].mModulations[1].mScaleN11 = 0.16f;
+        ++ i;
+
         InitDetunedLeadPreset("Detuned saws", OscWaveformShape::SawSync, 0.5f, mPresets[i++]);
         InitDetunedLeadPreset("Detuned sine", OscWaveformShape::Sine, 0.5f, mPresets[i++]);
         InitDetunedLeadPreset("Detuned pulse 10", OscWaveformShape::Pulse, 0.1f, mPresets[i++]);

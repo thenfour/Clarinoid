@@ -742,7 +742,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     MultiSubmenuSettingItem mModulationsList = {[](void *cap) { return SYNTH_MODULATIONS_MAX; },
                                                 [](void *cap, size_t i) {
-                                                    return String(String("mod ") + i + ":"); // <-- todo: better naming
+                                                    auto *pThis = (SynthPatchMenuApp *)cap;
+                                                    return String(String("#") + i + " " + pThis->GetBinding().mModulations[i].ToString());
                                                 },
                                                 [](void *cap, size_t i) { // get submenu
                                                     auto *pThis = (SynthPatchMenuApp *)cap;

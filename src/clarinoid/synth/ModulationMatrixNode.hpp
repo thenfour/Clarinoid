@@ -32,7 +32,7 @@ struct VoiceModulationMatrixNode : public AudioStream
 
         // mind ModulationSourceSkip and ModulationDestinationSkip when converting between indices & enum values.
         audio_block_t *sources[ModulationSourceViableCount] = {nullptr};
-        audio_block_t *destinations[ModulationSourceViableCount] = {nullptr};
+        audio_block_t *destinations[ModulationDestinationViableCount] = {nullptr};
 
         for (auto &modulation : mSynthPatch->mModulations)
         {
