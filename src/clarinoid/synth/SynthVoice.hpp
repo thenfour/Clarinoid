@@ -15,6 +15,7 @@
 #include "MultiMixer.hpp"
 #include "ModulationMatrixNode.hpp"
 #include "Patch.hpp"
+#include "polyBlepOscillator.hpp"
 
 namespace clarinoid
 {
@@ -370,9 +371,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mOsc.portamentoTime(2, mPreset->mPortamentoTime);
         mOsc.portamentoTime(3, mPreset->mPortamentoTime);
 
-        mOsc.waveform(1, (uint8_t)mPreset->mOsc1Waveform);
-        mOsc.waveform(2, (uint8_t)mPreset->mOsc2Waveform);
-        mOsc.waveform(3, (uint8_t)mPreset->mOsc3Waveform);
+        mOsc.waveform(1, mPreset->mOsc1Waveform);
+        mOsc.waveform(2, mPreset->mOsc2Waveform);
+        mOsc.waveform(3, mPreset->mOsc3Waveform);
 
         mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
         mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);

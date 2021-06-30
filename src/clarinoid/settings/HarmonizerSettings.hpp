@@ -260,6 +260,83 @@ struct HarmSettings
         p.mVoiceSettings[2].mSequence[1] = -6;
     }
 
+    static void InitQuartalHarmPreset(HarmPreset &p)
+    {
+        p.mName = "Chaos Quartals";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 6;
+        p.mVoiceSettings[0].mSequence[0] = -21; // Eb
+        p.mVoiceSettings[0].mSequence[1] = -20; // E
+        p.mVoiceSettings[0].mSequence[2] = -19; // F
+        p.mVoiceSettings[0].mSequence[3] = -16; // Ab
+        p.mVoiceSettings[0].mSequence[4] = -15; // A
+        p.mVoiceSettings[0].mSequence[5] = -14; // Bb
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 6;
+        p.mVoiceSettings[1].mSequence[0] = -16; // Ab
+        p.mVoiceSettings[1].mSequence[1] = -15; // A
+        p.mVoiceSettings[1].mSequence[2] = -14; // Bb
+        p.mVoiceSettings[1].mSequence[3] = -11; // Db
+        p.mVoiceSettings[1].mSequence[4] = -10; // D
+        p.mVoiceSettings[1].mSequence[5] = -9; // Eb
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[2].mSequenceLength = 6;
+        p.mVoiceSettings[2].mSequence[0] = -11; // Db
+        p.mVoiceSettings[2].mSequence[1] = -10; // D
+        p.mVoiceSettings[2].mSequence[2] = -9; // Eb
+        p.mVoiceSettings[2].mSequence[3] = -6; // Gb
+        p.mVoiceSettings[2].mSequence[4] = -5; // G
+        p.mVoiceSettings[2].mSequence[5] = -4; // Ab
+
+        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Voice;
+        p.mVoiceSettings[3].mVoiceSynthPreset = SynthPresetID_HarmSaw;
+        p.mVoiceSettings[3].mSequenceLength = 2;
+        p.mVoiceSettings[3].mMaxOutpNote = 40;
+        p.mVoiceSettings[3].mSequence[0] = 0;
+        p.mVoiceSettings[3].mSequence[1] = 5;
+    }
+
+    static void InitQuartal2HarmPreset(HarmPreset &p)
+    {
+        p.mName = "Quart-Quint";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 2;
+        p.mVoiceSettings[0].mSequence[0] = -5; // G
+        p.mVoiceSettings[0].mSequence[1] = -2; // F
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 2;
+        p.mVoiceSettings[1].mSequence[0] = -10; // D
+        p.mVoiceSettings[1].mSequence[1] = -14; // Bb
+
+        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[3].mSequenceLength = 2;
+        p.mVoiceSettings[3].mSequence[0] = -15; // A
+        p.mVoiceSettings[3].mSequence[1] = -21; // Eb
+
+        p.mVoiceSettings[4].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[4].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[4].mSequenceLength = 2;
+        p.mVoiceSettings[4].mSequence[0] = -20; // E
+        p.mVoiceSettings[4].mSequence[1] = -28; // Ab
+    }
+
     HarmSettings()
     {
         mPresets[1].mName = "Big";
@@ -327,6 +404,8 @@ struct HarmSettings
         InitBotanicalHarmPreset(mPresets[iPreset++]);
 
         InitFunkyHarmPreset(mPresets[iPreset++]);
+        InitQuartalHarmPreset(mPresets[iPreset++]);
+        InitQuartal2HarmPreset(mPresets[iPreset++]);
     }
 };
 

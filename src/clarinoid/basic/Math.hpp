@@ -84,6 +84,35 @@ static float Remap01ToRange(float x01, float destMin, float destMax)
     return x01;
 }
 
+inline float Frac(float x)
+{
+    return x - floorf(x);
+}
+
+inline float blamp0(float x)
+{
+    return 1 / 3.0 * x * x * x;
+}
+
+inline float blamp1(float x)
+{
+    x = x - 1;
+    return -1 / 3.0 * x * x * x;
+}
+
+inline float blep0(float x)
+{
+    return x * x;
+}
+
+inline float blep1(float x)
+{
+    x = 1 - x;
+    return -x * x;
+}
+
+
+
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd
 
