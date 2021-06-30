@@ -182,7 +182,7 @@ struct MPR121Device
         // 01 = baseline tracking disabled
         // 10 = baseline tracking enabled, initial baseline is 5 high bits of electrode val
         // 11 = baseline tracking enabled, initial baseline is full 10 bits of electrode val
-        return !!(readRegister8(MPR121Register::ECR) & B01000000);
+        return (readRegister8(MPR121Register::ECR) & B11000000) != B01000000;
     }
 
     void SetBaselineTrackingEnabled(bool b)

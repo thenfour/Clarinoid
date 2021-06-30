@@ -570,9 +570,9 @@ struct MPR121ConfigApp : SettingsMenuApp
     TriggerSettingItem mCreateOutliers = {String("Create outlir"),
                                           [](void *cap) {
                                               auto *pThis = (MPR121ConfigApp *)cap;
-                                              pThis->mControls.mLHMPR.mMpr121.SetBaseline(1, 440);
-                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(2, 440);
-                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(3, 990);
+                                              pThis->mControls.mLHMPR.mMpr121.SetBaseline(1, 880);
+                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(2, 880);
+                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(3, 1000);
                                           },
                                           this,
                                           []() { return true; }};
@@ -623,5 +623,10 @@ struct MPR121ConfigApp : SettingsMenuApp
         SettingsMenuApp::RenderFrontPage();
     }
 };
+
+
+
+
+
 
 } // namespace clarinoid

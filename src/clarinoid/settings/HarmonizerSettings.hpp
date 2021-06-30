@@ -319,7 +319,7 @@ struct HarmSettings
 
     static void InitQuartalHarmPreset2(HarmPreset &p)
     {
-        p.mName = "Quartals 2";
+        p.mName = "Quartal Madness";
         p.mPresetScale.mRootNoteIndex = Note::C;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
         p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
@@ -344,36 +344,6 @@ struct HarmSettings
         p.mVoiceSettings[2].mSequence[0] = -6;  // Gb
         p.mVoiceSettings[2].mSequence[1] = -5;  // G
         p.mVoiceSettings[2].mSequence[2] = -4;  // Ab
-    }
-
-
-    static void InitQuartSurprise(HarmPreset &p)
-    {
-        p.mName = "Quart Surprise";
-        p.mPresetScale.mRootNoteIndex = Note::C;
-        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-        p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
-
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
-        p.mVoiceSettings[0].mSequenceLength = 3;
-        p.mVoiceSettings[0].mSequence[0] = -5; // G
-        p.mVoiceSettings[0].mSequence[1] = -5; // G
-        p.mVoiceSettings[0].mSequence[2] = -4; // Ab
-
-        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
-        p.mVoiceSettings[1].mSequenceLength = 3;
-        p.mVoiceSettings[1].mSequence[0] = -10; // D
-        p.mVoiceSettings[1].mSequence[1] = -10; // D
-        p.mVoiceSettings[1].mSequence[2] = -9;  // Eb
-
-        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
-        p.mVoiceSettings[2].mSequenceLength = 3;
-        p.mVoiceSettings[2].mSequence[0] = -15;  // A
-        p.mVoiceSettings[2].mSequence[1] = -15;  // A
-        p.mVoiceSettings[2].mSequence[2] = -14;  // Bb
     }
 
     static void InitFuzionPreset(HarmPreset &p)
@@ -511,7 +481,7 @@ struct HarmSettings
     }
 
     static void InitBigBandPreset(HarmPreset &p) {
-        p.mName = "Big Band! Eb maj";
+        p.mName = "World Peace Eb";
         p.mPresetScale.mRootNoteIndex = Note::Eb;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
 
@@ -548,16 +518,16 @@ struct HarmSettings
         InitBotanicalHarmPreset(mPresets[iPreset++]);
         InitBellycrawlHarmPreset(mPresets[iPreset++]);
 
-        InitBigPreset(mPresets[iPreset++]);
-        InitMajInv2Preset(mPresets[iPreset++]);
-        InitMin6Preset(mPresets[iPreset++]);
-        InitBigBandPreset(mPresets[iPreset++]);
-        InitFuzionPreset(mPresets[iPreset++]);
         InitFunkyHarmPreset(mPresets[iPreset++]);
+        InitMajInv2Preset(mPresets[iPreset++]);
+        InitBigBandPreset(mPresets[iPreset++]);
+
+        InitBigPreset(mPresets[iPreset++]);
+        InitFuzionPreset(mPresets[iPreset++]);
+        InitMin6Preset(mPresets[iPreset++]);
         InitQuartQuintHarmPreset(mPresets[iPreset++]);
-        InitQuartalHarmPreset1(mPresets[iPreset++]);
+        //InitQuartalHarmPreset1(mPresets[iPreset++]); <-- it's nice, but too similar to the other quartal
         InitQuartalHarmPreset2(mPresets[iPreset++]);
-        InitQuartSurprise(mPresets[iPreset++]);
     }
 };
 
