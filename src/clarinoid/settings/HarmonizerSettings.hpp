@@ -236,6 +236,34 @@ struct HarmSettings
         p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
     }
 
+    static void InitBellycrawlHarmPreset(HarmPreset &p)
+    {
+        p.mName = "Bellycrawl Gm";
+        p.mPresetScale.mRootNoteIndex = Note::G;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::HarmonicMinor;
+        p.mStereoSeparation = 0.5f;
+        p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -2;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -4;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Voice;
+        p.mVoiceSettings[2].mLocalScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mVoiceSettings[2].mLocalScale.mRootNoteIndex = Note::C;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[2].mSequenceLength = 1;
+        p.mVoiceSettings[2].mSequence[0] = -11;
+    }
+
     static void InitFunkyHarmPreset(HarmPreset &p)
     {
         p.mName = "Funky D blues";
@@ -260,52 +288,133 @@ struct HarmSettings
         p.mVoiceSettings[2].mSequence[1] = -6;
     }
 
-    static void InitQuartalHarmPreset(HarmPreset &p)
+    static void InitQuartalHarmPreset1(HarmPreset &p)
     {
-        p.mName = "Chaos Quartals";
+        p.mName = "Quartals 1";
         p.mPresetScale.mRootNoteIndex = Note::C;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
         p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
 
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
-        p.mVoiceSettings[0].mSequenceLength = 6;
+        p.mVoiceSettings[0].mSequenceLength = 3;
         p.mVoiceSettings[0].mSequence[0] = -21; // Eb
         p.mVoiceSettings[0].mSequence[1] = -20; // E
         p.mVoiceSettings[0].mSequence[2] = -19; // F
-        p.mVoiceSettings[0].mSequence[3] = -16; // Ab
-        p.mVoiceSettings[0].mSequence[4] = -15; // A
-        p.mVoiceSettings[0].mSequence[5] = -14; // Bb
 
         p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
-        p.mVoiceSettings[1].mSequenceLength = 6;
+        p.mVoiceSettings[1].mSequenceLength = 3;
         p.mVoiceSettings[1].mSequence[0] = -16; // Ab
         p.mVoiceSettings[1].mSequence[1] = -15; // A
         p.mVoiceSettings[1].mSequence[2] = -14; // Bb
-        p.mVoiceSettings[1].mSequence[3] = -11; // Db
-        p.mVoiceSettings[1].mSequence[4] = -10; // D
-        p.mVoiceSettings[1].mSequence[5] = -9; // Eb
 
         p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
-        p.mVoiceSettings[2].mSequenceLength = 6;
+        p.mVoiceSettings[2].mSequenceLength = 3;
         p.mVoiceSettings[2].mSequence[0] = -11; // Db
         p.mVoiceSettings[2].mSequence[1] = -10; // D
-        p.mVoiceSettings[2].mSequence[2] = -9; // Eb
-        p.mVoiceSettings[2].mSequence[3] = -6; // Gb
-        p.mVoiceSettings[2].mSequence[4] = -5; // G
-        p.mVoiceSettings[2].mSequence[5] = -4; // Ab
-
-        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Voice;
-        p.mVoiceSettings[3].mVoiceSynthPreset = SynthPresetID_HarmSaw;
-        p.mVoiceSettings[3].mSequenceLength = 2;
-        p.mVoiceSettings[3].mMaxOutpNote = 40;
-        p.mVoiceSettings[3].mSequence[0] = 0;
-        p.mVoiceSettings[3].mSequence[1] = 5;
+        p.mVoiceSettings[2].mSequence[2] = -9;  // Eb
     }
 
-    static void InitQuartal2HarmPreset(HarmPreset &p)
+    static void InitQuartalHarmPreset2(HarmPreset &p)
+    {
+        p.mName = "Quartals 2";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 3;
+        p.mVoiceSettings[0].mSequence[0] = -16; // Ab
+        p.mVoiceSettings[0].mSequence[1] = -15; // A
+        p.mVoiceSettings[0].mSequence[2] = -14; // Bb
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 3;
+        p.mVoiceSettings[1].mSequence[0] = -11; // Db
+        p.mVoiceSettings[1].mSequence[1] = -10; // D
+        p.mVoiceSettings[1].mSequence[2] = -9;  // Eb
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[2].mSequenceLength = 3;
+        p.mVoiceSettings[2].mSequence[0] = -6;  // Gb
+        p.mVoiceSettings[2].mSequence[1] = -5;  // G
+        p.mVoiceSettings[2].mSequence[2] = -4;  // Ab
+    }
+
+
+    static void InitQuartSurprise(HarmPreset &p)
+    {
+        p.mName = "Quart Surprise";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 3;
+        p.mVoiceSettings[0].mSequence[0] = -5; // G
+        p.mVoiceSettings[0].mSequence[1] = -5; // G
+        p.mVoiceSettings[0].mSequence[2] = -4; // Ab
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 3;
+        p.mVoiceSettings[1].mSequence[0] = -10; // D
+        p.mVoiceSettings[1].mSequence[1] = -10; // D
+        p.mVoiceSettings[1].mSequence[2] = -9;  // Eb
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[2].mSequenceLength = 3;
+        p.mVoiceSettings[2].mSequence[0] = -15;  // A
+        p.mVoiceSettings[2].mSequence[1] = -15;  // A
+        p.mVoiceSettings[2].mSequence[2] = -14;  // Bb
+    }
+
+    static void InitFuzionPreset(HarmPreset &p)
+    {
+        if (HARM_SEQUENCE_LEN < 7) return;
+
+        p.mName = "Fuzion";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -4; // Ab
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -9; // Eb
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[2].mSequenceLength = 1;
+        p.mVoiceSettings[2].mSequence[0] = -14;  // Bb
+
+        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[3].mVoiceSynthPreset = SynthPresetID_HarmSaw;
+        p.mVoiceSettings[3].mSequenceLength = 7;
+
+        p.mVoiceSettings[3].mMaxOutpNote = 40;
+        p.mVoiceSettings[3].mSequence[0] = 0;
+        p.mVoiceSettings[3].mSequence[1] = 1;
+        p.mVoiceSettings[3].mSequence[2] = 2;
+        p.mVoiceSettings[3].mSequence[3] = 3;
+        p.mVoiceSettings[3].mSequence[4] = 5;
+        p.mVoiceSettings[3].mSequence[5] = 9;
+        p.mVoiceSettings[3].mSequence[6] = 10;
+    }
+
+    static void InitQuartQuintHarmPreset(HarmPreset &p)
     {
         p.mName = "Quart-Quint";
         p.mPresetScale.mRootNoteIndex = Note::C;
@@ -337,75 +446,118 @@ struct HarmSettings
         p.mVoiceSettings[4].mSequence[1] = -28; // Ab
     }
 
+    static void InitBigPreset(HarmPreset &p) {
+        p.mName = "Big";
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -7;
+        p.mVoiceSettings[0].mMaxOutpNote = 80;
+        p.mVoiceSettings[0].mMinOutpNote = 40;
+
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -11;
+        p.mVoiceSettings[1].mMaxOutpNote = 80;
+        p.mVoiceSettings[1].mMinOutpNote = 40;
+
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+        p.mVoiceSettings[2].mSequenceLength = 2;
+        p.mVoiceSettings[2].mMaxOutpNote = 40;
+        p.mVoiceSettings[2].mSequence[0] = -4;
+        p.mVoiceSettings[2].mSequence[0] = -9;
+    }
+
+    static void InitMajInv2Preset(HarmPreset &p) {
+        p.mName = "maj inv2";
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -3;
+
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -5;
+    }
+
+    static void InitMin6Preset(HarmPreset &p) {
+        p.mName = "Min6/9";
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -2; // Bb
+        p.mVoiceSettings[0].mMaxOutpNote = 80;
+        p.mVoiceSettings[0].mMinOutpNote = 40;
+
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+        p.mVoiceSettings[1].mSequenceLength = 4;
+        p.mVoiceSettings[1].mSequence[0] = -6; // Gb
+        p.mVoiceSettings[1].mSequence[1] = -6;
+        p.mVoiceSettings[1].mSequence[2] = -5; // G
+        p.mVoiceSettings[1].mSequence[3] = -5;
+        p.mVoiceSettings[1].mMaxOutpNote = 80;
+        p.mVoiceSettings[1].mMinOutpNote = 40;
+
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[2].mSequenceLength = 4;
+        p.mVoiceSettings[2].mSequence[0] = -11; // Db
+        p.mVoiceSettings[2].mSequence[1] = -11;
+        p.mVoiceSettings[2].mSequence[2] = -9; // Eb
+        p.mVoiceSettings[2].mSequence[3] = -9;
+        p.mVoiceSettings[2].mMaxOutpNote = 80;
+        p.mVoiceSettings[2].mMinOutpNote = 40;
+
+        p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+        p.mVoiceSettings[3].mSequenceLength = 3;
+        p.mVoiceSettings[3].mMaxOutpNote = 40;
+        p.mVoiceSettings[3].mSequence[0] = -9; // Eb
+        p.mVoiceSettings[3].mSequence[1] = -3; // A
+        p.mVoiceSettings[3].mSequence[2] = -9; // C
+    }
+
+    static void InitBigBandPreset(HarmPreset &p) {
+        p.mName = "Big Band! Eb maj";
+        p.mPresetScale.mRootNoteIndex = Note::Eb;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 2;
+        p.mVoiceSettings[0].mSequence[0] = -1; // Bb
+        p.mVoiceSettings[0].mSequence[1] = -2; // G
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+        p.mVoiceSettings[1].mSequenceLength = 2;
+        p.mVoiceSettings[1].mSequence[0] = -2; // G
+        p.mVoiceSettings[1].mSequence[1] = -3; // F
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[2].mSequenceLength = 1;
+        p.mVoiceSettings[2].mSequence[0] = -4; // Eb
+
+        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+        p.mVoiceSettings[3].mSequenceLength = 2;
+        p.mVoiceSettings[3].mSequence[0] = -5; // D
+        p.mVoiceSettings[3].mSequence[1] = -7; // Bb
+    }
+
     HarmSettings()
     {
-        mPresets[1].mName = "Big";
-        mPresets[1].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        mPresets[1].mVoiceSettings[0].mSequenceLength = 1;
-        mPresets[1].mVoiceSettings[0].mSequence[0] = -7;
-        mPresets[1].mVoiceSettings[0].mMaxOutpNote = 80;
-        mPresets[1].mVoiceSettings[0].mMinOutpNote = 40;
-
-        mPresets[1].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        mPresets[1].mVoiceSettings[1].mSequenceLength = 1;
-        mPresets[1].mVoiceSettings[1].mSequence[0] = -11;
-        mPresets[1].mVoiceSettings[1].mMaxOutpNote = 80;
-        mPresets[1].mVoiceSettings[1].mMinOutpNote = 40;
-
-        mPresets[1].mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
-        mPresets[1].mVoiceSettings[2].mSequenceLength = 2;
-        mPresets[1].mVoiceSettings[2].mMaxOutpNote = 40;
-        mPresets[1].mVoiceSettings[2].mSequence[0] = -4;
-        mPresets[1].mVoiceSettings[2].mSequence[0] = -9;
-
-        mPresets[2].mName = "maj inv2";
-        mPresets[2].mVoiceSettings[0].mSequenceLength = 1;
-        mPresets[2].mVoiceSettings[0].mSequence[0] = -3;
-
-        mPresets[2].mVoiceSettings[1].mSequenceLength = 1;
-        mPresets[2].mVoiceSettings[1].mSequence[0] = -5;
-
-        mPresets[3].mName = "Min6/9";
-        mPresets[3].mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        mPresets[3].mVoiceSettings[0].mSequenceLength = 1;
-        mPresets[3].mVoiceSettings[0].mSequence[0] = -2; // Bb
-        mPresets[3].mVoiceSettings[0].mMaxOutpNote = 80;
-        mPresets[3].mVoiceSettings[0].mMinOutpNote = 40;
-
-        mPresets[3].mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
-        mPresets[3].mVoiceSettings[1].mSequenceLength = 4;
-        mPresets[3].mVoiceSettings[1].mSequence[0] = -6; // Gb
-        mPresets[3].mVoiceSettings[1].mSequence[1] = -6;
-        mPresets[3].mVoiceSettings[1].mSequence[2] = -5; // G
-        mPresets[3].mVoiceSettings[1].mSequence[3] = -5;
-        mPresets[3].mVoiceSettings[1].mMaxOutpNote = 80;
-        mPresets[3].mVoiceSettings[1].mMinOutpNote = 40;
-
-        mPresets[3].mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        mPresets[3].mVoiceSettings[2].mSequenceLength = 4;
-        mPresets[3].mVoiceSettings[2].mSequence[0] = -11; // Db
-        mPresets[3].mVoiceSettings[2].mSequence[1] = -11;
-        mPresets[3].mVoiceSettings[2].mSequence[2] = -9; // Eb
-        mPresets[3].mVoiceSettings[2].mSequence[3] = -9;
-        mPresets[3].mVoiceSettings[2].mMaxOutpNote = 80;
-        mPresets[3].mVoiceSettings[2].mMinOutpNote = 40;
-
-        mPresets[3].mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
-        mPresets[3].mVoiceSettings[3].mSequenceLength = 3;
-        mPresets[3].mVoiceSettings[3].mMaxOutpNote = 40;
-        mPresets[3].mVoiceSettings[3].mSequence[0] = -9; // Eb
-        mPresets[3].mVoiceSettings[3].mSequence[1] = -3; // A
-        mPresets[3].mVoiceSettings[3].mSequence[2] = -9; // C
-
-        size_t iPreset = 4;
+        size_t iPreset = 1;
 
         InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
         InitSlumsHarmPreset(mPresets[iPreset++]);
         InitBotanicalHarmPreset(mPresets[iPreset++]);
+        InitBellycrawlHarmPreset(mPresets[iPreset++]);
 
+        InitBigPreset(mPresets[iPreset++]);
+        InitMajInv2Preset(mPresets[iPreset++]);
+        InitMin6Preset(mPresets[iPreset++]);
+        InitBigBandPreset(mPresets[iPreset++]);
+        InitFuzionPreset(mPresets[iPreset++]);
         InitFunkyHarmPreset(mPresets[iPreset++]);
-        InitQuartalHarmPreset(mPresets[iPreset++]);
-        InitQuartal2HarmPreset(mPresets[iPreset++]);
+        InitQuartQuintHarmPreset(mPresets[iPreset++]);
+        InitQuartalHarmPreset1(mPresets[iPreset++]);
+        InitQuartalHarmPreset2(mPresets[iPreset++]);
+        InitQuartSurprise(mPresets[iPreset++]);
     }
 };
 

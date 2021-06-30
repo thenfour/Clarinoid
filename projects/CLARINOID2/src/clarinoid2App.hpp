@@ -109,6 +109,7 @@ struct Clarinoid2App : ILEDDataProvider
 
         TouchKeyMonitorApp mLHKeysMonitor(mDisplay, mControlMapper.mLHMPR, "LH Keys Monitor", 0, 10);
         TouchKeyMonitorApp mRHKeysMonitor(mDisplay, mControlMapper.mRHMPR, "RH Keys Monitor", 0, 4);
+        MPR121ConfigApp mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
@@ -124,6 +125,7 @@ struct Clarinoid2App : ILEDDataProvider
             &mDebugDisplayApp,
             &mLHKeysMonitor,
             &mRHKeysMonitor,
+            &mMPR121ConfigApp,
         };
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper);

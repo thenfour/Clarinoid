@@ -438,7 +438,7 @@ struct TouchKeyMonitorApp : DisplayApp
         for (size_t i = 0; i < mKeyCount; ++i)
         {
             int filteredVal = mDevice.mMpr121.filteredData(i + mKeyIndexBegin);
-            int baselineVal = mDevice.mMpr121.baselineData(i + mKeyIndexBegin);
+            int baselineVal = mDevice.mMpr121.GetBaselineData(i + mKeyIndexBegin);
 
             int x = mDisplay.mDisplay.width() * i / mKeyCount;        // 128 * 5 / 10 =
             int x2 = mDisplay.mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 =
@@ -463,6 +463,164 @@ struct TouchKeyMonitorApp : DisplayApp
     virtual void DisplayAppUpdate() override
     {
         DisplayApp::DisplayAppUpdate(); // updates input
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct MPR121ConfigApp : SettingsMenuApp
+{
+    virtual const char *DisplayAppGetName() override
+    {
+        return "MPR121ConfigApp";
+    }
+
+    Clarinoid2ControlMapper &mControls;
+    MusicalStateTask &mMusicalStateTask;
+
+    MPR121ConfigApp(CCDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst)
+        : SettingsMenuApp(d), mControls(c), mMusicalStateTask(mst)
+    {
+    }
+
+    BoolSettingItem mTrackingEnabled = {
+        "Tracking Enable",
+        "ON",
+        "OFF",
+        Property<bool>{[](void *cap) {
+                           auto *pThis = (MPR121ConfigApp *)cap;
+                           return pThis->mControls.mLHMPR.mMpr121.IsBaselineTrackingEnabled() &&
+                                  pThis->mControls.mRHMPR.mMpr121.IsBaselineTrackingEnabled();
+                       },
+                       [](void *cap, const bool &v) {
+                           auto *pThis = (MPR121ConfigApp *)cap;
+                           pThis->mControls.mLHMPR.mMpr121.SetBaselineTrackingEnabled(v);
+                           pThis->mControls.mRHMPR.mMpr121.SetBaselineTrackingEnabled(v);
+                       },
+                       this},
+        AlwaysEnabled};
+
+    TriggerSettingItem mTameOutliers = {String("Tame outliers"),
+                                        [](void *cap) {
+                                            auto *pThis = (MPR121ConfigApp *)cap;
+                                            // ASSUME that there's outliers.
+                                            // get all baselines, determine the biggest gap, and everything above the
+                                            // gap bring to the highest val below the gap.
+                                            struct electrodeData
+                                            {
+                                                MPR121::MPR121Device *mDevice = nullptr;
+                                                uint8_t mElectrodeIndex = 0;
+                                                int16_t mBaselineValue10bit = 0;
+                                            };
+                                            // CCMPR121 mLHMPR = CCMPR121{&Wire1, 0x5A, 10};
+                                            // CCMPR121 mRHMPR = CCMPR121{&Wire1, 0x5B, 4};
+                                            static constexpr size_t LHelectrodeCount = 10;
+                                            static constexpr size_t RHelectrodeCount = 4;
+                                            electrodeData data[RHelectrodeCount + LHelectrodeCount];
+
+                                            // LH
+                                            for (uint8_t i = 0; i < LHelectrodeCount; ++i)
+                                            {
+                                                data[i].mDevice = &pThis->mControls.mLHMPR.mMpr121;
+                                                data[i].mElectrodeIndex = i;
+                                                data[i].mBaselineValue10bit =
+                                                    pThis->mControls.mLHMPR.mMpr121.GetBaselineData(i);
+                                            }
+
+                                            // RH
+                                            for (uint8_t i = 0; i < RHelectrodeCount; ++i)
+                                            {
+                                                data[LHelectrodeCount + i].mDevice = &pThis->mControls.mRHMPR.mMpr121;
+                                                data[LHelectrodeCount + i].mElectrodeIndex = i;
+                                                data[LHelectrodeCount + i].mBaselineValue10bit =
+                                                    pThis->mControls.mRHMPR.mMpr121.GetBaselineData(i);
+                                            }
+
+                                            // find the biggest gap, track the highest value below the gap.
+                                            electrodeData *modelElectrode = nullptr;
+                                            int biggestGap = 0;
+                                            int16_t baselineAtGapTop = 0;
+                                            for (size_t i = 0; i < SizeofStaticArray(data) - 1; ++i)
+                                            {
+                                                electrodeData &a = data[i];
+                                                electrodeData &b = data[i + 1];
+                                                auto gap = abs(a.mBaselineValue10bit - b.mBaselineValue10bit);
+                                                if (gap >= biggestGap)
+                                                {
+                                                    biggestGap = gap;
+                                                    if (a.mBaselineValue10bit < b.mBaselineValue10bit) {
+                                                        baselineAtGapTop = a.mBaselineValue10bit + gap/2; // because baseline is live-tracking, don't just use b's baseline val. you have to use something in the middle.
+                                                        modelElectrode = &a;
+                                                    }
+                                                    else {
+                                                        baselineAtGapTop = b.mBaselineValue10bit + gap/2;
+                                                        modelElectrode = &b;
+                                                    }
+                                                }
+                                            }
+
+                                            // all electrodes which are above the gap, tame them.
+                                            for (auto& e : data) {
+                                                if (e.mBaselineValue10bit < baselineAtGapTop) continue;
+                                                e.mDevice->SetBaseline(e.mElectrodeIndex, modelElectrode->mBaselineValue10bit);
+                                            }
+                                        },
+                                        this,
+                                        []() { return true; }};
+
+    TriggerSettingItem mCreateOutliers = {String("Create outlir"),
+                                          [](void *cap) {
+                                              auto *pThis = (MPR121ConfigApp *)cap;
+                                              pThis->mControls.mLHMPR.mMpr121.SetBaseline(1, 440);
+                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(2, 440);
+                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(3, 990);
+                                          },
+                                          this,
+                                          []() { return true; }};
+
+    TriggerSettingItem mSoftReset = {String("Soft reset"),
+                                     [](void *cap) {
+                                         auto *pThis = (MPR121ConfigApp *)cap;
+                                         pThis->mControls.mLHMPR.mMpr121.SoftReset();
+                                         pThis->mControls.mRHMPR.mMpr121.SoftReset();
+                                     },
+                                     this,
+                                     []() { return true; }};
+
+    BoolSettingItem mAutoconfigEnable = {
+        "Autoconf Enable",
+        "ON",
+        "OFF",
+        Property<bool>{[](void *cap) {
+                           auto *pThis = (MPR121ConfigApp *)cap;
+                           return pThis->mControls.mLHMPR.mMpr121.IsAutoconfigEnabled() &&
+                                  pThis->mControls.mRHMPR.mMpr121.IsAutoconfigEnabled();
+                       },
+                       [](void *cap, const bool &v) {
+                           auto *pThis = (MPR121ConfigApp *)cap;
+                           pThis->mControls.mLHMPR.mMpr121.SetAutoconfigEnabled(v);
+                           pThis->mControls.mRHMPR.mMpr121.SetAutoconfigEnabled(v);
+                       },
+                       this},
+        AlwaysEnabled};
+
+    ISettingItem *mArray[5] = {
+        &mTrackingEnabled, // does'nt work
+        &mCreateOutliers,
+        &mTameOutliers, // doesn't work
+        &mSoftReset, // works well
+        &mAutoconfigEnable, // it seems autoconfig is actually the best.
+    };
+    SettingsList mRootList = {mArray};
+
+    virtual SettingsList *GetRootSettingsList()
+    {
+        return &mRootList;
+    }
+
+    virtual void RenderFrontPage()
+    {
+        mDisplay.mDisplay.println(String("MPR121"));
+        SettingsMenuApp::RenderFrontPage();
     }
 };
 

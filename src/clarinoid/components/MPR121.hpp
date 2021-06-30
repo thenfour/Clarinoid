@@ -7,15 +7,6 @@
 namespace MPR121
 {
 
-// so because we depend on this, actually do include the Adafruit_MPR121.h library.
-//#include <Adafruit_BusIO_Register.h>
-//#include <Adafruit_I2CDevice.h>
-
-// The default I2C address
-// #define MPR121_I2CADDR_DEFAULT 0x5A        ///< default I2C address
-// #define MPR121_TOUCH_THRESHOLD_DEFAULT 12  ///< default touch threshold value
-// #define MPR121_RELEASE_THRESHOLD_DEFAULT 6 ///< default relese threshold value
-
 /*!
  *  Device register map
  */
@@ -45,7 +36,7 @@ enum MPR121Register
     CONFIG2 = 0x5D,
     CHARGECURR_0 = 0x5F,
     CHARGETIME_1 = 0x6C,
-    ECR = 0x5E,
+    ECR = 0x5E, // contains registers: CL (calibration lock), ELEPROX_EN (eleprox enable), ELE_EN (electrode enable)
     AUTOCONFIG0 = 0x7B,
     AUTOCONFIG1 = 0x7C,
     UPLIMIT = 0x7D,
@@ -69,63 +60,20 @@ enum MPR121Register
  */
 struct MPR121Device
 {
-    // public:
-    //   // Hardware I2C
-    //   Adafruit_MPR121();
-
-    //   bool begin(uint8_t i2caddr = MPR121_I2CADDR_DEFAULT, TwoWire *theWire = &Wire,
-    //              uint8_t touchThreshold = MPR121_TOUCH_THRESHOLD_DEFAULT,
-    //              uint8_t releaseThreshold = MPR121_RELEASE_THRESHOLD_DEFAULT);
-
-    //   uint16_t filteredData(uint8_t t);
-    //   uint16_t baselineData(uint8_t t);
-
-    //   uint8_t readRegister8(uint8_t reg);
-    //   uint16_t readRegister16(uint8_t reg);
-    //   void writeRegister(uint8_t reg, uint8_t value);
-    //   uint16_t touched(void);
-    //   // Add deprecated attribute so that the compiler shows a warning
-    //   void setThreshholds(uint8_t touch, uint8_t release)
-    //       __attribute__((deprecated));
-    //   void setThresholds(uint8_t touch, uint8_t release);
-
-    // private:
     Adafruit_I2CDevice *i2c_dev = NULL;
-    //};
+    uint8_t mElectrodesInUse = 12;
+    uint8_t mI2caddr;
+    TwoWire *mTheWire = nullptr;
+    uint8_t mTouchThreshold = 12;
+    uint8_t mReleaseThreshold = 6;
+    bool mAutoconfig = false;
 
-    //#endif
     /*!
-     * @file Adafruit_MPR121.cpp
-     *
-     *  @mainpage Adafruit MPR121 arduino driver
-     *
-     *  @section intro_sec Introduction
-     *
      *  This is a library for the MPR121 I2C 12-chan Capacitive Sensor
      *
      *  Designed specifically to work with the MPR121 sensor from Adafruit
      *  ----> https://www.adafruit.com/products/1982
-     *
-     *  These sensors use I2C to communicate, 2+ pins are required to
-     *  interface
-     *
-     *  Adafruit invests time and resources providing this open source code,
-     *  please support Adafruit and open-source hardware by purchasing
-     *  products from Adafruit!
-     *
-     *  @section author Author
-     *
-     *  Written by Limor Fried/Ladyada for Adafruit Industries.
-     *
-     *  @section license License
-     *
-     *  BSD license, all text here must be included in any redistribution.
      */
-
-    //#include "Adafruit_MPR121.h"
-
-    // uncomment to use autoconfig !
-    //#define AUTOCONFIG // use autoconfig (Yes it works pretty well!)
 
     /*!
      *  @brief    Begin an MPR121 object on a given I2C bus. This function resets
@@ -147,6 +95,12 @@ struct MPR121Device
                uint8_t electrodesInUse = 12,
                bool autoconfig = false)
     {
+        mI2caddr = i2caddr;
+        mTheWire = theWire;
+        mTouchThreshold = touchThreshold;
+        mReleaseThreshold = releaseThreshold;
+        mElectrodesInUse = electrodesInUse;
+        mAutoconfig = autoconfig;
 
         if (i2c_dev)
         {
@@ -162,10 +116,6 @@ struct MPR121Device
         // soft reset
         writeRegister(MPR121Register::SOFTRESET, 0x63);
         delay(1);
-        //   for (uint8_t i = 0; i < 0x7F; i++) {
-        //     //  Serial.print("$"); Serial.print(i, HEX);
-        //     //  Serial.print(": 0x"); Serial.println(readRegister8(i));
-        //   }
 
         writeRegister(MPR121Register::ECR, 0x0);
 
@@ -207,6 +157,48 @@ struct MPR121Device
                       B10000000 +
                           electrodesInUse); // 5 bits for baseline tracking, proximity disabled + X electrodes running
         return true;
+    }
+
+    bool IsAutoconfigEnabled() const { return mAutoconfig; }
+
+    void SetAutoconfigEnabled(bool b) {
+        if (mAutoconfig == b) return;
+        mAutoconfig = b;
+        begin(mI2caddr, mTheWire, mTouchThreshold, mReleaseThreshold, mElectrodesInUse, mAutoconfig);
+    }
+
+    void SoftReset() {
+        begin(mI2caddr, mTheWire, mTouchThreshold, mReleaseThreshold, mElectrodesInUse, mAutoconfig);
+    }
+
+    bool IsBaselineTrackingEnabled() const
+    {
+        //
+        // bit     7   6        5   4        3 2 1 0
+        // hex  0x80  40       20   10       8 4 2 1
+        //       ---CL---  --ELEPROX_EN--  --ELE_EN--
+        // CL is calibration lock, and
+        // 00 = baseline tracking enabled, initial baseline is current value in baseline register (unmodified)
+        // 01 = baseline tracking disabled
+        // 10 = baseline tracking enabled, initial baseline is 5 high bits of electrode val
+        // 11 = baseline tracking enabled, initial baseline is full 10 bits of electrode val
+        return !!(readRegister8(MPR121Register::ECR) & B01000000);
+    }
+
+    void SetBaselineTrackingEnabled(bool b)
+    {
+        // this should only be called after baseline values have been established,
+        // because enabling will not initialize baseline values
+        uint8_t r = readRegister8(MPR121Register::ECR) & B00111111;
+        if (b)
+        {
+            // |= 00 - enabled & unmodified
+        }
+        else
+        {
+            r |= B01000000; // disabled
+        }
+        writeRegister(MPR121Register::ECR, r);
     }
 
     /*!
@@ -279,12 +271,27 @@ struct MPR121Device
      *              the channel to read.
      *  @returns    the baseline data that was read
      */
-    uint16_t baselineData(uint8_t t)
+    uint16_t GetBaselineData(uint8_t t)
     {
         if (t > 12)
             return 0;
         uint16_t bl = readRegister8(MPR121Register::BASELINE_0 + t);
         return (bl << 2);
+    }
+
+    void SetBaseline(uint8_t el, uint16_t val10bit) {
+        uint8_t CL = readRegister8(MPR121Register::ECR) & B11000000; // read baseline tracking type
+        // 00 = baseline tracking enabled, initial baseline is current value in baseline register (unmodified)
+        // 01 = baseline tracking disabled
+        // 10 = baseline tracking enabled, initial baseline is 5 high bits of electrode val
+        // 11 = baseline tracking enabled, initial baseline is full 10 bits of electrode val
+        if (CL & B10000000) {
+            // baseline is set to initialize, which would defeat the purpose of setting the baseline value.
+            CL = 0; // set it to track, but not alter values.
+        }
+        writeRegister(MPR121Register::ECR, 0x0); // enter STOP mode
+        writeRegister(MPR121Register::BASELINE_0 + el, (uint8_t)(val10bit >> 2 & 0xff)); // set the specified baseline
+        writeRegister(MPR121Register::ECR, mElectrodesInUse | CL); // enter RUN mode for electrodes, and baseline values
     }
 
     /**
@@ -302,10 +309,8 @@ struct MPR121Device
 
     /*!
      *  @brief      Read the contents of an 8 bit device register.
-     *  @param      reg the register address to read from
-     *  @returns    the 8 bit value that was read.
      */
-    uint8_t readRegister8(uint8_t reg)
+    uint8_t readRegister8(uint8_t reg) const
     {
         Adafruit_BusIO_Register thereg = Adafruit_BusIO_Register(i2c_dev, reg, 1);
 
@@ -314,10 +319,8 @@ struct MPR121Device
 
     /*!
      *  @brief      Read the contents of a 16 bit device register.
-     *  @param      reg the register address to read from
-     *  @returns    the 16 bit value that was read.
      */
-    uint16_t readRegister16(uint8_t reg)
+    uint16_t readRegister16(uint8_t reg) const
     {
         Adafruit_BusIO_Register thereg = Adafruit_BusIO_Register(i2c_dev, reg, 2, LSBFIRST);
 
@@ -326,8 +329,6 @@ struct MPR121Device
 
     /*!
         @brief  Writes 8-bits to the specified destination register
-        @param  reg the register address to write to
-        @param  value the value to write
     */
     void writeRegister(uint8_t reg, uint8_t value)
     {

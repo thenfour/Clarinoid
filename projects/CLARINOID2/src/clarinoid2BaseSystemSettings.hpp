@@ -22,7 +22,7 @@ static constexpr float MAX_DELAY_MS = 500;
 
 static const size_t HARM_PRESET_COUNT = 32;
 static const size_t HARM_VOICES = 6;
-static const size_t HARM_SEQUENCE_LEN = 6;
+static const size_t HARM_SEQUENCE_LEN = 8;
 
 static const size_t LOOP_LAYERS = 6;
 static constexpr size_t MAX_MUSICAL_VOICES =
