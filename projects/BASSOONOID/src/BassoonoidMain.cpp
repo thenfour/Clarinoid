@@ -20,8 +20,8 @@
 #include <MIDI.h>
 #include <SD.h>
 #include <SerialFlash.h>
-#include <polyBlepOscillator.h> // https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
 #include <Encoder.h>
+#include <Audio.h>
 #include <WS2812Serial.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SPIDevice.h>

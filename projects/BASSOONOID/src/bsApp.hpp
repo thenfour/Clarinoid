@@ -21,9 +21,11 @@
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
+#include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
 #include <clarinoid/midi/midi.hpp>
 #include <clarinoid/application/MusicalState.hpp>
 
+#include <clarinoid/synth/polyBlepOscillator.hpp> // https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
 #include <clarinoid/synth/Synth.hpp>
 
 #include "bsLed.hpp"
@@ -100,13 +102,18 @@ struct BassoonoidApp : ILEDDataProvider
     {
         mControlMapper.Init(&mDisplay);
 
+        HarmSettingsApp mHarmVoiceSettingsApp(mDisplay);
+        SynthPatchMenuApp mSynthPatchApp(mDisplay);
+
         IDisplayApp *allApps[] = {
             &mPerformanceApp,
             &mAudioMonitorApp,
             &mDebugDisplayApp,
             &mSystemSettingsApp,
+            &mSynthPatchApp,
             &mSynthSettingsApp,
             &mMetronomeSettingsApp,
+            &mHarmVoiceSettingsApp,
         };
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
@@ -164,10 +171,10 @@ struct BassoonoidApp : ILEDDataProvider
         mAppSettings.mControlMappings[joyPitchMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
         mAppSettings.mControlMappings[joyPitchMappingIndex].mUnipolarMapping.mCurveS = 0; //-0.50f;
 
-        mAppSettings.mControlMappings[22] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHx5, ControlMapping::Function::LoopGo);
-        mAppSettings.mControlMappings[23] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
+        // mAppSettings.mControlMappings[22] =
+        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx5, ControlMapping::Function::LoopGo);
+        // mAppSettings.mControlMappings[23] =
+        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
         // this is a cool feature but would take a lot of practice to get right, plus accidentally hitting this key
         // causes chaos. mAppSettings.mControlMappings[24] =
@@ -175,107 +182,8 @@ struct BassoonoidApp : ILEDDataProvider
         mAppSettings.mControlMappings[25] =
             ControlMapping::MomentaryMapping(PhysicalControl::RHTh2, ControlMapping::Function::MetronomeLEDToggle);
 
-        auto InitBassoonoidPreset = [](SynthPreset &p,
-                                       const char *name,
-                                       ClarinoidFilterType filt,
-                                       float filterKeyScaling,
-                                       float q,
-                                       float filterMaxFreq,
-                                       bool octDown = false) {
-            p.mName = name;
-            p.mSync = false;
-            p.mDetune = 0.0f;
-            p.mVerbSend = 0;
-            p.mDelaySend = 0;
-
-            p.mOsc1Gain = 0.0f;
-
-            if (octDown)
-            {
-                p.mOsc3Gain = 1.0f;
-                p.mOsc3PitchSemis = -12;
-            }
-            else
-            {
-                p.mOsc3Gain = 0.0f;
-            }
-
-            p.mOsc1Waveform = OscWaveformShape::SawSync;
-            p.mOsc2Waveform = OscWaveformShape::SawSync;
-            p.mOsc3Waveform = OscWaveformShape::SawSync;
-            p.mOsc2Gain = 1.0f;
-
-            p.mFilterType = filt;
-            p.mFilterMinFreq = 0.0f;
-            p.mFilterMaxFreq = filterMaxFreq;
-            p.mFilterSaturation = 0;
-            p.mFilterQ = q;
-            p.mFilterKeytracking = filterKeyScaling;
-        };
-
-        size_t i = 0;
-        mAppSettings.mGlobalSynthPreset = SYNTH_PRESET_COUNT - 1;
-        InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[SYNTH_PRESET_COUNT - 1],
-                             "Diode-ks7-q15",
-                             ClarinoidFilterType::LP_Diode,
-                             0.7f,
-                             0.15f,
-                             15000);
-        // InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[i++],
-        //                      "Diode-ks7-q15-Oct",
-        //                      ClarinoidFilterType::LP_Diode,
-        //                      0.7f,
-        //                      0.15f,
-        //                      20000,
-        //                      true);
-        // InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[i++],
-        //                      "Diode-ks7-q0",
-        //                      ClarinoidFilterType::LP_Diode,
-        //                      0.7f,
-        //                      0.0f,
-        //                      10000);
-        // InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[i++],
-        //                      "Diode-ks9-q15",
-        //                      ClarinoidFilterType::LP_Diode,
-        //                      0.9f,
-        //                      0.15f,
-        //                      10000);
-        // InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[i++],
-        //                      "Diode-ks9-q0",
-        //                      ClarinoidFilterType::LP_Diode,
-        //                      0.9f,
-        //                      0.0f,
-        //                      10000);
-
-        // InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[i++],
-        //                      "Moog-ks7-q15",
-        //                      ClarinoidFilterType::LP_Moog4,
-        //                      0.7f,
-        //                      0.15f,
-        //                      4000);
-        // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "Moog-ks7-q0", ClarinoidFilterType::LP_Moog4, 0.7f, 0.0f,
-        //     4000);
-        // InitBassoonoidPreset(mAppSettings.mSynthSettings.mPresets[i++],
-        //                      "Moog-ks9-q15",
-        //                      ClarinoidFilterType::LP_Moog4,
-        //                      0.9f,
-        //                      0.15f,
-        //                      4000);
-        // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "Moog-ks9-q0", ClarinoidFilterType::LP_Moog4, 0.9f, 0.0f,
-        //     4000);
-
-        // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "K35-ks7-q15", ClarinoidFilterType::LP_K35, 0.7f, 0.15f, 750);
-        // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "K35-ks7-q0", ClarinoidFilterType::LP_K35, 0.7f, 0.0f, 750);
-        // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "K35-ks9-q15", ClarinoidFilterType::LP_K35, 0.9f, 0.15f, 750);
-        // InitBassoonoidPreset(
-        //     mAppSettings.mSynthSettings.mPresets[i++], "K35-ks9-q0", ClarinoidFilterType::LP_K35, 0.9f, 0.0f, 750);
-
-        // mAppSettings.mSynthSettings.mPresets[i++].mName = "Sync";
+        mAppSettings.mGlobalSynthPreset = SynthPresetID_Bassoonoid;
+        mAppSettings.mSynthSettings.mMasterGain = 2.0f;
 
         mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
         mMusicalStateTask.Init();

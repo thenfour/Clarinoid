@@ -627,6 +627,37 @@ struct SynthSettings
         p.mModulations[4].mScaleN11 = 0.03f;
     }
 
+    static void InitBassoonoidPreset(SynthPreset &p,
+                                     const char *name,
+                                     ClarinoidFilterType filt,
+                                     float filterKeyScaling,
+                                     float q,
+                                     float filterMaxFreq)
+    {
+        p.mName = name;
+        p.mSync = false;
+        p.mDetune = 0.0f;
+        p.mVerbSend = 0;
+        p.mDelaySend = 0;
+
+        p.mOsc1Waveform = OscWaveformShape::Sine;
+        p.mOsc2Waveform = OscWaveformShape::SawSync;
+        p.mOsc3Waveform = OscWaveformShape::SawSync;
+        p.mOsc1PulseWidth = 0.0f;
+        p.mOsc2PulseWidth = 0.0f;
+        p.mOsc3PulseWidth = 0.0f;
+        p.mOsc1Gain = 1.0f;
+        p.mOsc2Gain = 1.0f;
+        p.mOsc3Gain = 1.0f;
+
+        p.mFilterType = filt;
+        p.mFilterMinFreq = 0.0f;
+        p.mFilterMaxFreq = filterMaxFreq;
+        p.mFilterSaturation = 0;
+        p.mFilterQ = q;
+        p.mFilterKeytracking = filterKeyScaling;
+    };
+
     SynthSettings()
     {
         mPresets[0].mName = "Synccy Lead"; // default.
@@ -696,6 +727,9 @@ struct SynthSettings
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterQ = 0;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterType = ClarinoidFilterType::BP_Moog4;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterMaxFreq = 1800;
+
+        InitBassoonoidPreset(
+            mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
         InitHarmSyncLead(mPresets[SynthPresetID_HarmSync]);
         InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);

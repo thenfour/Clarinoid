@@ -252,24 +252,6 @@ struct DebugDisplayApp : SettingsMenuApp
                                                this},
                               AlwaysEnabled};
 
-    static String IndexToChar(int i)
-    {
-        char r[2] = {0};
-        if (i < 10)
-        { // 0-9
-            r[0] = '0' + i;
-        }
-        else if (i < 37)
-        { // 10-36
-            r[0] = 'A' + (i - 10);
-        }
-        else
-        {
-            r[0] = '!';
-        }
-        return String(r);
-    }
-
     LabelSettingItem mLHMPR121 = {Property<String>{[](void *cap) {
                                                        DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                        String ret = "L:";
@@ -402,71 +384,7 @@ struct AudioMonitorApp : DisplayApp
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct TouchKeyMonitorApp : DisplayApp
-{
-    CCMPR121 &mDevice;
-    const char *mDisplayName;
-    size_t mKeyIndexBegin;
-    size_t mKeyCount;
-
-    TouchKeyMonitorApp(CCDisplay &d, CCMPR121 &device, const char *displayName, size_t keyIndexBegin, size_t keyCount)
-        : DisplayApp(d), mDevice(device), mDisplayName(displayName), mKeyIndexBegin(keyIndexBegin), mKeyCount(keyCount)
-    {
-    }
-
-    virtual const char *DisplayAppGetName() override
-    {
-        return mDisplayName;
-    }
-
-    virtual void UpdateApp() override
-    {
-        if (mBack.IsNewlyPressed())
-        {
-            GoToFrontPage();
-        }
-    }
-
-    virtual void RenderApp() override
-    {
-    }
-
-    virtual void RenderFrontPage() override
-    {
-        // String strBase(mDisplayName);
-
-        for (size_t i = 0; i < mKeyCount; ++i)
-        {
-            int filteredVal = mDevice.mMpr121.filteredData(i + mKeyIndexBegin);
-            int baselineVal = mDevice.mMpr121.GetBaselineData(i + mKeyIndexBegin);
-
-            int x = mDisplay.mDisplay.width() * i / mKeyCount;        // 128 * 5 / 10 =
-            int x2 = mDisplay.mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 =
-            int width = x2 - x;
-            mDisplay.mDisplay.setCursor(x, 0);
-            mDisplay.mDisplay.print(String("") + i + mKeyIndexBegin);
-
-            mDisplay.mDisplay.drawFastVLine(x, 0, 4, WHITE);
-            int filteredY = (int)mDisplay.mDisplay.height() * filteredVal / 1024; // 10 bit val scaled to height.
-            int baselineY = (int)mDisplay.mDisplay.height() * baselineVal / 1024; // 10 bit val scaled to height.
-
-            // strBase += String(" ") + baselineVal + ":" + filteredVal + "[" + baselineY + ":" + filteredY + "]";
-
-            mDisplay.mDisplay.mSolidText = false;
-            mDisplay.mDisplay.drawFastHLine(x, baselineY, width, WHITE);
-            mDisplay.mDisplay.mSolidText = true;
-            mDisplay.mDisplay.drawFastHLine(x, filteredY, width, WHITE);
-        }
-        // log(strBase);
-    }
-
-    virtual void DisplayAppUpdate() override
-    {
-        DisplayApp::DisplayAppUpdate(); // updates input
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template<size_t LHelectrodeCount, size_t RHelectrodeCount>
 struct MPR121ConfigApp : SettingsMenuApp
 {
     virtual const char *DisplayAppGetName() override
@@ -499,73 +417,52 @@ struct MPR121ConfigApp : SettingsMenuApp
                        this},
         AlwaysEnabled};
 
-    TriggerSettingItem mTameOutliers = {String("Tame outliers"),
-                                        [](void *cap) {
-                                            auto *pThis = (MPR121ConfigApp *)cap;
-                                            // ASSUME that there's outliers.
-                                            // get all baselines, determine the biggest gap, and everything above the
-                                            // gap bring to the highest val below the gap.
-                                            struct electrodeData
-                                            {
-                                                MPR121::MPR121Device *mDevice = nullptr;
-                                                uint8_t mElectrodeIndex = 0;
-                                                int16_t mBaselineValue10bit = 0;
-                                            };
-                                            // CCMPR121 mLHMPR = CCMPR121{&Wire1, 0x5A, 10};
-                                            // CCMPR121 mRHMPR = CCMPR121{&Wire1, 0x5B, 4};
-                                            static constexpr size_t LHelectrodeCount = 10;
-                                            static constexpr size_t RHelectrodeCount = 4;
-                                            electrodeData data[RHelectrodeCount + LHelectrodeCount];
+    TriggerSettingItem mTameOutliers = {
+        String("Tame outliers"),
+        [](void *cap) {
+            auto *pThis = (MPR121ConfigApp *)cap;
+            // ASSUME that there's outliers.
+            // get all baselines, determine the biggest gap, and everything above the
+            // gap bring to the highest val below the gap.
+            pThis->InitElectrodeData();
 
-                                            // LH
-                                            for (uint8_t i = 0; i < LHelectrodeCount; ++i)
-                                            {
-                                                data[i].mDevice = &pThis->mControls.mLHMPR.mMpr121;
-                                                data[i].mElectrodeIndex = i;
-                                                data[i].mBaselineValue10bit =
-                                                    pThis->mControls.mLHMPR.mMpr121.GetBaselineData(i);
-                                            }
+            // find the biggest gap, track the highest value below the gap.
+            electrodeData *modelElectrode = nullptr;
+            int biggestGap = 0;
+            int16_t baselineAtGapTop = 0;
+            for (size_t i = 0; i < SizeofStaticArray(pThis->mElectrodeData) - 1; ++i)
+            {
+                electrodeData &a = pThis->mElectrodeData[i];
+                electrodeData &b = pThis->mElectrodeData[i + 1];
+                auto gap = abs(a.mBaselineValue10bit - b.mBaselineValue10bit);
+                if (gap >= biggestGap)
+                {
+                    biggestGap = gap;
+                    if (a.mBaselineValue10bit < b.mBaselineValue10bit)
+                    {
+                        baselineAtGapTop =
+                            a.mBaselineValue10bit + gap / 2; // because baseline is live-tracking, don't just use b's
+                                                             // baseline val. you have to use something in the middle.
+                        modelElectrode = &a;
+                    }
+                    else
+                    {
+                        baselineAtGapTop = b.mBaselineValue10bit + gap / 2;
+                        modelElectrode = &b;
+                    }
+                }
+            }
 
-                                            // RH
-                                            for (uint8_t i = 0; i < RHelectrodeCount; ++i)
-                                            {
-                                                data[LHelectrodeCount + i].mDevice = &pThis->mControls.mRHMPR.mMpr121;
-                                                data[LHelectrodeCount + i].mElectrodeIndex = i;
-                                                data[LHelectrodeCount + i].mBaselineValue10bit =
-                                                    pThis->mControls.mRHMPR.mMpr121.GetBaselineData(i);
-                                            }
-
-                                            // find the biggest gap, track the highest value below the gap.
-                                            electrodeData *modelElectrode = nullptr;
-                                            int biggestGap = 0;
-                                            int16_t baselineAtGapTop = 0;
-                                            for (size_t i = 0; i < SizeofStaticArray(data) - 1; ++i)
-                                            {
-                                                electrodeData &a = data[i];
-                                                electrodeData &b = data[i + 1];
-                                                auto gap = abs(a.mBaselineValue10bit - b.mBaselineValue10bit);
-                                                if (gap >= biggestGap)
-                                                {
-                                                    biggestGap = gap;
-                                                    if (a.mBaselineValue10bit < b.mBaselineValue10bit) {
-                                                        baselineAtGapTop = a.mBaselineValue10bit + gap/2; // because baseline is live-tracking, don't just use b's baseline val. you have to use something in the middle.
-                                                        modelElectrode = &a;
-                                                    }
-                                                    else {
-                                                        baselineAtGapTop = b.mBaselineValue10bit + gap/2;
-                                                        modelElectrode = &b;
-                                                    }
-                                                }
-                                            }
-
-                                            // all electrodes which are above the gap, tame them.
-                                            for (auto& e : data) {
-                                                if (e.mBaselineValue10bit < baselineAtGapTop) continue;
-                                                e.mDevice->SetBaseline(e.mElectrodeIndex, modelElectrode->mBaselineValue10bit);
-                                            }
-                                        },
-                                        this,
-                                        []() { return true; }};
+            // all electrodes which are above the gap, tame them.
+            for (auto &e : pThis->mElectrodeData)
+            {
+                if (e.mBaselineValue10bit < baselineAtGapTop)
+                    continue;
+                e.mDevice->SetBaseline(e.mElectrodeIndex, modelElectrode->mBaselineValue10bit);
+            }
+        },
+        this,
+        []() { return true; }};
 
     TriggerSettingItem mCreateOutliers = {String("Create outlir"),
                                           [](void *cap) {
@@ -606,8 +503,8 @@ struct MPR121ConfigApp : SettingsMenuApp
     ISettingItem *mArray[5] = {
         &mTrackingEnabled, // does'nt work
         &mCreateOutliers,
-        &mTameOutliers, // doesn't work
-        &mSoftReset, // works well
+        &mTameOutliers,     // doesn't work
+        &mSoftReset,        // works well
         &mAutoconfigEnable, // it seems autoconfig is actually the best.
     };
     SettingsList mRootList = {mArray};
@@ -617,16 +514,65 @@ struct MPR121ConfigApp : SettingsMenuApp
         return &mRootList;
     }
 
+    struct electrodeData
+    {
+        MPR121::MPR121Device *mDevice = nullptr;
+        uint8_t mElectrodeIndex = 0;
+        int16_t mBaselineValue10bit = 0;
+        int16_t mFilteredData10bit = 0;
+    };
+
+    electrodeData mElectrodeData[LHelectrodeCount + RHelectrodeCount];
+
+    void InitElectrodeData()
+    {
+        // LH
+        for (uint8_t i = 0; i < LHelectrodeCount; ++i)
+        {
+            mElectrodeData[i].mDevice = &mControls.mLHMPR.mMpr121;
+            mElectrodeData[i].mElectrodeIndex = i;
+            mElectrodeData[i].mBaselineValue10bit = mControls.mLHMPR.mMpr121.GetBaselineData(i);
+            mElectrodeData[i].mFilteredData10bit = mControls.mLHMPR.mMpr121.filteredData(i);
+        }
+
+        // RH
+        for (uint8_t i = 0; i < RHelectrodeCount; ++i)
+        {
+            mElectrodeData[LHelectrodeCount + i].mDevice = &mControls.mRHMPR.mMpr121;
+            mElectrodeData[LHelectrodeCount + i].mElectrodeIndex = i;
+            mElectrodeData[LHelectrodeCount + i].mBaselineValue10bit = mControls.mRHMPR.mMpr121.GetBaselineData(i);
+            mElectrodeData[LHelectrodeCount + i].mFilteredData10bit = mControls.mRHMPR.mMpr121.filteredData(i);
+        }
+    }
+
     virtual void RenderFrontPage()
     {
-        mDisplay.mDisplay.println(String("MPR121"));
+        InitElectrodeData();
+        size_t mKeyCount = SizeofStaticArray(mElectrodeData);
+
+        for (size_t i = 0; i < mKeyCount; ++i)
+        {
+            int filteredVal = mElectrodeData[i].mFilteredData10bit;// mDevice.mMpr121.filteredData(i + mKeyIndexBegin);
+            int baselineVal = mElectrodeData[i].mBaselineValue10bit;//mDevice.mMpr121.GetBaselineData(i + mKeyIndexBegin);
+
+            int x = mDisplay.mDisplay.width() * i / mKeyCount;        // 128 * 5 / 10 =
+            int x2 = mDisplay.mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 =
+            int width = x2 - x;
+            mDisplay.mDisplay.setCursor(x, 0);
+            mDisplay.mDisplay.print(IndexToChar(i));
+
+            mDisplay.mDisplay.drawFastVLine(x, 0, 4, WHITE);
+            int filteredY = (int)mDisplay.mDisplay.height() * filteredVal / 1024; // 10 bit val scaled to height.
+            int baselineY = (int)mDisplay.mDisplay.height() * baselineVal / 1024; // 10 bit val scaled to height.
+
+            mDisplay.mDisplay.mSolidText = false;
+            mDisplay.mDisplay.drawFastHLine(x, baselineY, width, WHITE);
+            mDisplay.mDisplay.mSolidText = true;
+            mDisplay.mDisplay.drawFastHLine(x, filteredY, width, WHITE);
+        }
+
         SettingsMenuApp::RenderFrontPage();
     }
 };
-
-
-
-
-
 
 } // namespace clarinoid

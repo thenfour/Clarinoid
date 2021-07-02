@@ -4,6 +4,7 @@
 #include "MenuSettings.hpp"
 #include "UnipolarCalibration.hpp"
 #include "BoolSettingItem.hpp"
+#include "NumericSettingItem.hpp"
 
 namespace clarinoid
 {
@@ -110,11 +111,57 @@ struct SystemSettingsApp : SettingsMenuApp
         },
         this};
 
-    ISettingItem *mArray[4] = {
+
+    IntSettingItem mSelectedSynthPatch = {"Synth patch",
+                                     NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
+                                     Property<int>{
+                                         [](void *cap) {
+                                             auto *pThis = (SystemSettingsApp *)cap;
+                                             return (int)pThis->mAppSettings->mGlobalSynthPreset;
+                                         }, // getter
+                                         [](void *cap, const int &val) {
+                                             auto *pThis = (SystemSettingsApp *)cap;
+                                             pThis->mAppSettings->mGlobalSynthPreset = val;
+                                         },   // setter
+                                         this // capture val
+                                     },
+                                     [](void *cap, int n) { // formatter
+                                         auto *pThis = (SystemSettingsApp *)cap;
+                                         return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                     },
+                                     AlwaysEnabled,
+                                     this};
+
+
+    IntSettingItem mSelectedHarmPatch = {"Harm patch",
+                                     NumericEditRangeSpec<int>{0, clarinoid::HARM_PRESET_COUNT  - 1},
+                                     Property<int>{
+                                         [](void *cap) {
+                                             auto *pThis = (SystemSettingsApp *)cap;
+                                             return (int)pThis->mAppSettings->mGlobalHarmPreset;
+                                         }, // getter
+                                         [](void *cap, const int &val) {
+                                             auto *pThis = (SystemSettingsApp *)cap;
+                                             pThis->mAppSettings->mGlobalHarmPreset = val;
+                                         },   // setter
+                                         this // capture val
+                                     },
+                                     [](void *cap, int n) { // formatter
+                                         auto *pThis = (SystemSettingsApp *)cap;
+                                         return pThis->mAppSettings->mHarmSettings.mPresets[n].ToString(n);
+                                     },
+                                     AlwaysEnabled,
+                                     this};
+
+
+
+    ISettingItem *mArray[6] = {
         &mDimDisplay,
         &mBreath,
         &mPitchUp,
         &mPitchDown,
+        &mSelectedHarmPatch,
+        &mSelectedSynthPatch,
     };
 
     SettingsList mRootList = {mArray};

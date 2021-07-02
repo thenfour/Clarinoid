@@ -107,9 +107,7 @@ struct Clarinoid2App : ILEDDataProvider
         mAppSettings.mSynthSettings.mReverbGain = 0.9f;
         mAppSettings.mSynthSettings.mPitchBendRange = 2.0f;
 
-        TouchKeyMonitorApp mLHKeysMonitor(mDisplay, mControlMapper.mLHMPR, "LH Keys Monitor", 0, 10);
-        TouchKeyMonitorApp mRHKeysMonitor(mDisplay, mControlMapper.mRHMPR, "RH Keys Monitor", 0, 4);
-        MPR121ConfigApp mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
+        MPR121ConfigApp<10,4> mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
@@ -123,8 +121,6 @@ struct Clarinoid2App : ILEDDataProvider
             &mAudioMonitorApp,
 
             &mDebugDisplayApp,
-            &mLHKeysMonitor,
-            &mRHKeysMonitor,
             &mMPR121ConfigApp,
         };
 
