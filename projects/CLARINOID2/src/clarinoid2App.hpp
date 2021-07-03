@@ -64,7 +64,7 @@ struct Clarinoid2App : ILEDDataProvider
     Clarinoid2App()
         : mLed(this), mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
           mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
-          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
+          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome),
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
           mSystemSettingsApp(
               mDisplay,
@@ -81,7 +81,8 @@ struct Clarinoid2App : ILEDDataProvider
               },
               this),
           mSynthSettingsApp(mDisplay), mSynthPatchApp(mDisplay), mAudioMonitorApp(mDisplay),
-          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay), mHarmVoiceSettingsApp(mDisplay)
+          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
+          mHarmVoiceSettingsApp(mDisplay)
     {
     }
 
@@ -107,7 +108,7 @@ struct Clarinoid2App : ILEDDataProvider
         mAppSettings.mSynthSettings.mReverbGain = 0.9f;
         mAppSettings.mSynthSettings.mPitchBendRange = 2.0f;
 
-        MPR121ConfigApp<10,4> mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
+        MPR121ConfigApp<10, 4> mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.

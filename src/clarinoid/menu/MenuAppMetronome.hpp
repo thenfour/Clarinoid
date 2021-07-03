@@ -143,7 +143,11 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                            this},
                              EnabledIfSoundOn};
 
-    ISettingItem *mArray[8] = {&mBPM, &mLEDEnable, &mLEDDecay, &mLEDBrightness, &mSoundEnable, &mGain, &mNote, &mDecay};
+    ISettingItem *mArray[8] = {
+        &mBPM,
+        &mGain,
+         &mSoundEnable, &mLEDEnable, &mLEDDecay, &mLEDBrightness, &mNote, &mDecay
+        };
     SettingsList mRootList = {mArray};
 
     virtual SettingsList *GetRootSettingsList()
@@ -170,7 +174,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
         mDisplay.mDisplay.setTextColor(highlight ? BLACK : WHITE);
         // mDisplay.mDisplay.setCursor(0,0);
 
-        mDisplay.mDisplay.println(String("METRONOME SETTINGS"));
+        mDisplay.mDisplay.println(String("METRONOME"));
         mDisplay.mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");
         mDisplay.mDisplay.print(" ");
         mDisplay.mDisplay.println(mpAppSettings->mMetronomeSoundOn ? "LEDOn" : "LEDOff");

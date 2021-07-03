@@ -164,7 +164,6 @@ struct HarmPreset
 struct HarmSettings
 {
     HarmPreset mPresets[HARM_PRESET_COUNT];
-    HarmPreset mDisabledPreset; // the preset that is used when harmonizer is disabled.
 
     static void InitSlumsHarmPreset(HarmPreset &p)
     {
@@ -519,21 +518,22 @@ struct HarmSettings
     {
         p.mName = "Oct down";
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mSynthPreset4 = SynthPresetID_HarmDetunedSaws;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
         p.mVoiceSettings[0].mSequenceLength = 1;
-        p.mVoiceSettings[0].mSequence[0] = -5;
+        p.mVoiceSettings[0].mSequence[0] = -24;
     }
 
     void InitSpicePreset(HarmPreset &p)
     {
         p.mName = "Spicy";
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mSynthPreset4 = SynthPresetID_HarmSync;
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
         p.mVoiceSettings[0].mSequenceLength = 1;
-        p.mVoiceSettings[0].mSequence[0] = 12;
+        p.mVoiceSettings[0].mSequence[0] = 24;
     }
     void Init5thPreset(HarmPreset &p) {
         p.mName = "5th";

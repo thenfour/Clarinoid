@@ -13,6 +13,8 @@ struct PerformanceApp : SettingsMenuApp
     TaskPlanner *mTaskManager = nullptr;
     MusicalStateTask *mpMusicalStateTask = nullptr;
     Clarinoid2ControlMapper *mpControls = nullptr;
+    Metronome *mpMetronome = nullptr;
+
     virtual const char *DisplayAppGetName() override
     {
         return "Performance";
@@ -20,8 +22,8 @@ struct PerformanceApp : SettingsMenuApp
 
     SimpleMovingAverage<30> mCPUUsage;
 
-    PerformanceApp(CCDisplay &d, MusicalStateTask *pMusicalStateTask, Clarinoid2ControlMapper *controls)
-        : SettingsMenuApp(d), mpMusicalStateTask(pMusicalStateTask), mpControls(controls)
+    PerformanceApp(CCDisplay &d, MusicalStateTask *pMusicalStateTask, Clarinoid2ControlMapper *controls, Metronome *pm)
+        : SettingsMenuApp(d), mpMusicalStateTask(pMusicalStateTask), mpControls(controls), mpMetronome(pm)
     {
     }
 
@@ -147,9 +149,50 @@ struct PerformanceApp : SettingsMenuApp
         return &mRootList;
     }
 
+    PeakMeterUtility<2000, 300> mPeakMeter;
+
     virtual void RenderFrontPage()
     {
-        mDisplay.mDisplay.println(String("Task timings >"));
+        // line 1
+        mDisplay.mDisplay.setTextWrap(false);
+        mDisplay.mDisplay.println(
+            mAppSettings->FindSynthPreset(mAppSettings->mGlobalSynthPreset).ToString(mAppSettings->mGlobalSynthPreset));
+
+        // line 2
+        mDisplay.mDisplay.println((mpMusicalStateTask->mMusicalState.mHarmIsOn
+                                       ? mAppSettings->FindHarmPreset(mAppSettings->mGlobalHarmPreset)
+                                             .ToString(mAppSettings->mGlobalHarmPreset)
+                                       : String("H:off:")) +
+                                  mAppSettings->FindHarmPreset(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)
+                                      .ToString(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID));
+
+        //mDisplay.mDisplay.println(mAppSettings->mGlobalScale.ToString());
+
+        float peak, heldPeak;
+        mPeakMeter.Update(peak, heldPeak);
+        auto y = mDisplay.mDisplay.getCursorY();
+        mDisplay.mDisplay.println(String("Peak ") + heldPeak);
+        mDisplay.mDisplay.fillRoundRect(0, y, peak * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+        mDisplay.mDisplay.drawFastVLine(heldPeak * mDisplay.mDisplay.width(), y, 8, SSD1306_INVERSE);
+
+
+        y = mDisplay.mDisplay.getCursorY();
+        float val = mpMusicalStateTask->mMusicalState.mCurrentBreath01.GetValue();
+        mDisplay.mDisplay.println(String("breath ") + val);
+        mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+
+
+        y = mDisplay.mDisplay.getCursorY();
+        val = mpMusicalStateTask->mMusicalState.mCurrentPitchN11.GetValue();
+        mDisplay.mDisplay.println(String("pitch ") + val);
+        mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+
+
+        // metronome
+        y = mDisplay.mDisplay.getCursorY();
+        val = mpMetronome->GetBeatFrac();
+        mDisplay.mDisplay.println(String("") +  mAppSettings->mBPM + " bpm " + mpMetronome->GetBeatInt());
+        mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
         SettingsMenuApp::RenderFrontPage();
     }
@@ -384,7 +427,7 @@ struct AudioMonitorApp : DisplayApp
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<size_t LHelectrodeCount, size_t RHelectrodeCount>
+template <size_t LHelectrodeCount, size_t RHelectrodeCount>
 struct MPR121ConfigApp : SettingsMenuApp
 {
     virtual const char *DisplayAppGetName() override
@@ -552,8 +595,9 @@ struct MPR121ConfigApp : SettingsMenuApp
 
         for (size_t i = 0; i < mKeyCount; ++i)
         {
-            int filteredVal = mElectrodeData[i].mFilteredData10bit;// mDevice.mMpr121.filteredData(i + mKeyIndexBegin);
-            int baselineVal = mElectrodeData[i].mBaselineValue10bit;//mDevice.mMpr121.GetBaselineData(i + mKeyIndexBegin);
+            int filteredVal = mElectrodeData[i].mFilteredData10bit; // mDevice.mMpr121.filteredData(i + mKeyIndexBegin);
+            int baselineVal =
+                mElectrodeData[i].mBaselineValue10bit; // mDevice.mMpr121.GetBaselineData(i + mKeyIndexBegin);
 
             int x = mDisplay.mDisplay.width() * i / mKeyCount;        // 128 * 5 / 10 =
             int x2 = mDisplay.mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 =

@@ -60,19 +60,13 @@ struct AppSettings
 
     HarmPreset &FindHarmPreset(uint16_t id)
     {
-        if (id < 0)
-            return mHarmSettings.mDisabledPreset;
-        if (id >= SYNTH_PRESET_COUNT)
-            return mHarmSettings.mDisabledPreset;
+        id = RotateIntoRange(id, HARM_PRESET_COUNT);
         return mHarmSettings.mPresets[id];
     }
 
     SynthPreset &FindSynthPreset(uint16_t id)
     {
-        if (id < 0)
-            id = 0;
-        if (id >= SYNTH_PRESET_COUNT)
-            id = 0;
+        id = RotateIntoRange(id, SYNTH_PRESET_COUNT);
         return mSynthSettings.mPresets[id];
     }
 };

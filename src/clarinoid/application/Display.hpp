@@ -221,6 +221,7 @@ struct CCDisplay
     {
         mDisplay.mSolidText = true;
         mDisplay.mTextLeftMargin = 0;
+        mDisplay.setTextWrap(true);
         mDisplay.ResetClip();
         mDisplay.setTextSize(1);
         mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
