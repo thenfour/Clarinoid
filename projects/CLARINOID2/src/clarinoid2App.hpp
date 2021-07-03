@@ -104,8 +104,9 @@ struct Clarinoid2App : ILEDDataProvider
         mControlMapper.Init(&mDisplay);
 
         // initialize some settings.
+        mAppSettings.mSynthSettings.mMasterGain = 1.0f;
         mAppSettings.mTranspose = 12;
-        mAppSettings.mSynthSettings.mReverbGain = 0.9f;
+        mAppSettings.mSynthSettings.mReverbGain = 0.3f;
         mAppSettings.mSynthSettings.mPitchBendRange = 2.0f;
 
         MPR121ConfigApp<10, 4> mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);

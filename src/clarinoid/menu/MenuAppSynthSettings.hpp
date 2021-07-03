@@ -133,19 +133,6 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                 this},
                                 AlwaysEnabled};
 
-    FloatSettingItem mPortamentoTime = {"Portamento",
-                                        StandardRangeSpecs::gPortamentoRange,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mPortamentoTime;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mPortamentoTime = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
                              Property<float>{[](void *cap) {
@@ -373,6 +360,47 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                   },
                                                   this},
                                   AlwaysEnabled};
+
+
+    FloatSettingItem mOsc1PortamentoTime = {" - Portamento",
+                                        StandardRangeSpecs::gPortamentoRange,
+                                        Property<float>{[](void *cap) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            return pThis->GetBinding().mOsc1PortamentoTime;
+                                                        },
+                                                        [](void *cap, const float &v) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            pThis->GetBinding().mOsc1PortamentoTime = v;
+                                                        },
+                                                        this},
+                                        AlwaysEnabled};
+
+    FloatSettingItem mOsc2PortamentoTime = {" - Portamento",
+                                        StandardRangeSpecs::gPortamentoRange,
+                                        Property<float>{[](void *cap) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            return pThis->GetBinding().mOsc2PortamentoTime;
+                                                        },
+                                                        [](void *cap, const float &v) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            pThis->GetBinding().mOsc2PortamentoTime = v;
+                                                        },
+                                                        this},
+                                        AlwaysEnabled};
+
+    FloatSettingItem mOsc3PortamentoTime = {" - Portamento",
+                                        StandardRangeSpecs::gPortamentoRange,
+                                        Property<float>{[](void *cap) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            return pThis->GetBinding().mOsc3PortamentoTime;
+                                                        },
+                                                        [](void *cap, const float &v) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            pThis->GetBinding().mOsc3PortamentoTime = v;
+                                                        },
+                                                        this},
+                                        AlwaysEnabled};
+
 
     FloatSettingItem mOsc1FreqMul = {" - FreqMul",
                                      StandardRangeSpecs::gFreqMulRange,
@@ -787,9 +815,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mModulationsSubmenuItem = {String("Modulations"), &mModulationsSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mOsc1SubmenuArray[7] = {
+    ISettingItem *mOsc1SubmenuArray[8] = {
         &mOsc1Waveform,
         &mOsc1Gain,
+        &mOsc1PortamentoTime,
         &mOsc1FreqMul,
         &mOsc1FreqOffset,
         &mOsc1PitchSemis,
@@ -800,9 +829,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mOsc1SubmenuItem = {String("OSC1"), &mOsc1SubmenuList, AlwaysEnabled};
 
-    ISettingItem *mOsc2SubmenuArray[7] = {
+    ISettingItem *mOsc2SubmenuArray[8] = {
         &mOsc2Waveform,
         &mOsc2Gain,
+        &mOsc2PortamentoTime,
         &mOsc2FreqMul,
         &mOsc2FreqOffset,
         &mOsc2PitchSemis,
@@ -813,9 +843,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mOsc2SubmenuItem = {String("OSC2"), &mOsc2SubmenuList, AlwaysEnabled};
 
-    ISettingItem *mOsc3SubmenuArray[7] = {
+    ISettingItem *mOsc3SubmenuArray[8] = {
         &mOsc3Waveform,
         &mOsc3Gain,
+        &mOsc3PortamentoTime,
         &mOsc3FreqMul,
         &mOsc3FreqOffset,
         &mOsc3PitchSemis,
@@ -838,10 +869,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[15] = {
+    ISettingItem *mArray[14] = {
         &mBreathFilterSubmenuItem,
         &mDetune,
-        &mPortamentoTime,
+        //&mPortamentoTime,
         &mPan,
         &mDelaySend,
         &mVerbSend,

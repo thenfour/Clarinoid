@@ -190,9 +190,14 @@ struct PerformanceApp : SettingsMenuApp
 
         // metronome
         y = mDisplay.mDisplay.getCursorY();
-        val = mpMetronome->GetBeatFrac();
+        float beatFrac = mpMetronome->GetBeatFrac();
         mDisplay.mDisplay.println(String("") +  mAppSettings->mBPM + " bpm " + mpMetronome->GetBeatInt());
-        mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+        mDisplay.mDisplay.fillRoundRect(0, y, beatFrac * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+
+        static const int R = 24;
+        static const int P = 16;
+        static const float THRESH = 0.1f;
+        mDisplay.mDisplay.fillCircle(mDisplay.mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
 
         SettingsMenuApp::RenderFrontPage();
     }

@@ -53,6 +53,8 @@ struct ListControl
 
             itemToRender = RotateIntoRange(itemToRender + 1, count);
         }
+        
+        //mDisplay->mDisplay.drawFastHLine(0, mDisplay->mDisplay.getCursorY(), mDisplay->mDisplay.width(), SSD1306_INVERSE);
     }
 
     virtual void Update()

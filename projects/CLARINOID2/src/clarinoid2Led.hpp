@@ -75,7 +75,7 @@ struct PeakMeter
             uint32_t color2 = 0; // default off=black.
             uint32_t onColor = GRB(0, 4, 0);
             if (i == (ledsPerBank - 1))
-                onColor = GRB(64, 0, 0);
+                onColor = GRB(128, 0, 0);
             else if (i == (ledsPerBank - 2))
                 onColor = GRB(16, 16, 0);
             else if (i == (ledsPerBank - 3))
@@ -145,7 +145,7 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         }
 
         mPeakMeter.Update([&](int n, uint32_t c) { this->SetPixel(23 - n, c); },
-                          [&](int n, uint32_t c) {
+                          [&](int n, uint32_t c) { this->SetPixel(23 - n, c); 
 
                           });
 

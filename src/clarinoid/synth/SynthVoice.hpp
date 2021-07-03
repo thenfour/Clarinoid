@@ -367,9 +367,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
         float midiNote =
             (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * mAppSettings->mSynthSettings.mPitchBendRange;
 
-        mOsc.portamentoTime(1, mPreset->mPortamentoTime);
-        mOsc.portamentoTime(2, mPreset->mPortamentoTime);
-        mOsc.portamentoTime(3, mPreset->mPortamentoTime);
+        mOsc.portamentoTime(1, mPreset->mOsc1PortamentoTime);
+        mOsc.portamentoTime(2, mPreset->mOsc2PortamentoTime);
+        mOsc.portamentoTime(3, mPreset->mOsc3PortamentoTime);
 
         mOsc.waveform(1, mPreset->mOsc1Waveform);
         mOsc.waveform(2, mPreset->mOsc2Waveform);
