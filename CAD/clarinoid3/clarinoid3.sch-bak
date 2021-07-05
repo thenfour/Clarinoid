@@ -1,0 +1,457 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L clarinoidSymbols:PCM5102 U6
+U 1 1 60E265C9
+P -2800 -1850
+F 0 "U6" H -2800 -1135 50  0000 C CNN
+F 1 "PCM5102" H -2800 -1226 50  0000 C CNN
+F 2 "clarinoid3:HILETGOPCM5102" H -3450 -1700 50  0001 C CNN
+F 3 "" H -3450 -1700 50  0001 C CNN
+	1    -2800 -1850
+	1    0    0    -1  
+$EndComp
+$Comp
+L teensy:Teensy4.0 U1
+U 1 1 60D8F3B7
+P -4800 -1750
+F 0 "U1" H -4800 -135 50  0000 C CNN
+F 1 "Teensy4.0" H -4800 -226 50  0000 C CNN
+F 2 "teensy:Teensy40" H -5200 -1550 50  0001 C CNN
+F 3 "" H -5200 -1550 50  0001 C CNN
+	1    -4800 -1750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:Battery_Cell BT1
+U 1 1 60E29A1D
+P -1700 -1000
+F 0 "BT1" H -1582 -904 50  0000 L CNN
+F 1 "Battery_Cell" H -1582 -995 50  0000 L CNN
+F 2 "clarinoid3:KEYSTONE_1043" V -1700 -940 50  0001 C CNN
+F 3 "~" V -1700 -940 50  0001 C CNN
+	1    -1700 -1000
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW10
+U 1 1 60E70CFF
+P 11950 -3450
+F 0 "SW10" H 11950 -3165 50  0000 C CNN
+F 1 "RHx1" H 11950 -3256 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 11950 -3250 50  0001 C CNN
+F 3 "~" H 11950 -3250 50  0001 C CNN
+	1    11950 -3450
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW12
+U 1 1 60E80173
+P 13150 -3050
+F 0 "SW12" H 13150 -2765 50  0000 C CNN
+F 1 "RHx3" H 13150 -2856 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 13150 -2850 50  0001 C CNN
+F 3 "~" H 13150 -2850 50  0001 C CNN
+	1    13150 -3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW13
+U 1 1 60E80635
+P 13650 -3500
+F 0 "SW13" H 13650 -3215 50  0000 C CNN
+F 1 "RHx4" H 13650 -3306 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 13650 -3300 50  0001 C CNN
+F 3 "~" H 13650 -3300 50  0001 C CNN
+	1    13650 -3500
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW11
+U 1 1 60E7F3C1
+P 12600 -3450
+F 0 "SW11" H 12600 -3165 50  0000 C CNN
+F 1 "RHx2" H 12600 -3256 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 12600 -3250 50  0001 C CNN
+F 3 "~" H 12600 -3250 50  0001 C CNN
+	1    12600 -3450
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW4
+U 1 1 60EA764E
+P 3700 -4600
+F 0 "SW4" H 3700 -4315 50  0000 C CNN
+F 1 "LHx1" H 3700 -4406 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 3700 -4400 50  0001 C CNN
+F 3 "~" H 3700 -4400 50  0001 C CNN
+	1    3700 -4600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW5
+U 1 1 60EA7654
+P 3950 -4150
+F 0 "SW5" H 3950 -3865 50  0000 C CNN
+F 1 "LHx3" H 3950 -3956 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 3950 -3950 50  0001 C CNN
+F 3 "~" H 3950 -3950 50  0001 C CNN
+	1    3950 -4150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW7
+U 1 1 60EA765A
+P 4400 -4600
+F 0 "SW7" H 4400 -4315 50  0000 C CNN
+F 1 "LHx4" H 4400 -4406 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 4400 -4400 50  0001 C CNN
+F 3 "~" H 4400 -4400 50  0001 C CNN
+	1    4400 -4600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW3
+U 1 1 60EA7666
+P 3400 -4150
+F 0 "SW3" H 3400 -3865 50  0000 C CNN
+F 1 "LHx2" H 3400 -3956 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 3400 -3950 50  0001 C CNN
+F 3 "~" H 3400 -3950 50  0001 C CNN
+	1    3400 -4150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW14
+U 1 1 60E80F83
+P 14200 -3050
+F 0 "SW14" H 14200 -2765 50  0000 C CNN
+F 1 "RHx5" H 14200 -2856 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 14200 -2850 50  0001 C CNN
+F 3 "~" H 14200 -2850 50  0001 C CNN
+	1    14200 -3050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	-1700 -1200 -1300 -1200
+Wire Wire Line
+	-1300 -1200 -1300 -1100
+Wire Wire Line
+	-1300 -1100 -850 -1100
+Wire Wire Line
+	-1700 -900 -1100 -900
+Wire Wire Line
+	-1100 -900 -1100 -1000
+Wire Wire Line
+	-1100 -1000 -850 -1000
+$Comp
+L Connector_Generic:Conn_01x04 J3
+U 1 1 60EB3895
+P -1400 -3300
+F 0 "J3" H -1320 -3308 50  0000 L CNN
+F 1 "Speaker" H -1320 -3399 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0004_1x04_P2.54mm_Vertical" H -1400 -3300 50  0001 C CNN
+F 3 "~" H -1400 -3300 50  0001 C CNN
+	1    -1400 -3300
+	1    0    0    -1  
+$EndComp
+$Comp
+L clarinoidSymbols:MH-CD42 U5
+U 1 1 60E25DE4
+P -450 -1050
+F 0 "U5" H -450 -575 50  0000 C CNN
+F 1 "MH-CD42" H -450 -666 50  0000 C CNN
+F 2 "clarinoid3:MH-CD42" H -800 -1050 50  0001 C CNN
+F 3 "" H -800 -1050 50  0001 C CNN
+	1    -450 -1050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Interface_Expansion:MCP23017_SP U4
+U 1 1 60DADB74
+P 17500 -4900
+F 0 "U4" H 17500 -3619 50  0000 C CNN
+F 1 "MCP23017_SP" H 17500 -3710 50  0000 C CNN
+F 2 "Package_DIP:DIP-28_W7.62mm" H 17700 -5900 50  0001 L CNN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf" H 17700 -6000 50  0001 L CNN
+	1    17500 -4900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_POT_Dual RV1
+U 1 1 60EC3FC8
+P 3050 -1850
+F 0 "RV1" H 3050 -2083 50  0000 C CNN
+F 1 "VOL" H 3050 -2174 50  0000 C CNN
+F 2 "clarinoid3:Bourns_POT_PTR902-2020K-A103_PANEL" H 3300 -1925 50  0001 C CNN
+F 3 "~" H 3300 -1925 50  0001 C CNN
+	1    3050 -1850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW2
+U 1 1 60EC6EBF
+P 3050 -1050
+F 0 "SW2" H 3050 -765 50  0000 C CNN
+F 1 "ONOFF" H 3050 -856 50  0000 C CNN
+F 2 "" H 3050 -850 50  0001 C CNN
+F 3 "~" H 3050 -850 50  0001 C CNN
+	1    3050 -1050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW1
+U 1 1 60EC864B
+P 150 -1300
+F 0 "SW1" H 150 -1015 50  0000 C CNN
+F 1 "CHARGE INDICATOR" H 150 -1106 50  0000 C CNN
+F 2 "clarinoid3:NKK_FB_PANEL" H 150 -1100 50  0001 C CNN
+F 3 "~" H 150 -1100 50  0001 C CNN
+	1    150  -1300
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_POT RV2
+U 1 1 60EC9824
+P 6100 -700
+F 0 "RV2" V 5985 -700 50  0000 C CNN
+F 1 "PITCH" V 5894 -700 50  0000 C CNN
+F 2 "clarinoid3:MAT060-B100K-231-A01" H 6100 -700 50  0001 C CNN
+F 3 "~" H 6100 -700 50  0001 C CNN
+	1    6100 -700
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x03 J1
+U 1 1 60ECA61D
+P -7250 -2300
+F 0 "J1" H -7170 -2258 50  0000 L CNN
+F 1 "LEDs" H -7170 -2349 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0003_1x03_P2.54mm_Vertical" H -7250 -2300 50  0001 C CNN
+F 3 "~" H -7250 -2300 50  0001 C CNN
+	1    -7250 -2300
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x07 J2
+U 1 1 60EE23DD
+P -1400 -3900
+F 0 "J2" H -1320 -3858 50  0000 L CNN
+F 1 "OLED" H -1320 -3949 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0007_1x07_P2.54mm_Vertical" H -1400 -3900 50  0001 C CNN
+F 3 "~" H -1400 -3900 50  0001 C CNN
+	1    -1400 -3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L clarinoidSymbols:HoneywellABPMAND001PG2A3 U7
+U 1 1 60EF4D79
+P 21050 -4850
+F 0 "U7" H 21050 -4385 50  0000 C CNN
+F 1 "HoneywellABPMAND001PG2A3" H 21050 -4476 50  0000 C CNN
+F 2 "clarinoid3:SON160P500X500X140-6N" H 20700 -5200 50  0001 C CNN
+F 3 "" H 20700 -5200 50  0001 C CNN
+	1    21050 -4850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW6
+U 1 1 60EA7660
+P 4700 -4150
+F 0 "SW6" H 4700 -3865 50  0000 C CNN
+F 1 "LHx5" H 4700 -3956 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 4700 -3950 50  0001 C CNN
+F 3 "~" H 4700 -3950 50  0001 C CNN
+	1    4700 -4150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x05 J6
+U 1 1 60ED0C30
+P 4050 -3550
+F 0 "J6" H 4130 -3508 50  0000 L CNN
+F 1 "RHkeys" H 4130 -3599 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0005_1x05_P2.54mm_Vertical" H 4050 -3550 50  0001 C CNN
+F 3 "~" H 4050 -3550 50  0001 C CNN
+	1    4050 -3550
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector:AudioJack3 J5
+U 1 1 60F05951
+P 1950 -2550
+F 0 "J5" H 1932 -2225 50  0000 C CNN
+F 1 "AudioOut" H 1932 -2316 50  0000 C CNN
+F 2 "clarinoid3:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal" H 1950 -2550 50  0001 C CNN
+F 3 "~" H 1950 -2550 50  0001 C CNN
+	1    1950 -2550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:AudioJack3 J4
+U 1 1 60F06341
+P 900 -2550
+F 0 "J4" H 882 -2225 50  0000 C CNN
+F 1 "MIDIOut" H 882 -2316 50  0000 C CNN
+F 2 "clarinoid3:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal" H 900 -2550 50  0001 C CNN
+F 3 "~" H 900 -2550 50  0001 C CNN
+	1    900  -2550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J7
+U 1 1 60F0B07F
+P 19550 -5000
+F 0 "J7" H 19630 -5008 50  0000 L CNN
+F 1 "BREATHI2C" H 19630 -5099 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0004_1x04_P2.54mm_Vertical" H 19550 -5000 50  0001 C CNN
+F 3 "~" H 19550 -5000 50  0001 C CNN
+	1    19550 -5000
+	1    0    0    -1  
+$EndComp
+$Comp
+L clarinoidSymbols:AdafruitMPR121 U3
+U 1 1 60DACB0F
+P 15000 -4950
+F 0 "U3" H 14933 -4035 50  0000 C CNN
+F 1 "AdafruitMPR121" H 14933 -4126 50  0000 C CNN
+F 2 "clarinoid3:MPR121" H 15100 -5450 50  0001 C CNN
+F 3 "" H 15100 -5450 50  0001 C CNN
+	1    15000 -4950
+	-1   0    0    -1  
+$EndComp
+$Comp
+L clarinoidSymbols:AdafruitMPR121 U2
+U 1 1 60D9DC68
+P 13000 -4950
+F 0 "U2" H 12908 -4035 50  0000 C CNN
+F 1 "AdafruitMPR121" H 12908 -4126 50  0000 C CNN
+F 2 "clarinoid3:MPR121" H 12600 -5500 50  0001 C CNN
+F 3 "" H 12600 -5500 50  0001 C CNN
+	1    13000 -4950
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Device:Rotary_Encoder_Switch SW9
+U 1 1 60EB4CE2
+P 11050 -5250
+F 0 "SW9" H 11050 -4883 50  0000 C CNN
+F 1 "Rotary_Encoder_Switch" H 11050 -4974 50  0000 C CNN
+F 2 "clarinoid3:Bourns_ENC_PEC11R-4215F-S0024" H 10900 -5090 50  0001 C CNN
+F 3 "~" H 11050 -4990 50  0001 C CNN
+	1    11050 -5250
+	1    0    0    -1  
+$EndComp
+$Comp
+L clarinoidSymbols:CLARINOID_OCTAVES U?
+U 1 1 60F55450
+P 13650 -2350
+F 0 "U?" H 14028 -2171 50  0000 L CNN
+F 1 "CLARINOID_OCTAVES" H 14028 -2262 50  0000 L CNN
+F 2 "" H 13650 -2350 50  0001 C CNN
+F 3 "" H 13650 -2350 50  0001 C CNN
+	1    13650 -2350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 60F56606
+P 500 -3750
+F 0 "R?" H 570 -3704 50  0000 L CNN
+F 1 "47" H 570 -3795 50  0000 L CNN
+F 2 "" V 430 -3750 50  0001 C CNN
+F 3 "~" H 500 -3750 50  0001 C CNN
+	1    500  -3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 60F56DE9
+P 950 -3750
+F 0 "R?" H 1020 -3704 50  0000 L CNN
+F 1 "47" H 1020 -3795 50  0000 L CNN
+F 2 "" V 880 -3750 50  0001 C CNN
+F 3 "~" H 950 -3750 50  0001 C CNN
+	1    950  -3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J?
+U 1 1 60F57060
+P 13350 -6550
+F 0 "J?" H 13430 -6558 50  0000 L CNN
+F 1 "RHx6" H 13430 -6649 50  0000 L CNN
+F 2 "" H 13350 -6550 50  0001 C CNN
+F 3 "~" H 13350 -6550 50  0001 C CNN
+	1    13350 -6550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x03 J?
+U 1 1 60F5831B
+P 5250 -1100
+F 0 "J?" H 5330 -1058 50  0000 L CNN
+F 1 "PITCHHeader" H 5330 -1149 50  0000 L CNN
+F 2 "" H 5250 -1100 50  0001 C CNN
+F 3 "~" H 5250 -1100 50  0001 C CNN
+	1    5250 -1100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J?
+U 1 1 60F5A2BC
+P 5600 -4750
+F 0 "J?" H 5680 -4758 50  0000 L CNN
+F 1 "LHx6" H 5680 -4849 50  0000 L CNN
+F 2 "" H 5600 -4750 50  0001 C CNN
+F 3 "~" H 5600 -4750 50  0001 C CNN
+	1    5600 -4750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 60F5D39D
+P 7150 -5050
+F 0 "J?" H 7230 -5058 50  0000 L CNN
+F 1 "BREATHI2C" H 7230 -5149 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0004_1x04_P2.54mm_Vertical" H 7150 -5050 50  0001 C CNN
+F 3 "~" H 7150 -5050 50  0001 C CNN
+	1    7150 -5050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x05 J?
+U 1 1 60F5E88C
+P 14800 -6600
+F 0 "J?" H 14880 -6558 50  0000 L CNN
+F 1 "LHkeys" H 14880 -6649 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0005_1x05_P2.54mm_Vertical" H 14800 -6600 50  0001 C CNN
+F 3 "~" H 14800 -6600 50  0001 C CNN
+	1    14800 -6600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Switch:SW_Push SW?
+U 1 1 60F60E00
+P 14800 -3500
+F 0 "SW?" H 14800 -3215 50  0000 C CNN
+F 1 "RHx4" H 14800 -3306 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 14800 -3300 50  0001 C CNN
+F 3 "~" H 14800 -3300 50  0001 C CNN
+	1    14800 -3500
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
