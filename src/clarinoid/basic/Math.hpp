@@ -111,7 +111,20 @@ inline float blep1(float x)
     return -x * x;
 }
 
+static inline float Sample16To32(int16_t s)
+{
+    return float(s) / 32768;
+}
 
+static inline float Sample16ToSignedRange(int16_t s, float pole)
+{
+    return Sample16To32(s) * pole;
+}
+
+static inline int16_t Sample32To16(float s)
+{
+    return (int16_t)(Clamp(s, 0.0f, 1.0f) * 32768.0f);
+}
 
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd
@@ -121,11 +134,6 @@ inline float blep1(float x)
 // use it and linear
 namespace Curve2
 {
-// static float Step01(float x, float thresh)
-// {
-//   return x < thresh ? 0.0f : 1.0f;
-// }
-
 static float Curve2_F(float c, float x, float n)
 {
     float d = ::powf(n, c - 1);
@@ -205,56 +213,6 @@ struct UnipolarMapping
         return x;
     }
 };
-
-// for two-polar. like joystick X or pitch bend strip,
-// these are 0-1 source values, but we want to map them into -1 to 1 float values.
-// instead of the 1 region of unipolar defined by {min,max}
-// we have 3 regions (negative, zero, positive), defined by the boundaries.
-// looking at the whole source range,
-// |---------------------------------------------------------------|
-//    |neg_min------neg_max|-----|pos_min----------pos_max|
-// struct NPolarMapping
-// {
-//   UnipolarMapping mNegative; // used for unipolar mapping.
-//   UnipolarMapping mPositive;
-
-//   UnipolarMapping &Unipolar() { return mNegative; }
-
-//   float PerformUnipolarMapping(float src) const
-//   {
-//     return mNegative.PerformMapping(src);
-//   }
-
-//   float PerformBipolarMapping(float src) const
-//   {
-//     // in fact it's not "bipolar" in any enforced sense. it's just 2 regions. if it's in the negative region, we use
-//     it.
-//     // if it's in the positive region we use that.
-//     // but you could in theory make overlapping regions or other nonsensical regions which here we just don't bother.
-
-//     // determine which region to let evaluate this.
-//     // if it's IN either range then it's clear.
-//     if (mNegative.IsSrcInRegion(src))
-//     {
-//       return mNegative.PerformMapping(src);
-//     }
-//     if (mPositive.IsSrcInRegion(src))
-//     {
-//       return mPositive.PerformMapping(src);
-//     }
-
-//     // so figure out if src is closer to the neg or positive region.
-//     float negCenter = (mNegative.mSrcMin + mNegative.mSrcMax) / 2;
-//     float posCenter = (mPositive.mSrcMin + mPositive.mSrcMax) / 2;
-//     float distToNeg = fabs(src - negCenter);
-//     float distToPos = fabs(src - posCenter);
-//     if (distToNeg < distToPos)
-//     {
-//       return mNegative.PerformMapping(src);
-//     }
-//     return mPositive.PerformMapping(src);
-//   }
-// };
 
 template <typename T, T divisor>
 void DivRem(T val, T &wholeParts, T &remainder)
@@ -487,7 +445,8 @@ struct NumericEditRangeSpec
 
 namespace StandardRangeSpecs
 {
-static const NumericEditRangeSpec<float> gFloat_0_1 = NumericEditRangeSpec<float>{0.0f, 1.0f, 0.2f/*course*/, 0.05f/*normal*/, 0.01f/*fine*/};
+static const NumericEditRangeSpec<float> gFloat_0_1 =
+    NumericEditRangeSpec<float>{0.0f, 1.0f, 0.2f /*course*/, 0.05f /*normal*/, 0.01f /*fine*/};
 static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<float>{-1.0f, 1.0f};
 
 // used by detune

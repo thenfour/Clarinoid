@@ -380,9 +380,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
 
         // pwm amount is always 1 within the polyblep osc; actual PWM amount is controlled by modulation matrix.
-        mOsc.pwmAmount(1, 1);
-        mOsc.pwmAmount(2, 1);
-        mOsc.pwmAmount(3, 1);
+        // mOsc.pwmAmount(1, 1);
+        // mOsc.pwmAmount(2, 1);
+        // mOsc.pwmAmount(3, 1);
 
         mOsc.fmAmount(1, 1);
         mOsc.fmAmount(2, 1);
@@ -474,14 +474,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = {
-    {0},
-    {1},
-    {2},
-    {3},
-    {4},
-    {5},
-};
+Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}};
 
 struct SynthGraphControl
 {

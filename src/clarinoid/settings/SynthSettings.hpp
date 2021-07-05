@@ -189,10 +189,10 @@ struct EnvelopeSpec
 struct SynthPreset
 {
     String mName = "--";
-    //float mPortamentoTime = 0.005f;
+    // float mPortamentoTime = 0.005f;
     float mPan = 0;
-    float mDelaySend = 0.12f;
-    float mVerbSend = 0.12f;
+    float mDelaySend = 0.08f;
+    float mVerbSend = 0.08f;
 
     float mOsc1Gain = 0;
     float mOsc2Gain = ReasonableOscillatorGain;
@@ -203,7 +203,7 @@ struct SynthPreset
     float mOsc1PortamentoTime = 0.0f;
     float mOsc2PortamentoTime = 0.0f;
     float mOsc3PortamentoTime = 0.0f;
-    
+
     float mOsc1FreqMultiplier = 1.0f; // midinotefreq * this
     float mOsc2FreqMultiplier = 1.0f;
     float mOsc3FreqMultiplier = 1.0f;
@@ -271,11 +271,11 @@ struct SynthSettings
 
     bool mMasterFXEnable = true;
 
-    float mReverbGain = 0.0f;
+    float mReverbGain = 0.9f;
     float mReverbDamping = 0.6f;
     float mReverbSize = 0.6f;
 
-    float mDelayGain = 0.3f;
+    float mDelayGain = 0.9f;
     float mDelayMS = 300;
     float mDelayStereoSep = 30;
     float mDelayFeedbackLevel = 0.3f;
@@ -662,68 +662,149 @@ struct SynthSettings
         p.mFilterKeytracking = filterKeyScaling;
     };
 
+    static void InitCloudsStars(SynthPreset &p)
+    {
+        p.mName = "Clouds+Stars";
+        p.mDetune = 0.09f;
+        p.mVerbSend = .50f;
+        p.mDelaySend = .50f;
+        p.mSync = false;
+
+        p.mLfo2Rate = 2.0f;
+
+        p.mFilterType = ClarinoidFilterType::LP_Moog2;
+        p.mFilterSaturation = 0.16f;
+        p.mFilterQ = 0.12f;
+
+        p.mOsc1Waveform = OscWaveformShape::VarTriangle;
+        p.mOsc1PulseWidth = 0.0f;
+        p.mOsc1Gain = ReasonableOscillatorGain / 1.5f;
+
+        p.mOsc2Waveform = OscWaveformShape::VarTriangle;
+        p.mOsc2PulseWidth = 0.0f;
+        p.mOsc2FreqMultiplier = 0.501f;
+        p.mOsc2Gain = ReasonableOscillatorGain / 1.5f;
+
+        p.mOsc3Waveform = OscWaveformShape::VarTriangle;
+        p.mOsc3PulseWidth = 0.0f;
+        p.mOsc3Gain = ReasonableOscillatorGain / 1.5f;
+
+
+        p.mModulations[0].mDest = ModulationDestination::Osc1PulseWidth;
+        p.mModulations[0].mSource = ModulationSource::LFO1;
+        p.mModulations[0].mScaleN11 = 0.2f;
+        p.mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
+        p.mModulations[1].mSource = ModulationSource::LFO2;
+        p.mModulations[1].mScaleN11 = 0.2f;
+        p.mModulations[2].mDest = ModulationDestination::Osc1PulseWidth;
+        p.mModulations[2].mSource = ModulationSource::LFO1;
+        p.mModulations[2].mScaleN11 = 0.2f;
+
+        p.mModulations[3].mDest = ModulationDestination::Osc3Frequency;
+        p.mModulations[3].mSource = ModulationSource::Breath;
+        p.mModulations[3].mScaleN11 = -0.03f;
+
+        p.mModulations[4].mDest = ModulationDestination::Osc1Frequency;
+        p.mModulations[4].mSource = ModulationSource::ENV1;
+        p.mModulations[4].mScaleN11 = 0.03f;
+    }
+
+    static void InitSynccyLead(SynthPreset &p)
+    {
+        p.mName = "Synccy Lead"; // default.
+        p.mModulations[0].mScaleN11 = 0.9f;
+        p.mModulations[0].mSource = ModulationSource::LFO1;
+        p.mModulations[0].mDest = ModulationDestination::Osc2Frequency;
+
+        p.mModulations[1].mScaleN11 = 0.015f;
+        p.mModulations[1].mSource = ModulationSource::LFO2;
+        p.mModulations[1].mDest = ModulationDestination::Osc1Frequency;
+    }
+
+    static void InitPWMLead2(SynthPreset &p)
+    {
+        InitBasicLeadPreset("PWM Mono Lead", OscWaveformShape::Pulse, 0.50f, p);
+        p.mFilterMaxFreq = 12000;
+        p.mFilterType = ClarinoidFilterType::LP_SEM12;
+        p.mModulations[0].mSource = ModulationSource::LFO1;
+        p.mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
+        p.mModulations[0].mScaleN11 = 0.20f;
+        p.mModulations[1].mSource = ModulationSource::Breath;
+        p.mModulations[1].mDest = ModulationDestination::Osc2PulseWidth;
+        p.mModulations[1].mScaleN11 = 0.20f;
+    }
+
+    static void InitPWMLeadStack(SynthPreset &p)
+    {
+        InitBasicLeadPreset("PWM Lead Stack", OscWaveformShape::Pulse, 0.50f, p);
+        p.mFilterMaxFreq = 12000;
+        p.mFilterType = ClarinoidFilterType::LP_SEM12;
+        p.mLfo2Rate = 2.0f;
+        p.mOsc3FreqMultiplier = 4.0f;
+        p.mOsc3Waveform = OscWaveformShape::Pulse;
+        p.mOsc3PulseWidth = 0.5f;
+        p.mOsc3Gain = .15f;
+        p.mModulations[0].mSource = ModulationSource::LFO1;
+        p.mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
+        p.mModulations[0].mScaleN11 = 0.20f;
+        p.mModulations[1].mSource = ModulationSource::Breath;
+        p.mModulations[1].mDest = ModulationDestination::Osc2PulseWidth;
+        p.mModulations[1].mScaleN11 = 0.20f;
+        p.mModulations[2].mSource = ModulationSource::LFO2;
+        p.mModulations[2].mDest = ModulationDestination::Osc3PulseWidth;
+        p.mModulations[2].mScaleN11 = -0.08f;
+        p.mModulations[3].mSource = ModulationSource::Breath;
+        p.mModulations[3].mDest = ModulationDestination::Osc3Frequency;
+        p.mModulations[3].mScaleN11 = 0.04f;
+    }
+
+    static void InitFluvial(SynthPreset &p)
+    {
+        p.mName = "Fluvial";
+        p.mOsc1Gain = 0.0f;
+        p.mSync = true;
+        p.mSyncMultMin = 0.15f;
+        p.mSyncMultMax = 1.95f;
+        p.mDetune = 0.0f;
+        p.mVerbSend = 0.1f;
+        p.mDelaySend = 0.1f;
+
+        p.mOsc2Gain = 0.15f;
+        p.mOsc2Waveform = OscWaveformShape::SawSync;
+
+        p.mOsc3Gain = 0.15f;
+        p.mOsc3PulseWidth = 0.5f;
+        p.mOsc3Waveform = OscWaveformShape::Pulse;
+
+        p.mFilterType = ClarinoidFilterType::LP_K35;
+        p.mFilterMinFreq = 0.0f;
+        p.mFilterMaxFreq = 22000;
+        p.mFilterSaturation = 0.60f;
+        p.mFilterQ = 0.25f;
+        p.mFilterKeytracking = 1.0f;
+
+        p.mModulations[0].mSource = ModulationSource::Breath;
+        p.mModulations[0].mDest = ModulationDestination::Osc3Frequency;
+        p.mModulations[0].mScaleN11 = -0.02f;
+        p.mModulations[1].mSource = ModulationSource::Breath;
+        p.mModulations[1].mDest = ModulationDestination::Osc3PulseWidth;
+        p.mModulations[1].mScaleN11 = -0.3f;
+    }
+
     SynthSettings()
     {
-        mPresets[0].mName = "Synccy Lead"; // default.
-        mPresets[0].mModulations[0].mScaleN11 = 0.9f;
-        mPresets[0].mModulations[0].mSource = ModulationSource::LFO1;
-        mPresets[0].mModulations[0].mDest = ModulationDestination::Osc2Frequency;
+        size_t i = 0;
 
-        mPresets[0].mModulations[1].mScaleN11 = 0.015f;
-        mPresets[0].mModulations[1].mSource = ModulationSource::LFO2;
-        mPresets[0].mModulations[1].mDest = ModulationDestination::Osc1Frequency;
-
-        size_t i = 1; // 0 = default = sync
-
-        // InitBasicLeadPreset("PWM Lead 1", OscWaveformShape::Pulse, 0.35f, mPresets[i]);
-        // mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
-        // mPresets[i].mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        // mPresets[i].mModulations[0].mScaleN11 = 0.20f;
-        // ++i;
-
-        InitBasicLeadPreset("PWM Lead 2", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
-        mPresets[i].mFilterMaxFreq = 12000;
-        mPresets[i].mFilterType = ClarinoidFilterType::LP_SEM12;
-        mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
-        mPresets[i].mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        mPresets[i].mModulations[0].mScaleN11 = 0.20f;
-        mPresets[i].mModulations[1].mSource = ModulationSource::Breath;
-        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc2PulseWidth;
-        mPresets[i].mModulations[1].mScaleN11 = 0.20f;
-        ++i;
-
-        InitBasicLeadPreset("PWM Lead 3", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
-        mPresets[i].mFilterMaxFreq = 12000;
-        mPresets[i].mFilterType = ClarinoidFilterType::LP_SEM12;
-        mPresets[i].mLfo2Rate = 2.0f;
-        mPresets[i].mOsc3FreqMultiplier = 4.0f;
-        mPresets[i].mOsc3Waveform = OscWaveformShape::Pulse;
-        mPresets[i].mOsc3PulseWidth = 0.5f;
-        mPresets[i].mOsc3Gain = .15f;
-        mPresets[i].mModulations[0].mSource = ModulationSource::LFO1;
-        mPresets[i].mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        mPresets[i].mModulations[0].mScaleN11 = 0.20f;
-        mPresets[i].mModulations[1].mSource = ModulationSource::Breath;
-        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc2PulseWidth;
-        mPresets[i].mModulations[1].mScaleN11 = 0.20f;
-        mPresets[i].mModulations[2].mSource = ModulationSource::LFO2;
-        mPresets[i].mModulations[2].mDest = ModulationDestination::Osc3PulseWidth;
-        mPresets[i].mModulations[2].mScaleN11 = -0.08f;
-        mPresets[i].mModulations[3].mSource = ModulationSource::Breath;
-        mPresets[i].mModulations[3].mDest = ModulationDestination::Osc3Frequency;
-        mPresets[i].mModulations[3].mScaleN11 = 0.04f;
-        ++i;
-
+        InitFluvial(mPresets[i++]);
+        InitSynccyLead(mPresets[i++]);
+        InitPWMLead2(mPresets[i++]);
+        InitPWMLeadStack(mPresets[i++]);
         InitDetunePWMLead(mPresets[i++]);
-
+        InitCloudsStars(mPresets[i++]);
         InitCrystalFieldsPatch(mPresets[i++]);
         InitCinematicTagPatch(mPresets[i++]);
-        //InitBellycrawlPreset(mPresets[i++]);
-
         InitPanFlutePreset(mPresets[i++]);
-
         InitFunkyLeadPreset(mPresets[i++]);
-
         InitBasicLeadPreset("Saw Brass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
         // make osc1 and osc2 equal
         mPresets[i].mOsc3Gain = mPresets[i].mOsc2Gain = mPresets[i].mOsc1Gain = ReasonableOscillatorGain;
@@ -739,8 +820,7 @@ struct SynthSettings
         mPresets[i].mModulations[1].mScaleN11 = 0.16f;
         ++i;
 
-        InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i]);
-        ++i;
+        InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
 
         InitFifthLeadPresetA(mPresets[i++]);
         InitFifthLeadPresetB(mPresets[i++]);

@@ -34,7 +34,7 @@ struct AppSettings
     bool mDisplayDim = true;
 
     bool mMetronomeSoundOn = false;
-    float mMetronomeGain = 0.14f;
+    float mMetronomeGain = 0.24f;
     int mMetronomeNote = 80;
     int mMetronomeDecayMS = 15;
 

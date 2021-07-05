@@ -40,19 +40,8 @@ namespace clarinoid
    This Software is published under the MIT License, use at your own risk
 */
 
-static inline float Sample16To32(int16_t s)
-{
-    return float(s) / 32768;
-}
-
-static inline int16_t Sample32To16(float s)
-{
-    return (int16_t)(Clamp(s, 0.0f, 1.0f) * 32768.0f);
-}
-
 struct AudioBandlimitedOsci : public AudioStream
 {
-
     AudioBandlimitedOsci() : AudioStream(6, inputQueueArray)
     {
     }
@@ -92,10 +81,10 @@ struct AudioBandlimitedOsci : public AudioStream
         mOsc[oscillator - 1].fmAmount(octaves);
     }
 
-    void pwmAmount(uint8_t oscillator, float amount)
-    {
-        mOsc[oscillator - 1].pwmAmount(amount);
-    }
+    // void pwmAmount(uint8_t oscillator, float amount)
+    // {
+    //     mOsc[oscillator - 1].pwmAmount(amount);
+    // }
 
     void addNote()
     {
@@ -136,7 +125,7 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mPulseWidthTarget01 = 0; // pulseWidth1
         float mPulseWidth = 0.5;       // osc1_pulseWidth
-        float mPWMAmount = 0.0f;       // osc1_pwmAmount
+        //float mPWMAmount = 0.0f;       // osc1_pwmAmount
 
         float mBlepDelay = 0;     // osc1_blepDelay
         float mWidthDelay = 0;    // osc1_widthDelay
@@ -207,11 +196,6 @@ struct AudioBandlimitedOsci : public AudioStream
             mPitchModAmount = octaves * 4096.0f;
         }
 
-        void pwmAmount(float amount)
-        {
-            mPWMAmount = amount;
-        }
-
         // call before calculating the sample; this does modulation stuff
         inline void PreStep(size_t i, audio_block_t *fm1, audio_block_t *pwm1)
         {
@@ -220,9 +204,9 @@ struct AudioBandlimitedOsci : public AudioStream
                 mFrequency += mPortamentoIncrement;
             }
 
-            // frequency Modulation:
-            if (fm1 && mPitchModAmount > 0)
+            if (fm1)
             {
+                //Sample16ToSignedRange(fm1->data[i], AUDIO_SAMPLE_RATE_EXACT);
                 int32_t n = fm1->data[i] * mPitchModAmount;
                 int32_t ipart = n >> 27;
                 n = n & 0x7FFFFFF;
@@ -245,7 +229,7 @@ struct AudioBandlimitedOsci : public AudioStream
             // pulse Width Modulation:
             if (pwm1)
             {
-                mPulseWidth = mPulseWidthTarget01 + Sample16To32(pwm1->data[i]) * mPWMAmount;
+                mPulseWidth = mPulseWidthTarget01 + Sample16To32(pwm1->data[i]);
             }
             mPulseWidth = Clamp(mPulseWidth, 0.001f, 0.999f);
         }
