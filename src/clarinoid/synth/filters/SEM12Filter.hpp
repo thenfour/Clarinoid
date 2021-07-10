@@ -21,6 +21,7 @@ struct SEM12Filter : IFilter
 
     virtual void SetCutoffFrequency(real hz) override
     {
+        if (FloatEquals(hz, m_cutoffHz)) return;
         m_cutoffHz = hz;
         Recalc();
     }
@@ -28,6 +29,8 @@ struct SEM12Filter : IFilter
     // 0-1
     virtual void SetResonance(real p_res) override
     {
+        if (FloatEquals(p_res, m_cachedResonance)) return;
+        m_cachedResonance = p_res;
         m_resonance = Real(24.5) * p_res * p_res * p_res * p_res + Real(0.5);
         m_resonance = ClampInclusive(m_resonance, Real(0.5), Real(25));
         Recalc();
@@ -35,6 +38,8 @@ struct SEM12Filter : IFilter
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
+        if (FloatEquals(cutoffHz, m_cutoffHz) && FloatEquals(reso, m_cachedResonance)) return;
+        m_cachedResonance = reso;
         m_cutoffHz = cutoffHz;
         m_resonance = Real(24.5) * reso * reso * reso * reso + Real(0.5);
         m_resonance = ClampInclusive(m_resonance, Real(0.5), Real(25));
@@ -65,6 +70,7 @@ struct SEM12Filter : IFilter
 
     real m_transition = -1;
     real m_resonance = Real(0.5);
+    real m_cachedResonance = Real(-1);
     real m_alpha = 1;
     real m_alpha_0 = 1;
     real m_rho = 1;

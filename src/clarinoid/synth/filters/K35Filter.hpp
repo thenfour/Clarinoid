@@ -21,6 +21,9 @@ struct K35Filter : IFilter
 
     virtual void SetType(FilterType type) override
     {
+        if (m_FilterType == type) {
+            return;
+        }
         switch (type)
         {
         default:
@@ -47,12 +50,18 @@ struct K35Filter : IFilter
 
     virtual void SetCutoffFrequency(real hz) override
     {
+        if (FloatEquals(hz, m_cutoffHz)) {
+            return;
+        }
         m_cutoffHz = hz;
         Recalc();
     }
 
     virtual void SetSaturation(real amt) override
     {
+        if (FloatEquals(amt, m_overdrive)) {
+            return;
+        }
         m_overdrive = amt;
         Recalc();
     }
@@ -60,8 +69,12 @@ struct K35Filter : IFilter
     // 0-1
     virtual void SetResonance(real res) override
     {
+        if (FloatEquals(res, m_res)) {
+            return;
+        }
         // note: m_k must never be zero else division by zero
         // note2 original was 1.99 but dont want self oscillation
+        m_res = res;
         m_k = res * Real(1.95) + Real(0.01);
         m_k = ClampInclusive(m_k, Real(0.01), Real(1.96));
         Recalc();
@@ -69,6 +82,9 @@ struct K35Filter : IFilter
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
+        if ((m_FilterType == type) && FloatEquals(cutoffHz, m_cutoffHz) && FloatEquals(saturation, m_overdrive) && FloatEquals(reso, m_res)) {
+            return;
+        }
         switch (type)
         {
         default:
@@ -85,6 +101,7 @@ struct K35Filter : IFilter
         }
         m_cutoffHz = cutoffHz;
         m_overdrive = saturation;
+        m_res = reso;
         m_k = reso * Real(1.95) + Real(0.01);
         m_k = ClampInclusive(m_k, Real(0.01), Real(1.96));
         Recalc();
@@ -115,6 +132,8 @@ struct K35Filter : IFilter
     FilterType m_FilterType = FilterType::LP;
     real m_cutoffHz = 10000;
     real m_overdrive = 0;
+
+    real m_res = Real(-1);// cached resonance val, just for checking if recalc is not needed
 
     real m_k = Real(0.01);
     real m_alpha = 0;

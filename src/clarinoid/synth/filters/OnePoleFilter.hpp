@@ -25,6 +25,7 @@ struct OnePoleFilter : public IFilter
     // IFilter
     virtual void SetType(FilterType type) override
     {
+        if (m_FilterType == type) return;
         switch (type)
         {
         default:
@@ -49,12 +50,16 @@ struct OnePoleFilter : public IFilter
     }
     virtual void SetCutoffFrequency(real hz) override
     {
+        if (FloatEquals(hz, m_cutoffHz)) return;
         m_cutoffHz = hz;
         Recalc();
     }
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
+        if ((m_FilterType == type) && FloatEquals(m_cutoffHz, cutoffHz)) {
+            return;
+        }
         switch (type)
         {
         default:

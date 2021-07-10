@@ -22,6 +22,7 @@ struct MoogLadderFilter : IFilter
     // IFilter
     virtual void SetType(FilterType type) override
     {
+        if (m_FilterType == type) return;
         switch (type)
         {
         default:
@@ -56,12 +57,14 @@ struct MoogLadderFilter : IFilter
 
     virtual void SetCutoffFrequency(real hz) override
     {
+        if (FloatEquals(m_cutoffHz, hz)) return;
         m_cutoffHz = hz;
         Recalc();
     }
 
     virtual void SetSaturation(real amt) override
     {
+        if (FloatEquals(m_overdrive, amt)) return;
         m_overdrive = amt;
         Recalc();
     }
@@ -69,6 +72,8 @@ struct MoogLadderFilter : IFilter
     // 0-1
     virtual void SetResonance(real p_res)
     {
+        if (FloatEquals(p_res, m_resonance)) return;
+        m_resonance = p_res;
         // this maps dQControl = 0->1 to 0-4 * 0.97 to avoid clippy self oscillation
         m_k = Real(3.88) * p_res;
         m_k = ClampInclusive(m_k, Real0, Real(3.88));
@@ -77,6 +82,10 @@ struct MoogLadderFilter : IFilter
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
+        if (FloatEquals(reso, m_resonance) && FloatEquals(m_overdrive, saturation) && FloatEquals(m_cutoffHz, cutoffHz) && (m_FilterType == type)) {
+            return;
+        }
+
         switch (type)
         {
         default:
@@ -101,6 +110,7 @@ struct MoogLadderFilter : IFilter
 
         m_cutoffHz = cutoffHz;
         m_overdrive = saturation;
+        m_resonance = reso;
         m_k = Real(3.88) * reso;
         m_k = ClampInclusive(m_k, Real0, Real(3.88));
         Recalc();
@@ -234,6 +244,8 @@ struct MoogLadderFilter : IFilter
     FilterType m_FilterType = FilterType::LP4;
     real m_cutoffHz = 10000;
     real m_overdrive = 0;
+
+    real m_resonance = Real(-1); // cached resonance for knowing when recalc is not needed.
 
     OnePoleFilter m_LPF1;
     OnePoleFilter m_LPF2;

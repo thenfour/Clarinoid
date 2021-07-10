@@ -29,12 +29,14 @@ struct DiodeFilter : public IFilter
     }
     virtual void SetCutoffFrequency(real hz) override
     {
+        if (FloatEquals(m_cutoffHz, hz)) return;
         m_cutoffHz = hz;
         Recalc();
     }
 
     virtual void SetSaturation(real amt) override
     {
+        if (FloatEquals(m_overdrive, amt)) return;
         m_overdrive = amt;
         Recalc();
     }
@@ -42,15 +44,20 @@ struct DiodeFilter : public IFilter
     // 0-1
     virtual void SetResonance(real amt) override
     {
-        m_k = amt * 16;
+        amt *= 16;
+        if (FloatEquals(m_k, amt)) return;
+        m_k = amt;
         Recalc();
     }
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
+        reso *= 16;
+        if (FloatEquals(m_cutoffHz, cutoffHz) && FloatEquals(m_overdrive, saturation) && FloatEquals(m_k, reso))
+            return;
         m_cutoffHz = cutoffHz;
         m_overdrive = saturation;
-        m_k = reso * 16;
+        m_k = reso;
         Recalc();
     }
 
