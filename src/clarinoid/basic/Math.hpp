@@ -91,13 +91,13 @@ inline float Frac(float x)
 
 inline float blamp0(float x)
 {
-    return 1 / 3.0 * x * x * x;
+    return 1 / 3.0f * x * x * x;
 }
 
 inline float blamp1(float x)
 {
     x = x - 1;
-    return -1 / 3.0 * x * x * x;
+    return -1 / 3.0f * x * x * x;
 }
 
 inline float blep0(float x)

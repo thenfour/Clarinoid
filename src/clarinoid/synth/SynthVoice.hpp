@@ -359,25 +359,25 @@ Input 5: Pulse Width Modulation for Oscillator 3
             mEnv2.noteOn();
         }
 
-        mOsc.amplitude(1, mPreset->mOsc1Gain);
-        mOsc.amplitude(2, mPreset->mOsc2Gain);
-        mOsc.amplitude(3, mPreset->mOsc3Gain);
+        mOsc.amplitude(1, mPreset->mOsc[0].mGain);
+        mOsc.amplitude(2, mPreset->mOsc[1].mGain);
+        mOsc.amplitude(3, mPreset->mOsc[2].mGain);
 
         // update
         float midiNote =
             (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * mAppSettings->mSynthSettings.mPitchBendRange;
 
-        mOsc.portamentoTime(1, mPreset->mOsc1PortamentoTime);
-        mOsc.portamentoTime(2, mPreset->mOsc2PortamentoTime);
-        mOsc.portamentoTime(3, mPreset->mOsc3PortamentoTime);
+        mOsc.portamentoTime(1, mPreset->mOsc[0].mPortamentoTime);
+        mOsc.portamentoTime(2, mPreset->mOsc[1].mPortamentoTime);
+        mOsc.portamentoTime(3, mPreset->mOsc[2].mPortamentoTime);
 
-        mOsc.waveform(1, mPreset->mOsc1Waveform);
-        mOsc.waveform(2, mPreset->mOsc2Waveform);
-        mOsc.waveform(3, mPreset->mOsc3Waveform);
+        mOsc.waveform(1, mPreset->mOsc[0].mWaveform);
+        mOsc.waveform(2, mPreset->mOsc[1].mWaveform);
+        mOsc.waveform(3, mPreset->mOsc[2].mWaveform);
 
-        mOsc.pulseWidth(1, mPreset->mOsc1PulseWidth);
-        mOsc.pulseWidth(2, mPreset->mOsc2PulseWidth);
-        mOsc.pulseWidth(3, mPreset->mOsc3PulseWidth);
+        mOsc.pulseWidth(1, mPreset->mOsc[0].mPulseWidth);
+        mOsc.pulseWidth(2, mPreset->mOsc[1].mPulseWidth);
+        mOsc.pulseWidth(3, mPreset->mOsc[2].mPulseWidth);
 
         // pwm amount is always 1 within the polyblep osc; actual PWM amount is controlled by modulation matrix.
         // mOsc.pwmAmount(1, 1);
@@ -397,27 +397,27 @@ Input 5: Pulse Width Modulation for Oscillator 3
 
         mOsc.frequency(1,
                        calcFreq(midiNote,
-                                mPreset->mOsc1PitchFine,
-                                mPreset->mOsc1PitchSemis,
+                                mPreset->mOsc[0].mPitchFine,
+                                mPreset->mOsc[0].mPitchSemis,
                                 -mPreset->mDetune,
-                                mPreset->mOsc1FreqMultiplier,
-                                mPreset->mOsc1FreqOffset));
+                                mPreset->mOsc[0].mFreqMultiplier,
+                                mPreset->mOsc[0].mFreqOffset));
         mOsc.frequency(3,
                        calcFreq(midiNote,
-                                mPreset->mOsc3PitchFine,
-                                mPreset->mOsc3PitchSemis,
+                                mPreset->mOsc[2].mPitchFine,
+                                mPreset->mOsc[2].mPitchSemis,
                                 mPreset->mDetune,
-                                mPreset->mOsc3FreqMultiplier,
-                                mPreset->mOsc3FreqOffset));
+                                mPreset->mOsc[2].mFreqMultiplier,
+                                mPreset->mOsc[2].mFreqOffset));
 
         if (mPreset->mSync)
         {
             float freq = calcFreq(midiNote,
-                                  mPreset->mOsc2PitchFine,
-                                  mPreset->mOsc2PitchSemis,
+                                  mPreset->mOsc[1].mPitchFine,
+                                  mPreset->mOsc[1].mPitchSemis,
                                   0,
-                                  mPreset->mOsc2FreqMultiplier,
-                                  mPreset->mOsc2FreqOffset);
+                                  mPreset->mOsc[1].mFreqMultiplier,
+                                  mPreset->mOsc[1].mFreqOffset);
             float freqSync =
                 map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * mPreset->mSyncMultMin, freq * mPreset->mSyncMultMax);
             mOsc.frequency(2, freqSync);
@@ -426,11 +426,11 @@ Input 5: Pulse Width Modulation for Oscillator 3
         {
             mOsc.frequency(2,
                            calcFreq(midiNote,
-                                    mPreset->mOsc2PitchFine,
-                                    mPreset->mOsc2PitchSemis,
+                                    mPreset->mOsc[1].mPitchFine,
+                                    mPreset->mOsc[1].mPitchSemis,
                                     0,
-                                    mPreset->mOsc2FreqMultiplier,
-                                    mPreset->mOsc2FreqOffset));
+                                    mPreset->mOsc[1].mFreqMultiplier,
+                                    mPreset->mOsc[1].mFreqOffset));
         }
 
         // perform breath & key tracking for filter. we will basically multiply the

@@ -186,46 +186,32 @@ struct EnvelopeSpec
     float mReleaseMS = 100.0f;
 };
 
+struct SynthOscillatorSettings
+{
+    float mGain = 0;
+    float mPortamentoTime = 0.0f;
+    float mFreqMultiplier = 1.0f; // midinotefreq * this
+    float mFreqOffset = 0.0f;
+
+    int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
+                          // not so great at being very precise.
+    float mPitchFine = 0; // in semitones, just for detuning
+
+    bool mPhaseRestart = false;
+    float mPhase01 = 0.0f;
+
+    OscWaveformShape mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+    float mPulseWidth = 0.5f;
+};
+
 struct SynthPreset
 {
+    SynthOscillatorSettings mOsc[3];
+
     String mName = "--";
-    // float mPortamentoTime = 0.005f;
     float mPan = 0;
     float mDelaySend = 0.08f;
     float mVerbSend = 0.08f;
-
-    float mOsc1Gain = 0;
-    float mOsc2Gain = ReasonableOscillatorGain;
-    float mOsc3Gain = ReasonableOscillatorGain;
-
-    // so frequency is calculated like,
-    // frequencyof(midinote + pitchsemis + pitchfine) * multiplier + freqoffset
-    float mOsc1PortamentoTime = 0.0f;
-    float mOsc2PortamentoTime = 0.0f;
-    float mOsc3PortamentoTime = 0.0f;
-
-    float mOsc1FreqMultiplier = 1.0f; // midinotefreq * this
-    float mOsc2FreqMultiplier = 1.0f;
-    float mOsc3FreqMultiplier = 1.0f;
-
-    float mOsc1FreqOffset = 0.0f; // midinotefreq * this
-    float mOsc2FreqOffset = 0.0f;
-    float mOsc3FreqOffset = 0.0f;
-
-    int mOsc1PitchSemis = 0; // semis = integral, transposition. want to keep this integral because the menu system is
-                             // not so great at being very precise.
-    int mOsc2PitchSemis = 0;
-    int mOsc3PitchSemis = 0;
-    float mOsc1PitchFine = 0; // in semitones, just for detuning
-    float mOsc2PitchFine = 0;
-    float mOsc3PitchFine = 0;
-
-    OscWaveformShape mOsc1Waveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
-    OscWaveformShape mOsc2Waveform = OscWaveformShape::SawSync;     //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
-    OscWaveformShape mOsc3Waveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
-    float mOsc1PulseWidth = 0.5f;
-    float mOsc2PulseWidth = 0.5f;
-    float mOsc3PulseWidth = 0.5f;
 
     EnvelopeSpec mEnv1;
     EnvelopeSpec mEnv2;
@@ -253,6 +239,17 @@ struct SynthPreset
                                      // applied (low notes get higher freq cutoff)
 
     SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
+
+    SynthPreset()
+    {
+        mOsc[0].mGain = 0;
+        mOsc[1].mGain = ReasonableOscillatorGain;
+        mOsc[2].mGain = ReasonableOscillatorGain;
+
+        mOsc[2].mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+        mOsc[2].mWaveform = OscWaveformShape::SawSync;     //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+        mOsc[2].mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+    }
 
     String ToString(uint8_t index) const
     {
@@ -293,13 +290,13 @@ struct SynthSettings
     {
         // detuned saw.
         p.mName = name;
-        p.mOsc1Gain = 0.0f;
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[0].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc1Waveform = OscWaveformShape::SawSync;
-        p.mOsc2Waveform = OscWaveformShape::SawSync;
-        p.mOsc3Waveform = OscWaveformShape::SawSync;
-        p.mOsc2Gain = ReasonableOscillatorGain;
+        p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[1].mGain = ReasonableOscillatorGain;
         p.mSync = false;
         p.mDetune = 0.0f;
 
@@ -314,14 +311,14 @@ struct SynthSettings
     static void InitBasicLeadPreset(const char *name, OscWaveformShape shape, float pulseWidth, SynthPreset &p)
     {
         p.mName = name;
-        p.mOsc1Gain = 0.0f;
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[0].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
         p.mSync = false;
         p.mDetune = 0.0f;
 
-        p.mOsc2Gain = ReasonableOscillatorGain;
-        p.mOsc2Waveform = shape;
-        p.mOsc2PulseWidth = pulseWidth;
+        p.mOsc[1].mGain = ReasonableOscillatorGain;
+        p.mOsc[1].mWaveform = shape;
+        p.mOsc[1].mPulseWidth = pulseWidth;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
         p.mFilterMinFreq = 0.0f;
@@ -337,17 +334,17 @@ struct SynthSettings
         p.mDetune = 0.1f;
         p.mSync = false;
 
-        p.mOsc1Gain = ReasonableOscillatorGain;
-        p.mOsc1Waveform = shape;
-        p.mOsc1PulseWidth = pulseWidth;
+        p.mOsc[0].mGain = ReasonableOscillatorGain;
+        p.mOsc[0].mWaveform = shape;
+        p.mOsc[0].mPulseWidth = pulseWidth;
 
-        p.mOsc2Gain = ReasonableOscillatorGain;
-        p.mOsc2Waveform = shape;
-        p.mOsc2PulseWidth = 1.0f - pulseWidth;
+        p.mOsc[1].mGain = ReasonableOscillatorGain;
+        p.mOsc[1].mWaveform = shape;
+        p.mOsc[1].mPulseWidth = 1.0f - pulseWidth;
 
-        p.mOsc3Gain = ReasonableOscillatorGain;
-        p.mOsc3Waveform = shape;
-        p.mOsc2PulseWidth = pulseWidth;
+        p.mOsc[2].mGain = ReasonableOscillatorGain;
+        p.mOsc[2].mWaveform = shape;
+        p.mOsc[1].mPulseWidth = pulseWidth;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
         p.mFilterMinFreq = 0.0f;
@@ -363,17 +360,17 @@ struct SynthSettings
         p.mSync = false;
         p.mDetune = 0.0f;
 
-        p.mOsc1Gain = ReasonableOscillatorGain;
-        p.mOsc1Waveform = OscWaveformShape::Pulse;
-        p.mOsc1PulseWidth = 0.08f;
-        p.mOsc1PitchSemis = -5;
+        p.mOsc[0].mGain = ReasonableOscillatorGain;
+        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[0].mPulseWidth = 0.08f;
+        p.mOsc[0].mPitchSemis = -5;
 
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc2Gain = ReasonableOscillatorGain;
-        p.mOsc2Waveform = OscWaveformShape::Pulse;
-        p.mOsc2PulseWidth = 0.92f;
-        p.mOsc2PitchSemis = -12;
+        p.mOsc[1].mGain = ReasonableOscillatorGain;
+        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[1].mPulseWidth = 0.92f;
+        p.mOsc[1].mPitchSemis = -12;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
         p.mFilterMinFreq = 0.0f;
@@ -389,16 +386,16 @@ struct SynthSettings
         p.mSync = false;
         p.mDetune = 0.0f;
 
-        p.mOsc1Gain = ReasonableOscillatorGain;
-        p.mOsc1Waveform = OscWaveformShape::Pulse;
-        p.mOsc1PulseWidth = 0.4f;
-        p.mOsc1PitchSemis = -5;
+        p.mOsc[0].mGain = ReasonableOscillatorGain;
+        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[0].mPulseWidth = 0.4f;
+        p.mOsc[0].mPitchSemis = -5;
 
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc2Gain = ReasonableOscillatorGain;
-        p.mOsc2Waveform = OscWaveformShape::Pulse;
-        p.mOsc2PitchSemis = -12;
+        p.mOsc[1].mGain = ReasonableOscillatorGain;
+        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[1].mPitchSemis = -12;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
         p.mFilterMinFreq = 0.0f;
@@ -411,11 +408,11 @@ struct SynthSettings
     static void InitHarmSyncLead(SynthPreset &p)
     {
         p.mName = "Sync for Harm";
-        p.mOsc1Gain = 0.0f;
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[0].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc2Gain = ReasonableOscillatorGainForHarm;
-        p.mOsc3Gain = ReasonableOscillatorGainForHarm;
+        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+        p.mOsc[2].mGain = ReasonableOscillatorGainForHarm;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
         p.mFilterMinFreq = 0.0f;
@@ -428,12 +425,12 @@ struct SynthSettings
     static void InitHarmTriLead(SynthPreset &p)
     {
         p.mName = "Tri for Harm";
-        p.mOsc1Gain = 0.0f;
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[0].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc2Waveform = OscWaveformShape::VarTriangle;
-        p.mOsc2Gain = ReasonableOscillatorGainForHarm;
-        p.mOsc2PulseWidth = 0.5f;
+        p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+        p.mOsc[1].mPulseWidth = 0.5f;
         p.mSync = false;
         p.mDetune = 0.0f;
 
@@ -452,12 +449,12 @@ struct SynthSettings
     static void InitHarmPulseLead(SynthPreset &p)
     {
         p.mName = "Pulse for Harm";
-        p.mOsc1Gain = 0.0f;
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[0].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc2Waveform = OscWaveformShape::Pulse;
-        p.mOsc2Gain = ReasonableOscillatorGainForHarm;
-        p.mOsc2PulseWidth = 0.07f;
+        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+        p.mOsc[1].mPulseWidth = 0.07f;
         p.mSync = false;
         p.mDetune = 0.0f;
 
@@ -472,11 +469,11 @@ struct SynthSettings
     static void InitHarmSawLead(SynthPreset &p)
     {
         p.mName = "Saw for Harm";
-        p.mOsc1Gain = 0.0f;
-        p.mOsc3Gain = 0.0f;
+        p.mOsc[0].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc2Waveform = OscWaveformShape::SawSync;
-        p.mOsc2Gain = ReasonableOscillatorGainForHarm;
+        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
         p.mSync = false;
         p.mDetune = 0.0f;
 
@@ -491,12 +488,12 @@ struct SynthSettings
     static void InitCrystalFieldsPatch(SynthPreset &p)
     {
         InitBasicLeadPreset("CrystalFields", OscWaveformShape::Pulse, 0.40f, p);
-        p.mOsc1Gain = p.mOsc2Gain;
-        p.mOsc1Waveform = OscWaveformShape::Pulse;
-        p.mOsc1PulseWidth = 0.5f;
-        p.mOsc1PitchSemis = -5;
+        p.mOsc[0].mGain = p.mOsc[1].mGain;
+        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[0].mPulseWidth = 0.5f;
+        p.mOsc[0].mPitchSemis = -5;
 
-        p.mOsc2PitchSemis = -12;
+        p.mOsc[1].mPitchSemis = -12;
 
         p.mLfo2Rate = 0.7f;
 
@@ -525,20 +522,20 @@ struct SynthSettings
         p.mFilterSaturation = 0.20f;
         p.mFilterQ = 0.0f;
 
-        p.mOsc1Waveform = OscWaveformShape::VarTriangle;
-        p.mOsc1PulseWidth = 0;
-        p.mOsc1PitchFine = 0.02f;
-        p.mOsc1Gain = ReasonableOscillatorGain;
+        p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[0].mPulseWidth = 0;
+        p.mOsc[0].mPitchFine = 0.02f;
+        p.mOsc[0].mGain = ReasonableOscillatorGain;
 
-        p.mOsc2Waveform = OscWaveformShape::VarTriangle;
-        p.mOsc2PulseWidth = 0;
-        p.mOsc2PitchFine = 0.02f;
-        p.mOsc2Gain = ReasonableOscillatorGain;
+        p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[1].mPulseWidth = 0;
+        p.mOsc[1].mPitchFine = 0.02f;
+        p.mOsc[1].mGain = ReasonableOscillatorGain;
 
-        p.mOsc3Waveform = OscWaveformShape::VarTriangle;
-        p.mOsc3PulseWidth = 0;
-        p.mOsc3PitchFine = -0.08f;
-        p.mOsc3Gain = ReasonableOscillatorGain;
+        p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[2].mPulseWidth = 0;
+        p.mOsc[2].mPitchFine = -0.08f;
+        p.mOsc[2].mGain = ReasonableOscillatorGain;
     }
 
     static void InitBellycrawlPreset(SynthPreset &p)
@@ -558,8 +555,8 @@ struct SynthSettings
     {
         InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, p);
         // make osc1 and osc2 equal
-        p.mOsc2Gain = p.mOsc1Gain = ReasonableOscillatorGain * 0.75f;
-        p.mOsc2Waveform = p.mOsc1Waveform = OscWaveformShape::Pulse;
+        p.mOsc[1].mGain = p.mOsc[0].mGain = ReasonableOscillatorGain * 0.75f;
+        p.mOsc[1].mWaveform = p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
         p.mDetune = 0.04f;
 
         p.mFilterType = ClarinoidFilterType::BP_Moog4;
@@ -583,9 +580,9 @@ struct SynthSettings
         p.mDetune = 0;
         p.mFilterQ = 0.40f;
         p.mFilterMaxFreq = 11500;
-        p.mOsc3Waveform = OscWaveformShape::Pulse;
-        p.mOsc3PulseWidth = 0.1f;
-        p.mOsc3Gain = ReasonableOscillatorGain;
+        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[2].mPulseWidth = 0.1f;
+        p.mOsc[2].mGain = ReasonableOscillatorGain;
     }
 
     static void InitDetunePWMLead(SynthPreset &p)
@@ -598,17 +595,17 @@ struct SynthSettings
         p.mFilterQ = 0.12f;
         // lp moog 4 16k
 
-        p.mOsc1Waveform = OscWaveformShape::Pulse;
-        p.mOsc1PulseWidth = 0.3f;
-        p.mOsc1Gain = ReasonableOscillatorGain / 1.5f;
+        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[0].mPulseWidth = 0.3f;
+        p.mOsc[0].mGain = ReasonableOscillatorGain / 1.5f;
 
-        p.mOsc2Waveform = OscWaveformShape::Pulse;
-        p.mOsc2PulseWidth = 0.3f;
-        p.mOsc2Gain = ReasonableOscillatorGain / 1.5f;
+        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[1].mPulseWidth = 0.3f;
+        p.mOsc[1].mGain = ReasonableOscillatorGain / 1.5f;
 
-        p.mOsc3Waveform = OscWaveformShape::Pulse;
-        p.mOsc3PulseWidth = 0.3f;
-        p.mOsc3Gain = ReasonableOscillatorGain / 1.5f;
+        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[2].mPulseWidth = 0.3f;
+        p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
 
         p.mLfo2Rate = p.mLfo1Rate;
 
@@ -644,15 +641,15 @@ struct SynthSettings
         p.mVerbSend = 0;
         p.mDelaySend = 0;
 
-        p.mOsc1Waveform = OscWaveformShape::Sine;
-        p.mOsc2Waveform = OscWaveformShape::SawSync;
-        p.mOsc3Waveform = OscWaveformShape::SawSync;
-        p.mOsc1PulseWidth = 0.0f;
-        p.mOsc2PulseWidth = 0.0f;
-        p.mOsc3PulseWidth = 0.0f;
-        p.mOsc1Gain = 1.0f;
-        p.mOsc2Gain = 1.0f;
-        p.mOsc3Gain = 1.0f;
+        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[0].mPulseWidth = 0.0f;
+        p.mOsc[1].mPulseWidth = 0.0f;
+        p.mOsc[2].mPulseWidth = 0.0f;
+        p.mOsc[0].mGain = 1.0f;
+        p.mOsc[1].mGain = 1.0f;
+        p.mOsc[2].mGain = 1.0f;
 
         p.mFilterType = filt;
         p.mFilterMinFreq = 0.0f;
@@ -676,19 +673,18 @@ struct SynthSettings
         p.mFilterSaturation = 0.16f;
         p.mFilterQ = 0.12f;
 
-        p.mOsc1Waveform = OscWaveformShape::VarTriangle;
-        p.mOsc1PulseWidth = 0.0f;
-        p.mOsc1Gain = ReasonableOscillatorGain / 1.5f;
+        p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[0].mPulseWidth = 0.0f;
+        p.mOsc[0].mGain = ReasonableOscillatorGain / 1.5f;
 
-        p.mOsc2Waveform = OscWaveformShape::VarTriangle;
-        p.mOsc2PulseWidth = 0.0f;
-        p.mOsc2FreqMultiplier = 0.501f;
-        p.mOsc2Gain = ReasonableOscillatorGain / 1.5f;
+        p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[1].mPulseWidth = 0.0f;
+        p.mOsc[1].mFreqMultiplier = 0.501f;
+        p.mOsc[1].mGain = ReasonableOscillatorGain / 1.5f;
 
-        p.mOsc3Waveform = OscWaveformShape::VarTriangle;
-        p.mOsc3PulseWidth = 0.0f;
-        p.mOsc3Gain = ReasonableOscillatorGain / 1.5f;
-
+        p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[2].mPulseWidth = 0.0f;
+        p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
 
         p.mModulations[0].mDest = ModulationDestination::Osc1PulseWidth;
         p.mModulations[0].mSource = ModulationSource::LFO1;
@@ -740,10 +736,10 @@ struct SynthSettings
         p.mFilterMaxFreq = 12000;
         p.mFilterType = ClarinoidFilterType::LP_SEM12;
         p.mLfo2Rate = 2.0f;
-        p.mOsc3FreqMultiplier = 4.0f;
-        p.mOsc3Waveform = OscWaveformShape::Pulse;
-        p.mOsc3PulseWidth = 0.5f;
-        p.mOsc3Gain = .15f;
+        p.mOsc[2].mFreqMultiplier = 4.0f;
+        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[2].mPulseWidth = 0.5f;
+        p.mOsc[2].mGain = .15f;
         p.mModulations[0].mSource = ModulationSource::LFO1;
         p.mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
         p.mModulations[0].mScaleN11 = 0.20f;
@@ -761,7 +757,7 @@ struct SynthSettings
     static void InitFluvial(SynthPreset &p)
     {
         p.mName = "Fluvial";
-        p.mOsc1Gain = 0.0f;
+        p.mOsc[0].mGain = 0.0f;
         p.mSync = true;
         p.mSyncMultMin = 0.15f;
         p.mSyncMultMax = 1.95f;
@@ -769,12 +765,12 @@ struct SynthSettings
         p.mVerbSend = 0.1f;
         p.mDelaySend = 0.1f;
 
-        p.mOsc2Gain = 0.15f;
-        p.mOsc2Waveform = OscWaveformShape::SawSync;
+        p.mOsc[1].mGain = 0.15f;
+        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
 
-        p.mOsc3Gain = 0.15f;
-        p.mOsc3PulseWidth = 0.5f;
-        p.mOsc3Waveform = OscWaveformShape::Pulse;
+        p.mOsc[2].mGain = 0.15f;
+        p.mOsc[2].mPulseWidth = 0.5f;
+        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
 
         p.mFilterType = ClarinoidFilterType::LP_K35;
         p.mFilterMinFreq = 0.0f;
@@ -807,10 +803,10 @@ struct SynthSettings
         InitFunkyLeadPreset(mPresets[i++]);
         InitBasicLeadPreset("Saw Brass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
         // make osc1 and osc2 equal
-        mPresets[i].mOsc3Gain = mPresets[i].mOsc2Gain = mPresets[i].mOsc1Gain = ReasonableOscillatorGain;
-        mPresets[i].mOsc3Waveform = mPresets[i].mOsc2Waveform = mPresets[i].mOsc1Waveform = OscWaveformShape::SawSync;
-        mPresets[i].mOsc1Waveform = OscWaveformShape::Pulse;
-        mPresets[i].mOsc3FreqMultiplier = 2.0f;
+        mPresets[i].mOsc[2].mGain = mPresets[i].mOsc[1].mGain = mPresets[i].mOsc[0].mGain = ReasonableOscillatorGain;
+        mPresets[i].mOsc[2].mWaveform = mPresets[i].mOsc[1].mWaveform = mPresets[i].mOsc[0].mWaveform = OscWaveformShape::SawSync;
+        mPresets[i].mOsc[0].mWaveform = OscWaveformShape::Pulse;
+        mPresets[i].mOsc[2].mFreqMultiplier = 2.0f;
         mPresets[i].mDetune = 0.14f;
 
         mPresets[i].mEnv1.mDecayMS = 100;
@@ -828,9 +824,9 @@ struct SynthSettings
         // harmonizer-friendly patches
         InitDetunedLeadPreset(
             "Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[SynthPresetID_HarmDetunedSaws]);
-        mPresets[SynthPresetID_HarmDetunedSaws].mOsc1Gain = ReasonableOscillatorGainForHarm;
-        mPresets[SynthPresetID_HarmDetunedSaws].mOsc2Gain = ReasonableOscillatorGainForHarm;
-        mPresets[SynthPresetID_HarmDetunedSaws].mOsc3Gain = ReasonableOscillatorGainForHarm;
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[0].mGain = ReasonableOscillatorGainForHarm;
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[2].mGain = ReasonableOscillatorGainForHarm;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterQ = 0;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterType = ClarinoidFilterType::BP_Moog4;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterMaxFreq = 1800;

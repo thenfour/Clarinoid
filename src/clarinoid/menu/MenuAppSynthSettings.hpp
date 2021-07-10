@@ -95,6 +95,133 @@ struct EnvelopeMenuApp
     }
 };
 
+struct SynthPatchOscillatorMenuStuff
+{
+    SynthOscillatorSettings *mpBinding = nullptr;
+    SynthOscillatorSettings &GetBinding()
+    {
+        return *mpBinding;
+    }
+    // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
+    // cc::function<bool()>::ptr_t isEnabled) :
+    EnumSettingItem<OscWaveformShape> mWaveform = {
+        "Osc1-Waveform",
+        gOscWaveformShapeInfo,
+        Property<OscWaveformShape>{[](void *cap) {
+                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                       return pThis->GetBinding().mWaveform;
+                                   },
+                                   [](void *cap, const OscWaveformShape &v) {
+                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                       pThis->GetBinding().mWaveform = v;
+                                   },
+                                   this},
+        AlwaysEnabled};
+
+    FloatSettingItem mGain = {" - Gain",
+                              StandardRangeSpecs::gFloat_0_1,
+                              Property<float>{[](void *cap) {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  return pThis->GetBinding().mGain;
+                                              },
+                                              [](void *cap, const float &v) {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  pThis->GetBinding().mGain = v;
+                                              },
+                                              this},
+                              AlwaysEnabled};
+
+    FloatSettingItem mPortamentoTime = {" - Portamento",
+                                        StandardRangeSpecs::gPortamentoRange,
+                                        Property<float>{[](void *cap) {
+                                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                            return pThis->GetBinding().mPortamentoTime;
+                                                        },
+                                                        [](void *cap, const float &v) {
+                                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                            pThis->GetBinding().mPortamentoTime = v;
+                                                        },
+                                                        this},
+                                        AlwaysEnabled};
+
+    FloatSettingItem mFreqMul = {" - FreqMul",
+                                 StandardRangeSpecs::gFreqMulRange,
+                                 Property<float>{[](void *cap) {
+                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                     return pThis->GetBinding().mFreqMultiplier;
+                                                 },
+                                                 [](void *cap, const float &v) {
+                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                     pThis->GetBinding().mFreqMultiplier = v;
+                                                 },
+                                                 this},
+                                 AlwaysEnabled};
+
+    FloatSettingItem mFreqOffset = {" - FreqOffset",
+                                    StandardRangeSpecs::gFreqOffsetRange,
+                                    Property<float>{[](void *cap) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        return pThis->GetBinding().mFreqOffset;
+                                                    },
+                                                    [](void *cap, const float &v) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        pThis->GetBinding().mFreqOffset = v;
+                                                    },
+                                                    this},
+                                    AlwaysEnabled};
+
+    IntSettingItem mPitchSemis = {" - PitchSemis",
+                                  StandardRangeSpecs::gTransposeRange,
+                                  Property<int>{[](void *cap) {
+                                                    auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                    return pThis->GetBinding().mPitchSemis;
+                                                },
+                                                [](void *cap, const int &v) {
+                                                    auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                    pThis->GetBinding().mPitchSemis = v;
+                                                },
+                                                this},
+                                  AlwaysEnabled};
+
+    FloatSettingItem mPitchFine = {" - PitchFine",
+                                   StandardRangeSpecs::gFloat_N1_1,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       return pThis->GetBinding().mPitchFine;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       pThis->GetBinding().mPitchFine = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
+    FloatSettingItem mPulseWidth = {" - PulseWidth",
+                                    StandardRangeSpecs::gFloat_0_1,
+                                    Property<float>{[](void *cap) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        return pThis->GetBinding().mPulseWidth;
+                                                    },
+                                                    [](void *cap, const float &v) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        pThis->GetBinding().mPulseWidth = v;
+                                                    },
+                                                    this},
+                                    AlwaysEnabled};
+
+    ISettingItem *mArray[8] = {
+        &mWaveform,
+        &mGain,
+        &mPortamentoTime,
+        &mFreqMul,
+        &mFreqOffset,
+        &mPitchSemis,
+        &mPitchFine,
+        &mPulseWidth,
+    };
+
+    SettingsList mSubmenuList = {mArray};
+};
+
 // acts as a standalone "current patch" editor app,
 // as well as sub-app of general synth settings. so you can change params of patches without them even being selected.
 struct SynthPatchMenuApp : public SettingsMenuApp
@@ -332,317 +459,6 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                  },
                                                  this}};
 
-    // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
-    // cc::function<bool()>::ptr_t isEnabled) :
-    EnumSettingItem<OscWaveformShape> mOsc1Waveform = {
-        "Osc1-Waveform",
-        gOscWaveformShapeInfo,
-        Property<OscWaveformShape>{[](void *cap) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       return pThis->GetBinding().mOsc1Waveform;
-                                   },
-                                   [](void *cap, const OscWaveformShape &v) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       pThis->GetBinding().mOsc1Waveform = v;
-                                   },
-                                   this},
-        AlwaysEnabled};
-
-    FloatSettingItem mOsc1Gain = {" - Gain",
-                                  StandardRangeSpecs::gFloat_0_1,
-                                  Property<float>{[](void *cap) {
-                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      return pThis->GetBinding().mOsc1Gain;
-                                                  },
-                                                  [](void *cap, const float &v) {
-                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      pThis->GetBinding().mOsc1Gain = v;
-                                                  },
-                                                  this},
-                                  AlwaysEnabled};
-
-
-    FloatSettingItem mOsc1PortamentoTime = {" - Portamento",
-                                        StandardRangeSpecs::gPortamentoRange,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc1PortamentoTime;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc1PortamentoTime = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    FloatSettingItem mOsc2PortamentoTime = {" - Portamento",
-                                        StandardRangeSpecs::gPortamentoRange,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc2PortamentoTime;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc2PortamentoTime = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    FloatSettingItem mOsc3PortamentoTime = {" - Portamento",
-                                        StandardRangeSpecs::gPortamentoRange,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc3PortamentoTime;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc3PortamentoTime = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-
-    FloatSettingItem mOsc1FreqMul = {" - FreqMul",
-                                     StandardRangeSpecs::gFreqMulRange,
-                                     Property<float>{[](void *cap) {
-                                                         auto *pThis = (SynthPatchMenuApp *)cap;
-                                                         return pThis->GetBinding().mOsc1FreqMultiplier;
-                                                     },
-                                                     [](void *cap, const float &v) {
-                                                         auto *pThis = (SynthPatchMenuApp *)cap;
-                                                         pThis->GetBinding().mOsc1FreqMultiplier = v;
-                                                     },
-                                                     this},
-                                     AlwaysEnabled};
-
-    FloatSettingItem mOsc1FreqOffset = {" - FreqOffset",
-                                        StandardRangeSpecs::gFreqOffsetRange,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc1FreqOffset;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc1FreqOffset = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    IntSettingItem mOsc1PitchSemis = {" - PitchSemis",
-                                      StandardRangeSpecs::gTransposeRange,
-                                      Property<int>{[](void *cap) {
-                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-                                                        return pThis->GetBinding().mOsc1PitchSemis;
-                                                    },
-                                                    [](void *cap, const int &v) {
-                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-                                                        pThis->GetBinding().mOsc1PitchSemis = v;
-                                                    },
-                                                    this},
-                                      AlwaysEnabled};
-    FloatSettingItem mOsc1PitchFine = {" - PitchFine",
-                                       StandardRangeSpecs::gFloat_N1_1,
-                                       Property<float>{[](void *cap) {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           return pThis->GetBinding().mOsc1PitchFine;
-                                                       },
-                                                       [](void *cap, const float &v) {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           pThis->GetBinding().mOsc1PitchFine = v;
-                                                       },
-                                                       this},
-                                       AlwaysEnabled};
-    FloatSettingItem mOsc1PulseWidth = {" - PulseWidth",
-                                        StandardRangeSpecs::gFloat_0_1,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc1PulseWidth;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc1PulseWidth = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    EnumSettingItem<OscWaveformShape> mOsc2Waveform = {
-        "Osc2-Waveform",
-        gOscWaveformShapeInfo,
-        Property<OscWaveformShape>{[](void *cap) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       return pThis->GetBinding().mOsc2Waveform;
-                                   },
-                                   [](void *cap, const OscWaveformShape &v) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       pThis->GetBinding().mOsc2Waveform = v;
-                                   },
-                                   this},
-        AlwaysEnabled};
-    FloatSettingItem mOsc2Gain = {" - Gain",
-                                  StandardRangeSpecs::gFloat_0_1,
-                                  Property<float>{[](void *cap) {
-                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      return pThis->GetBinding().mOsc2Gain;
-                                                  },
-                                                  [](void *cap, const float &v) {
-                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      pThis->GetBinding().mOsc2Gain = v;
-                                                  },
-                                                  this},
-                                  AlwaysEnabled};
-
-    FloatSettingItem mOsc2FreqMul = {" - FreqMul",
-                                     StandardRangeSpecs::gFreqMulRange,
-                                     Property<float>{[](void *cap) {
-                                                         auto *pThis = (SynthPatchMenuApp *)cap;
-                                                         return pThis->GetBinding().mOsc2FreqMultiplier;
-                                                     },
-                                                     [](void *cap, const float &v) {
-                                                         auto *pThis = (SynthPatchMenuApp *)cap;
-                                                         pThis->GetBinding().mOsc2FreqMultiplier = v;
-                                                     },
-                                                     this},
-                                     AlwaysEnabled};
-
-    FloatSettingItem mOsc2FreqOffset = {" - FreqOffset",
-                                        StandardRangeSpecs::gFreqOffsetRange,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc2FreqOffset;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc2FreqOffset = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    IntSettingItem mOsc2PitchSemis = {" - PitchSemis",
-                                      StandardRangeSpecs::gTransposeRange,
-                                      Property<int>{[](void *cap) {
-                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-                                                        return pThis->GetBinding().mOsc2PitchSemis;
-                                                    },
-                                                    [](void *cap, const int &v) {
-                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-                                                        pThis->GetBinding().mOsc2PitchSemis = v;
-                                                    },
-                                                    this},
-                                      AlwaysEnabled};
-    FloatSettingItem mOsc2PitchFine = {" - PitchFine",
-                                       StandardRangeSpecs::gFloat_N1_1,
-                                       Property<float>{[](void *cap) {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           return pThis->GetBinding().mOsc2PitchFine;
-                                                       },
-                                                       [](void *cap, const float &v) {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           pThis->GetBinding().mOsc2PitchFine = v;
-                                                       },
-                                                       this},
-                                       AlwaysEnabled};
-    FloatSettingItem mOsc2PulseWidth = {" - PulseWidth",
-                                        StandardRangeSpecs::gFloat_0_1,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc2PulseWidth;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc2PulseWidth = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    EnumSettingItem<OscWaveformShape> mOsc3Waveform = {
-        "Osc3-Waveform",
-        gOscWaveformShapeInfo,
-        Property<OscWaveformShape>{[](void *cap) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       return pThis->GetBinding().mOsc3Waveform;
-                                   },
-                                   [](void *cap, const OscWaveformShape &v) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       pThis->GetBinding().mOsc3Waveform = v;
-                                   },
-                                   this},
-        AlwaysEnabled};
-    FloatSettingItem mOsc3Gain = {" - Gain",
-                                  StandardRangeSpecs::gFloat_0_1,
-                                  Property<float>{[](void *cap) {
-                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      return pThis->GetBinding().mOsc3Gain;
-                                                  },
-                                                  [](void *cap, const float &v) {
-                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      pThis->GetBinding().mOsc3Gain = v;
-                                                  },
-                                                  this},
-                                  AlwaysEnabled};
-
-    FloatSettingItem mOsc3FreqMul = {" - FreqMul",
-                                     StandardRangeSpecs::gFreqMulRange,
-                                     Property<float>{[](void *cap) {
-                                                         auto *pThis = (SynthPatchMenuApp *)cap;
-                                                         return pThis->GetBinding().mOsc3FreqMultiplier;
-                                                     },
-                                                     [](void *cap, const float &v) {
-                                                         auto *pThis = (SynthPatchMenuApp *)cap;
-                                                         pThis->GetBinding().mOsc3FreqMultiplier = v;
-                                                     },
-                                                     this},
-                                     AlwaysEnabled};
-
-    FloatSettingItem mOsc3FreqOffset = {" - FreqOffset",
-                                        StandardRangeSpecs::gFreqOffsetRange,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc3FreqOffset;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc3FreqOffset = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    IntSettingItem mOsc3PitchSemis = {" - PitchSemis",
-                                      StandardRangeSpecs::gTransposeRange,
-                                      Property<int>{[](void *cap) {
-                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-                                                        return pThis->GetBinding().mOsc3PitchSemis;
-                                                    },
-                                                    [](void *cap, const int &v) {
-                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-                                                        pThis->GetBinding().mOsc3PitchSemis = v;
-                                                    },
-                                                    this},
-                                      AlwaysEnabled};
-    FloatSettingItem mOsc3PitchFine = {" - PitchFine",
-                                       StandardRangeSpecs::gFloat_N1_1,
-                                       Property<float>{[](void *cap) {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           return pThis->GetBinding().mOsc3PitchFine;
-                                                       },
-                                                       [](void *cap, const float &v) {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           pThis->GetBinding().mOsc3PitchFine = v;
-                                                       },
-                                                       this},
-                                       AlwaysEnabled};
-    FloatSettingItem mOsc3PulseWidth = {" - PulseWidth",
-                                        StandardRangeSpecs::gFloat_0_1,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            return pThis->GetBinding().mOsc3PulseWidth;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                            pThis->GetBinding().mOsc3PulseWidth = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
     FunctionListSettingItem mCopyPreset = {
         "Copy to ...",
         SYNTH_PRESET_COUNT,
@@ -815,47 +631,34 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mModulationsSubmenuItem = {String("Modulations"), &mModulationsSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mOsc1SubmenuArray[8] = {
-        &mOsc1Waveform,
-        &mOsc1Gain,
-        &mOsc1PortamentoTime,
-        &mOsc1FreqMul,
-        &mOsc1FreqOffset,
-        &mOsc1PitchSemis,
-        &mOsc1PitchFine,
-        &mOsc1PulseWidth,
-    };
-    SettingsList mOsc1SubmenuList = {mOsc1SubmenuArray};
+    SynthPatchOscillatorMenuStuff mOscSubmenuStuff;
 
-    SubmenuSettingItem mOsc1SubmenuItem = {String("OSC1"), &mOsc1SubmenuList, AlwaysEnabled};
+    SubmenuSettingItem mOsc1SubmenuItem = {String("OSC1"),
+                                           [](void *cap) {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[0];
+                                               return &pThis->mOscSubmenuStuff.mSubmenuList;
+                                           },
+                                           AlwaysEnabled,
+                                           this};
 
-    ISettingItem *mOsc2SubmenuArray[8] = {
-        &mOsc2Waveform,
-        &mOsc2Gain,
-        &mOsc2PortamentoTime,
-        &mOsc2FreqMul,
-        &mOsc2FreqOffset,
-        &mOsc2PitchSemis,
-        &mOsc2PitchFine,
-        &mOsc2PulseWidth,
-    };
-    SettingsList mOsc2SubmenuList = {mOsc2SubmenuArray};
+    SubmenuSettingItem mOsc2SubmenuItem = {String("OSC2"),
+                                           [](void *cap) {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[1];
+                                               return &pThis->mOscSubmenuStuff.mSubmenuList;
+                                           },
+                                           AlwaysEnabled,
+                                           this};
 
-    SubmenuSettingItem mOsc2SubmenuItem = {String("OSC2"), &mOsc2SubmenuList, AlwaysEnabled};
-
-    ISettingItem *mOsc3SubmenuArray[8] = {
-        &mOsc3Waveform,
-        &mOsc3Gain,
-        &mOsc3PortamentoTime,
-        &mOsc3FreqMul,
-        &mOsc3FreqOffset,
-        &mOsc3PitchSemis,
-        &mOsc3PitchFine,
-        &mOsc3PulseWidth,
-    };
-    SettingsList mOsc3SubmenuList = {mOsc3SubmenuArray};
-
-    SubmenuSettingItem mOsc3SubmenuItem = {String("OSC3"), &mOsc3SubmenuList, AlwaysEnabled};
+    SubmenuSettingItem mOsc3SubmenuItem = {String("OSC3"),
+                                           [](void *cap) {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[2];
+                                               return &pThis->mOscSubmenuStuff.mSubmenuList;
+                                           },
+                                           AlwaysEnabled,
+                                           this};
 
     ISettingItem *mBreathFilterSubmenuArray[6] = {
         &mBreathFiltType,
