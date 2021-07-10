@@ -5,6 +5,7 @@
 
 namespace clarinoid
 {
+static constexpr size_t POLYBLEP_OSC_COUNT = 3;
 
 static constexpr float ReasonableOscillatorGain = 0.25f;
 static constexpr float ReasonableOscillatorGainForHarm = 0.19f;
@@ -200,13 +201,13 @@ struct SynthOscillatorSettings
     bool mPhaseRestart = false;
     float mPhase01 = 0.0f;
 
-    OscWaveformShape mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+    OscWaveformShape mWaveform = OscWaveformShape::VarTriangle;
     float mPulseWidth = 0.5f;
 };
 
 struct SynthPreset
 {
-    SynthOscillatorSettings mOsc[3];
+    SynthOscillatorSettings mOsc[POLYBLEP_OSC_COUNT];
 
     String mName = "--";
     float mPan = 0;

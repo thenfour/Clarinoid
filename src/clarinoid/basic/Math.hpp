@@ -18,7 +18,7 @@ inline int FloatRoundToInt(float f)
     return (int)::floorf(f + 0.5f);
 }
 
-inline bool FloatEquals(float f1, float f2, float eps = 0.00001f)
+inline bool FloatEquals(float f1, float f2, float eps = 0.000001f)
 {
     return fabs(f1 - f2) < eps;
 }

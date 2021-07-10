@@ -285,13 +285,22 @@ Input 5: Pulse Width Modulation for Oscillator 3
         if (voiceOrPatchChanged || transition.mNeedsNoteOn)
         {
             mOsc.addNote(); // this also engages portamento
+
+            for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
+            {
+                if (mPreset->mOsc[i].mPhaseRestart)
+                {
+                    mOsc.mOsc[i].ResetPhase();
+                }
+            }
         }
 
         if (!mv.IsPlaying() || mv.mIsNoteCurrentlyMuted)
         {
-            mOsc.amplitude(1, 0.0);
-            mOsc.amplitude(2, 0.0);
-            mOsc.amplitude(3, 0.0);
+            for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
+            {
+                mOsc.mOsc[i].amplitude(0);
+            }
             mRunningVoice = mv;
             return;
         }
@@ -359,34 +368,20 @@ Input 5: Pulse Width Modulation for Oscillator 3
             mEnv2.noteOn();
         }
 
-        mOsc.amplitude(1, mPreset->mOsc[0].mGain);
-        mOsc.amplitude(2, mPreset->mOsc[1].mGain);
-        mOsc.amplitude(3, mPreset->mOsc[2].mGain);
-
         // update
         float midiNote =
             (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * mAppSettings->mSynthSettings.mPitchBendRange;
 
-        mOsc.portamentoTime(1, mPreset->mOsc[0].mPortamentoTime);
-        mOsc.portamentoTime(2, mPreset->mOsc[1].mPortamentoTime);
-        mOsc.portamentoTime(3, mPreset->mOsc[2].mPortamentoTime);
+        for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
+        {
+            mOsc.mOsc[i].amplitude(mPreset->mOsc[i].mGain);
+            mOsc.mOsc[i].SetPhaseOffset(mPreset->mOsc[i].mPhase01);
 
-        mOsc.waveform(1, mPreset->mOsc[0].mWaveform);
-        mOsc.waveform(2, mPreset->mOsc[1].mWaveform);
-        mOsc.waveform(3, mPreset->mOsc[2].mWaveform);
-
-        mOsc.pulseWidth(1, mPreset->mOsc[0].mPulseWidth);
-        mOsc.pulseWidth(2, mPreset->mOsc[1].mPulseWidth);
-        mOsc.pulseWidth(3, mPreset->mOsc[2].mPulseWidth);
-
-        // pwm amount is always 1 within the polyblep osc; actual PWM amount is controlled by modulation matrix.
-        // mOsc.pwmAmount(1, 1);
-        // mOsc.pwmAmount(2, 1);
-        // mOsc.pwmAmount(3, 1);
-
-        mOsc.fmAmount(1, 1);
-        mOsc.fmAmount(2, 1);
-        mOsc.fmAmount(3, 1);
+            mOsc.mOsc[i].portamentoTime(mPreset->mOsc[i].mPortamentoTime);
+            mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
+            mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
+            mOsc.mOsc[i].fmAmount(1);
+        }
 
         auto calcFreq =
             [](float midiNote, float pitchFine, int pitchSemis, float detune, float freqMul, float freqOffset) {

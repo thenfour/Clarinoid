@@ -195,6 +195,7 @@ struct SynthPatchOscillatorMenuStuff
                                                    },
                                                    this},
                                    AlwaysEnabled};
+
     FloatSettingItem mPulseWidth = {" - PulseWidth",
                                     StandardRangeSpecs::gFloat_0_1,
                                     Property<float>{[](void *cap) {
@@ -208,7 +209,34 @@ struct SynthPatchOscillatorMenuStuff
                                                     this},
                                     AlwaysEnabled};
 
-    ISettingItem *mArray[8] = {
+    BoolSettingItem mPhaseRestart = {"PhaseRestart",
+                                     "Yes",
+                                     "No",
+                                     Property<bool>{[](void *cap) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        return pThis->GetBinding().mPhaseRestart;
+                                                    },
+                                                    [](void *cap, const bool &v) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        pThis->GetBinding().mPhaseRestart = v;
+                                                    },
+                                                    this},
+                                     AlwaysEnabled};
+
+    FloatSettingItem mPhaseOffset = {" - PhaseOffset",
+                                     StandardRangeSpecs::gFloat_0_1,
+                                     Property<float>{[](void *cap) {
+                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                         return pThis->GetBinding().mPhase01;
+                                                     },
+                                                     [](void *cap, const float &v) {
+                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                         pThis->GetBinding().mPhase01 = v;
+                                                     },
+                                                     this},
+                                     AlwaysEnabled};
+
+    ISettingItem *mArray[10] = {
         &mWaveform,
         &mGain,
         &mPortamentoTime,
@@ -217,6 +245,8 @@ struct SynthPatchOscillatorMenuStuff
         &mPitchSemis,
         &mPitchFine,
         &mPulseWidth,
+        &mPhaseRestart,
+        &mPhaseOffset,
     };
 
     SettingsList mSubmenuList = {mArray};

@@ -15,6 +15,28 @@ namespace clarinoid
 
    When choosing the synced saw for oscillator 2 or 3, oscillator 1 is always the master
    The hard-synced sawtooth does not have PWM
+
+    NOTE: VARTRI @ pulsewidth 0 = "leaning to left", so you get a saw wave
+    |`.        |`.        |`.        |`.              
+    |  `.      |  `.      |  `.      |  `.              
+    |    `.    |    `.    |    `.    |    `.              
+    |      `.  |      `.  |      `.  |      `.              
+    |        `.|        `.|        `.|        `.              
+
+    pulsewidth 0.5 = triangle
+         /\         /\         /\         /\    
+        /  \       /  \       /  \       /  \   
+       /    \     /    \     /    \     /    \  
+      /      \   /      \   /      \   /      \ 
+     /        \ /        \ /        \ /        \
+
+    pulsewidth 1.0 = leaning to right
+    |        .`|        .`|        .`|        .`
+    |      .`  |      .`  |      .`  |      .`  
+    |    .`    |    .`    |    .`    |    .`    
+    |  .`      |  .`      |  .`      |  .`      
+    |.`        |.`        |.`        |.`        
+
 */
 
 // https://gitlab.com/flojawi/teensy-polyblep-oscillator
@@ -46,19 +68,9 @@ struct AudioBandlimitedOsci : public AudioStream
     {
     }
 
-    void amplitude(uint8_t oscillator, float a)
-    {
-        mOsc[oscillator - 1].amplitude(a);
-    }
-
     void frequency(uint8_t oscillator, float freq)
     {
         mOsc[oscillator - 1].frequency(freq, mNotesPlaying);
-    }
-
-    void phase(uint8_t oscillator, float t)
-    {
-        mOsc[oscillator - 1].phase(t);
     }
 
     void waveform(uint8_t oscillator, OscWaveformShape wform)
@@ -80,11 +92,6 @@ struct AudioBandlimitedOsci : public AudioStream
     {
         mOsc[oscillator - 1].fmAmount(octaves);
     }
-
-    // void pwmAmount(uint8_t oscillator, float amount)
-    // {
-    //     mOsc[oscillator - 1].pwmAmount(amount);
-    // }
 
     void addNote()
     {
@@ -111,7 +118,6 @@ struct AudioBandlimitedOsci : public AudioStream
 
     audio_block_t *inputQueueArray[6];
 
-  private:
     uint8_t mNotesPlaying;
 
     struct OscillatorState
@@ -125,7 +131,7 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mPulseWidthTarget01 = 0; // pulseWidth1
         float mPulseWidth = 0.5;       // osc1_pulseWidth
-        //float mPWMAmount = 0.0f;       // osc1_pwmAmount
+        // float mPWMAmount = 0.0f;       // osc1_pwmAmount
 
         float mBlepDelay = 0;     // osc1_blepDelay
         float mWidthDelay = 0;    // osc1_widthDelay
@@ -139,7 +145,8 @@ struct AudioBandlimitedOsci : public AudioStream
         uint64_t mCurrentPortamentoSample =
             0; // osc1_currentPortamentoSample -- position within portamento segemnt (0-mPortamentoSamples)
 
-        float mT = 0;  // position in wave cycle, [0-1) // osc1_t
+        float mT = 0; // position in wave cycle, [0-1) // osc1_t
+        float mPhaseOffset = 0;
         float mDt = 0; // cycles per sample, very small. amount of cycle to advance each sample. // osc1_dt
 
         float mOutput = 0; // osc1_output
@@ -171,18 +178,29 @@ struct AudioBandlimitedOsci : public AudioStream
             mPortamentoSamples = floorf(seconds * AUDIO_SAMPLE_RATE_EXACT);
         }
 
-        void phase(float t)
+        //  Use this for phase-retrigger everytime you send a noteOn, if you want a consistent sound.
+        //  Don't use this for hard-sync, it will cause aliasing.
+        //  You can also set the phases of the oscillators to different starting points.
+        void ResetPhase()
         {
-            //  Use this for phase-retrigger everytime you send a noteOn, if you want a consistent sound.
-            //  Don't use this for hard-sync, it will cause aliasing.
-            //  You can also set the phases of the oscillators to different starting points.
-            mT = Frac(t);
+            mT = mPhaseOffset;
+        }
+
+        void SetPhaseOffset(float t01)
+        {
+            if (FloatEquals(t01, mPhaseOffset))
+            {
+                return;
+            }
+            mT = Frac(mT + (t01 - mPhaseOffset));
+            mPhaseOffset = t01;
         }
 
         void waveform(OscWaveformShape wform)
         {
             mWaveformShape = wform;
         }
+
 
         void pulseWidth(float pulseWidth)
         {
@@ -206,7 +224,7 @@ struct AudioBandlimitedOsci : public AudioStream
 
             if (fm1)
             {
-                //Sample16ToSignedRange(fm1->data[i], AUDIO_SAMPLE_RATE_EXACT);
+                // Sample16ToSignedRange(fm1->data[i], AUDIO_SAMPLE_RATE_EXACT);
                 int32_t n = fm1->data[i] * mPitchModAmount;
                 int32_t ipart = n >> 27;
                 n = n & 0x7FFFFFF;
@@ -235,7 +253,7 @@ struct AudioBandlimitedOsci : public AudioStream
         }
 
         template <bool TperformSync>
-        inline void Step(AudioBandlimitedOsci& owner)
+        inline void Step(AudioBandlimitedOsci &owner)
         {
             mOutput = mBlepDelay;
             mBlepDelay = 0;
