@@ -109,9 +109,9 @@ AudioConnection patchDelayVerbInputRight = {delayFilterRight, 0, verbInputMixerR
 struct Voice
 {
     //
-    // [mOsc osc1] -->
-    // [mOsc osc2] --> [mOscMixer] --> [mFilter] -> [mPannerSplitter]
-    // [mOsc osc3] -->
+    // [mOsc] osc1 --> 0
+    // [mOsc] osc2 --> 1 [mOscMixerPanner] --> L [mFilter] L -> L [mSplitter] ... out
+    // [mOsc] osc3 --> 2                   --> R           R -> R
     //
     AudioBandlimitedOsci mOsc;
 
@@ -183,17 +183,19 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                    4};
 
     // ...
-    MultiMixerNode<3> mOscMixer;
+    MultiMixerPannerNode<3> mOscMixerPanner;
 
-    CCPatch mPatchOsc1ToMixer = {mOsc, 0, mOscMixer, 0};
-    CCPatch mPatchOsc2ToMixer = {mOsc, 1, mOscMixer, 1};
-    CCPatch mPatchOsc3ToMixer = {mOsc, 2, mOscMixer, 2};
+    CCPatch mPatchOsc1ToMixer = {mOsc, 0, mOscMixerPanner, 0};
+    CCPatch mPatchOsc2ToMixer = {mOsc, 1, mOscMixerPanner, 1};
+    CCPatch mPatchOsc3ToMixer = {mOsc, 2, mOscMixerPanner, 2};
 
-    ::clarinoid::FilterNode mFilter;
-    CCPatch mPatchMixToFilter = {mOscMixer, 0, mFilter, 0};
+    ::clarinoid::StereoFilterNode mFilter;
+    CCPatch mPatchMixToFilterL = {mOscMixerPanner, 0, mFilter, 0};
+    CCPatch mPatchMixToFilterR = {mOscMixerPanner, 1, mFilter, 1};
 
-    ::clarinoid::GainAndPanSplitterNode<3> mPannerSplitter; // handles panning and send levels to delay/verb/dry
-    CCPatch mPatchFilterToPannerSplitter = {mFilter, 0, mPannerSplitter, 0};
+    ::clarinoid::StereoGainerSplitterNode<3> mSplitter; // handles panning and send levels to delay/verb/dry
+    CCPatch mPatchFilterToPannerSplitterL = {mFilter, 0, mSplitter, 0};
+    CCPatch mPatchFilterToPannerSplitterR = {mFilter, 1, mSplitter, 1}; 
 
     CCPatch mPatchOutDryLeft;
     CCPatch mPatchOutDryRight;
@@ -219,8 +221,10 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchOsc1ToMixer.connect();
         mPatchOsc2ToMixer.connect();
         mPatchOsc3ToMixer.connect();
-        mPatchMixToFilter.connect();
-        mPatchFilterToPannerSplitter.connect();
+        mPatchMixToFilterL.connect();
+        mPatchMixToFilterR.connect();
+        mPatchFilterToPannerSplitterL.connect();
+        mPatchFilterToPannerSplitterR.connect();
         mPatchOutDryLeft.connect();
         mPatchOutDryRight.connect();
         mPatchOutDelayLeft.connect();
@@ -439,9 +443,14 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
         mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);
 
-        mPannerSplitter.SetPanAndGain(0, 1.0f, mv.mPan + mPreset->mPan);
-        mPannerSplitter.SetPanAndGain(1, mPreset->mDelaySend, mv.mPan + mPreset->mPan);
-        mPannerSplitter.SetPanAndGain(2, mPreset->mVerbSend, mv.mPan + mPreset->mPan);
+        //mOscMixerPanner.SetInputPan();
+        mSplitter.SetOutputGain(0, 1.0f);
+        mSplitter.SetOutputGain(1, mPreset->mDelaySend);
+        mSplitter.SetOutputGain(2, mPreset->mVerbSend);
+
+        mOscMixerPanner.SetInputPan(0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan);
+        mOscMixerPanner.SetInputPan(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan + mPreset->mStereoSpread);
+        mOscMixerPanner.SetInputPan(2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread);
 
         mRunningVoice = mv;
     }
@@ -459,17 +468,17 @@ Input 5: Pulse Width Modulation for Oscillator 3
     }
 
     Voice(int16_t vid)
-        : mPatchOutDryLeft(mPannerSplitter, 0, CCSynthGraph::voiceMixerDryLeft, vid),
-          mPatchOutDryRight(mPannerSplitter, 1, CCSynthGraph::voiceMixerDryRight, vid),
-          mPatchOutDelayLeft(mPannerSplitter, 2, CCSynthGraph::delayInputMixerLeft, vid),
-          mPatchOutDelayRight(mPannerSplitter, 3, CCSynthGraph::delayInputMixerRight, vid),
-          mPatchOutVerbLeft(mPannerSplitter, 4, CCSynthGraph::verbInputMixerLeft, vid),
-          mPatchOutVerbRight(mPannerSplitter, 5, CCSynthGraph::verbInputMixerLeft, vid)
+        : mPatchOutDryLeft(mSplitter, 0, CCSynthGraph::voiceMixerDryLeft, vid),
+          mPatchOutDryRight(mSplitter, 1, CCSynthGraph::voiceMixerDryRight, vid),
+          mPatchOutDelayLeft(mSplitter, 2, CCSynthGraph::delayInputMixerLeft, vid),
+          mPatchOutDelayRight(mSplitter, 3, CCSynthGraph::delayInputMixerRight, vid),
+          mPatchOutVerbLeft(mSplitter, 4, CCSynthGraph::verbInputMixerLeft, vid),
+          mPatchOutVerbRight(mSplitter, 5, CCSynthGraph::verbInputMixerLeft, vid)
     {
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}};
+Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}/*, {4}, {5}, {6}, {7}*/};
 
 struct SynthGraphControl
 {

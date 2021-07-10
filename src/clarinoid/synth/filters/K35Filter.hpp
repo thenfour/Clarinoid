@@ -119,6 +119,17 @@ struct K35Filter : IFilter
     {
         return InlineProcessSample(x);
     }
+    virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) override
+    {
+        for (size_t i = 0; i < sampleCount; ++i)
+        {
+            InlineProcessSample(samplesL[i], samplesR[i]);
+        }
+    }
+    virtual void ProcessSample(real& xnL, real& xnR) override
+    {
+        return InlineProcessSample(xnL, xnR);
+    }
 
     virtual void Reset() override
     {
@@ -149,7 +160,7 @@ struct K35Filter : IFilter
         if (m_FilterType == FilterType::LP)
         {
             real y1 = m_LPF1.InlineProcessSample(xn);
-            real s35 = m_LPF2.getFeedbackOutput() + m_HPF1.getFeedbackOutput();
+            real s35 = m_LPF2.getFeedbackOutputL() + m_HPF1.getFeedbackOutputL();
             real u = m_alpha * (y1 + s35);
 
             y = m_k * m_LPF2.InlineProcessSample(u);
@@ -158,7 +169,7 @@ struct K35Filter : IFilter
         else
         {
             real y1 = m_HPF1.InlineProcessSample(xn);
-            real s35 = m_HPF2.getFeedbackOutput() + m_LPF1.getFeedbackOutput();
+            real s35 = m_HPF2.getFeedbackOutputL() + m_LPF1.getFeedbackOutputL();
             real u = m_alpha * (y1 + s35);
 
             y = m_k * u;
@@ -171,7 +182,51 @@ struct K35Filter : IFilter
 
         return y;
     }
-    inline void Recalc()
+
+
+
+    inline void InlineProcessSample(real& xnL, real& xnR)
+    {
+        real yL, yR;
+        if (m_FilterType == FilterType::LP)
+        {
+            m_LPF1.InlineProcessSample(xnL, xnR); // y1 =
+            real s35L = m_LPF2.getFeedbackOutputL() + m_HPF1.getFeedbackOutputL();
+            real s35R = m_LPF2.getFeedbackOutputR() + m_HPF1.getFeedbackOutputR();
+            real uL = m_alpha * (xnL + s35L);
+            real uR = m_alpha * (xnR + s35R);
+
+            //y = m_k * m_LPF2.InlineProcessSample(u);
+            m_LPF2.InlineProcessSample(uL, uR);
+            yL = uL;
+            yR = uR;
+            uL *= m_k;
+            uR *= m_k;
+            m_HPF1.InlineProcessSample(uL, uR);
+        }
+        else
+        {
+            m_HPF1.InlineProcessSample(xnL, xnR); // y1 => xnL , xnR =
+            real s35L = m_HPF2.getFeedbackOutputL() + m_LPF1.getFeedbackOutputL();
+            real s35R = m_HPF2.getFeedbackOutputR() + m_LPF1.getFeedbackOutputR();
+            real uL = m_alpha * (xnL + s35L);
+            real uR = m_alpha * (xnR + s35R);
+
+            yL = uL;
+            yR = uR;
+            uL *= m_k;
+            uR *= m_k;
+            m_HPF2.InlineProcessSample(uL, uR);
+            m_LPF1.InlineProcessSample(uL, uR);
+        }
+
+        // make this one a bit easier (3.f), its very aggresive
+        applyOverdrive(yL, yR, m_overdrive, Real(3));
+        xnL = yL;
+        xnR = yR;
+    }
+    
+        inline void Recalc()
     {
         // BZT
         real wd = PITimes2 * m_cutoffHz;

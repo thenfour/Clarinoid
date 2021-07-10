@@ -43,10 +43,13 @@ struct DCFilter : public IFilter
 
     virtual void Reset() override
     {
-        xnminus1 = 0;
-        ynminus1 = 0;
+        xnminus1L = 0;
+        ynminus1L = 0;
+        xnminus1R = 0;
+        ynminus1R = 0;
     }
 
+    // mono processing
     virtual void ProcessInPlace(real *samples, size_t sampleCount) override
     {
         for (size_t i = 0; i < sampleCount; ++i)
@@ -61,15 +64,50 @@ struct DCFilter : public IFilter
 
     inline real InlineProcessSample(real xn)
     {
-        real yn = xn - xnminus1 + R * ynminus1;
-        xnminus1 = xn;
-        ynminus1 = yn;
+        real yn = xn - xnminus1L + R * ynminus1L;
+        xnminus1L = xn;
+        ynminus1L = yn;
         return yn;
     }
 
+    // stereo processing
+    virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) override
+    {
+        for (size_t i = 0; i < sampleCount; ++i)
+        {
+            InlineProcessSample(samplesL[i], samplesR[i]);
+        }
+    }
+    virtual void ProcessSample(real& xL, real& xR) override
+    {
+        InlineProcessSample(xL, xR);
+    }
+
+
+    inline void InlineProcessSample(real& xnL, real& xnR)
+    {
+        // left
+        real ynL = xnL - xnminus1L + R * ynminus1L;
+        xnminus1L = xnL;
+        ynminus1L = ynL;
+        // right
+        real ynR = xnR - xnminus1R + R * ynminus1R;
+        xnminus1R = xnR;
+        ynminus1R = ynR;
+        
+        xnL = ynL;
+        xnR = ynR;
+    }
+
   private:
-    real xnminus1 = 0;
-    real ynminus1 = 0;
+    // state L
+    real xnminus1L = 0;
+    real ynminus1L = 0;
+
+    // state R
+    real xnminus1R = 0;
+    real ynminus1R = 0;
+
     real R;
 };
 

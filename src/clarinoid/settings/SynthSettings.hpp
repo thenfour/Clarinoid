@@ -197,6 +197,7 @@ struct SynthOscillatorSettings
     int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
                           // not so great at being very precise.
     float mPitchFine = 0; // in semitones, just for detuning
+    float mPan = 0;
 
     bool mPhaseRestart = false;
     float mPhase01 = 0.0f;
@@ -213,6 +214,7 @@ struct SynthPreset
     float mPan = 0;
     float mDelaySend = 0.08f;
     float mVerbSend = 0.08f;
+    float mStereoSpread = 0.0f;
 
     EnvelopeSpec mEnv1;
     EnvelopeSpec mEnv2;

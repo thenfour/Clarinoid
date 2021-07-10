@@ -45,6 +45,23 @@ inline void applyOverdrive(real &pio_input, real m_overdrive, real p_tanh_factor
     }
 }
 
+inline void applyOverdrive(real &L, real& R, real m_overdrive, real p_tanh_factor)
+{
+    real overdrive_modded = m_overdrive;
+    overdrive_modded = overdrive_modded < 0 ? 0 : overdrive_modded;
+    if (overdrive_modded > Real(0.01) && overdrive_modded < 1)
+    {
+        // interpolate here so we have possibility of pure linear Processing
+        L = L * (Real1 - overdrive_modded) + overdrive_modded * fasttanh(L, p_tanh_factor);
+        R = R * (Real1 - overdrive_modded) + overdrive_modded * fasttanh(R, p_tanh_factor);
+    }
+    else if (overdrive_modded >= 1)
+    {
+        L = fasttanh(overdrive_modded * L, p_tanh_factor);
+        R = fasttanh(overdrive_modded * R, p_tanh_factor);
+    }
+}
+
 enum class FilterType
 {
     LP, // interpreted as "any lp"
@@ -81,6 +98,8 @@ struct IFilter
 
     virtual void ProcessInPlace(real *samples, size_t sampleCount) = 0;
     virtual real ProcessSample(real x) = 0;
+    virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) = 0;
+    virtual void ProcessSample(real& l, real& r) = 0;
     virtual void Reset() = 0; // honestly not even sure what reset really does
 };
 

@@ -59,36 +59,53 @@ struct SEM12Filter : IFilter
         return InlineProcessSample(x);
     }
 
+    virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) override
+    {
+        for (size_t i = 0; i < sampleCount; ++i)
+        {
+            InlineProcessSample(samplesL[i], samplesR[i]);
+        }
+    }
+    virtual void ProcessSample(real& xnL, real& xnR) override
+    {
+        return InlineProcessSample(xnL, xnR);
+    }
+
+
     virtual void Reset() override
     {
-        m_z_1 = 0.0;
-        m_z_2 = 0.0;
+        m_z_1L = Real0;
+        m_z_2L = Real0;
+        m_z_1R = Real0;
+        m_z_2R = Real0;
     }
 
   private:
     real m_cutoffHz = 10000;
 
-    real m_transition = -1;
+    real m_transition = -1; // i think this allows you to smoothly transition between LP, BP, and HP types.
     real m_resonance = Real(0.5);
     real m_cachedResonance = Real(-1);
     real m_alpha = 1;
     real m_alpha_0 = 1;
     real m_rho = 1;
 
-    real m_z_1 = 0;
-    real m_z_2 = 0;
+    real m_z_1L = 0;
+    real m_z_2L = 0;
+    real m_z_1R = 0;
+    real m_z_2R = 0;
 
     inline real InlineProcessSample(real xn)
     {
-        real hpf = m_alpha_0 * (xn - m_rho * m_z_1 - m_z_2);
-        real bpf = m_alpha * hpf + m_z_1;
+        real hpf = m_alpha_0 * (xn - m_rho * m_z_1L - m_z_2L);
+        real bpf = m_alpha * hpf + m_z_1L;
 
-        real lpf = m_alpha * bpf + m_z_2;
+        real lpf = m_alpha * bpf + m_z_2L;
         real r = Real1 / (Real2 * m_resonance);
         real bsf = xn - Real2 * r * bpf;
 
-        m_z_1 = m_alpha * hpf + bpf;
-        m_z_2 = m_alpha * bpf + lpf;
+        m_z_1L = m_alpha * hpf + bpf;
+        m_z_2L = m_alpha * bpf + lpf;
 
         real transition_modded = m_transition;
         transition_modded = transition_modded > 1 ? 1 : transition_modded;
@@ -104,6 +121,40 @@ struct SEM12Filter : IFilter
         }
 
         return xn;
+    }
+
+    inline void InlineProcessSample(real& xnL, real& xnR)
+    {
+        real hpfL = m_alpha_0 * (xnL - m_rho * m_z_1L - m_z_2L);
+        real hpfR = m_alpha_0 * (xnR - m_rho * m_z_1R - m_z_2R);
+        real bpfL = m_alpha * hpfL + m_z_1L;
+        real bpfR = m_alpha * hpfR + m_z_1R;
+
+        real lpfL = m_alpha * bpfL + m_z_2L;
+        real lpfR = m_alpha * bpfR + m_z_2R;
+        real r = Real1 / (Real2 * m_resonance);
+        real bsfL = xnL - Real2 * r * bpfL;
+        real bsfR = xnR - Real2 * r * bpfR;
+
+        m_z_1L = m_alpha * hpfL + bpfL;
+        m_z_2L = m_alpha * bpfL + lpfL;
+        m_z_1R = m_alpha * hpfR + bpfR;
+        m_z_2R = m_alpha * bpfR + lpfR;
+
+        real transition_modded = m_transition;
+        transition_modded = transition_modded > 1 ? 1 : transition_modded;
+        transition_modded = transition_modded < -1 ? -1 : transition_modded;
+
+        if (transition_modded < 0)
+        {
+            xnL = (1 + transition_modded) * bsfL - transition_modded * lpfL;
+            xnR = (1 + transition_modded) * bsfR - transition_modded * lpfR;
+        }
+        else
+        {
+            xnL = transition_modded * hpfL + (1 - transition_modded) * bsfL;
+            xnR = transition_modded * hpfR + (1 - transition_modded) * bsfR;
+        }
     }
 
     void Recalc()

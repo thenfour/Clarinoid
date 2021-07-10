@@ -104,83 +104,86 @@ namespace clarinoid
 //     audio_block_t *inputQueueArray[1];
 // };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Takes a single mono input, splits into N outputs * 2 (stereo), with gain &
-// pan applied to each split individually.
-template <size_t NSplits>
-struct GainAndPanSplitterNode : public AudioStream
-{
-    float mPanN11[NSplits];
-    float mGain01[NSplits];
-    static constexpr size_t OutputBufferCount = NSplits * 2;
-    int32_t mMultipliers[OutputBufferCount];
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// // Takes a single mono input, splits into N outputs * 2 (stereo), with gain &
+// // pan applied to each split individually.
+// template <size_t NSplits>
+// struct GainAndPanSplitterNode : public AudioStream
+// {
+//     float mPanN11[NSplits];
+//     float mGain01[NSplits];
+//     static constexpr size_t OutputBufferCount = NSplits * 2;
+//     int32_t mMultipliers[OutputBufferCount];
 
-    GainAndPanSplitterNode() : AudioStream(1, inputQueueArray)
-    {
-        for (size_t i = 0; i < NSplits; ++i)
-        {
-            SetPanAndGainUnchecked(i, 0, 0);
-        }
-    }
+//     GainAndPanSplitterNode() : AudioStream(1, inputQueueArray)
+//     {
+//         for (size_t i = 0; i < NSplits; ++i)
+//         {
+//             SetPanAndGainUnchecked(i, 0, 0);
+//         }
+//     }
 
-    void SetPanAndGainUnchecked(size_t chan, float gain01, float panN11)
-    {
-        CCASSERT(chan < SizeofStaticArray(mPanN11));
-        mGain01[chan] = gain01;
-        mPanN11[chan] = panN11;
+//     void SetPanAndGainUnchecked(size_t chan, float gain01, float panN11)
+//     {
+//         CCASSERT(chan < SizeofStaticArray(mPanN11));
+//         mGain01[chan] = gain01;
+//         mPanN11[chan] = panN11;
 
-        // SQRT pan law
-        // -1..+1  -> 1..0
-        float normPan = (-panN11 + 1) / 2;
-        float leftChannel = sqrtf(normPan);
-        float rightChannel = sqrtf(1.0f - normPan);
+//         // SQRT pan law
+//         // -1..+1  -> 1..0
+//         float normPan = (-panN11 + 1) / 2;
+//         float leftChannel = sqrtf(normPan);
+//         float rightChannel = sqrtf(1.0f - normPan);
 
-        mMultipliers[chan * 2] = gainToSignedMultiply32x16(leftChannel * gain01);
-        mMultipliers[(chan * 2) + 1] = gainToSignedMultiply32x16(rightChannel * gain01);
-    }
+//         mMultipliers[chan * 2] = gainToSignedMultiply32x16(leftChannel * gain01);
+//         mMultipliers[(chan * 2) + 1] = gainToSignedMultiply32x16(rightChannel * gain01);
+//     }
 
-    void SetPanAndGain(size_t chan, float gain01, float panN11)
-    {
-        if (panN11 < -1)
-            panN11 = -1;
-        if (panN11 > 1)
-            panN11 = 1;
-        if (gain01 < 0)
-            gain01 = 0;
-        if (FloatEquals(panN11, mPanN11[chan], 0.00001f) && FloatEquals(gain01, mGain01[chan], 0.00001f))
-        {
-            return;
-        }
-        SetPanAndGainUnchecked(chan, gain01, panN11);
-    }
+//     void SetPanAndGain(size_t chan, float gain01, float panN11)
+//     {
+//         if (panN11 < -1)
+//             panN11 = -1;
+//         if (panN11 > 1)
+//             panN11 = 1;
+//         if (gain01 < 0)
+//             gain01 = 0;
+//         if (FloatEquals(panN11, mPanN11[chan], 0.00001f) && FloatEquals(gain01, mGain01[chan], 0.00001f))
+//         {
+//             return;
+//         }
+//         SetPanAndGainUnchecked(chan, gain01, panN11);
+//     }
 
-    virtual void update() override
-    {
-        audio_block_t *inputBuf = receiveReadOnly();
-        if (!inputBuf)
-            return;
+//     virtual void update() override
+//     {
+//         audio_block_t *inputBuf = receiveReadOnly();
+//         if (!inputBuf)
+//             return;
 
-        audio_block_t *outputBuffers[OutputBufferCount] = {nullptr};
-        int16_t *outputDataBuffers[OutputBufferCount] = {nullptr};
-        for (size_t i = 0; i < SizeofStaticArray(outputBuffers); ++i)
-        {
-            outputBuffers[i] = allocate();
-            CCASSERT(outputBuffers[i] && outputBuffers[i]->data);
-            outputDataBuffers[i] = outputBuffers[i]->data;
-        }
+//         audio_block_t *outputBuffers[OutputBufferCount] = {nullptr};
+//         int16_t *outputDataBuffers[OutputBufferCount] = {nullptr};
+//         for (size_t i = 0; i < SizeofStaticArray(outputBuffers); ++i)
+//         {
+//             outputBuffers[i] = allocate();
+//             CCASSERT(outputBuffers[i] && outputBuffers[i]->data);
+//             outputDataBuffers[i] = outputBuffers[i]->data;
+//         }
 
-        audioBufferCopyAndApplyGainMulti<OutputBufferCount>(inputBuf->data, outputDataBuffers, mMultipliers);
+//         audioBufferCopyAndApplyGainMulti<OutputBufferCount>(inputBuf->data, outputDataBuffers, mMultipliers);
 
-        release(inputBuf);
+//         release(inputBuf);
 
-        for (size_t i = 0; i < SizeofStaticArray(outputBuffers); ++i)
-        {
-            transmit(outputBuffers[i], i);
-            release(outputBuffers[i]);
-        }
-    }
+//         for (size_t i = 0; i < SizeofStaticArray(outputBuffers); ++i)
+//         {
+//             transmit(outputBuffers[i], i);
+//             release(outputBuffers[i]);
+//         }
+//     }
 
-    audio_block_t *inputQueueArray[1];
-};
+//     audio_block_t *inputQueueArray[1];
+// };
+
+
+
 
 } // namespace clarinoid

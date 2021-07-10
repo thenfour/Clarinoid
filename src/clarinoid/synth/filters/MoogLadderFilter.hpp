@@ -128,6 +128,17 @@ struct MoogLadderFilter : IFilter
     {
         return InlineProcessSample(x);
     }
+    virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) override
+    {
+        for (size_t i = 0; i < sampleCount; ++i)
+        {
+            InlineProcessSample(samplesL[i], samplesR[i]);
+        }
+    }
+    virtual void ProcessSample(real& xnL, real& xnR) override
+    {
+        return InlineProcessSample(xnL, xnR);
+    }
 
     virtual void Reset() override
     {
@@ -139,8 +150,8 @@ struct MoogLadderFilter : IFilter
 
     inline real InlineProcessSample(real xn)
     {
-        real dSigma = m_LPF1.getFeedbackOutput() + m_LPF2.getFeedbackOutput() + m_LPF3.getFeedbackOutput() +
-                      m_LPF4.getFeedbackOutput();
+        real dSigma = m_LPF1.getFeedbackOutputL() + m_LPF2.getFeedbackOutputL() + m_LPF3.getFeedbackOutputL() +
+                      m_LPF4.getFeedbackOutputL();
 
         // calculate input to first filter
         real dU = (xn - m_k * dSigma) * m_alpha_0;
@@ -157,6 +168,36 @@ struct MoogLadderFilter : IFilter
         applyOverdrive(output, m_overdrive, Real(3.5));
 
         return output;
+    }
+
+    inline void InlineProcessSample(real &xnL, real& xnR)
+    {
+        real dSigmaL = m_LPF1.getFeedbackOutputL() + m_LPF2.getFeedbackOutputL() + m_LPF3.getFeedbackOutputL() +
+                      m_LPF4.getFeedbackOutputL();
+        real dSigmaR = m_LPF1.getFeedbackOutputR() + m_LPF2.getFeedbackOutputR() + m_LPF3.getFeedbackOutputR() +
+                      m_LPF4.getFeedbackOutputR();
+
+        // calculate input to first filter
+        real dUL = (xnL - m_k * dSigmaL) * m_alpha_0;
+        real dUR = (xnR - m_k * dSigmaR) * m_alpha_0;
+
+        // --- cascade of 4 filters
+        real dLP1L = dUL, dLP1R = dUR;
+        m_LPF1.InlineProcessSample(dLP1L, dLP1R);
+        real dLP2L = dLP1L, dLP2R = dLP1R;
+        m_LPF2.InlineProcessSample(dLP2L, dLP2R);
+        real dLP3L = dLP2L, dLP3R = dLP2R;
+        m_LPF3.InlineProcessSample(dLP3L, dLP3R);
+        real dLP4L = dLP3L, dLP4R = dLP3R;
+        m_LPF4.InlineProcessSample(dLP4L, dLP4R);
+
+        // --- Oberheim variations
+        real outputL = m_a * dUL + m_b * dLP1L + m_c * dLP2L + m_d * dLP3L + m_e * dLP4L;
+        real outputR = m_a * dUR + m_b * dLP1R + m_c * dLP2R + m_d * dLP3R + m_e * dLP4R;
+
+        applyOverdrive(outputL, outputR, m_overdrive, Real(3.5));
+        xnL = outputL;
+        xnR = outputR;
     }
 
   private:

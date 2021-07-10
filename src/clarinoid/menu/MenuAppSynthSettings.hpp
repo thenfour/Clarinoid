@@ -131,6 +131,19 @@ struct SynthPatchOscillatorMenuStuff
                                               this},
                               AlwaysEnabled};
 
+    FloatSettingItem mPan = {" - Pan",
+                              StandardRangeSpecs::gFloat_N1_1,
+                              Property<float>{[](void *cap) {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  return pThis->GetBinding().mPan;
+                                              },
+                                              [](void *cap, const float &v) {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  pThis->GetBinding().mPan = v;
+                                              },
+                                              this},
+                              AlwaysEnabled};
+
     FloatSettingItem mPortamentoTime = {" - Portamento",
                                         StandardRangeSpecs::gPortamentoRange,
                                         Property<float>{[](void *cap) {
@@ -236,9 +249,10 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                      AlwaysEnabled};
 
-    ISettingItem *mArray[10] = {
+    ISettingItem *mArray[11] = {
         &mWaveform,
         &mGain,
+        &mPan,
         &mPortamentoTime,
         &mFreqMul,
         &mFreqOffset,
@@ -342,6 +356,19 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                             },
                                             this},
                              AlwaysEnabled};
+
+    FloatSettingItem mStereoSpread = {"Stereo Spread",
+                              StandardRangeSpecs::gFloat_0_1,
+                              Property<float>{[](void *cap) {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  return pThis->GetBinding().mStereoSpread;
+                                              },
+                                              [](void *cap, const float &v) {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  pThis->GetBinding().mStereoSpread = v;
+                                              },
+                                              this},
+                              AlwaysEnabled};
 
     FloatSettingItem mSyncMultMin = {" - mult min",
                                      NumericEditRangeSpec<float>{0.0f, 15.0f},
@@ -702,11 +729,12 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[14] = {
+    ISettingItem *mArray[15] = {
         &mBreathFilterSubmenuItem,
         &mDetune,
         //&mPortamentoTime,
         &mPan,
+        &mStereoSpread,
         &mDelaySend,
         &mVerbSend,
         &mSync,

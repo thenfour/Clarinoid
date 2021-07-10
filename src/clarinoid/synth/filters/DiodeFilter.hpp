@@ -74,6 +74,18 @@ struct DiodeFilter : public IFilter
         return InlineProcessSample(x);
     }
 
+    virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) override
+    {
+        for (size_t i = 0; i < sampleCount; ++i)
+        {
+            InlineProcessSample(samplesL[i], samplesR[i]);
+        }
+    }
+    virtual void ProcessSample(real& xnL, real& xnR) override
+    {
+        return InlineProcessSample(xnL, xnR);
+    }
+
     virtual void Reset() override
     {
         m_LPF1.Reset();
@@ -151,13 +163,13 @@ struct DiodeFilter : public IFilter
 
     inline real InlineProcessSample(real xn)
     {
-        m_LPF4.m_feedback = 0;
-        m_LPF3.m_feedback = m_LPF4.getFeedbackOutput();
-        m_LPF2.m_feedback = m_LPF3.getFeedbackOutput();
-        m_LPF1.m_feedback = m_LPF2.getFeedbackOutput();
+        m_LPF4.m_feedbackL = 0;
+        m_LPF3.m_feedbackL = m_LPF4.getFeedbackOutputL();
+        m_LPF2.m_feedbackL = m_LPF3.getFeedbackOutputL();
+        m_LPF1.m_feedbackL = m_LPF2.getFeedbackOutputL();
 
-        real sigma = m_sg1 * m_LPF1.getFeedbackOutput() + m_sg2 * m_LPF2.getFeedbackOutput() +
-                     m_sg3 * m_LPF3.getFeedbackOutput() + m_sg4 * m_LPF4.getFeedbackOutput();
+        real sigmaL = m_sg1 * m_LPF1.getFeedbackOutputL() + m_sg2 * m_LPF2.getFeedbackOutputL() +
+                     m_sg3 * m_LPF3.getFeedbackOutputL() + m_sg4 * m_LPF4.getFeedbackOutputL();
 
         real k_modded = m_k;
         k_modded = k_modded > 16 ? 16 : k_modded;
@@ -166,14 +178,54 @@ struct DiodeFilter : public IFilter
         // for passband gain compensation:
         xn *= Real1 + Real(0.3) * k_modded;
 
-        real u = (xn - k_modded * sigma) / (Real1 + k_modded * m_gamma);
+        xn = (xn - k_modded * sigmaL) / (Real1 + k_modded * m_gamma);
 
-        real output = m_LPF4.InlineProcessSample(
-            m_LPF3.InlineProcessSample(m_LPF2.InlineProcessSample(m_LPF1.InlineProcessSample(u))));
+        xn = m_LPF1.InlineProcessSample(xn);
+        xn = m_LPF2.InlineProcessSample(xn);
+        xn = m_LPF3.InlineProcessSample(xn);
+        xn = m_LPF4.InlineProcessSample(xn);
 
-        applyOverdrive(output, m_overdrive, Real(3.5));
+        applyOverdrive(xn, m_overdrive, Real(3.5));
 
-        return output;
+        return xn;
+    }
+
+    inline void InlineProcessSample(real& xnL, real& xnR)
+    {
+        m_LPF4.m_feedbackL = 0;
+        m_LPF3.m_feedbackL = m_LPF4.getFeedbackOutputL();
+        m_LPF2.m_feedbackL = m_LPF3.getFeedbackOutputL();
+        m_LPF1.m_feedbackL = m_LPF2.getFeedbackOutputL();
+
+        real sigmaL = m_sg1 * m_LPF1.getFeedbackOutputL() + m_sg2 * m_LPF2.getFeedbackOutputL() +
+                     m_sg3 * m_LPF3.getFeedbackOutputL() + m_sg4 * m_LPF4.getFeedbackOutputL();
+
+        m_LPF4.m_feedbackR = 0;
+        m_LPF3.m_feedbackR = m_LPF4.getFeedbackOutputR();
+        m_LPF2.m_feedbackR = m_LPF3.getFeedbackOutputR();
+        m_LPF1.m_feedbackR = m_LPF2.getFeedbackOutputR();
+
+        real sigmaR = m_sg1 * m_LPF1.getFeedbackOutputR() + m_sg2 * m_LPF2.getFeedbackOutputR() +
+                     m_sg3 * m_LPF3.getFeedbackOutputR() + m_sg4 * m_LPF4.getFeedbackOutputR();
+
+        real k_modded = m_k;
+        k_modded = k_modded > 16 ? 16 : k_modded;
+        k_modded = k_modded < 0 ? 0 : k_modded;
+
+        // for passband gain compensation:
+        real c = Real1 + Real(0.3) * k_modded;
+        xnL *= c;
+        xnR *= c;
+
+        xnL = (xnL - k_modded * sigmaL) / (Real1 + k_modded * m_gamma);
+        xnR = (xnR - k_modded * sigmaR) / (Real1 + k_modded * m_gamma);
+
+        m_LPF1.InlineProcessSample(xnL, xnR);
+        m_LPF2.InlineProcessSample(xnL, xnR);
+        m_LPF3.InlineProcessSample(xnL, xnR);
+        m_LPF4.InlineProcessSample(xnL, xnR);
+
+        applyOverdrive(xnL, xnR, m_overdrive, Real(3.5));
     }
 };
 
