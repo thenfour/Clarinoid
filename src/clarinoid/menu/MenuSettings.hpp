@@ -71,15 +71,10 @@ struct SettingsList
 {
     ISettingItem **mItems;
     size_t mItemRawCount;
-    // size_t mItemTotalCount;
 
     template <size_t N>
     SettingsList(ISettingItem *(&arr)[N]) : mItems(arr), mItemRawCount(N)
     {
-        // mItemTotalCount = 0;
-        // for (auto& i : arr) {
-        //   mItemTotalCount += i->GetMultiCount();
-        // }
     }
 
     size_t Count() const
@@ -435,6 +430,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         {
             size_t multiIndex = 0;
             auto *item = state.pList->GetItem(itemToRender, multiIndex);
+            int separatorY = mDisplay.mDisplay.getCursorY() - 1;
             if (itemToRender == (size_t)state.focusedItem)
             {
                 mDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
@@ -457,6 +453,11 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
             default:
                 mDisplay.mDisplay.println(item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex));
                 break;
+            }
+
+            if (itemToRender == 0)
+            {
+                 mDisplay.mDisplay.drawFastHLine(0, separatorY, mDisplay.mDisplay.width(), SSD1306_INVERSE);
             }
 
             itemToRender = (itemToRender + 1) % state.pList->Count();
