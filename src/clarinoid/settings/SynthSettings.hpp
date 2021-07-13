@@ -214,7 +214,7 @@ struct SynthPreset
     float mPan = 0;
     float mDelaySend = 0.08f;
     float mVerbSend = 0.08f;
-    float mStereoSpread = 0.0f;
+    float mStereoSpread = 0.15f;
 
     EnvelopeSpec mEnv1;
     EnvelopeSpec mEnv2;
@@ -249,8 +249,8 @@ struct SynthPreset
         mOsc[1].mGain = ReasonableOscillatorGain;
         mOsc[2].mGain = ReasonableOscillatorGain;
 
-        mOsc[2].mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
-        mOsc[2].mWaveform = OscWaveformShape::SawSync;     //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+        mOsc[0].mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
+        mOsc[1].mWaveform = OscWaveformShape::SawSync;     //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
         mOsc[2].mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
     }
 
@@ -790,6 +790,47 @@ struct SynthSettings
         p.mModulations[1].mScaleN11 = -0.3f;
     }
 
+    static void InitSynthTrumpetPreset(SynthPreset &p)
+    {
+        p.mName = "Trumpet";
+        p.mSync = false;
+        p.mStereoSpread = 0.15f;
+        p.mDetune = 0.04f;
+        p.mVerbSend = 0.07f;
+        p.mDelaySend = 0.07f;
+
+        p.mFilterType = ClarinoidFilterType::LP_Moog2;
+        p.mFilterMinFreq = 0.0f;
+        p.mFilterMaxFreq = 15000;
+        p.mFilterSaturation = 0.80f;
+        p.mFilterQ = 0.15f;
+        p.mFilterKeytracking = 0;
+
+        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain = ReasonableOscillatorGain / 2.5f;
+        p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
+        p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
+
+        p.mModulations[0].mSource = ModulationSource::ENV1;
+        p.mModulations[0].mDest = ModulationDestination::Osc1Frequency;
+        p.mModulations[0].mScaleN11 = 0.05f;
+
+        p.mModulations[1].mSource = ModulationSource::ENV2;
+        p.mModulations[1].mDest = ModulationDestination::Osc3Frequency;
+        p.mModulations[1].mScaleN11 = -0.02f;
+
+        p.mEnv1.mDelayMS = 0;
+        p.mEnv1.mAttackMS = 0;
+        p.mEnv1.mDecayMS = 100;
+        p.mEnv1.mSustainLevel = 0;
+        p.mEnv1.mReleaseMS = 100;
+
+        p.mEnv2.mDelayMS = 0;
+        p.mEnv2.mAttackMS = 0;
+        p.mEnv2.mDecayMS = 500;
+        p.mEnv2.mSustainLevel = 0;
+        p.mEnv2.mReleaseMS = 500;
+    }
+
     SynthSettings()
     {
         size_t i = 0;
@@ -803,13 +844,17 @@ struct SynthSettings
         InitCrystalFieldsPatch(mPresets[i++]);
         InitCinematicTagPatch(mPresets[i++]);
         InitPanFlutePreset(mPresets[i++]);
+        InitSynthTrumpetPreset(mPresets[i++]);
         InitFunkyLeadPreset(mPresets[i++]);
-        InitBasicLeadPreset("Saw Brass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
+        InitBasicLeadPreset("Moog bass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
         // make osc1 and osc2 equal
         mPresets[i].mOsc[2].mGain = mPresets[i].mOsc[1].mGain = mPresets[i].mOsc[0].mGain = ReasonableOscillatorGain;
-        mPresets[i].mOsc[2].mWaveform = mPresets[i].mOsc[1].mWaveform = mPresets[i].mOsc[0].mWaveform = OscWaveformShape::SawSync;
+        mPresets[i].mOsc[2].mWaveform = mPresets[i].mOsc[1].mWaveform = mPresets[i].mOsc[0].mWaveform =
+            OscWaveformShape::SawSync;
         mPresets[i].mOsc[0].mWaveform = OscWaveformShape::Pulse;
-        mPresets[i].mOsc[2].mFreqMultiplier = 2.0f;
+        mPresets[i].mOsc[0].mFreqMultiplier = .5f;
+        mPresets[i].mOsc[1].mFreqMultiplier = .5f;
+        mPresets[i].mOsc[2].mFreqMultiplier = 1.0f;
         mPresets[i].mDetune = 0.14f;
 
         mPresets[i].mEnv1.mDecayMS = 100;

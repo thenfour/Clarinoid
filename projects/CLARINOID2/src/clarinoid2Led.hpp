@@ -119,8 +119,8 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         case 13:
         case 14:
         case 15:
-        case 26:
-        case 27:
+        //case 26: // these are completely covered up
+        //case 27: // these are completely covered up
             return true;
         }
         return false;
@@ -133,14 +133,21 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         {
             if (IsInnerLED(i))
             {
-                this->SetPixel(i, 0, 0, 32);
+                this->SetPixel(i, 0, 0, 64);
             }
-            else if (i > 1 && i < 12)
+            else if (i >= 6 && i < 12)
             {
                 this->SetPixel(i,
                                ((serialCount & (1 << i)) > 0) ? 6 : 0,
                                0,
-                               0); //((serialCount & (1 << i)) > 0) ? 4 : 0);
+                               0);
+            }
+            else if (i > 1 && i < 6)
+            {
+                this->SetPixel(i,
+                               0,
+                               0,
+                               ((serialCount & (1 << i)) > 0) ? 6 : 0);
             }
         }
 

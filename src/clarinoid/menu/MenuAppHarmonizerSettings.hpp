@@ -246,9 +246,7 @@ struct HarmVoiceSettingsApp
         },
         AlwaysEnabled};
 
-    LabelSettingItem mEndSeparator = {Property<String>{[](void *) { return String("----"); }}, AlwaysEnabled};
-
-    ISettingItem *mArray[13] = {
+    ISettingItem *mArray[12] = {
         &mSynthPresetRef,
         &mOwnSynthPatch,
         &mSequenceLength,
@@ -261,7 +259,6 @@ struct HarmVoiceSettingsApp
         &mLocalScaleNote,
         &mLocalScaleFlavor,
         &mNonDiatonicBehavior,
-        &mEndSeparator,
     };
     SettingsList mRootList = {mArray};
 }; // namespace clarinoid

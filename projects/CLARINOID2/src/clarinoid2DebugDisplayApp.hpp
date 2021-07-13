@@ -159,14 +159,15 @@ struct PerformanceApp : SettingsMenuApp
             mAppSettings->FindSynthPreset(mAppSettings->mGlobalSynthPreset).ToString(mAppSettings->mGlobalSynthPreset));
 
         // line 2
-        mDisplay.mDisplay.println((mpMusicalStateTask->mMusicalState.mHarmIsOn
-                                       ? mAppSettings->FindHarmPreset(mAppSettings->mGlobalHarmPreset)
-                                             .ToString(mAppSettings->mGlobalHarmPreset)
-                                       : String("H:off:")) +
-                                  mAppSettings->FindHarmPreset(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)
-                                      .ToString(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID));
+        mDisplay.mDisplay.println(
+            mpMusicalStateTask->mMusicalState.mHarmIsOn
+                ? mAppSettings->FindHarmPreset(mAppSettings->mGlobalHarmPreset)
+                      .ToString(mAppSettings->mGlobalHarmPreset)
+                : (String("H:off:") +
+                   mAppSettings->FindHarmPreset(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)
+                       .ToString(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)));
 
-        //mDisplay.mDisplay.println(mAppSettings->mGlobalScale.ToString());
+        // mDisplay.mDisplay.println(mAppSettings->mGlobalScale.ToString());
 
         float peak, heldPeak;
         mPeakMeter.Update(peak, heldPeak);
@@ -175,29 +176,45 @@ struct PerformanceApp : SettingsMenuApp
         mDisplay.mDisplay.fillRoundRect(0, y, peak * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
         mDisplay.mDisplay.drawFastVLine(heldPeak * mDisplay.mDisplay.width(), y, 8, SSD1306_INVERSE);
 
-
         y = mDisplay.mDisplay.getCursorY();
         float val = mpMusicalStateTask->mMusicalState.mCurrentBreath01.GetValue();
         mDisplay.mDisplay.println(String("breath ") + val);
         mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
-
         y = mDisplay.mDisplay.getCursorY();
         val = mpMusicalStateTask->mMusicalState.mCurrentPitchN11.GetValue();
-        mDisplay.mDisplay.println(String("pitch ") + val);
-        mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
-
+        // mDisplay.mDisplay.println(String("pitch ") + val);
+        static const int pbwidth = 5;
+        if (val >= 0)
+        {
+            int pbextent = std::max(1, val * mDisplay.mDisplay.height() / 2);
+            mDisplay.mDisplay.fillRect(mDisplay.mDisplay.width() - pbwidth - 1,     // x
+                                       (mDisplay.mDisplay.height() / 2) - pbextent, // y
+                                       5,                                           // width
+                                       pbextent,                                    // height
+                                       SSD1306_INVERSE);
+        }
+        else
+        {
+            int pbextent = -val * mDisplay.mDisplay.height() / 2;
+            mDisplay.mDisplay.fillRect(mDisplay.mDisplay.width() - pbwidth - 1, // x
+                                       (mDisplay.mDisplay.height() / 2),        // y
+                                       5,                                       // width
+                                       pbextent,                                // height
+                                       SSD1306_INVERSE);
+        }
 
         // metronome
         y = mDisplay.mDisplay.getCursorY();
         float beatFrac = mpMetronome->GetBeatFrac();
-        mDisplay.mDisplay.println(String("") +  mAppSettings->mBPM + " bpm " + mpMetronome->GetBeatInt());
+        mDisplay.mDisplay.println(String("") + mAppSettings->mBPM + " bpm " + mpMetronome->GetBeatInt());
         mDisplay.mDisplay.fillRoundRect(0, y, beatFrac * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
         static const int R = 24;
         static const int P = 16;
         static const float THRESH = 0.1f;
-        mDisplay.mDisplay.fillCircle(mDisplay.mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
+        mDisplay.mDisplay.fillCircle(
+            mDisplay.mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
 
         SettingsMenuApp::RenderFrontPage();
     }

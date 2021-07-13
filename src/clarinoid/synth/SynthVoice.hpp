@@ -195,7 +195,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
 
     ::clarinoid::StereoGainerSplitterNode<3> mSplitter; // handles panning and send levels to delay/verb/dry
     CCPatch mPatchFilterToPannerSplitterL = {mFilter, 0, mSplitter, 0};
-    CCPatch mPatchFilterToPannerSplitterR = {mFilter, 1, mSplitter, 1}; 
+    CCPatch mPatchFilterToPannerSplitterR = {mFilter, 1, mSplitter, 1};
 
     CCPatch mPatchOutDryLeft;
     CCPatch mPatchOutDryRight;
@@ -305,8 +305,16 @@ Input 5: Pulse Width Modulation for Oscillator 3
             {
                 mOsc.mOsc[i].amplitude(0);
             }
+            // for CPU saving
+            // mOsc.Disable();
+            // mFilter.Disable();
             mRunningVoice = mv;
             return;
+        }
+        else
+        {
+            // mOsc.Enable();
+            // mFilter.Enable();
         }
 
         // configure envelopes (DADSR x 3)
@@ -443,13 +451,13 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
         mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);
 
-        //mOscMixerPanner.SetInputPan();
+        // mOscMixerPanner.SetInputPan();
         mSplitter.SetOutputGain(0, 1.0f);
         mSplitter.SetOutputGain(1, mPreset->mDelaySend);
         mSplitter.SetOutputGain(2, mPreset->mVerbSend);
 
-        mOscMixerPanner.SetInputPan(0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan);
-        mOscMixerPanner.SetInputPan(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan + mPreset->mStereoSpread);
+        mOscMixerPanner.SetInputPan(0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan + mPreset->mStereoSpread);
+        mOscMixerPanner.SetInputPan(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan);
         mOscMixerPanner.SetInputPan(2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread);
 
         mRunningVoice = mv;
@@ -478,7 +486,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}/*, {4}, {5}, {6}, {7}*/};
+Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}, {4}, {5},/* {6}, {7}*/};
 
 struct SynthGraphControl
 {
@@ -488,7 +496,6 @@ struct SynthGraphControl
 
     void Setup(AppSettings *appSettings, Metronome *metronome /*, IModulationSourceSource *modulationSourceSource*/)
     {
-        // AudioMemory(AUDIO_MEMORY_TO_ALLOCATE);
         AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
 
         mAppSettings = appSettings;

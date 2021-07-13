@@ -17,25 +17,25 @@ namespace clarinoid
    The hard-synced sawtooth does not have PWM
 
     NOTE: VARTRI @ pulsewidth 0 = "leaning to left", so you get a saw wave
-    |`.        |`.        |`.        |`.              
-    |  `.      |  `.      |  `.      |  `.              
-    |    `.    |    `.    |    `.    |    `.              
-    |      `.  |      `.  |      `.  |      `.              
-    |        `.|        `.|        `.|        `.              
+    |`.        |`.        |`.        |`.
+    |  `.      |  `.      |  `.      |  `.
+    |    `.    |    `.    |    `.    |    `.
+    |      `.  |      `.  |      `.  |      `.
+    |        `.|        `.|        `.|        `.
 
     pulsewidth 0.5 = triangle
-         /\         /\         /\         /\    
-        /  \       /  \       /  \       /  \   
-       /    \     /    \     /    \     /    \  
-      /      \   /      \   /      \   /      \ 
+         /\         /\         /\         /\
+        /  \       /  \       /  \       /  \
+       /    \     /    \     /    \     /    \
+      /      \   /      \   /      \   /      \
      /        \ /        \ /        \ /        \
 
     pulsewidth 1.0 = leaning to right
     |        .`|        .`|        .`|        .`
-    |      .`  |      .`  |      .`  |      .`  
-    |    .`    |    .`    |    .`    |    .`    
-    |  .`      |  .`      |  .`      |  .`      
-    |.`        |.`        |.`        |.`        
+    |      .`  |      .`  |      .`  |      .`
+    |    .`    |    .`    |    .`    |    .`
+    |  .`      |  .`      |  .`      |  .`
+    |.`        |.`        |.`        |.`
 
 */
 
@@ -106,6 +106,16 @@ struct AudioBandlimitedOsci : public AudioStream
         {
             mNotesPlaying--;
         }
+    }
+
+    bool mEnabled = true;
+    void Disable()
+    {
+        mEnabled = false;
+    }
+    void Enable()
+    {
+        mEnabled = true;
     }
 
     virtual void update(void);
@@ -200,7 +210,6 @@ struct AudioBandlimitedOsci : public AudioStream
         {
             mWaveformShape = wform;
         }
-
 
         void pulseWidth(float pulseWidth)
         {
@@ -457,6 +466,8 @@ struct AudioBandlimitedOsci : public AudioStream
 
 void AudioBandlimitedOsci::update()
 {
+    if (!mEnabled)
+        return;
     audio_block_t *out1 = allocate();
     if (!out1)
         return;

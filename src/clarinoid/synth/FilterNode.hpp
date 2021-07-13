@@ -155,6 +155,7 @@ class StereoFilterNode : public AudioStream
 
     virtual void update() override
     {
+        if (!mEnabled) return;
         audio_block_t *blockL = receiveWritable(0);
         if (!blockL)
         {
@@ -208,6 +209,16 @@ class StereoFilterNode : public AudioStream
         {
             mDC.SetMinus3DBFreq(cutoffHZ);
         }
+    }
+
+    bool mEnabled = true;
+    void Disable()
+    {
+        mEnabled = false;
+    }
+    void Enable()
+    {
+        mEnabled = true;
     }
 
     void SetParams(ClarinoidFilterType ctype, float cutoffHz, float reso, float saturation)

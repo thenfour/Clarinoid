@@ -430,7 +430,6 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         {
             size_t multiIndex = 0;
             auto *item = state.pList->GetItem(itemToRender, multiIndex);
-            int separatorY = mDisplay.mDisplay.getCursorY() - 1;
             if (itemToRender == (size_t)state.focusedItem)
             {
                 mDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
@@ -455,9 +454,10 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
                 break;
             }
 
-            if (itemToRender == 0)
+            if (itemToRender == (state.pList->Count() - 1))
             {
-                 mDisplay.mDisplay.drawFastHLine(0, separatorY, mDisplay.mDisplay.width(), SSD1306_INVERSE);
+                int separatorY = mDisplay.mDisplay.getCursorY() - 1;
+                mDisplay.mDisplay.drawFastHLine(0, separatorY, mDisplay.mDisplay.width(), SSD1306_INVERSE);
             }
 
             itemToRender = (itemToRender + 1) % state.pList->Count();

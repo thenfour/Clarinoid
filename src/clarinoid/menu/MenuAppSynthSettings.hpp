@@ -285,9 +285,6 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         return GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset];
     }
 
-    // LabelSettingItem(cc::function<String()>::ptr_t text, cc::function<bool()>::ptr_t isEnabled) :
-    LabelSettingItem mBigSeparator = {Property<String>{[](void *) { return String("----"); }}, AlwaysEnabled};
-
     // NumericSettingItem(const String& name, T min_, T max_, const Property<T>& binding, typename
     // cc::function<bool()>::ptr_t isEnabled) : BoolSettingItem(const String& name, const String& trueCaption, const
     // String& falseCaption, const Property<bool>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
@@ -729,7 +726,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[15] = {
+    ISettingItem *mArray[14] = {
         &mBreathFilterSubmenuItem,
         &mDetune,
         //&mPortamentoTime,
@@ -747,7 +744,6 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
         &mModulationsSubmenuItem,
         &mCopyPreset,
-        &mBigSeparator,
     };
     SettingsList mRootList = {mArray};
 
@@ -910,8 +906,6 @@ struct SynthSettingsApp : public SettingsMenuApp
                                                     this},
                                     AlwaysEnabled};
 
-    LabelSettingItem mSeparator = {Property<String>{[](void *) { return String("----"); }}, AlwaysEnabled};
-
     FloatSettingItem mDelayGain = {"Delay gain",
                                    StandardRangeSpecs::gFloat_0_1,
                                    Property<float>{[](void *cap) {
@@ -1034,11 +1028,10 @@ struct SynthSettingsApp : public SettingsMenuApp
                                                       this},
                                        AlwaysEnabled};
 
-    ISettingItem *mMasterFXSubmenuItems[13] = {
+    ISettingItem *mMasterFXSubmenuItems[11] = {
         &mReverbGain,
         &mReverbDamping,
         &mReverbSize,
-        &mSeparator,
         &mDelayGain,
         &mDelayTimeMS,
         &mDelayStereoSep,
@@ -1047,13 +1040,12 @@ struct SynthSettingsApp : public SettingsMenuApp
         &mDelayCutoffFrequency,
         &mDelaySaturation,
         &mDelayQ,
-        &mSeparator,
     };
     SettingsList mMasterFXList = {mMasterFXSubmenuItems};
 
     SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
 
-    ISettingItem *mArray[7] = {
+    ISettingItem *mArray[6] = {
         &mMasterGain,
         &mTranspose,
         &mPitchbendRange,
@@ -1061,7 +1053,6 @@ struct SynthSettingsApp : public SettingsMenuApp
         &mMasterFXEnable,
         &mMasterFX,
         &mPatches,
-        &mSeparator,
     };
     SettingsList mRootList = {mArray};
 
