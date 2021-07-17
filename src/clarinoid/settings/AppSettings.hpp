@@ -24,6 +24,13 @@ EnumItemInfo<GlobalScaleRefType> gGlobalScaleRefTypeItems[2] = {
 
 EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo("GlobalScaleRefType", gGlobalScaleRefTypeItems);
 
+
+
+
+
+
+
+
 struct AppSettings
 {
     ControlMapping mControlMappings[MAX_CONTROL_MAPPINGS];
@@ -34,7 +41,7 @@ struct AppSettings
     bool mDisplayDim = true;
 
     bool mMetronomeSoundOn = false;
-    float mMetronomeGain = 0.24f;
+    float mMetronomeGain = 0.34f;
     int mMetronomeNote = 80;
     int mMetronomeDecayMS = 15;
 

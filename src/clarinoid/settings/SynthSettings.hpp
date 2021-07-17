@@ -641,6 +641,7 @@ struct SynthSettings
         p.mName = name;
         p.mSync = false;
         p.mDetune = 0.0f;
+        p.mStereoSpread = 0;
         p.mVerbSend = 0;
         p.mDelaySend = 0;
 
@@ -846,6 +847,14 @@ struct SynthSettings
         InitPanFlutePreset(mPresets[i++]);
         InitSynthTrumpetPreset(mPresets[i++]);
         InitFunkyLeadPreset(mPresets[i++]);
+        InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
+
+        InitFifthLeadPresetA(mPresets[i++]);
+        InitFifthLeadPresetB(mPresets[i++]);
+
+        // harmonizer-friendly patches
+
+        i = SynthPresetID_MoogBass;
         InitBasicLeadPreset("Moog bass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
         // make osc1 and osc2 equal
         mPresets[i].mOsc[2].mGain = mPresets[i].mOsc[1].mGain = mPresets[i].mOsc[0].mGain = ReasonableOscillatorGain;
@@ -864,12 +873,6 @@ struct SynthSettings
         mPresets[i].mModulations[1].mScaleN11 = 0.16f;
         ++i;
 
-        InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
-
-        InitFifthLeadPresetA(mPresets[i++]);
-        InitFifthLeadPresetB(mPresets[i++]);
-
-        // harmonizer-friendly patches
         InitDetunedLeadPreset(
             "Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[SynthPresetID_HarmDetunedSaws]);
         mPresets[SynthPresetID_HarmDetunedSaws].mOsc[0].mGain = ReasonableOscillatorGainForHarm;

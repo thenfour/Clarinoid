@@ -6,6 +6,7 @@
 namespace clarinoid
 {
 
+static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 7;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 6;
 static constexpr size_t SynthPresetID_HarmSync = SYNTH_PRESET_COUNT - 5;
 static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
@@ -518,12 +519,26 @@ struct HarmSettings
     {
         p.mName = "Oct down";
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-        p.mSynthPreset4 = SynthPresetID_HarmDetunedSaws;
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Global;
         p.mVoiceSettings[0].mSequenceLength = 1;
-        p.mVoiceSettings[0].mSequence[0] = -24;
+        p.mVoiceSettings[0].mSequence[0] = -12;
     }
+
+    void InitColBassPreset(HarmPreset &p)
+    {
+        p.mName = "Col Bass";
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mVoiceSettings[0].mMaxOutpNote = 36;
+        p.mVoiceSettings[0].mMaxOutpNote = 50;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Voice;
+        p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_MoogBass;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -12;
+    }
+
+    
 
     void InitSpicePreset(HarmPreset &p)
     {
@@ -549,13 +564,14 @@ struct HarmSettings
     {
         size_t iPreset = 1;
 
-        InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
-        InitSlumsHarmPreset(mPresets[iPreset++]);
-        InitBotanicalHarmPreset(mPresets[iPreset++]);
-        InitBellycrawlHarmPreset(mPresets[iPreset++]);
+        //InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
+        //InitSlumsHarmPreset(mPresets[iPreset++]);
+        //InitBotanicalHarmPreset(mPresets[iPreset++]);
+        //InitBellycrawlHarmPreset(mPresets[iPreset++]);
 
         InitOctDownPreset(mPresets[iPreset++]);
-        InitSpicePreset(mPresets[iPreset++]);
+        InitColBassPreset(mPresets[iPreset++]);
+        //InitSpicePreset(mPresets[iPreset++]);
         Init5thPreset(mPresets[iPreset++]);
 
         InitFunkyHarmPreset(mPresets[iPreset++]);

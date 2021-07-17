@@ -67,11 +67,14 @@ struct TimeSpan
     {
         return mMicros / 1000;
     }
-    float ElapsedSeconds() const // note: LOSSY.
+    float ElapsedSeconds() const
     {
         double d = (double)mMicros;
         d /= 1000000; // convert micros to seconds.
         return (float)d;
+    }
+    float ElapsedBeats(float bpm) const {
+        return double(mMicros) * bpm / 60000000;
     }
 
     bool IsZero() const
@@ -94,6 +97,9 @@ struct TimeSpan
     static TimeSpan FromBPM(float bpm)
     {
         return FromMillis(int64_t(60000.0f / bpm));
+    }
+    static TimeSpan FromBeats(float beats, float bpm) {
+        return FromMillis(int64_t(beats * 60000.0f / bpm));
     }
     static TimeSpan FromFPS(float bpm)
     {
@@ -118,6 +124,7 @@ TimeSpan Uptime()
 {
     return TimeSpan::FromMicros(UptimeMicros64());
 }
+
 
 //////////////////////////////////////////////////////////////////////
 // initially running.
@@ -178,60 +185,7 @@ struct Stopwatch
     }
 };
 
-// TODO: support smoothly changing periods, not jerky behavior like this.
-struct PeriodicTimer
-{
-    Stopwatch mSw;
-    TimeSpan mPeriod = TimeSpan::FromMillis(100);
 
-    explicit PeriodicTimer(const TimeSpan &period) : mPeriod(period)
-    {
-        CCASSERT(mPeriod.IsNonZero());
-    }
-
-    PeriodicTimer()
-    {
-    }
-
-    void SetPeriod(const TimeSpan &period)
-    {
-        CCASSERT(period.IsNonZero()); // avoid div0
-        mPeriod = period;
-    }
-
-    void Reset()
-    {
-        mSw.Restart(TimeSpan::Zero());
-    }
-
-    float GetBeatFloat()
-    {
-        float f = (float)GetBeatInt();
-        f += GetBeatFrac();
-        return f;
-    }
-    // returns 0-1 the time since the last "beat".
-    float GetBeatFrac()
-    {
-        auto beatMicros =
-            mSw.ElapsedTime().ElapsedMicros() %
-            mPeriod
-                .ElapsedMicros(); // micros within the beat. mod it like this to ensure huge numbers don't cause issues.
-        float frac = (float)beatMicros / mPeriod.ElapsedMicros();
-        return frac;
-    }
-    uint32_t GetBeatInt()
-    {
-        auto beatInt = mSw.ElapsedTime().ElapsedMicros() / mPeriod.ElapsedMicros();
-        return (uint32_t)beatInt;
-    }
-
-    TimeSpan BeatsToTimeSpan(float b) const
-    {
-        auto a = b * mPeriod.ElapsedMicros();
-        return TimeSpan((int64_t)a);
-    }
-};
 
 //////////////////////////////////////////////////////////////////////
 template <uint32_t TperiodMS>

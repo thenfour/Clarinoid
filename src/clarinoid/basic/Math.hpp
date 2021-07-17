@@ -2,6 +2,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 
 namespace clarinoid
 {
@@ -124,6 +125,21 @@ static inline float Sample16ToSignedRange(int16_t s, float pole)
 static inline int16_t Sample32To16(float s)
 {
     return (int16_t)(Clamp(s, 0.0f, 1.0f) * 32768.0f);
+}
+
+/**
+ * Converts a linear value to decibels.  Returns aMinDecibels if the linear
+ * value is 0.
+ */
+inline float LinearToDecibels(float aLinearValue, float aMinDecibels) {
+  return aLinearValue ? 20.0f * std::log10(aLinearValue) : aMinDecibels;
+}
+
+/**
+ * Converts a decibel value to a linear value.
+ */
+inline float DecibelsToLinear(float aDecibels) {
+  return std::pow(10.0f, 0.05f * aDecibels);
 }
 
 // this is all utilities for shaping curves using this style:

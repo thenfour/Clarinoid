@@ -46,6 +46,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                              [](void *cap, const float &v) {
                                                  auto *pThis = (MetronomeSettingsApp *)cap;
                                                  pThis->mpAppSettings->mBPM = v;
+                                                 pThis->mpMetronome->OnBPMChanged();
                                              },
                                              this},
                              AlwaysEnabled};
@@ -143,11 +144,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                            this},
                              EnabledIfSoundOn};
 
-    ISettingItem *mArray[8] = {
-        &mBPM,
-        &mGain,
-         &mSoundEnable, &mLEDEnable, &mLEDDecay, &mLEDBrightness, &mNote, &mDecay
-        };
+    ISettingItem *mArray[8] = {&mBPM, &mGain, &mSoundEnable, &mLEDEnable, &mLEDDecay, &mLEDBrightness, &mNote, &mDecay};
     SettingsList mRootList = {mArray};
 
     virtual SettingsList *GetRootSettingsList()
