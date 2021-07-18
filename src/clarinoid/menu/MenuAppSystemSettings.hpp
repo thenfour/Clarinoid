@@ -112,6 +112,7 @@ struct SystemSettingsApp : SettingsMenuApp
         this};
 
 
+
     IntSettingItem mSelectedSynthPatch = {"Synth patch",
                                      NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
                                      Property<int>{
@@ -153,15 +154,48 @@ struct SystemSettingsApp : SettingsMenuApp
                                      AlwaysEnabled,
                                      this};
 
+    IntSettingItem mNoteChangeFrames = {"Note chg frames",
+                                         NumericEditRangeSpec<int>{0, 25},
+                                         Property<int>{
+                                             [](void *cap) {
+                                                 auto *pThis = (SystemSettingsApp *)cap;
+                                                 return (int)pThis->mAppSettings->mNoteChangeSmoothingFrames;
+                                             }, // getter
+                                             [](void *cap, const int &val) {
+                                                 auto *pThis = (SystemSettingsApp *)cap;
+                                                 pThis->mAppSettings->mNoteChangeSmoothingFrames = val;
+                                             },   // setter
+                                             this // capture val
+                                         },
+                                         AlwaysEnabled};
 
 
-    ISettingItem *mArray[6] = {
+    FloatSettingItem mNoteChangeIntFrames = {"Note delta*",
+                                         StandardRangeSpecs::gFloat_0_1,
+                                         Property<float>{
+                                             [](void *cap) {
+                                                 auto *pThis = (SystemSettingsApp *)cap;
+                                                 return pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor;
+                                             }, // getter
+                                             [](void *cap, const float &val) {
+                                                 auto *pThis = (SystemSettingsApp *)cap;
+                                                 pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor = val;
+                                             },   // setter
+                                             this // capture val
+                                         },
+                                         AlwaysEnabled};
+
+
+
+    ISettingItem *mArray[8] = {
         &mDimDisplay,
         &mBreath,
         &mPitchUp,
         &mPitchDown,
         &mSelectedHarmPatch,
         &mSelectedSynthPatch,
+        &mNoteChangeFrames,
+        &mNoteChangeIntFrames,
     };
 
     SettingsList mRootList = {mArray};

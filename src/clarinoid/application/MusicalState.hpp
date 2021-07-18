@@ -17,7 +17,12 @@ struct CCEWIMusicalState
     ScaleFollower *mScaleFollower;
     IInputSource *mInputSrc;
 
-    MusicalVoice mLiveVoice; // the voice you're literally physically playing.
+    int mLastInterval = 0;
+
+    MusicalVoice mIncomingVoice; // the voice that you are physically playing, but with age = 0. In order to avoid very
+                                 // small glitchy notes, we don't apply a note change unless it's of a certain age.
+    MusicalVoice mLiveVoice;     // the voice that's actually playing that represents what the player is playing (not a
+                                 // harmonized voice or looped voice)
     MusicalVoice
         mMusicalVoices[MAX_MUSICAL_VOICES]; // these are all the voices that WANT to be played (after transpose,
                                             // harmonize, looping, etc). May be more than synth polyphony.
@@ -77,7 +82,9 @@ struct CCEWIMusicalState
 
     void Update()
     {
-        MusicalVoice mNewState(mLiveVoice);
+        mIncomingVoice.mAgeFrames++;
+        mLiveVoice.mAgeFrames++;
+        MusicalVoice mNewState(mIncomingVoice);
 
         float _incomingBreath = mInput->mBreath.CurrentValue01(); // this is actually the transformed value.
         mCurrentBreath01.Update(_incomingBreath);
@@ -229,9 +236,21 @@ struct CCEWIMusicalState
             mLastPlayedNote = mNewState.mMidiNote;
         }
 
-        auto transitionEvents = CalculateTransitionEvents(mLiveVoice, mNewState);
+        auto transitionEvents = CalculateTransitionEvents(mIncomingVoice, mNewState);
+        if (transitionEvents.mNeedsNoteOn)
+        {
+            mLastInterval = std::abs(mIncomingVoice.mMidiNote - mNewState.mMidiNote);
+            mNewState.mAgeFrames = 0;
+        }
+        mIncomingVoice = mNewState;
 
-        mLiveVoice = mNewState;
+        int smoothingFrames = mAppSettings->mNoteChangeSmoothingFrames +
+                              (mLastInterval * mAppSettings->mNoteChangeSmoothingIntervalFrameFactor);
+
+        if (mNewState.mAgeFrames >= smoothingFrames)
+        {
+            mLiveVoice = mNewState;
+        }
 
         mLoopGoReader.Update(&mInput->mLoopGoButton);
         mLoopStopReader.Update(&mInput->mLoopStopButton);
@@ -285,7 +304,8 @@ struct CCEWIMusicalState
                                      mAppSettings->mHarmSettings.mPresets[this->mNonZeroHarmPresetID].ToString(
                                          this->mNonZeroHarmPresetID));
             }
-            else if (!this->mNonZeroHarmPresetID) {
+            else if (!this->mNonZeroHarmPresetID)
+            {
                 mpDisplay->ShowToast(String("Harmonizer OFF\r\n"));
             }
             else

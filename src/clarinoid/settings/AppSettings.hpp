@@ -38,6 +38,10 @@ struct AppSettings
     UnipolarMapping mPitchUpMapping;
     UnipolarMapping mPitchDownMapping;
 
+    int mNoteChangeSmoothingFrames = 4;
+    // the idea here is that the bigger the interval, the bigger the delay required to lock in the note
+    float mNoteChangeSmoothingIntervalFrameFactor = 0.07f;
+
     bool mDisplayDim = true;
 
     bool mMetronomeSoundOn = false;
