@@ -52,7 +52,7 @@ struct MusicalVoice
     float mPan = 0;
     int16_t mSynthPatch = 0;
     int16_t mHarmPatch = 0;
-    uint16_t mAgeFrames = 0;
+    //uint16_t mAgeFrames = 0;
 };
 
 struct MusicalVoiceTransitionEvents

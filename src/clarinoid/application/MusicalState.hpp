@@ -18,11 +18,14 @@ struct CCEWIMusicalState
     IInputSource *mInputSrc;
 
     int mLastInterval = 0;
+    int mIncomingMidiNote = 0;
+    int mIncomingMidiNoteAgeFrames = 0;
 
-    MusicalVoice mIncomingVoice; // the voice that you are physically playing, but with age = 0. In order to avoid very
-                                 // small glitchy notes, we don't apply a note change unless it's of a certain age.
-    MusicalVoice mLiveVoice;     // the voice that's actually playing that represents what the player is playing (not a
-                                 // harmonized voice or looped voice)
+    // MusicalVoice mIncomingVoice; // the voice that you are physically playing, but with age = 0. In order to avoid
+    // very
+    //                              // small glitchy notes, we don't apply a note change unless it's of a certain age.
+    MusicalVoice mLiveVoice; // the voice that's actually playing that represents what the player is playing (not a
+                             // harmonized voice or looped voice)
     MusicalVoice
         mMusicalVoices[MAX_MUSICAL_VOICES]; // these are all the voices that WANT to be played (after transpose,
                                             // harmonize, looping, etc). May be more than synth polyphony.
@@ -82,9 +85,9 @@ struct CCEWIMusicalState
 
     void Update()
     {
-        mIncomingVoice.mAgeFrames++;
-        mLiveVoice.mAgeFrames++;
-        MusicalVoice mNewState(mIncomingVoice);
+        mIncomingMidiNoteAgeFrames++;
+        // mLiveVoice.mAgeFrames++;
+        MusicalVoice mNewState(mLiveVoice);
 
         float _incomingBreath = mInput->mBreath.CurrentValue01(); // this is actually the transformed value.
         mCurrentBreath01.Update(_incomingBreath);
@@ -236,21 +239,29 @@ struct CCEWIMusicalState
             mLastPlayedNote = mNewState.mMidiNote;
         }
 
-        auto transitionEvents = CalculateTransitionEvents(mIncomingVoice, mNewState);
-        if (transitionEvents.mNeedsNoteOn)
+        if (mNewState.IsPlaying() && (mIncomingMidiNote != mNewState.mMidiNote))
         {
-            mLastInterval = std::abs(mIncomingVoice.mMidiNote - mNewState.mMidiNote);
-            mNewState.mAgeFrames = 0;
+            mLastInterval = std::abs(mLiveVoice.mMidiNote - mNewState.mMidiNote);
+            mIncomingMidiNote = mNewState.mMidiNote;
+            mIncomingMidiNoteAgeFrames = 0;
         }
-        mIncomingVoice = mNewState;
 
         int smoothingFrames = mAppSettings->mNoteChangeSmoothingFrames +
                               (mLastInterval * mAppSettings->mNoteChangeSmoothingIntervalFrameFactor);
 
-        if (mNewState.mAgeFrames >= smoothingFrames)
+        // force continuation of live note if this note is just too damned freshh
+        if (mIncomingMidiNoteAgeFrames <= smoothingFrames)
         {
-            mLiveVoice = mNewState;
+            // only do this if it's a note transition, not from off to on.
+            if (mLiveVoice.IsPlaying())
+            {
+                mNewState.mMidiNote = mLiveVoice.mMidiNote;
+            }
         }
+
+        auto transitionEvents = CalculateTransitionEvents(mLiveVoice, mNewState);
+
+        mLiveVoice = mNewState;
 
         mLoopGoReader.Update(&mInput->mLoopGoButton);
         mLoopStopReader.Update(&mInput->mLoopStopButton);
