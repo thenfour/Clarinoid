@@ -264,10 +264,14 @@ struct HarmVoiceSettingsApp
 }; // namespace clarinoid
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct HarmPatchSettingsApp
+struct HarmPatchSettingsApp : public SettingsMenuApp
 {
+    virtual const char *DisplayAppGetName() override
+    {
+        return "HarmPatchSettingsApp";
+    }
 
-    HarmPatchSettingsApp(CCDisplay &d) : mDisplay(d), mHarmVoiceSettingsApp(d)
+    HarmPatchSettingsApp(CCDisplay &d) : SettingsMenuApp(d), mDisplay(d), mHarmVoiceSettingsApp(d)
     {
     }
 
@@ -485,6 +489,22 @@ struct HarmPatchSettingsApp
         &mCopyPreset,
     };
     SettingsList mRootList = {mArray};
+
+    virtual SettingsList *GetRootSettingsList()
+    {
+        return &mRootList;
+    }
+
+    virtual void RenderFrontPage()
+    {
+        mDisplay.ClearState();
+        mDisplay.mDisplay.println(String("Harmonizer"));
+        mDisplay.mDisplay.println(String("     patch >>"));
+        mDisplay.mDisplay.println(
+            GetAppSettings()->mHarmSettings.mPresets[GetAppSettings()->mGlobalHarmPreset].ToString(
+                GetAppSettings()->mGlobalHarmPreset));
+        SettingsMenuApp::RenderFrontPage();
+    }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

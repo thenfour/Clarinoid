@@ -60,6 +60,7 @@ struct Clarinoid2App : ILEDDataProvider
     AudioMonitorApp mAudioMonitorApp;
     MetronomeSettingsApp mMetronomeSettingsApp;
     HarmSettingsApp mHarmVoiceSettingsApp;
+    HarmPatchSettingsApp mHarmPatchApp;
 
     Clarinoid2App()
         : mLed(this), mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
@@ -82,7 +83,7 @@ struct Clarinoid2App : ILEDDataProvider
               this),
           mSynthSettingsApp(mDisplay), mSynthPatchApp(mDisplay), mAudioMonitorApp(mDisplay),
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
-          mHarmVoiceSettingsApp(mDisplay)
+          mHarmVoiceSettingsApp(mDisplay), mHarmPatchApp(mDisplay)
     {
     }
 
@@ -113,6 +114,7 @@ struct Clarinoid2App : ILEDDataProvider
 
             &mSynthPatchApp,
             &mSynthSettingsApp,
+            &mHarmPatchApp,
             &mHarmVoiceSettingsApp,
 
             &mMetronomeSettingsApp,
