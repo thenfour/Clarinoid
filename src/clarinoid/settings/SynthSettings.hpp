@@ -194,6 +194,9 @@ struct SynthOscillatorSettings
     float mFreqMultiplier = 1.0f; // midinotefreq * this
     float mFreqOffset = 0.0f;
 
+    float mPitchBendRange = 2.0f;
+    float mPitchBendSnap = 0; // 0= no snap, 1=total snap
+
     int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
                           // not so great at being very precise.
     float mPitchFine = 0; // in semitones, just for detuning
@@ -267,7 +270,6 @@ struct SynthSettings
     SynthPreset mPresets[SYNTH_PRESET_COUNT];
 
     float mMasterGain = 1.0f;
-    float mPitchBendRange = 2.0f;
 
     bool mMasterFXEnable = true;
 
@@ -592,6 +594,7 @@ struct SynthSettings
     {
         p.mName = "Detune PWM";
         p.mDetune = 0.09f;
+        p.mStereoSpread = 0.5f;
         p.mSync = false;
 
         p.mFilterSaturation = 0.1f;

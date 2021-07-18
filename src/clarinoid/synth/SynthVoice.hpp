@@ -381,8 +381,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
         }
 
         // update
-        float midiNote =
-            (float)mv.mMidiNote + mv.mPitchBendN11.GetFloatVal() * mAppSettings->mSynthSettings.mPitchBendRange;
+        float midiNote = (float)mv.mMidiNote;
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
@@ -395,15 +394,23 @@ Input 5: Pulse Width Modulation for Oscillator 3
             mOsc.mOsc[i].fmAmount(1);
         }
 
-        auto calcFreq =
-            [](float midiNote, float pitchFine, int pitchSemis, float detune, float freqMul, float freqOffset) {
-                float ret = midiNote + pitchFine + pitchSemis + detune;
-                ret = (MIDINoteToFreq(ret) * freqMul) + freqOffset;
-                return Clamp(ret, 0.0f, 22050.0f);
-            };
+        auto calcFreq = [](float midiNote,
+                           float pbSemis,
+                           float pbSnap,
+                           float pitchFine,
+                           int pitchSemis,
+                           float detune,
+                           float freqMul,
+                           float freqOffset) {
+            float ret = midiNote + pitchFine + pitchSemis + detune + SnapPitchBend(pbSemis, pbSnap);
+            ret = (MIDINoteToFreq(ret) * freqMul) + freqOffset;
+            return Clamp(ret, 0.0f, 22050.0f);
+        };
 
         mOsc.frequency(1,
                        calcFreq(midiNote,
+                                mPreset->mOsc[0].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
+                                mPreset->mOsc[0].mPitchBendSnap,
                                 mPreset->mOsc[0].mPitchFine,
                                 mPreset->mOsc[0].mPitchSemis,
                                 -mPreset->mDetune,
@@ -411,6 +418,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                 mPreset->mOsc[0].mFreqOffset));
         mOsc.frequency(3,
                        calcFreq(midiNote,
+                                mPreset->mOsc[2].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
+                                mPreset->mOsc[2].mPitchBendSnap,
                                 mPreset->mOsc[2].mPitchFine,
                                 mPreset->mOsc[2].mPitchSemis,
                                 mPreset->mDetune,
@@ -420,6 +429,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
         if (mPreset->mSync)
         {
             float freq = calcFreq(midiNote,
+                                  mPreset->mOsc[1].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
+                                  mPreset->mOsc[1].mPitchBendSnap,
                                   mPreset->mOsc[1].mPitchFine,
                                   mPreset->mOsc[1].mPitchSemis,
                                   0,
@@ -433,6 +444,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
         {
             mOsc.frequency(2,
                            calcFreq(midiNote,
+                                    mPreset->mOsc[1].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
+                                    mPreset->mOsc[1].mPitchBendSnap,
                                     mPreset->mOsc[1].mPitchFine,
                                     mPreset->mOsc[1].mPitchSemis,
                                     0,

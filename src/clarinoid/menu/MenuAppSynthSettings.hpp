@@ -158,6 +158,39 @@ struct SynthPatchOscillatorMenuStuff
                                                         this},
                                         AlwaysEnabled};
 
+
+    // there's a bit of a conflict here because it's defined as float but this is int.
+    IntSettingItem mPitchbendRange = {
+        "Pitchbend range",
+        NumericEditRangeSpec<int>{0, 48},
+        Property<int>{[](void *cap) {
+                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                          return (int)pThis->GetBinding().mPitchBendRange;
+                      },
+                      [](void *cap, const int &v) {
+                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                          pThis->GetBinding().mPitchBendRange = (float)v;
+                      },
+                      this},
+        AlwaysEnabled};
+
+
+    FloatSettingItem mPitchbendSnap = {"Pitchbend snap",
+                                 StandardRangeSpecs::gFloat_0_1,
+                                 Property<float>{[](void *cap) {
+                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                     return pThis->GetBinding().mPitchBendSnap;
+                                                 },
+                                                 [](void *cap, const float &v) {
+                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                     pThis->GetBinding().mPitchBendSnap = v;
+                                                 },
+                                                 this},
+                                 AlwaysEnabled};
+
+
+
+
     FloatSettingItem mFreqMul = {"FreqMul",
                                  StandardRangeSpecs::gFreqMulRange,
                                  Property<float>{[](void *cap) {
@@ -250,10 +283,12 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                      AlwaysEnabled};
 
-    ISettingItem *mArray[11] = {
+    ISettingItem *mArray[13] = {
         &mWaveform,
         &mGain,
         &mPan,
+        &mPitchbendRange,
+        &mPitchbendSnap,
         &mPortamentoTime,
         &mFreqMul,
         &mFreqOffset,
@@ -835,21 +870,6 @@ struct SynthSettingsApp : public SettingsMenuApp
                                                this},
                                  AlwaysEnabled};
 
-    // there's a bit of a conflict here because it's defined as float but this is int.
-    IntSettingItem mPitchbendRange = {
-        "Pitchbend range",
-        NumericEditRangeSpec<int>{0, 12},
-        Property<int>{[](void *cap) {
-                          auto *pThis = (SynthSettingsApp *)cap;
-                          return (int)pThis->GetAppSettings()->mSynthSettings.mPitchBendRange;
-                      },
-                      [](void *cap, const int &v) {
-                          auto *pThis = (SynthSettingsApp *)cap;
-                          pThis->GetAppSettings()->mSynthSettings.mPitchBendRange = (float)v;
-                      },
-                      this},
-        AlwaysEnabled};
-
     MultiSubmenuSettingItem mPatches = {
         [](void *cap) { return SYNTH_PRESET_COUNT; },
         [](void *cap, size_t n) {
@@ -1046,11 +1066,9 @@ struct SynthSettingsApp : public SettingsMenuApp
 
     SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
 
-    ISettingItem *mArray[6] = {
+    ISettingItem *mArray[5] = {
         &mMasterGain,
         &mTranspose,
-        &mPitchbendRange,
-        //&mGlobalSynthPreset,
         &mMasterFXEnable,
         &mMasterFX,
         &mPatches,
