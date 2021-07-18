@@ -140,10 +140,15 @@ class StereoFilterNode : public AudioStream
     filters::MoogLadderFilter mMoog;
 
     filters::IFilter *mSelectedFilter = &mK35;
+    ClarinoidFilterType mSelectedFilterType = ClarinoidFilterType::LP_K35;
 
     bool mDCEnabled = false;
     float mDCCutoff = 0;
     filters::DCFilter mDC;
+
+    float mRampGain = 1.0f;
+    static constexpr int mRampLengthSamples = AUDIO_SAMPLE_RATE_EXACT * 250 / 1000; // 250 ms ramp
+    static constexpr float mRampGainIncreasePerSample = 1.0f / mRampLengthSamples;
 
     audio_block_t *inputQueueArray[2];
 
@@ -155,7 +160,8 @@ class StereoFilterNode : public AudioStream
 
     virtual void update() override
     {
-        if (!mEnabled) return;
+        if (!mEnabled)
+            return;
         audio_block_t *blockL = receiveWritable(0);
         if (!blockL)
         {
@@ -186,9 +192,11 @@ class StereoFilterNode : public AudioStream
         for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
         {
             float fL = tempBufferSourceL[i];
-            pL[i] = saturate16(int32_t(fL * 32768.0f));
             float fR = tempBufferSourceR[i];
-            pR[i] = saturate16(int32_t(fR * 32768.0f));
+            float m = 32768.0f * mRampGain;
+            mRampGain = std::min(1.0f, mRampGain + mRampGainIncreasePerSample);
+            pL[i] = saturate16(int32_t(fL * m));
+            pR[i] = saturate16(int32_t(fR * m));
         }
 
         transmit(blockL, 0);
@@ -221,10 +229,29 @@ class StereoFilterNode : public AudioStream
         mEnabled = true;
     }
 
+    void ResetFilterState()
+    {
+        mOnePole.Reset();
+        mSEM12.Reset();
+        mDiode.Reset();
+        mK35.Reset();
+        mMoog.Reset();
+    }
+
+    void TriggerRamp()
+    {
+        mRampGain = 0.0f;
+    }
+
     void SetParams(ClarinoidFilterType ctype, float cutoffHz, float reso, float saturation)
     {
         // select filter & set type
         filters::FilterType ft = filters::FilterType::LP;
+        bool filterTypeChanged = mSelectedFilterType != ctype;
+        if (filterTypeChanged)
+        {
+            TriggerRamp();
+        }
         switch (ctype)
         {
         case ClarinoidFilterType::LP_OnePole:
@@ -277,6 +304,7 @@ class StereoFilterNode : public AudioStream
             mSelectedFilter = &mMoog;
             break;
         }
+        mSelectedFilterType = ctype;
         mSelectedFilter->SetParams(ft, cutoffHz, reso, saturation);
     }
 };
