@@ -64,7 +64,7 @@ struct Clarinoid2App : ILEDDataProvider
 
     Clarinoid2App()
         : mLed(this), mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
-          mMusicalStateTask(&mAppSettings, &mInputDelegator, &mControlMapper),
+          mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome),
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
           mSystemSettingsApp(

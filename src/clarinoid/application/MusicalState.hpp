@@ -10,6 +10,7 @@ namespace clarinoid
 
 struct CCEWIMusicalState
 {
+    CCDisplay *mpDisplay;
     AppSettings *mAppSettings;
     InputDelegator *mInput;
     Metronome *mMetronome;
@@ -55,13 +56,14 @@ struct CCEWIMusicalState
     int mRelativeNoteWhenPitchHeld = 0;
     int mCurrentBaseNote = mDefaultBaseNote;
 
-    CCEWIMusicalState(AppSettings *appSettings,
+    CCEWIMusicalState(CCDisplay *pDisplay,
+                      AppSettings *appSettings,
                       InputDelegator *inputDelegator,
                       Metronome *metronome,
                       ScaleFollower *scaleFollower,
                       IInputSource *inputSrc)
-        : mAppSettings(appSettings), mInput(inputDelegator), mMetronome(metronome), mScaleFollower(scaleFollower),
-          mInputSrc(inputSrc),
+        : mpDisplay(pDisplay), mAppSettings(appSettings), mInput(inputDelegator), mMetronome(metronome),
+          mScaleFollower(scaleFollower), mInputSrc(inputSrc),
 
           mLooper(appSettings, metronome, scaleFollower)
     {
@@ -276,14 +278,22 @@ struct CCEWIMusicalState
         if (mHarmPresetOnOffToggleReader.IsNewlyPressed())
         {
             if (mHarmIsOn && mAppSettings->mGlobalHarmPreset)
-            { // it's non-zero.
+            {
                 mHarmIsOn = false;
                 mAppSettings->mGlobalHarmPreset = 0;
+                mpDisplay->ShowToast(String("Harmonizer OFF\r\n") +
+                                     mAppSettings->mHarmSettings.mPresets[this->mNonZeroHarmPresetID].ToString(
+                                         this->mNonZeroHarmPresetID));
+            }
+            else if (!this->mNonZeroHarmPresetID) {
+                mpDisplay->ShowToast(String("Harmonizer OFF\r\n"));
             }
             else
             {
-                // harm is 0 or is off.
                 mAppSettings->mGlobalHarmPreset = this->mNonZeroHarmPresetID;
+                mpDisplay->ShowToast(String("Harmonizer ON\r\n") +
+                                     mAppSettings->mHarmSettings.mPresets[mAppSettings->mGlobalHarmPreset].ToString(
+                                         mAppSettings->mGlobalHarmPreset));
             }
         }
         else
