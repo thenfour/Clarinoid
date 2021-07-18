@@ -5,6 +5,7 @@
 #include "NumericSettingItem.hpp"
 #include "EnumSettingItem.hpp"
 #include "FunctionListSettingItem.hpp"
+#include "GainSettingItem.hpp"
 
 namespace clarinoid
 {
@@ -105,7 +106,7 @@ struct SynthPatchOscillatorMenuStuff
     // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
     // cc::function<bool()>::ptr_t isEnabled) :
     EnumSettingItem<OscWaveformShape> mWaveform = {
-        "Osc1-Waveform",
+        "Waveform",
         gOscWaveformShapeInfo,
         Property<OscWaveformShape>{[](void *cap) {
                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -118,8 +119,8 @@ struct SynthPatchOscillatorMenuStuff
                                    this},
         AlwaysEnabled};
 
-    FloatSettingItem mGain = {" - Gain",
-                              StandardRangeSpecs::gFloat_0_1,
+    GainSettingItem mGain = {"Gain",
+                              StandardRangeSpecs::gGeneralGain,
                               Property<float>{[](void *cap) {
                                                   auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                   return pThis->GetBinding().mGain;
@@ -131,20 +132,20 @@ struct SynthPatchOscillatorMenuStuff
                                               this},
                               AlwaysEnabled};
 
-    FloatSettingItem mPan = {" - Pan",
-                              StandardRangeSpecs::gFloat_N1_1,
-                              Property<float>{[](void *cap) {
-                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                  return pThis->GetBinding().mPan;
-                                              },
-                                              [](void *cap, const float &v) {
-                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                  pThis->GetBinding().mPan = v;
-                                              },
-                                              this},
-                              AlwaysEnabled};
+    FloatSettingItem mPan = {"Pan",
+                             StandardRangeSpecs::gFloat_N1_1,
+                             Property<float>{[](void *cap) {
+                                                 auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                 return pThis->GetBinding().mPan;
+                                             },
+                                             [](void *cap, const float &v) {
+                                                 auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                 pThis->GetBinding().mPan = v;
+                                             },
+                                             this},
+                             AlwaysEnabled};
 
-    FloatSettingItem mPortamentoTime = {" - Portamento",
+    FloatSettingItem mPortamentoTime = {"Portamento",
                                         StandardRangeSpecs::gPortamentoRange,
                                         Property<float>{[](void *cap) {
                                                             auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -157,7 +158,7 @@ struct SynthPatchOscillatorMenuStuff
                                                         this},
                                         AlwaysEnabled};
 
-    FloatSettingItem mFreqMul = {" - FreqMul",
+    FloatSettingItem mFreqMul = {"FreqMul",
                                  StandardRangeSpecs::gFreqMulRange,
                                  Property<float>{[](void *cap) {
                                                      auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -170,7 +171,7 @@ struct SynthPatchOscillatorMenuStuff
                                                  this},
                                  AlwaysEnabled};
 
-    FloatSettingItem mFreqOffset = {" - FreqOffset",
+    FloatSettingItem mFreqOffset = {"FreqOffset",
                                     StandardRangeSpecs::gFreqOffsetRange,
                                     Property<float>{[](void *cap) {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -183,7 +184,7 @@ struct SynthPatchOscillatorMenuStuff
                                                     this},
                                     AlwaysEnabled};
 
-    IntSettingItem mPitchSemis = {" - PitchSemis",
+    IntSettingItem mPitchSemis = {"PitchSemis",
                                   StandardRangeSpecs::gTransposeRange,
                                   Property<int>{[](void *cap) {
                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -196,7 +197,7 @@ struct SynthPatchOscillatorMenuStuff
                                                 this},
                                   AlwaysEnabled};
 
-    FloatSettingItem mPitchFine = {" - PitchFine",
+    FloatSettingItem mPitchFine = {"PitchFine",
                                    StandardRangeSpecs::gFloat_N1_1,
                                    Property<float>{[](void *cap) {
                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -209,7 +210,7 @@ struct SynthPatchOscillatorMenuStuff
                                                    this},
                                    AlwaysEnabled};
 
-    FloatSettingItem mPulseWidth = {" - PulseWidth",
+    FloatSettingItem mPulseWidth = {"PulseWidth",
                                     StandardRangeSpecs::gFloat_0_1,
                                     Property<float>{[](void *cap) {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -236,7 +237,7 @@ struct SynthPatchOscillatorMenuStuff
                                                     this},
                                      AlwaysEnabled};
 
-    FloatSettingItem mPhaseOffset = {" - PhaseOffset",
+    FloatSettingItem mPhaseOffset = {"PhaseOffset",
                                      StandardRangeSpecs::gFloat_0_1,
                                      Property<float>{[](void *cap) {
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -314,8 +315,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                              this},
                              AlwaysEnabled};
 
-    FloatSettingItem mVerbSend = {"Verb Send",
-                                  StandardRangeSpecs::gFloat_0_1,
+    GainSettingItem mVerbSend = {"Verb Send",
+                                  StandardRangeSpecs::gSendGain,
                                   Property<float>{[](void *cap) {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
                                                       return pThis->GetBinding().mVerbSend;
@@ -327,8 +328,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                   this},
                                   AlwaysEnabled};
 
-    FloatSettingItem mDelaySend = {"Dly Send",
-                                   StandardRangeSpecs::gFloat_0_1,
+    GainSettingItem mDelaySend = {"Dly Send",
+                                   StandardRangeSpecs::gSendGain,
                                    Property<float>{[](void *cap) {
                                                        auto *pThis = (SynthPatchMenuApp *)cap;
                                                        return pThis->GetBinding().mDelaySend;
@@ -355,17 +356,17 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                              AlwaysEnabled};
 
     FloatSettingItem mStereoSpread = {"Stereo Spread",
-                              StandardRangeSpecs::gFloat_0_1,
-                              Property<float>{[](void *cap) {
-                                                  auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->GetBinding().mStereoSpread;
-                                              },
-                                              [](void *cap, const float &v) {
-                                                  auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  pThis->GetBinding().mStereoSpread = v;
-                                              },
-                                              this},
-                              AlwaysEnabled};
+                                      StandardRangeSpecs::gFloat_0_1,
+                                      Property<float>{[](void *cap) {
+                                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                                          return pThis->GetBinding().mStereoSpread;
+                                                      },
+                                                      [](void *cap, const float &v) {
+                                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                                          pThis->GetBinding().mStereoSpread = v;
+                                                      },
+                                                      this},
+                                      AlwaysEnabled};
 
     FloatSettingItem mSyncMultMin = {" - mult min",
                                      NumericEditRangeSpec<float>{0.0f, 15.0f},
@@ -795,18 +796,18 @@ struct SynthSettingsApp : public SettingsMenuApp
     {
     }
 
-    FloatSettingItem mMasterGain = {"Master gain",
-                                    StandardRangeSpecs::gFloat_0_2,
-                                    Property<float>{[](void *cap) {
-                                                        auto *pThis = (SynthSettingsApp *)cap;
-                                                        return pThis->GetSynthSettings().mMasterGain;
-                                                    },
-                                                    [](void *cap, const float &v) {
-                                                        auto *pThis = (SynthSettingsApp *)cap;
-                                                        pThis->GetSynthSettings().mMasterGain = v;
-                                                    },
-                                                    this},
-                                    AlwaysEnabled};
+    GainSettingItem mMasterGain = {"Master gain",
+                                   StandardRangeSpecs::gMasterGainDb,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (SynthSettingsApp *)cap;
+                                                       return pThis->GetSynthSettings().mMasterGain;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (SynthSettingsApp *)cap;
+                                                       pThis->GetSynthSettings().mMasterGain = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
 
     IntSettingItem mGlobalSynthPreset = {"Global synth P#",
                                          NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
@@ -867,8 +868,8 @@ struct SynthSettingsApp : public SettingsMenuApp
         (void *)this // capture
     };
 
-    FloatSettingItem mReverbGain = {"Reverb gain",
-                                    StandardRangeSpecs::gFloat_0_1,
+    GainSettingItem mReverbGain = {"Reverb gain",
+                                    StandardRangeSpecs::gGeneralGain,
                                     Property<float>{[](void *cap) {
                                                         auto *pThis = (SynthSettingsApp *)cap;
                                                         return pThis->GetSynthSettings().mReverbGain;
@@ -906,8 +907,8 @@ struct SynthSettingsApp : public SettingsMenuApp
                                                     this},
                                     AlwaysEnabled};
 
-    FloatSettingItem mDelayGain = {"Delay gain",
-                                   StandardRangeSpecs::gFloat_0_1,
+    GainSettingItem mDelayGain = {"Delay gain",
+                                   StandardRangeSpecs::gGeneralGain,
                                    Property<float>{[](void *cap) {
                                                        auto *pThis = (SynthSettingsApp *)cap;
                                                        return pThis->GetSynthSettings().mDelayGain;

@@ -127,19 +127,26 @@ static inline int16_t Sample32To16(float s)
     return (int16_t)(Clamp(s, 0.0f, 1.0f) * 32768.0f);
 }
 
+static constexpr float MIN_DECIBEL_GAIN = -60.0f;
+
 /**
  * Converts a linear value to decibels.  Returns aMinDecibels if the linear
  * value is 0.
  */
-inline float LinearToDecibels(float aLinearValue, float aMinDecibels) {
-  return aLinearValue ? 20.0f * std::log10(aLinearValue) : aMinDecibels;
+inline float LinearToDecibels(float aLinearValue, float aMinDecibels = MIN_DECIBEL_GAIN)
+{
+    return aLinearValue ? 20.0f * std::log10(aLinearValue) : aMinDecibels;
 }
 
 /**
  * Converts a decibel value to a linear value.
  */
-inline float DecibelsToLinear(float aDecibels) {
-  return std::pow(10.0f, 0.05f * aDecibels);
+inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIBEL_GAIN)
+{
+    float lin = std::pow(10.0f, 0.05f * aDecibels);
+    if (lin <= aNegInfDecibels)
+        return 0.0f;
+    return lin;
 }
 
 // this is all utilities for shaping curves using this style:
@@ -445,7 +452,7 @@ struct NumericEditRangeSpec
     {
     }
 
-    T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed)
+    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed)
     {
         T step = mNormalStep;
         if (isCoursePressed && !isFinePressed)
@@ -459,6 +466,60 @@ struct NumericEditRangeSpec
     }
 };
 
+// this is a weird funciton but it's convenient for decibel settings.
+// it allows that below the minimum, there's an extra value of -inf db.
+struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
+{
+    static constexpr float BOTTOM_VALUE = MIN_DECIBEL_GAIN;
+
+    explicit NumericEditRangeSpecWithBottom(float rangeMin, float rangeMax)
+        : NumericEditRangeSpec(rangeMin, rangeMax)
+    {
+        CCASSERT(rangeMin > BOTTOM_VALUE);
+    }
+
+    explicit NumericEditRangeSpecWithBottom(float rangeMin,
+                                                float rangeMax,
+                                                float courseStep,
+                                                float normalStep,
+                                                float fineStep)
+        : NumericEditRangeSpec(rangeMin, rangeMax, courseStep, normalStep, fineStep)
+    {
+        CCASSERT(rangeMin > BOTTOM_VALUE);
+    }
+
+    using T = float;
+
+    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) override
+    {
+        T step = mNormalStep;
+        if (isCoursePressed && !isFinePressed)
+            step = mCourseStep;
+        if (isFinePressed && !isCoursePressed)
+            step = mFineStep;
+
+        T ret = f;
+
+        if (encoderIntDelta > 0 && FloatEquals(f, BOTTOM_VALUE))
+        {
+            // handle the first encoder detent jumping from 0 to the range min.
+            ret = mRangeMin;
+            encoderIntDelta--;
+        }
+
+        ret += (step * encoderIntDelta);
+        if (ret < mRangeMin)
+        {
+            ret = BOTTOM_VALUE;
+        }
+        else if (ret > mRangeMax)
+        {
+            ret = mRangeMax;
+        }
+        return ret;
+    }
+};
+
 namespace StandardRangeSpecs
 {
 static const NumericEditRangeSpec<float> gFloat_0_1 =
@@ -467,6 +528,13 @@ static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<floa
 
 // used by detune
 static const NumericEditRangeSpec<float> gFloat_0_2 = NumericEditRangeSpec<float>{0.0f, 2.0f};
+
+static const NumericEditRangeSpecWithBottom gMasterGainDb =
+    NumericEditRangeSpecWithBottom{-40.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
+static const NumericEditRangeSpecWithBottom gGeneralGain =
+    NumericEditRangeSpecWithBottom{-40.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
+static const NumericEditRangeSpecWithBottom gSendGain =
+    NumericEditRangeSpecWithBottom{-40.0f, 0.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
 
 static const NumericEditRangeSpec<float> gPortamentoRange = NumericEditRangeSpec<float>{0.0f, 0.2f};
 
