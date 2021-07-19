@@ -6,6 +6,7 @@
 namespace clarinoid
 {
 
+static constexpr size_t SynthPresetID_SynthTrumpetDoubler = SYNTH_PRESET_COUNT - 8;
 static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 7;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 6;
 static constexpr size_t SynthPresetID_HarmSync = SYNTH_PRESET_COUNT - 5;
@@ -74,7 +75,8 @@ EnumInfo<NoteOOBBehavior> gNoteOOBBehaviorInfo("NoteOOBBehavior", gNoteOOBBehavi
 ////////////////////////////////////////////////////
 enum class HarmSynthPresetRefType : uint8_t
 {
-    Global,
+    GlobalA,
+    GlobalB,
     Preset1, // at the preset level i can imagine setting a bass, comp, fx synth presets. they can be used for multiple
              // layers then.
     Preset2,
@@ -83,8 +85,9 @@ enum class HarmSynthPresetRefType : uint8_t
     Voice
 };
 
-EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[6] = {
-    {HarmSynthPresetRefType::Global, "Global"},
+EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[7] = {
+    {HarmSynthPresetRefType::GlobalA, "GlobalA"},
+    {HarmSynthPresetRefType::GlobalB, "GlobalB"},
     {HarmSynthPresetRefType::Preset1, "Preset1"},
     {HarmSynthPresetRefType::Preset2, "Preset2"},
     {HarmSynthPresetRefType::Preset3, "Preset3"},
@@ -116,7 +119,7 @@ struct HarmVoiceSettings
     int8_t mSequence[HARM_SEQUENCE_LEN] = {0};
     uint8_t mSequenceLength = 0;
 
-    HarmSynthPresetRefType mSynthPresetRef = HarmSynthPresetRefType::Global;
+    HarmSynthPresetRefType mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
     uint16_t mVoiceSynthPreset = 0;
 
     HarmScaleRefType mScaleRef = HarmScaleRefType::Global;
@@ -520,7 +523,7 @@ struct HarmSettings
         p.mName = "Oct down";
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Global;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -12;
     }
@@ -537,6 +540,18 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -12;
     }
+
+    // void InitColDetSawsPreset(HarmPreset &p)
+    // {
+    //     p.mName = "Thiccc";
+    //     p.mStereoSeparation = 0.5f;
+    //     p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+    //     p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+    //     p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Voice;
+    //     p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_HarmDetunedSaws;
+    //     p.mVoiceSettings[0].mSequenceLength = 1;
+    //     p.mVoiceSettings[0].mSequence[0] = 0;
+    // }
 
     
 
@@ -569,10 +584,11 @@ struct HarmSettings
         //InitBotanicalHarmPreset(mPresets[iPreset++]);
         //InitBellycrawlHarmPreset(mPresets[iPreset++]);
 
-        InitOctDownPreset(mPresets[iPreset++]);
+        //InitOctDownPreset(mPresets[iPreset++]);
+        //InitColDetSawsPreset(mPresets[iPreset++]);
         InitColBassPreset(mPresets[iPreset++]);
         //InitSpicePreset(mPresets[iPreset++]);
-        Init5thPreset(mPresets[iPreset++]);
+        //Init5thPreset(mPresets[iPreset++]);
 
         InitFunkyHarmPreset(mPresets[iPreset++]);
         InitMajInv2Preset(mPresets[iPreset++]);

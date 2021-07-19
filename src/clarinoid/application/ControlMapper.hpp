@@ -8,7 +8,7 @@
 namespace clarinoid
 {
 
-struct SynthPresetMappableFunction : FunctionHandler
+struct SynthPresetAMappableFunction : FunctionHandler
 {
     IInputSource *mInputSrc;
     AppSettings *mAppSettings;
@@ -23,17 +23,56 @@ struct SynthPresetMappableFunction : FunctionHandler
     {
         int nv = v.AsRoundedInt();
         nv = RotateIntoRange(nv, SYNTH_PRESET_COUNT);
-        int old = mAppSettings->mGlobalSynthPreset;
+        int old = mAppSettings->GetCurrentPerformancePatch().mSynthPresetA;
         if (old != nv)
         {
             auto &p = mAppSettings->FindSynthPreset(nv);
-            mInputSrc->InputSource_ShowToast(String("Synth preset: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
-            mAppSettings->mGlobalSynthPreset = nv;
+            mInputSrc->InputSource_ShowToast(String("Synth patch A: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
+            mAppSettings->GetCurrentPerformancePatch().mSynthPresetA = nv;
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        int v = mAppSettings->mGlobalSynthPreset;
+        int v = mAppSettings->GetCurrentPerformancePatch().mSynthPresetA;
+        return ControlValue::IntValue(v);
+    }
+};
+
+struct SynthPresetBMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc = nullptr;
+    AppSettings *mAppSettings = nullptr;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+        CCASSERT(!!psrc);
+        CCASSERT(!!appSettings);
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        CCASSERT(!!mAppSettings);
+        int nv = v.AsRoundedInt();
+        if (nv < -1) {
+            nv = SYNTH_PRESET_COUNT - 1;
+        }
+        if (nv >= (int)SYNTH_PRESET_COUNT) {
+            nv = -1;
+        }
+        int old = mAppSettings->GetCurrentPerformancePatch().mSynthPresetB;
+        if (old != nv)
+        {
+            //auto &p = mAppSettings->FindSynthPreset(nv);
+            auto name = mAppSettings->GetSynthPatchName(nv);
+            mInputSrc->InputSource_ShowToast(String("Synth patch B: ") + nv + " (" + (nv - old) + ")\r\n" + name);
+            mAppSettings->GetCurrentPerformancePatch().mSynthPresetB = nv;
+        }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        int v = mAppSettings->GetCurrentPerformancePatch().mSynthPresetB;
         return ControlValue::IntValue(v);
     }
 };
@@ -53,17 +92,51 @@ struct HarmPresetMappableFunction : FunctionHandler
     {
         int nv = v.AsRoundedInt();
         nv = RotateIntoRange(nv, HARM_PRESET_COUNT);
-        int old = mAppSettings->mGlobalHarmPreset;
+        int old = mAppSettings->GetCurrentPerformancePatch().mHarmPreset;
         if (old != nv)
         {
             auto &p = mAppSettings->FindHarmPreset(nv);
             mInputSrc->InputSource_ShowToast(String("Harmonizer: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
-            mAppSettings->mGlobalHarmPreset = nv;
+            mAppSettings->GetCurrentPerformancePatch().mHarmPreset = nv;
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        int v = mAppSettings->mGlobalHarmPreset;
+        int v = mAppSettings->GetCurrentPerformancePatch().mHarmPreset;
+        return ControlValue::IntValue(v);
+    }
+};
+
+struct PerfPresetMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc = nullptr;
+    AppSettings *mAppSettings = nullptr;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+        CCASSERT(!!psrc);
+        CCASSERT(!!appSettings);
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        CCASSERT(!!mAppSettings); // make sure Init() is called!
+        int nv = v.AsRoundedInt();
+        nv = RotateIntoRange(nv, PERFORMANCE_PATCH_COUNT);
+        int old = mAppSettings->mCurrentPerformancePatch;
+        if (old != nv)
+        {
+            auto name = mAppSettings->GetPerfPatchName(nv);
+            mInputSrc->InputSource_ShowToast(String("Perf: ") + nv + " (" + (nv - old) + ")\r\n" + name);
+            mAppSettings->mCurrentPerformancePatch = nv;
+        }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        int v = mAppSettings->mCurrentPerformancePatch;
+        v = RotateIntoRange(v, PERFORMANCE_PATCH_COUNT);
         return ControlValue::IntValue(v);
     }
 };
@@ -92,16 +165,16 @@ struct TransposeMappableFunction : FunctionHandler
             mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo high"));
             return;
         }
-        int old = mAppSettings->mTranspose;
+        int old = mAppSettings->GetCurrentPerformancePatch().mTranspose;
         if (old != nv)
         {
             mInputSrc->InputSource_ShowToast(String("Transpose: ") + nv + " (" + (nv - old) + ")");
-            mAppSettings->mTranspose = nv;
+            mAppSettings->GetCurrentPerformancePatch().mTranspose = nv;
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        return ControlValue::IntValue(mAppSettings->mTranspose);
+        return ControlValue::IntValue(mAppSettings->GetCurrentPerformancePatch().mTranspose);
     }
 };
 
@@ -141,12 +214,16 @@ struct InputDelegator
 
     VirtualSwitch mModifierFine;
     VirtualSwitch mModifierCourse;
+    VirtualSwitch mModifierSynth;
+    VirtualSwitch mModifierPerf;
+    VirtualSwitch mModifierHarm;
     VirtualSwitch mModifierShift;
-    VirtualSwitch mModifierCtrl;
 
-    SynthPresetMappableFunction mSynthPresetFn;
+    SynthPresetAMappableFunction mSynthPresetAFn;
+    SynthPresetBMappableFunction mSynthPresetBFn;
     HarmPresetMappableFunction mHarmPresetFn;
     TransposeMappableFunction mTransposeFn;
+    PerfPresetMappableFunction mPerfPresetFn;
 
     VirtualSwitch mLoopStopButton;
     VirtualSwitch mLoopGoButton;
@@ -160,17 +237,21 @@ struct InputDelegator
         mpAppSettings = appSettings;
         mpSrc = psrc;
 
-        mSynthPresetFn.Init(appSettings, psrc);
+        mSynthPresetAFn.Init(appSettings, psrc);
+        mSynthPresetBFn.Init(appSettings, psrc);
         mHarmPresetFn.Init(appSettings, psrc);
         mTransposeFn.Init(appSettings, psrc);
+        mPerfPresetFn.Init(appSettings, psrc);
 
         RegisterFunction(ControlMapping::Function::Nop,
                          &mMenuBack); // anything works; it's never called.
 
         RegisterFunction(ControlMapping::Function::ModifierCourse, &mModifierCourse);
         RegisterFunction(ControlMapping::Function::ModifierFine, &mModifierFine);
+        RegisterFunction(ControlMapping::Function::ModifierSynth, &mModifierSynth);
+        RegisterFunction(ControlMapping::Function::ModifierHarm, &mModifierHarm);
+        RegisterFunction(ControlMapping::Function::ModifierPerf, &mModifierPerf);
         RegisterFunction(ControlMapping::Function::ModifierShift, &mModifierShift);
-        RegisterFunction(ControlMapping::Function::ModifierCtrl, &mModifierCtrl);
 
         RegisterFunction(ControlMapping::Function::MenuBack, &mMenuBack);
         RegisterFunction(ControlMapping::Function::MenuOK, &mMenuOK);
@@ -196,9 +277,11 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::Breath, &mBreath);
         RegisterFunction(ControlMapping::Function::PitchBend, &mPitchBend);
 
-        RegisterFunction(ControlMapping::Function::SynthPreset, &mSynthPresetFn);
+        RegisterFunction(ControlMapping::Function::SynthPresetA, &mSynthPresetAFn);
+        RegisterFunction(ControlMapping::Function::SynthPresetB, &mSynthPresetBFn);
         RegisterFunction(ControlMapping::Function::HarmPreset, &mHarmPresetFn);
         RegisterFunction(ControlMapping::Function::Transpose, &mTransposeFn);
+        RegisterFunction(ControlMapping::Function::PerfPreset, &mPerfPresetFn);
 
         RegisterFunction(ControlMapping::Function::LoopStop, &mLoopStopButton);
         RegisterFunction(ControlMapping::Function::LoopGo, &mLoopGoButton);
@@ -220,10 +303,27 @@ struct InputDelegator
 
     bool MatchesModifierKeys(const ControlMapping &m)
     {
-        return true;
-        // todo: this needs to be fully thought-out. we have modifier keys but,
-        // criteria for matching them is not super basic, so it should be done
-        // right. maybe also, mod keys mapping should be handled specially
+        switch (m.mModifier)
+        {
+        case ModifierKey::None: // = 0, // requires no modifiers are pressed.
+            return !mModifierFine.CurrentValue() && !mModifierCourse.CurrentValue() &&
+            !mModifierSynth.CurrentValue() && !mModifierHarm.CurrentValue() && !mModifierPerf.CurrentValue() && !mModifierShift.CurrentValue();
+        case ModifierKey::Fine: // = 1,
+            return mModifierFine.CurrentValue();
+        case ModifierKey::Course: // = 2,
+            return mModifierCourse.CurrentValue();
+        case ModifierKey::Synth: // = 2,
+            return mModifierSynth.CurrentValue();
+        case ModifierKey::Harm: // = 2,
+            return mModifierHarm.CurrentValue();
+        case ModifierKey::Perf: // = 2,
+            return mModifierPerf.CurrentValue();
+        case ModifierKey::Shift: // = 2,
+            return mModifierShift.CurrentValue();
+        default:
+        case ModifierKey::Any: // = 128, // special; any combination works.
+            return true;
+        }
     }
 
     // for test code.
@@ -231,8 +331,10 @@ struct InputDelegator
     {
         mModifierCourse.mValue = false;
         mModifierFine.mValue = false;
+        mModifierSynth.mValue = false;
+        mModifierHarm.mValue = false;
+        mModifierPerf.mValue = false;
         mModifierShift.mValue = false;
-        mModifierCtrl.mValue = false;
     }
 
     // process all input state and delegate to handlers.

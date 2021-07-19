@@ -25,8 +25,9 @@ struct HarmVoiceSettingsApp
     HarmVoiceSettings &EditingVoice()
     {
         CCASSERT(mEditingHarmVoice >= 0 && mEditingHarmVoice < (int)clarinoid::HARM_VOICES);
-        return mDisplay.mAppSettings->mHarmSettings.mPresets[mDisplay.mAppSettings->mGlobalHarmPreset]
-            .mVoiceSettings[mEditingHarmVoice];
+        auto &perf = mDisplay.mAppSettings->GetCurrentPerformancePatch();
+        auto &h = mDisplay.mAppSettings->FindHarmPreset(perf.mHarmPreset);
+        return h.mVoiceSettings[mEditingHarmVoice];
     }
 
     EnumSettingItem<HarmSynthPresetRefType> mSynthPresetRef = {"Synth patch ref",
@@ -280,7 +281,8 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
 
     HarmPreset &EditingPreset()
     {
-        return this->mDisplay.mAppSettings->mHarmSettings.mPresets[this->mDisplay.mAppSettings->mGlobalHarmPreset];
+        auto &perf = this->mDisplay.mAppSettings->GetCurrentPerformancePatch();
+        return this->mDisplay.mAppSettings->mHarmSettings.mPresets[perf.mHarmPreset];
     }
 
     BoolSettingItem mEmitLiveNote = {"Emit live note?",
@@ -466,11 +468,11 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
            size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (HarmPatchSettingsApp *)cap;
             pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
-            pThis->mDisplay.ShowToast(
-                String("Copied ") +
-                pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[pThis->mDisplay.mAppSettings->mGlobalHarmPreset]
-                    .ToString(pThis->mDisplay.mAppSettings->mGlobalHarmPreset) +
-                "\nto\n" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].ToString(i));
+            auto &settings = *pThis->mDisplay.mAppSettings;
+            auto &perf = settings.GetCurrentPerformancePatch();
+            auto fromName = settings.GetHarmPatchName(perf.mHarmPreset);
+            auto toName = settings.GetHarmPatchName(i);
+            pThis->mDisplay.ShowToast(String("Copied ") + fromName + "\nto\n" + toName);
         },
         AlwaysEnabled,
         this};
@@ -500,9 +502,9 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         mDisplay.ClearState();
         mDisplay.mDisplay.println(String("Harmonizer"));
         mDisplay.mDisplay.println(String("     patch >>"));
-        mDisplay.mDisplay.println(
-            GetAppSettings()->mHarmSettings.mPresets[GetAppSettings()->mGlobalHarmPreset].ToString(
-                GetAppSettings()->mGlobalHarmPreset));
+        auto &perf = GetAppSettings()->GetCurrentPerformancePatch();
+        auto name = GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
+        mDisplay.mDisplay.println(name);
         SettingsMenuApp::RenderFrontPage();
     }
 };
@@ -529,7 +531,7 @@ struct HarmSettingsApp : public SettingsMenuApp
         },
         [](void *cap, size_t mi) { // get submenu
             auto *pThis = (HarmSettingsApp *)cap;
-            pThis->GetAppSettings()->mGlobalHarmPreset = mi;
+            pThis->GetAppSettings()->GetCurrentPerformancePatch().mHarmPreset = mi;
             return &pThis->mHarmPatchSettings.mRootList;
         },
         [](void *cap, size_t mi) { return true; }, // is enabled?
@@ -547,9 +549,12 @@ struct HarmSettingsApp : public SettingsMenuApp
     {
         this->mDisplay.ClearState();
         this->mDisplay.mDisplay.println("Harmonizer >");
-        this->mDisplay.mDisplay.println(
-            this->GetAppSettings()->mHarmSettings.mPresets[this->GetAppSettings()->mGlobalHarmPreset].ToString(
-                this->GetAppSettings()->mGlobalHarmPreset));
+
+        auto& perf = this->GetAppSettings()->GetCurrentPerformancePatch();
+        auto name = this->GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
+        //auto& h = this->GetAppSettings()->FindHarmPreset(perf.mHarmPreset);
+
+        this->mDisplay.mDisplay.println(name);
         SettingsMenuApp::RenderFrontPage();
     }
 };

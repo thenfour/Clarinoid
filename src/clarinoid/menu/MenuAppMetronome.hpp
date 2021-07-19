@@ -41,11 +41,11 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                              StandardRangeSpecs::gBPMRange,
                              Property<float>{[](void *cap) {
                                                  auto *pThis = (MetronomeSettingsApp *)cap;
-                                                 return pThis->mpAppSettings->mBPM;
+                                                 return pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM;
                                              },
                                              [](void *cap, const float &v) {
                                                  auto *pThis = (MetronomeSettingsApp *)cap;
-                                                 pThis->mpAppSettings->mBPM = v;
+                                                 pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM = v;
                                                  pThis->mpMetronome->OnBPMChanged();
                                              },
                                              this},
@@ -175,7 +175,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
         mDisplay.mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");
         mDisplay.mDisplay.print(" ");
         mDisplay.mDisplay.println(mpAppSettings->mMetronomeSoundOn ? "LEDOn" : "LEDOff");
-        mDisplay.mDisplay.println(String(" bpm=") + mpAppSettings->mBPM);
+        mDisplay.mDisplay.println(String(" bpm=") + mpAppSettings->GetCurrentPerformancePatch().mBPM);
 
         const int r = 4;
         int x = beatFrac * (MAX_DISPLAY_WIDTH - r * 2);

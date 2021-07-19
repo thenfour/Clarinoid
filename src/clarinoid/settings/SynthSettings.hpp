@@ -269,23 +269,6 @@ struct SynthSettings
 {
     SynthPreset mPresets[SYNTH_PRESET_COUNT];
 
-    float mMasterGain = 1.0f;
-
-    bool mMasterFXEnable = true;
-
-    float mReverbGain = 0.9f;
-    float mReverbDamping = 0.6f;
-    float mReverbSize = 0.6f;
-
-    float mDelayGain = 0.9f;
-    float mDelayMS = 300;
-    float mDelayStereoSep = 30;
-    float mDelayFeedbackLevel = 0.3f;
-    ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog2;
-    float mDelayCutoffFrequency = 1000;
-    float mDelaySaturation = 0.2f;
-    float mDelayQ = 0.1f;
-
     static void InitClarinoid2Preset(SynthPreset &p,
                                      const char *name,
                                      ClarinoidFilterType filt,
@@ -794,7 +777,7 @@ struct SynthSettings
         p.mModulations[1].mScaleN11 = -0.3f;
     }
 
-    static void InitSynthTrumpetPreset(SynthPreset &p)
+    static void InitSynthTrumpetPreset(SynthPreset &p, float gain)
     {
         p.mName = "Trumpet";
         p.mSync = false;
@@ -810,7 +793,7 @@ struct SynthSettings
         p.mFilterQ = 0.15f;
         p.mFilterKeytracking = 0;
 
-        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain = ReasonableOscillatorGain / 2.5f;
+        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain = (ReasonableOscillatorGain / 2.5f) * DecibelsToLinear(gain);
         p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
 
@@ -848,7 +831,7 @@ struct SynthSettings
         InitCrystalFieldsPatch(mPresets[i++]);
         InitCinematicTagPatch(mPresets[i++]);
         InitPanFlutePreset(mPresets[i++]);
-        InitSynthTrumpetPreset(mPresets[i++]);
+        InitSynthTrumpetPreset(mPresets[i++], 0);
         InitFunkyLeadPreset(mPresets[i++]);
         InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
 
@@ -892,6 +875,7 @@ struct SynthSettings
         InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);
         InitHarmPulseLead(mPresets[SynthPresetID_HarmPulse]);
         InitHarmSawLead(mPresets[SynthPresetID_HarmSaw]);
+        InitSynthTrumpetPreset(mPresets[SynthPresetID_SynthTrumpetDoubler], -6.04f);
     }
 };
 

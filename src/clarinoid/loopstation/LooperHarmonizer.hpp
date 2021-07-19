@@ -180,6 +180,7 @@ struct LooperAndHarmonizer
                   MusicalVoice *outp,
                   MusicalVoice *outpEnd)
     {
+        auto& perf = mAppSettings->GetCurrentPerformancePatch();
         /*
         1. record state
         2. for each layer, each harmonizer layer, if it can already be filled in, do it.
@@ -283,8 +284,7 @@ struct LooperAndHarmonizer
             }
         }
 
-        // auto old = gAppSettings.mDeducedScale;
-        mAppSettings->mDeducedScale = mScaleFollower->Update(outp, pout - outp);
+        perf.mDeducedScale = mScaleFollower->Update(outp, pout - outp);
         // if (gAppSettings.mDeducedScale != old) {
         //   Serial.println(String("scale changed to ") + gAppSettings.mDeducedScale.ToString());
         // }

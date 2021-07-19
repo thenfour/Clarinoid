@@ -60,16 +60,41 @@ struct Harmonizer
         // real harmonized output, then mark it as muted. it needs to be there so
         // the scale deducer can use it.
         liveVoice->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote;
-        liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, 0);
+        liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, MAGIC_VOICE_ID_LIVE_A);
         if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices)
         {
             ++ret; // live voice is a non-deduced voice.
         }
 
+        auto &perf = mAppSettings->GetCurrentPerformancePatch();
         MusicalVoice *pout = outp;
+        if (pout >= end)
+        {
+            return ret;
+        }
 
-        bool globalDeduced = mAppSettings->mGlobalScaleRef == GlobalScaleRefType::Deduced;
-        Scale globalScale = globalDeduced ? mAppSettings->mDeducedScale : mAppSettings->mGlobalScale;
+        if (preset.mEmitLiveNote && (liveVoice->mSynthPatchB >= 0))
+        {
+            *pout = *liveVoice; // copy from live voice to get started.
+            pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, MAGIC_VOICE_ID_LIVE_B);
+            pout->mSynthPatchA = pout->mSynthPatchB;
+            pout->mSynthPatchB = liveVoice->mSynthPatchB =
+                -1; // as we split this voice into 2, remove the reference to patch B.
+
+            // stereo spread of A & B synth patches
+            liveVoice->mPan -= perf.mSynthStereoSpread;
+            pout->mPan += perf.mSynthStereoSpread;
+
+            ++pout;
+            ++ret;
+            if (pout >= end)
+            {
+                return ret;
+            }
+        }
+
+        bool globalDeduced = perf.mGlobalScaleRef == GlobalScaleRefType::Deduced;
+        Scale globalScale = globalDeduced ? perf.mDeducedScale : perf.mGlobalScale;
 
         // CCPlot(String("globalScale:") + globalScale.ToString() + ", isdeduced=" +
         // (globalDeduced ? "yes" : "no"));
@@ -113,7 +138,8 @@ struct Harmonizer
 
             *pout = *liveVoice; // copy from live voice to get started.
             pout->mIsNoteCurrentlyMuted = false;
-            pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, (uint8_t)(nVoice + 1)); // +1 because live voice is id 0.
+            pout->mVoiceId =
+                MakeMusicalVoiceID(loopLayerID, HarmLayerToVoiceID(nVoice)); // +1 because live voice is id 0.
 
             pout->mPan += preset.mStereoSeparation * ((((int)nVoice & 1) * 2) - 1); // turns bit 0 to -1 or 1
 
@@ -165,23 +191,26 @@ struct Harmonizer
 
             switch (hv.mSynthPresetRef)
             {
-            case HarmSynthPresetRefType::Global:
-                pout->mSynthPatch = mAppSettings->mGlobalSynthPreset;
+            case HarmSynthPresetRefType::GlobalA:
+                pout->mSynthPatchA = perf.mSynthPresetA; //  ->mGlobalSynthPreset;
+                break;
+            case HarmSynthPresetRefType::GlobalB:
+                pout->mSynthPatchA = perf.mSynthPresetB; //  ->mGlobalSynthPreset;
                 break;
             case HarmSynthPresetRefType::Preset1:
-                pout->mSynthPatch = preset.mSynthPreset1;
+                pout->mSynthPatchA = preset.mSynthPreset1;
                 break;
             case HarmSynthPresetRefType::Preset2:
-                pout->mSynthPatch = preset.mSynthPreset2;
+                pout->mSynthPatchA = preset.mSynthPreset2;
                 break;
             case HarmSynthPresetRefType::Preset3:
-                pout->mSynthPatch = preset.mSynthPreset3;
+                pout->mSynthPatchA = preset.mSynthPreset3;
                 break;
             case HarmSynthPresetRefType::Preset4:
-                pout->mSynthPatch = preset.mSynthPreset4;
+                pout->mSynthPatchA = preset.mSynthPreset4;
                 break;
             case HarmSynthPresetRefType::Voice:
-                pout->mSynthPatch = hv.mVoiceSynthPreset;
+                pout->mSynthPatchA = hv.mVoiceSynthPreset;
                 break;
             }
 

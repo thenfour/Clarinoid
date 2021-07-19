@@ -34,6 +34,7 @@
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
+#include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 
 namespace clarinoid
 {
@@ -55,7 +56,7 @@ struct Clarinoid2App : ILEDDataProvider
     PerformanceApp mPerformanceApp;
     DebugDisplayApp mDebugDisplayApp;
     SystemSettingsApp mSystemSettingsApp;
-    SynthSettingsApp mSynthSettingsApp;
+    PerformancePatchSettingsApp mPerfPatchApp;
     SynthPatchMenuApp mSynthPatchApp;
     AudioMonitorApp mAudioMonitorApp;
     MetronomeSettingsApp mMetronomeSettingsApp;
@@ -81,7 +82,7 @@ struct Clarinoid2App : ILEDDataProvider
                   return pThis->mControlMapper.mPitchStrip.CurrentValue01();
               },
               this),
-          mSynthSettingsApp(mDisplay), mSynthPatchApp(mDisplay), mAudioMonitorApp(mDisplay),
+          mPerfPatchApp(mDisplay), mSynthPatchApp(mDisplay), mAudioMonitorApp(mDisplay),
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
           mHarmVoiceSettingsApp(mDisplay), mHarmPatchApp(mDisplay)
     {
@@ -105,20 +106,20 @@ struct Clarinoid2App : ILEDDataProvider
         mControlMapper.Init(&mDisplay);
 
         // initialize some settings.
-        mAppSettings.mTranspose = 12;
 
         MPR121ConfigApp<10, 4> mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
 
-            &mSynthPatchApp,
-            &mSynthSettingsApp,
+            &mPerfPatchApp,
             &mHarmPatchApp,
+            &mSynthPatchApp,
+
             &mHarmVoiceSettingsApp,
 
             &mMetronomeSettingsApp,
-            &mSystemSettingsApp,
+            &mSystemSettingsApp, // <-- perf patch selector
             &mAudioMonitorApp,
 
             &mDebugDisplayApp,
@@ -196,20 +197,41 @@ struct Clarinoid2App : ILEDDataProvider
         //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx3, ControlMapping::Function::SynthPreset,
         //     -1.0f);
 
+
+        //  NORMAL     SHIFT
+        // - synth+    synthB+
+        // - synth-    synthB-
+        //
+        // - harm+     perf+
+        // - harm-     perf-
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx1, ControlMapping::Function::SynthPreset, 1.0f);
+            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx1, ControlMapping::Function::SynthPresetA, 1.0f);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx2, ControlMapping::Function::SynthPreset, -1.0f);
+            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx2, ControlMapping::Function::SynthPresetA, -1.0f);
+
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::SynthPresetB, 1.0f, ModifierKey::Shift);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::SynthPresetB, -1.0f, ModifierKey::Shift);
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f);
         mAppSettings.mControlMappings[++im] =
             ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f);
 
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::PerfPreset, 1.0f, ModifierKey::Shift);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::PerfPreset, -1.0f, ModifierKey::Shift);
+
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHx1, ControlMapping::Function::ModifierFine);
+            ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::ModifierFine);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::HarmPresetOnOffToggle);
+            ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::ModifierShift);
+
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::LHx1, ControlMapping::Function::HarmPresetOnOffToggle);
+
         // mAppSettings.mControlMappings[++im] =
         //     ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierCourse);
 

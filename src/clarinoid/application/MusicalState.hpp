@@ -99,8 +99,10 @@ struct CCEWIMusicalState
         mNewState.mPitchBendN11 = mCurrentPitchN11.GetValue();
         mNewState.mVelocity = 100;
 
-        mNewState.mHarmPatch = mAppSettings->mGlobalHarmPreset;
-        mNewState.mSynthPatch = mAppSettings->mGlobalSynthPreset;
+        auto& perf = mAppSettings->GetCurrentPerformancePatch();
+        mNewState.mHarmPatch = perf.mHarmPreset;
+        mNewState.mSynthPatchA = perf.mSynthPresetA;
+        mNewState.mSynthPatchB = perf.mSynthPresetB;
         mNewState.mPan = 0; // panning is part of musical state because harmonizer needs it per voice, but it's actually
                             // calculated by the synth based on synth preset.
 
@@ -213,7 +215,7 @@ struct CCEWIMusicalState
 #endif
 
         // transpose
-        relativeNote += mAppSettings->mTranspose;
+        relativeNote += mAppSettings->GetCurrentPerformancePatch().mTranspose;
 
         // hold pitch is cool, but if we set the new base pitch while you're holding keys down (which is kinda 100%),
         // then you immediately start playing relative to the existing pitch. very ugly, and literally never intended.
@@ -307,10 +309,10 @@ struct CCEWIMusicalState
         mHarmPresetOnOffToggleReader.Update(&mInput->mHarmPresetOnOffToggle);
         if (mHarmPresetOnOffToggleReader.IsNewlyPressed())
         {
-            if (mHarmIsOn && mAppSettings->mGlobalHarmPreset)
+            if (mHarmIsOn && perf.mHarmPreset)
             {
                 mHarmIsOn = false;
-                mAppSettings->mGlobalHarmPreset = 0;
+                perf.mHarmPreset = 0;
                 mpDisplay->ShowToast(String("Harmonizer OFF\r\n") +
                                      mAppSettings->mHarmSettings.mPresets[this->mNonZeroHarmPresetID].ToString(
                                          this->mNonZeroHarmPresetID));
@@ -321,21 +323,20 @@ struct CCEWIMusicalState
             }
             else
             {
-                mAppSettings->mGlobalHarmPreset = this->mNonZeroHarmPresetID;
+                perf.mHarmPreset = this->mNonZeroHarmPresetID;
                 mpDisplay->ShowToast(String("Harmonizer ON\r\n") +
-                                     mAppSettings->mHarmSettings.mPresets[mAppSettings->mGlobalHarmPreset].ToString(
-                                         mAppSettings->mGlobalHarmPreset));
+                                     mAppSettings->GetHarmPatchName(perf.mHarmPreset));
             }
         }
         else
         {
             // normal, non-newly-pressed operation
-            if (!!mAppSettings->mGlobalHarmPreset)
+            if (!!perf.mHarmPreset)
             {
-                mNonZeroHarmPresetID = mAppSettings->mGlobalHarmPreset;
+                mNonZeroHarmPresetID = perf.mHarmPreset;
             }
         }
-        mHarmIsOn = !!mAppSettings->mGlobalHarmPreset; // only consider it on when we actually are on a harm preset
+        mHarmIsOn = !!perf.mHarmPreset; // only consider it on when we actually are on a harm preset
 
         // we have calculated mLiveVoice, converting physical to live musical state.
         // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.

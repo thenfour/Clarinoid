@@ -277,11 +277,12 @@ Input 5: Pulse Width Modulation for Oscillator 3
 
     void Update(const MusicalVoice &mv)
     {
-        mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatch);
+        // NOTE: we don't care about SynthPatchB at this point.
+        mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatchA);
         mModMatrix.SetSynthPatch(mPreset);
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
         bool voiceOrPatchChanged =
-            (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatch != mv.mSynthPatch);
+            (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatchA != mv.mSynthPatchA);
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
             mOsc.removeNote();
@@ -544,36 +545,38 @@ struct SynthGraphControl
 
     void UpdatePostFx()
     {
-        CCSynthGraph::delayFeedbackAmpLeft.gain(mAppSettings->mSynthSettings.mDelayFeedbackLevel);
-        CCSynthGraph::delayFeedbackAmpRight.gain(mAppSettings->mSynthSettings.mDelayFeedbackLevel);
-        CCSynthGraph::delayLeft.delay(0, mAppSettings->mSynthSettings.mDelayMS);
-        CCSynthGraph::delayRight.delay(
-            0, mAppSettings->mSynthSettings.mDelayMS + mAppSettings->mSynthSettings.mDelayStereoSep);
+        auto& perf = mAppSettings->GetCurrentPerformancePatch();
 
-        CCSynthGraph::delayFilterLeft.SetParams(mAppSettings->mSynthSettings.mDelayFilterType,
-                                                mAppSettings->mSynthSettings.mDelayCutoffFrequency,
-                                                mAppSettings->mSynthSettings.mDelayQ,
-                                                mAppSettings->mSynthSettings.mDelaySaturation);
-        CCSynthGraph::delayFilterRight.SetParams(mAppSettings->mSynthSettings.mDelayFilterType,
-                                                 mAppSettings->mSynthSettings.mDelayCutoffFrequency,
-                                                 mAppSettings->mSynthSettings.mDelayQ,
-                                                 mAppSettings->mSynthSettings.mDelaySaturation);
+        CCSynthGraph::delayFeedbackAmpLeft.gain(perf.mDelayFeedbackLevel);
+        CCSynthGraph::delayFeedbackAmpRight.gain(perf.mDelayFeedbackLevel);
+        CCSynthGraph::delayLeft.delay(0, perf.mDelayMS);
+        CCSynthGraph::delayRight.delay(
+            0, perf.mDelayMS + perf.mDelayStereoSep);
+
+        CCSynthGraph::delayFilterLeft.SetParams(perf.mDelayFilterType,
+                                                perf.mDelayCutoffFrequency,
+                                                perf.mDelayQ,
+                                                perf.mDelaySaturation);
+        CCSynthGraph::delayFilterRight.SetParams(perf.mDelayFilterType,
+                                                 perf.mDelayCutoffFrequency,
+                                                 perf.mDelayQ,
+                                                 perf.mDelaySaturation);
 
         CCSynthGraph::delayWetAmpLeft.gain(
-            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mDelayGain : 0.0f);
+            perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
         CCSynthGraph::delayWetAmpRight.gain(
-            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mDelayGain : 0.0f);
+            perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
 
-        CCSynthGraph::verb.roomsize(mAppSettings->mSynthSettings.mReverbSize);
-        CCSynthGraph::verb.damping(mAppSettings->mSynthSettings.mReverbDamping);
+        CCSynthGraph::verb.roomsize(perf.mReverbSize);
+        CCSynthGraph::verb.damping(perf.mReverbDamping);
 
         CCSynthGraph::verbWetAmpLeft.gain(
-            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mReverbGain : 0.0f);
+            perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
         CCSynthGraph::verbWetAmpRight.gain(
-            mAppSettings->mSynthSettings.mMasterFXEnable ? mAppSettings->mSynthSettings.mReverbGain : 0.0f);
+            perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
 
-        CCSynthGraph::ampLeft.gain(mAppSettings->mSynthSettings.mMasterGain);
-        CCSynthGraph::ampRight.gain(mAppSettings->mSynthSettings.mMasterGain);
+        CCSynthGraph::ampLeft.gain(perf.mMasterGain);
+        CCSynthGraph::ampRight.gain(perf.mMasterGain);
 
         if (!mAppSettings->mMetronomeSoundOn)
         {

@@ -24,12 +24,46 @@ EnumItemInfo<GlobalScaleRefType> gGlobalScaleRefTypeItems[2] = {
 
 EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo("GlobalScaleRefType", gGlobalScaleRefTypeItems);
 
+struct PerformancePatch
+{
+    String mName = "--";
 
+    float mBPM = 104.0f;
 
+    int8_t mTranspose = DEFAULT_TRANSPOSE;
 
+    GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Deduced;
+    Scale mGlobalScale = Scale{Note::E, ScaleFlavorIndex::MajorPentatonic};  // you can set this in menus
+    Scale mDeducedScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic}; // this is automatically populated always
 
+    int16_t mSynthPresetA = 0;
+    int16_t mSynthPresetB = -1; // -1 = mute, no patch.
+    int16_t mHarmPreset = 0;
 
+    float mSynthStereoSpread = 0.35f;
 
+    float mMasterGain = 1.0f;
+
+    bool mMasterFXEnable = true;
+
+    float mReverbGain = 0.9f;
+    float mReverbDamping = 0.6f;
+    float mReverbSize = 0.6f;
+
+    float mDelayGain = 0.9f;
+    float mDelayMS = 300;
+    float mDelayStereoSep = 30;
+    float mDelayFeedbackLevel = 0.3f;
+    ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog2;
+    float mDelayCutoffFrequency = 1000;
+    float mDelaySaturation = 0.2f;
+    float mDelayQ = 0.1f;
+
+    String ToString(uint8_t index) const
+    {
+        return String("") + index + ":" + mName;
+    }
+};
 
 struct AppSettings
 {
@@ -53,32 +87,61 @@ struct AppSettings
     int mMetronomeBrightness = 255;
     float mMetronomeLEDDecay = 0.1f;
 
-    float mBPM = 104.0f;
-
-    int mTranspose = 0;
-
-    GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Deduced;
-    Scale mGlobalScale = Scale{Note::E, ScaleFlavorIndex::MajorPentatonic};  // you can set this in menus
-    Scale mDeducedScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic}; // this is automatically populated always
-
     HarmSettings mHarmSettings;
     LooperSettings mLooperSettings;
     SynthSettings mSynthSettings;
 
-    // these are for the live playing voice. a harmonizer's voices can override the synth preset though.
-    uint16_t mGlobalSynthPreset = 0;
-    uint16_t mGlobalHarmPreset = 0;
+    PerformancePatch mPerformancePatches[PERFORMANCE_PATCH_COUNT];
+    uint16_t mCurrentPerformancePatch = 0;
 
-    HarmPreset &FindHarmPreset(uint16_t id)
+    PerformancePatch &GetCurrentPerformancePatch()
+    {
+        return mPerformancePatches[mCurrentPerformancePatch];
+    }
+
+    String GetSynthPatchName(int16_t id)
+    {
+        if (id < 0 || (size_t)id >= SYNTH_PRESET_COUNT)
+            return String("<none>");
+        return mSynthSettings.mPresets[id].ToString(id);
+    }
+
+    String GetHarmPatchName(int16_t id)
+    {
+        if (id < 0 || (size_t)id >= HARM_PRESET_COUNT)
+            return String("<none>");
+        return mHarmSettings.mPresets[id].ToString(id);
+    }
+
+    String GetPerfPatchName(int16_t id)
+    {
+        if (id < 0 || (size_t)id >= PERFORMANCE_PATCH_COUNT)
+            return String("<none>");
+        return mPerformancePatches[id].ToString(id);
+    }
+
+    HarmPreset &FindHarmPreset(int16_t id)
     {
         id = RotateIntoRange(id, HARM_PRESET_COUNT);
         return mHarmSettings.mPresets[id];
     }
 
-    SynthPreset &FindSynthPreset(uint16_t id)
+    SynthPreset &FindSynthPreset(int16_t id)
     {
         id = RotateIntoRange(id, SYNTH_PRESET_COUNT);
         return mSynthSettings.mPresets[id];
+    }
+
+    static void InitThiccPerf(PerformancePatch& p) {
+        p.mName = "Thicc";
+        p.mSynthStereoSpread = 0.35f;
+        p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+    }
+
+    AppSettings()
+    {
+        size_t i = 1;
+        InitThiccPerf(mPerformancePatches[i++]);
     }
 };
 

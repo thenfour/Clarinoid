@@ -24,6 +24,10 @@ static const size_t HARM_PRESET_COUNT = 32;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;
 
+static const size_t PERFORMANCE_PATCH_COUNT = 16;
+
+static const int DEFAULT_TRANSPOSE = 12;
+
 static const size_t LOOP_LAYERS = 6;
 static constexpr size_t MAX_MUSICAL_VOICES =
     LOOP_LAYERS *
@@ -39,7 +43,7 @@ static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the
 static const size_t MAX_DISPLAY_WIDTH = 128; // in order to maintain some static buffers.
 
 // assignable slots.
-static const size_t MAX_CONTROL_MAPPINGS = 30;
+static const size_t MAX_CONTROL_MAPPINGS = 48;
 
 enum class PhysicalControl : uint8_t
 {

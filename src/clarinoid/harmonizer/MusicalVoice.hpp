@@ -13,6 +13,12 @@ static constexpr MusicalVoiceID_t MAGIC_VOICE_ID_UNASSIGNED =
     std::numeric_limits<MusicalVoiceID_t>::max(); // used as a voice ID for voices that aren't assigned to any musical
                                                   // voice.
 
+static constexpr uint8_t MAGIC_VOICE_ID_LIVE_A = 0; // when we had 1 live voice, this is 0.
+static constexpr uint8_t MAGIC_VOICE_ID_LIVE_B = 1;
+static constexpr uint8_t HarmLayerToVoiceID(int8_t h) {
+    return h + 2;
+}
+
 static inline MusicalVoiceID_t MakeMusicalVoiceID(uint8_t loopLayerID, uint8_t harmVoice)
 {
     static_assert(HARM_VOICES < 256, "harmonizer voice ids must fit into a byte");
@@ -50,9 +56,9 @@ struct MusicalVoice
     AnalogValue01<> mBreath01;
     AnalogValueN11<> mPitchBendN11;
     float mPan = 0;
-    int16_t mSynthPatch = 0;
+    int16_t mSynthPatchA = 0;
+    int16_t mSynthPatchB = -1; // this one can be negative to indicate mute / no patch.
     int16_t mHarmPatch = 0;
-    //uint16_t mAgeFrames = 0;
 };
 
 struct MusicalVoiceTransitionEvents

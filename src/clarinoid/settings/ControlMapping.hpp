@@ -5,15 +5,20 @@
 
 namespace clarinoid
 {
-// flags. consider things like "fine"
+
+
+// these should be flags someday but for now no need.
 enum class ModifierKey : uint8_t
 {
     None = 0, // requires no modifiers are pressed.
     Fine = 1,
     Course = 2,
-    Shift = 4,
-    Ctrl = 8,
-    Any = 128, // special; any combination works.
+
+    Synth = 3,
+    Perf = 4,
+    Harm = 5,
+    Shift = 6,
+    Any = 127, // special; any combination works.
 };
 
 // defines a mapping from a switch.
@@ -24,8 +29,10 @@ struct ControlMapping
         Nop,
         ModifierFine,
         ModifierCourse,
+        ModifierSynth,
+        ModifierPerf,
+        ModifierHarm,
         ModifierShift,
-        ModifierCtrl,
         MenuBack,
         MenuOK,
         LH1,
@@ -45,9 +52,11 @@ struct ControlMapping
         Breath,
         PitchBend,
         MenuScrollA,
-        SynthPreset,
+        SynthPresetA,
+        SynthPresetB,
         HarmPreset,
         Transpose,
+        PerfPreset,
         LoopGo,
         LoopStop,
         BaseNoteHoldToggle,
@@ -60,7 +69,6 @@ struct ControlMapping
     {
         Passthrough,   // can be used as a "nop", or things like mapping a button input to a bool function
         RemapUnipolar, // map the source value with {min,max} => float01
-        // RemapBipolar,           // map the source value with {negmin, negmax, dead max, pos min, pos max} => floatN11
         DeltaWithScale,     // for encoders scrolling for example. if you just "set" the value, then it would interfere.
                             // it's more accurate like this.
         TriggerUpValue,     // when trigger up condition is met, set dest value to X.
@@ -232,7 +240,7 @@ struct ControlMapping
     }
 
     // triggers when down pressed, adds a value to the param.
-    static ControlMapping ButtonIncrementMapping(PhysicalControl source, Function fn, float delta)
+    static ControlMapping ButtonIncrementMapping(PhysicalControl source, Function fn, float delta, ModifierKey mod = ModifierKey::None)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -241,6 +249,7 @@ struct ControlMapping
             MapStyle::TriggerUpValue; // doing it this way allows you to map multiple buttons to the same boolean thing.
         ret.mValueArray[0] = delta;
         ret.mFunction = fn;
+        ret.mModifier = mod;
         return ret;
     }
 

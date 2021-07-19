@@ -181,9 +181,15 @@ struct LoopCursor
             e.ApplyToVoice(mRunningVoice);
             break;
         }
-        case LoopEventType::SynthPatchChange: // { uint8_t patchid }
+        case LoopEventType::SynthPatchChangeA: // { uint8_t patchid }
         {
-            LoopEvent_SynthPatchChange e(mP, byte2);
+            LoopEvent_SynthPatchChangeA e(mP, byte2);
+            e.ApplyToVoice(mRunningVoice);
+            break;
+        }
+        case LoopEventType::SynthPatchChangeB: // { uint8_t patchid }
+        {
+            LoopEvent_SynthPatchChangeB e(mP, byte2);
             e.ApplyToVoice(mRunningVoice);
             break;
         }
@@ -223,7 +229,8 @@ struct LoopEvent_DebugUnified
     LoopEvent_Breath mBreathParams;
     LoopEvent_Pitch mPitchParams;
     LoopEvent_BreathAndPitch mBreathAndPitchParams;
-    LoopEvent_SynthPatchChange mSynthPatchChangeParams;
+    LoopEvent_SynthPatchChangeA mSynthPatchChangeParamsA;
+    LoopEvent_SynthPatchChangeB mSynthPatchChangeParamsB;
     LoopEvent_HarmPatchChange mHarmPatchChangeParams;
     LoopEvent_FullState mFullStateParams;
 
@@ -270,11 +277,17 @@ struct LoopEvent_DebugUnified
             mBreathAndPitchParams = LoopEvent_BreathAndPitch(p, byte2);
             mParamString = mBreathAndPitchParams.ToString();
             break;
-        case LoopEventType::SynthPatchChange:
-            mName = LoopEvent_SynthPatchChange::Name;
-            mPayloadSize = LoopEvent_SynthPatchChange::PayloadSizeBytes;
-            mSynthPatchChangeParams = LoopEvent_SynthPatchChange(p, byte2);
-            mParamString = mSynthPatchChangeParams.ToString();
+        case LoopEventType::SynthPatchChangeA:
+            mName = LoopEvent_SynthPatchChangeA::Name;
+            mPayloadSize = LoopEvent_SynthPatchChangeA::PayloadSizeBytes;
+            mSynthPatchChangeParamsA = LoopEvent_SynthPatchChangeA(p, byte2);
+            mParamString = mSynthPatchChangeParamsA.ToString();
+            break;
+        case LoopEventType::SynthPatchChangeB:
+            mName = LoopEvent_SynthPatchChangeB::Name;
+            mPayloadSize = LoopEvent_SynthPatchChangeB::PayloadSizeBytes;
+            mSynthPatchChangeParamsB = LoopEvent_SynthPatchChangeB(p, byte2);
+            mParamString = mSynthPatchChangeParamsB.ToString();
             break;
         case LoopEventType::HarmPatchChange:
             mName = LoopEvent_HarmPatchChange::Name;
@@ -890,10 +903,15 @@ struct LoopEventStream
         }
 
         // capture alteration events before note on
-        if (liveVoice.mSynthPatch != mCursor.mRunningVoice.mSynthPatch)
+        if (liveVoice.mSynthPatchA != mCursor.mRunningVoice.mSynthPatchA)
         {
-            mCursor.mRunningVoice.mSynthPatch = liveVoice.mSynthPatch;
-            WriteEventRaw(LoopEvent_SynthPatchChange(liveVoice));
+            mCursor.mRunningVoice.mSynthPatchA = liveVoice.mSynthPatchA;
+            WriteEventRaw(LoopEvent_SynthPatchChangeA(liveVoice));
+        }
+        if (liveVoice.mSynthPatchB != mCursor.mRunningVoice.mSynthPatchB)
+        {
+            mCursor.mRunningVoice.mSynthPatchB = liveVoice.mSynthPatchB;
+            WriteEventRaw(LoopEvent_SynthPatchChangeB(liveVoice));
         }
 
         if (liveVoice.mHarmPatch != mCursor.mRunningVoice.mHarmPatch)

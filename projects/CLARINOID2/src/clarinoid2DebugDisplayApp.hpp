@@ -137,11 +137,11 @@ struct PerformanceApp : SettingsMenuApp
     ISettingItem *mArray[7] = {
         &mDelay,        // ok
         &mTimesliceLen, // ok
-        &mCPU,          // definitely bugged
+        &mCPU,          // 
         &mTiming,       // ok
-        &mInput,        // bugged
-        &mMusicalState, // bugged
-        &mSynthState,   // bugged
+        &mInput,        // 
+        &mMusicalState, // 
+        &mSynthState,   // 
     };
     SettingsList mRootList = {mArray};
     virtual SettingsList *GetRootSettingsList()
@@ -153,21 +153,28 @@ struct PerformanceApp : SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
+        auto& perf = mAppSettings->GetCurrentPerformancePatch();
+
+        // line 0
+        mDisplay.mDisplay.setTextWrap(false);
+        mDisplay.mDisplay.println(String("P:") + perf.mName);
+
         // line 1
         mDisplay.mDisplay.setTextWrap(false);
         mDisplay.mDisplay.println(
-            mAppSettings->FindSynthPreset(mAppSettings->mGlobalSynthPreset).ToString(mAppSettings->mGlobalSynthPreset));
+            String("A:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetA));
 
         // line 2
+        mDisplay.mDisplay.setTextWrap(false);
+        mDisplay.mDisplay.println(
+            String("B:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetB));
+
+        // line 3
         mDisplay.mDisplay.println(
             mpMusicalStateTask->mMusicalState.mHarmIsOn
-                ? mAppSettings->FindHarmPreset(mAppSettings->mGlobalHarmPreset)
-                      .ToString(mAppSettings->mGlobalHarmPreset)
+                ? String("H:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)
                 : (String("H:off:") +
-                   mAppSettings->FindHarmPreset(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)
-                       .ToString(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)));
-
-        // mDisplay.mDisplay.println(mAppSettings->mGlobalScale.ToString());
+                   mAppSettings->GetHarmPatchName(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)));
 
         float peak, heldPeak;
         mPeakMeter.Update(peak, heldPeak);
@@ -176,13 +183,13 @@ struct PerformanceApp : SettingsMenuApp
         mDisplay.mDisplay.fillRoundRect(0, y, peak * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
         mDisplay.mDisplay.drawFastVLine(heldPeak * mDisplay.mDisplay.width(), y, 8, SSD1306_INVERSE);
 
-        y = mDisplay.mDisplay.getCursorY();
-        float val = mpMusicalStateTask->mMusicalState.mCurrentBreath01.GetValue();
-        mDisplay.mDisplay.println(String("breath ") + val);
-        mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+        // y = mDisplay.mDisplay.getCursorY();
+        // float val = mpMusicalStateTask->mMusicalState.mCurrentBreath01.GetValue();
+        // mDisplay.mDisplay.println(String("breath ") + val);
+        // mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
         y = mDisplay.mDisplay.getCursorY();
-        val = mpMusicalStateTask->mMusicalState.mCurrentPitchN11.GetValue();
+        float val = mpMusicalStateTask->mMusicalState.mCurrentPitchN11.GetValue();
         // mDisplay.mDisplay.println(String("pitch ") + val);
         static const int pbwidth = 5;
         if (val >= 0)
@@ -207,7 +214,7 @@ struct PerformanceApp : SettingsMenuApp
         // metronome
         y = mDisplay.mDisplay.getCursorY();
         float beatFrac = mpMetronome->GetBeatFrac();
-        mDisplay.mDisplay.println(String("") + mAppSettings->mBPM + " bpm " + mpMetronome->GetBeatInt());
+        mDisplay.mDisplay.println(String("") + perf.mBPM + " bpm " + mpMetronome->GetBeatInt());
         mDisplay.mDisplay.fillRoundRect(0, y, beatFrac * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
         static const int R = 24;

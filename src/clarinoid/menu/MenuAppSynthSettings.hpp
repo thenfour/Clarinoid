@@ -316,9 +316,15 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     }
 
     // AppSettings &GetAppSettings() { return *mDisplay.mAppSettings; }
+    int16_t mBindingID = 0;
     SynthPreset &GetBinding()
     {
-        return GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset];
+        //return GetAppSettings()->FindSynthPreset(GetAppSettings()->GetCurrentPerformancePatch().mSynthPresetA);
+        return GetAppSettings()->FindSynthPreset(mBindingID);
+    }
+    int16_t GetBindingID() {
+        return mBindingID;
+        //return GetAppSettings()->GetCurrentPerformancePatch().mSynthPresetA;
     }
 
     // NumericSettingItem(const String& name, T min_, T max_, const Property<T>& binding, typename
@@ -559,11 +565,13 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         [](void *cap, size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (SynthPatchMenuApp *)cap;
             pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[i] = pThis->GetBinding();
+
+            auto fromName = pThis->GetAppSettings()->GetSynthPatchName(pThis->GetBindingID());
+            auto toName = pThis->GetAppSettings()->GetSynthPatchName(i);
+
             pThis->mDisplay.ShowToast(
-                String("Copied ") +
-                pThis->GetAppSettings()->mSynthSettings.mPresets[pThis->GetAppSettings()->mGlobalSynthPreset].ToString(
-                    pThis->GetAppSettings()->mGlobalSynthPreset) +
-                "\nto\n" + pThis->GetAppSettings()->mSynthSettings.mPresets[i].ToString(i));
+                String("Copied ") +fromName +
+                "\nto\n" + toName);
         },
         AlwaysEnabled,
         this};
@@ -786,12 +794,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     SettingsList *Start(size_t iPatch)
     {
         this->DisplayAppInit(); // required to initialize stuff
-        // log(String("Starting synth patch app"));
-        // log(String("  appsettings: ") + (uint32_t)GetAppSettings());
-        // log(String("  from ") + GetAppSettings()->mGlobalSynthPreset + " to " + iPatch);
-        GetAppSettings()->mGlobalSynthPreset = iPatch;
-        // mAppSettings->mGlobalSynthPreset = nv;
-        // mEditingSynthPatch = iPatch;
+        mBindingID = iPatch;
+        //GetAppSettings()->mGlobalSynthPreset = iPatch;
         return &mRootList;
     }
 
@@ -806,292 +810,75 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.ClearState();
-        mDisplay.mDisplay.println(String("PATCH >"));
+        mDisplay.mDisplay.println(String("Synth Patch >"));
         mDisplay.mDisplay.println(
-            GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(
-                GetAppSettings()->mGlobalSynthPreset));
+            GetAppSettings()->GetSynthPatchName(GetBindingID()));
         SettingsMenuApp::RenderFrontPage();
     }
 };
 
-struct SynthSettingsApp : public SettingsMenuApp
-{
-    virtual const char *DisplayAppGetName() override
-    {
-        return "SynthSettingsApp";
-    }
 
-    SynthPatchMenuApp mSynthPatchSettingsApp;
-    SynthSettings &GetSynthSettings()
-    {
-        return this->mAppSettings->mSynthSettings;
-    }
+// struct SynthSettingsApp : public SettingsMenuApp
+// {
+//     virtual const char *DisplayAppGetName() override
+//     {
+//         return "SynthSettingsApp";
+//     }
 
-    SynthSettingsApp(CCDisplay &d) : SettingsMenuApp(d), mSynthPatchSettingsApp(d)
-    {
-    }
+//     SynthPatchMenuApp mSynthPatchSettingsApp;
+//     SynthSettings &GetSynthSettings()
+//     {
+//         return this->mAppSettings->mSynthSettings;
+//     }
 
-    GainSettingItem mMasterGain = {"Master gain",
-                                   StandardRangeSpecs::gMasterGainDb,
-                                   Property<float>{[](void *cap) {
-                                                       auto *pThis = (SynthSettingsApp *)cap;
-                                                       return pThis->GetSynthSettings().mMasterGain;
-                                                   },
-                                                   [](void *cap, const float &v) {
-                                                       auto *pThis = (SynthSettingsApp *)cap;
-                                                       pThis->GetSynthSettings().mMasterGain = v;
-                                                   },
-                                                   this},
-                                   AlwaysEnabled};
+//     SynthSettingsApp(CCDisplay &d) : SettingsMenuApp(d), mSynthPatchSettingsApp(d)
+//     {
+//     }
 
-    IntSettingItem mGlobalSynthPreset = {"Global synth P#",
-                                         NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
-                                         Property<int>{[](void *cap) {
-                                                           auto *pThis = (SynthSettingsApp *)cap;
-                                                           return (int)pThis->GetAppSettings()->mGlobalSynthPreset;
-                                                       },
-                                                       [](void *cap, const int &v) {
-                                                           auto *pThis = (SynthSettingsApp *)cap;
-                                                           pThis->GetAppSettings()->mGlobalSynthPreset = (uint16_t)v;
-                                                       },
-                                                       this},
-                                         AlwaysEnabled};
+//     MultiSubmenuSettingItem mPatches = {
+//         [](void *cap) { return SYNTH_PRESET_COUNT; },
+//         [](void *cap, size_t n) {
+//             auto *pThis = (SynthSettingsApp *)cap;
+//             if (pThis->GetSynthSettings().mPresets[n].mName.length() == 0)
+//             {
+//                 return String(String("") + n + ": <init>");
+//             }
+//             return String(String("") + n + ":" + pThis->GetSynthSettings().mPresets[n].mName);
+//         }, // name
+//         [](void *cap, size_t n) {
+//             auto *pThis = (SynthSettingsApp *)cap;
+//             return pThis->mSynthPatchSettingsApp.Start(n);
+//         }, // get submenu list
+//         [](void *cap, size_t n) { return true; },
+//         (void *)this // capture
+//     };
 
-    IntSettingItem mTranspose = {"Transpose",
-                                 StandardRangeSpecs::gTransposeRange,
-                                 Property<int>{[](void *cap) {
-                                                   auto *pThis = (SynthSettingsApp *)cap;
-                                                   return pThis->GetAppSettings()->mTranspose;
-                                               },
-                                               [](void *cap, const int &v) {
-                                                   auto *pThis = (SynthSettingsApp *)cap;
-                                                   pThis->GetAppSettings()->mTranspose = v;
-                                               },
-                                               this},
-                                 AlwaysEnabled};
+//     ISettingItem *mArray[5] = {
+//         &mMasterGain,
+//         &mTranspose,
+//         &mMasterFXEnable,
+//         &mMasterFX,
+//         &mPatches,
+//     };
+//     SettingsList mRootList = {mArray};
 
-    MultiSubmenuSettingItem mPatches = {
-        [](void *cap) { return SYNTH_PRESET_COUNT; },
-        [](void *cap, size_t n) {
-            auto *pThis = (SynthSettingsApp *)cap;
-            if (pThis->GetSynthSettings().mPresets[n].mName.length() == 0)
-            {
-                return String(String("") + n + ": <init>");
-            }
-            return String(String("") + n + ":" + pThis->GetSynthSettings().mPresets[n].mName);
-        }, // name
-        [](void *cap, size_t n) {
-            auto *pThis = (SynthSettingsApp *)cap;
-            return pThis->mSynthPatchSettingsApp.Start(n);
-        }, // get submenu list
-        [](void *cap, size_t n) { return true; },
-        (void *)this // capture
-    };
+//   public:
+//     virtual SettingsList *GetRootSettingsList()
+//     {
+//         return &mRootList;
+//     }
 
-    GainSettingItem mReverbGain = {"Reverb gain",
-                                    StandardRangeSpecs::gGeneralGain,
-                                    Property<float>{[](void *cap) {
-                                                        auto *pThis = (SynthSettingsApp *)cap;
-                                                        return pThis->GetSynthSettings().mReverbGain;
-                                                    },
-                                                    [](void *cap, const float &v) {
-                                                        auto *pThis = (SynthSettingsApp *)cap;
-                                                        pThis->GetSynthSettings().mReverbGain = v;
-                                                    },
-                                                    this},
-                                    AlwaysEnabled};
+//     virtual void RenderFrontPage()
+//     {
+//         // log(String("synth settings app settings = ") + (uint32_t)mAppSettings);
+//         mDisplay.ClearState();
+//         mDisplay.mDisplay.println(String("SYNTH > "));
+//         mDisplay.mDisplay.println(
+//             GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(
+//                 GetAppSettings()->mGlobalSynthPreset));
 
-    FloatSettingItem mReverbDamping = {"Reverb damp",
-                                       StandardRangeSpecs::gFloat_0_1,
-                                       Property<float>{[](void *cap) {
-                                                           auto *pThis = (SynthSettingsApp *)cap;
-                                                           return pThis->GetSynthSettings().mReverbDamping;
-                                                       },
-                                                       [](void *cap, const float &v) {
-                                                           auto *pThis = (SynthSettingsApp *)cap;
-                                                           pThis->GetSynthSettings().mReverbDamping = v;
-                                                       },
-                                                       this},
-                                       AlwaysEnabled};
-
-    FloatSettingItem mReverbSize = {"Reverb size",
-                                    StandardRangeSpecs::gFloat_0_1,
-                                    Property<float>{[](void *cap) {
-                                                        auto *pThis = (SynthSettingsApp *)cap;
-                                                        return pThis->GetSynthSettings().mReverbSize;
-                                                    },
-                                                    [](void *cap, const float &v) {
-                                                        auto *pThis = (SynthSettingsApp *)cap;
-                                                        pThis->GetSynthSettings().mReverbSize = v;
-                                                    },
-                                                    this},
-                                    AlwaysEnabled};
-
-    GainSettingItem mDelayGain = {"Delay gain",
-                                   StandardRangeSpecs::gGeneralGain,
-                                   Property<float>{[](void *cap) {
-                                                       auto *pThis = (SynthSettingsApp *)cap;
-                                                       return pThis->GetSynthSettings().mDelayGain;
-                                                   },
-                                                   [](void *cap, const float &v) {
-                                                       auto *pThis = (SynthSettingsApp *)cap;
-                                                       pThis->GetSynthSettings().mDelayGain = v;
-                                                   },
-                                                   this},
-                                   AlwaysEnabled};
-
-    FloatSettingItem mDelayTimeMS = {"Delay Time",
-                                     NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
-                                     Property<float>{[](void *cap) {
-                                                         auto *pThis = (SynthSettingsApp *)cap;
-                                                         return pThis->GetSynthSettings().mDelayMS;
-                                                     },
-                                                     [](void *cap, const float &v) {
-                                                         auto *pThis = (SynthSettingsApp *)cap;
-                                                         pThis->GetSynthSettings().mDelayMS = v;
-                                                     },
-                                                     this},
-                                     AlwaysEnabled};
-
-    FloatSettingItem mDelayStereoSep = {" >Width",
-                                        NumericEditRangeSpec<float>(1, 100),
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (SynthSettingsApp *)cap;
-                                                            return pThis->GetSynthSettings().mDelayStereoSep;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (SynthSettingsApp *)cap;
-                                                            pThis->GetSynthSettings().mDelayStereoSep = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-    FloatSettingItem mDelayFeedbackLevel = {" >FB",
-                                            StandardRangeSpecs::gFloat_0_1,
-                                            Property<float>{[](void *cap) {
-                                                                auto *pThis = (SynthSettingsApp *)cap;
-                                                                return pThis->GetSynthSettings().mDelayFeedbackLevel;
-                                                            },
-                                                            [](void *cap, const float &v) {
-                                                                auto *pThis = (SynthSettingsApp *)cap;
-                                                                pThis->GetSynthSettings().mDelayFeedbackLevel = v;
-                                                            },
-                                                            this},
-                                            AlwaysEnabled};
-
-    EnumSettingItem<ClarinoidFilterType> mDelayFilterType = {
-        " >Filter",
-        gClarinoidFilterTypeInfo,
-        Property<ClarinoidFilterType>{[](void *cap) {
-                                          auto *pThis = (SynthSettingsApp *)cap;
-                                          return pThis->GetSynthSettings().mDelayFilterType;
-                                      },
-                                      [](void *cap, const ClarinoidFilterType &v) {
-                                          auto *pThis = (SynthSettingsApp *)cap;
-                                          pThis->GetSynthSettings().mDelayFilterType = v;
-                                      },
-                                      this},
-        AlwaysEnabled};
-
-    FloatSettingItem mDelayCutoffFrequency = {
-        " > >Freq",
-        NumericEditRangeSpec<float>(0, 22050),
-        Property<float>{[](void *cap) {
-                            auto *pThis = (SynthSettingsApp *)cap;
-                            return pThis->GetSynthSettings().mDelayCutoffFrequency;
-                        },
-                        [](void *cap, const float &v) {
-                            auto *pThis = (SynthSettingsApp *)cap;
-                            pThis->GetSynthSettings().mDelayCutoffFrequency = v;
-                        },
-                        this},
-        AlwaysEnabled};
-
-    FloatSettingItem mDelaySaturation = {" > >Sat",
-                                         StandardRangeSpecs::gFloat_0_1,
-                                         Property<float>{[](void *cap) {
-                                                             auto *pThis = (SynthSettingsApp *)cap;
-                                                             return pThis->GetSynthSettings().mDelaySaturation;
-                                                         },
-                                                         [](void *cap, const float &v) {
-                                                             auto *pThis = (SynthSettingsApp *)cap;
-                                                             pThis->GetSynthSettings().mDelaySaturation = v;
-                                                         },
-                                                         this},
-                                         AlwaysEnabled};
-
-    FloatSettingItem mDelayQ = {" > >Q",
-                                StandardRangeSpecs::gFloat_0_1,
-                                Property<float>{[](void *cap) {
-                                                    auto *pThis = (SynthSettingsApp *)cap;
-                                                    return pThis->GetSynthSettings().mDelayQ;
-                                                },
-                                                [](void *cap, const float &v) {
-                                                    auto *pThis = (SynthSettingsApp *)cap;
-                                                    pThis->GetSynthSettings().mDelayQ = v;
-                                                },
-                                                this},
-                                AlwaysEnabled};
-
-    // ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog4;
-
-    BoolSettingItem mMasterFXEnable = {"MasterFX Enable",
-                                       "Yes",
-                                       "No",
-                                       Property<bool>{[](void *cap) {
-                                                          auto *pThis = (SynthSettingsApp *)cap;
-                                                          return pThis->GetSynthSettings().mMasterFXEnable;
-                                                      },
-                                                      [](void *cap, const bool &v) {
-                                                          auto *pThis = (SynthSettingsApp *)cap;
-                                                          pThis->GetSynthSettings().mMasterFXEnable = v;
-                                                      },
-                                                      this},
-                                       AlwaysEnabled};
-
-    ISettingItem *mMasterFXSubmenuItems[11] = {
-        &mReverbGain,
-        &mReverbDamping,
-        &mReverbSize,
-        &mDelayGain,
-        &mDelayTimeMS,
-        &mDelayStereoSep,
-        &mDelayFeedbackLevel,
-        &mDelayFilterType,
-        &mDelayCutoffFrequency,
-        &mDelaySaturation,
-        &mDelayQ,
-    };
-    SettingsList mMasterFXList = {mMasterFXSubmenuItems};
-
-    SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
-
-    ISettingItem *mArray[5] = {
-        &mMasterGain,
-        &mTranspose,
-        &mMasterFXEnable,
-        &mMasterFX,
-        &mPatches,
-    };
-    SettingsList mRootList = {mArray};
-
-  public:
-    virtual SettingsList *GetRootSettingsList()
-    {
-        return &mRootList;
-    }
-
-    virtual void RenderFrontPage()
-    {
-        // log(String("synth settings app settings = ") + (uint32_t)mAppSettings);
-        mDisplay.ClearState();
-        mDisplay.mDisplay.println(String("SYNTH > "));
-        mDisplay.mDisplay.println(
-            GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(
-                GetAppSettings()->mGlobalSynthPreset));
-
-        SettingsMenuApp::RenderFrontPage();
-    }
-};
+//         SettingsMenuApp::RenderFrontPage();
+//     }
+// };
 
 } // namespace clarinoid

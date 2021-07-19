@@ -113,47 +113,6 @@ struct SystemSettingsApp : SettingsMenuApp
 
 
 
-    IntSettingItem mSelectedSynthPatch = {"Synth patch",
-                                     NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
-                                     Property<int>{
-                                         [](void *cap) {
-                                             auto *pThis = (SystemSettingsApp *)cap;
-                                             return (int)pThis->mAppSettings->mGlobalSynthPreset;
-                                         }, // getter
-                                         [](void *cap, const int &val) {
-                                             auto *pThis = (SystemSettingsApp *)cap;
-                                             pThis->mAppSettings->mGlobalSynthPreset = val;
-                                         },   // setter
-                                         this // capture val
-                                     },
-                                     [](void *cap, int n) { // formatter
-                                         auto *pThis = (SystemSettingsApp *)cap;
-                                         return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
-                                     },
-                                     AlwaysEnabled,
-                                     this};
-
-
-    IntSettingItem mSelectedHarmPatch = {"Harm patch",
-                                     NumericEditRangeSpec<int>{0, clarinoid::HARM_PRESET_COUNT  - 1},
-                                     Property<int>{
-                                         [](void *cap) {
-                                             auto *pThis = (SystemSettingsApp *)cap;
-                                             return (int)pThis->mAppSettings->mGlobalHarmPreset;
-                                         }, // getter
-                                         [](void *cap, const int &val) {
-                                             auto *pThis = (SystemSettingsApp *)cap;
-                                             pThis->mAppSettings->mGlobalHarmPreset = val;
-                                         },   // setter
-                                         this // capture val
-                                     },
-                                     [](void *cap, int n) { // formatter
-                                         auto *pThis = (SystemSettingsApp *)cap;
-                                         return pThis->mAppSettings->mHarmSettings.mPresets[n].ToString(n);
-                                     },
-                                     AlwaysEnabled,
-                                     this};
-
     IntSettingItem mNoteChangeFrames = {"Note chg frames",
                                          NumericEditRangeSpec<int>{0, 25},
                                          Property<int>{
@@ -186,14 +145,35 @@ struct SystemSettingsApp : SettingsMenuApp
                                          AlwaysEnabled};
 
 
+    IntSettingItem mSelectedPerfPatch = {"Perf patch",
+                                         NumericEditRangeSpec<int>{0, clarinoid::PERFORMANCE_PATCH_COUNT - 1},
+                                         Property<int>{
+                                             [](void *cap) {
+                                                 auto *pThis = (SystemSettingsApp *)cap;
+                                                 return (int)pThis->mAppSettings->mCurrentPerformancePatch;
+                                             }, // getter
+                                             [](void *cap, const int &val) {
+                                                 auto *pThis = (SystemSettingsApp *)cap;
+                                                 pThis->mAppSettings->mCurrentPerformancePatch = val;
+                                                 //pThis->mpMetronome->OnBPMChanged();
+                                                 
+                                             },   // setter
+                                             this // capture val
+                                         },
+                                         [](void *cap, int n) { // formatter
+                                             auto *pThis = (SystemSettingsApp *)cap;
+                                             return pThis->mAppSettings->GetPerfPatchName(n);
+                                         },
+                                         AlwaysEnabled,
+                                         this};
 
-    ISettingItem *mArray[8] = {
+
+    ISettingItem *mArray[7] = {
+        &mSelectedPerfPatch,
         &mDimDisplay,
         &mBreath,
         &mPitchUp,
         &mPitchDown,
-        &mSelectedHarmPatch,
-        &mSelectedSynthPatch,
         &mNoteChangeFrames,
         &mNoteChangeIntFrames,
     };
@@ -212,7 +192,7 @@ struct SystemSettingsApp : SettingsMenuApp
         mDisplay.mDisplay.setTextColor(WHITE);
         mDisplay.mDisplay.setCursor(0, 0);
 
-        mDisplay.mDisplay.println(String("System Settings"));
+        mDisplay.mDisplay.println(String("System >"));
         SettingsMenuApp::RenderFrontPage();
     }
 };

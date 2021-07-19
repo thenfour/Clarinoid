@@ -14,15 +14,16 @@ static constexpr uint16_t LOOP_EVENT_DELAY_MAX = std::numeric_limits<event_delay
 
 enum class LoopEventType : uint8_t
 {
-    Nop = 0,              // {  } supports long time rests
-    NoteOff = 1,          // { }
-    NoteOn = 2,           // { uint8_t note, uint8_t velocity }
-    Breath = 3,           // { breath }
-    Pitch = 4,            // { pitch }
-    BreathAndPitch = 5,   // { breath, pitch }
-    SynthPatchChange = 6, // { uint8_t patchid }
-    HarmPatchChange = 7,  // { uint8_t patchid }
-    FullState = 8,
+    Nop = 0,               // {  } supports long time rests
+    NoteOff = 1,           // { }
+    NoteOn = 2,            // { uint8_t note, uint8_t velocity }
+    Breath = 3,            // { breath }
+    Pitch = 4,             // { pitch }
+    BreathAndPitch = 5,    // { breath, pitch }
+    SynthPatchChangeA = 6, // { uint8_t patchid }
+    SynthPatchChangeB = 7, // { uint8_t patchid }
+    HarmPatchChange = 8,   // { uint8_t patchid }
+    FullState = 9,
     // reserve some additional CC here.
     // - expr
     // - modwheel
@@ -267,30 +268,61 @@ struct LoopEvent_BreathAndPitch
     }
 };
 
-struct LoopEvent_SynthPatchChange
+struct LoopEvent_SynthPatchChangeA
 {
     static constexpr size_t PayloadSizeBytes = 3;
-    static constexpr LoopEventType EventType = LoopEventType::SynthPatchChange;
-    static constexpr const char *Name = "SynthPatch";
+    static constexpr LoopEventType EventType = LoopEventType::SynthPatchChangeA;
+    static constexpr const char *Name = "SynthPatchA";
 
     uint16_t mSynthPatchId; // 12 bits
 
-    LoopEvent_SynthPatchChange() = default;
+    LoopEvent_SynthPatchChangeA() = default;
 
-    explicit LoopEvent_SynthPatchChange(Ptr &p, uint8_t byte2)
+    explicit LoopEvent_SynthPatchChangeA(Ptr &p, uint8_t byte2)
     {
         LoopEvent_Construct12BitParam(p, byte2, mSynthPatchId);
     }
-    explicit LoopEvent_SynthPatchChange(const MusicalVoice &mv) : mSynthPatchId(mv.mSynthPatch)
+    explicit LoopEvent_SynthPatchChangeA(const MusicalVoice &mv) : mSynthPatchId(mv.mSynthPatchA)
     {
     }
     void Write(Ptr &p, event_delay_t delay) const
     {
-        LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::SynthPatchChange, mSynthPatchId);
+        LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::SynthPatchChangeA, mSynthPatchId);
     }
     void ApplyToVoice(MusicalVoice &mv) const
     {
-        mv.mSynthPatch = mSynthPatchId;
+        mv.mSynthPatchA = mSynthPatchId;
+    }
+    String ToString() const
+    {
+        return String("") + (int)mSynthPatchId;
+    }
+};
+
+struct LoopEvent_SynthPatchChangeB
+{
+    static constexpr size_t PayloadSizeBytes = 3;
+    static constexpr LoopEventType EventType = LoopEventType::SynthPatchChangeB;
+    static constexpr const char *Name = "SynthPatchB";
+
+    uint16_t mSynthPatchId; // 12 bits
+
+    LoopEvent_SynthPatchChangeB() = default;
+
+    explicit LoopEvent_SynthPatchChangeB(Ptr &p, uint8_t byte2)
+    {
+        LoopEvent_Construct12BitParam(p, byte2, mSynthPatchId);
+    }
+    explicit LoopEvent_SynthPatchChangeB(const MusicalVoice &mv) : mSynthPatchId(mv.mSynthPatchB)
+    {
+    }
+    void Write(Ptr &p, event_delay_t delay) const
+    {
+        LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::SynthPatchChangeB, mSynthPatchId);
+    }
+    void ApplyToVoice(MusicalVoice &mv) const
+    {
+        mv.mSynthPatchB = mSynthPatchId;
     }
     String ToString() const
     {
@@ -331,52 +363,62 @@ struct LoopEvent_HarmPatchChange
 
 struct LoopEvent_FullState
 {
-    static constexpr size_t PayloadSizeBytes = 10;
+    static constexpr size_t PayloadSizeBytes = 12;
     static constexpr LoopEventType EventType = LoopEventType::FullState;
     static constexpr const char *Name = "FullState";
 
-    uint16_t mBreath01;     // 12 // 3
-    uint16_t mPitchN11;     // 16
-    uint16_t mSynthPatchId; // 12
-    uint16_t mHarmPatchId;  // 12
-    uint8_t mMidiNote;      // 8
-    uint8_t mVelocity;      // 8
+    uint16_t mPitchN11; // 16 bits = 3.5 bytes
+
+    uint16_t mSynthPatchAId; // 12 bits = 5 bytes   | grouped to 3 bytes
+    uint16_t mSynthPatchBId; // 12 bits = 6.5 bytes |
+
+    uint16_t mBreath01;    // 12 bits = 1.5 bytes  | grouped to 3 bytes
+    uint16_t mHarmPatchId; // 12 bits = 8 bytes    |
+
+    uint8_t mMidiNote; // 8 bits = 9 bytes
+    uint8_t mVelocity; // 8 bits = 10 bytes
 
     LoopEvent_FullState() = default;
 
     explicit LoopEvent_FullState(const MusicalVoice &mv)
-        : mBreath01(mv.mBreath01.Serialize12Bit()), mPitchN11(mv.mPitchBendN11.Serialize12Bit()),
-          mSynthPatchId(mv.mSynthPatch), mHarmPatchId(mv.mHarmPatch), mMidiNote(mv.mMidiNote), mVelocity(mv.mVelocity)
+        : mPitchN11(mv.mPitchBendN11.Serialize12Bit()), mSynthPatchAId(mv.mSynthPatchA),
+          mSynthPatchBId(mv.mSynthPatchB), mBreath01(mv.mBreath01.Serialize12Bit()), mHarmPatchId(mv.mHarmPatch),
+          mMidiNote(mv.mMidiNote), mVelocity(mv.mVelocity)
     {
     }
 
     LoopEvent_FullState(Ptr &p, uint8_t byte2)
     {
-        LoopEvent_Construct12BitParam(p, byte2, mBreath01);
+        //LoopEvent_Construct12BitParam(p, byte2, mBreath01);
         p.Read(mPitchN11);
-        LoopEvent_ReadTwo12BitValues(p, mSynthPatchId, mHarmPatchId);
+        LoopEvent_ReadTwo12BitValues(p, mSynthPatchAId, mSynthPatchBId);
+        LoopEvent_ReadTwo12BitValues(p, mBreath01, mHarmPatchId);
         p.Read(mMidiNote);
         p.Read(mVelocity);
     }
     void Write(Ptr &p, event_delay_t delay) const
     {
-        LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::FullState, mBreath01);
+        LoopEvent_WriteHeaderNoParams(p, delay, LoopEventType::FullState);
+        //LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::FullState, mBreath01);
         p.Write(mPitchN11);
-        LoopEvent_WriteTwo12BitValues(p, mSynthPatchId, mHarmPatchId);
+        LoopEvent_WriteTwo12BitValues(p, mSynthPatchAId, mSynthPatchBId);
+        LoopEvent_WriteTwo12BitValues(p, mBreath01, mHarmPatchId);
         p.Write(mMidiNote);
         p.Write(mVelocity);
     }
 
     String ToString() const
     {
-        return String("b:") + (int)mBreath01 + ", p:" + (int)mPitchN11 + ", s:" + (int)mSynthPatchId +
-               ", h:" + (int)mHarmPatchId + ", note:" + (int)mMidiNote + ",v:" + (int)mVelocity;
+        return String("b:") + (int)mBreath01 + ", p:" + (int)mPitchN11 + ", sA:" + (int)mSynthPatchAId +
+               ", sB:" + (int)mSynthPatchBId + ", h:" + (int)mHarmPatchId + ", note:" + (int)mMidiNote +
+               ",v:" + (int)mVelocity;
     }
     void ApplyToVoice(MusicalVoice &mv) const
     {
         mv.mBreath01.Deserialize12Bit(mBreath01);
         mv.mPitchBendN11.Deserialize12Bit(mPitchN11);
-        mv.mSynthPatch = mSynthPatchId;
+        mv.mSynthPatchA = mSynthPatchAId;
+        mv.mSynthPatchB = mSynthPatchBId;
         mv.mHarmPatch = mHarmPatchId;
         mv.mIsNoteCurrentlyMuted = false;
         mv.mMidiNote = mMidiNote;
