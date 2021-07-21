@@ -137,11 +137,11 @@ struct PerformanceApp : SettingsMenuApp
     ISettingItem *mArray[7] = {
         &mDelay,        // ok
         &mTimesliceLen, // ok
-        &mCPU,          // 
+        &mCPU,          //
         &mTiming,       // ok
-        &mInput,        // 
-        &mMusicalState, // 
-        &mSynthState,   // 
+        &mInput,        //
+        &mMusicalState, //
+        &mSynthState,   //
     };
     SettingsList mRootList = {mArray};
     virtual SettingsList *GetRootSettingsList()
@@ -153,7 +153,7 @@ struct PerformanceApp : SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        auto& perf = mAppSettings->GetCurrentPerformancePatch();
+        auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
         // line 0
         mDisplay.mDisplay.setTextWrap(false);
@@ -161,13 +161,11 @@ struct PerformanceApp : SettingsMenuApp
 
         // line 1
         mDisplay.mDisplay.setTextWrap(false);
-        mDisplay.mDisplay.println(
-            String("A:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetA));
+        mDisplay.mDisplay.println(String("A:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetA));
 
         // line 2
         mDisplay.mDisplay.setTextWrap(false);
-        mDisplay.mDisplay.println(
-            String("B:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetB));
+        mDisplay.mDisplay.println(String("B:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetB));
 
         // line 3
         mDisplay.mDisplay.println(
@@ -222,6 +220,18 @@ struct PerformanceApp : SettingsMenuApp
         static const float THRESH = 0.1f;
         mDisplay.mDisplay.fillCircle(
             mDisplay.mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
+
+        // state
+        {
+            float p = (float)mTaskManager->mPreviousTimeSliceDelayTime.ElapsedMicros();
+            p /= mTaskManager->mTimesliceDuration.ElapsedMicros();
+            p = 1.0f - p;
+            mCPUUsage.Update(p);
+            p = mCPUUsage.GetValue() * 100;
+            mDisplay.mDisplay.println(String("v:") + mpMusicalStateTask->mSynth.mCurrentPolyphony + "/" +
+                                      MAX_SYNTH_VOICES + " a:" + (int)std::ceil(AudioProcessorUsage()) +
+                                      "% tm:" + (int)std::ceil(p) + "%");
+        }
 
         SettingsMenuApp::RenderFrontPage();
     }

@@ -167,11 +167,11 @@ Input 5: Pulse Width Modulation for Oscillator 3
     CCPatch mPatchModToOsc2PWM = {mModMatrix,
                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2PulseWidth),
                                   mOsc,
-                                  3};
+                                  4};
     CCPatch mPatchModToOsc3PWM = {mModMatrix,
                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3PulseWidth),
                                   mOsc,
-                                  5};
+                                  7};
 
     CCPatch mPatchModToOsc1Freq = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Frequency),
@@ -180,11 +180,24 @@ Input 5: Pulse Width Modulation for Oscillator 3
     CCPatch mPatchModToOsc2Freq = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Frequency),
                                    mOsc,
-                                   2};
+                                   3};
     CCPatch mPatchModToOsc3Freq = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Frequency),
                                    mOsc,
-                                   4};
+                                   6};
+
+    CCPatch mPatchModToOsc1Phase = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Phase),
+                                   mOsc,
+                                   2};
+    CCPatch mPatchModToOsc2Phase = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Phase),
+                                   mOsc,
+                                   5};
+    CCPatch mPatchModToOsc3Phase = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Phase),
+                                   mOsc,
+                                   8};
 
     // ...
     MultiMixerPannerNode<3> mOscMixerPanner;
@@ -255,6 +268,10 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchModToOsc1Freq.connect();
         mPatchModToOsc2Freq.connect();
         mPatchModToOsc3Freq.connect();
+
+        mPatchModToOsc1Phase.connect();
+        mPatchModToOsc2Phase.connect();
+        mPatchModToOsc3Phase.connect();
 
         mPatchDCToEnv1.connect();
         mPatchDCToEnv2.connect();
@@ -430,6 +447,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
             mOsc.mOsc[i].waveform(outputEnable[i] ? mPreset->mOsc[i].mWaveform : OscWaveformShape::Sine);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
             mOsc.mOsc[i].fmAmount(1);
+            mOsc.mOsc[i].mPMMultiplier = mPreset->mFMStrength;
         }
 
         auto calcFreq = [](float midiNote,
@@ -539,7 +557,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}, {4}, {5}, /* {6}, {7}*/};
+Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}, /*{4}, {5},  {6}, {7}*/};
 
 struct SynthGraphControl
 {

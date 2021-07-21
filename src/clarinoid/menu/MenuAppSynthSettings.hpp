@@ -331,7 +331,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     }
     int16_t GetBindingID()
     {
-        //return mBindingID;
+        // return mBindingID;
         return GetAppSettings()->GetCurrentPerformancePatch().mSynthPresetA;
     }
 
@@ -429,6 +429,19 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                         },
                                                         this},
                                        AlwaysEnabled};
+
+    FloatSettingItem mFMStrength = {"FM Strength",
+                                    NumericEditRangeSpec<float>{0.0f, 0.25f},
+                                    Property<float>{[](void *cap) {
+                                                        auto *pThis = (SynthPatchMenuApp *)cap;
+                                                        return pThis->GetBinding().mFMStrength;
+                                                    },
+                                                    [](void *cap, const float &v) {
+                                                        auto *pThis = (SynthPatchMenuApp *)cap;
+                                                        pThis->GetBinding().mFMStrength = v;
+                                                    },
+                                                    this},
+                                    AlwaysEnabled};
 
     FloatSettingItem mSyncMultMin = {" - mult min",
                                      NumericEditRangeSpec<float>{0.0f, 15.0f},
@@ -789,9 +802,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[15] = {
+    ISettingItem *mArray[16] = {
         &mBreathFilterSubmenuItem,
         &mFMAlgo,
+        &mFMStrength,
         &mDetune,
         &mPan,
         &mStereoSpread,

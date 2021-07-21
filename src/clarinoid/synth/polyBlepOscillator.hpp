@@ -37,6 +37,21 @@ namespace clarinoid
     |  .`      |  .`      |  .`      |  .`
     |.`        |.`        |.`        |.`
 
+    INPUT CONNECTIONS:
+    0 = fm1
+    1 = pwm1
+    2 = pm1
+    3 = fm2
+    4 = pwm2
+    5 = pm2
+    6 = fm3
+    7 = pwm3
+    8 = pm3
+
+    OUTPUT CONNECTIONS:
+    0 = osc1
+    1 = osc2
+    2 = osc3
 */
 
 // https://gitlab.com/flojawi/teensy-polyblep-oscillator
@@ -64,7 +79,9 @@ namespace clarinoid
 
 struct AudioBandlimitedOsci : public AudioStream
 {
-    AudioBandlimitedOsci() : AudioStream(6, inputQueueArray)
+    static constexpr size_t INPUT_CONNECTION_COUNT = 9;
+
+    AudioBandlimitedOsci() : AudioStream(INPUT_CONNECTION_COUNT, inputQueueArray)
     {
     }
 
@@ -91,6 +108,12 @@ struct AudioBandlimitedOsci : public AudioStream
     void fmAmount(uint8_t oscillator, float octaves)
     {
         mOsc[oscillator - 1].fmAmount(octaves);
+    }
+
+    void SetPhaseModRange(float r) {
+        mOsc[0].mPMMultiplier = r;
+        mOsc[1].mPMMultiplier = r;
+        mOsc[2].mPMMultiplier = r;
     }
 
     void addNote()
@@ -126,7 +149,7 @@ struct AudioBandlimitedOsci : public AudioStream
     inline void osc3Step();
     inline void osc3Sync(float x);
 
-    audio_block_t *inputQueueArray[6];
+    audio_block_t *inputQueueArray[INPUT_CONNECTION_COUNT];
 
     uint8_t mNotesPlaying;
 
@@ -141,7 +164,6 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mPulseWidthTarget01 = 0; // pulseWidth1
         float mPulseWidth = 0.5;       // osc1_pulseWidth
-        // float mPWMAmount = 0.0f;       // osc1_pwmAmount
 
         float mBlepDelay = 0;     // osc1_blepDelay
         float mWidthDelay = 0;    // osc1_widthDelay
@@ -160,6 +182,7 @@ struct AudioBandlimitedOsci : public AudioStream
         float mDt = 0; // cycles per sample, very small. amount of cycle to advance each sample. // osc1_dt
 
         float mOutput = 0; // osc1_output
+        float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
 
         void amplitude(float a)
         {
@@ -223,12 +246,17 @@ struct AudioBandlimitedOsci : public AudioStream
             mPitchModAmount = octaves * 4096.0f;
         }
 
-        // call before calculating the sample; this does modulation stuff
-        inline void PreStep(size_t i, audio_block_t *fm1, audio_block_t *pwm1)
+        // call before calculating the sample; this does A-rate modulation stuff
+        inline void PreStep(size_t i, audio_block_t *fm1, audio_block_t *pwm1, audio_block_t *pm1)
         {
             if (mPortamentoSamples > 0 && mCurrentPortamentoSample++ < mPortamentoSamples)
             {
                 mFrequency += mPortamentoIncrement;
+            }
+
+            if (pm1) {
+                mT += Sample16To32(pm1->data[i]) * mPMMultiplier;
+                mT = Frac(mT);
             }
 
             if (fm1)
@@ -480,16 +508,19 @@ void AudioBandlimitedOsci::update()
 
     audio_block_t *fm1 = receiveReadOnly(0);
     audio_block_t *pwm1 = receiveReadOnly(1);
-    audio_block_t *fm2 = receiveReadOnly(2);
-    audio_block_t *pwm2 = receiveReadOnly(3);
-    audio_block_t *fm3 = receiveReadOnly(4);
-    audio_block_t *pwm3 = receiveReadOnly(5);
+    audio_block_t *pm1 = receiveReadOnly(2);
+    audio_block_t *fm2 = receiveReadOnly(3);
+    audio_block_t *pwm2 = receiveReadOnly(4);
+    audio_block_t *pm2 = receiveReadOnly(5);
+    audio_block_t *fm3 = receiveReadOnly(6);
+    audio_block_t *pwm3 = receiveReadOnly(7);
+    audio_block_t *pm3 = receiveReadOnly(8);
 
     for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
     {
-        mOsc[0].PreStep(i, fm1, pwm1);
-        mOsc[1].PreStep(i, fm2, pwm2);
-        mOsc[2].PreStep(i, fm3, pwm3);
+        mOsc[0].PreStep(i, fm1, pwm1, pm1);
+        mOsc[1].PreStep(i, fm2, pwm2, pm2);
+        mOsc[2].PreStep(i, fm3, pwm3, pm3);
 
         osc1Step(); // This steps actually all oscillators.
 
@@ -511,14 +542,20 @@ void AudioBandlimitedOsci::update()
         release(fm1);
     if (pwm1)
         release(pwm1);
+    if (pm1)
+        release(pm1);
     if (fm2)
         release(fm2);
     if (pwm2)
         release(pwm2);
+    if (pm2)
+        release(pm2);
     if (fm3)
         release(fm3);
     if (pwm3)
         release(pwm3);
+    if (pm3)
+        release(pm3);
 }
 
 inline void AudioBandlimitedOsci::osc3Step()

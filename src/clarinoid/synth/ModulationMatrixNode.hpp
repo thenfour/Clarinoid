@@ -82,36 +82,36 @@ struct VoiceModulationMatrixNode : public AudioStream
         // process FM feedback modulations.
         SynthModulationSpec fb1;
         fb1.mSource = ModulationSource::Osc1FB;
-        fb1.mDest = ModulationDestination::Osc1Frequency;
+        fb1.mDest = ModulationDestination::Osc1Phase;
         fb1.mScaleN11 = mSynthPatch->mOsc[0].mFMFeedbackGain;
         processModulation(fb1);
 
         SynthModulationSpec fb2;
         fb2.mSource = ModulationSource::Osc2FB;
-        fb2.mDest = ModulationDestination::Osc2Frequency;
+        fb2.mDest = ModulationDestination::Osc2Phase;
         fb2.mScaleN11 = mSynthPatch->mOsc[1].mFMFeedbackGain;
         processModulation(fb2);
 
         SynthModulationSpec fb3;
         fb3.mSource = ModulationSource::Osc3FB;
-        fb3.mDest = ModulationDestination::Osc3Frequency;
+        fb3.mDest = ModulationDestination::Osc3Phase;
         fb3.mScaleN11 = mSynthPatch->mOsc[2].mFMFeedbackGain;
         processModulation(fb3);
 
         // process FB algo modulations
         SynthModulationSpec fm3to2;
         fm3to2.mSource = ModulationSource::Osc3FB;
-        fm3to2.mDest = ModulationDestination::Osc2Frequency;
+        fm3to2.mDest = ModulationDestination::Osc2Phase;
         fm3to2.mScaleN11 = mSynthPatch->mOsc[2].mGain;
 
         SynthModulationSpec fm3to1;
         fm3to1.mSource = ModulationSource::Osc3FB;
-        fm3to1.mDest = ModulationDestination::Osc1Frequency;
+        fm3to1.mDest = ModulationDestination::Osc1Phase;
         fm3to1.mScaleN11 = mSynthPatch->mOsc[2].mGain;
 
         SynthModulationSpec fm2to1;
         fm2to1.mSource = ModulationSource::Osc2FB;
-        fm2to1.mDest = ModulationDestination::Osc1Frequency;
+        fm2to1.mDest = ModulationDestination::Osc1Phase;
         fm2to1.mScaleN11 = mSynthPatch->mOsc[1].mGain;
 
         switch (mSynthPatch->mFMAlgo)

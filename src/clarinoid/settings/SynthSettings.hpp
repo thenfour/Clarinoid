@@ -115,15 +115,18 @@ enum class ModulationDestination : uint8_t
     Osc1Frequency,
     // Osc1Volume,
     Osc1PulseWidth,
+    Osc1Phase,
     Osc2Frequency,
     Osc2PulseWidth,
+    Osc2Phase,
     // Osc2Volume,
     Osc3Frequency,
     Osc3PulseWidth,
+    Osc3Phase,
     // Osc3Volume,
 };
 
-EnumItemInfo<ModulationDestination> gModulationDestinationItems[7] = {
+EnumItemInfo<ModulationDestination> gModulationDestinationItems[10] = {
     {ModulationDestination::None, "None"},
     // {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
     // {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
@@ -131,11 +134,14 @@ EnumItemInfo<ModulationDestination> gModulationDestinationItems[7] = {
     {ModulationDestination::Osc1Frequency, "Osc1Frequency"},
     //{ModulationDestination::Osc1Volume, "Osc1Volume"},
     {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
+    {ModulationDestination::Osc1Phase, "Osc1Phase"},
     {ModulationDestination::Osc2Frequency, "Osc2Frequency"},
     {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
+    {ModulationDestination::Osc2Phase, "Osc2Phase"},
     //{ModulationDestination::Osc2Volume, "Osc2Volume"},
     {ModulationDestination::Osc3Frequency, "Osc3Frequency"},
     {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
+    {ModulationDestination::Osc3Phase, "Osc3Phase"},
     //{ModulationDestination::Osc3Volume, "Osc3Volume"},
 };
 static constexpr size_t ModulationDestinationSkip = 1; // 1 for the None value.
@@ -263,6 +269,7 @@ struct SynthPreset
                                      // applied (low notes get higher freq cutoff)
 
     FMAlgo mFMAlgo = FMAlgo::c1c2c3_NoFM;
+    float mFMStrength = 0.1f;
 
     SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
 
