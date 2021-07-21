@@ -442,6 +442,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
             outputEnable[2] = false;
             break;
         case FMAlgo::c1m2c3_FM12_NoFM3: // [1<2][3]
+        case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
             outputEnable[1] = false;
             break;
         case FMAlgo::c1m23: // [1<(2&3)]
@@ -460,11 +461,12 @@ Input 5: Pulse Width Modulation for Oscillator 3
 
             mOsc.mOsc[i].portamentoTime(mPreset->mOsc[i].mPortamentoTime);
 
-            // for modulators, it's pointless to have any shape other than sine.
-            mOsc.mOsc[i].waveform(outputEnable[i] ? mPreset->mOsc[i].mWaveform : OscWaveformShape::Sine);
+            mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
             mOsc.mOsc[i].fmAmount(1);
             mOsc.mOsc[i].mPMMultiplier = mPreset->mFMStrength;
+            mOsc.mOsc[i].mAMMinimumGain = mPreset->mOsc[i].mAMMinimumGain;
+            mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain;
         }
 
         auto calcFreq = [](float midiNote,

@@ -133,18 +133,32 @@ struct SynthPatchOscillatorMenuStuff
                              AlwaysEnabled};
 
     // for the moment fm feedback just doesn't work.
-    // GainSettingItem mFMFeedback = {"FM Feedback",
-    //                                StandardRangeSpecs::gGeneralGain,
-    //                                Property<float>{[](void *cap) {
-    //                                                    auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-    //                                                    return pThis->GetBinding().mFMFeedbackGain;
-    //                                                },
-    //                                                [](void *cap, const float &v) {
-    //                                                    auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-    //                                                    pThis->GetBinding().mFMFeedbackGain = v;
-    //                                                },
-    //                                                this},
-    //                                AlwaysEnabled};
+    GainSettingItem mFMFeedback = {"FM Feedback",
+                                   StandardRangeSpecs::gGeneralGain,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       return pThis->GetBinding().mFMFeedbackGain;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       pThis->GetBinding().mFMFeedbackGain = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
+
+    // for the moment fm feedback just doesn't work.
+    GainSettingItem mAMMinimumGain = {"AM Min",
+                                   StandardRangeSpecs::gGeneralGain,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       return pThis->GetBinding().mAMMinimumGain;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       pThis->GetBinding().mAMMinimumGain = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
@@ -291,9 +305,11 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                      AlwaysEnabled};
 
-    ISettingItem *mArray[13] = {
+    ISettingItem *mArray[15] = {
         &mWaveform,
         &mGain,
+        &mFMFeedback,
+        &mAMMinimumGain,
         &mPan,
         &mPitchbendRange,
         &mPitchbendSnap,

@@ -195,17 +195,19 @@ struct EnvelopeSpec
 
 enum class FMAlgo : uint8_t
 {
-    c1c2c3_NoFM,       // [1][2][3]
-    c1m2c3_FM12_NoFM3, // [1<2][3]
-    c1m2m3_Chain,      // [1<2<3]
-    c1m23,             // [1<(2&3)]
+    c1c2c3_NoFM,        // [1][2][3]
+    c1m2c3_FM12_NoFM3,  // [1<2][3]
+    c1m2m3_Chain,       // [1<2<3]
+    c1m23,              // [1<(2&3)]
+    c2m2c3_FM13_Split2, // [1<2][2>3]
 };
 
-EnumItemInfo<FMAlgo> gFMAlgoItems[4] = {
-    {FMAlgo::c1c2c3_NoFM, "[1][2][3]"}, // Gets special handling. see below.
+EnumItemInfo<FMAlgo> gFMAlgoItems[5] = {
+    {FMAlgo::c1c2c3_NoFM, "[1][2][3]"},
     {FMAlgo::c1m2c3_FM12_NoFM3, "[1<2][3]"},
     {FMAlgo::c1m2m3_Chain, "[1<2<3]"},
-    {FMAlgo::c1m23, "[1<(2&3)]"},
+    {FMAlgo::c1m23, "[1<(2+3)]"},
+    {FMAlgo::c2m2c3_FM13_Split2, "[1<2][2>3]"},
 };
 EnumInfo<FMAlgo> gFMAlgoInfo("FMAlgo", gFMAlgoItems);
 
@@ -231,6 +233,7 @@ struct SynthOscillatorSettings
     float mPulseWidth = 0.5f;
 
     float mFMFeedbackGain = 0.0f;
+    float mAMMinimumGain = 0.0f; // in order to allow amplitude modulations to be non-zero
 };
 
 struct SynthPreset
@@ -846,7 +849,6 @@ struct SynthSettings
         p.mEnv2.mReleaseMS = 500;
     }
 
-
     static void InitFMPreset(SynthPreset &p)
     {
         p.mName = "FM test";
@@ -864,9 +866,7 @@ struct SynthSettings
         p.mOsc[0].mGain = p.mOsc[1].mGain = DecibelsToLinear(-6.0f);
         p.mOsc[2].mGain = 0;
         p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::Sine;
-
     }
-
 
     SynthSettings()
     {

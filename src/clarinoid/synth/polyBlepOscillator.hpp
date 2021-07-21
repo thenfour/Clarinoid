@@ -206,6 +206,8 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mOutput = 0;           // osc1_output
         float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
+        float mAMMinimumGain = 0.0f; // when modulating amplitude, this is the minimum
+        float mPMFeedbackAmt = 0.0f;
 
         void amplitude(float a)
         {
@@ -280,12 +282,10 @@ struct AudioBandlimitedOsci : public AudioStream
             if (pm1)
             {
                 mT += Sample16To32(pm1->data[i]) * mPMMultiplier;
-                mT = Frac(mT);
             }
 
             if (fm1)
             {
-                // Sample16ToSignedRange(fm1->data[i], AUDIO_SAMPLE_RATE_EXACT);
                 int32_t n = fm1->data[i] * mPitchModAmount;
                 int32_t ipart = n >> 27;
                 n = n & 0x7FFFFFF;
@@ -318,7 +318,7 @@ struct AudioBandlimitedOsci : public AudioStream
             float o = mOutput * mGain;
             if (am)
             {
-                o *= Sample16To32(am->data[i]);
+                o *= std::abs(Sample16To32(am->data[i])) + mAMMinimumGain;
             }
 
             out->data[i] = o * 32768.0f;
@@ -327,6 +327,7 @@ struct AudioBandlimitedOsci : public AudioStream
         template <bool TperformSync>
         inline void Step(AudioBandlimitedOsci &owner)
         {
+            float fboutput = mOutput;
             mOutput = mBlepDelay;
             mBlepDelay = 0;
 
@@ -343,7 +344,7 @@ struct AudioBandlimitedOsci : public AudioStream
             {
             case OscWaveformShape::Sine: {
                 mT -= floorf(mT);
-                mOutput = arm_sin_f32(mT * TWO_PI);
+                mOutput = arm_sin_f32((mT + fboutput * mPMFeedbackAmt) * TWO_PI);
                 break;
             }
 
