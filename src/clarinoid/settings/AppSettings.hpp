@@ -46,11 +46,11 @@ struct PerformancePatch
 
     bool mMasterFXEnable = true;
 
-    float mReverbGain = 0.9f;
+    float mReverbGain = DecibelsToLinear(-3.0f);
     float mReverbDamping = 0.6f;
     float mReverbSize = 0.6f;
 
-    float mDelayGain = 0.9f;
+    float mDelayGain = DecibelsToLinear(-3.0f);
     float mDelayMS = 300;
     float mDelayStereoSep = 30;
     float mDelayFeedbackLevel = 0.3f;
@@ -132,9 +132,27 @@ struct AppSettings
         return mSynthSettings.mPresets[id];
     }
 
-    static void InitThiccPerf(PerformancePatch& p) {
+    static void InitThiccPerf(PerformancePatch &p)
+    {
         p.mName = "Thicc";
         p.mSynthStereoSpread = 0.35f;
+        p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+    }
+
+    static void InitSilkSuspendersPerf(PerformancePatch &p)
+    {
+        p.mName = "Silk Susp";
+        p.mSynthPresetA = SynthPresetID_PanFlute;
+        p.mSynthPresetB = SynthPresetID_CinematicTag;
+        p.mBPM = 110;
+        p.mReverbGain = DecibelsToLinear(-12.0f);
+        p.mDelayGain = DecibelsToLinear(-12.0f);
+    }
+
+    static void InitSoaringGuitarPerf(PerformancePatch &p)
+    {
+        p.mName = "Soaring Guitar";
+        p.mSynthPresetA = SynthPresetID_Fluvial;
         p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
     }
 
@@ -142,6 +160,8 @@ struct AppSettings
     {
         size_t i = 1;
         InitThiccPerf(mPerformancePatches[i++]);
+        InitSilkSuspendersPerf(mPerformancePatches[i++]);
+        InitSoaringGuitarPerf(mPerformancePatches[i++]);
     }
 };
 

@@ -6,6 +6,9 @@
 namespace clarinoid
 {
 
+static constexpr size_t SynthPresetID_CinematicTag = SYNTH_PRESET_COUNT - 11;
+static constexpr size_t SynthPresetID_Fluvial = SYNTH_PRESET_COUNT - 10;
+static constexpr size_t SynthPresetID_PanFlute = SYNTH_PRESET_COUNT - 9;
 static constexpr size_t SynthPresetID_SynthTrumpetDoubler = SYNTH_PRESET_COUNT - 8;
 static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 7;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 6;
@@ -553,8 +556,6 @@ struct HarmSettings
     //     p.mVoiceSettings[0].mSequence[0] = 0;
     // }
 
-    
-
     void InitSpicePreset(HarmPreset &p)
     {
         p.mName = "Spicy";
@@ -565,7 +566,8 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = 24;
     }
-    void Init5thPreset(HarmPreset &p) {
+    void Init5thPreset(HarmPreset &p)
+    {
         p.mName = "5th";
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
@@ -579,16 +581,16 @@ struct HarmSettings
     {
         size_t iPreset = 1;
 
-        //InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
-        //InitSlumsHarmPreset(mPresets[iPreset++]);
-        //InitBotanicalHarmPreset(mPresets[iPreset++]);
-        //InitBellycrawlHarmPreset(mPresets[iPreset++]);
+        // InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
+        // InitSlumsHarmPreset(mPresets[iPreset++]);
+        // InitBotanicalHarmPreset(mPresets[iPreset++]);
+        // InitBellycrawlHarmPreset(mPresets[iPreset++]);
 
-        //InitOctDownPreset(mPresets[iPreset++]);
-        //InitColDetSawsPreset(mPresets[iPreset++]);
+        // InitOctDownPreset(mPresets[iPreset++]);
+        // InitColDetSawsPreset(mPresets[iPreset++]);
         InitColBassPreset(mPresets[iPreset++]);
-        //InitSpicePreset(mPresets[iPreset++]);
-        //Init5thPreset(mPresets[iPreset++]);
+        // InitSpicePreset(mPresets[iPreset++]);
+        // Init5thPreset(mPresets[iPreset++]);
 
         InitFunkyHarmPreset(mPresets[iPreset++]);
         InitMajInv2Preset(mPresets[iPreset++]);
