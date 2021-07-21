@@ -187,30 +187,30 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                    (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::fm3};
 
     CCPatch mPatchModToOsc1Phase = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Phase),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm1};
+                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Phase),
+                                    mOsc,
+                                    (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm1};
     CCPatch mPatchModToOsc2Phase = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Phase),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm2};
+                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Phase),
+                                    mOsc,
+                                    (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm2};
     CCPatch mPatchModToOsc3Phase = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Phase),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm3};
+                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Phase),
+                                    mOsc,
+                                    (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm3};
 
     CCPatch mPatchModToOsc1Amp = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Amplitude),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am1};
+                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Amplitude),
+                                  mOsc,
+                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am1};
     CCPatch mPatchModToOsc2Amp = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Amplitude),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am2};
+                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Amplitude),
+                                  mOsc,
+                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am2};
     CCPatch mPatchModToOsc3Amp = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Amplitude),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am3};
+                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Amplitude),
+                                  mOsc,
+                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am3};
 
     // ...
     MultiMixerPannerNode<3> mOscMixerPanner;
@@ -441,8 +441,17 @@ Input 5: Pulse Width Modulation for Oscillator 3
             outputEnable[1] = false;
             outputEnable[2] = false;
             break;
-        case FMAlgo::c1m2c3_FM12_NoFM3: // [1<2][3]
+        case FMAlgo::m1c2c3_FM21_NoFM3: // [1>2][3]
+            outputEnable[0] = false;
+            break;
+        case FMAlgo::c1m2c3_FM12_NoFM3:  // [1<2][3]
         case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
+            outputEnable[1] = false;
+            break;
+        case FMAlgo::c1c2m3_FM32_NoFM1: // [1][2<3]
+            outputEnable[2] = false;
+            break;
+        case FMAlgo::c1m2c3_FM23_NoFM1: // [1][2>3]
             outputEnable[1] = false;
             break;
         case FMAlgo::c1m23: // [1<(2&3)]

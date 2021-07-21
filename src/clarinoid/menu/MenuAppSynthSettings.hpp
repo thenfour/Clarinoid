@@ -132,7 +132,6 @@ struct SynthPatchOscillatorMenuStuff
                                              this},
                              AlwaysEnabled};
 
-    // for the moment fm feedback just doesn't work.
     GainSettingItem mFMFeedback = {"FM Feedback",
                                    StandardRangeSpecs::gGeneralGain,
                                    Property<float>{[](void *cap) {
@@ -146,8 +145,7 @@ struct SynthPatchOscillatorMenuStuff
                                                    this},
                                    AlwaysEnabled};
 
-    // for the moment fm feedback just doesn't work.
-    GainSettingItem mAMMinimumGain = {"AM Min",
+    GainSettingItem mAMMinimumGain = {"AM Baseline",
                                    StandardRangeSpecs::gGeneralGain,
                                    Property<float>{[](void *cap) {
                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -339,11 +337,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     {
     }
 
-    // AppSettings &GetAppSettings() { return *mDisplay.mAppSettings; }
-    int16_t mBindingID = 0;
+    //int16_t mBindingID = 0;
     SynthPreset &GetBinding()
     {
-        return GetAppSettings()->FindSynthPreset(mBindingID);
+        return GetAppSettings()->FindSynthPreset(GetBindingID());
     }
     int16_t GetBindingID()
     {

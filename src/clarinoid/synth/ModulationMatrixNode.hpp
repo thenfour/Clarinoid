@@ -100,6 +100,11 @@ struct VoiceModulationMatrixNode : public AudioStream
         fm2to3.mDest = ModulationDestination::Osc3Phase;
         fm2to3.mScaleN11 = mSynthPatch->mOsc[1].mGain;
 
+        SynthModulationSpec fm1to2;
+        fm1to2.mSource = ModulationSource::Osc1FB;
+        fm1to2.mDest = ModulationDestination::Osc2Phase;
+        fm1to2.mScaleN11 = mSynthPatch->mOsc[0].mGain;
+
         switch (mSynthPatch->mFMAlgo)
         {
         default:
@@ -112,6 +117,15 @@ struct VoiceModulationMatrixNode : public AudioStream
             break;
         case FMAlgo::c1m2c3_FM12_NoFM3: // [1<2][3]
             processModulation(fm2to1);
+            break;
+        case FMAlgo::m1c2c3_FM21_NoFM3:  // [1>2][3]
+            processModulation(fm1to2);
+            break;
+        case FMAlgo::c1c2m3_FM32_NoFM1:  // [1][2<3]
+            processModulation(fm3to2);
+            break;
+        case FMAlgo::c1m2c3_FM23_NoFM1:  // [1][2>3]
+            processModulation(fm2to3);
             break;
         case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
             processModulation(fm2to1);

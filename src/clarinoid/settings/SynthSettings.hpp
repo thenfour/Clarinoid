@@ -197,14 +197,20 @@ enum class FMAlgo : uint8_t
 {
     c1c2c3_NoFM,        // [1][2][3]
     c1m2c3_FM12_NoFM3,  // [1<2][3]
+    m1c2c3_FM21_NoFM3,  // [1>2][3]
+    c1c2m3_FM32_NoFM1,  // [1][2<3]
+    c1m2c3_FM23_NoFM1,  // [1][2>3]
     c1m2m3_Chain,       // [1<2<3]
     c1m23,              // [1<(2&3)]
     c2m2c3_FM13_Split2, // [1<2][2>3]
 };
 
-EnumItemInfo<FMAlgo> gFMAlgoItems[5] = {
+EnumItemInfo<FMAlgo> gFMAlgoItems[8] = {
     {FMAlgo::c1c2c3_NoFM, "[1][2][3]"},
     {FMAlgo::c1m2c3_FM12_NoFM3, "[1<2][3]"},
+    {FMAlgo::m1c2c3_FM21_NoFM3, "[1>2][3]"},
+    {FMAlgo::c1c2m3_FM32_NoFM1, "[1][2<3]"},
+    {FMAlgo::c1m2c3_FM23_NoFM1, "[1][2>3]"},
     {FMAlgo::c1m2m3_Chain, "[1<2<3]"},
     {FMAlgo::c1m23, "[1<(2+3)]"},
     {FMAlgo::c2m2c3_FM13_Split2, "[1<2][2>3]"},
