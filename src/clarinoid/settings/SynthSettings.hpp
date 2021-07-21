@@ -113,36 +113,36 @@ enum class ModulationDestination : uint8_t
     // VoiceFilterQ,
     // VoiceFilterSaturation,
     Osc1Frequency,
-    // Osc1Volume,
+    Osc1Amplitude,
     Osc1PulseWidth,
     Osc1Phase,
     Osc2Frequency,
     Osc2PulseWidth,
     Osc2Phase,
-    // Osc2Volume,
+    Osc2Amplitude,
     Osc3Frequency,
     Osc3PulseWidth,
     Osc3Phase,
-    // Osc3Volume,
+    Osc3Amplitude,
 };
 
-EnumItemInfo<ModulationDestination> gModulationDestinationItems[10] = {
+EnumItemInfo<ModulationDestination> gModulationDestinationItems[13] = {
     {ModulationDestination::None, "None"},
     // {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
     // {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
     // {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
     {ModulationDestination::Osc1Frequency, "Osc1Frequency"},
-    //{ModulationDestination::Osc1Volume, "Osc1Volume"},
+    {ModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
     {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
     {ModulationDestination::Osc1Phase, "Osc1Phase"},
     {ModulationDestination::Osc2Frequency, "Osc2Frequency"},
     {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
     {ModulationDestination::Osc2Phase, "Osc2Phase"},
-    //{ModulationDestination::Osc2Volume, "Osc2Volume"},
+    {ModulationDestination::Osc2Amplitude, "Osc2Amplitude"},
     {ModulationDestination::Osc3Frequency, "Osc3Frequency"},
     {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
     {ModulationDestination::Osc3Phase, "Osc3Phase"},
-    //{ModulationDestination::Osc3Volume, "Osc3Volume"},
+    {ModulationDestination::Osc3Amplitude, "Osc3Amplitude"},
 };
 static constexpr size_t ModulationDestinationSkip = 1; // 1 for the None value.
 static constexpr size_t ModulationDestinationViableCount =

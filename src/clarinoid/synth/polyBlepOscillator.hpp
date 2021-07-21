@@ -37,16 +37,21 @@ namespace clarinoid
     |  .`      |  .`      |  .`      |  .`
     |.`        |.`        |.`        |.`
 
-    INPUT CONNECTIONS:
+    INPUT CONNECTIONS (12):
     0 = fm1
     1 = pwm1
     2 = pm1
-    3 = fm2
-    4 = pwm2
-    5 = pm2
-    6 = fm3
-    7 = pwm3
-    8 = pm3
+    3 = am1
+
+    4 = fm2
+    5 = pwm2
+    6 = pm2
+    7 = am2
+
+    8 = fm3
+    9 = pwm3
+    10 = pm3
+    11 = am3
 
     OUTPUT CONNECTIONS:
     0 = osc1
@@ -79,7 +84,24 @@ namespace clarinoid
 
 struct AudioBandlimitedOsci : public AudioStream
 {
-    static constexpr size_t INPUT_CONNECTION_COUNT = 9;
+    static constexpr size_t INPUT_CONNECTION_COUNT = 12;
+    enum class INPUT_INDEX
+    {
+        fm1 = 0,
+        pwm1 = 1,
+        pm1 = 2,
+        am1 = 3,
+
+        fm2 = 4,
+        pwm2 = 5,
+        pm2 = 6,
+        am2 = 7,
+
+        fm3 = 8,
+        pwm3 = 9,
+        pm3 = 10,
+        am3 = 11,
+    };
 
     AudioBandlimitedOsci() : AudioStream(INPUT_CONNECTION_COUNT, inputQueueArray)
     {
@@ -110,7 +132,8 @@ struct AudioBandlimitedOsci : public AudioStream
         mOsc[oscillator - 1].fmAmount(octaves);
     }
 
-    void SetPhaseModRange(float r) {
+    void SetPhaseModRange(float r)
+    {
         mOsc[0].mPMMultiplier = r;
         mOsc[1].mPMMultiplier = r;
         mOsc[2].mPMMultiplier = r;
@@ -181,7 +204,7 @@ struct AudioBandlimitedOsci : public AudioStream
         float mPhaseOffset = 0;
         float mDt = 0; // cycles per sample, very small. amount of cycle to advance each sample. // osc1_dt
 
-        float mOutput = 0; // osc1_output
+        float mOutput = 0;           // osc1_output
         float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
 
         void amplitude(float a)
@@ -254,7 +277,8 @@ struct AudioBandlimitedOsci : public AudioStream
                 mFrequency += mPortamentoIncrement;
             }
 
-            if (pm1) {
+            if (pm1)
+            {
                 mT += Sample16To32(pm1->data[i]) * mPMMultiplier;
                 mT = Frac(mT);
             }
@@ -287,6 +311,17 @@ struct AudioBandlimitedOsci : public AudioStream
                 mPulseWidth = mPulseWidthTarget01 + Sample16To32(pwm1->data[i]);
             }
             mPulseWidth = Clamp(mPulseWidth, 0.001f, 0.999f);
+        }
+
+        inline void PostStep(size_t i, audio_block_t *out, audio_block_t *am)
+        {
+            float o = mOutput * mGain;
+            if (am)
+            {
+                o *= Sample16To32(am->data[i]);
+            }
+
+            out->data[i] = o * 32768.0f;
         }
 
         template <bool TperformSync>
@@ -506,15 +541,18 @@ void AudioBandlimitedOsci::update()
     if (!out3)
         return;
 
-    audio_block_t *fm1 = receiveReadOnly(0);
-    audio_block_t *pwm1 = receiveReadOnly(1);
-    audio_block_t *pm1 = receiveReadOnly(2);
-    audio_block_t *fm2 = receiveReadOnly(3);
-    audio_block_t *pwm2 = receiveReadOnly(4);
-    audio_block_t *pm2 = receiveReadOnly(5);
-    audio_block_t *fm3 = receiveReadOnly(6);
-    audio_block_t *pwm3 = receiveReadOnly(7);
-    audio_block_t *pm3 = receiveReadOnly(8);
+    audio_block_t *fm1 = receiveReadOnly((int)INPUT_INDEX::fm1);
+    audio_block_t *pwm1 = receiveReadOnly((int)INPUT_INDEX::pwm1);
+    audio_block_t *pm1 = receiveReadOnly((int)INPUT_INDEX::pm1);
+    audio_block_t *am1 = receiveReadOnly((int)INPUT_INDEX::am1);
+    audio_block_t *fm2 = receiveReadOnly((int)INPUT_INDEX::fm2);
+    audio_block_t *pwm2 = receiveReadOnly((int)INPUT_INDEX::pwm2);
+    audio_block_t *pm2 = receiveReadOnly((int)INPUT_INDEX::pm2);
+    audio_block_t *am2 = receiveReadOnly((int)INPUT_INDEX::am2);
+    audio_block_t *fm3 = receiveReadOnly((int)INPUT_INDEX::fm3);
+    audio_block_t *pwm3 = receiveReadOnly((int)INPUT_INDEX::pwm3);
+    audio_block_t *pm3 = receiveReadOnly((int)INPUT_INDEX::pm3);
+    audio_block_t *am3 = receiveReadOnly((int)INPUT_INDEX::am3);
 
     for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
     {
@@ -524,9 +562,13 @@ void AudioBandlimitedOsci::update()
 
         osc1Step(); // This steps actually all oscillators.
 
-        out1->data[i] = (int16_t)(mOsc[0].mOutput * 32768.0 * mOsc[0].mGain);
-        out2->data[i] = (int16_t)(mOsc[1].mOutput * 32768.0 * mOsc[1].mGain);
-        out3->data[i] = (int16_t)(mOsc[2].mOutput * 32768.0 * mOsc[2].mGain);
+        mOsc[0].PostStep(i, out1, am1);
+        mOsc[1].PostStep(i, out2, am2);
+        mOsc[2].PostStep(i, out3, am3);
+
+        // out1->data[i] = (int16_t)(mOsc[0].mOutput * 32768.0 * mOsc[0].mGain);
+        // out2->data[i] = (int16_t)(mOsc[1].mOutput * 32768.0 * mOsc[1].mGain);
+        // out3->data[i] = (int16_t)(mOsc[2].mOutput * 32768.0 * mOsc[2].mGain);
     }
 
     transmit(out1, 0);
@@ -544,18 +586,25 @@ void AudioBandlimitedOsci::update()
         release(pwm1);
     if (pm1)
         release(pm1);
+    if (am1)
+        release(am1);
     if (fm2)
         release(fm2);
     if (pwm2)
         release(pwm2);
     if (pm2)
         release(pm2);
+    if (am2)
+        release(am2);
+
     if (fm3)
         release(fm3);
     if (pwm3)
         release(pwm3);
     if (pm3)
         release(pm3);
+    if (am3)
+        release(am3);
 }
 
 inline void AudioBandlimitedOsci::osc3Step()

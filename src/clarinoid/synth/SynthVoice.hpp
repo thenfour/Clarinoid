@@ -163,41 +163,54 @@ Input 5: Pulse Width Modulation for Oscillator 3
     CCPatch mPatchModToOsc1PWM = {mModMatrix,
                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth),
                                   mOsc,
-                                  1};
+                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm1};
     CCPatch mPatchModToOsc2PWM = {mModMatrix,
                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2PulseWidth),
                                   mOsc,
-                                  4};
+                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm2};
     CCPatch mPatchModToOsc3PWM = {mModMatrix,
                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3PulseWidth),
                                   mOsc,
-                                  7};
+                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm3};
 
     CCPatch mPatchModToOsc1Freq = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Frequency),
                                    mOsc,
-                                   0};
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::fm1};
     CCPatch mPatchModToOsc2Freq = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Frequency),
                                    mOsc,
-                                   3};
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::fm2};
     CCPatch mPatchModToOsc3Freq = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Frequency),
                                    mOsc,
-                                   6};
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::fm3};
 
     CCPatch mPatchModToOsc1Phase = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Phase),
                                    mOsc,
-                                   2};
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm1};
     CCPatch mPatchModToOsc2Phase = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Phase),
                                    mOsc,
-                                   5};
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm2};
     CCPatch mPatchModToOsc3Phase = {mModMatrix,
                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Phase),
                                    mOsc,
-                                   8};
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm3};
+
+    CCPatch mPatchModToOsc1Amp = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Amplitude),
+                                   mOsc,
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am1};
+    CCPatch mPatchModToOsc2Amp = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Amplitude),
+                                   mOsc,
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am2};
+    CCPatch mPatchModToOsc3Amp = {mModMatrix,
+                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Amplitude),
+                                   mOsc,
+                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am3};
 
     // ...
     MultiMixerPannerNode<3> mOscMixerPanner;
@@ -272,6 +285,10 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchModToOsc1Phase.connect();
         mPatchModToOsc2Phase.connect();
         mPatchModToOsc3Phase.connect();
+
+        mPatchModToOsc1Amp.connect();
+        mPatchModToOsc2Amp.connect();
+        mPatchModToOsc3Amp.connect();
 
         mPatchDCToEnv1.connect();
         mPatchDCToEnv2.connect();
