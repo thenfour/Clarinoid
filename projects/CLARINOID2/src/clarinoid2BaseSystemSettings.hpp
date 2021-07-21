@@ -10,7 +10,7 @@ namespace clarinoid
 
 const char gClarinoidVersion[] = "CLARINOID 2";
 
-static const size_t MAX_SYNTH_VOICES = 6;
+static const size_t MAX_SYNTH_VOICES = 4;
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 192000; // should be enough right?
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;    // a smaller buffer that's just used for intermediate copy ops
@@ -36,7 +36,7 @@ static constexpr size_t MAX_MUSICAL_VOICES =
 static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 32;
-static const size_t SYNTH_MODULATIONS_MAX = 10;
+static const size_t SYNTH_MODULATIONS_MAX = 6; // an additional 5 will be internally created because of FM modulation
 
 static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
 

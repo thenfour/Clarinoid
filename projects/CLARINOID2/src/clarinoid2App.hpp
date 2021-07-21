@@ -225,20 +225,15 @@ struct Clarinoid2App : ILEDDataProvider
             PhysicalControl::RHx4, ControlMapping::Function::PerfPreset, -1.0f, ModifierKey::Shift);
 
         mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::LHx3, ControlMapping::Function::ModifierCourse);
+            
+        mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::ModifierFine);
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::ModifierShift);
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::LHx1, ControlMapping::Function::HarmPresetOnOffToggle);
-
-        // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierCourse);
-
-        // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::LoopGo);
-        // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
 
         mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
         mMusicalStateTask.Init();

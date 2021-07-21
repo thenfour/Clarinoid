@@ -66,12 +66,12 @@ enum class ModulationSource : uint8_t
     LFO2,
     ENV1,
     ENV2,
-    // Osc1FB,
-    // Osc2FB,
-    // Osc3FB,
+    Osc1FB,
+    Osc2FB,
+    Osc3FB,
 };
 
-EnumItemInfo<ModulationSource> gModulationSourceItems[7] = {
+EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
     {ModulationSource::None, "None"}, // Gets special handling. see below.
     {ModulationSource::Breath, "Breath"},
     {ModulationSource::PitchStrip, "PitchBend"},
@@ -79,9 +79,9 @@ EnumItemInfo<ModulationSource> gModulationSourceItems[7] = {
     {ModulationSource::LFO2, "LFO2"},
     {ModulationSource::ENV1, "ENV1"},
     {ModulationSource::ENV2, "ENV2"},
-    // {ModulationSource::Osc1FB, "Osc1FB"},
-    // {ModulationSource::Osc2FB, "Osc2FB"},
-    // {ModulationSource::Osc3FB, "Osc3FB"},
+    {ModulationSource::Osc1FB, "Osc1FB"},
+    {ModulationSource::Osc2FB, "Osc2FB"},
+    {ModulationSource::Osc3FB, "Osc3FB"},
 };
 static constexpr size_t ModulationSourceSkip = 1; // 1 for the None value.
 static constexpr size_t ModulationSourceViableCount =
@@ -187,6 +187,22 @@ struct EnvelopeSpec
     float mReleaseMS = 100.0f;
 };
 
+enum class FMAlgo : uint8_t
+{
+    c1c2c3_NoFM,       // [1][2][3]
+    c1m2c3_FM12_NoFM3, // [1<2][3]
+    c1m2m3_Chain,      // [1<2<3]
+    c1m23,             // [1<(2&3)]
+};
+
+EnumItemInfo<FMAlgo> gFMAlgoItems[4] = {
+    {FMAlgo::c1c2c3_NoFM, "[1][2][3]"}, // Gets special handling. see below.
+    {FMAlgo::c1m2c3_FM12_NoFM3, "[1<2][3]"},
+    {FMAlgo::c1m2m3_Chain, "[1<2<3]"},
+    {FMAlgo::c1m23, "[1<(2&3)]"},
+};
+EnumInfo<FMAlgo> gFMAlgoInfo("FMAlgo", gFMAlgoItems);
+
 struct SynthOscillatorSettings
 {
     float mGain = 0;
@@ -207,6 +223,8 @@ struct SynthOscillatorSettings
 
     OscWaveformShape mWaveform = OscWaveformShape::VarTriangle;
     float mPulseWidth = 0.5f;
+
+    float mFMFeedbackGain = 0.0f;
 };
 
 struct SynthPreset
@@ -243,6 +261,8 @@ struct SynthPreset
     float mFilterSaturation = 0.2f;
     float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
                                      // applied (low notes get higher freq cutoff)
+
+    FMAlgo mFMAlgo = FMAlgo::c1c2c3_NoFM;
 
     SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
 
@@ -793,7 +813,8 @@ struct SynthSettings
         p.mFilterQ = 0.15f;
         p.mFilterKeytracking = 0;
 
-        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain = (ReasonableOscillatorGain / 2.5f) * DecibelsToLinear(gain);
+        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain =
+            (ReasonableOscillatorGain / 2.5f) * DecibelsToLinear(gain);
         p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
 
@@ -818,10 +839,33 @@ struct SynthSettings
         p.mEnv2.mReleaseMS = 500;
     }
 
+
+    static void InitFMPreset(SynthPreset &p)
+    {
+        p.mName = "FM test";
+        p.mSync = false;
+        p.mDetune = 0.0f;
+        p.mVerbSend = 0.07f;
+        p.mDelaySend = 0.07f;
+        p.mFilterType = ClarinoidFilterType::LP_Moog2;
+        p.mFilterMinFreq = 0.0f;
+        p.mFilterMaxFreq = 15000;
+        p.mFilterSaturation = 0.0f;
+        p.mFilterQ = 0.15f;
+        p.mFilterKeytracking = 0;
+
+        p.mOsc[0].mGain = p.mOsc[1].mGain = DecibelsToLinear(-6.0f);
+        p.mOsc[2].mGain = 0;
+        p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::Sine;
+
+    }
+
+
     SynthSettings()
     {
         size_t i = 0;
 
+        InitFMPreset(mPresets[i++]);
         InitFluvial(mPresets[i++]);
         InitSynccyLead(mPresets[i++]);
         InitPWMLead2(mPresets[i++]);

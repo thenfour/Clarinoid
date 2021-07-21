@@ -47,7 +47,6 @@ struct MultiMixerNode : public AudioStream
     audio_block_t *inputQueueArray[NInputs];
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // takes N inputs, applies pan and mixes them all together to create a single pair of L R output
 template <size_t NInputs>
@@ -59,19 +58,29 @@ struct MultiMixerPannerNode : public AudioStream
     int32_t mInputMultipliersLeft[NInputs]; // bakes inputpan into L/R multipliers for each input. After this multiply,
                                             // the samples can be added together for a single L/R channel
     int32_t mInputMultipliersRight[NInputs];
+    bool mEnabled[NInputs];
 
     MultiMixerPannerNode() : AudioStream(NInputs, inputQueueArray)
     {
         for (size_t i = 0; i < NInputs; ++i)
         {
-            SetInputPanUnchecked(i, 0);
+            mEnabled[i] = true;
+            mInputPanN11[i] = 0;
+            RecalcInput(i);
         }
     }
 
-    void SetInputPanUnchecked(size_t inputChannel, float panN11)
+    void RecalcInput(size_t inputChannel)
     {
         CCASSERT(inputChannel < SizeofStaticArray(mInputPanN11));
-        mInputPanN11[inputChannel] = panN11;
+        float panN11 = mInputPanN11[inputChannel];
+
+        if (!mEnabled[inputChannel])
+        {
+            mInputMultipliersLeft[inputChannel] = 0;
+            mInputMultipliersRight[inputChannel] = 0;
+            return;
+        }
 
         // SQRT pan law
         // -1..+1  -> 1..0
@@ -83,17 +92,19 @@ struct MultiMixerPannerNode : public AudioStream
         mInputMultipliersRight[inputChannel] = gainToSignedMultiply32x16(rightChannel);
     }
 
-    void SetInputPan(size_t inputChannel, float panN11)
+    void SetInputPanAndEnabled(size_t inputChannel, float panN11, bool enabled)
     {
         if (panN11 < -1)
             panN11 = -1;
         if (panN11 > 1)
             panN11 = 1;
-        if (FloatEquals(panN11, mInputPanN11[inputChannel]))
+        if ((mEnabled[inputChannel] == enabled) && FloatEquals(panN11, mInputPanN11[inputChannel]))
         {
             return;
         }
-        SetInputPanUnchecked(inputChannel, panN11);
+        mEnabled[inputChannel] = enabled;
+        mInputPanN11[inputChannel] = panN11;
+        RecalcInput(inputChannel);
     }
 
     virtual void update() override
@@ -279,7 +290,5 @@ struct StereoGainerSplitterNode : public AudioStream
         }
     }
 };
-
-
 
 } // namespace clarinoid

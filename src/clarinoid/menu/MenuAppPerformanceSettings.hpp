@@ -308,24 +308,6 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
 
         SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
 
-    //     MultiSubmenuSettingItem mPatches = {
-    //         [](void *cap) { return SYNTH_PRESET_COUNT; },
-    //         [](void *cap, size_t n) {
-    //             auto *pThis = (SynthSettingsApp *)cap;
-    //             if (pThis->GetSynthSettings().mPresets[n].mName.length() == 0)
-    //             {
-    //                 return String(String("") + n + ": <init>");
-    //             }
-    //             return String(String("") + n + ":" + pThis->GetSynthSettings().mPresets[n].mName);
-    //         }, // name
-    //         [](void *cap, size_t n) {
-    //             auto *pThis = (SynthSettingsApp *)cap;
-    //             return pThis->mSynthPatchSettingsApp.Start(n);
-    //         }, // get submenu list
-    //         [](void *cap, size_t n) { return true; },
-    //         (void *)this // capture
-    //     };
-
     ISettingItem *mArray[10] = {
         &mMasterGain,
         &mTranspose,

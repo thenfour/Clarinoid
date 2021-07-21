@@ -120,17 +120,30 @@ struct SynthPatchOscillatorMenuStuff
         AlwaysEnabled};
 
     GainSettingItem mGain = {"Gain",
-                              StandardRangeSpecs::gGeneralGain,
-                              Property<float>{[](void *cap) {
-                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                  return pThis->GetBinding().mGain;
-                                              },
-                                              [](void *cap, const float &v) {
-                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                  pThis->GetBinding().mGain = v;
-                                              },
-                                              this},
-                              AlwaysEnabled};
+                             StandardRangeSpecs::gGeneralGain,
+                             Property<float>{[](void *cap) {
+                                                 auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                 return pThis->GetBinding().mGain;
+                                             },
+                                             [](void *cap, const float &v) {
+                                                 auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                 pThis->GetBinding().mGain = v;
+                                             },
+                                             this},
+                             AlwaysEnabled};
+
+    GainSettingItem mFMFeedback = {"FM Feedback",
+                                   StandardRangeSpecs::gGeneralGain,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       return pThis->GetBinding().mFMFeedbackGain;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                       pThis->GetBinding().mFMFeedbackGain = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
@@ -158,38 +171,32 @@ struct SynthPatchOscillatorMenuStuff
                                                         this},
                                         AlwaysEnabled};
 
-
     // there's a bit of a conflict here because it's defined as float but this is int.
-    IntSettingItem mPitchbendRange = {
-        "Pitchbend range",
-        NumericEditRangeSpec<int>{0, 48},
-        Property<int>{[](void *cap) {
-                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                          return (int)pThis->GetBinding().mPitchBendRange;
-                      },
-                      [](void *cap, const int &v) {
-                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                          pThis->GetBinding().mPitchBendRange = (float)v;
-                      },
-                      this},
-        AlwaysEnabled};
-
+    IntSettingItem mPitchbendRange = {"Pitchbend range",
+                                      NumericEditRangeSpec<int>{0, 48},
+                                      Property<int>{[](void *cap) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        return (int)pThis->GetBinding().mPitchBendRange;
+                                                    },
+                                                    [](void *cap, const int &v) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        pThis->GetBinding().mPitchBendRange = (float)v;
+                                                    },
+                                                    this},
+                                      AlwaysEnabled};
 
     FloatSettingItem mPitchbendSnap = {"Pitchbend snap",
-                                 StandardRangeSpecs::gFloat_0_1,
-                                 Property<float>{[](void *cap) {
-                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                     return pThis->GetBinding().mPitchBendSnap;
-                                                 },
-                                                 [](void *cap, const float &v) {
-                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                     pThis->GetBinding().mPitchBendSnap = v;
-                                                 },
-                                                 this},
-                                 AlwaysEnabled};
-
-
-
+                                       StandardRangeSpecs::gFloat_0_1,
+                                       Property<float>{[](void *cap) {
+                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                           return pThis->GetBinding().mPitchBendSnap;
+                                                       },
+                                                       [](void *cap, const float &v) {
+                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                           pThis->GetBinding().mPitchBendSnap = v;
+                                                       },
+                                                       this},
+                                       AlwaysEnabled};
 
     FloatSettingItem mFreqMul = {"FreqMul",
                                  StandardRangeSpecs::gFreqMulRange,
@@ -283,9 +290,10 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                      AlwaysEnabled};
 
-    ISettingItem *mArray[13] = {
+    ISettingItem *mArray[14] = {
         &mWaveform,
         &mGain,
+        &mFMFeedback,
         &mPan,
         &mPitchbendRange,
         &mPitchbendSnap,
@@ -319,12 +327,12 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     int16_t mBindingID = 0;
     SynthPreset &GetBinding()
     {
-        //return GetAppSettings()->FindSynthPreset(GetAppSettings()->GetCurrentPerformancePatch().mSynthPresetA);
         return GetAppSettings()->FindSynthPreset(mBindingID);
     }
-    int16_t GetBindingID() {
-        return mBindingID;
-        //return GetAppSettings()->GetCurrentPerformancePatch().mSynthPresetA;
+    int16_t GetBindingID()
+    {
+        //return mBindingID;
+        return GetAppSettings()->GetCurrentPerformancePatch().mSynthPresetA;
     }
 
     // NumericSettingItem(const String& name, T min_, T max_, const Property<T>& binding, typename
@@ -357,30 +365,30 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                              AlwaysEnabled};
 
     GainSettingItem mVerbSend = {"Verb Send",
+                                 StandardRangeSpecs::gSendGain,
+                                 Property<float>{[](void *cap) {
+                                                     auto *pThis = (SynthPatchMenuApp *)cap;
+                                                     return pThis->GetBinding().mVerbSend;
+                                                 },
+                                                 [](void *cap, const float &v) {
+                                                     auto *pThis = (SynthPatchMenuApp *)cap;
+                                                     pThis->GetBinding().mVerbSend = v;
+                                                 },
+                                                 this},
+                                 AlwaysEnabled};
+
+    GainSettingItem mDelaySend = {"Dly Send",
                                   StandardRangeSpecs::gSendGain,
                                   Property<float>{[](void *cap) {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      return pThis->GetBinding().mVerbSend;
+                                                      return pThis->GetBinding().mDelaySend;
                                                   },
                                                   [](void *cap, const float &v) {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      pThis->GetBinding().mVerbSend = v;
+                                                      pThis->GetBinding().mDelaySend = v;
                                                   },
                                                   this},
                                   AlwaysEnabled};
-
-    GainSettingItem mDelaySend = {"Dly Send",
-                                   StandardRangeSpecs::gSendGain,
-                                   Property<float>{[](void *cap) {
-                                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                                       return pThis->GetBinding().mDelaySend;
-                                                   },
-                                                   [](void *cap, const float &v) {
-                                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                                       pThis->GetBinding().mDelaySend = v;
-                                                   },
-                                                   this},
-                                   AlwaysEnabled};
 
     BoolSettingItem mSync = {"Sync",
                              "On",
@@ -408,6 +416,19 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                       },
                                                       this},
                                       AlwaysEnabled};
+
+    EnumSettingItem<FMAlgo> mFMAlgo = {"FM Algo",
+                                       gFMAlgoInfo,
+                                       Property<FMAlgo>{[](void *cap) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            return pThis->GetBinding().mFMAlgo;
+                                                        },
+                                                        [](void *cap, const FMAlgo &v) {
+                                                            auto *pThis = (SynthPatchMenuApp *)cap;
+                                                            pThis->GetBinding().mFMAlgo = v;
+                                                        },
+                                                        this},
+                                       AlwaysEnabled};
 
     FloatSettingItem mSyncMultMin = {" - mult min",
                                      NumericEditRangeSpec<float>{0.0f, 15.0f},
@@ -569,9 +590,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
             auto fromName = pThis->GetAppSettings()->GetSynthPatchName(pThis->GetBindingID());
             auto toName = pThis->GetAppSettings()->GetSynthPatchName(i);
 
-            pThis->mDisplay.ShowToast(
-                String("Copied ") +fromName +
-                "\nto\n" + toName);
+            pThis->mDisplay.ShowToast(String("Copied ") + fromName + "\nto\n" + toName);
         },
         AlwaysEnabled,
         this};
@@ -770,10 +789,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[14] = {
+    ISettingItem *mArray[15] = {
         &mBreathFilterSubmenuItem,
+        &mFMAlgo,
         &mDetune,
-        //&mPortamentoTime,
         &mPan,
         &mStereoSpread,
         &mDelaySend,
@@ -791,13 +810,12 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     };
     SettingsList mRootList = {mArray};
 
-    SettingsList *Start(size_t iPatch)
-    {
-        this->DisplayAppInit(); // required to initialize stuff
-        mBindingID = iPatch;
-        //GetAppSettings()->mGlobalSynthPreset = iPatch;
-        return &mRootList;
-    }
+    // SettingsList *Start(size_t iPatch)
+    // {
+    //     this->DisplayAppInit(); // required to initialize stuff
+    //     mBindingID = iPatch;
+    //     return &mRootList;
+    // }
 
     virtual SettingsList *GetRootSettingsList()
     {
@@ -811,74 +829,9 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     {
         mDisplay.ClearState();
         mDisplay.mDisplay.println(String("Synth Patch >"));
-        mDisplay.mDisplay.println(
-            GetAppSettings()->GetSynthPatchName(GetBindingID()));
+        mDisplay.mDisplay.println(GetAppSettings()->GetSynthPatchName(GetBindingID()));
         SettingsMenuApp::RenderFrontPage();
     }
 };
-
-
-// struct SynthSettingsApp : public SettingsMenuApp
-// {
-//     virtual const char *DisplayAppGetName() override
-//     {
-//         return "SynthSettingsApp";
-//     }
-
-//     SynthPatchMenuApp mSynthPatchSettingsApp;
-//     SynthSettings &GetSynthSettings()
-//     {
-//         return this->mAppSettings->mSynthSettings;
-//     }
-
-//     SynthSettingsApp(CCDisplay &d) : SettingsMenuApp(d), mSynthPatchSettingsApp(d)
-//     {
-//     }
-
-//     MultiSubmenuSettingItem mPatches = {
-//         [](void *cap) { return SYNTH_PRESET_COUNT; },
-//         [](void *cap, size_t n) {
-//             auto *pThis = (SynthSettingsApp *)cap;
-//             if (pThis->GetSynthSettings().mPresets[n].mName.length() == 0)
-//             {
-//                 return String(String("") + n + ": <init>");
-//             }
-//             return String(String("") + n + ":" + pThis->GetSynthSettings().mPresets[n].mName);
-//         }, // name
-//         [](void *cap, size_t n) {
-//             auto *pThis = (SynthSettingsApp *)cap;
-//             return pThis->mSynthPatchSettingsApp.Start(n);
-//         }, // get submenu list
-//         [](void *cap, size_t n) { return true; },
-//         (void *)this // capture
-//     };
-
-//     ISettingItem *mArray[5] = {
-//         &mMasterGain,
-//         &mTranspose,
-//         &mMasterFXEnable,
-//         &mMasterFX,
-//         &mPatches,
-//     };
-//     SettingsList mRootList = {mArray};
-
-//   public:
-//     virtual SettingsList *GetRootSettingsList()
-//     {
-//         return &mRootList;
-//     }
-
-//     virtual void RenderFrontPage()
-//     {
-//         // log(String("synth settings app settings = ") + (uint32_t)mAppSettings);
-//         mDisplay.ClearState();
-//         mDisplay.mDisplay.println(String("SYNTH > "));
-//         mDisplay.mDisplay.println(
-//             GetAppSettings()->mSynthSettings.mPresets[GetAppSettings()->mGlobalSynthPreset].ToString(
-//                 GetAppSettings()->mGlobalSynthPreset));
-
-//         SettingsMenuApp::RenderFrontPage();
-//     }
-// };
 
 } // namespace clarinoid

@@ -147,6 +147,10 @@ struct Voice
                                      mModMatrix,
                                      (uint8_t)ModulationSourceToIndex(ModulationSource::PitchStrip)};
 
+    CCPatch mOsc1FBToMod = {mOsc, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc1FB)};
+    CCPatch mOsc2FBToMod = {mOsc, 1, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc2FB)};
+    CCPatch mOsc3FBToMod = {mOsc, 2, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc3FB)};
+
     // Patch modulation destinations
     /*
 Input 0: Frequency Modulation for Oscillator 1
@@ -232,6 +236,10 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchOutVerbLeft.connect();
         mPatchOutVerbRight.connect();
 
+        mOsc1FBToMod.connect();
+        mOsc2FBToMod.connect();
+        mOsc3FBToMod.connect();
+
         mPatchEnv1ToMod.connect();
         mPatchEnv2ToMod.connect();
         mPatchLfo1ToMod.connect();
@@ -306,7 +314,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
             {
                 mOsc.mOsc[i].amplitude(0);
             }
-            // for CPU saving
+            // for CPU saving (currently causes glitches)
             // mOsc.Disable();
             // mFilter.Disable();
             mRunningVoice = mv;
@@ -384,13 +392,42 @@ Input 5: Pulse Width Modulation for Oscillator 3
         // update
         float midiNote = (float)mv.mMidiNote;
 
+        bool outputEnable[POLYBLEP_OSC_COUNT];
+        outputEnable[0] = true;
+        outputEnable[1] = true;
+        outputEnable[2] = true;
+        static_assert(POLYBLEP_OSC_COUNT == 3, "this is designed only for 3 oscillators");
+
+        switch (mPreset->mFMAlgo)
+        {
+        default:
+        case FMAlgo::c1c2c3_NoFM: // [1][2][3]
+            break;
+        case FMAlgo::c1m2m3_Chain: // [1<2<3]
+            outputEnable[1] = false;
+            outputEnable[2] = false;
+            break;
+        case FMAlgo::c1m2c3_FM12_NoFM3: // [1<2][3]
+            outputEnable[1] = false;
+            break;
+        case FMAlgo::c1m23: // [1<(2&3)]
+            outputEnable[1] = false;
+            outputEnable[2] = false;
+            break;
+        }
+
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
-            mOsc.mOsc[i].amplitude(mPreset->mOsc[i].mGain);
+            // if the output is disabled, then the multimixerpanner will disable this channel,
+            // and its output is only designed for modulation sources. then the gain will be
+            // specified in the modulation amount.
+            mOsc.mOsc[i].amplitude(outputEnable[i] ? mPreset->mOsc[i].mGain : 1.0f);
             mOsc.mOsc[i].SetPhaseOffset(mPreset->mOsc[i].mPhase01);
 
             mOsc.mOsc[i].portamentoTime(mPreset->mOsc[i].mPortamentoTime);
-            mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
+
+            // for modulators, it's pointless to have any shape other than sine.
+            mOsc.mOsc[i].waveform(outputEnable[i] ? mPreset->mOsc[i].mWaveform : OscWaveformShape::Sine);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
             mOsc.mOsc[i].fmAmount(1);
         }
@@ -470,9 +507,11 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mSplitter.SetOutputGain(1, mPreset->mDelaySend);
         mSplitter.SetOutputGain(2, mPreset->mVerbSend);
 
-        mOscMixerPanner.SetInputPan(0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan + mPreset->mStereoSpread);
-        mOscMixerPanner.SetInputPan(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan);
-        mOscMixerPanner.SetInputPan(2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread);
+        mOscMixerPanner.SetInputPanAndEnabled(
+            0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan + mPreset->mStereoSpread, outputEnable[0]);
+        mOscMixerPanner.SetInputPanAndEnabled(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan, outputEnable[1]);
+        mOscMixerPanner.SetInputPanAndEnabled(
+            2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread, outputEnable[2]);
 
         mRunningVoice = mv;
     }
@@ -545,35 +584,26 @@ struct SynthGraphControl
 
     void UpdatePostFx()
     {
-        auto& perf = mAppSettings->GetCurrentPerformancePatch();
+        auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
         CCSynthGraph::delayFeedbackAmpLeft.gain(perf.mDelayFeedbackLevel);
         CCSynthGraph::delayFeedbackAmpRight.gain(perf.mDelayFeedbackLevel);
         CCSynthGraph::delayLeft.delay(0, perf.mDelayMS);
-        CCSynthGraph::delayRight.delay(
-            0, perf.mDelayMS + perf.mDelayStereoSep);
+        CCSynthGraph::delayRight.delay(0, perf.mDelayMS + perf.mDelayStereoSep);
 
-        CCSynthGraph::delayFilterLeft.SetParams(perf.mDelayFilterType,
-                                                perf.mDelayCutoffFrequency,
-                                                perf.mDelayQ,
-                                                perf.mDelaySaturation);
-        CCSynthGraph::delayFilterRight.SetParams(perf.mDelayFilterType,
-                                                 perf.mDelayCutoffFrequency,
-                                                 perf.mDelayQ,
-                                                 perf.mDelaySaturation);
+        CCSynthGraph::delayFilterLeft.SetParams(
+            perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
+        CCSynthGraph::delayFilterRight.SetParams(
+            perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
 
-        CCSynthGraph::delayWetAmpLeft.gain(
-            perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
-        CCSynthGraph::delayWetAmpRight.gain(
-            perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
+        CCSynthGraph::delayWetAmpLeft.gain(perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
+        CCSynthGraph::delayWetAmpRight.gain(perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
 
         CCSynthGraph::verb.roomsize(perf.mReverbSize);
         CCSynthGraph::verb.damping(perf.mReverbDamping);
 
-        CCSynthGraph::verbWetAmpLeft.gain(
-            perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
-        CCSynthGraph::verbWetAmpRight.gain(
-            perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
+        CCSynthGraph::verbWetAmpLeft.gain(perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
+        CCSynthGraph::verbWetAmpRight.gain(perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
 
         CCSynthGraph::ampLeft.gain(perf.mMasterGain);
         CCSynthGraph::ampRight.gain(perf.mMasterGain);
