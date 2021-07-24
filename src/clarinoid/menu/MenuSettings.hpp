@@ -440,6 +440,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
             }
 
             mDisplay.mDisplay.mSolidText = item->IsEnabled(multiIndex);
+            mDisplay.mDisplay.setTextWrap(false);
 
             switch (item->GetType(multiIndex))
             {
@@ -450,7 +451,15 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
                 mDisplay.mDisplay.println(item->GetName(multiIndex) + " -->");
                 break;
             default:
-                mDisplay.mDisplay.println(item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex));
+                auto eq = item->GetValueString(multiIndex);
+                if (eq.length() > 0)
+                {
+                    mDisplay.mDisplay.println(item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex));
+                }
+                else
+                {
+                    mDisplay.mDisplay.println(item->GetName(multiIndex));
+                }
                 break;
             }
 

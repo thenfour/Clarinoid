@@ -43,4 +43,24 @@ struct DigitalPinSwitch : ISwitch
     }
 };
 
+template<uint8_t mPin>
+struct DigitalPinSwitchT : ISwitch
+{
+    bool mCurrentValue = false;
+
+    DigitalPinSwitchT()
+    {
+        pinMode(mPin, INPUT_PULLUP);
+    }
+
+    void Update()
+    {
+        mCurrentValue = !!digitalReadFast(mPin);
+    }
+
+    virtual bool CurrentValue() const override
+    {
+        return mCurrentValue;
+    }
+};
 } // namespace clarinoid

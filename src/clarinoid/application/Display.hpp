@@ -221,6 +221,7 @@ struct CCDisplay
 
     void ClearState()
     {
+        mDisplay.setFont();
         mDisplay.mSolidText = true;
         mDisplay.mTextLeftMargin = 0;
         mDisplay.setTextWrap(true);
