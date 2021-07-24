@@ -187,12 +187,12 @@ struct SynthModulationSpec
 struct EnvelopeSpec
 {
     float mDelayMS = 0.0f;
-    float mAttackMS = 0.0f;
+    float mAttackMS = 4.0f;
     float mHoldMS = 0.0f;
     float mDecayMS = 500.0f;
     float mSustainLevel = 0.0f;
     float mReleaseMS = 100.0f;
-    float mReleaseNoteOnMS = 100.0f;
+    float mReleaseNoteOnMS = 0.0f;
 };
 
 enum class FMAlgo : uint8_t
@@ -241,7 +241,7 @@ struct SynthOscillatorSettings
     float mPulseWidth = 0.5f;
 
     float mFMFeedbackGain = 0.0f; // 0 to 1
-    float mAMMinimumGain = 0.0f; // in order to allow amplitude modulations to be non-zero
+    float mAMMinimumGain = 0.0f;  // in order to allow amplitude modulations to be non-zero
 };
 
 struct SynthPreset
@@ -848,13 +848,13 @@ struct SynthSettings
         p.mEnv1.mAttackMS = 0;
         p.mEnv1.mDecayMS = 100;
         p.mEnv1.mSustainLevel = 0;
-        p.mEnv1.mReleaseMS = 100;
+        p.mEnv1.mReleaseMS = p.mEnv1.mReleaseNoteOnMS = 100;
 
         p.mEnv2.mDelayMS = 0;
         p.mEnv2.mAttackMS = 0;
         p.mEnv2.mDecayMS = 500;
         p.mEnv2.mSustainLevel = 0;
-        p.mEnv2.mReleaseMS = 500;
+        p.mEnv2.mReleaseMS = p.mEnv1.mReleaseNoteOnMS = 500;
     }
 
     // static void InitFMPreset(SynthPreset &p)
