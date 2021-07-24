@@ -11,6 +11,7 @@
 #include "clarinoid/application/Font/matchup8.hpp"
 #include "clarinoid/application/Font/chicago4px7b.hpp"
 #include "clarinoid/application/Font/TomThumb.hpp"
+#include "clarinoid/application/Font/eighties8.hpp"
 
 
 namespace clarinoid
@@ -102,6 +103,9 @@ struct CCDisplay
             glyph.yOffset += 9;
         }
         for (auto& glyph : TomThumbGlyphs) {
+            glyph.yOffset += 6;
+        }
+        for (auto& glyph : Eighties8pt7bGlyphs) {
             glyph.yOffset += 6;
         }
 
@@ -259,11 +263,12 @@ struct CCDisplay
     //GFXfont const *mCurrentFontIndex = &MatchupPro8pt7b;
     size_t mCurrentFontIndex = 0;
 
-    GFXfont const *mGUIFonts[4] = {
+    GFXfont const *mGUIFonts[5] = {
         &MatchupPro8pt7b,
+        &Eighties8pt7b,
+        &TomThumb,
         nullptr,
         &pixChicago4pt7b,
-        &TomThumb,
     };
 
     SwitchControlReader mToggleReader;
