@@ -27,6 +27,8 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
         mEncoder.Update();
         mOK.Update();
         mBack.Update();
+        mEncButton.Update();
+        mButton3.Update();
         // mMCP.Update();
         // mLHMPR.Update();
         // mRHMPR.Update();
@@ -43,9 +45,9 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
 
         mControlInfo[(size_t)PhysicalControl::Back] = ControlInfo{"CPBack", &mBack};
         mControlInfo[(size_t)PhysicalControl::Ok] = ControlInfo{"CPOk", &mOK};
-        // mControlInfo[(size_t)PhysicalControl::EncButton] = ControlInfo{"CPEncBtn", &mMCP.mButtons[3]};
+        mControlInfo[(size_t)PhysicalControl::EncButton] = ControlInfo{"CPEncBtn", &mEncButton};
 
-        // mControlInfo[(size_t)PhysicalControl::LHx1] = ControlInfo{"LHx1", &mMCP.mButtons[0]};
+        mControlInfo[(size_t)PhysicalControl::Button3] = ControlInfo{"LHx1", &mButton3};
         // mControlInfo[(size_t)PhysicalControl::LHx2] = ControlInfo{"LHx2", &mMCP.mButtons[1]};
         // mControlInfo[(size_t)PhysicalControl::LHx3] = ControlInfo{"LHx3", &mMCP.mButtons[2]};
 
@@ -91,6 +93,8 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
     CCEncoder<4 /* step increment each increment */, 14 /* pin #1 */, 15 /* pin #2 */> mEncoder;
     DigitalPinSwitchT<16> mOK;
     DigitalPinSwitchT<17> mBack;
+    DigitalPinSwitchT<18> mButton3;
+    DigitalPinSwitchT<19> mEncButton;
  
     ControlInfo mControlInfo[(size_t)PhysicalControl::COUNT];
 };

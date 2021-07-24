@@ -8,6 +8,11 @@
 #include "clarinoid/components/AdafruitSSD1366Wrapper.hpp"
 #include <clarinoid/application/ControlMapper.hpp>
 
+#include "clarinoid/application/Font/matchup8.hpp"
+#include "clarinoid/application/Font/chicago4px7b.hpp"
+#include "clarinoid/application/Font/TomThumb.hpp"
+
+
 namespace clarinoid
 {
 
@@ -89,6 +94,17 @@ struct CCDisplay
 
         gDisplay = &mDisplay;
 
+        // fix fonts up a bit
+        for (auto& glyph : MatchupPro8pt7bGlyphs) {
+            glyph.yOffset += 6;
+        }
+        for (auto& glyph : pixChicago4pt7bGlyphs) {
+            glyph.yOffset += 9;
+        }
+        for (auto& glyph : TomThumbGlyphs) {
+            glyph.yOffset += 6;
+        }
+
         pfnCrashHandler = []() {
             Serial.println(gCrashMessage);
             Serial.println(String("Display ptr = ") + (uintptr_t)gDisplay);
@@ -147,6 +163,12 @@ struct CCDisplay
     {
         CCASSERT(this->mIsSetup);
 
+        mToggleReader.Update(&mInput->mDisplayFontToggle);
+        if (mToggleReader.IsNewlyPressed())
+        {
+            mCurrentFontIndex = RotateIntoRange(mCurrentFontIndex + 1, SizeofStaticArray(mGUIFonts));
+        }
+
         IDisplayApp *pMenuApp = nullptr;
 
         if (mCurrentAppIndex < (int)mApps.mSize)
@@ -186,6 +208,30 @@ struct CCDisplay
         }
     }
 
+    void DrawInvertedText(const String &str, bool isInverted = true)
+    {
+        if (isInverted)
+        {
+            int16_t x, y;
+            uint16_t w, h;
+            mDisplay.getTextBounds(str, mDisplay.getCursorX(), mDisplay.getCursorY(), &x, &y, &w, &h);
+            mDisplay.fillRect(x, y, w, h, SSD1306_WHITE);
+            mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        }
+        else
+        {
+            mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+        }
+
+        mDisplay.print(str);
+    }
+
+    void DrawInvertedLine(const String &str, bool isInverted = true)
+    {
+        DrawInvertedText(str, isInverted);
+        mDisplay.println();
+    }
+
     void DisplayTask()
     {
         ClearState();
@@ -210,6 +256,17 @@ struct CCDisplay
     Stopwatch mToastTimer;
     bool mIsShowingToast = false;
     String mToastMsg;
+    //GFXfont const *mCurrentFontIndex = &MatchupPro8pt7b;
+    size_t mCurrentFontIndex = 0;
+
+    GFXfont const *mGUIFonts[4] = {
+        &MatchupPro8pt7b,
+        nullptr,
+        &pixChicago4pt7b,
+        &TomThumb,
+    };
+
+    SwitchControlReader mToggleReader;
 
     void ShowToast(const String &msg)
     {
@@ -221,7 +278,7 @@ struct CCDisplay
 
     void ClearState()
     {
-        mDisplay.setFont();
+        mDisplay.setFont(mGUIFonts[mCurrentFontIndex]);
         mDisplay.mSolidText = true;
         mDisplay.mTextLeftMargin = 0;
         mDisplay.setTextWrap(true);

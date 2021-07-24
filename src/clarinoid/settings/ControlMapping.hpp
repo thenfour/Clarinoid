@@ -34,6 +34,7 @@ struct ControlMapping
         ModifierHarm,
         ModifierShift,
         MenuBack,
+        DisplayFontToggle,
         MenuOK,
         LH1,
         LH2,

@@ -178,6 +178,8 @@ struct TransposeMappableFunction : FunctionHandler
     }
 };
 
+
+
 struct InputDelegator
 {
     AppSettings *mpAppSettings = nullptr;
@@ -231,6 +233,7 @@ struct InputDelegator
     VirtualSwitch mBaseNoteHoldToggle;
     VirtualSwitch mMetronomeLEDToggle;
     VirtualSwitch mHarmPresetOnOffToggle;
+    VirtualSwitch mDisplayFontToggle;
 
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
@@ -289,6 +292,8 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::BaseNoteHoldToggle, &mBaseNoteHoldToggle);
         RegisterFunction(ControlMapping::Function::MetronomeLEDToggle, &mMetronomeLEDToggle);
         RegisterFunction(ControlMapping::Function::HarmPresetOnOffToggle, &mHarmPresetOnOffToggle);
+
+        RegisterFunction(ControlMapping::Function::DisplayFontToggle, &mDisplayFontToggle);
 
         mpSrc->InputSource_Init(this);
     }

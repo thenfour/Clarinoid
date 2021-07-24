@@ -50,6 +50,8 @@ enum class PhysicalControl : uint8_t
     Back,
     Ok,
     Enc,
+    EncButton,
+    Button3,
 
     COUNT,
 };

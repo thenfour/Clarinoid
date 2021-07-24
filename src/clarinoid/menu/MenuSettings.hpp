@@ -430,42 +430,38 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         {
             size_t multiIndex = 0;
             auto *item = state.pList->GetItem(itemToRender, multiIndex);
-            if (itemToRender == (size_t)state.focusedItem)
-            {
-                mDisplay.mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-            }
-            else
-            {
-                mDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-            }
-
             mDisplay.mDisplay.mSolidText = item->IsEnabled(multiIndex);
             mDisplay.mDisplay.setTextWrap(false);
+
+            String line = "";
 
             switch (item->GetType(multiIndex))
             {
             case SettingItemType::Trigger:
-                mDisplay.mDisplay.println(item->GetName(multiIndex));
+                line += item->GetName(multiIndex);
                 break;
             case SettingItemType::Submenu:
-                mDisplay.mDisplay.println(item->GetName(multiIndex) + " -->");
+                line +=item->GetName(multiIndex) + " -->";
                 break;
             default:
                 auto eq = item->GetValueString(multiIndex);
                 if (eq.length() > 0)
                 {
-                    mDisplay.mDisplay.println(item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex));
+                    line += item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex);
                 }
                 else
                 {
-                    mDisplay.mDisplay.println(item->GetName(multiIndex));
+                    line +=item->GetName(multiIndex);
                 }
                 break;
             }
 
+            auto cursorY = mDisplay.mDisplay.getCursorY();
+            mDisplay.DrawInvertedLine(line, (itemToRender == (size_t)state.focusedItem));
+
             if (itemToRender == (state.pList->Count() - 1))
             {
-                int separatorY = mDisplay.mDisplay.getCursorY() - 1;
+                int separatorY = cursorY + mDisplay.mDisplay.GetLineHeight() - 1;
                 mDisplay.mDisplay.drawFastHLine(0, separatorY, mDisplay.mDisplay.width(), SSD1306_INVERSE);
             }
 
