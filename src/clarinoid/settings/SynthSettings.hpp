@@ -848,13 +848,13 @@ struct SynthSettings
         p.mEnv1.mAttackMS = 0;
         p.mEnv1.mDecayMS = 100;
         p.mEnv1.mSustainLevel = 0;
-        p.mEnv1.mReleaseMS = p.mEnv1.mReleaseNoteOnMS = 100;
+        p.mEnv1.mReleaseMS = p.mEnv1.mReleaseNoteOnMS = 0;
 
         p.mEnv2.mDelayMS = 0;
         p.mEnv2.mAttackMS = 0;
         p.mEnv2.mDecayMS = 500;
         p.mEnv2.mSustainLevel = 0;
-        p.mEnv2.mReleaseMS = p.mEnv1.mReleaseNoteOnMS = 500;
+        p.mEnv2.mReleaseMS = p.mEnv2.mReleaseNoteOnMS = 0;
     }
 
     // static void InitFMPreset(SynthPreset &p)
