@@ -363,19 +363,19 @@ Input 5: Pulse Width Modulation for Oscillator 3
         // configure envelopes (DADSR x 3)
         mEnv1.delay(mPreset->mEnv1.mDelayMS);
         mEnv1.attack(mPreset->mEnv1.mAttackMS);
-        mEnv1.hold(0);
+        mEnv1.hold(mPreset->mEnv1.mHoldMS);
         mEnv1.decay(mPreset->mEnv1.mDecayMS);
         mEnv1.sustain(mPreset->mEnv1.mSustainLevel);
         mEnv1.release(mPreset->mEnv1.mReleaseMS);
-        mEnv1.releaseNoteOn(0);
+        mEnv1.releaseNoteOn(mPreset->mEnv1.mReleaseNoteOnMS);
 
         mEnv2.delay(mPreset->mEnv2.mDelayMS);
         mEnv2.attack(mPreset->mEnv2.mAttackMS);
-        mEnv2.hold(0);
+        mEnv2.hold(mPreset->mEnv2.mHoldMS);
         mEnv2.decay(mPreset->mEnv2.mDecayMS);
         mEnv2.sustain(mPreset->mEnv2.mSustainLevel);
         mEnv2.release(mPreset->mEnv2.mReleaseMS);
-        mEnv2.releaseNoteOn(0);
+        mEnv2.releaseNoteOn(mPreset->mEnv2.mReleaseNoteOnMS);
 
         auto convertWaveType = [](OscWaveformShape s) {
             switch (s)

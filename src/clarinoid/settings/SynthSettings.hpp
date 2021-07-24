@@ -187,10 +187,12 @@ struct SynthModulationSpec
 struct EnvelopeSpec
 {
     float mDelayMS = 0.0f;
-    float mAttackMS = 4.0f;
+    float mAttackMS = 0.0f;
+    float mHoldMS = 0.0f;
     float mDecayMS = 500.0f;
     float mSustainLevel = 0.0f;
     float mReleaseMS = 100.0f;
+    float mReleaseNoteOnMS = 100.0f;
 };
 
 enum class FMAlgo : uint8_t
@@ -238,7 +240,7 @@ struct SynthOscillatorSettings
     OscWaveformShape mWaveform = OscWaveformShape::VarTriangle;
     float mPulseWidth = 0.5f;
 
-    float mFMFeedbackGain = 0.0f;
+    float mFMFeedbackGain = 0.0f; // 0 to 1
     float mAMMinimumGain = 0.0f; // in order to allow amplitude modulations to be non-zero
 };
 
@@ -584,9 +586,9 @@ struct SynthSettings
         p.mDetune = 0.04f;
 
         p.mFilterType = ClarinoidFilterType::BP_Moog4;
-        p.mFilterMaxFreq = 7000;
+        p.mFilterMaxFreq = 11000.0f;
         p.mFilterKeytracking = 1.0f;
-        p.mFilterQ = 0.1f;
+        p.mFilterQ = 0.0f;
         p.mFilterSaturation = 0.3f;
 
         p.mEnv1.mDecayMS = 100;

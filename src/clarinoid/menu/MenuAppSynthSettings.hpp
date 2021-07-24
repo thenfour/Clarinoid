@@ -38,6 +38,19 @@ struct EnvelopeMenuApp
                                                   this},
                                   AlwaysEnabled};
 
+    FloatSettingItem mHoldMS = {"Hold",
+                                  StandardRangeSpecs::gEnvHoldMS,
+                                  Property<float>{[](void *cap) {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      return pThis->mBinding->mHoldMS;
+                                                  },
+                                                  [](void *cap, const float &v) {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      pThis->mBinding->mHoldMS = v;
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
+
     FloatSettingItem mDecayMS = {"Decay",
                                  StandardRangeSpecs::gEnvDecayMS,
                                  Property<float>{[](void *cap) {
@@ -77,12 +90,27 @@ struct EnvelopeMenuApp
                                                    this},
                                    AlwaysEnabled};
 
-    ISettingItem *mArray[5] = {
+    FloatSettingItem mReleaseNoteOnMS = {"ReleaseNoteOn",
+                                   StandardRangeSpecs::gEnvReleaseMS,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (EnvelopeMenuApp *)cap;
+                                                       return pThis->mBinding->mReleaseNoteOnMS;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (EnvelopeMenuApp *)cap;
+                                                       pThis->mBinding->mReleaseNoteOnMS = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
+
+    ISettingItem *mArray[7] = {
         &mDelayMS,
         &mAttackMS,
+        &mHoldMS,
         &mDecayMS,
         &mSustainLevel,
         &mReleaseMS,
+        &mReleaseNoteOnMS,
     };
 
     SettingsList mRootList = {mArray};
@@ -132,8 +160,8 @@ struct SynthPatchOscillatorMenuStuff
                                              this},
                              AlwaysEnabled};
 
-    GainSettingItem mFMFeedback = {"FM Feedback",
-                                   StandardRangeSpecs::gGeneralGain,
+    FloatSettingItem mFMFeedback = {"FM Feedback",
+                                   StandardRangeSpecs::gFloat_0_1,
                                    Property<float>{[](void *cap) {
                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                        return pThis->GetBinding().mFMFeedbackGain;

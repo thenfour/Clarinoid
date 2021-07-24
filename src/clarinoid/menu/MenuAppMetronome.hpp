@@ -162,8 +162,6 @@ struct MetronomeSettingsApp : public SettingsMenuApp
         bool highlight = beatFrac < 0.1;
 
         mDisplay.ClearState();
-        // mDisplay.mDisplay.setTextSize(1);
-        // mDisplay.mDisplay.setTextColor(WHITE);
         if (highlight)
         {
             mDisplay.mDisplay.fillScreen(WHITE);

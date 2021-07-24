@@ -31,17 +31,7 @@ struct ListControl
         const int itemsToRender = min(mVisibleItems, count);
         for (int i = 0; i < itemsToRender; ++i)
         {
-            if (itemToRender == mSelectedItem.GetValue())
-            {
-                mDisplay->mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-            }
-            else
-            {
-                mDisplay->mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-            }
-
-            mDisplay->mDisplay.println(mpList->List_GetItemCaption(itemToRender));
-
+            mDisplay->DrawInvertedLine(mpList->List_GetItemCaption(itemToRender), itemToRender == mSelectedItem.GetValue());
             itemToRender = RotateIntoRange(itemToRender + 1, count);
         }
     }

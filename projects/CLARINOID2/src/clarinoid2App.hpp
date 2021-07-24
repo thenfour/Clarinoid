@@ -155,6 +155,8 @@ struct Clarinoid2App : ILEDDataProvider
             ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::DisplayFontToggle);
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::Oct1, ControlMapping::Function::Oct1);

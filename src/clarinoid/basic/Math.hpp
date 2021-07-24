@@ -563,6 +563,7 @@ static const NumericEditRangeSpec<float> gLFOFrequency = NumericEditRangeSpec<fl
 // envelope
 static const NumericEditRangeSpec<float> gEnvDelayMS = NumericEditRangeSpec<float>{0.0f, 2000.0f, 100, 25, 5};
 static const NumericEditRangeSpec<float> gEnvAttackMS = NumericEditRangeSpec<float>{0.0f, 2000.0f, 100, 25, 5};
+static const NumericEditRangeSpec<float> gEnvHoldMS = NumericEditRangeSpec<float>{0.0f, 2000.0f, 100, 25, 5};
 static const NumericEditRangeSpec<float> gEnvDecayMS = NumericEditRangeSpec<float>{0.0f, 10000.0f, 300, 50, 10};
 static const NumericEditRangeSpec<float> gEnvSustainLevel = gFloat_0_1;
 static const NumericEditRangeSpec<float> gEnvReleaseMS = NumericEditRangeSpec<float>{0.0f, 10000.0f, 300, 50, 10};

@@ -13,7 +13,6 @@
 #include "clarinoid/application/Font/TomThumb.hpp"
 #include "clarinoid/application/Font/eighties8.hpp"
 
-
 namespace clarinoid
 {
 
@@ -96,16 +95,20 @@ struct CCDisplay
         gDisplay = &mDisplay;
 
         // fix fonts up a bit
-        for (auto& glyph : MatchupPro8pt7bGlyphs) {
+        for (auto &glyph : MatchupPro8pt7bGlyphs)
+        {
             glyph.yOffset += 6;
         }
-        for (auto& glyph : pixChicago4pt7bGlyphs) {
+        for (auto &glyph : pixChicago4pt7bGlyphs)
+        {
             glyph.yOffset += 9;
         }
-        for (auto& glyph : TomThumbGlyphs) {
+        for (auto &glyph : TomThumbGlyphs)
+        {
             glyph.yOffset += 6;
         }
-        for (auto& glyph : Eighties8pt7bGlyphs) {
+        for (auto &glyph : Eighties8pt7bGlyphs)
+        {
             glyph.yOffset += 6;
         }
 
@@ -238,21 +241,33 @@ struct CCDisplay
 
     void DisplayTask()
     {
-        ClearState();
-        mDisplay.setCursor(0, 0);
-        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+        String s = "";
+
         if (this->mInput->mModifierFine.CurrentValue())
         {
-            mDisplay.print(" F ");
+            s += "F ";
         }
         if (this->mInput->mModifierCourse.CurrentValue())
         {
-            mDisplay.print(" C ");
+            s += "C ";
         }
         if (this->mInput->mModifierShift.CurrentValue())
         {
-            mDisplay.print(" Sh ");
+            s += "Sh ";
         }
+
+        ClearState();
+        mDisplay.setCursor(0, 0);
+
+        int16_t x, y;
+        uint16_t w, h;
+        mDisplay.getTextBounds(s, 0, 0, &x, &y, &w, &h);
+        x = mDisplay.width() - w; // x is where the text will appear
+        mDisplay.fillRect(x - 1/*start rect 1 px left*/, y, w + 2, h + 2, SSD1306_WHITE);
+        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        mDisplay.setCursor(x, 1); // y + 2
+        mDisplay.print(s);
+
         NoInterrupts _ni;
         mDisplay.display();
     }
@@ -260,15 +275,15 @@ struct CCDisplay
     Stopwatch mToastTimer;
     bool mIsShowingToast = false;
     String mToastMsg;
-    //GFXfont const *mCurrentFontIndex = &MatchupPro8pt7b;
+    // GFXfont const *mCurrentFontIndex = &MatchupPro8pt7b;
     size_t mCurrentFontIndex = 0;
 
-    GFXfont const *mGUIFonts[5] = {
+    GFXfont const *mGUIFonts[4] = {
         &MatchupPro8pt7b,
-        &Eighties8pt7b,
-        &TomThumb,
+        //&Eighties8pt7b,
         nullptr,
         &pixChicago4pt7b,
+        &TomThumb,
     };
 
     SwitchControlReader mToggleReader;

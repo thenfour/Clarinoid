@@ -275,8 +275,7 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
     virtual void Render()
     {
         CCDisplay *d = mpApi->GetDisplay();
-        d->mDisplay.clearDisplay();
-        d->mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+        d->ClearState();
 
         switch (mSelectedParam)
         {
