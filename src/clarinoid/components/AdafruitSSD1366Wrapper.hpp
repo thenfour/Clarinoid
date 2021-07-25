@@ -75,7 +75,6 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
                            bitrate), // 128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 44 * 1000000UL)
           mClipRight(w), mClipBottom(h)
     {
-        ResetClip();
     }
 
     // #define OLED_MOSI   9
@@ -90,38 +89,25 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
                       int8_t dc_pin,
                       int8_t rst_pin,
                       int8_t cs_pin)
-        : Adafruit_SSD1306(w, h, mosi_pin, sclk_pin, dc_pin, rst_pin, cs_pin)
+        : Adafruit_SSD1306(w, h, mosi_pin, sclk_pin, dc_pin, rst_pin, cs_pin), mClipRight(w), mClipBottom(h)
     {
-        ResetClip();
     }
 
     bool mSolidText = true;
     int mTextLeftMargin = 0;
+
+    void SetClipRect(int left, int top, int right, int bottom)
+    {
+        mClipLeft = left;
+        mClipRight = right;
+        mClipTop = top;
+        mClipBottom = bottom;
+    }
+
     int mClipLeft = 0;
     int mClipRight = 0;
     int mClipTop = 0;
     int mClipBottom = 0;
-
-    int ClippedAreaHeight() const
-    {
-        return mClipBottom - mClipTop;
-    }
-
-    void ResetClip()
-    {
-        mClipLeft = 0;
-        mClipRight = width();
-        mClipTop = 0;
-        mClipBottom = height();
-    }
-
-    void ClipToMargin(int m)
-    {
-        mClipLeft = m;
-        mClipRight = width() - m;
-        mClipTop = m;
-        mClipBottom = height() - m;
-    }
 
     // for checker-style bool checking
     bool PixelParity(int16_t x, int16_t y) const

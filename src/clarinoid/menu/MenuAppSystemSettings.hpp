@@ -22,6 +22,7 @@ struct SystemSettingsApp : SettingsMenuApp
     cc::function<float(void *)>::ptr_t mRawBreathGetter;
     cc::function<float(void *)>::ptr_t mRawPitchBendGetter;
     void *mpCapture;
+    Metronome *mpMetronome = nullptr;
 
     SystemSettingsApp(CCDisplay &d,
                       size_t breathMappingIndex,
@@ -29,10 +30,10 @@ struct SystemSettingsApp : SettingsMenuApp
                       size_t pitchDownMappingIndex,
                       cc::function<float(void *)>::ptr_t rawBreathGetter,
                       cc::function<float(void *)>::ptr_t rawPitchBendGetter,
-                      void *capture)
+                      void *capture, Metronome *pm)
         : SettingsMenuApp(d), mBreathMappingIndex(breathMappingIndex), mPitchUpMappingIndex(pitchUpMappingIndex),
           mPitchDownMappingIndex(pitchDownMappingIndex), mRawBreathGetter(rawBreathGetter),
-          mRawPitchBendGetter(rawPitchBendGetter), mpCapture(capture)
+          mRawPitchBendGetter(rawPitchBendGetter), mpCapture(capture), mpMetronome(pm)
     {
     }
 
@@ -155,7 +156,7 @@ struct SystemSettingsApp : SettingsMenuApp
                                              [](void *cap, const int &val) {
                                                  auto *pThis = (SystemSettingsApp *)cap;
                                                  pThis->mAppSettings->mCurrentPerformancePatch = val;
-                                                 //pThis->mpMetronome->OnBPMChanged();
+                                                 pThis->mpMetronome->OnBPMChanged();
                                                  
                                              },   // setter
                                              this // capture val

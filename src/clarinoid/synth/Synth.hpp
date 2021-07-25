@@ -59,20 +59,23 @@ struct CCSynth
         return &gVoices[0];
     }
 
-    // void SetGain(float f) {
-    //   gSynthGraphControl.SetGain(f);
-    // }
-
     // After musical state has been updated, call this to apply those changes to the synth state.
     void Update(const MusicalVoice *pVoicesBegin, const MusicalVoice *pVoicesEnd)
     {
         gSynthGraphControl.BeginUpdate();
         mCurrentPolyphony = 0;
 
-        if (CCSynthGraph::peak1.available())
+        if (CCSynthGraph::peakL.available() && CCSynthGraph::peakR.available())
         {
-            //gPeak = CCSynthGraph::peak1.read();
-            gPeak = CCSynthGraph::peak1.readPeakToPeak();
+            gPeak = std::max(CCSynthGraph::peakL.readPeakToPeak(), CCSynthGraph::peakR.readPeakToPeak());
+        }
+        else if (CCSynthGraph::peakL.available())
+        {
+            gPeak = std::max(CCSynthGraph::peakL.readPeakToPeak(), gPeak);
+        }
+        else if (CCSynthGraph::peakR.available())
+        {
+            gPeak = std::max(CCSynthGraph::peakR.readPeakToPeak(), gPeak);
         }
 
         for (auto &v : gVoices)
@@ -87,19 +90,16 @@ struct CCSynth
             CCASSERT(!!pv);
             pv->Update(mv);
             pv->mTouched = true;
-            if (mv.IsPlaying())
-            {
-                mCurrentPolyphony++;
-            }
         }
 
         // any voice that wasn't assigned should be muted.
         for (auto &v : gVoices)
         {
+            if (v.IsPlaying())
+                mCurrentPolyphony++;
             if (v.mTouched)
                 continue;
             v.Update(mUnassignedVoice);
-            // v.Unassign();
         }
 
         for (auto &v : gVoices)

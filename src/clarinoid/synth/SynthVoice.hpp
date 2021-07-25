@@ -45,7 +45,8 @@ AudioMixer4 postMixerRight;           // xy=1413,858
 AudioAmplifier ampLeft;               // xy=1573,776
 AudioAmplifier ampRight;              // xy=1576,857
 AudioOutputI2S i2s1;                  // xy=1758,809
-AudioAnalyzePeak peak1;               // xy=1801,588
+AudioAnalyzePeak peakL;               // xy=1801,588
+AudioAnalyzePeak peakR;               // xy=1851,598
 AudioConnection patchCord1(delayWetAmpLeft, 0, postMixerLeft, 1);
 AudioConnection patchCord2(delayWetAmpRight, 0, postMixerRight, 1);
 AudioConnection patchCord3(verbInputMixer, verb);
@@ -58,9 +59,10 @@ AudioConnection patchCord9(verbWetAmpLeft, 0, postMixerLeft, 2);
 AudioConnection patchCord10(verbWetAmpRight, 0, postMixerRight, 2);
 AudioConnection patchCord11(postMixerLeft, ampLeft);
 AudioConnection patchCord12(postMixerRight, ampRight);
-AudioConnection patchCord13(ampLeft, peak1);
-AudioConnection patchCord14(ampLeft, 0, i2s1, 1);
-AudioConnection patchCord15(ampRight, 0, i2s1, 0);
+AudioConnection patchCord13(ampLeft, peakL);
+AudioConnection patchCord14(ampRight, peakR);
+AudioConnection patchCord15(ampLeft, 0, i2s1, 1);
+AudioConnection patchCord16(ampRight, 0, i2s1, 0);
 // GUItool: end automatically generated code
 
 // insert the delay filters.

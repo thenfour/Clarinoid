@@ -141,7 +141,7 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
         bool captionOn = (mEditState != EditState::SelectParam) || blinkOn;
         bool guidelineOn = (mEditState != EditState::EditParam) || blinkOn;
 
-        RectI rcDisplay = {0, 0, d->mDisplay.width(), d->mDisplay.height()};
+        RectI rcDisplay = {0, 0, d->mDisplay.width(), d->GetClientHeight()};
 
         // calculate left & right areas
         RectI rcLeft = rcDisplay;
@@ -200,7 +200,7 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
         bool captionOn = (mEditState != EditState::SelectParam) || blinkOn;
         bool guidelineOn = (mEditState != EditState::EditParam) || blinkOn;
 
-        RectI rcDisplay = {0, 0, d->mDisplay.width(), d->mDisplay.height()};
+        RectI rcDisplay = {0, 0, d->mDisplay.width(), d->GetClientHeight()};
 
         // calculate left & right areas
         RectI rcLeft = rcDisplay;

@@ -419,13 +419,11 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         mDisplay.ClearState();
 
         size_t lineHeight = mDisplay.mDisplay.GetLineHeight();
-        size_t maxItemsToRender = (mDisplay.mDisplay.height() + (lineHeight / 2)) / lineHeight;
+        size_t maxItemsToRender = (mDisplay.GetClientHeight() + lineHeight) / lineHeight;
         size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
         int focusedItemScreenPos = maxItemsToRender / 3; // estimated... whatever.
 
         size_t itemToRender = AddConstrained(state.focusedItem, -focusedItemScreenPos, 0, state.pList->Count() - 1);
-        // Serial.println(String("focuseditem = ") + state.focusedItem + " itemsFromTop=" + itemsFromTop + "plist count
-        // =" + state.pList->Count());
         for (size_t i = 0; i < itemsToRender; ++i)
         {
             size_t multiIndex = 0;

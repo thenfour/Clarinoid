@@ -18,6 +18,7 @@
 #include <clarinoid/components/CCMPR121.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 #include <clarinoid/application/Display.hpp>
+#include <clarinoid/application/DefaultHud.hpp>
 #include <clarinoid/application/ControlMapper.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
@@ -39,7 +40,7 @@
 namespace clarinoid
 {
 
-struct Clarinoid2App : ILEDDataProvider
+struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 {
     static constexpr size_t breathMappingIndex = 0;
     static constexpr size_t pitchUpMappingIndex = 1;
@@ -49,6 +50,7 @@ struct Clarinoid2App : ILEDDataProvider
     InputDelegator mInputDelegator;
     Clarinoid2ControlMapper mControlMapper;
     CCDisplay mDisplay;
+    DefaultHud mHud;
     AppSettings mAppSettings;
 
     MusicalStateTask mMusicalStateTask;
@@ -63,8 +65,10 @@ struct Clarinoid2App : ILEDDataProvider
     HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
 
+    TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
+
     Clarinoid2App()
-        : mLed(this), mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
+        : mLed(this), mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL), mHud(mDisplay, this),
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome),
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
@@ -81,7 +85,8 @@ struct Clarinoid2App : ILEDDataProvider
                   Clarinoid2App *pThis = (Clarinoid2App *)cap;
                   return pThis->mControlMapper.mPitchStrip.CurrentValue01();
               },
-              this),
+              this,
+              &mMusicalStateTask.mMetronome),
           mPerfPatchApp(mDisplay), mSynthPatchApp(mDisplay), mAudioMonitorApp(mDisplay),
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
           mHarmVoiceSettingsApp(mDisplay), mHarmPatchApp(mDisplay)
@@ -99,6 +104,57 @@ struct Clarinoid2App : ILEDDataProvider
     virtual CCEWIMusicalState *ILEDDataProvider_GetMusicalState() override
     {
         return &mMusicalStateTask.mMusicalState;
+    }
+
+    SimpleMovingAverage<30> mCPUUsage;
+    PeakMeterUtility<2000, 300> mPeakMeter;
+
+    virtual uint8_t ISysInfoProvider_GetPolyphony() override
+    {
+        return mMusicalStateTask.mSynth.mCurrentPolyphony;
+    }
+    virtual float ISysInfoProvider_GetAudioCPUUsage() override
+    {
+        return AudioProcessorUsage();
+    }
+    virtual float ISysInfoProvider_GetTaskManagerCPUUsage() override
+    {
+        if (!mTaskPlanner)
+            return 0.0f;
+        float p = (float)mTaskPlanner->mPreviousTimeSliceDelayTime.ElapsedMicros();
+        p /= mTaskPlanner->mTimesliceDuration.ElapsedMicros();
+        p = 1.0f - p;
+        return p * 100.0f;
+    }
+    virtual float ISysInfoProvider_GetPeak() override
+    {
+        float peak, heldPeak;
+        mPeakMeter.Update(peak, heldPeak);
+        return heldPeak;
+    }
+    virtual MidiNote ISysInfoProvider_GetNote() override
+    {
+        return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
+    }
+    virtual float ISysInfoProvider_GetTempo() override
+    {
+        return mMusicalStateTask.mMetronome.mBPM;
+    }
+    virtual Metronome *ISysInfoProvider_GetMetronome() override
+    {
+        return &mMusicalStateTask.mMetronome;
+    }
+    virtual float ISysInfoProvider_GetPitchBendN11() override
+    {
+        return mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
+    }
+    virtual float ISysInfoProvider_GetBreath01() override
+    {
+        return mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
+    }
+    virtual AppSettings *ISysInfoProvider_GetSettings() override
+    {
+        return &mAppSettings;
     }
 
     void Main()
@@ -199,7 +255,6 @@ struct Clarinoid2App : ILEDDataProvider
         //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx3, ControlMapping::Function::SynthPreset,
         //     -1.0f);
 
-
         //  NORMAL     SHIFT
         // - synth+    synthB+
         // - synth-    synthB-
@@ -208,8 +263,8 @@ struct Clarinoid2App : ILEDDataProvider
         // - harm-     perf-
         mAppSettings.mControlMappings[++im] =
             ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx1, ControlMapping::Function::SynthPresetA, 1.0f);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx2, ControlMapping::Function::SynthPresetA, -1.0f);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::SynthPresetA, -1.0f);
 
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
             PhysicalControl::RHx1, ControlMapping::Function::SynthPresetB, 1.0f, ModifierKey::Shift);
@@ -228,7 +283,7 @@ struct Clarinoid2App : ILEDDataProvider
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::LHx3, ControlMapping::Function::ModifierCourse);
-            
+
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::ModifierFine);
         mAppSettings.mControlMappings[++im] =
@@ -237,7 +292,7 @@ struct Clarinoid2App : ILEDDataProvider
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::LHx1, ControlMapping::Function::HarmPresetOnOffToggle);
 
-        mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
+        mDisplay.Init(&mAppSettings, &mInputDelegator, &mHud, allApps);
         mMusicalStateTask.Init();
 
         Wire1.setClock(400000); // use high speed mode. default speed = 100k
@@ -275,6 +330,7 @@ struct Clarinoid2App : ILEDDataProvider
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &nopTask, "Nop"},
         };
 
+        mTaskPlanner = &tp;
         mPerformanceApp.Init(&tp);
 
         tp.Main();

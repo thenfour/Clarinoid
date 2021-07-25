@@ -16,7 +16,14 @@
 namespace clarinoid
 {
 
-static constexpr int TOAST_DURATION_MILLIS = 2000;
+static constexpr int TOAST_DURATION_MILLIS = 1700;
+
+//////////////////////////////////////////////////////////////////////
+struct IHudProvider
+{
+    virtual int16_t IHudProvider_GetHudHeight() = 0;
+    virtual void IHudProvider_RenderHud(int16_t displayWidth, int16_t displayHeight) = 0;
+};
 
 //////////////////////////////////////////////////////////////////////
 struct IDisplayApp
@@ -45,8 +52,9 @@ struct CCDisplay
   public:
     CCAdafruitSSD1306 mDisplay;
 
-    AppSettings *mAppSettings;
-    InputDelegator *mInput;
+    AppSettings *mAppSettings = nullptr;
+    InputDelegator *mInput = nullptr;
+    IHudProvider *mHudProvider = nullptr;
 
     bool mIsSetup = false; // used for crash handling to try and setup this if we can
     bool mFirstAppSelected = false;
@@ -81,11 +89,12 @@ struct CCDisplay
         // Init();
     }
 
-    void Init(AppSettings *appSettings, InputDelegator *input, const array_view<IDisplayApp *> &apps)
+    void Init(AppSettings *appSettings, InputDelegator *input, IHudProvider* hud, const array_view<IDisplayApp *> &apps)
     {
         mAppSettings = appSettings;
         mInput = input;
         mApps = apps;
+        mHudProvider = hud;
 
         // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
         // Serial.println(String("Display init"));
@@ -213,6 +222,49 @@ struct CCDisplay
                 mDisplay.print(mToastMsg);
             }
         }
+
+        ClearState();
+        mDisplay.SetClipRect(0, 0, mDisplay.width(), mDisplay.height());
+        mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
+
+        String s = "";
+
+        if (this->mInput->mModifierFine.CurrentValue())
+        {
+            s += "F ";
+        }
+        if (this->mInput->mModifierCourse.CurrentValue())
+        {
+            s += "C ";
+        }
+        if (this->mInput->mModifierShift.CurrentValue())
+        {
+            s += "Sh ";
+        }
+
+        ClearState();
+        mDisplay.setCursor(0, 0);
+
+        int16_t x, y;
+        uint16_t w, h;
+        mDisplay.getTextBounds(s, 0, 0, &x, &y, &w, &h);
+        x = mDisplay.width() - w; // x is where the text will appear
+        mDisplay.fillRect(x - 1 /*start rect 1 px left*/, y, w + 2, h + 2, SSD1306_WHITE);
+        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        mDisplay.setCursor(x, 1); // y + 2
+        mDisplay.print(s);
+    }
+
+
+    int16_t GetHudHeight() const
+    {
+        return mHudProvider->IHudProvider_GetHudHeight();
+        //return mDisplay.GetLineHeight() + HUD_LINE_SEPARATOR_HEIGHT;
+    }
+
+    int16_t GetClientHeight() const
+    {
+        return mDisplay.height() - GetHudHeight();
     }
 
     void DrawInvertedText(const String &str, bool isInverted = true)
@@ -241,33 +293,6 @@ struct CCDisplay
 
     void DisplayTask()
     {
-        String s = "";
-
-        if (this->mInput->mModifierFine.CurrentValue())
-        {
-            s += "F ";
-        }
-        if (this->mInput->mModifierCourse.CurrentValue())
-        {
-            s += "C ";
-        }
-        if (this->mInput->mModifierShift.CurrentValue())
-        {
-            s += "Sh ";
-        }
-
-        ClearState();
-        mDisplay.setCursor(0, 0);
-
-        int16_t x, y;
-        uint16_t w, h;
-        mDisplay.getTextBounds(s, 0, 0, &x, &y, &w, &h);
-        x = mDisplay.width() - w; // x is where the text will appear
-        mDisplay.fillRect(x - 1/*start rect 1 px left*/, y, w + 2, h + 2, SSD1306_WHITE);
-        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        mDisplay.setCursor(x, 1); // y + 2
-        mDisplay.print(s);
-
         NoInterrupts _ni;
         mDisplay.display();
     }
@@ -296,13 +321,28 @@ struct CCDisplay
         mToastTimer.Restart();
     }
 
+    int ClippedAreaHeight() const
+    {
+        return mDisplay.mClipBottom - mDisplay.mClipTop;
+    }
+
+    void ResetClip()
+    {
+        mDisplay.SetClipRect(0, 0, mDisplay.width(), GetClientHeight());
+    }
+
+    void ClipToMargin(int m)
+    {
+        mDisplay.SetClipRect(m, m, mDisplay.width() - m, GetClientHeight() - m);
+    }
+
     void ClearState()
     {
         mDisplay.setFont(mGUIFonts[mCurrentFontIndex]);
         mDisplay.mSolidText = true;
         mDisplay.mTextLeftMargin = 0;
         mDisplay.setTextWrap(true);
-        mDisplay.ResetClip();
+        ResetClip();
         mDisplay.setTextSize(1);
         mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
         mDisplay.setCursor(0, 0);
@@ -312,11 +352,11 @@ struct CCDisplay
     inline void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4)
     {
         ClearState();
-        mDisplay.fillRect(pad, pad, mDisplay.width() - pad, mDisplay.height() - pad, SSD1306_BLACK);
+        mDisplay.fillRect(pad, pad, mDisplay.width() - pad, GetClientHeight() - pad, SSD1306_BLACK);
         mDisplay.drawRect(
-            rectStart, rectStart, mDisplay.width() - rectStart, mDisplay.height() - rectStart, SSD1306_WHITE);
+            rectStart, rectStart, mDisplay.width() - rectStart, GetClientHeight() - rectStart, SSD1306_WHITE);
         mDisplay.mTextLeftMargin = textStart;
-        mDisplay.ClipToMargin(textStart);
+        ClipToMargin(textStart);
         mDisplay.setCursor(textStart, textStart);
     }
 };

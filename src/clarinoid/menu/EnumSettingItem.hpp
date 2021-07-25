@@ -70,7 +70,7 @@ struct EnumEditor : ISettingItemEditor
     virtual void Render()
     {
         mpApi->GetDisplay()->SetupModal();
-        int nitems = mpApi->GetDisplay()->mDisplay.ClippedAreaHeight() / mpApi->GetDisplay()->mDisplay.GetLineHeight();
+        int nitems = mpApi->GetDisplay()->ClippedAreaHeight() / mpApi->GetDisplay()->mDisplay.GetLineHeight();
         mListControl.Render(mpApi->GetDisplay(), 12, 12, nitems);
     }
 };

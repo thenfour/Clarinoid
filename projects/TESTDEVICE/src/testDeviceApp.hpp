@@ -18,6 +18,7 @@
 #include <clarinoid/components/CCMPR121.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 #include <clarinoid/application/Display.hpp>
+#include <clarinoid/application/DefaultHud.hpp>
 #include <clarinoid/application/ControlMapper.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
@@ -129,11 +130,12 @@ const char *const FontTesterApp::gLoremIpsumLines[12] = {
     "id nulla ut magna euismod lobortis.",
 };
 
-struct TestDeviceApp
+struct TestDeviceApp : ISysInfoProvider
 {
     InputDelegator mInputDelegator;
     Clarinoid2ControlMapper mControlMapper;
     CCDisplay mDisplay;
+    DefaultHud mHud;
     AppSettings mAppSettings;
 
     MusicalStateTask mMusicalStateTask;
@@ -145,14 +147,67 @@ struct TestDeviceApp
     HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
 
+    TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
+
     TestDeviceApp()
-        : mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),
+        : mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL), mHud(mDisplay, this),
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome),
           mPerfPatchApp(mDisplay), mSynthPatchApp(mDisplay),
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
           mHarmVoiceSettingsApp(mDisplay), mHarmPatchApp(mDisplay)
     {
+    }
+
+    SimpleMovingAverage<30> mCPUUsage;
+    PeakMeterUtility<2000, 300> mPeakMeter;
+
+    virtual uint8_t ISysInfoProvider_GetPolyphony() override
+    {
+        return 0;
+    }
+    virtual float ISysInfoProvider_GetAudioCPUUsage() override
+    {
+        return AudioProcessorUsage();
+    }
+    virtual float ISysInfoProvider_GetTaskManagerCPUUsage() override
+    {
+        if (!mTaskPlanner)
+            return 0.0f;
+        float p = (float)mTaskPlanner->mPreviousTimeSliceDelayTime.ElapsedMicros();
+        p /= mTaskPlanner->mTimesliceDuration.ElapsedMicros();
+        p = 1.0f - p;
+        return p* 100.0f;
+    }
+    virtual float ISysInfoProvider_GetPeak() override
+    {
+        float peak, heldPeak;
+        mPeakMeter.Update(peak, heldPeak);
+        return heldPeak;
+    }
+    virtual MidiNote ISysInfoProvider_GetNote() override
+    {
+        return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
+    }
+    virtual float ISysInfoProvider_GetTempo() override
+    {
+        return mMusicalStateTask.mMetronome.mBPM;
+    }
+    virtual Metronome *ISysInfoProvider_GetMetronome() override
+    {
+        return &mMusicalStateTask.mMetronome;
+    }
+    virtual float ISysInfoProvider_GetPitchBendN11() override
+    {
+        return 0;
+    }
+    virtual float ISysInfoProvider_GetBreath01() override
+    {
+        return 0;
+    }
+    virtual AppSettings *ISysInfoProvider_GetSettings() override
+    {
+        return &mAppSettings;
     }
 
     void Main()
@@ -192,7 +247,7 @@ struct TestDeviceApp
         mAppSettings.mControlMappings[im++] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
-        mDisplay.Init(&mAppSettings, &mInputDelegator, allApps);
+        mDisplay.Init(&mAppSettings, &mInputDelegator, &mHud, allApps);
         mMusicalStateTask.Init();
 
         Wire1.setClock(400000); // use high speed mode. default speed = 100k
@@ -223,6 +278,7 @@ struct TestDeviceApp
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4), &nopTask, "Nop"},
         };
 
+        mTaskPlanner = &tp;
         mPerformanceApp.Init(&tp);
 
         tp.Main();
