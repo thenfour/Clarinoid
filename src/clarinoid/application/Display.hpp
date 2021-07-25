@@ -89,7 +89,7 @@ struct CCDisplay
         // Init();
     }
 
-    void Init(AppSettings *appSettings, InputDelegator *input, IHudProvider* hud, const array_view<IDisplayApp *> &apps)
+    void Init(AppSettings *appSettings, InputDelegator *input, IHudProvider *hud, const array_view<IDisplayApp *> &apps)
     {
         mAppSettings = appSettings;
         mInput = input;
@@ -205,7 +205,6 @@ struct CCDisplay
 
         if (pMenuApp)
         {
-            // Serial.println(String(" => render ") + pMenuApp->DisplayAppGetName());
             pMenuApp->DisplayAppRender();
         }
 
@@ -224,7 +223,6 @@ struct CCDisplay
         }
 
         ClearState();
-        mDisplay.SetClipRect(0, 0, mDisplay.width(), mDisplay.height());
         mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
 
         String s = "";
@@ -242,24 +240,23 @@ struct CCDisplay
             s += "Sh ";
         }
 
-        ClearState();
-        mDisplay.setCursor(0, 0);
-
-        int16_t x, y;
-        uint16_t w, h;
-        mDisplay.getTextBounds(s, 0, 0, &x, &y, &w, &h);
-        x = mDisplay.width() - w; // x is where the text will appear
-        mDisplay.fillRect(x - 1 /*start rect 1 px left*/, y, w + 2, h + 2, SSD1306_WHITE);
-        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        mDisplay.setCursor(x, 1); // y + 2
-        mDisplay.print(s);
+        if (s.length() > 0)
+        {
+            ClearState();
+            int16_t x, y;
+            uint16_t w, h;
+            mDisplay.getTextBounds(s, 0, 0, &x, &y, &w, &h);
+            x = mDisplay.width() - w; // x is where the text will appear
+            mDisplay.fillRect(x - 1 /*start rect 1 px left*/, y, w + 2, h + 2, SSD1306_WHITE);
+            mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+            mDisplay.setCursor(x, 1); // y + 2
+            mDisplay.print(s);
+        }
     }
-
 
     int16_t GetHudHeight() const
     {
         return mHudProvider->IHudProvider_GetHudHeight();
-        //return mDisplay.GetLineHeight() + HUD_LINE_SEPARATOR_HEIGHT;
     }
 
     int16_t GetClientHeight() const
@@ -300,7 +297,6 @@ struct CCDisplay
     Stopwatch mToastTimer;
     bool mIsShowingToast = false;
     String mToastMsg;
-    // GFXfont const *mCurrentFontIndex = &MatchupPro8pt7b;
     size_t mCurrentFontIndex = 0;
 
     GFXfont const *mGUIFonts[4] = {
@@ -315,7 +311,6 @@ struct CCDisplay
 
     void ShowToast(const String &msg)
     {
-        // Serial.println(String("toast: ") +msg);
         mIsShowingToast = true;
         mToastMsg = msg;
         mToastTimer.Restart();
