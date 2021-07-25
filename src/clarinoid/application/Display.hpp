@@ -288,6 +288,12 @@ struct CCDisplay
         mDisplay.println();
     }
 
+    void DrawSelectionRect(const RectI &rc)
+    {
+        mDisplay.DrawDottedRectOutlineWithGlobalParity(rc.x, rc.y, rc.width, rc.height, !!((micros() / (1000 * 150)) & 1));
+    }
+
+
     void DisplayTask()
     {
         NoInterrupts _ni;
@@ -324,6 +330,11 @@ struct CCDisplay
     void ResetClip()
     {
         mDisplay.SetClipRect(0, 0, mDisplay.width(), GetClientHeight());
+    }
+
+    void SetClipRect(const RectI &rc)
+    {
+        mDisplay.SetClipRect(rc.x, rc.y, rc.right(), rc.bottom());
     }
 
     void ClipToMargin(int m)

@@ -31,10 +31,6 @@ struct DisplayApp : IDisplayApp
     {
         mAppSettings = mDisplay.mAppSettings;
         mInput = mDisplay.mInput;
-
-        // mOK.SetSource(&mInput->mMenuOK);
-        // mBack.SetSource(&mInput->mMenuBack);
-        // mEnc.SetSource(&mInput->mMenuScrollA);
     }
 
     virtual void UpdateApp() = 0;

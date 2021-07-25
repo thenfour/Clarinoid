@@ -345,6 +345,17 @@ int ModularDistance(int a, int b)
     return std::min(b - a, a + period - b);
 }
 
+int ModularDistance(int period, int a, int b)
+{
+    a = RotateIntoRange(a, period);
+    b = RotateIntoRange(b, period);
+    if (a > b)
+    {
+        return std::min(a - b, b + period - a);
+    }
+    return std::min(b - a, a + period - b);
+}
+
 struct SawWave
 {
     uint32_t mFrequencyMicros = 1000000; // just 1 hz frequency default

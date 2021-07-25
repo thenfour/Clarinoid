@@ -25,6 +25,7 @@
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/midi/midi.hpp>
 #include <clarinoid/application/MusicalState.hpp>
+#include <clarinoid/Gui/GuiApp.hpp>
 
 #include <clarinoid/synth/Synth.hpp>
 
@@ -215,9 +216,11 @@ struct TestDeviceApp : ISysInfoProvider
         mControlMapper.Init(&mDisplay);
 
         FontTesterApp mFontTesterApp(mDisplay);
+        GuiPerformanceApp mGuiPerformanceApp(mDisplay);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
+            &mGuiPerformanceApp,
             &mFontTesterApp,
 
             &mPerfPatchApp,

@@ -53,8 +53,9 @@ struct DefaultHud : IHudProvider
             mpInfo->ISysInfoProvider_GetNote().ToString() + " d=" + (int) std::round(mpInfo->ISysInfoProvider_GetTempo())
             );
 
+        static constexpr int metronomeFlashWidth = 32;
         if (mpInfo->ISysInfoProvider_GetMetronome()->GetBeatFrac() < 0.10f) {
-            mDisplay.mDisplay.fillRect(0, hudYStart, displayWidth, IHudProvider_GetHudHeight(), SSD1306_INVERSE);
+            mDisplay.mDisplay.fillRect(displayWidth - metronomeFlashWidth, hudYStart, metronomeFlashWidth, IHudProvider_GetHudHeight(), SSD1306_INVERSE);
         }
 
         // todo: one day make special narrow characters for db & "quarter=" and use :

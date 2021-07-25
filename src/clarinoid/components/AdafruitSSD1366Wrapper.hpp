@@ -169,6 +169,32 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
         }
     }
 
+    void DrawDottedHLineWithGlobalParity(int xstart, int w, int y, bool variation)
+    {
+        for (int16_t x = xstart; x < xstart + w; ++x)
+        {
+            if (variation ? ((x & 1) == (y & 1)) : ((x & 1) != (y & 1)))
+                drawPixel(x, y, SSD1306_WHITE);
+        }
+    }
+
+    void DrawDottedVLineWithGlobalParity(int x, int ystart, int h, bool variation)
+    {
+        for (int16_t y = ystart; y < ystart + h; ++y)
+        {
+            if (variation ? ((x & 1) == (y & 1)) : ((x & 1) != (y & 1)))
+                drawPixel(x, y, SSD1306_WHITE);
+        }
+    }
+
+    void DrawDottedRectOutlineWithGlobalParity(int x, int y, int w, int h, bool variation)
+    {
+        DrawDottedHLineWithGlobalParity(x, w, y, variation);
+        DrawDottedHLineWithGlobalParity(x, w, y + h - 1, variation);
+        DrawDottedVLineWithGlobalParity(x, y + 1, h - 2, variation);
+        DrawDottedVLineWithGlobalParity(x + w - 1, y + 1, h - 2, variation);
+    }
+
     uint16_t GetLineHeight() const
     {
         if (gfxFont)
