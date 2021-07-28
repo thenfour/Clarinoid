@@ -215,13 +215,13 @@ struct TestDeviceApp : ISysInfoProvider
     {
         mControlMapper.Init(&mDisplay);
 
-        FontTesterApp mFontTesterApp(mDisplay);
+        //FontTesterApp mFontTesterApp(mDisplay);
         GuiPerformanceApp mGuiPerformanceApp(mDisplay);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
             &mGuiPerformanceApp,
-            &mFontTesterApp,
+            //&mFontTesterApp,
 
             &mPerfPatchApp,
             &mHarmPatchApp,
