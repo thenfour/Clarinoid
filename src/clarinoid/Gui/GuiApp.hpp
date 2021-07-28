@@ -54,7 +54,7 @@ struct GuiApp : public DisplayApp
             if (ctrl->IGuiControl_GetPage() != navState.mSelectedPage)
                 continue;
             ctrl->IGuiControl_Render(mDisplay);
-            if (ctrl == navState.mSelectedCtrl)
+            if (ctrl == navState.mSelectedControl)
             {
                 mDisplay.DrawSelectionRect(ctrl->IGuiControl_GetBounds().Inflate(1));
                 mDisplay.DrawSelectionRect(ctrl->IGuiControl_GetBounds());

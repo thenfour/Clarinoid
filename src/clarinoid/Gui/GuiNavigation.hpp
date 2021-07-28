@@ -11,195 +11,87 @@ namespace clarinoid
 {
 
 // ---------------------------------------------------------------------------------------
+static constexpr size_t MaxScrollSequenceLen =
+    50; // should be enough to represent the maximum complete # of selectable items on the menu.
+
+struct ScrollSequenceItem
+{
+    IGuiControl *mpCtrl = nullptr; // when null, show the page but no selected control.
+    int mPage = -1;                // represents an invalid item.
+};
 struct GuiNavigationState
 {
-    int mSelectedPage;
-    IGuiControl *mSelectedCtrl; // may be null!
     int mPageCount;
+    int mSelectedScrollSequenceIndex;
+    int mScrollSequenceLength;
+    int mSelectedPage;
+    IGuiControl *mSelectedControl = nullptr;
+    ScrollSequenceItem mScrollSequence[MaxScrollSequenceLen];
 };
+// static constexpr size_t scrollsequencesize = sizeof(ScrollSequence);
 
-
+// ---------------------------------------------------------------------------------------
 // this is kinda convoluted so want to stick it in its own object.
 // in general you want to scroll through selectable controls only, and the current page
 // will follow your selection. but you also want to be able to see pages even when
 // there are no selectable controls on them. so as you scroll through, you are selecting
 // either a page or a control.
-//
-// In fact it should eventually be refactored a bit so instead of doing everything in a
-// live line-by-line update, just create a complete list of nav states from the given
-// control list, and then nav from that list.
 struct GuiNavigationLogic
 {
-    bool mTemporaryPageOnlyView = false; // set to true when you're viewing a page with no selectable controls.
-    int32_t mSelectedIndex = 0;
-    int32_t mPageIndexWhenNoSelection = 0; // the page index to display when there's no selected control. this way you
-                                           // can still VIEW other pages without having to select controls.
+    int mSelectedScrollSequenceIndex = 0;
 
-    IGuiControl *IncrementSelectedControl(GuiControlList *list)
+    // generate a list of items you can scroll through. that includes selectable controls,
+    // or in the case where a page contains no selectable controls, an item representing the page with no selected
+    // control. assumes that the control list is in tab order.
+    GuiNavigationState GetNavState(GuiControlList *list)
     {
-        // auto *list = GetRootControlList();
-        if (!list->Count())
-            return nullptr;
+        GuiNavigationState ret;
+        int iSeq = 0;
 
-        if (mTemporaryPageOnlyView)
+        // determine page count.
+        ret.mPageCount = list->GetPageCount();
+
+        for (int iPage = 0; iPage < ret.mPageCount; ++iPage)
         {
-            // increment the temporary page until we get in sync with the selected item
-            mPageIndexWhenNoSelection = RotateIntoRange(mPageIndexWhenNoSelection + 1, GetPageCount(list));
-            int targetPage = list->GetItem(mSelectedIndex)->IGuiControl_GetPage();
-            if (ModularDistance(GetPageCount(list), targetPage, mPageIndexWhenNoSelection) > 0)
+            CCASSERT(iSeq < (int)MaxScrollSequenceLen);
+            int nSelectableControls = 0;
+            for (size_t iCtrl = 0; iCtrl < list->Count(); ++iCtrl)
             {
-                // still no good; stay on page view.
-                return nullptr;
+                auto *pctrl = list->GetItem(iCtrl);
+                if (pctrl->IGuiControl_GetPage() != iPage)
+                    continue;
+                if (!pctrl->IGuiControl_IsSelectable())
+                    continue;
+                ret.mScrollSequence[iSeq].mPage = iPage;
+                ret.mScrollSequence[iSeq].mpCtrl = pctrl;
+                ++iSeq;
+                ++nSelectableControls;
             }
-            else
+            if (nSelectableControls < 1)
             {
-                // we hit it; break out of temp view.
-                mTemporaryPageOnlyView = false;
+                ret.mScrollSequence[iSeq].mPage = iPage;
+                ret.mScrollSequence[iSeq].mpCtrl = nullptr;
+                ++iSeq;
             }
-            return list->GetItem(mSelectedIndex);
         }
 
-        int oldPage = GetSelectedPage(list);
+        ret.mScrollSequenceLength = iSeq;
+        ret.mSelectedScrollSequenceIndex = RotateIntoRange(mSelectedScrollSequenceIndex, ret.mScrollSequenceLength);
 
-        for (size_t i = 0; i < list->Count(); ++i)
-        {
-            size_t adjindex = RotateIntoRange(i + mSelectedIndex + 1, list->Count());
-            auto *ctrl = list->GetItem(adjindex);
-            if (ctrl->IGuiControl_IsSelectable())
-            {
-                mSelectedIndex = adjindex;
-                int newPage = GetSelectedPage(list);
-                if (ModularDistance(GetPageCount(list), newPage, oldPage) > 1)
-                {
-                    mPageIndexWhenNoSelection = RotateIntoRange(oldPage + 1, GetPageCount(list));
-                    mTemporaryPageOnlyView = true;
-                }
-                else
-                {
-                    mTemporaryPageOnlyView = false;
-                }
-                return ctrl;
-            }
-        }
-        mPageIndexWhenNoSelection = RotateIntoRange(mPageIndexWhenNoSelection + 1, GetPageCount(list));
-        return nullptr;
-    }
+        auto &si = ret.mScrollSequence[ret.mSelectedScrollSequenceIndex];
+        ret.mSelectedControl = si.mpCtrl;
+        ret.mSelectedPage = si.mPage;
 
-    IGuiControl *DecrementSelectedControl(GuiControlList *list)
-    {
-        // auto *list = GetRootControlList();
-        if (!list->Count())
-            return nullptr;
-
-        if (mTemporaryPageOnlyView)
-        {
-            // increment the temporary page until we get in sync with the selected item
-            mPageIndexWhenNoSelection = RotateIntoRange(mPageIndexWhenNoSelection - 1, GetPageCount(list));
-            int targetPage = list->GetItem(mSelectedIndex)->IGuiControl_GetPage();
-            if (ModularDistance(GetPageCount(list), targetPage, mPageIndexWhenNoSelection) > 0)
-            {
-                // still no good.
-            }
-            else
-            {
-                // we hit it; break out of temp view.
-                mTemporaryPageOnlyView = false;
-            }
-            return list->GetItem(mSelectedIndex);
-        }
-
-        int oldPage = GetSelectedPage(list);
-        for (size_t i = 0; i < list->Count(); ++i)
-        {
-            size_t adjindex = RotateIntoRange(mSelectedIndex - i - 1, list->Count());
-            auto *ctrl = list->GetItem(adjindex);
-            if (ctrl->IGuiControl_IsSelectable())
-            {
-                mSelectedIndex = adjindex;
-                int newPage = GetSelectedPage(list);
-                if (ModularDistance(GetPageCount(list), newPage, oldPage) > 1)
-                {
-                    mPageIndexWhenNoSelection = RotateIntoRange(oldPage - 1, GetPageCount(list));
-                    mTemporaryPageOnlyView = true;
-                }
-                else
-                {
-                    mTemporaryPageOnlyView = false;
-                }
-                return ctrl;
-            }
-        }
-        mPageIndexWhenNoSelection = RotateIntoRange(mPageIndexWhenNoSelection - 1, GetPageCount(list));
-        return nullptr;
+        return ret;
     }
 
     void AdjustSelectedControl(GuiControlList *list, int delta)
     {
-        if (delta >= 0)
-        {
-            for (int n = 0; n < delta; ++n) // for each encoder increment, select the next
-            {
-                IncrementSelectedControl(list);
-            }
-        }
-        else
-        {
-            for (int n = 0; n < -delta; ++n)
-            {
-                DecrementSelectedControl(list);
-            }
-        }
+        auto navState = this->GetNavState(list);
+        mSelectedScrollSequenceIndex =
+            RotateIntoRange(navState.mSelectedScrollSequenceIndex + delta, navState.mScrollSequenceLength);
     }
 
-    IGuiControl *GetSelectedControl(GuiControlList *list)
-    {
-        // auto *list = GetRootControlList();
-        if (list->Count() == 0)
-            return nullptr;
-
-        auto *ret = list->GetItem(mSelectedIndex);
-
-        if (!ret->IGuiControl_IsSelectable())
-        {
-            return IncrementSelectedControl(list);
-        }
-        return ret;
-    }
-
-    int GetSelectedPage(GuiControlList *list)
-    {
-        if (mTemporaryPageOnlyView)
-        {
-            return mPageIndexWhenNoSelection;
-        }
-        auto *ctrl = GetSelectedControl(list);
-        if (ctrl == nullptr)
-        {
-            return mPageIndexWhenNoSelection;
-        }
-        return ctrl->IGuiControl_GetPage();
-    }
-
-    int32_t GetPageCount(GuiControlList *list)
-    {
-        // auto *list = GetRootControlList();
-        int32_t ret = 1;
-        for (size_t i = 0; i < list->Count(); ++i)
-        {
-            auto *ctrl = list->GetItem(i);
-            ret = std::max((int32_t)ctrl->IGuiControl_GetPage() + 1, ret);
-        }
-        return ret;
-    }
-
-    GuiNavigationState GetNavState(GuiControlList *list)
-    {
-        GuiNavigationState ret;
-        ret.mPageCount = GetPageCount(list);
-        ret.mSelectedCtrl = GetSelectedControl(list);
-        ret.mSelectedPage = GetSelectedPage(list);
-        return ret;
-    }
 };
 
 } // namespace clarinoid

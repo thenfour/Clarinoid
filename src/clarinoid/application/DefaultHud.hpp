@@ -58,9 +58,7 @@ struct DefaultHud : IHudProvider
             mDisplay.mDisplay.fillRect(displayWidth - metronomeFlashWidth, hudYStart, metronomeFlashWidth, IHudProvider_GetHudHeight(), SSD1306_INVERSE);
         }
 
-        // todo: one day make special narrow characters for db & "quarter=" and use :
-        // void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
-        //                               int16_t h, uint16_t color) {
+        // todo: one day make special narrow characters for db & "quarter="
     }
 };
 

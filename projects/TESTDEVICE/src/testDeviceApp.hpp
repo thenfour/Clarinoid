@@ -169,7 +169,8 @@ struct TestDeviceApp : ISysInfoProvider
     }
     virtual float ISysInfoProvider_GetAudioCPUUsage() override
     {
-        return AudioProcessorUsage();
+        return 0.0f;
+        //return AudioProcessorUsage();
     }
     virtual float ISysInfoProvider_GetTaskManagerCPUUsage() override
     {
@@ -215,13 +216,13 @@ struct TestDeviceApp : ISysInfoProvider
     {
         mControlMapper.Init(&mDisplay);
 
-        //FontTesterApp mFontTesterApp(mDisplay);
+        FontTesterApp mFontTesterApp(mDisplay);
         GuiPerformanceApp mGuiPerformanceApp(mDisplay);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
             &mGuiPerformanceApp,
-            //&mFontTesterApp,
+            &mFontTesterApp,
 
             &mPerfPatchApp,
             &mHarmPatchApp,
@@ -275,10 +276,10 @@ struct TestDeviceApp : ISysInfoProvider
 
         TaskPlanner tp{
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mDisplayTask1, "Display1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1), &mMusicalStateTask, "MusS0"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2), &mDisplayTask2, "Display2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(3), &mMusicalStateTask, "MusS1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4), &nopTask, "Nop"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS0"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mDisplayTask2, "Display2"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12000), &mMusicalStateTask, "MusS1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &nopTask, "Nop"},
         };
 
         mTaskPlanner = &tp;

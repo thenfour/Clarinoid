@@ -96,6 +96,16 @@ struct GuiControlList // very much like SettingsList. simpler though because we 
         CCASSERT(i < mItemRawCount);
         return mItems[i];
     }
+
+    int GetPageCount() {
+        int ret = 1;
+        for (size_t i = 0; i < this->Count(); ++i)
+        {
+            auto *ctrl = this->GetItem(i);
+            ret = std::max(ctrl->IGuiControl_GetPage() + 1, ret);
+        }
+        return ret;
+    }
 };
 
 // select patch
@@ -106,6 +116,7 @@ struct GuiControlList // very much like SettingsList. simpler though because we 
 // filter type
 // waveform
 // IntString ("transpose +12")
+
 
 // ---------------------------------------------------------------------------------------
 struct GuiLabelControl : IGuiControl
