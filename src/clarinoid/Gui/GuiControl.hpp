@@ -54,6 +54,12 @@ static const uint8_t gPrevPageBMP_Height = SizeofStaticArray(gPrevPageBMP);
 // represents an INSTANCE of a gui control, not a control type.
 struct IGuiControl
 {
+    IGuiControl()
+    {
+    }
+    explicit IGuiControl(int page, const RectI &bounds) : mPage(page), mBounds(bounds)
+    {
+    }
     virtual int IGuiControl_GetPage()
     {
         return mPage;
@@ -66,13 +72,27 @@ struct IGuiControl
     {
         return mIsSelectable;
     }
-    virtual void IGuiControl_Render(CCDisplay &display) = 0;
-    virtual void IGuiControl_Update(CCDisplay &display) = 0;
+
+    virtual void IGuiControl_SelectBegin(DisplayApp &app)
+    {
+    }
+    virtual void IGuiControl_SelectEnd(DisplayApp &app)
+    {
+    }
+    virtual void IGuiControl_EditBegin(DisplayApp &app)
+    {
+    }
+    virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled)
+    {
+    }
+
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) = 0;
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) = 0;
 
   protected:
+    int mPage = 0;
     RectI mBounds;
     bool mIsSelectable = true;
-    int mPage = 0;
 };
 
 // ---------------------------------------------------------------------------------------
@@ -97,7 +117,8 @@ struct GuiControlList // very much like SettingsList. simpler though because we 
         return mItems[i];
     }
 
-    int GetPageCount() {
+    int GetPageCount()
+    {
         int ret = 1;
         for (size_t i = 0; i < this->Count(); ++i)
         {
@@ -107,16 +128,6 @@ struct GuiControlList // very much like SettingsList. simpler though because we 
         return ret;
     }
 };
-
-// select patch
-// select harm patch
-// knob (N11 or 01)
-// stereo width (N11 or 01)
-// text
-// filter type
-// waveform
-// IntString ("transpose +12")
-
 
 // ---------------------------------------------------------------------------------------
 struct GuiLabelControl : IGuiControl
@@ -129,16 +140,99 @@ struct GuiLabelControl : IGuiControl
         IGuiControl::mBounds = bounds;
         IGuiControl::mIsSelectable = isSelectable;
     }
-    virtual void IGuiControl_Render(CCDisplay &display) override
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
         display.mDisplay.setCursor(mBounds.x, mBounds.y);
         display.SetClipRect(mBounds);
         display.mDisplay.print(mText);
     }
-    virtual void IGuiControl_Update(CCDisplay &display) override
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
         //
     }
 };
+
+// ---------------------------------------------------------------------------------------
+struct GuiIntegerTextControl : IGuiControl
+{
+    NumericEditRangeSpec<int> mRange;
+    cc::function<String(void *, const int &)>::ptr_t mValueFormatter;
+    cc::function<String(void *, const int &)>::ptr_t mValueFormatterForEdit;
+    Property<int> mValue;
+    Property<bool> mIsSelectable;
+    void *mCapture;
+    // editing label placement (top/bottom)
+    // text size is not a good idea because it has bugs
+
+    int mEditingOriginalVal = 0;
+
+    GuiIntegerTextControl(int page,
+                          RectI bounds,
+                          const NumericEditRangeSpec<int> &range,
+                          cc::function<String(void *, const int &)>::ptr_t valueFormatter,
+                          cc::function<String(void *, const int &)>::ptr_t valueFormatterForEdit,
+                          const Property<int> &value,
+                          const Property<bool> &isSelectable,
+                          void *capture)
+        : IGuiControl(page, bounds), mRange(range), mValueFormatter(valueFormatter),
+          mValueFormatterForEdit(valueFormatterForEdit), mValue(value), mIsSelectable(isSelectable), mCapture(capture)
+    {
+    }
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        display.ClearState();
+        if (isEditing)
+        {
+            display.mDisplay.fillRect(0,
+                                      display.GetClientHeight() - display.mDisplay.GetLineHeight(),
+                                      display.mDisplay.width(),
+                                      display.mDisplay.GetLineHeight(),
+                                      SSD1306_WHITE);
+            //Serial.println(String("y cursor setting to ") + (display.GetClientHeight() - display.mDisplay.GetLineHeight()));
+            display.mDisplay.setCursor(0, display.GetClientHeight() - display.mDisplay.GetLineHeight());
+            display.mDisplay.setTextColor(SSD1306_INVERSE);
+            //Serial.println(String("y cursor ? ") + (display.mDisplay.getCursorY()));
+            display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
+            //Serial.println(String("y cursor after print = ") + (display.mDisplay.getCursorY()));
+        }
+        display.ClearState();
+        display.mDisplay.setCursor(mBounds.x + 2, mBounds.y + 2);
+        display.SetClipRect(mBounds);
+        display.mDisplay.print(mValueFormatter(mCapture, mValue.GetValue()));
+    }
+    virtual void IGuiControl_EditBegin(DisplayApp &app) override
+    {
+        mEditingOriginalVal = mValue.GetValue();
+    }
+    virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
+    {
+        if (wasCancelled)
+        {
+            mValue.SetValue(mEditingOriginalVal);
+        }
+    }
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        if (isEditing)
+        {
+            int oldVal = mValue.GetValue();
+            int newVal = mRange.AdjustValue(oldVal,
+                                            app.mEnc.GetIntDelta(),
+                                            app.mInput->mModifierCourse.CurrentValue(),
+                                            app.mInput->mModifierFine.CurrentValue());
+            // Serial.printf("editing param: delta=%d, old=%d, new=%d\n", app.mEnc.GetIntDelta(), oldVal, newVal);
+            mValue.SetValue(newVal);
+        }
+    }
+};
+
+// select patch
+// select harm patch
+// knob (N11 or 01)
+// stereo width (N11 or 01)
+// text
+// filter type
+// waveform
+// IntString ("transpose +12")
 
 } // namespace clarinoid

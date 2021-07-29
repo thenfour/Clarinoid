@@ -85,11 +85,13 @@ struct GuiNavigationLogic
         return ret;
     }
 
-    void AdjustSelectedControl(GuiControlList *list, int delta)
+    // returns new state.
+    GuiNavigationState AdjustSelectedControl(GuiControlList *list, int delta)
     {
         auto navState = this->GetNavState(list);
         mSelectedScrollSequenceIndex =
             RotateIntoRange(navState.mSelectedScrollSequenceIndex + delta, navState.mScrollSequenceLength);
+        return this->GetNavState(list); // yea this could be optimized but not critical.
     }
 
 };

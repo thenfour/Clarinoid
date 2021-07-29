@@ -9,11 +9,11 @@
 namespace clarinoid
 {
 
-
 // ---------------------------------------------------------------------------------------
 struct GuiApp : public DisplayApp
 {
     GuiNavigationLogic mNavigator;
+    bool mIsEditing = false;
 
     GuiApp(CCDisplay &d) : DisplayApp(d)
     {
@@ -22,18 +22,63 @@ struct GuiApp : public DisplayApp
     virtual void UpdateApp() override
     {
         auto *list = GetRootControlList();
+        auto navState = mNavigator.GetNavState(list);
+        if (IsShowingFrontPage())
+        {
+            return;
+        }
+
+        bool mWasEditing = mIsEditing;
+        if (mIsEditing)
+        {
+            if (mBack.IsNewlyPressed())
+            {
+                if (navState.mSelectedControl)
+                {
+                    navState.mSelectedControl->IGuiControl_EditEnd(*this, true);
+                }
+                mIsEditing = false;
+            } else if (mOK.IsNewlyPressed()) {
+                if (navState.mSelectedControl)
+                {
+                    navState.mSelectedControl->IGuiControl_EditEnd(*this, false);
+                }
+                mIsEditing = false;
+            }
+        }
+        else
+        {
+            // not editing
+            if (mOK.IsNewlyPressed() && navState.mSelectedControl)
+            {
+                navState.mSelectedControl->IGuiControl_EditBegin(*this);
+                mIsEditing = true;
+            }
+            else
+            {
+                auto *oldSelection = navState.mSelectedControl;
+                navState = mNavigator.AdjustSelectedControl(list, mEnc.GetIntDelta());
+                if (oldSelection != navState.mSelectedControl)
+                {
+                    if (oldSelection)
+                    {
+                        oldSelection->IGuiControl_SelectEnd(*this);
+                    }
+                    if (navState.mSelectedControl)
+                    {
+                        navState.mSelectedControl->IGuiControl_SelectBegin(*this);
+                    }
+                }
+            }
+        }
         for (size_t i = 0; i < list->Count(); ++i)
         {
-            list->GetItem(i)->IGuiControl_Update(mDisplay);
+            auto *ctrl = list->GetItem(i);
+            ctrl->IGuiControl_Update(
+                ctrl == navState.mSelectedControl, mIsEditing && ctrl == navState.mSelectedControl, *this, mDisplay);
         }
-
-        if (!IsShowingFrontPage())
-        {
-            mNavigator.AdjustSelectedControl(list, mEnc.GetIntDelta());
-        }
-
         // back/up when not editing
-        if (mBack.IsNewlyPressed())
+        if (!mWasEditing && mBack.IsNewlyPressed())
         {
             GoToFrontPage();
         }
@@ -53,7 +98,8 @@ struct GuiApp : public DisplayApp
             auto *ctrl = list->GetItem(i);
             if (ctrl->IGuiControl_GetPage() != navState.mSelectedPage)
                 continue;
-            ctrl->IGuiControl_Render(mDisplay);
+            ctrl->IGuiControl_Render(
+                ctrl == navState.mSelectedControl, mIsEditing && ctrl == navState.mSelectedControl, *this, mDisplay);
             if (ctrl == navState.mSelectedControl)
             {
                 mDisplay.DrawSelectionRect(ctrl->IGuiControl_GetBounds().Inflate(1));
@@ -114,9 +160,49 @@ struct GuiPerformanceApp : GuiApp
     GuiLabelControl mLabel7 = {2, false, RectI::Construct(4, 24, 50, 8), String("page 3")};
     GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
     GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
+
+    int param1 = 111;
+    GuiIntegerTextControl mCtrl4a = {
+        4,
+        RectI::Construct(5, 10, 50, 20),
+        StandardRangeSpecs::gMetronomeDecayRange,
+        [](void *, const int &val) { return String(val); },                      // formatter
+        [](void *, const int &val) { return String(String("Param1: ") + val); }, // formatter
+        Property<int>{[](void *cap) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          return pThis->param1;
+                      },
+                      [](void *cap, const int &i) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          pThis->param1 = i;
+                      },
+                      this},                                                                   // value
+        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
+        this                                                                                   // cap
+    };
+
+    int param2 = 2;
+    GuiIntegerTextControl mCtrl4b = {
+        4,
+        RectI::Construct(5, 35, 117, 20),
+        StandardRangeSpecs::gMetronomeDecayRange,
+        [](void *, const int &val) { return String(val); },                         // formatter
+        [](void *, const int &val) { return String(String("Param two: ") + val); }, // formatter
+        Property<int>{[](void *cap) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          return pThis->param2;
+                      },
+                      [](void *cap, const int &i) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          pThis->param2 = i;
+                      },
+                      this},                                                                    // value
+        Property<bool>{[](void *cap) { return false; }, [](void *cap, const bool &b) {}, this}, // selectable
+        this                                                                                    // cap
+    };
     GuiLabelControl mLabel10 = {5, false, RectI::Construct(14, 34, 50, 8), String("page 6 ~~")};
 
-    IGuiControl *mArray[10] = {
+    IGuiControl *mArray[12] = {
         &mLabel1,
         &mLabel2,
         &mLabel3,
@@ -126,6 +212,8 @@ struct GuiPerformanceApp : GuiApp
         &mLabel7,
         &mLabel8,
         &mLabel9,
+        &mCtrl4a,
+        &mCtrl4b,
         &mLabel10,
     };
 
