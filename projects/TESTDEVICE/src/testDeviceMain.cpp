@@ -33,6 +33,7 @@ void setup()
 {
     Serial.begin(9600);
     //while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
+    //Serial.println("starting normally....");
 
     clarinoid::TestDeviceApp app;
     app.Main();

@@ -207,13 +207,14 @@ struct BassoonoidApp : ILEDDataProvider
         NopTask nopTask;
 
         TaskPlanner tp{
+            // NB: run an update task before display tasks in order to initialize things on 1st frame.
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1), &mDisplayTask1, "Display1"},
 
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mMusicalStateTask, "MusS1"},
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5001), &mLed1, "mLed1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5002), &mLed2, "mLed2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5003), &mBreathLED, "mBreathLED"},
+            //TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5002), &mLed2, "mLed2"},
+            //TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5003), &mBreathLED, "mBreathLED"},
 
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(9000), &mMusicalStateTask, "MusS2"},
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(9001), &mDisplayTask2, "Display2"},

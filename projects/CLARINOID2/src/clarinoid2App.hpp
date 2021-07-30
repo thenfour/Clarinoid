@@ -316,6 +316,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         NopTask nopTask;
 
         TaskPlanner tp{
+            // NB: run an update task before display tasks in order to initialize things on 1st frame.
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1), &mDisplayTask1, "Display1"},
 

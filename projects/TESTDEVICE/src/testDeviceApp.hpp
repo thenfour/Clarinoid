@@ -266,24 +266,22 @@ struct TestDeviceApp : ISysInfoProvider
                                        pThis->mDisplay.DisplayTask();
                                    }};
 
-        // the "Musical state" is the most critical. So let's run it periodically, spread through the whole time slice.
-        // display tasks are also very heavy. Display1 is update/state, Display2 is SPI render.
-        // musical state = about <2400 microseconds
-        // display1 = about <1500 microseconds
-        // display2 = about <2000 microseconds
-        // LED tasks tend to be almost instantaneous (~<10 microseconds) so they can all live in the same slot.
         NopTask nopTask;
 
+        // Important that a state task runs before display tasks, to ensure there's not a single
+        // uninitialized glitch frame at startup
         TaskPlanner tp{
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mDisplayTask1, "Display1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS0"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mDisplayTask2, "Display2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12000), &mMusicalStateTask, "MusS1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mDisplayTask1, "Display1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mMusicalStateTask, "MusS1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12000), &mDisplayTask2, "Display2"},
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &nopTask, "Nop"},
         };
 
         mTaskPlanner = &tp;
         mPerformanceApp.Init(&tp);
+
+        //delay(100);
 
         tp.Main();
     }
