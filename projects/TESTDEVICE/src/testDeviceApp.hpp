@@ -169,8 +169,7 @@ struct TestDeviceApp : ISysInfoProvider
     }
     virtual float ISysInfoProvider_GetAudioCPUUsage() override
     {
-        return 0.0f;
-        //return AudioProcessorUsage();
+        return AudioProcessorUsage();
     }
     virtual float ISysInfoProvider_GetTaskManagerCPUUsage() override
     {
@@ -272,16 +271,14 @@ struct TestDeviceApp : ISysInfoProvider
         // uninitialized glitch frame at startup
         TaskPlanner tp{
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mDisplayTask1, "Display1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mMusicalStateTask, "MusS1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12000), &mDisplayTask2, "Display2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &nopTask, "Nop"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mDisplayTask1, "Display1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &mMusicalStateTask, "MusS1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(23000), &mDisplayTask2, "Display2"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(32000), &nopTask, "Nop"},
         };
 
         mTaskPlanner = &tp;
         mPerformanceApp.Init(&tp);
-
-        //delay(100);
 
         tp.Main();
     }

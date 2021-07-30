@@ -95,6 +95,7 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
 
     bool mSolidText = true;
     int mTextLeftMargin = 0;
+    int mFrameCount = 0; // set by caller; display() is not a virtual fn
 
     void SetClipRect(int left, int top, int right, int bottom)
     {
@@ -193,6 +194,30 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
         DrawDottedHLineWithGlobalParity(x, w, y + h - 1, variation);
         DrawDottedVLineWithGlobalParity(x, y + 1, h - 2, variation);
         DrawDottedVLineWithGlobalParity(x + w - 1, y + 1, h - 2, variation);
+    }
+
+    template <int AntSize>
+    void DrawMarchingAntsFilledRect(int xstart, int ystart, int w, int h, int variation)
+    {
+        for (int y = ystart; y < ystart + h; ++y)
+        {
+            for (int x = xstart; x < xstart + w; ++x)
+            {
+                bool parity = !!(((x + y + variation) / AntSize) & 1);
+                drawPixel(x, y, parity ? SSD1306_WHITE : SSD1306_BLACK);
+            }
+        }
+    }
+
+    template <int LineWidth, int AntSize>
+    void DrawMarchingAntsRectOutline(int x, int y, int w, int h, int variation)
+    {
+        // draw rect INSIDE the given coords
+        DrawMarchingAntsFilledRect<AntSize>(x, y, w, LineWidth, variation);                 // top rect
+        DrawMarchingAntsFilledRect<AntSize>(x, y + h - LineWidth, w, LineWidth, variation); // bottom rect
+        DrawMarchingAntsFilledRect<AntSize>(x, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // left
+        DrawMarchingAntsFilledRect<AntSize>(
+            x + w - LineWidth, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // right
     }
 
     uint16_t GetLineHeight() const

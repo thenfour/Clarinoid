@@ -102,7 +102,6 @@ struct GuiApp : public DisplayApp
                 ctrl == navState.mSelectedControl, mIsEditing && ctrl == navState.mSelectedControl, *this, mDisplay);
             if (ctrl == navState.mSelectedControl)
             {
-                mDisplay.DrawSelectionRect(ctrl->IGuiControl_GetBounds().Inflate(1));
                 mDisplay.DrawSelectionRect(ctrl->IGuiControl_GetBounds());
             }
         }

@@ -290,13 +290,15 @@ struct CCDisplay
 
     void DrawSelectionRect(const RectI &rc)
     {
-        mDisplay.DrawDottedRectOutlineWithGlobalParity(rc.x, rc.y, rc.width, rc.height, !!((micros() / (1000 * 150)) & 1));
+        RectI z = rc.Inflate(1);
+        mDisplay.DrawMarchingAntsRectOutline<1, 4>(z.x, z.y, z.width, z.height, (micros() / (1000 * 80)));
     }
 
 
     void DisplayTask()
     {
         NoInterrupts _ni;
+        mDisplay.mFrameCount ++;
         mDisplay.display();
     }
 
