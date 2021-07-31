@@ -7,6 +7,7 @@
 
 namespace clarinoid
 {
+
 namespace KnobDetails
 {
 static const uint8_t PROGMEM gKnobOutlineBMP[] = {
@@ -25,6 +26,8 @@ static const uint8_t PROGMEM gKnobOutlineBMP[] = {
     0b00100000, 0b00001000, //
 };
 
+static const BitmapSpec gKnobOutlineSpec = BitmapSpec::Construct(gKnobOutlineBMP, 2, 15);
+
 // same thing but showing a static "-inf" indicator
 static const uint8_t PROGMEM gKnobOutlineMutedBMP[] = {
     0b00000111, 0b11000000, //
@@ -41,8 +44,8 @@ static const uint8_t PROGMEM gKnobOutlineMutedBMP[] = {
     0b01000000, 0b00000100, //
     0b00100000, 0b00001000, //
 };
-static const uint8_t BmpWidthBits = 16;
-static const uint8_t Height = SizeofStaticArray(gKnobOutlineBMP) / (BmpWidthBits / 8);
+
+static const BitmapSpec gKnobOutlineMutedSpec = BitmapSpec::Construct(gKnobOutlineMutedBMP, 2, 15);
 
 static const float CenterX = 7.75f;
 static const float CenterY = 7.5f;
@@ -69,8 +72,7 @@ static const uint8_t PROGMEM gLowPassBMP[] = {
     0b01111111, 0b11000000, //
     0b01111111, 0b11100000, //
 };
-static const uint8_t gLowPassBMP_BmpWidthBits = 16;
-static const uint8_t gLowPassBMP_Height = SizeofStaticArray(gLowPassBMP) / (gLowPassBMP_BmpWidthBits / 8);
+static const BitmapSpec gLowPassBitmapSpec = BitmapSpec::Construct(gLowPassBMP, 2, 15);
 
 static const uint8_t PROGMEM gHighPassBMP[] = {
     0b00000000, 0b00000000, //
@@ -86,8 +88,7 @@ static const uint8_t PROGMEM gHighPassBMP[] = {
     0b00000011, 0b11111110, //
     0b00000111, 0b11111110, //
 };
-static const uint8_t gHighPassBMP_BmpWidthBits = 16;
-static const uint8_t gHighPassBMP_Height = SizeofStaticArray(gHighPassBMP) / (gHighPassBMP_BmpWidthBits / 8);
+static const BitmapSpec gHighPassBitmapSpec = BitmapSpec::Construct(gHighPassBMP, 2, 15);
 
 static const uint8_t PROGMEM gBandPassBMP[] = {
     0b00000000, 0b00000000, //
@@ -103,8 +104,7 @@ static const uint8_t PROGMEM gBandPassBMP[] = {
     0b00111111, 0b11100000, //
     0b01111111, 0b11110000, //
 };
-static const uint8_t gBandPassBMP_BmpWidthBits = 16;
-static const uint8_t gBandPassBMP_Height = SizeofStaticArray(gBandPassBMP) / (gBandPassBMP_BmpWidthBits / 8);
+static const BitmapSpec gBandPassBitmapSpec = BitmapSpec::Construct(gBandPassBMP, 2, 15);
 
 static const uint8_t PROGMEM gNextPageBMP[] = {
     0b10000000,
@@ -123,9 +123,7 @@ static const uint8_t PROGMEM gNextPageBMP[] = {
     0b10000000,
     0b10000000,
 };
-static const uint8_t gNextPageBMP_BmpWidthBits = 8;
-static const uint8_t gNextPageBMP_DisplayWidthBits = 3;
-static const uint8_t gNextPageBMP_Height = SizeofStaticArray(gNextPageBMP);
+static const BitmapSpec gNextPageBitmapSpec = BitmapSpec::Construct(gNextPageBMP, 1, 3);
 
 static const uint8_t PROGMEM gPrevPageBMP[] = {
     0b00100000,
@@ -144,8 +142,7 @@ static const uint8_t PROGMEM gPrevPageBMP[] = {
     0b00100000,
     0b00100000,
 };
-static const uint8_t gPrevPageBMP_BmpWidthBits = 8;
-static const uint8_t gPrevPageBMP_Height = SizeofStaticArray(gPrevPageBMP);
+static const BitmapSpec gPrevPageBitmapSpec = BitmapSpec::Construct(gPrevPageBMP, 1, 3);
 
 // ---------------------------------------------------------------------------------------
 // very much like ISettingItem.
@@ -365,12 +362,7 @@ struct GuiKnobControl : IGuiControl
 
         display.ClearState();
 
-        display.mDisplay.drawBitmap(mBounds.x,
-                                    mBounds.y,
-                                    KnobDetails::gKnobOutlineBMP,
-                                    KnobDetails::BmpWidthBits,
-                                    KnobDetails::Height,
-                                    SSD1306_WHITE);
+        display.DrawBitmap(mBounds.UpperLeft(), KnobDetails::gKnobOutlineSpec);
         float val = mValue.GetValue();
         float a0 = mRange.remap(val, KnobDetails::MinAngle, KnobDetails::MaxAngle);
         float a1 = mRange.remap(0.0f, KnobDetails::MinAngle, KnobDetails::MaxAngle);
@@ -449,21 +441,11 @@ struct GuiKnobGainControl : IGuiControl
         if (mRange.IsBottom(val))
         {
             // -inf db,
-            display.mDisplay.drawBitmap(mBounds.x,
-                                        mBounds.y,
-                                        KnobDetails::gKnobOutlineMutedBMP,
-                                        KnobDetails::BmpWidthBits,
-                                        KnobDetails::Height,
-                                        SSD1306_WHITE);
+            display.DrawBitmap(mBounds.UpperLeft(), KnobDetails::gKnobOutlineMutedSpec);
         }
         else
         {
-            display.mDisplay.drawBitmap(mBounds.x,
-                                        mBounds.y,
-                                        KnobDetails::gKnobOutlineBMP,
-                                        KnobDetails::BmpWidthBits,
-                                        KnobDetails::Height,
-                                        SSD1306_WHITE);
+            display.DrawBitmap(mBounds.UpperLeft(), KnobDetails::gKnobOutlineSpec);
             if (mRange.mRangeMax >= 0) // user can GAIN in addition to attenuation; put zero point at the top.
             {
                 // negative & positive poles are different scales

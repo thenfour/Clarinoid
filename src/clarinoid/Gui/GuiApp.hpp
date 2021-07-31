@@ -111,21 +111,14 @@ struct GuiApp : public DisplayApp
         mDisplay.ResetClip();
         if (navState.mSelectedPage < navState.mPageCount - 1)
         {
-            mDisplay.mDisplay.drawBitmap(mDisplay.mDisplay.width() - gNextPageBMP_DisplayWidthBits,
-                                         (mDisplay.GetClientHeight() - gNextPageBMP_Height) / 2,
-                                         gNextPageBMP,
-                                         gNextPageBMP_BmpWidthBits,
-                                         gNextPageBMP_Height,
-                                         SSD1306_WHITE);
+            mDisplay.DrawBitmap(PointI::Construct(mDisplay.mDisplay.width() - gNextPageBitmapSpec.widthPixels,
+                                                  (mDisplay.GetClientHeight() - gNextPageBitmapSpec.heightPixels) / 2),
+                                gNextPageBitmapSpec);
         }
         if (navState.mSelectedPage > 0)
         {
-            mDisplay.mDisplay.drawBitmap(0,
-                                         (mDisplay.GetClientHeight() - gPrevPageBMP_Height) / 2,
-                                         gPrevPageBMP,
-                                         gPrevPageBMP_BmpWidthBits,
-                                         gPrevPageBMP_Height,
-                                         SSD1306_WHITE);
+            mDisplay.DrawBitmap(PointI::Construct(0, (mDisplay.GetClientHeight() - gPrevPageBitmapSpec.heightPixels) / 2),
+                                gPrevPageBitmapSpec);
         }
     }
     virtual GuiControlList *GetRootControlList() = 0;

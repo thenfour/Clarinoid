@@ -355,6 +355,12 @@ struct CCDisplay
         mDisplay.setCursor(0, 0);
     }
 
+    void DrawBitmap(PointI pos, const BitmapSpec &bmp)
+    {
+        mDisplay.drawBitmap(pos.x, pos.y, bmp.pBmp, bmp.widthPixels, bmp.heightPixels,
+                            SSD1306_WHITE);
+    }
+
     void fillPie(const PointF &origin, float radius, float angleStart, float angleSweep, bool filled = true)
     {
         float a0, a1;
