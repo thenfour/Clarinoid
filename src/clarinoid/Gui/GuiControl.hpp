@@ -21,7 +21,24 @@ static const uint8_t PROGMEM gKnobOutlineBMP[] = {
     0b10000000, 0b00000010, //
     0b10000000, 0b00000010, //
     0b01000000, 0b00000100, //
-    0b01010000, 0b00010100, //
+    0b01000000, 0b00000100, //
+    0b00100000, 0b00001000, //
+};
+
+// same thing but showing a static "-inf" indicator
+static const uint8_t PROGMEM gKnobOutlineMutedBMP[] = {
+    0b00000111, 0b11000000, //
+    0b00011000, 0b00110000, //
+    0b00100000, 0b00001000, //
+    0b01000000, 0b00000100, //
+    0b01000000, 0b00000100, //
+    0b10000011, 0b01100010, //
+    0b10000101, 0b10010010, //
+    0b10110100, 0b11010010, //
+    0b10000011, 0b01100010, //
+    0b10000000, 0b00000010, //
+    0b01000000, 0b00000100, //
+    0b01000000, 0b00000100, //
     0b00100000, 0b00001000, //
 };
 static const uint8_t BmpWidthBits = 16;
@@ -420,32 +437,33 @@ struct GuiKnobGainControl : IGuiControl
                                       display.mDisplay.width(),
                                       display.mDisplay.GetLineHeight(),
                                       SSD1306_WHITE);
-            display.mDisplay.setCursor(0, display.GetClientHeight() - display.mDisplay.GetLineHeight());
+            display.mDisplay.setCursor(1, display.GetClientHeight() - display.mDisplay.GetLineHeight());
             display.mDisplay.setTextColor(SSD1306_INVERSE);
             display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
         }
 
         display.ClearState();
 
-        display.mDisplay.drawBitmap(mBounds.x,
-                                    mBounds.y,
-                                    KnobDetails::gKnobOutlineBMP,
-                                    KnobDetails::BmpWidthBits,
-                                    KnobDetails::Height,
-                                    SSD1306_WHITE);
         float val = mValue.GetValue();
         float aCenter = KnobDetails::CenterAngle; // Remap01ToRange(0.5f, KnobDetails::MinAngle, KnobDetails::MaxAngle);
         if (mRange.IsBottom(val))
         {
             // -inf db,
-            display.fillPie(KnobDetails::Origin.Add(mBounds.UpperLeft()),
-                            KnobDetails::Radius,
-                            KnobDetails::MinAngle,
-                            aCenter - KnobDetails::MinAngle,
-                            false);
+            display.mDisplay.drawBitmap(mBounds.x,
+                                        mBounds.y,
+                                        KnobDetails::gKnobOutlineMutedBMP,
+                                        KnobDetails::BmpWidthBits,
+                                        KnobDetails::Height,
+                                        SSD1306_WHITE);
         }
         else
         {
+            display.mDisplay.drawBitmap(mBounds.x,
+                                        mBounds.y,
+                                        KnobDetails::gKnobOutlineBMP,
+                                        KnobDetails::BmpWidthBits,
+                                        KnobDetails::Height,
+                                        SSD1306_WHITE);
             if (mRange.mRangeMax >= 0) // user can GAIN in addition to attenuation; put zero point at the top.
             {
                 // negative & positive poles are different scales
@@ -499,11 +517,9 @@ struct GuiKnobGainControl : IGuiControl
 
 // select patch
 // select harm patch
-// knob for GAIN with -inf
 // stereo width (N11 or 01)
-// text
+// text string
 // filter type
 // waveform
-// IntString ("transpose +12")
 
 } // namespace clarinoid

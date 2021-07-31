@@ -48,57 +48,6 @@ void drawLine(int x0, int y0, int x1, int y1, T&& drawPixel)
   }
 }
 
-//
-//template<typename T>
-//void drawLine(float x0, float y0, float x1, float y1, T&& drawPixel) {
-//  bool steep = abs(y1 - y0) > abs(x1 - x0);
-//  if (steep) {
-//    std::swap(x0, y0);
-//    std::swap(x1, y1);
-//  }
-//
-//  if (x0 > x1) {
-//    std::swap(x0, x1);
-//    std::swap(y0, y1);
-//  }
-//
-//  float dx, dy;
-//  dx = x1 - x0;
-//  dy = abs(y1 - y0);
-//
-//  float err = dx / 2;
-//  int ystep;
-//
-//  if (y0 < y1) {
-//    ystep = 1;
-//  }
-//  else {
-//    ystep = -1;
-//  }
-//
-//  for (; x0 <= x1; x0++) {
-//    if (steep) {
-//      //drawPixel(y0, x0, true);
-//      drawPixel((int)std::floorf(y0), (int)std::floorf(x0), true);
-//    }
-//    else {
-//      drawPixel((int)std::floorf(x0), (int)std::floorf(y0), true);
-//      //drawPixel(x0, y0, true);
-//    }
-//    err -= dy;
-//    if (err < 0) {
-//      y0 += ystep;
-//      err += dx;
-//    }
-//  }
-//}
-
-
-
-
-
-
-
 // adapted from
 // https://stackoverflow.com/questions/58222657/generate-a-pieslice-in-c-without-using-the-pieslice-of-graphics-h
 template <typename T>
@@ -130,7 +79,7 @@ void fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // 
           if (((x * uy) - (y * ux) <= 0)     // x,y is above a0 in clockwise direction
             && ((x * vy) - (y * vx) >= 0)) // x,y is below a1 in counter clockwise direction
           {
-            drawPixel((int)std::floorf(sx), (int)std::floorf(sy), false);
+            drawPixel((int)::floorf(sx), (int)::floorf(sy), false);
             ++pixelsDrawn;
           }
       }
@@ -147,16 +96,14 @@ void fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // 
           if (((x * uy) - (y * ux) <= 0)     // x,y is above a0 in clockwise direction
             || ((x * vy) - (y * vx) >= 0)) // x,y is below a1 in counter clockwise direction
           {
-            drawPixel((int)std::floorf(sx), (int)std::floorf(sy), false);
+            drawPixel((int)::floorf(sx), (int)::floorf(sy), false);
             ++pixelsDrawn;
           }
         }
       }
     }
   }
-  //if (pixelsDrawn <= r) {
     drawLine(x0, y0, x0 + ux, y0 + uy, drawPixel);
-  //}
 }
 
 
