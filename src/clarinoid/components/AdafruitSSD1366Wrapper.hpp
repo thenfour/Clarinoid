@@ -196,27 +196,28 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
         DrawDottedVLineWithGlobalParity(x + w - 1, y + 1, h - 2, variation);
     }
 
-    template <int AntSize>
+    template <int AntSize, int AntMask, int ySign, int xSign>
     void DrawMarchingAntsFilledRect(int xstart, int ystart, int w, int h, int variation)
     {
         for (int y = ystart; y < ystart + h; ++y)
         {
             for (int x = xstart; x < xstart + w; ++x)
             {
-                bool parity = !!(((x + y + variation) / AntSize) & 1);
+                int p = abs(xSign * x + ySign * y - variation) % AntSize; // p is the position in the pattern.
+                bool parity = !!(AntMask & (1 << p));
                 drawPixel(x, y, parity ? SSD1306_WHITE : SSD1306_BLACK);
             }
         }
     }
 
-    template <int LineWidth, int AntSize>
+    template <int LineWidth, int AntSize, int AntMask>
     void DrawMarchingAntsRectOutline(int x, int y, int w, int h, int variation)
     {
         // draw rect INSIDE the given coords
-        DrawMarchingAntsFilledRect<AntSize>(x, y, w, LineWidth, variation);                 // top rect
-        DrawMarchingAntsFilledRect<AntSize>(x, y + h - LineWidth, w, LineWidth, variation); // bottom rect
-        DrawMarchingAntsFilledRect<AntSize>(x, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // left
-        DrawMarchingAntsFilledRect<AntSize>(
+        DrawMarchingAntsFilledRect<AntSize, AntMask, 1, 1>(x, y, w, LineWidth, variation);                 // top rect
+        DrawMarchingAntsFilledRect<AntSize, AntMask, 1, -1>(x, y + h - LineWidth, w, LineWidth, variation); // bottom rect
+        DrawMarchingAntsFilledRect<AntSize, AntMask, -1, -1>(x, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // left
+        DrawMarchingAntsFilledRect<AntSize, AntMask, 1, 1>(
             x + w - LineWidth, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // right
     }
 

@@ -7,6 +7,9 @@
 namespace clarinoid
 {
 
+template <typename T>
+constexpr T gPI = T(3.1415926535897932385);
+
 uint16_t ClampUint32ToUint16(uint32_t a)
 {
     if (a > std::numeric_limits<uint16_t>::max())
@@ -55,14 +58,14 @@ static T ClampInclusive(T x, T minInclusive, T maxInclusive)
 
 // remap so src min to max become [0-1]. results are NOT clamped.
 // if min-max == 0, just return x to avoid bad behaviors
-// static float RemapTo01(float x, float xmin, float xmax)
-// {
-//   if (FloatEquals(xmax - xmin, 0.0f))
-//     return x;
-//   x -= xmin;
-//   x /= xmax - xmin;
-//   return x;
-// }
+static float RemapTo01(float x, float xmin, float xmax)
+{
+    if (FloatEquals(xmax - xmin, 0.0f))
+        return x;
+    x -= xmin;
+    x /= xmax - xmin;
+    return x;
+}
 
 // remap so src min to max become [0-1]. results are NOT clamped.
 // if min-max == 0, just return x to avoid bad behaviors
@@ -154,12 +157,14 @@ inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIB
 // when snapStrength is 1, this is effecitvely a floor() function.
 inline float SnapPitchBend(float x, float snapStrength)
 {
-    if (snapStrength < 0.000001f) return x;
+    if (snapStrength < 0.000001f)
+        return x;
     float z = std::floor(x);
-    if (snapStrength > 0.99999f) return z;
+    if (snapStrength > 0.99999f)
+        return z;
     float p = x - z;
     float q = snapStrength * 3;
-    q = q*q*q*q*q;
+    q = q * q * q * q * q;
     q += 1;
     return z + std::pow(p, q);
 }
@@ -429,13 +434,99 @@ struct TriangleWave
     }
 };
 
+// wikipedia https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+template <typename T>
+void drawLine(int x0, int y0, int x1, int y1, T &&drawPixel)
+{
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy; /* error value e_xy */
+    while (true)
+    { /* loop */
+        drawPixel(x0, y0, true);
+        if (x0 == x1 && y0 == y1)
+            break;
+        int e2 = 2 * err;
+        if (e2 >= dy)
+        { /* e_xy+e_x > 0 */
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx)
+        { /* e_xy+e_y < 0 */
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+// adapted from
+// https://stackoverflow.com/questions/58222657/generate-a-pieslice-in-c-without-using-the-pieslice-of-graphics-h
+template <typename T>
+void fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // a0 < a1
+{
+    float x, y,     // circle centered point
+        xx, yy, rr, // x^2,y^2,r^2
+        ux, uy,     // u
+        vx, vy,     // v
+        sx, sy;     // pixel position
+    rr = r * r;
+    ux = (r)*cosf(a0);
+    uy = (r)*sinf(a0);
+    vx = (r)*cosf(a1);
+    vy = (r)*sinf(a1);
+    // handle big/small pies
+    x = a1 - a0;
+    if (x < 0)
+        x = -x;
+    // render small pies
+    int pixelsDrawn = 0;
+    if (x < gPI<float>) /* 180 deg */
+    {
+        for (y = -r, yy = y * y, sy = y0 + y; y <= +r; y++, yy = y * y, sy++)
+        {
+            for (x = -r, xx = x * x, sx = x0 + x; x <= +r; x++, xx = x * x, sx++)
+            {
+                if (xx + yy <= rr)                     // inside circle
+                    if (((x * uy) - (y * ux) <= 0)     // x,y is above a0 in clockwise direction
+                        && ((x * vy) - (y * vx) >= 0)) // x,y is below a1 in counter clockwise direction
+                    {
+                        drawPixel((int)::floorf(sx), (int)::floorf(sy), false);
+                        ++pixelsDrawn;
+                    }
+            }
+        }
+    }
+    else
+    {
+        for (y = -r, yy = y * y, sy = y0 + y; y <= +r; y++, yy = y * y, sy++)
+        {
+            for (x = -r, xx = x * x, sx = x0 + x; x <= +r; x++, xx = x * x, sx++)
+            {
+                if (xx + yy <= rr)
+                {                                      // inside circle
+                    if (((x * uy) - (y * ux) <= 0)     // x,y is above a0 in clockwise direction
+                        || ((x * vy) - (y * vx) >= 0)) // x,y is below a1 in counter clockwise direction
+                    {
+                        drawPixel((int)::floorf(sx), (int)::floorf(sy), false);
+                        ++pixelsDrawn;
+                    }
+                }
+            }
+        }
+    }
+    drawLine(x0, y0, x0 + ux, y0 + uy, drawPixel);
+}
+
 // for adjusting numeric values with the settings menu editor...
 template <typename T>
 struct NumericEditRangeSpec
 {
-    static constexpr int DefaultCourseSteps = 30;
-    static constexpr int DefaultNormalSteps = 100;
-    static constexpr int DefaultFineSteps = 1000;
+    static constexpr int DefaultCourseSteps = 18;
+    static constexpr int DefaultNormalSteps = 36;
+    static constexpr int DefaultFineSteps = 500;
 
     T mRangeMin;
     T mRangeMax;
@@ -490,6 +581,12 @@ struct NumericEditRangeSpec
         ret = ClampInclusive(ret, mRangeMin, mRangeMax);
         return ret;
     }
+
+    virtual float remap(T val, float newMin, float newMax) const
+    {
+        float v01 = RemapTo01(val, mRangeMin, mRangeMax);
+        return Remap01ToRange(v01, newMin, newMax);
+    }
 };
 
 // this is a weird funciton but it's convenient for decibel settings.
@@ -498,17 +595,16 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
 {
     static constexpr float BOTTOM_VALUE = MIN_DECIBEL_GAIN;
 
-    explicit NumericEditRangeSpecWithBottom(float rangeMin, float rangeMax)
-        : NumericEditRangeSpec(rangeMin, rangeMax)
+    explicit NumericEditRangeSpecWithBottom(float rangeMin, float rangeMax) : NumericEditRangeSpec(rangeMin, rangeMax)
     {
         CCASSERT(rangeMin > BOTTOM_VALUE);
     }
 
     explicit NumericEditRangeSpecWithBottom(float rangeMin,
-                                                float rangeMax,
-                                                float courseStep,
-                                                float normalStep,
-                                                float fineStep)
+                                            float rangeMax,
+                                            float courseStep,
+                                            float normalStep,
+                                            float fineStep)
         : NumericEditRangeSpec(rangeMin, rangeMax, courseStep, normalStep, fineStep)
     {
         CCASSERT(rangeMin > BOTTOM_VALUE);

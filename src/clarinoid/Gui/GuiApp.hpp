@@ -38,7 +38,9 @@ struct GuiApp : public DisplayApp
                     navState.mSelectedControl->IGuiControl_EditEnd(*this, true);
                 }
                 mIsEditing = false;
-            } else if (mOK.IsNewlyPressed()) {
+            }
+            else if (mOK.IsNewlyPressed())
+            {
                 if (navState.mSelectedControl)
                 {
                     navState.mSelectedControl->IGuiControl_EditEnd(*this, false);
@@ -145,6 +147,7 @@ struct GuiPerformanceApp : GuiApp
                                true,
                                RectI::Construct(0, 0, 50, 8),
                                String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
+
     GuiLabelControl mLabel2 = {0,
                                false,
                                RectI::Construct(12, 16, 90, 16),
@@ -154,8 +157,69 @@ struct GuiPerformanceApp : GuiApp
                                false,
                                RectI::Construct(26, 48, 111, 4),
                                String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
-    GuiLabelControl mLabel5 = {1, false, RectI::Construct(4, 4, 50, 8), String("page 2")};
-    GuiLabelControl mLabel6 = {1, true, RectI::Construct(4, 14, 50, 8), String("xyz")};
+    GuiLabelControl mLabel5 = {1, false, RectI::Construct(5, 4, 50, 8), String("page 2")};
+    GuiLabelControl mLabel6 = {1, true, RectI::Construct(5, 14, 50, 8), String("xyz")};
+
+    float floatParam1 = 0.0f;
+    GuiKnobControl mKnob1 = {
+        1,
+        RectI::Construct(5, 30, 16, 16),
+        StandardRangeSpecs::gFloat_N1_1,
+        [](void *, const float &val) { return String(String("Knob1: ") + val); }, // formatter for edit
+        Property<float>{[](void *cap) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          return pThis->floatParam1;
+                      },
+                      [](void *cap, const float &i) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          pThis->floatParam1 = i;
+                      },
+                      this},                                                                   // value
+        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
+        this                                                                                   // cap
+
+    };
+
+    float floatParam2 = 0.0f;
+    GuiKnobControl mKnob2 = {
+        1,
+        RectI::Construct(55, 30, 15, 15),
+        StandardRangeSpecs::gFloat_0_2,
+        [](void *, const float &val) { return String(String("Knob2: ") + val); }, // formatter for edit
+        Property<float>{[](void *cap) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          return pThis->floatParam2;
+                      },
+                      [](void *cap, const float &i) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          pThis->floatParam2 = i;
+                      },
+                      this},                                                                   // value
+        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
+        this                                                                                   // cap
+
+    };
+
+    float floatParam3 = 0.0f;
+    GuiKnobControl mKnob3 = {
+        1,
+        RectI::Construct(75, 30, 15, 15),
+        NumericEditRangeSpec<float>(-2.0f, 10.0f),
+        [](void *, const float &val) { return String(String("Knob3: ") + val); }, // formatter for edit
+        Property<float>{[](void *cap) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          return pThis->floatParam3;
+                      },
+                      [](void *cap, const float &i) {
+                          auto *pThis = (GuiPerformanceApp *)cap;
+                          pThis->floatParam3 = i;
+                      },
+                      this},                                                                   // value
+        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
+        this                                                                                   // cap
+
+    };
+
     GuiLabelControl mLabel7 = {2, false, RectI::Construct(4, 24, 50, 8), String("page 3")};
     GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
     GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
@@ -201,13 +265,16 @@ struct GuiPerformanceApp : GuiApp
     };
     GuiLabelControl mLabel10 = {5, false, RectI::Construct(14, 34, 50, 8), String("page 6 ~~")};
 
-    IGuiControl *mArray[12] = {
+    IGuiControl *mArray[15] = {
         &mLabel1,
         &mLabel2,
         &mLabel3,
         &mLabel4,
         &mLabel5,
         &mLabel6,
+        &mKnob1,
+        &mKnob2,
+        &mKnob3,
         &mLabel7,
         &mLabel8,
         &mLabel9,

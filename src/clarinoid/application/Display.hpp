@@ -291,14 +291,13 @@ struct CCDisplay
     void DrawSelectionRect(const RectI &rc)
     {
         RectI z = rc.Inflate(1);
-        mDisplay.DrawMarchingAntsRectOutline<1, 4>(z.x, z.y, z.width, z.height, (micros() / (1000 * 80)));
+        mDisplay.DrawMarchingAntsRectOutline<1, 3, 1>(z.x, z.y, z.width, z.height, (micros() / (1000 * 120)));
     }
-
 
     void DisplayTask()
     {
         NoInterrupts _ni;
-        mDisplay.mFrameCount ++;
+        mDisplay.mFrameCount++;
         mDisplay.display();
     }
 
@@ -354,6 +353,21 @@ struct CCDisplay
         mDisplay.setTextSize(1);
         mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
         mDisplay.setCursor(0, 0);
+    }
+
+    void fillPie(const PointF &origin, float radius, float angleStart, float angleSweep)
+    {
+        float a0, a1;
+        if (angleSweep >= 0) {
+            a0 = angleStart;
+            a1 = a0 + angleSweep;            
+        } else {
+            a0 = angleStart + angleSweep;
+            a1 = angleStart;
+        }
+        ::clarinoid::fillPie(origin.x, origin.y, radius, a0, a1, [&](int x, int y, bool){
+            mDisplay.drawPixel(x, y, SSD1306_WHITE);
+        });
     }
 
     // draws & prepares the screen for a modal message. after this just print text whatever.

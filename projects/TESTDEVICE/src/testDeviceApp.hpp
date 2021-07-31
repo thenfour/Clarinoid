@@ -271,10 +271,10 @@ struct TestDeviceApp : ISysInfoProvider
         // uninitialized glitch frame at startup
         TaskPlanner tp{
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &mDisplayTask1, "Display1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(16000), &mMusicalStateTask, "MusS1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(23000), &mDisplayTask2, "Display2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(32000), &nopTask, "Nop"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(100), &mDisplayTask1, "Display1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(200), &mMusicalStateTask, "MusS1"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(300), &mDisplayTask2, "Display2"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(400), &nopTask, "Nop"},
         };
 
         mTaskPlanner = &tp;

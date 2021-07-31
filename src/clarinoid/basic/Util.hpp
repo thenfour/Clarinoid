@@ -7,24 +7,38 @@
 
 namespace clarinoid
 {
-struct PointF
-{
-    float x;
-    float y;
-};
 struct PointI
 {
     int x;
     int y;
+    static PointI Construct(int x_, int y_)
+    {
+        PointI ret;
+        ret.x = x_;
+        ret.y = y_;
+        return ret;
+    }
 };
 
-struct RectF
+struct PointF
 {
     float x;
     float y;
-    float width;
-    float height;
+    static PointF Construct(float x_, float y_)
+    {
+        PointF ret;
+        ret.x = x_;
+        ret.y = y_;
+        return ret;
+    }
+    PointF Add(const PointF& rhs) const {
+        return PointF::Construct(x + rhs.x, y + rhs.y);
+    }
+    PointF Add(const PointI& rhs) const {
+        return PointF::Construct(x + rhs.x, y + rhs.y);
+    }
 };
+
 struct RectI
 {
     static RectI Construct(int x, int y, int w, int h)
@@ -48,9 +62,33 @@ struct RectI
     {
         return y + height;
     }
-    RectI Inflate(int n) const {
+    RectI Inflate(int n) const
+    {
         return Construct(x - n, y - n, width + n + n, height + n + n);
     }
+    PointI UpperLeft() const
+    {
+        return PointI::Construct(x, y);
+    }
+    PointI UpperRight() const
+    {
+        return PointI::Construct(x + width, y);
+    }
+    PointI BottomLeft() const
+    {
+        return PointI::Construct(x, y + height);
+    }
+    PointI BottomRight() const
+    {
+        return PointI::Construct(x + width, y + height);
+    }
+};
+struct RectF
+{
+    float x;
+    float y;
+    float width;
+    float height;
 };
 
 struct ColorF
