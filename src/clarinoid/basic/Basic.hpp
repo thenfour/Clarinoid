@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "BaseDefs.hpp"
 #include "log.hpp"
 #include "assert.hpp"
 #include "Uptime.hpp"

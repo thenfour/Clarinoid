@@ -355,19 +355,49 @@ struct CCDisplay
         mDisplay.setCursor(0, 0);
     }
 
-    void fillPie(const PointF &origin, float radius, float angleStart, float angleSweep)
+    void fillPie(const PointF &origin, float radius, float angleStart, float angleSweep, bool filled = true)
     {
         float a0, a1;
-        if (angleSweep >= 0) {
+        if (angleSweep >= 0)
+        {
             a0 = angleStart;
-            a1 = a0 + angleSweep;            
-        } else {
+            a1 = a0 + angleSweep;
+        }
+        else
+        {
             a0 = angleStart + angleSweep;
             a1 = angleStart;
         }
-        ::clarinoid::fillPie(origin.x, origin.y, radius, a0, a1, [&](int x, int y, bool){
-            mDisplay.drawPixel(x, y, SSD1306_WHITE);
-        });
+        ::clarinoid::PieData pd;
+        if (filled)
+        {
+            pd = ::clarinoid::fillPie(origin.x, origin.y, radius, a0, a1, [&](int x, int y, bool line) {
+                if (!line && ((x + y) & 1))
+                    return;
+                mDisplay.drawPixel(x, y, SSD1306_WHITE);
+            });
+        }
+        else
+        {
+            pd = ::clarinoid::fillPie(origin.x, origin.y, radius, a0, a1, [&](int x, int y, bool line) {
+                if (line || (((x * 2 + y) % 4) == 1))
+                {
+                    mDisplay.drawPixel(x, y, SSD1306_WHITE);
+                }
+            });
+        }
+        if (angleSweep >= 0)
+        {
+            drawLine(origin.x, origin.y, origin.x + pd.p0.x, origin.y + pd.p0.y, [&](int x, int y, bool) {
+                mDisplay.drawPixel(x, y, SSD1306_WHITE);
+            });
+        }
+        else
+        {
+            drawLine(origin.x, origin.y, origin.x + pd.p1.x, origin.y + pd.p1.y, [&](int x, int y, bool) {
+                mDisplay.drawPixel(x, y, SSD1306_WHITE);
+            });
+        }
     }
 
     // draws & prepares the screen for a modal message. after this just print text whatever.

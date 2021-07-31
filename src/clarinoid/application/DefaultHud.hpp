@@ -45,12 +45,15 @@ struct DefaultHud : IHudProvider
         mDisplay.mDisplay.setCursor(0, hudYStart + HUD_LINE_SEPARATOR_HEIGHT);
         mDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
 
+    // (int)(std::ceil(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()))) + CHAR_DB " " +
+        String dbpeak = DecibelsToIntString(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()));// "-" CHARSTR_INFINITY CHARSTR_DB;
+
         int cpu = (int)std::ceil(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
         mDisplay.mDisplay.print(
             String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " +
             cpu + "% " +
-            (int)(std::ceil(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()))) + "db " +
-            mpInfo->ISysInfoProvider_GetNote().ToString() + " d=" + (int) std::round(mpInfo->ISysInfoProvider_GetTempo())
+            dbpeak + " " +
+            mpInfo->ISysInfoProvider_GetNote().ToString() + " " CHARSTR_QEQ + (int) std::round(mpInfo->ISysInfoProvider_GetTempo())
             );
 
         static constexpr int metronomeFlashWidth = 32;

@@ -21,21 +21,22 @@ struct NoteDesc
 {
     uint8_t mIndex;
     const char *mName;
+    const char *mNameWithCustomGlyphs;
 };
 
 NoteDesc const gNotes[12] = {
-    {0, "C "},
-    {1, "C#"},
-    {2, "D "},
-    {3, "D#"},
-    {4, "E "},
-    {5, "F "},
-    {6, "F#"},
-    {7, "G "},
-    {8, "G#"},
-    {9, "A "},
-    {10, "A#"},
-    {11, "B "},
+    {0, "C ", "C "},
+    {1, "C#", "C" CHARSTR_SHARP},
+    {2, "D ", "D "},
+    {3, "D#", "D" CHARSTR_SHARP},
+    {4, "E ", "E "},
+    {5, "F ", "F "},
+    {6, "F#", "F" CHARSTR_SHARP},
+    {7, "G ", "G "},
+    {8, "G#", "G" CHARSTR_SHARP},
+    {9, "A ", "A "},
+    {10, "A#", "A" CHARSTR_SHARP},
+    {11, "B ", "B "},
 };
 
 enum class Note : uint8_t
@@ -101,7 +102,7 @@ class MidiNote
 
     const char *ToString() const
     {
-        return gNotes[mNoteIndex].mName;
+        return gNotes[mNoteIndex].mNameWithCustomGlyphs;
     }
 
     uint8_t GetMidiValue() const

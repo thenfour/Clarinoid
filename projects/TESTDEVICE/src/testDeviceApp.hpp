@@ -188,7 +188,8 @@ struct TestDeviceApp : ISysInfoProvider
     }
     virtual MidiNote ISysInfoProvider_GetNote() override
     {
-        return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
+        return MidiNote(4, Note::Db);
+        //return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
     }
     virtual float ISysInfoProvider_GetTempo() override
     {

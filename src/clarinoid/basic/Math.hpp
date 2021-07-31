@@ -133,7 +133,7 @@ static inline int16_t Sample32To16(float s)
 static constexpr float MIN_DECIBEL_GAIN = -60.0f;
 
 /**
- * Converts a linear value to decibels.  Returns aMinDecibels if the linear
+ * Converts a linear value to decibels.  Returns <= aMinDecibels if the linear
  * value is 0.
  */
 inline float LinearToDecibels(float aLinearValue, float aMinDecibels = MIN_DECIBEL_GAIN)
@@ -150,6 +150,31 @@ inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIB
     if (lin <= aNegInfDecibels)
         return 0.0f;
     return lin;
+}
+
+String GetSignStr(float f) {
+    if (FloatEquals(f, 0.0f)) return CHARSTR_NARROWPLUSMINUS;
+    if (f > 0) return CHARSTR_NARROWPLUS;
+    return CHARSTR_NARROWMINUS;
+}
+
+// always showing sign,
+// no decimal places, just show integral value
+// fixed width 2 digits
+// negative infinity glyph
+// decibels glyph
+inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_DECIBEL_GAIN) {
+    if (aDecibels <= aNegInfDecibels) {
+        return CHARSTR_NARROWMINUS CHARSTR_INFINITY CHARSTR_DB; // -oodb
+    }
+    String ret = GetSignStr(aDecibels);
+    int iDecibels = (int)std::ceil(abs(aDecibels));
+    if (iDecibels < 10) {
+        ret.append(CHARSTR_DIGITWIDTHSPACE);
+    }
+    ret.append(iDecibels);
+    ret.append(CHARSTR_DB);
+    return ret;
 }
 
 // takes a linear X value and snaps it to integral values.
@@ -462,10 +487,16 @@ void drawLine(int x0, int y0, int x1, int y1, T &&drawPixel)
     }
 }
 
+struct PieData
+{
+    PointF p0; // represents a0
+    PointF p1; // represents a1
+};
+
 // adapted from
 // https://stackoverflow.com/questions/58222657/generate-a-pieslice-in-c-without-using-the-pieslice-of-graphics-h
 template <typename T>
-void fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // a0 < a1
+PieData fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // a0 < a1
 {
     float x, y,     // circle centered point
         xx, yy, rr, // x^2,y^2,r^2
@@ -477,6 +508,9 @@ void fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // 
     uy = (r)*sinf(a0);
     vx = (r)*cosf(a1);
     vy = (r)*sinf(a1);
+    PieData ret;
+    ret.p0 = PointF::Construct(ux, uy);
+    ret.p1 = PointF::Construct(vx, vy);
     // handle big/small pies
     x = a1 - a0;
     if (x < 0)
@@ -498,6 +532,7 @@ void fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // 
                     }
             }
         }
+    //drawLine(x0, y0, x0 + ux, y0 + uy, drawPixel);
     }
     else
     {
@@ -517,7 +552,7 @@ void fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) // 
             }
         }
     }
-    drawLine(x0, y0, x0 + ux, y0 + uy, drawPixel);
+    return ret;
 }
 
 // for adjusting numeric values with the settings menu editor...
@@ -612,6 +647,10 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
 
     using T = float;
 
+    bool IsBottom(T val) const {
+        return val <= BOTTOM_VALUE;
+    }
+
     virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) override
     {
         T step = mNormalStep;
@@ -652,11 +691,11 @@ static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<floa
 static const NumericEditRangeSpec<float> gFloat_0_2 = NumericEditRangeSpec<float>{0.0f, 2.0f};
 
 static const NumericEditRangeSpecWithBottom gMasterGainDb =
-    NumericEditRangeSpecWithBottom{-40.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
+    NumericEditRangeSpecWithBottom{-30.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
 static const NumericEditRangeSpecWithBottom gGeneralGain =
-    NumericEditRangeSpecWithBottom{-40.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
+    NumericEditRangeSpecWithBottom{-30.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
 static const NumericEditRangeSpecWithBottom gSendGain =
-    NumericEditRangeSpecWithBottom{-40.0f, 0.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
+    NumericEditRangeSpecWithBottom{-30.0f, 0.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
 
 static const NumericEditRangeSpec<float> gPortamentoRange = NumericEditRangeSpec<float>{0.0f, 0.2f};
 

@@ -27,11 +27,12 @@ static const uint8_t PROGMEM gKnobOutlineBMP[] = {
 static const uint8_t BmpWidthBits = 16;
 static const uint8_t Height = SizeofStaticArray(gKnobOutlineBMP) / (BmpWidthBits / 8);
 
-static float CenterX = 7.75f;
-static float CenterY = 7.5f;
-static float MinAngle = 2.35f;
-static float MaxAngle = 7.15f;
-static float Radius = 7.1f;
+static const float CenterX = 7.75f;
+static const float CenterY = 7.5f;
+static const float MinAngle = 2.35f;
+static const float CenterAngle = 4.712388975f; // 1.5 pi
+static const float MaxAngle = 7.15f;
+static const float Radius = 7.1f;
 
 static PointF Origin = PointF::Construct(CenterX, CenterY);
 
@@ -311,7 +312,6 @@ struct GuiIntegerTextControl : IGuiControl
 struct GuiKnobControl : IGuiControl
 {
     NumericEditRangeSpec<float> mRange;
-    // cc::function<String(void *, const float &)>::ptr_t mValueFormatter;
     cc::function<String(void *, const float &)>::ptr_t mValueFormatterForEdit;
     Property<float> mValue;
     Property<bool> mIsSelectable;
@@ -323,13 +323,12 @@ struct GuiKnobControl : IGuiControl
     GuiKnobControl(float page,
                    RectI bounds,
                    const NumericEditRangeSpec<float> &range,
-                   // cc::function<String(void *, const float &)>::ptr_t valueFormatter,
                    cc::function<String(void *, const float &)>::ptr_t valueFormatterForEdit,
                    const Property<float> &value,
                    const Property<bool> &isSelectable,
                    void *capture)
-        : IGuiControl(page, bounds), mRange(range), // mValueFormatter(valueFormatter),
-          mValueFormatterForEdit(valueFormatterForEdit), mValue(value), mIsSelectable(isSelectable), mCapture(capture)
+        : IGuiControl(page, bounds), mRange(range), mValueFormatterForEdit(valueFormatterForEdit), mValue(value),
+          mIsSelectable(isSelectable), mCapture(capture)
     {
     }
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
@@ -385,9 +384,121 @@ struct GuiKnobControl : IGuiControl
     }
 };
 
+// ---------------------------------------------------------------------------------------
+// - supports -inf db
+// - the zero point is always at the top, when the range can go positive.
+//   - when the range max is 0, then 0 is full right
+struct GuiKnobGainControl : IGuiControl
+{
+    NumericEditRangeSpecWithBottom mRange;
+    cc::function<String(void *, const float &)>::ptr_t mValueFormatterForEdit;
+    Property<float> mValue;
+    Property<bool> mIsSelectable;
+    void *mCapture;
+    // editing label placement (top/bottom)
+
+    float mEditingOriginalVal = 0;
+
+    GuiKnobGainControl(float page,
+                       RectI bounds,
+                       const NumericEditRangeSpecWithBottom &range,
+                       cc::function<String(void *, const float &)>::ptr_t valueFormatterForEdit,
+                       const Property<float> &value,
+                       const Property<bool> &isSelectable,
+                       void *capture)
+        : IGuiControl(page, bounds), mRange(range), mValueFormatterForEdit(valueFormatterForEdit), mValue(value),
+          mIsSelectable(isSelectable), mCapture(capture)
+    {
+    }
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        display.ClearState();
+        if (isEditing)
+        {
+            display.mDisplay.fillRect(0,
+                                      display.GetClientHeight() - display.mDisplay.GetLineHeight(),
+                                      display.mDisplay.width(),
+                                      display.mDisplay.GetLineHeight(),
+                                      SSD1306_WHITE);
+            display.mDisplay.setCursor(0, display.GetClientHeight() - display.mDisplay.GetLineHeight());
+            display.mDisplay.setTextColor(SSD1306_INVERSE);
+            display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
+        }
+
+        display.ClearState();
+
+        display.mDisplay.drawBitmap(mBounds.x,
+                                    mBounds.y,
+                                    KnobDetails::gKnobOutlineBMP,
+                                    KnobDetails::BmpWidthBits,
+                                    KnobDetails::Height,
+                                    SSD1306_WHITE);
+        float val = mValue.GetValue();
+        float aCenter = KnobDetails::CenterAngle; // Remap01ToRange(0.5f, KnobDetails::MinAngle, KnobDetails::MaxAngle);
+        if (mRange.IsBottom(val))
+        {
+            // -inf db,
+            display.fillPie(KnobDetails::Origin.Add(mBounds.UpperLeft()),
+                            KnobDetails::Radius,
+                            KnobDetails::MinAngle,
+                            aCenter - KnobDetails::MinAngle,
+                            false);
+        }
+        else
+        {
+            if (mRange.mRangeMax >= 0) // user can GAIN in addition to attenuation; put zero point at the top.
+            {
+                // negative & positive poles are different scales
+                float a0;
+                if (val < 0)
+                {
+                    float negPos = RemapTo01(val, mRange.mRangeMin, 0.0f);
+                    a0 = Remap01ToRange(negPos, KnobDetails::MinAngle, aCenter);
+                }
+                else
+                {
+                    float posPos = RemapTo01(val, 0.0f, mRange.mRangeMax);
+                    a0 = Remap01ToRange(posPos, aCenter, KnobDetails::MaxAngle);
+                }
+                display.fillPie(KnobDetails::Origin.Add(mBounds.UpperLeft()), KnobDetails::Radius, a0, aCenter - a0);
+            }
+            else // ONLY attenuation allowed. -inf is full left, max is full right
+            {
+                float aCenter = Remap01ToRange(0.5f, KnobDetails::MinAngle, KnobDetails::MaxAngle);
+                float a0;
+                float negPos = RemapTo01(val, mRange.mRangeMin, 0.0f);
+                a0 = Remap01ToRange(negPos, KnobDetails::MinAngle, aCenter);
+                display.fillPie(KnobDetails::Origin.Add(mBounds.UpperLeft()), KnobDetails::Radius, a0, aCenter - a0);
+            }
+        }
+    }
+    virtual void IGuiControl_EditBegin(DisplayApp &app) override
+    {
+        mEditingOriginalVal = mValue.GetValue();
+    }
+    virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
+    {
+        if (wasCancelled)
+        {
+            mValue.SetValue(mEditingOriginalVal);
+        }
+    }
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        if (isEditing)
+        {
+            float oldVal = mValue.GetValue();
+            float newVal = mRange.AdjustValue(oldVal,
+                                              app.mEnc.GetIntDelta(),
+                                              app.mInput->mModifierCourse.CurrentValue(),
+                                              app.mInput->mModifierFine.CurrentValue());
+            mValue.SetValue(newVal);
+        }
+    }
+};
+
 // select patch
 // select harm patch
-// knob (N11 or 01)
 // knob for GAIN with -inf
 // stereo width (N11 or 01)
 // text

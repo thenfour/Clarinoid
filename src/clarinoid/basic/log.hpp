@@ -6,12 +6,6 @@
 namespace clarinoid
 {
 
-template <typename T, size_t N>
-constexpr size_t SizeofStaticArray(const T (&x)[N])
-{
-    return N;
-}
-
 String ToString(void *p)
 {
     static char x[20];
