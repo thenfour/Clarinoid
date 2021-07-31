@@ -559,8 +559,8 @@ PieData fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) 
 template <typename T>
 struct NumericEditRangeSpec
 {
-    static constexpr int DefaultCourseSteps = 18;
-    static constexpr int DefaultNormalSteps = 36;
+    static constexpr int DefaultCourseSteps = 12;
+    static constexpr int DefaultNormalSteps = 24;
     static constexpr int DefaultFineSteps = 500;
 
     T mRangeMin;

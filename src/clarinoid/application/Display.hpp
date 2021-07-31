@@ -290,7 +290,7 @@ struct CCDisplay
 
     void DrawSelectionRect(const RectI &rc)
     {
-        RectI z = rc.Inflate(1);
+        RectI z = rc.Inflate(2);
         mDisplay.DrawMarchingAntsRectOutline<1, 3, 1>(z.x, z.y, z.width, z.height, (micros() / (1000 * 120)));
     }
 

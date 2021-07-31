@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "Binary.hpp"
 #include "BaseDefs.hpp"
 #include "log.hpp"
 #include "assert.hpp"

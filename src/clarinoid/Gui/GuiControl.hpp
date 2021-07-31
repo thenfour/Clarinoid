@@ -4,6 +4,7 @@
 
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
+#include "StereoSpreadIcons.hpp"
 
 namespace clarinoid
 {
@@ -143,6 +144,7 @@ static const uint8_t PROGMEM gPrevPageBMP[] = {
     0b00100000,
 };
 static const BitmapSpec gPrevPageBitmapSpec = BitmapSpec::Construct(gPrevPageBMP, 1, 3);
+
 
 // ---------------------------------------------------------------------------------------
 // very much like ISettingItem.
@@ -497,9 +499,79 @@ struct GuiKnobGainControl : IGuiControl
     }
 };
 
+
+
+// ---------------------------------------------------------------------------------------
+struct GuiStereoSpreadControl : IGuiControl
+{
+    NumericEditRangeSpec<float> mRange;
+    cc::function<String(void *, const float &)>::ptr_t mValueFormatterForEdit;
+    Property<float> mValue;
+    Property<bool> mIsSelectable;
+    void *mCapture;
+
+    float mEditingOriginalVal = 0;
+
+    GuiStereoSpreadControl(float page,
+                       RectI bounds,
+                       const NumericEditRangeSpec<float> &range,
+                       cc::function<String(void *, const float &)>::ptr_t valueFormatterForEdit,
+                       const Property<float> &value,
+                       const Property<bool> &isSelectable,
+                       void *capture)
+        : IGuiControl(page, bounds), mRange(range), mValueFormatterForEdit(valueFormatterForEdit), mValue(value),
+          mIsSelectable(isSelectable), mCapture(capture)
+    {
+    }
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        display.ClearState();
+        if (isEditing)
+        {
+            display.mDisplay.fillRect(0,
+                                      display.GetClientHeight() - display.mDisplay.GetLineHeight(),
+                                      display.mDisplay.width(),
+                                      display.mDisplay.GetLineHeight(),
+                                      SSD1306_WHITE);
+            display.mDisplay.setCursor(1, display.GetClientHeight() - display.mDisplay.GetLineHeight());
+            display.mDisplay.setTextColor(SSD1306_INVERSE);
+            display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
+        }
+
+        display.ClearState();
+        float val = mValue.GetValue();
+        auto& spec = GetStereoSpreadBitmapSpec(val);
+        display.DrawBitmap(mBounds.UpperLeft(), spec);
+    }
+    virtual void IGuiControl_EditBegin(DisplayApp &app) override
+    {
+        mEditingOriginalVal = mValue.GetValue();
+    }
+    virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
+    {
+        if (wasCancelled)
+        {
+            mValue.SetValue(mEditingOriginalVal);
+        }
+    }
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        if (isEditing)
+        {
+            float oldVal = mValue.GetValue();
+            float newVal = mRange.AdjustValue(oldVal,
+                                              app.mEnc.GetIntDelta(),
+                                              app.mInput->mModifierCourse.CurrentValue(),
+                                              app.mInput->mModifierFine.CurrentValue());
+            mValue.SetValue(newVal);
+        }
+    }
+};
+
+
+
 // select patch
 // select harm patch
-// stereo width (N11 or 01)
 // text string
 // filter type
 // waveform

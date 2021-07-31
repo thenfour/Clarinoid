@@ -215,6 +215,28 @@ struct GuiPerformanceApp : GuiApp
 
     };
 
+    float floatParam4 = 0.0f;
+    GuiStereoSpreadControl mStereoSpread1 = {
+        1,
+        RectI::Construct(75, 10, 17, 7),
+        StandardRangeSpecs::gFloat_N1_1,
+        [](void *, const float &val) {
+            return String(String("Stereo spread: ") + val);
+        }, // formatter for edit
+        Property<float>{[](void *cap) {
+                            auto *pThis = (GuiPerformanceApp *)cap;
+                            return pThis->floatParam4;
+                        },
+                        [](void *cap, const float &i) {
+                            auto *pThis = (GuiPerformanceApp *)cap;
+                            pThis->floatParam4 = i;
+                        },
+                        this},                                                                 // value
+        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
+        this                                                                                   // cap
+
+    };
+
     GuiLabelControl mLabel7 = {2, false, RectI::Construct(4, 24, 50, 8), String("page 3")};
     GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
     GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
@@ -260,7 +282,7 @@ struct GuiPerformanceApp : GuiApp
     };
     GuiLabelControl mLabel10 = {5, false, RectI::Construct(14, 34, 50, 8), String("page 6 ~~")};
 
-    IGuiControl *mArray[15] = {
+    IGuiControl *mArray[16] = {
         &mLabel1,
         &mLabel2,
         &mLabel3,
@@ -270,6 +292,7 @@ struct GuiPerformanceApp : GuiApp
         &mKnob1,
         &mKnob2,
         &mKnob3,
+        &mStereoSpread1,
         &mLabel7,
         &mLabel8,
         &mLabel9,
