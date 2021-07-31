@@ -52,7 +52,6 @@ struct IGuiControl
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) = 0;
     virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) = 0;
 
-  protected:
     int mPage = 0;
     RectI mBounds;
     bool mIsSelectable = true;
@@ -415,6 +414,7 @@ struct GuiStereoSpreadControl : IGuiControl
     }
 };
 
+// ---------------------------------------------------------------------------------------
 template <typename T>
 struct GuiEnumEditor
 {
@@ -517,6 +517,44 @@ struct GuiEnumControl : IGuiControl
     }
 };
 
+// ---------------------------------------------------------------------------------------
+struct GuiBoolControl : IGuiControl
+{
+    typename cc::function<void(void *, bool val, bool isSelected, bool isEditing, DisplayApp &)>::ptr_t mRenderFn =
+        nullptr;
 
+    Property<bool> mBinding;
+    Property<bool> mIsSelectable;
+    void *mCapture;
+
+    GuiBoolControl(
+        int page,
+        RectI bounds,
+        const Property<bool> &binding,
+        typename cc::function<void(void *, bool val, bool isSelected, bool isEditing, DisplayApp &app)>::ptr_t renderFn,
+        const Property<bool> &isSelectable,
+        void *capture)
+        : IGuiControl(page, bounds), mRenderFn(renderFn), mBinding(binding), mIsSelectable(isSelectable),
+          mCapture(capture)
+    {
+    }
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        display.ClearState();
+        display.mDisplay.setCursor(mBounds.x, mBounds.y);
+        mRenderFn(mCapture, mBinding.GetValue(), isSelected, isEditing, app);
+    }
+    virtual bool IGuiControl_EditBegin(DisplayApp &app) override
+    {
+        mBinding.SetValue(!mBinding.GetValue());
+        return false;
+    }
+    virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
+    {
+    }
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+    }
+};
 
 } // namespace clarinoid

@@ -18,6 +18,7 @@ struct ListControl
         mpList = list;
         mSelectedItem = selectedItemBinding;
         pEncoder = penc;
+        mEnc.ClearState(); // important so the next Update() call doesn't incorrectly calculate a delta.
     }
 
     void Render(CCDisplay *mDisplay, int x, int y, int mVisibleItems)

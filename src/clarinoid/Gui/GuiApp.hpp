@@ -256,7 +256,7 @@ struct GuiPerformanceApp : GuiApp
     ClarinoidFilterType mEnumParam1 = ClarinoidFilterType::HP_K35;
     GuiEnumControl<ClarinoidFilterType> mEnum1 = {
         2,                                            // page
-        RectI::Construct(5, 2, 100, 20),              // bounds
+        RectI::Construct(5, 2, 50, 20),               // bounds
         gClarinoidFilterTypeInfo,                     // enuminfo
         Property<ClarinoidFilterType>{[](void *cap) { // binding
                                           auto *pThis = (GuiPerformanceApp *)cap;
@@ -269,12 +269,33 @@ struct GuiPerformanceApp : GuiApp
                                       this},
         [](void *cap, const ClarinoidFilterType &val, bool isSelected, bool isEditing, DisplayApp &app) { // render fn
             app.mDisplay.mDisplay.print(String(gClarinoidFilterTypeInfo.GetValueString(val)));
-            //app.mDisplay.mDisplay.print("hi.");
         },
         Property<bool>{
             [](void *cap) { return true; }, // selectable
         },
         this};
+
+    bool mMuteParam = false;
+    GuiBoolControl mMute = {2,                              // page
+                            RectI::Construct(50, 2, 17, 7), // bounds
+                            Property<bool>{[](void *cap) {  // binding
+                                               auto *pThis = (GuiPerformanceApp *)cap;
+                                               return pThis->mMuteParam;
+                                           },
+                                           [](void *cap, const bool &i) {
+                                               auto *pThis = (GuiPerformanceApp *)cap;
+                                               pThis->mMuteParam = i;
+                                           },
+                                           this},
+                            [](void *cap, bool val, bool isSelected, bool isEditing, DisplayApp &app) { // render fn
+                                auto *pThis = (GuiPerformanceApp *)cap;
+                                app.mDisplay.DrawBitmap(pThis->mMute.mBounds.UpperLeft(),
+                                                        val ? gMuteOnBitmapSpec : gMuteOffBitmapSpec);
+                            },
+                            Property<bool>{
+                                [](void *cap) { return true; }, // selectable
+                            },
+                            this};
 
     GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
     GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
@@ -320,7 +341,7 @@ struct GuiPerformanceApp : GuiApp
     };
     GuiLabelControl mLabel10 = {5, false, RectI::Construct(14, 34, 50, 8), String("page 6 ~~")};
 
-    IGuiControl *mArray[17] = {
+    IGuiControl *mArray[18] = {
         &mLabel1,
         &mLabel2,
         &mLabel3,
@@ -333,6 +354,7 @@ struct GuiPerformanceApp : GuiApp
         &mStereoSpread1,
         &mLabel7,
         &mEnum1,
+        &mMute,
         &mLabel8,
         &mLabel9,
         &mCtrl4a,
