@@ -53,8 +53,8 @@ struct GuiApp : public DisplayApp
             // not editing
             if (mOK.IsNewlyPressed() && navState.mSelectedControl)
             {
-                navState.mSelectedControl->IGuiControl_EditBegin(*this);
-                mIsEditing = true;
+                mIsEditing = navState.mSelectedControl->IGuiControl_EditBegin(*this);
+                // mIsEditing = true;
             }
             else
             {
@@ -95,16 +95,22 @@ struct GuiApp : public DisplayApp
     {
         auto *list = GetRootControlList();
         auto navState = mNavigator.GetNavState(list);
+        IGuiControl *ctrlToRenderLast = nullptr;
         for (size_t i = 0; i < list->Count(); ++i)
         {
             auto *ctrl = list->GetItem(i);
             if (ctrl->IGuiControl_GetPage() != navState.mSelectedPage)
                 continue;
-            ctrl->IGuiControl_Render(
-                ctrl == navState.mSelectedControl, mIsEditing && ctrl == navState.mSelectedControl, *this, mDisplay);
             if (ctrl == navState.mSelectedControl)
             {
-                mDisplay.DrawSelectionRect(ctrl->IGuiControl_GetBounds());
+                ctrlToRenderLast = ctrl;
+            }
+            else
+            {
+                ctrl->IGuiControl_Render(ctrl == navState.mSelectedControl,
+                                         mIsEditing && ctrl == navState.mSelectedControl,
+                                         *this,
+                                         mDisplay);
             }
         }
 
@@ -117,8 +123,18 @@ struct GuiApp : public DisplayApp
         }
         if (navState.mSelectedPage > 0)
         {
-            mDisplay.DrawBitmap(PointI::Construct(0, (mDisplay.GetClientHeight() - gPrevPageBitmapSpec.heightPixels) / 2),
-                                gPrevPageBitmapSpec);
+            mDisplay.DrawBitmap(
+                PointI::Construct(0, (mDisplay.GetClientHeight() - gPrevPageBitmapSpec.heightPixels) / 2),
+                gPrevPageBitmapSpec);
+        }
+
+        if (ctrlToRenderLast)
+        {
+            mDisplay.DrawSelectionRect(ctrlToRenderLast->IGuiControl_GetBounds());
+            ctrlToRenderLast->IGuiControl_Render(ctrlToRenderLast == navState.mSelectedControl,
+                                                 mIsEditing && ctrlToRenderLast == navState.mSelectedControl,
+                                                 *this,
+                                                 mDisplay);
         }
     }
     virtual GuiControlList *GetRootControlList() = 0;
@@ -220,9 +236,7 @@ struct GuiPerformanceApp : GuiApp
         1,
         RectI::Construct(75, 10, 17, 7),
         StandardRangeSpecs::gFloat_N1_1,
-        [](void *, const float &val) {
-            return String(String("Stereo spread: ") + val);
-        }, // formatter for edit
+        [](void *, const float &val) { return String(String("Stereo spread: ") + val); }, // formatter for edit
         Property<float>{[](void *cap) {
                             auto *pThis = (GuiPerformanceApp *)cap;
                             return pThis->floatParam4;
@@ -237,7 +251,31 @@ struct GuiPerformanceApp : GuiApp
 
     };
 
-    GuiLabelControl mLabel7 = {2, false, RectI::Construct(4, 24, 50, 8), String("page 3")};
+    GuiLabelControl mLabel7 = {2, false, RectI::Construct(5, 24, 50, 8), String("page 3")};
+
+    ClarinoidFilterType mEnumParam1 = ClarinoidFilterType::HP_K35;
+    GuiEnumControl<ClarinoidFilterType> mEnum1 = {
+        2,                                            // page
+        RectI::Construct(5, 2, 100, 20),              // bounds
+        gClarinoidFilterTypeInfo,                     // enuminfo
+        Property<ClarinoidFilterType>{[](void *cap) { // binding
+                                          auto *pThis = (GuiPerformanceApp *)cap;
+                                          return pThis->mEnumParam1;
+                                      },
+                                      [](void *cap, const ClarinoidFilterType &i) {
+                                          auto *pThis = (GuiPerformanceApp *)cap;
+                                          pThis->mEnumParam1 = i;
+                                      },
+                                      this},
+        [](void *cap, const ClarinoidFilterType &val, bool isSelected, bool isEditing, DisplayApp &app) { // render fn
+            app.mDisplay.mDisplay.print(String(gClarinoidFilterTypeInfo.GetValueString(val)));
+            //app.mDisplay.mDisplay.print("hi.");
+        },
+        Property<bool>{
+            [](void *cap) { return true; }, // selectable
+        },
+        this};
+
     GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
     GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
 
@@ -282,7 +320,7 @@ struct GuiPerformanceApp : GuiApp
     };
     GuiLabelControl mLabel10 = {5, false, RectI::Construct(14, 34, 50, 8), String("page 6 ~~")};
 
-    IGuiControl *mArray[16] = {
+    IGuiControl *mArray[17] = {
         &mLabel1,
         &mLabel2,
         &mLabel3,
@@ -294,6 +332,7 @@ struct GuiPerformanceApp : GuiApp
         &mKnob3,
         &mStereoSpread1,
         &mLabel7,
+        &mEnum1,
         &mLabel8,
         &mLabel9,
         &mCtrl4a,

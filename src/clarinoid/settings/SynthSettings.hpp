@@ -44,7 +44,7 @@ enum class ClarinoidFilterType : uint8_t
     HP_Moog4,
 };
 
-EnumItemInfo<ClarinoidFilterType> gClarinoidFilterTypeItems[8] = {
+EnumItemInfo<ClarinoidFilterType> gClarinoidFilterTypeItems[12] = {
     {ClarinoidFilterType::LP_OnePole, "LP_OnePole"},
     {ClarinoidFilterType::LP_SEM12, "LP_SEM12"},
     {ClarinoidFilterType::LP_Diode, "LP_Diode"},
@@ -53,6 +53,10 @@ EnumItemInfo<ClarinoidFilterType> gClarinoidFilterTypeItems[8] = {
     {ClarinoidFilterType::LP_Moog4, "LP_Moog4"},
     {ClarinoidFilterType::BP_Moog2, "BP_Moog2"},
     {ClarinoidFilterType::BP_Moog4, "BP_Moog4"},
+    {ClarinoidFilterType::HP_OnePole, "HP_OnePole"},
+    {ClarinoidFilterType::HP_K35, "HP_K35"},
+    {ClarinoidFilterType::HP_Moog2, "HP_Moog2"},
+    {ClarinoidFilterType::HP_Moog4, "HP_Moog4"},
 };
 
 EnumInfo<ClarinoidFilterType> gClarinoidFilterTypeInfo("FilterType", gClarinoidFilterTypeItems);

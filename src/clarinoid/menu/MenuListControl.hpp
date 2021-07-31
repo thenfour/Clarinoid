@@ -33,6 +33,11 @@ struct ListControl
         {
             mDisplay->DrawInvertedLine(mpList->List_GetItemCaption(itemToRender), itemToRender == mSelectedItem.GetValue());
             itemToRender = RotateIntoRange(itemToRender + 1, count);
+            if (itemToRender == (mpList->List_GetItemCount() - 1)) {
+                auto cursorY = mDisplay->mDisplay.getCursorY();
+                int separatorY = cursorY + mDisplay->mDisplay.GetLineHeight() - 1;
+                mDisplay->mDisplay.drawFastHLine(0, separatorY, mDisplay->mDisplay.width(), SSD1306_INVERSE);
+            }
         }
     }
 

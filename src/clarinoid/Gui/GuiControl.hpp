@@ -4,147 +4,12 @@
 
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
+
 #include "StereoSpreadIcons.hpp"
+#include "Bitmaps.hpp"
 
 namespace clarinoid
 {
-
-namespace KnobDetails
-{
-static const uint8_t PROGMEM gKnobOutlineBMP[] = {
-    0b00000111, 0b11000000, //
-    0b00011000, 0b00110000, //
-    0b00100000, 0b00001000, //
-    0b01000000, 0b00000100, //
-    0b01000000, 0b00000100, //
-    0b10000000, 0b00000010, //
-    0b10000000, 0b00000010, //
-    0b10000001, 0b00000010, //
-    0b10000000, 0b00000010, //
-    0b10000000, 0b00000010, //
-    0b01000000, 0b00000100, //
-    0b01000000, 0b00000100, //
-    0b00100000, 0b00001000, //
-};
-
-static const BitmapSpec gKnobOutlineSpec = BitmapSpec::Construct(gKnobOutlineBMP, 2, 15);
-
-// same thing but showing a static "-inf" indicator
-static const uint8_t PROGMEM gKnobOutlineMutedBMP[] = {
-    0b00000111, 0b11000000, //
-    0b00011000, 0b00110000, //
-    0b00100000, 0b00001000, //
-    0b01000000, 0b00000100, //
-    0b01000000, 0b00000100, //
-    0b10000011, 0b01100010, //
-    0b10000101, 0b10010010, //
-    0b10110100, 0b11010010, //
-    0b10000011, 0b01100010, //
-    0b10000000, 0b00000010, //
-    0b01000000, 0b00000100, //
-    0b01000000, 0b00000100, //
-    0b00100000, 0b00001000, //
-};
-
-static const BitmapSpec gKnobOutlineMutedSpec = BitmapSpec::Construct(gKnobOutlineMutedBMP, 2, 15);
-
-static const float CenterX = 7.75f;
-static const float CenterY = 7.5f;
-static const float MinAngle = 2.35f;
-static const float CenterAngle = 4.712388975f; // 1.5 pi
-static const float MaxAngle = 7.15f;
-static const float Radius = 7.1f;
-
-static PointF Origin = PointF::Construct(CenterX, CenterY);
-
-} // namespace KnobDetails
-
-static const uint8_t PROGMEM gLowPassBMP[] = {
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b01110000, 0b00000000, //
-    0b01111000, 0b00000000, //
-    0b01111100, 0b00000000, //
-    0b01111110, 0b00000000, //
-    0b01111111, 0b00000000, //
-    0b01111111, 0b10000000, //
-    0b01111111, 0b11000000, //
-    0b01111111, 0b11100000, //
-};
-static const BitmapSpec gLowPassBitmapSpec = BitmapSpec::Construct(gLowPassBMP, 2, 15);
-
-static const uint8_t PROGMEM gHighPassBMP[] = {
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00001110, //
-    0b00000000, 0b00011110, //
-    0b00000000, 0b00111110, //
-    0b00000000, 0b01111110, //
-    0b00000000, 0b11111110, //
-    0b00000001, 0b11111110, //
-    0b00000011, 0b11111110, //
-    0b00000111, 0b11111110, //
-};
-static const BitmapSpec gHighPassBitmapSpec = BitmapSpec::Construct(gHighPassBMP, 2, 15);
-
-static const uint8_t PROGMEM gBandPassBMP[] = {
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000000, 0b00000000, //
-    0b00000111, 0b00000000, //
-    0b00001111, 0b10000000, //
-    0b00001111, 0b10000000, //
-    0b00011111, 0b11000000, //
-    0b00011111, 0b11000000, //
-    0b00111111, 0b11100000, //
-    0b00111111, 0b11100000, //
-    0b01111111, 0b11110000, //
-};
-static const BitmapSpec gBandPassBitmapSpec = BitmapSpec::Construct(gBandPassBMP, 2, 15);
-
-static const uint8_t PROGMEM gNextPageBMP[] = {
-    0b10000000,
-    0b10000000,
-    0b10000000,
-    0b11000000,
-    0b11000000,
-    0b11000000,
-    0b11100000,
-    0b11100000,
-    0b11100000,
-    0b11000000,
-    0b11000000,
-    0b11000000,
-    0b10000000,
-    0b10000000,
-    0b10000000,
-};
-static const BitmapSpec gNextPageBitmapSpec = BitmapSpec::Construct(gNextPageBMP, 1, 3);
-
-static const uint8_t PROGMEM gPrevPageBMP[] = {
-    0b00100000,
-    0b00100000,
-    0b00100000,
-    0b01100000,
-    0b01100000,
-    0b01100000,
-    0b11100000,
-    0b11100000,
-    0b11100000,
-    0b01100000,
-    0b01100000,
-    0b01100000,
-    0b00100000,
-    0b00100000,
-    0b00100000,
-};
-static const BitmapSpec gPrevPageBitmapSpec = BitmapSpec::Construct(gPrevPageBMP, 1, 3);
-
 
 // ---------------------------------------------------------------------------------------
 // very much like ISettingItem.
@@ -176,8 +41,9 @@ struct IGuiControl
     virtual void IGuiControl_SelectEnd(DisplayApp &app)
     {
     }
-    virtual void IGuiControl_EditBegin(DisplayApp &app)
+    virtual bool IGuiControl_EditBegin(DisplayApp &app) // if editing should be entered, return true.
     {
+        return false;
     }
     virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled)
     {
@@ -245,11 +111,30 @@ struct GuiLabelControl : IGuiControl
     }
     virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
-        //
     }
 };
 
+// For the little one-line editor on the top/bottom of the screen, this function
+// sets up the mini editor state so the caller can just print the text or render or whatever it needs to do.
+// returns true if the caller should proceed drawing the editor.
+static bool GuiInitiateMiniEditor(bool isEditing, DisplayApp &app)
+{
+    if (!isEditing)
+        return false;
+    app.mDisplay.ClearState();
+    app.mDisplay.mDisplay.fillRect(0,
+                                   app.mDisplay.GetClientHeight() - app.mDisplay.mDisplay.GetLineHeight(),
+                                   app.mDisplay.mDisplay.width(),
+                                   app.mDisplay.mDisplay.GetLineHeight(),
+                                   SSD1306_WHITE);
+    app.mDisplay.mDisplay.setCursor(1, app.mDisplay.GetClientHeight() - app.mDisplay.mDisplay.GetLineHeight());
+    app.mDisplay.mDisplay.setTextColor(SSD1306_INVERSE);
+    return true;
+}
+
 // ---------------------------------------------------------------------------------------
+// integer parameter, string formatting,
+// mini string-based editor.
 struct GuiIntegerTextControl : IGuiControl
 {
     NumericEditRangeSpec<int> mRange;
@@ -258,8 +143,6 @@ struct GuiIntegerTextControl : IGuiControl
     Property<int> mValue;
     Property<bool> mIsSelectable;
     void *mCapture;
-    // editing label placement (top/bottom)
-    // text size is not a good idea because it has bugs
 
     int mEditingOriginalVal = 0;
 
@@ -277,30 +160,19 @@ struct GuiIntegerTextControl : IGuiControl
     }
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
-        display.ClearState();
-        if (isEditing)
+        if (GuiInitiateMiniEditor(isEditing, app))
         {
-            display.mDisplay.fillRect(0,
-                                      display.GetClientHeight() - display.mDisplay.GetLineHeight(),
-                                      display.mDisplay.width(),
-                                      display.mDisplay.GetLineHeight(),
-                                      SSD1306_WHITE);
-            // Serial.println(String("y cursor setting to ") + (display.GetClientHeight() -
-            // display.mDisplay.GetLineHeight()));
-            display.mDisplay.setCursor(0, display.GetClientHeight() - display.mDisplay.GetLineHeight());
-            display.mDisplay.setTextColor(SSD1306_INVERSE);
-            // Serial.println(String("y cursor ? ") + (display.mDisplay.getCursorY()));
             display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
-            // Serial.println(String("y cursor after print = ") + (display.mDisplay.getCursorY()));
         }
         display.ClearState();
         display.mDisplay.setCursor(mBounds.x, mBounds.y);
         display.SetClipRect(mBounds);
         display.mDisplay.print(mValueFormatter(mCapture, mValue.GetValue()));
     }
-    virtual void IGuiControl_EditBegin(DisplayApp &app) override
+    virtual bool IGuiControl_EditBegin(DisplayApp &app) override
     {
         mEditingOriginalVal = mValue.GetValue();
+        return true;
     }
     virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
     {
@@ -318,7 +190,6 @@ struct GuiIntegerTextControl : IGuiControl
                                             app.mEnc.GetIntDelta(),
                                             app.mInput->mModifierCourse.CurrentValue(),
                                             app.mInput->mModifierFine.CurrentValue());
-            // Serial.printf("editing param: delta=%d, old=%d, new=%d\n", app.mEnc.GetIntDelta(), oldVal, newVal);
             mValue.SetValue(newVal);
         }
     }
@@ -336,7 +207,7 @@ struct GuiKnobControl : IGuiControl
 
     float mEditingOriginalVal = 0;
 
-    GuiKnobControl(float page,
+    GuiKnobControl(int page,
                    RectI bounds,
                    const NumericEditRangeSpec<float> &range,
                    cc::function<String(void *, const float &)>::ptr_t valueFormatterForEdit,
@@ -349,30 +220,22 @@ struct GuiKnobControl : IGuiControl
     }
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
-        display.ClearState();
-        if (isEditing)
+        if (GuiInitiateMiniEditor(isEditing, app))
         {
-            display.mDisplay.fillRect(0,
-                                      display.GetClientHeight() - display.mDisplay.GetLineHeight(),
-                                      display.mDisplay.width(),
-                                      display.mDisplay.GetLineHeight(),
-                                      SSD1306_WHITE);
-            display.mDisplay.setCursor(0, display.GetClientHeight() - display.mDisplay.GetLineHeight());
-            display.mDisplay.setTextColor(SSD1306_INVERSE);
             display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
         }
 
         display.ClearState();
-
         display.DrawBitmap(mBounds.UpperLeft(), KnobDetails::gKnobOutlineSpec);
         float val = mValue.GetValue();
         float a0 = mRange.remap(val, KnobDetails::MinAngle, KnobDetails::MaxAngle);
         float a1 = mRange.remap(0.0f, KnobDetails::MinAngle, KnobDetails::MaxAngle);
         display.fillPie(KnobDetails::Origin.Add(mBounds.UpperLeft()), KnobDetails::Radius, a0, a1 - a0);
     }
-    virtual void IGuiControl_EditBegin(DisplayApp &app) override
+    virtual bool IGuiControl_EditBegin(DisplayApp &app) override
     {
         mEditingOriginalVal = mValue.GetValue();
+        return true;
     }
     virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
     {
@@ -410,7 +273,7 @@ struct GuiKnobGainControl : IGuiControl
 
     float mEditingOriginalVal = 0;
 
-    GuiKnobGainControl(float page,
+    GuiKnobGainControl(int page,
                        RectI bounds,
                        const NumericEditRangeSpecWithBottom &range,
                        cc::function<String(void *, const float &)>::ptr_t valueFormatterForEdit,
@@ -423,16 +286,8 @@ struct GuiKnobGainControl : IGuiControl
     }
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
-        display.ClearState();
-        if (isEditing)
+        if (GuiInitiateMiniEditor(isEditing, app))
         {
-            display.mDisplay.fillRect(0,
-                                      display.GetClientHeight() - display.mDisplay.GetLineHeight(),
-                                      display.mDisplay.width(),
-                                      display.mDisplay.GetLineHeight(),
-                                      SSD1306_WHITE);
-            display.mDisplay.setCursor(1, display.GetClientHeight() - display.mDisplay.GetLineHeight());
-            display.mDisplay.setTextColor(SSD1306_INVERSE);
             display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
         }
 
@@ -474,9 +329,10 @@ struct GuiKnobGainControl : IGuiControl
             }
         }
     }
-    virtual void IGuiControl_EditBegin(DisplayApp &app) override
+    virtual bool IGuiControl_EditBegin(DisplayApp &app) override
     {
         mEditingOriginalVal = mValue.GetValue();
+        return true;
     }
     virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
     {
@@ -498,8 +354,6 @@ struct GuiKnobGainControl : IGuiControl
         }
     }
 };
-
-
 
 // ---------------------------------------------------------------------------------------
 struct GuiStereoSpreadControl : IGuiControl
@@ -512,40 +366,33 @@ struct GuiStereoSpreadControl : IGuiControl
 
     float mEditingOriginalVal = 0;
 
-    GuiStereoSpreadControl(float page,
-                       RectI bounds,
-                       const NumericEditRangeSpec<float> &range,
-                       cc::function<String(void *, const float &)>::ptr_t valueFormatterForEdit,
-                       const Property<float> &value,
-                       const Property<bool> &isSelectable,
-                       void *capture)
+    GuiStereoSpreadControl(int page,
+                           RectI bounds,
+                           const NumericEditRangeSpec<float> &range,
+                           cc::function<String(void *, const float &)>::ptr_t valueFormatterForEdit,
+                           const Property<float> &value,
+                           const Property<bool> &isSelectable,
+                           void *capture)
         : IGuiControl(page, bounds), mRange(range), mValueFormatterForEdit(valueFormatterForEdit), mValue(value),
           mIsSelectable(isSelectable), mCapture(capture)
     {
     }
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
-        display.ClearState();
-        if (isEditing)
+        if (GuiInitiateMiniEditor(isEditing, app))
         {
-            display.mDisplay.fillRect(0,
-                                      display.GetClientHeight() - display.mDisplay.GetLineHeight(),
-                                      display.mDisplay.width(),
-                                      display.mDisplay.GetLineHeight(),
-                                      SSD1306_WHITE);
-            display.mDisplay.setCursor(1, display.GetClientHeight() - display.mDisplay.GetLineHeight());
-            display.mDisplay.setTextColor(SSD1306_INVERSE);
             display.mDisplay.print(mValueFormatterForEdit(mCapture, mValue.GetValue()));
         }
 
         display.ClearState();
         float val = mValue.GetValue();
-        auto& spec = GetStereoSpreadBitmapSpec(val);
+        auto &spec = GetStereoSpreadBitmapSpec(val);
         display.DrawBitmap(mBounds.UpperLeft(), spec);
     }
-    virtual void IGuiControl_EditBegin(DisplayApp &app) override
+    virtual bool IGuiControl_EditBegin(DisplayApp &app) override
     {
         mEditingOriginalVal = mValue.GetValue();
+        return true;
     }
     virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
     {
@@ -568,12 +415,108 @@ struct GuiStereoSpreadControl : IGuiControl
     }
 };
 
+template <typename T>
+struct GuiEnumEditor
+{
+    T mOldVal;
+
+    Property<T> mBinding;
+    const EnumInfo<T> &mEnumInfo;
+
+    Property<int> mListSelectedItem = {[](void *capture) {
+                                           GuiEnumEditor<T> *pthis = (GuiEnumEditor<T> *)capture;
+                                           return (int)pthis->mBinding.GetValue();
+                                       },
+                                       [](void *capture, const int &val) {
+                                           GuiEnumEditor<T> *pthis = (GuiEnumEditor<T> *)capture;
+                                           pthis->mBinding.SetValue((T)val);
+                                       },
+                                       this};
+
+    ListControl mListControl;
+
+    GuiEnumEditor(const EnumInfo<T> &enumInfo, const Property<T> &binding) : mBinding(binding), mEnumInfo(enumInfo)
+    {
+    }
+
+    bool StartEditing(DisplayApp &app)
+    {
+        mListControl.Init(&mEnumInfo, &app.mInput->mMenuScrollA, mListSelectedItem); //
+        mOldVal = mBinding.GetValue();
+        return true;
+    }
+
+    void StopEditing(DisplayApp &app, bool wasCancelled)
+    {
+        if (wasCancelled)
+        {
+            mBinding.SetValue(mOldVal);
+        }
+    }
+
+    void Update(DisplayApp &app, bool isEditing)
+    {
+        if (!isEditing)
+            return;
+        mListControl.Update();
+    }
+
+    void Render(DisplayApp &app, bool isEditing)
+    {
+        if (!isEditing)
+            return;
+        app.mDisplay.SetupModal();
+        int nitems = app.mDisplay.ClippedAreaHeight() / app.mDisplay.mDisplay.GetLineHeight();
+        mListControl.Render(&app.mDisplay, 12, 12, nitems + 1);
+    }
+};
+
+// ---------------------------------------------------------------------------------------
+template <typename T>
+struct GuiEnumControl : IGuiControl
+{
+    GuiEnumEditor<T> mEditor;
+    typename cc::function<void(void *, const T &, bool, bool, DisplayApp &)>::ptr_t mRenderFn = nullptr;
+
+    Property<T> mBinding;
+    Property<bool> mIsSelectable;
+    void *mCapture;
+
+    GuiEnumControl(
+        int page,
+        RectI bounds,
+        const EnumInfo<T> &enumInfo,
+        const Property<T> &binding,
+        typename cc::function<void(void *, const T &, bool isSelected, bool isEditing, DisplayApp &app)>::ptr_t
+            renderFn,
+        const Property<bool> &isSelectable,
+        void *capture)
+        : IGuiControl(page, bounds), mEditor(enumInfo, binding), mRenderFn(renderFn), mBinding(binding),
+          mIsSelectable(isSelectable), mCapture(capture)
+    {
+    }
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        display.ClearState();
+        display.mDisplay.setCursor(mBounds.x, mBounds.y);
+        mRenderFn(mCapture, mBinding.GetValue(), isSelected, isEditing, app);
+
+        mEditor.Render(app, isEditing);
+    }
+    virtual bool IGuiControl_EditBegin(DisplayApp &app) override
+    {
+        return mEditor.StartEditing(app);
+    }
+    virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
+    {
+        mEditor.StopEditing(app, wasCancelled);
+    }
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    {
+        mEditor.Update(app, isEditing);
+    }
+};
 
 
-// select patch
-// select harm patch
-// text string
-// filter type
-// waveform
 
 } // namespace clarinoid
