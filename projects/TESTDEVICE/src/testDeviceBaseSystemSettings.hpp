@@ -10,7 +10,9 @@ namespace clarinoid
 
 const char gClarinoidVersion[] = "CLARINOID TEST APP";
 
-static const size_t MAX_SYNTH_VOICES = 4;
+static const size_t MAX_SYNTH_VOICES = 6;
+#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}
+
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 8192;
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 1024;

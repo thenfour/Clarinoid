@@ -29,7 +29,7 @@ struct OnePoleFilter : public IFilter
 
     real getFeedbackOutputR()
     {
-        return m_beta * (m_z_1L + m_feedbackR * m_delta);
+        return m_beta * (m_z_1R + m_feedbackR * m_delta);
     }
 
     // IFilter

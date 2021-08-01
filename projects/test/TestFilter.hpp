@@ -77,15 +77,15 @@ void TestFilterPerformance()
 {
   using clarinoid::filters::Real;
   using clarinoid::filters::real;
-  //clarinoid::filters::MoogLadderFilter filt;
-  clarinoid::filters::OnePoleFilter filt;
+  clarinoid::filters::MoogLadderFilter filt;
+  //clarinoid::filters::OnePoleFilter filt;
   clarinoid::filters::IFilter* pf = nullptr;
   pf = &filt;
   filt.SetType(clarinoid::filters::FilterType::BP4);
   filt.SetResonance(2);
   filt.SetSaturation(Real(0.5));
 
-  static const int BUFFER_SIZE = 1024;
+  static const int BUFFER_SIZE = 128;
   real bufL[BUFFER_SIZE];
   real bufR[BUFFER_SIZE];
   srand(GetTickCount());
@@ -94,7 +94,7 @@ void TestFilterPerformance()
     bufR[i] = (((float)rand()) / RAND_MAX) * 2.0f - 1.0f;
   }
   auto m1 = GetTickCount64();
-  for (uint64_t it = 0; it < 50000000; ++it) {
+  for (uint64_t it = 0; it < 50000; ++it) {
     pf->ProcessInPlace(bufL, bufR, BUFFER_SIZE);
   }
   auto m2 = GetTickCount64();

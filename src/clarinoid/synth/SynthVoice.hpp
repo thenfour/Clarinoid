@@ -587,7 +587,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = {{0}, {1}, {2}, {3}, {4}, {5}, /* {6}, {7}*/};
+Voice gVoices[MAX_SYNTH_VOICES] = { VOICE_INITIALIZER };
 
 struct SynthGraphControl
 {
