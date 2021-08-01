@@ -64,6 +64,15 @@ struct RectI
         ret.height = h;
         return ret;
     }
+    static RectI Construct(PointI upperLeft, int w, int h)
+    {
+        RectI ret;
+        ret.x = upperLeft.x;
+        ret.y = upperLeft.y;
+        ret.width = w;
+        ret.height = h;
+        return ret;
+    }
     int x;
     int y;
     int width;

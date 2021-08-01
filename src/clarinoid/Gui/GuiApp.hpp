@@ -5,6 +5,13 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include "GuiNavigation.hpp"
+#include "GuiControlBase.hpp"
+
+#include "GuiBoolControl.hpp"
+#include "GuiIntegerControl.hpp"
+#include "GuiKnobControl.hpp"
+#include "GuiEnumControl.hpp"
+#include "GuiStereoSpreadControl.hpp"
 
 namespace clarinoid
 {
@@ -172,173 +179,79 @@ struct GuiPerformanceApp : GuiApp
     float floatParam1 = 0.0f;
     GuiKnobControl mKnob1 = {
         1,
-        RectI::Construct(5, 30, 16, 16),
+        PointI::Construct(5, 30),
         StandardRangeSpecs::gFloat_N1_1,
-        [](void *, const float &val) { return String(String("Knob1: ") + val); }, // formatter for edit
-        Property<float>{[](void *cap) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            return pThis->floatParam1;
-                        },
-                        [](void *cap, const float &i) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            pThis->floatParam1 = i;
-                        },
-                        this},                                                                 // value
-        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
-        this                                                                                   // cap
-
+        "Knob1", // formatter for edit
+        floatParam1,
+        AlwaysEnabled
     };
 
     float floatParam2 = 0.0f;
     GuiKnobControl mKnob2 = {
         1,
-        RectI::Construct(55, 30, 15, 15),
+        PointI::Construct(55, 30),
         StandardRangeSpecs::gFloat_0_2,
-        [](void *, const float &val) { return String(String("Knob2: ") + val); }, // formatter for edit
-        Property<float>{[](void *cap) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            return pThis->floatParam2;
-                        },
-                        [](void *cap, const float &i) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            pThis->floatParam2 = i;
-                        },
-                        this},                                                                 // value
-        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
-        this                                                                                   // cap
-
+        "Knob2", // formatter for edit
+        floatParam2,
+        AlwaysEnabled
     };
 
     float floatParam3 = 0.0f;
     GuiKnobGainControl mKnob3 = {
         1,
-        RectI::Construct(75, 30, 15, 15),
+        PointI::Construct(75, 30),
         StandardRangeSpecs::gMasterGainDb,
-        [](void *, const float &val) {
-            return String(String("Master Gain: ") + DecibelsToIntString(val));
-        }, // formatter for edit
-        Property<float>{[](void *cap) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            return pThis->floatParam3;
-                        },
-                        [](void *cap, const float &i) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            pThis->floatParam3 = i;
-                        },
-                        this},                                                                 // value
-        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
-        this                                                                                   // cap
-
+        "Master Gain", // formatter for edit
+        floatParam3,
+        AlwaysEnabled
     };
 
     float floatParam4 = 0.0f;
     GuiStereoSpreadControl mStereoSpread1 = {
-        1,
-        RectI::Construct(75, 10, 17, 7),
-        StandardRangeSpecs::gFloat_N1_1,
-        [](void *, const float &val) { return String(String("Stereo spread: ") + val); }, // formatter for edit
-        Property<float>{[](void *cap) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            return pThis->floatParam4;
-                        },
-                        [](void *cap, const float &i) {
-                            auto *pThis = (GuiPerformanceApp *)cap;
-                            pThis->floatParam4 = i;
-                        },
-                        this},                                                                 // value
-        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
-        this                                                                                   // cap
-
+        1,                               // page
+        PointI::Construct(75, 10),       // pos
+        StandardRangeSpecs::gFloat_N1_1, // range
+        "Stereo spread",                 // tooltip
+        floatParam4,                     // binding
+        AlwaysEnabled                    // always en
     };
 
     GuiLabelControl mLabel7 = {2, false, RectI::Construct(5, 24, 50, 8), String("page 3")};
 
     ClarinoidFilterType mEnumParam1 = ClarinoidFilterType::HP_K35;
-    GuiEnumControl<ClarinoidFilterType> mEnum1 = {
-        2,                                            // page
-        RectI::Construct(5, 2, 50, 20),               // bounds
-        gClarinoidFilterTypeInfo,                     // enuminfo
-        Property<ClarinoidFilterType>{[](void *cap) { // binding
-                                          auto *pThis = (GuiPerformanceApp *)cap;
-                                          return pThis->mEnumParam1;
-                                      },
-                                      [](void *cap, const ClarinoidFilterType &i) {
-                                          auto *pThis = (GuiPerformanceApp *)cap;
-                                          pThis->mEnumParam1 = i;
-                                      },
-                                      this},
-        [](void *cap, const ClarinoidFilterType &val, bool isSelected, bool isEditing, DisplayApp &app) { // render fn
-            app.mDisplay.mDisplay.print(String(gClarinoidFilterTypeInfo.GetValueString(val)));
-        },
-        Property<bool>{
-            [](void *cap) { return true; }, // selectable
-        },
-        this};
+    GuiEnumControl<ClarinoidFilterType> mEnum1 = {2,                              // page
+                                                  RectI::Construct(5, 2, 50, 20), // bounds
+                                                  "Filter type",
+                                                  gClarinoidFilterTypeInfo, // enuminfo
+                                                  mEnumParam1,
+                                                  AlwaysEnabled};
 
     bool mMuteParam = false;
-    GuiBoolControl mMute = {2,                              // page
-                            RectI::Construct(50, 2, 17, 7), // bounds
-                            Property<bool>{[](void *cap) {  // binding
-                                               auto *pThis = (GuiPerformanceApp *)cap;
-                                               return pThis->mMuteParam;
-                                           },
-                                           [](void *cap, const bool &i) {
-                                               auto *pThis = (GuiPerformanceApp *)cap;
-                                               pThis->mMuteParam = i;
-                                           },
-                                           this},
-                            [](void *cap, bool val, bool isSelected, bool isEditing, DisplayApp &app) { // render fn
-                                auto *pThis = (GuiPerformanceApp *)cap;
-                                app.mDisplay.DrawBitmap(pThis->mMute.mBounds.UpperLeft(),
-                                                        val ? gMuteOnBitmapSpec : gMuteOffBitmapSpec);
-                            },
-                            Property<bool>{
-                                [](void *cap) { return true; }, // selectable
-                            },
-                            this};
+    GuiMuteControl mMute = {2, PointI::Construct(50, 2), "mute?", "yea", "nah", mMuteParam, AlwaysEnabled};
 
     GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
     GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
 
     int param1 = 111;
-    GuiIntegerTextControl mCtrl4a = {
+    GuiIntegerTextControl<int> mCtrl4a = {
         4,
         RectI::Construct(5, 10, 50, 20),
         StandardRangeSpecs::gMetronomeDecayRange,
-        [](void *, const int &val) { return String(val); },                      // formatter
-        [](void *, const int &val) { return String(String("Param1: ") + val); }, // formatter
-        Property<int>{[](void *cap) {
-                          auto *pThis = (GuiPerformanceApp *)cap;
-                          return pThis->param1;
-                      },
-                      [](void *cap, const int &i) {
-                          auto *pThis = (GuiPerformanceApp *)cap;
-                          pThis->param1 = i;
-                      },
-                      this},                                                                   // value
-        Property<bool>{[](void *cap) { return true; }, [](void *cap, const bool &b) {}, this}, // selectable
-        this                                                                                   // cap
+        "Param1",
+        param1,
+        AlwaysEnabled // selectable
     };
 
     int param2 = 2;
-    GuiIntegerTextControl mCtrl4b = {
+    GuiIntegerTextControl<int> mCtrl4b = {
         4,
         RectI::Construct(5, 35, 117, 20),
         StandardRangeSpecs::gMetronomeDecayRange,
-        [](void *, const int &val) { return String(val); },                         // formatter
-        [](void *, const int &val) { return String(String("Param two: ") + val); }, // formatter
-        Property<int>{[](void *cap) {
-                          auto *pThis = (GuiPerformanceApp *)cap;
-                          return pThis->param2;
-                      },
-                      [](void *cap, const int &i) {
-                          auto *pThis = (GuiPerformanceApp *)cap;
-                          pThis->param2 = i;
-                      },
-                      this},                                                                    // value
-        Property<bool>{[](void *cap) { return false; }, [](void *cap, const bool &b) {}, this}, // selectable
-        this                                                                                    // cap
+        "param2",
+        param2,
+        AlwaysEnabled // selectable
     };
+
     GuiLabelControl mLabel10 = {5, false, RectI::Construct(14, 34, 50, 8), String("page 6 ~~")};
 
     IGuiControl *mArray[18] = {

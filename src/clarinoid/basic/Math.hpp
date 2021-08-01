@@ -640,7 +640,7 @@ struct NumericEditRangeSpec
     {
     }
 
-    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed)
+    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) const
     {
         T step = mNormalStep;
         if (isCoursePressed && !isFinePressed)
@@ -688,7 +688,7 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
         return val <= BOTTOM_VALUE;
     }
 
-    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) override
+    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) const override
     {
         T step = mNormalStep;
         if (isCoursePressed && !isFinePressed)

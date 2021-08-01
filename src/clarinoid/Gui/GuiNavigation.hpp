@@ -5,7 +5,7 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
 
-#include "GuiControl.hpp"
+#include "GuiControlBase.hpp"
 
 namespace clarinoid
 {

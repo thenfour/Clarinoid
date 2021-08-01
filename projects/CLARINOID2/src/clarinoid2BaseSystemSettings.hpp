@@ -11,6 +11,7 @@ namespace clarinoid
 const char gClarinoidVersion[] = "CLARINOID 2";
 
 static const size_t MAX_SYNTH_VOICES = 6;
+#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5} // 
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 192000; // should be enough right?
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;    // a smaller buffer that's just used for intermediate copy ops

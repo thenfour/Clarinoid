@@ -50,11 +50,11 @@ struct Property
     }
     Property<T> &operator=(Property<T> &&) = delete;
 
-    Property(T &binding) : mRefBinding(&binding)
+    Property(T &binding) : mRefBinding(&binding), mSetter(nullptr)
     {
     }
 
-    Property(typename cc::function<T(void *)>::ptr_t getter) : mGetter(getter), mSetter(nullptr), mpCapture(nullptr)
+    Property(typename cc::function<T(void *)>::ptr_t getter) : mGetter(getter), mSetter(nullptr)
     {
     }
 
@@ -76,7 +76,7 @@ struct Property
     {
     }
 
-    Property() : mRefBinding(&mOwnValue)
+    Property() : mRefBinding(&mOwnValue), mSetter(nullptr)
     {
     }
 

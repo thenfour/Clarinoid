@@ -65,6 +65,11 @@ namespace clarinoid
 int main()
 //int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR lpCmdLine, int)
 {
+  bool b = false;
+  clarinoid::Property<bool> prop = b;
+  prop.GetValue();
+  prop.SetValue(true);
+
   //TestFilter();
   TestFilterPerformance();
 

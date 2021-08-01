@@ -146,11 +146,11 @@ static const BitmapSpec gPrevPageBitmapSpec = BitmapSpec::Construct(gPrevPageBMP
 
 static const uint8_t PROGMEM gMuteOnBMP[] = {
     B_____x__, B________, //
-    B____xx__, Bx___x___, //
-    B__xxxx__, B_x_x____, //
-    B__xxxx__, B__x_____, //
-    B__xxxx__, B_x_x____, //
-    B____xx__, Bx___x___, //
+    B____x___, Bx___x___, //
+    B__xx_x__, B_x_x____, //
+    B__x_x___, B__x_____, //
+    B__xx_x__, B_x_x____, //
+    B____x___, Bx___x___, //
     B_____x__, B________, //
 };
 
