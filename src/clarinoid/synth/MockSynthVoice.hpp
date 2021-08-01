@@ -7,10 +7,20 @@
 namespace clarinoid
 {
 
+  struct MockPeakNode {
+    bool available() const { return true;  }
+    float readPeakToPeak() const { return 0.0f; }
+  };
+  namespace CCSynthGraph
+  {
+    MockPeakNode peakL;
+    MockPeakNode peakR;
+  }
+
 struct Voice
 {
     // int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-    // bool mTouched = false;
+    bool mTouched = false;
 
     MusicalVoice mRunningVoice;
 

@@ -131,6 +131,8 @@
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>../../src</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -173,6 +175,7 @@
     <ClInclude Include="..\..\src\clarinoid\synth\Synth.hpp" />
     <ClInclude Include="..\..\src\clarinoid\synth\SynthVoice.hpp" />
     <ClInclude Include="Test.hpp" />
+    <ClInclude Include="testBaseSettings.hpp" />
     <ClInclude Include="TestFilter.hpp" />
     <ClInclude Include="TestHarmonizer.hpp" />
     <ClInclude Include="TestInputMapping.hpp" />

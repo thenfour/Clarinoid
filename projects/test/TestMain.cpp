@@ -18,6 +18,10 @@ namespace clarinoid
   static const size_t HARM_PRESET_COUNT = 16;
   static const size_t HARM_VOICES = 6;
   static const size_t HARM_SEQUENCE_LEN = 8;
+  static const size_t SYNTH_MODULATIONS_MAX = 8;
+  static const size_t PERFORMANCE_PATCH_COUNT = 16;
+
+  static const int DEFAULT_TRANSPOSE = 12;
 
   static const size_t LOOP_LAYERS = 6;
   static constexpr size_t MAX_MUSICAL_VOICES = LOOP_LAYERS * (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
@@ -27,6 +31,9 @@ namespace clarinoid
   static const size_t SYNTH_PRESET_COUNT = 16;
 
   static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
+
+  static const size_t LOOPER_MEMORY_TOTAL_BYTES = 192000; // should be enough right?
+  static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;    // a smaller buffer that's just used for intermediate copy ops
 
   // assignable slots.
   static const size_t MAX_CONTROL_MAPPINGS = 64;
@@ -58,7 +65,8 @@ namespace clarinoid
 int main()
 //int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR lpCmdLine, int)
 {
-  TestFilter();
+  //TestFilter();
+  TestFilterPerformance();
 
   //clarinoid::TestInputDelegator(); // test that input, mapping, and functions work.
   //TestControlReaders();

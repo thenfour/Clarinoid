@@ -52,7 +52,7 @@ void TestHappyFlow()
 
   status.mCurrentLoopTimeMS = 100;
   mv.mBreath01 = 0.0f;
-  mv.mSynthPatch = 5;
+  mv.mSynthPatchA = 5;
   //mv.mNeedsNoteOn = true;
   mv.mMidiNote = 20;
   mv.mVelocity = 20;
@@ -87,7 +87,7 @@ void TestHappyFlow()
   status.mCurrentLoopTimeMS = 110; // advancing to AFTER the event should change things.
   stream.ReadUntilLoopTime(mvout);
   Test(mvout.mBreath01.GetFloatVal() == 0.0f);
-  Test(mvout.mSynthPatch == 5);
+  Test(mvout.mSynthPatchA == 5);
   Test(mvout.mMidiNote == 20);
 
   status.mCurrentLoopTimeMS = 10; // wrapping the loop. we should go back to original state.
@@ -127,7 +127,7 @@ void TestConsumeMultipleEvents()
 
   status.mCurrentLoopTimeMS = 50;
   mv.mHarmPatch = 5;
-  mv.mSynthPatch = 5;
+  mv.mSynthPatchA = 5;
   mv.mBreath01.Deserialize12Bit(5);
   stream.Write(mv);
   clarinoid::log("---");
@@ -150,7 +150,7 @@ void TestConsumeMultipleEvents()
 
   Test(mvout.mBreath01.Serialize12Bit() == 5);
   Test(mvout.mHarmPatch == 5);
-  Test(mvout.mSynthPatch == 5);
+  Test(mvout.mSynthPatchA == 5);
   Test(mvout.mPitchBendN11.Serialize12Bit() == 2);
 }
 
@@ -213,7 +213,7 @@ void TestReadingAfterLooped()
 
   status.mCurrentLoopTimeMS = 50;
   mv.mHarmPatch = 5;
-  mv.mSynthPatch = 5;
+  mv.mSynthPatchA = 5;
   mv.mBreath01.Deserialize12Bit(5);
   stream.Write(mv);
   stream.Dump();
@@ -422,7 +422,7 @@ void TestFullMusicalState1()
   status.mCurrentLoopTimeMS = 1000;
   mv.mBreath01.Deserialize12Bit(1001);
   mv.mPitchBendN11.Deserialize12Bit(1002);
-  mv.mSynthPatch = 1003;
+  mv.mSynthPatchA = 1003;
   mv.mHarmPatch = 1004;
 
   stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
@@ -433,7 +433,7 @@ void TestFullMusicalState1()
   status.mCurrentLoopTimeMS = 3;
   mv.mBreath01.Deserialize12Bit(1);
   mv.mPitchBendN11.Deserialize12Bit(2);
-  mv.mSynthPatch = 3;
+  mv.mSynthPatchA = 3;
   mv.mHarmPatch = 4;
   stream.Write(mv);
   stream.Dump();
@@ -442,7 +442,7 @@ void TestFullMusicalState1()
   // |-n---nn        nnn-----------------|
   status.mCurrentLoopTimeMS = 50;
   mv.mPitchBendN11.Deserialize12Bit(52);
-  mv.mSynthPatch = 53;
+  mv.mSynthPatchA = 53;
   stream.Write(mv);
   stream.Dump();
 
@@ -455,7 +455,7 @@ void TestFullMusicalState1()
   stream.Dump();
   Test(mvout.mBreath01.Serialize12Bit() == 1001);
   Test(mvout.mPitchBendN11.Serialize12Bit() == 1002);
-  Test(mvout.mSynthPatch == 1003);
+  Test(mvout.mSynthPatchA == 1003);
   Test(mvout.mHarmPatch == 1004);
 }
 
@@ -475,7 +475,7 @@ void TestFullMusicalState2()
   status.mCurrentLoopTimeMS = 1000;
   mv.mBreath01.Deserialize12Bit(1001);
   mv.mPitchBendN11.Deserialize12Bit(1002);
-  mv.mSynthPatch = 1003;
+  mv.mSynthPatchA = 1003;
   mv.mHarmPatch = 1004;
 
   stream.StartRecording(status, mv, Ptr(buf), Ptr(clarinoid::EndPtr(buf)));
@@ -485,7 +485,7 @@ void TestFullMusicalState2()
   status.mCurrentLoopTimeMS = 3;
   mv.mBreath01.Deserialize12Bit(1);
   mv.mPitchBendN11.Deserialize12Bit(2);
-  mv.mSynthPatch = 3;
+  mv.mSynthPatchA = 3;
   mv.mHarmPatch = 4;
   stream.Write(mv);
   stream.Dump();
@@ -493,7 +493,7 @@ void TestFullMusicalState2()
   // and at t=50ms with different state.
   status.mCurrentLoopTimeMS = 50;
   mv.mPitchBendN11.Deserialize12Bit(52);
-  mv.mSynthPatch = 53;
+  mv.mSynthPatchA = 53;
   stream.Write(mv);
   stream.Dump();
 
@@ -501,7 +501,7 @@ void TestFullMusicalState2()
   status.mCurrentLoopTimeMS = 59000;
   mv.mBreath01.Deserialize12Bit(880);
   mv.mPitchBendN11.Deserialize12Bit(881);
-  mv.mSynthPatch = 882;
+  mv.mSynthPatchA = 882;
   mv.mHarmPatch = 883;
   stream.Write(mv);
   stream.Dump();
@@ -515,7 +515,7 @@ void TestFullMusicalState2()
   stream.Dump();
   Test(mvout.mBreath01.Serialize12Bit() == 1);
   Test(mvout.mPitchBendN11.Serialize12Bit() == 52);
-  Test(mvout.mSynthPatch == 53);
+  Test(mvout.mSynthPatchA == 53);
   Test(mvout.mHarmPatch == 4);
 }
 
@@ -549,7 +549,7 @@ void Test12BitParam()
   uint8_t buf[10];
   Ptr write(buf);
   const uint16_t param1 = 0x345;
-  LoopEvent_WriteHeaderAnd12BitParam(write, 121, LoopEventType::SynthPatchChange, param1);
+  LoopEvent_WriteHeaderAnd12BitParam(write, 121, LoopEventType::SynthPatchChangeA, param1);
   write.Write((uint8_t)89);
 
   Ptr read(buf);
@@ -564,7 +564,7 @@ void Test12BitParam()
   read.Read(magic);
   Test(read == write);
   Test(delay == 121);
-  Test(eventType == LoopEventType::SynthPatchChange);
+  Test(eventType == LoopEventType::SynthPatchChangeA);
   Test(magic == 89);
   Test(param1r == param1);
 
@@ -582,7 +582,7 @@ void TestVoiceID()
   clarinoid::AppSettings appSettings;
   appSettings.mLooperSettings.mTrigger = clarinoid::LooperTrigger::Immediate;
 
-  clarinoid::Metronome metronome(&appSettings);
+  clarinoid::Metronome metronome(appSettings);
   clarinoid::ScaleFollower scaleFollower;
 
   clarinoid::LooperAndHarmonizer lh(&appSettings, &metronome, &scaleFollower);
@@ -591,7 +591,7 @@ void TestVoiceID()
 
   SetTestClockMillis(1000);
   lv.mHarmPatch = 4;
-  lv.mSynthPatch = 5;
+  lv.mSynthPatchA = 5;
   lv.mVoiceId = 0x666;
   lh.LoopIt(lv); // start recording.
 
@@ -608,7 +608,7 @@ void TestVoiceID()
   //Test(outp[0].mNeedsNoteOn);
   Test(outp[0].mMidiNote == 30);
   Test(outp[0].mHarmPatch == 4);
-  Test(outp[0].mSynthPatch == 5);
+  Test(outp[0].mSynthPatchA == 5);
 
   SetTestClockMillis(3000); // stop playing note.
   //lv.ResetOneFrameState();
@@ -643,7 +643,7 @@ void TestLoopstationSynth()
 {
   clarinoid::AppSettings appSettings;
   appSettings.mLooperSettings.mTrigger = clarinoid::LooperTrigger::Immediate;
-  clarinoid::Metronome metronome(&appSettings);
+  clarinoid::Metronome metronome(appSettings);
   clarinoid::ScaleFollower scaleFollower;
 
   clarinoid::LooperAndHarmonizer lh(&appSettings, &metronome, &scaleFollower);
@@ -654,7 +654,7 @@ void TestLoopstationSynth()
 
   SetTestClockMillis(1000);
   lv.mHarmPatch = 4;
-  lv.mSynthPatch = 5;
+  lv.mSynthPatchA = 5;
   lh.LoopIt(lv); // start recording. 1000 = start recording (looptime 0)
 
   MusicalVoice outp[10];
@@ -667,7 +667,7 @@ void TestLoopstationSynth()
   Test(vc == 1);
   Test(outp[0].mMidiNote == 30);
   Test(outp[0].mHarmPatch == 4);
-  Test(outp[0].mSynthPatch == 5);
+  Test(outp[0].mSynthPatchA == 5);
 
   SetTestClockMillis(3000); // 3000 stop playing note. (looptime 2000)
   lv.mMidiNote = 0;
@@ -858,7 +858,7 @@ void TestLoopstationLegato()
 
   clarinoid::AppSettings appSettings;
   appSettings.mLooperSettings.mTrigger = clarinoid::LooperTrigger::Immediate;
-  clarinoid::Metronome metronome(&appSettings);
+  clarinoid::Metronome metronome(appSettings);
   clarinoid::ScaleFollower scaleFollower;
   
   clarinoid::LooperAndHarmonizer lh(&appSettings, &metronome, &scaleFollower);
@@ -868,7 +868,7 @@ void TestLoopstationLegato()
 
   SetTestClockMillis(1000);
   lv.mHarmPatch = 4;
-  lv.mSynthPatch = 5;
+  lv.mSynthPatchA = 5;
   lh.LoopIt(lv); // start recording. 1000 = start recording (looptime 0)
 
   SetTestClockMillis(2000); // 2000 = note on (looptime 1000)

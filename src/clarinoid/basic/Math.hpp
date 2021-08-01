@@ -85,24 +85,37 @@ static float RemapTo01(float x, float xmin, float xmax)
 }
 
 // remap so src min to max become [0-1]. results are NOT clamped.
-// if min-max == 0, just return x to avoid bad behaviors
 static float RemapTo01Clamped(float x, float xmin, float xmax)
 {
     if (FloatEquals(xmax - xmin, 0.0f))
-        return x;
+        return xmin;
     x -= xmin;
     x /= xmax - xmin;
     return Clamp(x, 0.0f, 1.0f);
 }
 // remap a 0-1 float val to a new min/max. no clamping performed anywhere so if the src is out of 0-1 range, the dest
-// will be out of destMin-destMax range. if min-max == 0, just return x to avoid bad behaviors
+// will be out of destMin-destMax range.
 static float Remap01ToRange(float x01, float destMin, float destMax)
 {
     if (FloatEquals(destMax - destMin, 0.0f))
-        return x01;
+        return destMin;
     x01 *= destMax - destMin;
     x01 += destMin;
     return x01;
+}
+
+// same as arduino's map() fn.
+static float RemapToRange(float x, float amin, float amax, float bmin, float bmax)
+{
+  if (FloatEquals(amin - amax, 0.0f))
+    return bmin;
+  if (FloatEquals(bmin - bmax, 0.0f))
+    return bmin;
+  x -= amin;
+  x /= amax - amin;
+  x *= bmax - bmin;
+  x += bmin;
+  return x;
 }
 
 inline float Frac(float x)
@@ -642,7 +655,7 @@ struct NumericEditRangeSpec
 
     virtual float remap(T val, float newMin, float newMax) const
     {
-        float v01 = RemapTo01(val, mRangeMin, mRangeMax);
+        float v01 = RemapTo01((float)val, (float)mRangeMin, (float)mRangeMax);
         return Remap01ToRange(v01, newMin, newMax);
     }
 };

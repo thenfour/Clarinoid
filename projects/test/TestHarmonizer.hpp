@@ -16,8 +16,8 @@ void TestHarmonizer()
   MusicalVoice mv[clarinoid::HARM_VOICES + 1];
   MusicalVoice& lv(mv[0]);
   clarinoid::MusicalVoiceTransitionEvents te;
-  appSettings.mGlobalScaleRef = GlobalScaleRefType::Chosen;
-  appSettings.mGlobalScale = Scale{ Note::E, ScaleFlavorIndex::MajorPentatonic };
+  appSettings.GetCurrentPerformancePatch().mGlobalScaleRef = GlobalScaleRefType::Chosen;
+  appSettings.GetCurrentPerformancePatch().mGlobalScale = Scale{ Note::E, ScaleFlavorIndex::MajorPentatonic };
   //gAppSettings.mGlobalHarmPreset = 1;
   lv.mHarmPatch = 1;
 

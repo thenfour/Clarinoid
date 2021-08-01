@@ -162,7 +162,7 @@ struct HarmPreset
     uint16_t mSynthPreset3 = SynthPresetID_HarmPulse; // harm-friendly pulse
     uint16_t mSynthPreset4 = SynthPresetID_HarmSaw;   // harm-friendly saw
 
-    String ToString(uint8_t index) const
+    String ToString(int index) const
     {
         return String("") + index + ":" + mName;
     }

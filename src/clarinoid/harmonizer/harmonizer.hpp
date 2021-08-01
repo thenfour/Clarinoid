@@ -139,7 +139,7 @@ struct Harmonizer
             *pout = *liveVoice; // copy from live voice to get started.
             pout->mIsNoteCurrentlyMuted = false;
             pout->mVoiceId =
-                MakeMusicalVoiceID(loopLayerID, HarmLayerToVoiceID(nVoice)); // +1 because live voice is id 0.
+                MakeMusicalVoiceID(loopLayerID, HarmLayerToVoiceID((uint8_t)nVoice)); // +1 because live voice is id 0.
 
             pout->mPan += preset.mStereoSeparation * ((((int)nVoice & 1) * 2) - 1); // turns bit 0 to -1 or 1
 

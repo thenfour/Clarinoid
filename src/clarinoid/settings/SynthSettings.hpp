@@ -299,7 +299,7 @@ struct SynthPreset
         mOsc[2].mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
     }
 
-    String ToString(uint8_t index) const
+    String ToString(int index) const
     {
         return String("") + index + ":" + mName;
     }

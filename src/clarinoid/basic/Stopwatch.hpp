@@ -74,7 +74,7 @@ struct TimeSpan
         return (float)d;
     }
     float ElapsedBeats(float bpm) const {
-        return double(mMicros) * bpm / 60000000;
+        return (float)(double(mMicros) * bpm / 60000000);
     }
 
     bool IsZero() const

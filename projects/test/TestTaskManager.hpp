@@ -8,35 +8,35 @@
 namespace clarinoid
 {
 
-  void TestPeriodicTimer()
-  {
-    SetTestClockMicros(0);
-    PeriodicTimer pt(TimeSpan::FromMicros(100));
-    Test(pt.GetBeatFloat() == 0.0f);
-    Test(pt.GetBeatInt() == 0);
-    Test(pt.GetBeatFrac() == 0.0f);
+  //void TestPeriodicTimer()
+  //{
+  //  SetTestClockMicros(0);
+  //  PeriodicTimer pt(TimeSpan::FromMicros(100));
+  //  Test(pt.GetBeatFloat() == 0.0f);
+  //  Test(pt.GetBeatInt() == 0);
+  //  Test(pt.GetBeatFrac() == 0.0f);
 
-    SetTestClockMicros(25);
-    Test(FloatEquals(pt.GetBeatFloat(), 0.25f));
-    Test(pt.GetBeatInt() == 0);
-    Test(FloatEquals(pt.GetBeatFrac(), 0.25f));
+  //  SetTestClockMicros(25);
+  //  Test(FloatEquals(pt.GetBeatFloat(), 0.25f));
+  //  Test(pt.GetBeatInt() == 0);
+  //  Test(FloatEquals(pt.GetBeatFrac(), 0.25f));
 
-    SetTestClockMicros(100);
-    Test(pt.GetBeatFloat() == 1.00f);
-    Test(pt.GetBeatInt() == 1);
-    Test(pt.GetBeatFrac() == 0.0f);
+  //  SetTestClockMicros(100);
+  //  Test(pt.GetBeatFloat() == 1.00f);
+  //  Test(pt.GetBeatInt() == 1);
+  //  Test(pt.GetBeatFrac() == 0.0f);
 
-    SetTestClockMicros(125);
-    Test(FloatEquals(pt.GetBeatFloat(), 1.25f));
-    Test(pt.GetBeatInt() == 1);
-    Test(FloatEquals(pt.GetBeatFrac(), 0.25f));
+  //  SetTestClockMicros(125);
+  //  Test(FloatEquals(pt.GetBeatFloat(), 1.25f));
+  //  Test(pt.GetBeatInt() == 1);
+  //  Test(FloatEquals(pt.GetBeatFrac(), 0.25f));
 
-    // skip beats.
-    SetTestClockMicros(1080);
-    Test(FloatEquals(pt.GetBeatFloat(), 10.8f));
-    Test(pt.GetBeatInt() == 10);
-    Test(FloatEquals(pt.GetBeatFrac(), 0.8f));
-  }
+  //  // skip beats.
+  //  SetTestClockMicros(1080);
+  //  Test(FloatEquals(pt.GetBeatFloat(), 10.8f));
+  //  Test(pt.GetBeatInt() == 10);
+  //  Test(FloatEquals(pt.GetBeatFrac(), 0.8f));
+  //}
 
   void TestCircularArray()
   {
@@ -194,7 +194,7 @@ namespace clarinoid
   void TestTaskManager()
   {
     TestUptime();
-    TestPeriodicTimer();
+    //TestPeriodicTimer();
     TestCircularArray();
     TestTaskPlanner();
 

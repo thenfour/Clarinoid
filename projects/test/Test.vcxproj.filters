@@ -38,6 +38,7 @@
     <ClInclude Include="..\..\src\clarinoid\synth\filters\K35Filter.hpp">
       <Filter>filters</Filter>
     </ClInclude>
+    <ClInclude Include="testBaseSettings.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="filters">

@@ -59,7 +59,7 @@ struct PerformancePatch
     float mDelaySaturation = 0.2f;
     float mDelayQ = 0.1f;
 
-    String ToString(uint8_t index) const
+    String ToString(int index) const
     {
         return String("") + index + ":" + mName;
     }

@@ -149,7 +149,7 @@ struct PeakMeterUtility
         else
         {
             // falloff: remap millis from 500-1000 from heldpeak to 0.
-            heldPeak = map<float, float, float, float, float>(
+            heldPeak = RemapToRange(
                 holdDurationMS, holdTimeMS, holdTimeMS + falloffTimeMS, mHeldPeak, peak);
         }
     }
