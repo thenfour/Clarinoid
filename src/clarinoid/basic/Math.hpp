@@ -10,6 +10,23 @@ namespace clarinoid
 template <typename T>
 constexpr T gPI = T(3.1415926535897932385);
 
+// https://www.kvraudio.com/forum/viewtopic.php?f=33&t=388650&start=45
+inline float vox_fasttanh2(const float x)
+{
+    const float ax = fabsf(x);
+    const float x2 = x * x;
+
+    return (x * (2.45550750702956f + 2.45550750702956f * ax + (0.893229853513558f + 0.821226666969744f * ax) * x2) /
+            (2.44506634652299f + (2.44506634652299f + x2) * fabsf(x + 0.814642734961073f * x * ax)));
+}
+
+// https://github.com/discohead/LXR_JCM/blob/14b4b06ce5c9f4a60528d0c2d181f47227ae87df/mainboard/LxrStm32/src/DSPAudio/ResonantFilter.c
+// slightly faster than vox_fasttanh2, but it's slightly less accurate.
+inline float discohead_fastTanh(float var)
+{
+    return 4.15f * var / (4.29f + var * var);
+}
+
 uint16_t ClampUint32ToUint16(uint32_t a)
 {
     if (a > std::numeric_limits<uint16_t>::max())
@@ -152,9 +169,12 @@ inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIB
     return lin;
 }
 
-String GetSignStr(float f) {
-    if (FloatEquals(f, 0.0f)) return CHARSTR_NARROWPLUSMINUS;
-    if (f > 0) return CHARSTR_NARROWPLUS;
+String GetSignStr(float f)
+{
+    if (FloatEquals(f, 0.0f))
+        return CHARSTR_NARROWPLUSMINUS;
+    if (f > 0)
+        return CHARSTR_NARROWPLUS;
     return CHARSTR_NARROWMINUS;
 }
 
@@ -163,13 +183,16 @@ String GetSignStr(float f) {
 // fixed width 2 digits
 // negative infinity glyph
 // decibels glyph
-inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_DECIBEL_GAIN) {
-    if (aDecibels <= aNegInfDecibels) {
+inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_DECIBEL_GAIN)
+{
+    if (aDecibels <= aNegInfDecibels)
+    {
         return CHARSTR_NARROWMINUS CHARSTR_INFINITY CHARSTR_DB; // -oodb
     }
     String ret = GetSignStr(aDecibels);
     int iDecibels = (int)std::ceil(abs(aDecibels));
-    if (iDecibels < 10) {
+    if (iDecibels < 10)
+    {
         ret.append(CHARSTR_DIGITWIDTHSPACE);
     }
     ret.append(iDecibels);
@@ -532,7 +555,7 @@ PieData fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) 
                     }
             }
         }
-    //drawLine(x0, y0, x0 + ux, y0 + uy, drawPixel);
+        // drawLine(x0, y0, x0 + ux, y0 + uy, drawPixel);
     }
     else
     {
@@ -647,7 +670,8 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
 
     using T = float;
 
-    bool IsBottom(T val) const {
+    bool IsBottom(T val) const
+    {
         return val <= BOTTOM_VALUE;
     }
 
