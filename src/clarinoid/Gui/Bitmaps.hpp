@@ -174,4 +174,35 @@ static const BitmapSpec gMuteOffBitmapSpec = BitmapSpec::Construct(gMuteOffBMP, 
 
 
 
+static const uint8_t PROGMEM gPatchEnabledBMP[] = {
+    B_x______, //
+    Bx__x____, //
+    Bx_x__x__, //
+    Bx_x_x___, //
+    Bx_x__x__, //
+    Bx__x____, //
+    B_x______, //
+};
+
+static const BitmapSpec gPatchEnabledSpec = BitmapSpec::Construct(gPatchEnabledBMP, 1, 7);
+
+static const uint8_t PROGMEM gPatchDisabledBMP[] = {
+    B________, //
+    B_x___x__, //
+    B__x_x___, //
+    B___x____, //
+    B__x_x___, //
+    B_x___x__, //
+    B________, //
+};
+
+static const BitmapSpec gPatchDisabledSpec = BitmapSpec::Construct(gPatchDisabledBMP, 1, 7);
+
+
+
+
+
+
+
+
 } // namespace clarinoid

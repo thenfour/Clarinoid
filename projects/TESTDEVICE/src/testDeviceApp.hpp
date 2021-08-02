@@ -27,6 +27,8 @@
 #include <clarinoid/application/MusicalState.hpp>
 #include <clarinoid/Gui/GuiApp.hpp>
 
+#include <clarinoid/Gui/GuiPerformanceApp.hpp>
+
 #include <clarinoid/synth/Synth.hpp>
 
 #include "testDeviceControlMapper.hpp"
@@ -51,6 +53,7 @@ const FontInfo gAllFonts[] = {
     {&pixChicago4pt7b, "pixChicago4pt7b"},
 
     {&MatchupPro8pt7b, "MatchupPro8pt7b"},
+    {&Eighties8pt7b, "Eighties8pt7b"},
 
     {&TomThumb, "TomThumb"},
 
@@ -188,8 +191,7 @@ struct TestDeviceApp : ISysInfoProvider
     }
     virtual MidiNote ISysInfoProvider_GetNote() override
     {
-        return MidiNote(4, Note::Db);
-        //return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
+        return MidiNote(4, millis()/600 % 12);
     }
     virtual float ISysInfoProvider_GetTempo() override
     {
@@ -217,10 +219,12 @@ struct TestDeviceApp : ISysInfoProvider
         mControlMapper.Init(&mDisplay);
 
         FontTesterApp mFontTesterApp(mDisplay);
+        GuiTestApp mGuiTestApp(mDisplay);
         GuiPerformanceApp mGuiPerformanceApp(mDisplay);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
+            &mGuiTestApp,
             &mGuiPerformanceApp,
             &mFontTesterApp,
 

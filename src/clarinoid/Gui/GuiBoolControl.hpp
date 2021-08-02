@@ -60,4 +60,47 @@ struct GuiMuteControl : GuiCompositeControl<bool>
     }
 };
 
+struct GuiPatchMuteControlRenderer : IGuiRenderer<bool>
+{
+    using T = bool;
+    String mStaticCaption;
+    String mTrueValue;
+    String mFalseValue;
+    GuiPatchMuteControlRenderer(const String &staticCaption, const String &trueValue, const String &falseValue)
+        : mStaticCaption(staticCaption), mTrueValue(trueValue), mFalseValue(falseValue)
+    {
+    }
+    virtual void IGuiRenderer_Render(IGuiControl &ctrl,
+                                     const T &val,
+                                     bool isSelected,
+                                     bool isEditing,
+                                     DisplayApp &app) override
+    {
+        app.mDisplay.DrawBitmap(ctrl.mBounds.UpperLeft(), val ? gPatchEnabledSpec : gPatchDisabledSpec);
+        if (GuiInitiateTooltip(isSelected, isEditing, app))
+        {
+            app.mDisplay.mDisplay.print(mStaticCaption + ": " + (val ? mTrueValue : mFalseValue));
+        }
+    }
+};
+
+struct GuiPatchMuteControl : GuiCompositeControl<bool>
+{
+    GuiPatchMuteControlRenderer mRenderer;
+    GuiToggleEditor mEditor;
+
+    GuiPatchMuteControl(int page,                          //
+                        PointI pt,                         //
+                        const String &tooltipCaption,      //
+                        const String &trueValue,           //
+                        const String &falseValue,          //
+                        const Property<bool> &binding,     //
+                        const Property<bool> &isSelectable //
+                        )
+        : GuiCompositeControl(page, RectI::Construct(pt, 7, 7), binding, &mRenderer, &mEditor, isSelectable),
+          mRenderer(tooltipCaption, trueValue, falseValue)
+    {
+    }
+};
+
 } // namespace clarinoid

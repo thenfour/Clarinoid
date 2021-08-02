@@ -13,7 +13,6 @@ static bool AlwaysEnabled(void *)
 {
     return true;
 }
-// static bool AlwaysEnabledWithCapture(void*) { return true; }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // implemented by the settings app to provide an aPI to editors

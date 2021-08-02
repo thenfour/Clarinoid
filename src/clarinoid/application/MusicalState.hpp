@@ -48,9 +48,9 @@ struct CCEWIMusicalState
     SwitchControlReader mMetronomeLEDToggleReader;
 
     SwitchControlReader mHarmPresetOnOffToggleReader;
-    size_t mNonZeroHarmPresetID = 0; // while harm preset is toggled "on", save it here. when it's OFF, set to zero.
-                                     // When toggled back ON, set to this.
-    bool mHarmIsOn = false;
+    // size_t mNonZeroHarmPresetID = 0; // while harm preset is toggled "on", save it here. when it's OFF, set to zero.
+    //                                  // When toggled back ON, set to this.
+    // bool mHarmIsOn = false;
 
     int nUpdates = 0;
     int noteOns = 0;
@@ -309,34 +309,35 @@ struct CCEWIMusicalState
         mHarmPresetOnOffToggleReader.Update(&mInput->mHarmPresetOnOffToggle);
         if (mHarmPresetOnOffToggleReader.IsNewlyPressed())
         {
-            if (mHarmIsOn && perf.mHarmPreset)
+            if (perf.mHarmEnabled && perf.mHarmPreset)
             {
-                mHarmIsOn = false;
-                perf.mHarmPreset = 0;
+                perf.mHarmEnabled = false;
+                //perf.mHarmPreset = 0;
                 mpDisplay->ShowToast(String("Harmonizer OFF\r\n") +
-                                     mAppSettings->mHarmSettings.mPresets[this->mNonZeroHarmPresetID].ToString(
-                                         this->mNonZeroHarmPresetID));
+                                     mAppSettings->mHarmSettings.mPresets[perf.mHarmPreset].ToString(
+                                         perf.mHarmPreset));
             }
-            else if (!this->mNonZeroHarmPresetID)
+            else if (!perf.mHarmEnabled && perf.mHarmPreset)
             {
-                mpDisplay->ShowToast(String("Harmonizer OFF\r\n"));
-            }
-            else
-            {
-                perf.mHarmPreset = this->mNonZeroHarmPresetID;
+                perf.mHarmEnabled = true;
                 mpDisplay->ShowToast(String("Harmonizer ON\r\n") +
                                      mAppSettings->GetHarmPatchName(perf.mHarmPreset));
             }
-        }
-        else
-        {
-            // normal, non-newly-pressed operation
-            if (!!perf.mHarmPreset)
+            else // no harm preset selected anyway. take no action.
             {
-                mNonZeroHarmPresetID = perf.mHarmPreset;
+                //mpDisplay->ShowToast(String("Harmonizer OFF\r\n"));
+                //perf.mHarmPreset = this->mNonZeroHarmPresetID;
             }
         }
-        mHarmIsOn = !!perf.mHarmPreset; // only consider it on when we actually are on a harm preset
+        // else
+        // {
+        //     // normal, non-newly-pressed operation
+        //     if (!!perf.mHarmPreset)
+        //     {
+        //         //mNonZeroHarmPresetID = perf.mHarmPreset;
+        //     }
+        // }
+        //perf.mHarmEnabled = !!perf.mHarmPreset; // only consider it on when we actually are on a harm preset
 
         // we have calculated mLiveVoice, converting physical to live musical state.
         // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.

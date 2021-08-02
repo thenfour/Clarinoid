@@ -98,25 +98,41 @@ struct GuiControlList // very much like SettingsList. simpler though because we 
 // ---------------------------------------------------------------------------------------
 struct GuiLabelControl : IGuiControl
 {
+    bool mClip = false;
     String mText;
 
-    GuiLabelControl(int page, bool isSelectable, RectI bounds, const String &s) : mText(s)
+    GuiLabelControl(int page, RectI clipBounds, const String &s)
+        : mClip(true), //
+          mText(s)
     {
         IGuiControl::mPage = page;
-        IGuiControl::mBounds = bounds;
-        IGuiControl::mIsSelectable = isSelectable;
+        IGuiControl::mBounds = clipBounds;
+        IGuiControl::mIsSelectable = false;
     }
+
+    GuiLabelControl(int page, PointI pt, const String &s)
+        : mClip(false), //
+          mText(s)
+    {
+        IGuiControl::mPage = page;
+        IGuiControl::mBounds =
+            RectI::Construct(pt, 1, 1); // since we don't clip text, don't require specifying width/height.
+        IGuiControl::mIsSelectable = false;
+    }
+
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
+        display.mDisplay.setTextWrap(false);
         display.mDisplay.setCursor(mBounds.x, mBounds.y);
-        display.SetClipRect(mBounds);
+        if (mClip) {
+            display.SetClipRect(mBounds);
+        }
         display.mDisplay.print(mText);
     }
     virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
     }
 };
-
 
 // ---------------------------------------------------------------------------------------
 // for rendering the GUI control, tooltip area, etc, this is a common
@@ -257,6 +273,5 @@ struct GuiRendererCombiner : IGuiRenderer<T>
         }
     }
 };
-
 
 } // namespace clarinoid

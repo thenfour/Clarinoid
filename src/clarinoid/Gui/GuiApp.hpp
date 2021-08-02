@@ -150,33 +150,30 @@ struct GuiApp : public DisplayApp
 };
 
 // ---------------------------------------------------------------------------------------
-struct GuiPerformanceApp : GuiApp
+struct GuiTestApp : GuiApp
 {
     virtual const char *DisplayAppGetName() override
     {
-        return "GuiPerformanceApp";
+        return "GuiTestApp";
     }
 
-    GuiPerformanceApp(CCDisplay &display) : GuiApp(display)
+    GuiTestApp(CCDisplay &display) : GuiApp(display)
     {
     }
 
     GuiLabelControl mLabel1 = {0,
-                               true,
-                               RectI::Construct(0, 0, 50, 8),
+                               PointI::Construct(0, 0),
                                String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
 
     GuiLabelControl mLabel2 = {0,
-                               false,
-                               RectI::Construct(12, 16, 90, 16),
+                               PointI::Construct(12, 16),
                                String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
-    GuiLabelControl mLabel3 = {0, true, RectI::Construct(20, 4, 50, 8), String("aight")};
+    GuiLabelControl mLabel3 = {0, PointI::Construct(20, 4), String("aight")};
     GuiLabelControl mLabel4 = {0,
-                               false,
-                               RectI::Construct(26, 48, 111, 4),
+                               PointI::Construct(26, 48),
                                String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
-    GuiLabelControl mLabel5 = {1, false, RectI::Construct(5, 4, 50, 8), String("page 2")};
-    GuiLabelControl mLabel6 = {1, true, RectI::Construct(5, 14, 50, 8), String("xyz")};
+    GuiLabelControl mLabel5 = {1, PointI::Construct(5, 4), String("page 2")};
+    GuiLabelControl mLabel6 = {1, PointI::Construct(5, 14), String("xyz")};
 
     float floatParam1 = 0.0f;
     GuiKnobControl mKnob1 = {
@@ -218,7 +215,7 @@ struct GuiPerformanceApp : GuiApp
         AlwaysEnabled                    // always en
     };
 
-    GuiLabelControl mLabel7 = {2, false, RectI::Construct(5, 24, 50, 8), String("page 3")};
+    GuiLabelControl mLabel7 = {2, PointI::Construct(5, 24), String("page 3")};
 
     ClarinoidFilterType mEnumParam1 = ClarinoidFilterType::HP_K35;
     GuiEnumControl<ClarinoidFilterType> mEnum1 = {2,                              // page
@@ -231,8 +228,8 @@ struct GuiPerformanceApp : GuiApp
     bool mMuteParam = false;
     GuiMuteControl mMute = {2, PointI::Construct(50, 2), "mute?", "yea", "nah", mMuteParam, AlwaysEnabled};
 
-    GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
-    GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
+    GuiLabelControl mLabel8 = {3, PointI::Construct(4, 34), String("page 4")};
+    GuiLabelControl mLabel9 = {4, PointI::Construct(4, 44), String("page 5")};
 
     int param1 = 111;
     GuiIntegerTextControl<int> mCtrl4a = {
@@ -254,7 +251,7 @@ struct GuiPerformanceApp : GuiApp
         AlwaysEnabled // selectable
     };
 
-    GuiLabelControl mLabel10 = {5, false, RectI::Construct(106, 6, 50, 8), String("page 6 ~~")};
+    GuiLabelControl mLabel10 = {5, PointI::Construct(106, 6), String("page 6 ~~")};
 
     int mSynthPatchAval = 2;
     GuiSynthPatchSelectControl mSynthPatchA = {

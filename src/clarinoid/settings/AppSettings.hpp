@@ -37,10 +37,18 @@ struct PerformancePatch
     Scale mDeducedScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic}; // this is automatically populated always
 
     int16_t mSynthPresetA = 0;
-    int16_t mSynthPresetB = -1; // -1 = mute, no patch.
-    int16_t mHarmPreset = 0;
+    float mSynthAGain = 1.0f;
+    bool mSynthAEnabled = true;
 
-    float mSynthStereoSpread = 0.35f;
+    int16_t mSynthPresetB = -1; // -1 = mute, no patch.
+    float mSynthBGain = 1.0f;
+    bool mSynthBEnabled = true;
+
+    int16_t mHarmPreset = 0;
+    float mHarmGain = 1.0f;
+    bool mHarmEnabled = true;
+
+    float mSynthStereoSpread = 0.35f; // -1 to 1
 
     float mMasterGain = 1.0f;
 
