@@ -7,15 +7,22 @@
 namespace clarinoid
 {
 
-  struct MockPeakNode {
-    bool available() const { return true;  }
-    float readPeakToPeak() const { return 0.0f; }
-  };
-  namespace CCSynthGraph
-  {
-    MockPeakNode peakL;
-    MockPeakNode peakR;
-  }
+struct MockPeakNode
+{
+    bool available() const
+    {
+        return true;
+    }
+    float readPeakToPeak() const
+    {
+        return 0.0f;
+    }
+};
+namespace CCSynthGraph
+{
+MockPeakNode peakL;
+MockPeakNode peakR;
+} // namespace CCSynthGraph
 
 struct Voice
 {

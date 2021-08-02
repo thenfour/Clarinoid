@@ -90,14 +90,14 @@ struct IntEditor : NumericEditor<int>
     {
         if (mValueFormatter)
         {
-            this->mpApi->GetDisplay()->mDisplay.print(mValueFormatter(mpCapture, n));
+            this->mpApi->GetDisplay()->print(mValueFormatter(mpCapture, n));
         }
         else
         {
-            this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
+            this->mpApi->GetDisplay()->print(String("") + n);
         }
         int delta = n - oldVal;
-        this->mpApi->GetDisplay()->mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+        this->mpApi->GetDisplay()->print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
     }
 };
 
@@ -110,9 +110,9 @@ struct FloatEditor : NumericEditor<float>
 
     virtual void DrawValue(float n, float oldVal)
     {
-        this->mpApi->GetDisplay()->mDisplay.print(String("") + n);
+        this->mpApi->GetDisplay()->print(String("") + n);
         float delta = n - oldVal;
-        this->mpApi->GetDisplay()->mDisplay.print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+        this->mpApi->GetDisplay()->print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
     }
 };
 

@@ -43,7 +43,7 @@ struct DigitalPinSwitch : ISwitch
     }
 };
 
-template<uint8_t mPin>
+template <uint8_t mPin>
 struct DigitalPinSwitchT : ISwitch
 {
     bool mCurrentValue = false;

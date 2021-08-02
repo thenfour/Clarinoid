@@ -39,17 +39,17 @@ struct EnvelopeMenuApp
                                   AlwaysEnabled};
 
     FloatSettingItem mHoldMS = {"Hold",
-                                  StandardRangeSpecs::gEnvHoldMS,
-                                  Property<float>{[](void *cap) {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return pThis->mBinding->mHoldMS;
-                                                  },
-                                                  [](void *cap, const float &v) {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mHoldMS = v;
-                                                  },
-                                                  this},
-                                  AlwaysEnabled};
+                                StandardRangeSpecs::gEnvHoldMS,
+                                Property<float>{[](void *cap) {
+                                                    auto *pThis = (EnvelopeMenuApp *)cap;
+                                                    return pThis->mBinding->mHoldMS;
+                                                },
+                                                [](void *cap, const float &v) {
+                                                    auto *pThis = (EnvelopeMenuApp *)cap;
+                                                    pThis->mBinding->mHoldMS = v;
+                                                },
+                                                this},
+                                AlwaysEnabled};
 
     FloatSettingItem mDecayMS = {"Decay",
                                  StandardRangeSpecs::gEnvDecayMS,
@@ -91,17 +91,17 @@ struct EnvelopeMenuApp
                                    AlwaysEnabled};
 
     FloatSettingItem mReleaseNoteOnMS = {"ReleaseNoteOn",
-                                   StandardRangeSpecs::gEnvReleaseMS,
-                                   Property<float>{[](void *cap) {
-                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                       return pThis->mBinding->mReleaseNoteOnMS;
-                                                   },
-                                                   [](void *cap, const float &v) {
-                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                       pThis->mBinding->mReleaseNoteOnMS = v;
-                                                   },
-                                                   this},
-                                   AlwaysEnabled};
+                                         StandardRangeSpecs::gEnvReleaseMS,
+                                         Property<float>{[](void *cap) {
+                                                             auto *pThis = (EnvelopeMenuApp *)cap;
+                                                             return pThis->mBinding->mReleaseNoteOnMS;
+                                                         },
+                                                         [](void *cap, const float &v) {
+                                                             auto *pThis = (EnvelopeMenuApp *)cap;
+                                                             pThis->mBinding->mReleaseNoteOnMS = v;
+                                                         },
+                                                         this},
+                                         AlwaysEnabled};
 
     ISettingItem *mArray[7] = {
         &mDelayMS,
@@ -161,30 +161,30 @@ struct SynthPatchOscillatorMenuStuff
                              AlwaysEnabled};
 
     FloatSettingItem mFMFeedback = {"FM Feedback",
-                                   StandardRangeSpecs::gFloat_0_1,
-                                   Property<float>{[](void *cap) {
-                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                       return pThis->GetBinding().mFMFeedbackGain;
-                                                   },
-                                                   [](void *cap, const float &v) {
-                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                       pThis->GetBinding().mFMFeedbackGain = v;
-                                                   },
-                                                   this},
-                                   AlwaysEnabled};
+                                    StandardRangeSpecs::gFloat_0_1,
+                                    Property<float>{[](void *cap) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        return pThis->GetBinding().mFMFeedbackGain;
+                                                    },
+                                                    [](void *cap, const float &v) {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        pThis->GetBinding().mFMFeedbackGain = v;
+                                                    },
+                                                    this},
+                                    AlwaysEnabled};
 
     GainSettingItem mAMMinimumGain = {"AM Baseline",
-                                   StandardRangeSpecs::gGeneralGain,
-                                   Property<float>{[](void *cap) {
-                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                       return pThis->GetBinding().mAMMinimumGain;
-                                                   },
-                                                   [](void *cap, const float &v) {
-                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                       pThis->GetBinding().mAMMinimumGain = v;
-                                                   },
-                                                   this},
-                                   AlwaysEnabled};
+                                      StandardRangeSpecs::gGeneralGain,
+                                      Property<float>{[](void *cap) {
+                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                          return pThis->GetBinding().mAMMinimumGain;
+                                                      },
+                                                      [](void *cap, const float &v) {
+                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                          pThis->GetBinding().mAMMinimumGain = v;
+                                                      },
+                                                      this},
+                                      AlwaysEnabled};
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
@@ -361,11 +361,11 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         return "SynthPatchMenuApp";
     }
 
-    SynthPatchMenuApp(CCDisplay &d) : SettingsMenuApp(d) //, mDisplay(d)
+    SynthPatchMenuApp(IDisplay &d) : SettingsMenuApp(d) //, mDisplay(d)
     {
     }
 
-    //int16_t mBindingID = 0;
+    // int16_t mBindingID = 0;
     SynthPreset &GetBinding()
     {
         return GetAppSettings()->FindSynthPreset(GetBindingID());
@@ -635,11 +635,11 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         SYNTH_PRESET_COUNT,
         [](void *cap, size_t i) { // itemNameGetter,
             auto *pThis = (SynthPatchMenuApp *)cap;
-            return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[i].ToString(i);
+            return pThis->GetAppSettings()->mSynthSettings.mPresets[i].ToString(i);
         },
         [](void *cap, size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (SynthPatchMenuApp *)cap;
-            pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[i] = pThis->GetBinding();
+            pThis->GetAppSettings()->mSynthSettings.mPresets[i] = pThis->GetBinding();
 
             auto fromName = pThis->GetAppSettings()->GetSynthPatchName(pThis->GetBindingID());
             auto toName = pThis->GetAppSettings()->GetSynthPatchName(i);
@@ -883,8 +883,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.ClearState();
-        mDisplay.mDisplay.println(String("Synth Patch >"));
-        mDisplay.mDisplay.println(GetAppSettings()->GetSynthPatchName(GetBindingID()));
+        mDisplay.println(String("Synth Patch >"));
+        mDisplay.println(GetAppSettings()->GetSynthPatchName(GetBindingID()));
         SettingsMenuApp::RenderFrontPage();
     }
 };

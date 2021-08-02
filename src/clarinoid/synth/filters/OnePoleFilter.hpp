@@ -35,7 +35,8 @@ struct OnePoleFilter : public IFilter
     // IFilter
     virtual void SetType(FilterType type) override
     {
-        if (m_FilterType == type) return;
+        if (m_FilterType == type)
+            return;
         switch (type)
         {
         default:
@@ -60,14 +61,16 @@ struct OnePoleFilter : public IFilter
     }
     virtual void SetCutoffFrequency(real hz) override
     {
-        if (FloatEquals(hz, m_cutoffHz)) return;
+        if (FloatEquals(hz, m_cutoffHz))
+            return;
         m_cutoffHz = hz;
         Recalc();
     }
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
-        if ((m_FilterType == type) && FloatEquals(m_cutoffHz, cutoffHz)) {
+        if ((m_FilterType == type) && FloatEquals(m_cutoffHz, cutoffHz))
+        {
             return;
         }
         switch (type)
@@ -135,12 +138,12 @@ struct OnePoleFilter : public IFilter
             InlineProcessSample(samplesL[i], samplesR[i]);
         }
     }
-    virtual void ProcessSample(real& xnL, real& xnR) override
+    virtual void ProcessSample(real &xnL, real &xnR) override
     {
         return InlineProcessSample(xnL, xnR);
     }
 
-    inline void InlineProcessSample(real& xnL, real& xnR)
+    inline void InlineProcessSample(real &xnL, real &xnR)
     {
         // for diode filter support
         // LEFT
@@ -167,10 +170,10 @@ struct OnePoleFilter : public IFilter
 
     real m_alpha = 1; // Feed Forward coeff
     real m_beta = 0;
-    real m_gamma = 1;    // Pre-Gain
-    real m_delta = 0;    // FB_IN Coeff
-    real m_epsilon = 0;  // FB_OUT scalar
-    real m_a_0 = 1;      // input gain
+    real m_gamma = 1;     // Pre-Gain
+    real m_delta = 0;     // FB_IN Coeff
+    real m_epsilon = 0;   // FB_OUT scalar
+    real m_a_0 = 1;       // input gain
     real m_feedbackL = 0; // our own feedback coeff from S ..... this is written to by DiodeFilter
     real m_feedbackR = 0; // our own feedback coeff from S ..... this is written to by DiodeFilter
 

@@ -17,7 +17,7 @@ struct GuiPerformanceApp : GuiApp
         return "GuiPerformanceApp";
     }
 
-    GuiPerformanceApp(CCDisplay &display, Metronome &m) : GuiApp(display), mMetronome(m)
+    GuiPerformanceApp(IDisplay &display, Metronome &m) : GuiApp(display), mMetronome(m)
     {
     }
 
@@ -125,7 +125,6 @@ struct GuiPerformanceApp : GuiApp
          this},
         AlwaysEnabled};
 
-
     GuiLabelControl mLabelMst = {0, PointI::Construct(70, 4), "Mst"};
 
     GuiKnobGainControl mGlobalGain = {
@@ -141,7 +140,7 @@ struct GuiPerformanceApp : GuiApp
 
     GuiStereoSpreadControl mStereoSpread = {
         0,                               // page
-        PointI::Construct(107, 4),        // pos
+        PointI::Construct(107, 4),       // pos
         StandardRangeSpecs::gFloat_N1_1, // range
         "Stereo spread",                 // tooltip
         {[](void *cap) -> float & {
@@ -191,8 +190,8 @@ struct GuiPerformanceApp : GuiApp
                                },
                                this},
                               AlwaysEnabled,
-                              [](void*cap, DisplayApp& app) { // on toggle handler
-                              app.mAppSettings->mMetronomeSoundOn = !app.mAppSettings->mMetronomeSoundOn;
+                              [](void *cap, DisplayApp &app) { // on toggle handler
+                                  app.mAppSettings->mMetronomeSoundOn = !app.mAppSettings->mMetronomeSoundOn;
                               }};
 
     GuiTransposeControl<int8_t> mTranspose = {0,

@@ -159,15 +159,21 @@ struct MPR121Device
         return true;
     }
 
-    bool IsAutoconfigEnabled() const { return mAutoconfig; }
+    bool IsAutoconfigEnabled() const
+    {
+        return mAutoconfig;
+    }
 
-    void SetAutoconfigEnabled(bool b) {
-        if (mAutoconfig == b) return;
+    void SetAutoconfigEnabled(bool b)
+    {
+        if (mAutoconfig == b)
+            return;
         mAutoconfig = b;
         begin(mI2caddr, mTheWire, mTouchThreshold, mReleaseThreshold, mElectrodesInUse, mAutoconfig);
     }
 
-    void SoftReset() {
+    void SoftReset()
+    {
         begin(mI2caddr, mTheWire, mTouchThreshold, mReleaseThreshold, mElectrodesInUse, mAutoconfig);
     }
 
@@ -279,17 +285,19 @@ struct MPR121Device
         return (bl << 2);
     }
 
-    void SetBaseline(uint8_t el, uint16_t val10bit) {
+    void SetBaseline(uint8_t el, uint16_t val10bit)
+    {
         uint8_t CL = readRegister8(MPR121Register::ECR) & B11000000; // read baseline tracking type
         // 00 = baseline tracking enabled, initial baseline is current value in baseline register (unmodified)
         // 01 = baseline tracking disabled
         // 10 = baseline tracking enabled, initial baseline is 5 high bits of electrode val
         // 11 = baseline tracking enabled, initial baseline is full 10 bits of electrode val
-        if (CL & B10000000) {
+        if (CL & B10000000)
+        {
             // baseline is set to initialize, which would defeat the purpose of setting the baseline value.
             CL = 0; // set it to track, but not alter values.
         }
-        writeRegister(MPR121Register::ECR, 0x0); // enter STOP mode
+        writeRegister(MPR121Register::ECR, 0x0);                                         // enter STOP mode
         writeRegister(MPR121Register::BASELINE_0 + el, (uint8_t)(val10bit >> 2 & 0xff)); // set the specified baseline
         writeRegister(MPR121Register::ECR, mElectrodesInUse | CL); // enter RUN mode for electrodes, and baseline values
     }

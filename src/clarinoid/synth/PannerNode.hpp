@@ -183,7 +183,4 @@ namespace clarinoid
 //     audio_block_t *inputQueueArray[1];
 // };
 
-
-
-
 } // namespace clarinoid

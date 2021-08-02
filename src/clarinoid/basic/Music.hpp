@@ -2,7 +2,6 @@
 #pragma once
 
 #include <initializer_list>
-#include <vector>
 #include "Enum.hpp"
 
 namespace clarinoid
@@ -215,8 +214,13 @@ struct ScaleFlavor
     // list of intervals in the scale?
     uint8_t mSymmetry =
         0; // symmetric scales mean there are not 12 unique ones. chromatic = symmetry of 1. whole tone = symmetry 2.
-    std::vector<int8_t> mIntervals; // signed because we have -1 magic numbers.
-    std::vector<int8_t> mDegreeCharacteristicStrengths;
+
+    int8_t mIntervals[12]; // signed because we have -1 magic numbers.
+    size_t mIntervalCount;
+
+    int8_t mDegreeCharacteristicStrengths[12];
+    size_t mDegreeCharacteristicStrengthsCount;
+
     uint8_t mTotalCharacteristicStrength = 0;
     NoteInScaleFlavorContext mNoteToScaleDegreeLUT_Sharps[12]; // convert chromatic note to scale degree+enharmonic.
     NoteInScaleFlavorContext mNoteToScaleDegreeLUT_Flats[12];  // convert chromatic note to scale degree+enharmonic.
@@ -230,18 +234,40 @@ struct ScaleFlavor
                 uint8_t symmetry,
                 std::initializer_list<int8_t> intervals,
                 std::initializer_list<int8_t> degreeCharacteristicStrengths)
-        : mID(id), mShortName(shortName), mLongName(longName), mOptions(options), mSymmetry(symmetry),
-          mIntervals(intervals), mDegreeCharacteristicStrengths(degreeCharacteristicStrengths)
+        : mID(id), mShortName(shortName), mLongName(longName), mOptions(options), mSymmetry(symmetry)
     {
+        size_t i = 0;
+        for (auto it = intervals.begin(); it != intervals.end(); ++it, ++i)
+        {
+            mIntervals[i] = *it;
+        }
+        mIntervals[intervals.size()] = -1;
+        mIntervalCount = intervals.size();
+
+        i = 0;
+        for (auto it = degreeCharacteristicStrengths.begin(); it != degreeCharacteristicStrengths.end(); ++it, ++i)
+        {
+            mDegreeCharacteristicStrengths[i] = *it;
+        }
+        mDegreeCharacteristicStrengths[degreeCharacteristicStrengths.size()] = -1;
+        mDegreeCharacteristicStrengthsCount = degreeCharacteristicStrengths.size();
+
         uint8_t span = 0;
         for (auto i : mIntervals)
         {
+            if (i < 0)
+                break;
             span += i;
+        }
+        if (span != 12) {
+            Serial.println(String("no 12 in ") + longName + "; mIntervalCount=" + mIntervalCount);
         }
         CCASSERT(span == 12);
 
         for (auto i : mDegreeCharacteristicStrengths)
         {
+            if (i < 0)
+                break;
             mTotalCharacteristicStrength += i;
         }
 
@@ -258,7 +284,7 @@ struct ScaleFlavor
             mNoteToScaleDegreeLUT_Sharps[ich].mScaleDegree = iScaleDeg_sharps;
             mNoteToScaleDegreeLUT_Sharps[ich].mEnharmonic = enh_sharps;
             enh_sharps++;
-            if (enh_sharps >= mIntervals.begin()[iScaleDeg_sharps])
+            if (enh_sharps >= mIntervals[iScaleDeg_sharps])
             {
                 enh_sharps = 0;
                 iScaleDeg_sharps++;
@@ -276,8 +302,8 @@ struct ScaleFlavor
             mNoteToScaleDegreeLUT_Flats[ich % 12].mScaleDegree = iScaleDeg_flats;
             mNoteToScaleDegreeLUT_Flats[ich % 12].mEnharmonic = -enh_flats;
             enh_flats++;
-            uint8_t intMinus1 = RotateIntoRange(iScaleDeg_flats - 1, mIntervals.size());
-            if (enh_flats >= mIntervals.begin()[intMinus1])
+            uint8_t intMinus1 = RotateIntoRange(iScaleDeg_flats - 1, mIntervalCount);
+            if (enh_flats >= mIntervals[intMinus1])
             {
                 enh_flats = 0;
                 iScaleDeg_flats = intMinus1;
@@ -301,13 +327,13 @@ struct ScaleFlavor
     // takes any scale degree and brings it into range of 0-
     uint8_t NormalizeScaleDegree(int8_t s) const
     {
-        return RotateIntoRangeByte(s, (uint8_t)mIntervals.size());
+        return RotateIntoRangeByte(s, (uint8_t)mIntervalCount);
     }
 
     // takes any scale degree and brings it into range of 0-
     uint8_t NormalizeScaleDegree(int8_t s, int8_t &octaveTransposition) const
     {
-        return RotateIntoRangeByte(s, (uint8_t)mIntervals.size(), octaveTransposition);
+        return RotateIntoRangeByte(s, (uint8_t)mIntervalCount, octaveTransposition);
     }
 
     // if ctx octave had to be normalized, offsetAdj will be adjusted to understand how to preserve octave info.

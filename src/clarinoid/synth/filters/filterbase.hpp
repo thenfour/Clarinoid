@@ -45,7 +45,7 @@ inline void applyOverdrive(real &pio_input, real m_overdrive, real p_tanh_factor
     }
 }
 
-inline void applyOverdrive(real &L, real& R, real m_overdrive, real p_tanh_factor)
+inline void applyOverdrive(real &L, real &R, real m_overdrive, real p_tanh_factor)
 {
     real overdrive_modded = m_overdrive;
     overdrive_modded = overdrive_modded < 0 ? 0 : overdrive_modded;
@@ -99,7 +99,7 @@ struct IFilter
     virtual void ProcessInPlace(real *samples, size_t sampleCount) = 0;
     virtual real ProcessSample(real x) = 0;
     virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) = 0;
-    virtual void ProcessSample(real& l, real& r) = 0;
+    virtual void ProcessSample(real &l, real &r) = 0;
     virtual void Reset() = 0; // honestly not even sure what reset really does
 };
 

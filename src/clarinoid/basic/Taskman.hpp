@@ -51,12 +51,6 @@ struct TaskExecutionData
     TimeSpan mTTD; // negative = the task was overdue
 };
 
-enum class PriorityClass
-{
-    Normal,
-    Critical
-};
-
 struct TaskPlanner
 {
     struct TaskInfo
@@ -71,10 +65,7 @@ struct TaskPlanner
         void Run(TimeSpan ttd /* the ttd calculated by the task planner */)
         {
             Stopwatch sw;
-            {
-                NoInterrupts ni;
-                mProc->TaskRun();
-            }
+            mProc->TaskRun();
             TimeSpan duration = sw.ElapsedTime();
             mExecutionCount++;
             mExecutionTimeMicros.Update((float)duration.ElapsedMicros());
@@ -83,14 +74,6 @@ struct TaskPlanner
             d.mTTD = ttd;
             mExecutionHistory.Push(d);
         }
-
-        // int32_t EstimateExecutionDurationMicros()
-        // {
-        //   if (mExecutionTimeMicros.GetValidSampleCount() == 0)
-        //     return 0; // we don't know, therefore return a length of 0 to guarantee that we can at least someday
-        //     execute and get this data.
-        //   return (int32_t)mExecutionTimeMicros.GetValue();
-        // }
     };
 
     struct TaskDeadline
@@ -114,7 +97,7 @@ struct TaskPlanner
         TimeSpan mTTD;       // negative= this task was overdue. positive = task not due yet.
     };
 
-    std::vector<TaskDeadline> mTasks; // signed because we have -1 magic numbers.
+    array_view<TaskDeadline> mTasks;
 
     TimeSpan mTimesliceDuration;
     TimeSpan mPreviousTimeSliceDelayTime;
@@ -123,17 +106,18 @@ struct TaskPlanner
     size_t mTaskCursor = 0; // which task is next to execute.
     Stopwatch mTimesliceTimer;
 
-    TaskPlanner(std::initializer_list<TaskDeadline> x) : mTasks(x)
+    TaskPlanner(array_view<TaskDeadline> tasks) : mTasks(tasks)
     {
         // assert every task in order.
         TimeSpan lastTS = TimeSpan::Zero();
-        for (auto &t : mTasks)
+        for (size_t i = 0; i < mTaskCursor; ++ i)
         {
+            auto& t = mTasks[i];
             CCASSERT(t.mTimeSliceDeadline >= lastTS);
             lastTS = t.mTimeSliceDeadline;
         }
 
-        mTimesliceDuration = mTasks.back().mTimeSliceDeadline;
+        mTimesliceDuration = mTasks[mTasks.mSize - 1].mTimeSliceDeadline;
         StartNewTimeSlice(TimeSpan::Zero());
     }
 
@@ -147,8 +131,8 @@ struct TaskPlanner
 
     TaskActionSpec GetNextAction()
     {
-        CCASSERT(mTasks.size());
-        size_t index = mTaskCursor % mTasks.size();
+        CCASSERT(mTasks.mSize);
+        size_t index = mTaskCursor % mTasks.mSize;
         auto &t = mTasks[index];
         TimeSpan timeSlicePosition = mTimesliceTimer.ElapsedTime();
         TimeSpan ttd = t.mTimeSliceDeadline - timeSlicePosition;
@@ -176,7 +160,7 @@ struct TaskPlanner
 
         a.mTask->mInfo.Run(a.mTTD);
 
-        if (a.mTaskDeadlineIndex == (mTasks.size() - 1))
+        if (a.mTaskDeadlineIndex == (mTasks.mSize - 1))
         {
             // this is the last task of the plan. how much did we overshoot?
             TimeSpan tspos = mTimesliceTimer.ElapsedTime();

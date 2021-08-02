@@ -78,13 +78,12 @@ struct DCFilter : public IFilter
             InlineProcessSample(samplesL[i], samplesR[i]);
         }
     }
-    virtual void ProcessSample(real& xL, real& xR) override
+    virtual void ProcessSample(real &xL, real &xR) override
     {
         InlineProcessSample(xL, xR);
     }
 
-
-    inline void InlineProcessSample(real& xnL, real& xnR)
+    inline void InlineProcessSample(real &xnL, real &xnR)
     {
         // left
         real ynL = xnL - xnminus1L + R * ynminus1L;
@@ -94,7 +93,7 @@ struct DCFilter : public IFilter
         real ynR = xnR - xnminus1R + R * ynminus1R;
         xnminus1R = xnR;
         ynminus1R = ynR;
-        
+
         xnL = ynL;
         xnR = ynR;
     }

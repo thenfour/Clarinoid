@@ -51,7 +51,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     Clarinoid2LedsTask mLed;
     InputDelegator mInputDelegator;
     Clarinoid2ControlMapper mControlMapper;
-    CCDisplay mDisplay;
+    _CCDisplay mDisplay;
     DefaultHud mHud;
     AppSettings mAppSettings;
 
@@ -67,13 +67,21 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
 
+    GuiPerformanceApp mGuiPerformanceApp;    //(mDisplay, mMusicalStateTask.mMetronome);
+    MPR121ConfigApp<10, 4> mMPR121ConfigApp; //(mDisplay, mControlMapper, mMusicalStateTask);
+
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
+    SimpleMovingAverage<30> mCPUUsage;
+    PeakMeterUtility<2000, 300> mPeakMeter;
+
     Clarinoid2App()
-        : mLed(this), mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL), mHud(mDisplay, this),
-          mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
-          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome),
-          mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
+        : mLed(this),                                                                                    //
+          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),                       //
+          mHud(mDisplay, this),                                                                          //
+          mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),                //
+          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome), //
+          mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),                                 //
           mSystemSettingsApp(
               mDisplay,
               breathMappingIndex,
@@ -91,7 +99,10 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
               &mMusicalStateTask.mMetronome),
           mPerfPatchApp(mDisplay), mSynthPatchApp(mDisplay), mAudioMonitorApp(mDisplay),
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
-          mHarmVoiceSettingsApp(mDisplay), mHarmPatchApp(mDisplay)
+          mHarmVoiceSettingsApp(mDisplay),                            //
+          mHarmPatchApp(mDisplay),                                    //
+          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome), //
+          mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask)
     {
     }
 
@@ -107,9 +118,6 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     {
         return &mMusicalStateTask.mMusicalState;
     }
-
-    SimpleMovingAverage<30> mCPUUsage;
-    PeakMeterUtility<2000, 300> mPeakMeter;
 
     virtual uint8_t ISysInfoProvider_GetPolyphony() override
     {
@@ -161,19 +169,13 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
     void Main()
     {
+        Wire1.setClock(400000); // use high speed mode. default speed = 100k
         mControlMapper.Init(&mDisplay);
-
-        // initialize some settings.
-
-        MPR121ConfigApp<10, 4> mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
-
-        GuiPerformanceApp mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome);
 
         IDisplayApp *allApps[] = {
             &mGuiPerformanceApp,
 
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
-
             &mPerfPatchApp,
             &mHarmPatchApp,
             &mSynthPatchApp,
@@ -301,15 +303,15 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mDisplay.Init(&mAppSettings, &mInputDelegator, &mHud, allApps);
         mMusicalStateTask.Init();
 
-        Wire1.setClock(400000); // use high speed mode. default speed = 100k
-
         FunctionTask mDisplayTask1{this, [](void *cap) {
                                        Clarinoid2App *pThis = (Clarinoid2App *)cap;
+                                       NoInterrupts ni;
                                        pThis->mDisplay.UpdateAndRenderTask();
                                    }};
 
         FunctionTask mDisplayTask2{this, [](void *cap) {
                                        Clarinoid2App *pThis = (Clarinoid2App *)cap;
+                                       NoInterrupts ni;
                                        pThis->mDisplay.DisplayTask();
                                    }};
 
@@ -321,26 +323,38 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         // LED tasks tend to be almost instantaneous (~<10 microseconds) so they can all live in the same slot.
         NopTask nopTask;
 
-        TaskPlanner tp{
+        TaskPlanner::TaskDeadline plan[] = {
             // NB: run an update task before display tasks in order to initialize things on 1st frame.
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(1), &mDisplayTask1, "Display1"},
 
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2500), &mMusicalStateTask, "MusS1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2501), &mLed, "mLed"},
+            // 0: mus, led
+            {TimeSpan::FromMicros(0), &mMusicalStateTask, "Mus1"},
+            {TimeSpan::FromMicros(0), &mLed, "Led1"},
 
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mMusicalStateTask, "MusS2"},
+            {TimeSpan::FromMicros(3000), &mMusicalStateTask, "Mus2"},
+            {TimeSpan::FromMicros(3000), &mDisplayTask1, "Display1"},
 
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7500), &mMusicalStateTask, "MusS3"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7501), &mDisplayTask2, "Display2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS4"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12500), &mMusicalStateTask, "MusS5"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(15000), &nopTask, "Nop"},
+            // 6000
+            {TimeSpan::FromMicros(6000), &mMusicalStateTask, "Mus3"},
+
+            // 9000
+            {TimeSpan::FromMicros(9000), &mMusicalStateTask, "Mus4"},
+            {TimeSpan::FromMicros(9000), &mLed, "Led2"},
+
+            // 12000
+            {TimeSpan::FromMicros(12000), &mMusicalStateTask, "Mus5"},
+            {TimeSpan::FromMicros(12000), &mDisplayTask2, "Display2"},
+
+            // 15000
+            {TimeSpan::FromMicros(15000), &nopTask, "Nop"},
+
         };
+
+        TaskPlanner tp = {plan};
 
         mTaskPlanner = &tp;
         mPerformanceApp.Init(&tp);
 
+        AudioInterrupts();
         tp.Main();
     }
 };

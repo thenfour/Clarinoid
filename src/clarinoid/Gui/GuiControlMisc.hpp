@@ -14,29 +14,25 @@ static bool GuiInitiateTooltip(bool isSelected, bool isEditing, DisplayApp &app)
     if (!isSelected)
         return false;
     app.mDisplay.ClearState();
-    app.mDisplay.mDisplay.setCursor(1, 1 + app.mDisplay.GetClientHeight() - app.mDisplay.mDisplay.GetLineHeight());
+    app.mDisplay.setCursor(1, 1 + app.mDisplay.GetClientHeight() - app.mDisplay.GetLineHeight());
     if (!isEditing)
     {
-        app.mDisplay.mDisplay.DrawMarchingAntsFilledRect<3, 1, 1, 1>(0,
-                                                                     app.mDisplay.GetClientHeight() -
-                                                                         app.mDisplay.mDisplay.GetLineHeight(),
-                                                                     app.mDisplay.mDisplay.width(),
-                                                                     1,
-                                                                     0);
-        app.mDisplay.mDisplay.fillRect(0,
-                                       1 + app.mDisplay.GetClientHeight() - app.mDisplay.mDisplay.GetLineHeight(),
-                                       app.mDisplay.mDisplay.width(),
-                                       app.mDisplay.mDisplay.GetLineHeight(),
-                                       SSD1306_BLACK);
-        app.mDisplay.mDisplay.setTextColor(SSD1306_WHITE);
+        app.mDisplay.DrawMarchingAntsFilledRect(
+            3, 1, 1, 1, 0, app.mDisplay.GetClientHeight() - app.mDisplay.GetLineHeight(), app.mDisplay.width(), 1, 0);
+        app.mDisplay.fillRect(0,
+                              1 + app.mDisplay.GetClientHeight() - app.mDisplay.GetLineHeight(),
+                              app.mDisplay.width(),
+                              app.mDisplay.GetLineHeight(),
+                              SSD1306_BLACK);
+        app.mDisplay.setTextColor(SSD1306_WHITE);
         return true;
     }
-    app.mDisplay.mDisplay.fillRect(0,
-                                   app.mDisplay.GetClientHeight() - app.mDisplay.mDisplay.GetLineHeight(),
-                                   app.mDisplay.mDisplay.width(),
-                                   app.mDisplay.mDisplay.GetLineHeight(),
-                                   SSD1306_WHITE);
-    app.mDisplay.mDisplay.setTextColor(SSD1306_INVERSE);
+    app.mDisplay.fillRect(0,
+                          app.mDisplay.GetClientHeight() - app.mDisplay.GetLineHeight(),
+                          app.mDisplay.width(),
+                          app.mDisplay.GetLineHeight(),
+                          SSD1306_WHITE);
+    app.mDisplay.setTextColor(SSD1306_INVERSE);
     return true;
 }
 
@@ -63,7 +59,7 @@ struct GuiValueAsTextRenderer : IGuiRenderer<T>
                                      bool isEditing,
                                      DisplayApp &app) override
     {
-        app.mDisplay.mDisplay.print(mValueFormatter ? mValueFormatter(mpCapture, val) : String(val));
+        app.mDisplay.print(mValueFormatter ? mValueFormatter(mpCapture, val) : String(val));
     }
 };
 
@@ -98,7 +94,7 @@ struct GuiLabelValueTooltipRenderer : IGuiRenderer<T>
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
             String valStr = (mValueFormatter ? mValueFormatter(mpCapture, val) : String(val));
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + valStr);
+            app.mDisplay.print(mStaticCaption + ": " + valStr);
         }
     }
 };
@@ -119,7 +115,7 @@ struct GuiStaticTooltipRenderer : IGuiRenderer<T>
     {
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption);
+            app.mDisplay.print(mStaticCaption);
         }
     }
 };

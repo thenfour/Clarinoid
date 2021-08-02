@@ -45,10 +45,12 @@ struct PointF
         ret.y = y_;
         return ret;
     }
-    PointF Add(const PointF& rhs) const {
+    PointF Add(const PointF &rhs) const
+    {
         return PointF::Construct(x + rhs.x, y + rhs.y);
     }
-    PointF Add(const PointI& rhs) const {
+    PointF Add(const PointI &rhs) const
+    {
         return PointF::Construct(x + rhs.x, y + rhs.y);
     }
 };
@@ -105,7 +107,8 @@ struct RectI
     {
         return PointI::Construct(x + width, y + height);
     }
-    bool YInRect(int y) const {
+    bool YInRect(int y) const
+    {
         return (y >= this->y) && (y < this->right());
     }
 };
@@ -138,8 +141,9 @@ struct BitmapSpec
     uint8_t widthPixels = 0;
     uint8_t heightPixels = 0;
 
-    template<size_t BitmapDataSizeBytes>
-    static BitmapSpec Construct(const uint8_t (&bmpBytes)[BitmapDataSizeBytes], uint8_t widthBytes, uint8_t widthPixels) {
+    template <size_t BitmapDataSizeBytes>
+    static BitmapSpec Construct(const uint8_t (&bmpBytes)[BitmapDataSizeBytes], uint8_t widthBytes, uint8_t widthPixels)
+    {
         BitmapSpec ret;
         ret.pBmp = bmpBytes;
         ret.widthBytes = widthBytes;
@@ -148,9 +152,6 @@ struct BitmapSpec
         ret.heightPixels = BitmapDataSizeBytes / ret.widthBytes;
         return ret;
     }
-
 };
 
 } // namespace clarinoid
-
-

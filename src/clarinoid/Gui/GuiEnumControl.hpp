@@ -23,7 +23,7 @@ struct GuiEnumAsTextRenderer : IGuiRenderer<T>
                                      bool isEditing,
                                      DisplayApp &app) override
     {
-        app.mDisplay.mDisplay.print(mEnumInfo.GetValueString(val));
+        app.mDisplay.print(mEnumInfo.GetValueString(val));
     }
 };
 
@@ -46,7 +46,7 @@ struct GuiLabelEnumTooltipRenderer : IGuiRenderer<T>
     {
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + mEnumInfo.GetValueString(val));
+            app.mDisplay.print(mStaticCaption + ": " + mEnumInfo.GetValueString(val));
         }
     }
 };
@@ -114,7 +114,7 @@ struct GuiEnumEditor : IGuiEditor<T>
         if (!isEditing)
             return;
         app.mDisplay.SetupModal();
-        int nitems = app.mDisplay.ClippedAreaHeight() / app.mDisplay.mDisplay.GetLineHeight();
+        int nitems = app.mDisplay.ClippedAreaHeight() / app.mDisplay.GetLineHeight();
         mListControl.Render(&app.mDisplay, 12, 12, nitems + 1);
     }
 };

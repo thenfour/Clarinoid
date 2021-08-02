@@ -62,7 +62,6 @@ struct CCSynth
     // After musical state has been updated, call this to apply those changes to the synth state.
     void Update(const MusicalVoice *pVoicesBegin, const MusicalVoice *pVoicesEnd)
     {
-        gSynthGraphControl.BeginUpdate();
         mCurrentPolyphony = 0;
 
         if (CCSynthGraph::peakL.available() && CCSynthGraph::peakR.available())
@@ -111,7 +110,6 @@ struct CCSynth
         }
 
         gSynthGraphControl.UpdatePostFx();
-        gSynthGraphControl.EndUpdate();
     }
 
     static float GetPeakLevel()
@@ -120,16 +118,12 @@ struct CCSynth
     }
 };
 
-
-
-
-
 template <uint32_t holdTimeMS, uint32_t falloffTimeMS>
 struct PeakMeterUtility
 {
     GenericPeakMeterUtility<holdTimeMS, falloffTimeMS> mUtil;
 
-    void Update(float& peak, float& heldPeak)
+    void Update(float &peak, float &heldPeak)
     {
         peak = CCSynth::GetPeakLevel();
         heldPeak = mUtil.Update(peak);

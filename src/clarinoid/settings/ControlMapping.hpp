@@ -6,7 +6,6 @@
 namespace clarinoid
 {
 
-
 // these should be flags someday but for now no need.
 enum class ModifierKey : uint8_t
 {
@@ -68,8 +67,8 @@ struct ControlMapping
 
     enum class MapStyle : uint8_t
     {
-        Passthrough,   // can be used as a "nop", or things like mapping a button input to a bool function
-        RemapUnipolar, // map the source value with {min,max} => float01
+        Passthrough,        // can be used as a "nop", or things like mapping a button input to a bool function
+        RemapUnipolar,      // map the source value with {min,max} => float01
         DeltaWithScale,     // for encoders scrolling for example. if you just "set" the value, then it would interfere.
                             // it's more accurate like this.
         TriggerUpValue,     // when trigger up condition is met, set dest value to X.
@@ -241,7 +240,10 @@ struct ControlMapping
     }
 
     // triggers when down pressed, adds a value to the param.
-    static ControlMapping ButtonIncrementMapping(PhysicalControl source, Function fn, float delta, ModifierKey mod = ModifierKey::None)
+    static ControlMapping ButtonIncrementMapping(PhysicalControl source,
+                                                 Function fn,
+                                                 float delta,
+                                                 ModifierKey mod = ModifierKey::None)
     {
         ControlMapping ret;
         ret.mSource = source;

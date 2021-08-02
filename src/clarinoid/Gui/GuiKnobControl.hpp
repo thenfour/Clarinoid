@@ -118,7 +118,7 @@ struct GuiLabelGainTooltipRenderer : IGuiRenderer<T>
     {
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + GainToIntString(val));
+            app.mDisplay.print(mStaticCaption + ": " + GainToIntString(val));
         }
     }
 };
@@ -138,10 +138,7 @@ struct GuiGainEditor : IGuiEditor<float>
         return true;
     }
 
-    virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
-                                        Property<float> &binding,
-                                        DisplayApp &app,
-                                        bool wasCancelled)
+    virtual void IGuiEditor_StopEditing(IGuiControl &ctrl, Property<float> &binding, DisplayApp &app, bool wasCancelled)
     {
         if (wasCancelled)
         {
@@ -160,14 +157,13 @@ struct GuiGainEditor : IGuiEditor<float>
             float oldValLin = binding.GetValue();
             float oldValDb = LinearToDecibels(oldValLin);
             float newValDb = mRange.AdjustValue(oldValDb,
-                                               app.mEnc.GetIntDelta(),
-                                               app.mInput->mModifierCourse.CurrentValue(),
-                                               app.mInput->mModifierFine.CurrentValue());
+                                                app.mEnc.GetIntDelta(),
+                                                app.mInput->mModifierCourse.CurrentValue(),
+                                                app.mInput->mModifierFine.CurrentValue());
             binding.SetValue(DecibelsToLinear(newValDb));
         }
     }
 };
-
 
 // ---------------------------------------------------------------------------------------
 struct GuiKnobGainControl : GuiCompositeControl<float>

@@ -41,6 +41,11 @@ struct array_view
     array_view(T (&a)[N]) : mSize(N), mData(a)
     {
     }
+
+    T& operator [](size_t i) {
+        CCASSERT(i < mSize);
+        return mData[i];
+    }
 };
 
 template <typename T, size_t N>

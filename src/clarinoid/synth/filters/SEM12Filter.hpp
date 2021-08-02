@@ -21,7 +21,8 @@ struct SEM12Filter : IFilter
 
     virtual void SetCutoffFrequency(real hz) override
     {
-        if (FloatEquals(hz, m_cutoffHz)) return;
+        if (FloatEquals(hz, m_cutoffHz))
+            return;
         m_cutoffHz = hz;
         Recalc();
     }
@@ -29,7 +30,8 @@ struct SEM12Filter : IFilter
     // 0-1
     virtual void SetResonance(real p_res) override
     {
-        if (FloatEquals(p_res, m_cachedResonance)) return;
+        if (FloatEquals(p_res, m_cachedResonance))
+            return;
         m_cachedResonance = p_res;
         m_resonance = Real(24.5) * p_res * p_res * p_res * p_res + Real(0.5);
         m_resonance = ClampInclusive(m_resonance, Real(0.5), Real(25));
@@ -38,7 +40,8 @@ struct SEM12Filter : IFilter
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
-        if (FloatEquals(cutoffHz, m_cutoffHz) && FloatEquals(reso, m_cachedResonance)) return;
+        if (FloatEquals(cutoffHz, m_cutoffHz) && FloatEquals(reso, m_cachedResonance))
+            return;
         m_cachedResonance = reso;
         m_cutoffHz = cutoffHz;
         m_resonance = Real(24.5) * reso * reso * reso * reso + Real(0.5);
@@ -66,11 +69,10 @@ struct SEM12Filter : IFilter
             InlineProcessSample(samplesL[i], samplesR[i]);
         }
     }
-    virtual void ProcessSample(real& xnL, real& xnR) override
+    virtual void ProcessSample(real &xnL, real &xnR) override
     {
         return InlineProcessSample(xnL, xnR);
     }
-
 
     virtual void Reset() override
     {
@@ -123,7 +125,7 @@ struct SEM12Filter : IFilter
         return xn;
     }
 
-    inline void InlineProcessSample(real& xnL, real& xnR)
+    inline void InlineProcessSample(real &xnL, real &xnR)
     {
         real hpfL = m_alpha_0 * (xnL - m_rho * m_z_1L - m_z_2L);
         real hpfR = m_alpha_0 * (xnR - m_rho * m_z_1R - m_z_2R);

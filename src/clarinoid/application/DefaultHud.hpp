@@ -24,9 +24,9 @@ struct ISysInfoProvider
 struct DefaultHud : IHudProvider
 {
     GenericPeakMeterUtility<1000, 250> mCPUPeakMeter;
-    CCDisplay &mDisplay;
+    IDisplay &mDisplay;
     ISysInfoProvider *mpInfo = nullptr;
-    DefaultHud(CCDisplay &display, ISysInfoProvider *infoProvider) : mDisplay(display), mpInfo(infoProvider)
+    DefaultHud(IDisplay &display, ISysInfoProvider *infoProvider) : mDisplay(display), mpInfo(infoProvider)
     {
     }
 
@@ -34,18 +34,18 @@ struct DefaultHud : IHudProvider
 
     virtual int16_t IHudProvider_GetHudHeight() override
     {
-        return mDisplay.mDisplay.GetLineHeight() + HUD_LINE_SEPARATOR_HEIGHT -
+        return mDisplay.GetLineHeight() + HUD_LINE_SEPARATOR_HEIGHT -
                1; // -1 because the bottom line of the font will not really be used.
     }
 
     virtual void IHudProvider_RenderHud(int16_t displayWidth, int16_t displayHeight) override
     {
         int16_t hudYStart = displayHeight - IHudProvider_GetHudHeight();
-        mDisplay.mDisplay.SetClipRect(0, hudYStart, displayWidth, displayHeight);
-        mDisplay.mDisplay.drawFastHLine(0, hudYStart, displayWidth, SSD1306_BLACK);
-        mDisplay.mDisplay.drawFastHLine(0, hudYStart + 1, displayWidth, SSD1306_WHITE);
-        mDisplay.mDisplay.setCursor(0, hudYStart + HUD_LINE_SEPARATOR_HEIGHT);
-        mDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
+        mDisplay.SetClipRect(RectI::Construct(0, hudYStart, displayWidth, displayHeight));
+        mDisplay.drawFastHLine(0, hudYStart, displayWidth, SSD1306_BLACK);
+        mDisplay.drawFastHLine(0, hudYStart + 1, displayWidth, SSD1306_WHITE);
+        mDisplay.setCursor(0, hudYStart + HUD_LINE_SEPARATOR_HEIGHT);
+        mDisplay.setTextColor(SSD1306_WHITE); // normal text
 
         // (int)(std::ceil(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()))) + CHAR_DB " " +
         String dbpeak = DecibelsToIntString(
@@ -56,23 +56,23 @@ struct DefaultHud : IHudProvider
         float cpu = mCPUPeakMeter.Update(
             std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
         int icpu = (int)std::ceil(cpu);
-        mDisplay.mDisplay.print(String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " + icpu + "% " + dbpeak + " " +
-                                mpInfo->ISysInfoProvider_GetNote().ToString());
+        mDisplay.print(String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " + icpu + "% " + dbpeak + " " +
+                       mpInfo->ISysInfoProvider_GetNote().ToString());
 
         String bpmStr = String(CHARSTR_QEQ) + (int)std::round(mpInfo->ISysInfoProvider_GetTempo());
         auto rcbpm = mDisplay.GetTextBounds(bpmStr);
 
-        mDisplay.mDisplay.setCursor(mDisplay.mDisplay.width() - rcbpm.width, mDisplay.mDisplay.getCursorY());
-        mDisplay.mDisplay.print(bpmStr);
+        mDisplay.setCursor(mDisplay.width() - rcbpm.width, mDisplay.getCursorY());
+        mDisplay.print(bpmStr);
 
         static constexpr int metronomeFlashWidth = 32;
         if (mpInfo->ISysInfoProvider_GetMetronome()->GetBeatFrac() < 0.10f)
         {
-            mDisplay.mDisplay.fillRect(displayWidth - metronomeFlashWidth,
-                                       hudYStart,
-                                       metronomeFlashWidth,
-                                       IHudProvider_GetHudHeight(),
-                                       SSD1306_INVERSE);
+            mDisplay.fillRect(displayWidth - metronomeFlashWidth,
+                              hudYStart,
+                              metronomeFlashWidth,
+                              IHudProvider_GetHudHeight(),
+                              SSD1306_INVERSE);
         }
     }
 };

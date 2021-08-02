@@ -180,7 +180,7 @@ struct LooperAndHarmonizer
                   MusicalVoice *outp,
                   MusicalVoice *outpEnd)
     {
-        auto& perf = mAppSettings->GetCurrentPerformancePatch();
+        auto &perf = mAppSettings->GetCurrentPerformancePatch();
         /*
         1. record state
         2. for each layer, each harmonizer layer, if it can already be filled in, do it.

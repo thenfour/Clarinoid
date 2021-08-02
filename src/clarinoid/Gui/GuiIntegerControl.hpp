@@ -58,9 +58,7 @@ struct GuiTempoControl : GuiCompositeControl<float>
           mValueRenderer([](void *cap, const float &bpm) { return String(String(CHARSTR_QEQ) + (int)std::round(bpm)); },
                          this),                          //
           mRenderer(&mValueRenderer, &mTooltipRenderer), //
-          mEditor(range),
-          mOnToggleHandler(onToggleHandler),
-          mpCapture(capture)
+          mEditor(range), mOnToggleHandler(onToggleHandler), mpCapture(capture)
     {
     }
 

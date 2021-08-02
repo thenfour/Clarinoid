@@ -52,7 +52,7 @@ struct PerformancePatch
 
     float mMasterGain = 1.0f;
 
-    float  mMasterFXGain = 1.0f;
+    float mMasterFXGain = 1.0f;
     bool mMasterFXEnable = true;
 
     float mReverbGain = DecibelsToLinear(-3.0f);
@@ -60,7 +60,7 @@ struct PerformancePatch
     float mReverbSize = 0.6f;
 
     float mDelayGain = DecibelsToLinear(-3.0f);
-    float mDelayMS = 300;
+    float mDelayMS = 225;
     float mDelayStereoSep = 30;
     float mDelayFeedbackLevel = 0.3f;
     ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog2;

@@ -13,25 +13,12 @@ struct Plotter
 {
     static constexpr size_t SamplesCapacity = TmaxWidth /* * Tspeed*/; // theoretical maximum samples to take
     float mSamples[SamplesCapacity];
-    // size_t mSamplesCapacity; // # of samples that we will actually use in mVals (width based on display area passed
-    // to Init())
     size_t mCursor = 0;
     size_t mValidSamples = 0; // how many elements in mSamples are valid.
-    // float *mSamples = nullptr;
-    // float mSamples[];
 
     void Init()
     {
     }
-
-    // void Init(/*CCDisplay* display, RectI displayArea*/)
-    // {
-    //     //mDisplay = display;
-    //     //CCASSERT(!!mDisplay);
-    //     //mDisplayArea = displayArea;
-    //     //mSamplesCapacity = TmaxWidth * Tspeed;
-    //     //mSamples = new float[mSamplesCapacity];
-    // }
 
     void clear()
     {
@@ -47,7 +34,7 @@ struct Plotter
         mCursor = (mCursor + 1) % SamplesCapacity;
     }
 
-    void Render(CCDisplay &mDisplay, RectI mDisplayArea)
+    void Render(IDisplay &mDisplay, RectI mDisplayArea)
     {
         if (mValidSamples == 0)
             return;
@@ -64,7 +51,7 @@ struct Plotter
 
             float f = Clamp(mSamples[iSample], 0.0f, 1.0f);
             float y = map(f, 0.0f, 1.0f, float(mDisplayArea.height - 1), 0.0f);
-            mDisplay.mDisplay.drawPixel(mDisplayArea.x + x, mDisplayArea.y + y, WHITE);
+            mDisplay.drawPixel(mDisplayArea.x + x, mDisplayArea.y + y, WHITE);
 
             --iSample;
         }

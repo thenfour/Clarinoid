@@ -161,9 +161,9 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
         }
     }
 
-    template <int skip = 2>
     void DrawDottedHLine(int16_t left, int16_t width, int16_t y, uint16_t color)
     {
+        const int skip = 2;
         for (int16_t x = left; x < left + width; x += skip)
         {
             drawPixel(x, y, color);
@@ -196,8 +196,16 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
         DrawDottedVLineWithGlobalParity(x + w - 1, y + 1, h - 2, variation);
     }
 
-    template <int AntSize, int AntMask, int ySign, int xSign>
-    void DrawMarchingAntsFilledRect(int xstart, int ystart, int w, int h, int variation)
+    // template <int AntSize, int AntMask, int ySign, int xSign>
+    void DrawMarchingAntsFilledRect(int AntSize,
+                                    int AntMask,
+                                    int ySign,
+                                    int xSign,
+                                    int xstart,
+                                    int ystart,
+                                    int w,
+                                    int h,
+                                    int variation)
     {
         for (int y = ystart; y < ystart + h; ++y)
         {
@@ -210,15 +218,24 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
         }
     }
 
-    template <int LineWidth, int AntSize, int AntMask>
-    void DrawMarchingAntsRectOutline(int x, int y, int w, int h, int variation)
+    // template <int LineWidth, int AntSize, int AntMask>
+    void DrawMarchingAntsRectOutline(int LineWidth, int AntSize, int AntMask, int x, int y, int w, int h, int variation)
     {
         // draw rect INSIDE the given coords
-        DrawMarchingAntsFilledRect<AntSize, AntMask, 1, 1>(x, y, w, LineWidth, variation);                 // top rect
-        DrawMarchingAntsFilledRect<AntSize, AntMask, 1, -1>(x, y + h - LineWidth, w, LineWidth, variation); // bottom rect
-        DrawMarchingAntsFilledRect<AntSize, AntMask, -1, -1>(x, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // left
-        DrawMarchingAntsFilledRect<AntSize, AntMask, 1, 1>(
-            x + w - LineWidth, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // right
+        DrawMarchingAntsFilledRect(AntSize, AntMask, 1, 1, x, y, w, LineWidth, variation); // top rect
+        DrawMarchingAntsFilledRect(
+            AntSize, AntMask, 1, -1, x, y + h - LineWidth, w, LineWidth, variation); // bottom rect
+        DrawMarchingAntsFilledRect(
+            AntSize, AntMask, -1, -1, x, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // left
+        DrawMarchingAntsFilledRect(AntSize,
+                                   AntMask,
+                                   1,
+                                   1,
+                                   x + w - LineWidth,
+                                   y + LineWidth,
+                                   LineWidth,
+                                   h - LineWidth - LineWidth,
+                                   variation); // right
     }
 
     uint16_t GetLineHeight() const

@@ -22,7 +22,7 @@ struct PerformanceApp : SettingsMenuApp
 
     SimpleMovingAverage<30> mCPUUsage;
 
-    PerformanceApp(CCDisplay &d, MusicalStateTask *pMusicalStateTask, Clarinoid2ControlMapper *controls, Metronome *pm)
+    PerformanceApp(IDisplay &d, MusicalStateTask *pMusicalStateTask, Clarinoid2ControlMapper *controls, Metronome *pm)
         : SettingsMenuApp(d), mpMusicalStateTask(pMusicalStateTask), mpControls(controls), mpMetronome(pm)
     {
     }
@@ -102,7 +102,7 @@ struct PerformanceApp : SettingsMenuApp
         mTiming.Init(
             [](void *cap) { // get item count
                 PerformanceApp *pThis = (PerformanceApp *)cap;
-                return pThis->mTaskManager->mTasks.size();
+                return pThis->mTaskManager->mTasks.mSize;
             },
             [](void *cap, size_t i) // get name
             {
@@ -156,70 +156,67 @@ struct PerformanceApp : SettingsMenuApp
         auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
         // line 0
-        mDisplay.mDisplay.setTextWrap(false);
-        mDisplay.mDisplay.println(String("P:") + perf.mName);
+        mDisplay.setTextWrap(false);
+        mDisplay.println(String("P:") + perf.mName);
 
         // line 1
-        mDisplay.mDisplay.setTextWrap(false);
-        mDisplay.mDisplay.println(String("A:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetA));
+        mDisplay.setTextWrap(false);
+        mDisplay.println(String("A:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetA));
 
         // line 2
-        mDisplay.mDisplay.setTextWrap(false);
-        mDisplay.mDisplay.println(String("B:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetB));
+        mDisplay.setTextWrap(false);
+        mDisplay.println(String("B:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetB));
 
         // line 3
-        mDisplay.mDisplay.println(
-            perf.mHarmEnabled
-                ? String("H:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)
-                : (String("H:off:") +
-                   mAppSettings->GetHarmPatchName(perf.mHarmPreset)));
+        mDisplay.println(perf.mHarmEnabled ? String("H:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)
+                                           : (String("H:off:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)));
 
         float peak, heldPeak;
         mPeakMeter.Update(peak, heldPeak);
-        auto y = mDisplay.mDisplay.getCursorY();
-        mDisplay.mDisplay.println(String("Peak ") + heldPeak);
-        mDisplay.mDisplay.fillRoundRect(0, y, peak * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
-        mDisplay.mDisplay.drawFastVLine(heldPeak * mDisplay.mDisplay.width(), y, 8, SSD1306_INVERSE);
+        auto y = mDisplay.getCursorY();
+        mDisplay.println(String("Peak ") + heldPeak);
+        mDisplay.fillRoundRect(0, y, peak * mDisplay.width(), 5, 2, SSD1306_INVERSE);
+        mDisplay.drawFastVLine(heldPeak * mDisplay.width(), y, 8, SSD1306_INVERSE);
 
         // y = mDisplay.mDisplay.getCursorY();
         // float val = mpMusicalStateTask->mMusicalState.mCurrentBreath01.GetValue();
         // mDisplay.mDisplay.println(String("breath ") + val);
         // mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
-        y = mDisplay.mDisplay.getCursorY();
+        y = mDisplay.getCursorY();
         float val = mpMusicalStateTask->mMusicalState.mCurrentPitchN11.GetValue();
         // mDisplay.mDisplay.println(String("pitch ") + val);
         static const int pbwidth = 5;
         if (val >= 0)
         {
-            int pbextent = std::max(1, val * mDisplay.mDisplay.height() / 2);
-            mDisplay.mDisplay.fillRect(mDisplay.mDisplay.width() - pbwidth - 1,     // x
-                                       (mDisplay.mDisplay.height() / 2) - pbextent, // y
-                                       5,                                           // width
-                                       pbextent,                                    // height
-                                       SSD1306_INVERSE);
+            int pbextent = std::max(1, val * mDisplay.height() / 2);
+            mDisplay.fillRect(mDisplay.width() - pbwidth - 1,     // x
+                              (mDisplay.height() / 2) - pbextent, // y
+                              5,                                  // width
+                              pbextent,                           // height
+                              SSD1306_INVERSE);
         }
         else
         {
-            int pbextent = -val * mDisplay.mDisplay.height() / 2;
-            mDisplay.mDisplay.fillRect(mDisplay.mDisplay.width() - pbwidth - 1, // x
-                                       (mDisplay.mDisplay.height() / 2),        // y
-                                       5,                                       // width
-                                       pbextent,                                // height
-                                       SSD1306_INVERSE);
+            int pbextent = -val * mDisplay.height() / 2;
+            mDisplay.fillRect(mDisplay.width() - pbwidth - 1, // x
+                              (mDisplay.height() / 2),        // y
+                              5,                              // width
+                              pbextent,                       // height
+                              SSD1306_INVERSE);
         }
 
         // metronome
-        y = mDisplay.mDisplay.getCursorY();
+        y = mDisplay.getCursorY();
         float beatFrac = mpMetronome->GetBeatFrac();
-        mDisplay.mDisplay.println(String("") + perf.mBPM + " bpm " + mpMetronome->GetBeatInt());
-        mDisplay.mDisplay.fillRoundRect(0, y, beatFrac * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+        mDisplay.println(String("") + perf.mBPM + " bpm " + mpMetronome->GetBeatInt());
+        mDisplay.fillRoundRect(0, y, beatFrac * mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
         static const int R = 24;
         static const int P = 16;
         static const float THRESH = 0.1f;
-        mDisplay.mDisplay.fillCircle(
-            mDisplay.mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
+        mDisplay.fillCircle(
+            mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
 
         // state
         {
@@ -228,9 +225,8 @@ struct PerformanceApp : SettingsMenuApp
             p = 1.0f - p;
             mCPUUsage.Update(p);
             p = mCPUUsage.GetValue() * 100;
-            mDisplay.mDisplay.println(String("v:") + mpMusicalStateTask->mSynth.mCurrentPolyphony + "/" +
-                                      MAX_SYNTH_VOICES + " a:" + (int)std::ceil(AudioProcessorUsage()) +
-                                      "% tm:" + (int)std::ceil(p) + "%");
+            mDisplay.println(String("v:") + mpMusicalStateTask->mSynth.mCurrentPolyphony + "/" + MAX_SYNTH_VOICES +
+                             " a:" + (int)std::ceil(AudioProcessorUsage()) + "% tm:" + (int)std::ceil(p) + "%");
         }
 
         SettingsMenuApp::RenderFrontPage();
@@ -248,7 +244,7 @@ struct DebugDisplayApp : SettingsMenuApp
     Clarinoid2ControlMapper &mControls;
     MusicalStateTask &mMusicalStateTask;
 
-    DebugDisplayApp(CCDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst)
+    DebugDisplayApp(IDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst)
         : SettingsMenuApp(d), mControls(c), mMusicalStateTask(mst)
     {
     }
@@ -420,7 +416,7 @@ struct DebugDisplayApp : SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        mDisplay.mDisplay.println(String("Debug info ->"));
+        mDisplay.println(String("Debug info ->"));
         SettingsMenuApp::RenderFrontPage();
     }
 };
@@ -430,7 +426,7 @@ struct AudioMonitorApp : DisplayApp
 {
     Plotter<MAX_DISPLAY_WIDTH> mPlotter;
 
-    AudioMonitorApp(CCDisplay &d) : DisplayApp(d)
+    AudioMonitorApp(IDisplay &d) : DisplayApp(d)
     {
         mPlotter.Plot(0);
     }
@@ -452,10 +448,10 @@ struct AudioMonitorApp : DisplayApp
     }
     virtual void RenderFrontPage() override
     {
-        mDisplay.mDisplay.println(String("Peak"));
+        mDisplay.println(String("Peak"));
         float peak = CCSynth::GetPeakLevel();
         mPlotter.Plot(peak);
-        RectI rcDisplay = {0, 0, this->mDisplay.mDisplay.width(), this->mDisplay.mDisplay.height()};
+        RectI rcDisplay = {0, 0, this->mDisplay.width(), this->mDisplay.height()};
         mPlotter.Render(this->mDisplay, rcDisplay);
     }
 
@@ -477,7 +473,7 @@ struct MPR121ConfigApp : SettingsMenuApp
     Clarinoid2ControlMapper &mControls;
     MusicalStateTask &mMusicalStateTask;
 
-    MPR121ConfigApp(CCDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst)
+    MPR121ConfigApp(IDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst)
         : SettingsMenuApp(d), mControls(c), mMusicalStateTask(mst)
     {
     }
@@ -638,20 +634,20 @@ struct MPR121ConfigApp : SettingsMenuApp
             int baselineVal =
                 mElectrodeData[i].mBaselineValue10bit; // mDevice.mMpr121.GetBaselineData(i + mKeyIndexBegin);
 
-            int x = mDisplay.mDisplay.width() * i / mKeyCount;        // 128 * 5 / 10 =
-            int x2 = mDisplay.mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 =
+            int x = mDisplay.width() * i / mKeyCount;        // 128 * 5 / 10 =
+            int x2 = mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 =
             int width = x2 - x;
-            mDisplay.mDisplay.setCursor(x, 0);
-            mDisplay.mDisplay.print(IndexToChar(i));
+            mDisplay.setCursor(x, 0);
+            mDisplay.print(IndexToChar(i));
 
-            mDisplay.mDisplay.drawFastVLine(x, 0, 4, WHITE);
-            int filteredY = (int)mDisplay.mDisplay.height() * filteredVal / 1024; // 10 bit val scaled to height.
-            int baselineY = (int)mDisplay.mDisplay.height() * baselineVal / 1024; // 10 bit val scaled to height.
+            mDisplay.drawFastVLine(x, 0, 4, WHITE);
+            int filteredY = (int)mDisplay.height() * filteredVal / 1024; // 10 bit val scaled to height.
+            int baselineY = (int)mDisplay.height() * baselineVal / 1024; // 10 bit val scaled to height.
 
-            mDisplay.mDisplay.mSolidText = false;
-            mDisplay.mDisplay.drawFastHLine(x, baselineY, width, WHITE);
-            mDisplay.mDisplay.mSolidText = true;
-            mDisplay.mDisplay.drawFastHLine(x, filteredY, width, WHITE);
+            mDisplay.SetTextSolid(false);
+            mDisplay.drawFastHLine(x, baselineY, width, WHITE);
+            mDisplay.SetTextSolid(true);
+            mDisplay.drawFastHLine(x, filteredY, width, WHITE);
         }
 
         SettingsMenuApp::RenderFrontPage();

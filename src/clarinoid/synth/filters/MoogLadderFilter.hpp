@@ -22,7 +22,8 @@ struct MoogLadderFilter : IFilter
     // IFilter
     virtual void SetType(FilterType type) override
     {
-        if (m_FilterType == type) return;
+        if (m_FilterType == type)
+            return;
         switch (type)
         {
         default:
@@ -57,14 +58,16 @@ struct MoogLadderFilter : IFilter
 
     virtual void SetCutoffFrequency(real hz) override
     {
-        if (FloatEquals(m_cutoffHz, hz)) return;
+        if (FloatEquals(m_cutoffHz, hz))
+            return;
         m_cutoffHz = hz;
         Recalc();
     }
 
     virtual void SetSaturation(real amt) override
     {
-        if (FloatEquals(m_overdrive, amt)) return;
+        if (FloatEquals(m_overdrive, amt))
+            return;
         m_overdrive = amt;
         Recalc();
     }
@@ -72,7 +75,8 @@ struct MoogLadderFilter : IFilter
     // 0-1
     virtual void SetResonance(real p_res)
     {
-        if (FloatEquals(p_res, m_resonance)) return;
+        if (FloatEquals(p_res, m_resonance))
+            return;
         m_resonance = p_res;
         // this maps dQControl = 0->1 to 0-4 * 0.97 to avoid clippy self oscillation
         m_k = Real(3.88) * p_res;
@@ -82,7 +86,9 @@ struct MoogLadderFilter : IFilter
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
-        if (FloatEquals(reso, m_resonance) && FloatEquals(m_overdrive, saturation) && FloatEquals(m_cutoffHz, cutoffHz) && (m_FilterType == type)) {
+        if (FloatEquals(reso, m_resonance) && FloatEquals(m_overdrive, saturation) &&
+            FloatEquals(m_cutoffHz, cutoffHz) && (m_FilterType == type))
+        {
             return;
         }
 
@@ -135,7 +141,7 @@ struct MoogLadderFilter : IFilter
             InlineProcessSample(samplesL[i], samplesR[i]);
         }
     }
-    virtual void ProcessSample(real& xnL, real& xnR) override
+    virtual void ProcessSample(real &xnL, real &xnR) override
     {
         return InlineProcessSample(xnL, xnR);
     }
@@ -170,12 +176,12 @@ struct MoogLadderFilter : IFilter
         return output;
     }
 
-    inline void InlineProcessSample(real &xnL, real& xnR)
+    inline void InlineProcessSample(real &xnL, real &xnR)
     {
         real dSigmaL = m_LPF1.getFeedbackOutputL() + m_LPF2.getFeedbackOutputL() + m_LPF3.getFeedbackOutputL() +
-                      m_LPF4.getFeedbackOutputL();
+                       m_LPF4.getFeedbackOutputL();
         real dSigmaR = m_LPF1.getFeedbackOutputR() + m_LPF2.getFeedbackOutputR() + m_LPF3.getFeedbackOutputR() +
-                      m_LPF4.getFeedbackOutputR();
+                       m_LPF4.getFeedbackOutputR();
 
         // calculate input to first filter
         real dUL = (xnL - m_k * dSigmaL) * m_alpha_0;

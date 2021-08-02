@@ -26,7 +26,7 @@ struct Metronome
         // make it smoothly modulated; "now" should finish out the current beat.
         // so, make the new root time (now - current beat fraction * new bpm)
         // this is required in order to make BPM changes and not cause total chaos with regards to sequencer timing.
-        float b = GetBeatFloat();                           // old bpm
+        float b = GetBeatFloat();                                                        // old bpm
         auto t = TimeSpan::FromBeats(b, mAppSettings.GetCurrentPerformancePatch().mBPM); // new bpm
         mRootTime = Uptime() - t;
         mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM;

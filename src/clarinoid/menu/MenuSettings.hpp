@@ -19,7 +19,7 @@ static bool AlwaysEnabled(void *)
 struct ISettingItemEditorActions
 {
     virtual void CommitEditing() = 0;
-    virtual CCDisplay *GetDisplay() = 0;
+    virtual IDisplay *GetDisplay() = 0;
     virtual AppSettings *GetAppSettings() = 0;
     virtual InputDelegator *GetInputDelegator() = 0;
 };
@@ -365,7 +365,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
 {
     ISettingItemEditor *mpCurrentEditor = nullptr;
 
-    SettingsMenuApp(CCDisplay &d) : DisplayApp(d)
+    SettingsMenuApp(IDisplay &d) : DisplayApp(d)
     {
     }
 
@@ -382,7 +382,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         DisplayApp::DisplayAppOnSelected();
     }
 
-    virtual CCDisplay *GetDisplay() override
+    virtual IDisplay *GetDisplay() override
     {
         return &mDisplay;
     }
@@ -417,7 +417,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
 
         mDisplay.ClearState();
 
-        size_t lineHeight = mDisplay.mDisplay.GetLineHeight();
+        size_t lineHeight = mDisplay.GetLineHeight();
         size_t maxItemsToRender = (mDisplay.GetClientHeight() + lineHeight) / lineHeight;
         size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
         int focusedItemScreenPos = maxItemsToRender / 3; // estimated... whatever.
@@ -427,8 +427,8 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         {
             size_t multiIndex = 0;
             auto *item = state.pList->GetItem(itemToRender, multiIndex);
-            mDisplay.mDisplay.mSolidText = item->IsEnabled(multiIndex);
-            mDisplay.mDisplay.setTextWrap(false);
+            mDisplay.SetTextSolid(item->IsEnabled(multiIndex));
+            mDisplay.setTextWrap(false);
 
             String line = "";
 
@@ -438,7 +438,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
                 line += item->GetName(multiIndex);
                 break;
             case SettingItemType::Submenu:
-                line +=item->GetName(multiIndex) + " -->";
+                line += item->GetName(multiIndex) + " -->";
                 break;
             default:
                 auto eq = item->GetValueString(multiIndex);
@@ -448,18 +448,18 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
                 }
                 else
                 {
-                    line +=item->GetName(multiIndex);
+                    line += item->GetName(multiIndex);
                 }
                 break;
             }
 
-            auto cursorY = mDisplay.mDisplay.getCursorY();
+            auto cursorY = mDisplay.getCursorY();
             mDisplay.PrintInvertedLine(line, (itemToRender == (size_t)state.focusedItem));
 
             if (itemToRender == (state.pList->Count() - 1))
             {
-                int separatorY = cursorY + mDisplay.mDisplay.GetLineHeight() - 1;
-                mDisplay.mDisplay.drawFastHLine(0, separatorY, mDisplay.mDisplay.width(), SSD1306_INVERSE);
+                int separatorY = cursorY + mDisplay.GetLineHeight() - 1;
+                mDisplay.drawFastHLine(0, separatorY, mDisplay.width(), SSD1306_INVERSE);
             }
 
             itemToRender = (itemToRender + 1) % state.pList->Count();

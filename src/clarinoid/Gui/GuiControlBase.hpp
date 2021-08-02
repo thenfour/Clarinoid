@@ -20,6 +20,10 @@ namespace clarinoid
 // represents an INSTANCE of a gui control, not a control type.
 struct IGuiControl
 {
+    int mPage = 0;
+    RectI mBounds;
+    bool mIsSelectable = true;
+
     IGuiControl()
     {
     }
@@ -53,12 +57,8 @@ struct IGuiControl
     {
     }
 
-    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) = 0;
-    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) = 0;
-
-    int mPage = 0;
-    RectI mBounds;
-    bool mIsSelectable = true;
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) = 0;
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) = 0;
 };
 
 // ---------------------------------------------------------------------------------------
@@ -120,17 +120,18 @@ struct GuiLabelControl : IGuiControl
         IGuiControl::mIsSelectable = false;
     }
 
-    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
     {
         display.ClearState();
-        display.mDisplay.setTextWrap(false);
-        display.mDisplay.setCursor(mBounds.x, mBounds.y);
-        if (mClip) {
+        display.setTextWrap(false);
+        display.setCursor(mBounds.x, mBounds.y);
+        if (mClip)
+        {
             display.SetClipRect(mBounds);
         }
-        display.mDisplay.print(mText);
+        display.print(mText);
     }
-    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
     {
     }
 };
@@ -230,10 +231,10 @@ struct GuiCompositeControl : IGuiControl
     {
     }
 
-    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
     {
         display.ClearState();
-        display.mDisplay.setCursor(mBounds.x, mBounds.y);
+        display.setCursor(mBounds.x, mBounds.y);
         mRenderCtrl->IGuiRenderer_Render(*this, mBinding.GetValue(), isSelected, isEditing, app);
         mEditor->IGuiEditor_Render(*this, mBinding, isSelected, isEditing, app);
     }
@@ -245,7 +246,7 @@ struct GuiCompositeControl : IGuiControl
     {
         mEditor->IGuiEditor_StopEditing(*this, mBinding, app, wasCancelled);
     }
-    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
     {
         mEditor->IGuiEditor_Update(*this, mBinding, isSelected, isEditing, app);
     }

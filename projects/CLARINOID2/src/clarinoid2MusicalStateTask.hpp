@@ -26,7 +26,7 @@ struct MusicalStateTask : ITask
     SimpleMovingAverage<15> mMusicalStateTiming;
     SimpleMovingAverage<15> mSynthStateTiming;
 
-    MusicalStateTask(CCDisplay *pDisplay,
+    MusicalStateTask(IDisplay *pDisplay,
                      AppSettings *appSettings,
                      InputDelegator *input,
                      Clarinoid2ControlMapper *controlMapper)
@@ -43,6 +43,7 @@ struct MusicalStateTask : ITask
     virtual void TaskRun() override
     {
         {
+            NoInterrupts ni;
             int m1 = micros();
             mControlMapper->TaskRun();
             mpInput->Update();
@@ -50,6 +51,7 @@ struct MusicalStateTask : ITask
             mInputTiming.Update((float)(m2 - m1));
         }
         {
+            NoInterrupts ni;
             int m1 = micros();
             mMusicalState.Update();
             int m2 = micros();
@@ -57,7 +59,7 @@ struct MusicalStateTask : ITask
         }
 
         {
-            // does its own interrupt disabling.
+            NoInterrupts ni;
             int m1 = micros();
             mSynth.Update(mMusicalState.mMusicalVoices, mMusicalState.mMusicalVoices + mMusicalState.mVoiceCount);
             int m2 = micros();

@@ -319,9 +319,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
         return filterFreq;
     }
 
+    // NOTE: we don't care about SynthPatchB at this point.
     void Update(const MusicalVoice &mv)
     {
-        // NOTE: we don't care about SynthPatchB at this point.
         mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatchA);
         mModMatrix.SetSynthPatch(mPreset);
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
@@ -620,16 +620,6 @@ struct SynthGraphControl
         CCSynthGraph::metronomeEnv.hold(0);
         CCSynthGraph::metronomeEnv.releaseNoteOn(0);
         CCSynthGraph::metronomeEnv.sustain(0);
-    }
-
-    void BeginUpdate()
-    {
-        AudioNoInterrupts(); // https://www.pjrc.com/teensy/td_libs_AudioProcessorUsage.html
-    }
-
-    void EndUpdate()
-    {
-        AudioInterrupts();
     }
 
     void UpdatePostFx()

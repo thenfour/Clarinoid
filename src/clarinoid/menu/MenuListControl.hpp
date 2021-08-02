@@ -21,13 +21,12 @@ struct ListControl
         mEnc.ClearState(); // important so the next Update() call doesn't incorrectly calculate a delta.
     }
 
-    void Render(CCDisplay *mDisplay, int x, int y, int mVisibleItems)
+    void Render(IDisplay *mDisplay, int x, int y, int mVisibleItems)
     {
         auto count = mpList->List_GetItemCount();
         if (count == 0)
             return;
-        mDisplay->mDisplay.setTextSize(1);
-        mDisplay->mDisplay.setTextWrap(false);
+        mDisplay->setTextWrap(false);
         int itemToRender = RotateIntoRange(mSelectedItem.GetValue() - 1, count);
         const int itemsToRender = min(mVisibleItems, count);
         for (int i = 0; i < itemsToRender; ++i)
@@ -37,9 +36,9 @@ struct ListControl
             itemToRender = RotateIntoRange(itemToRender + 1, count);
             if (itemToRender == (mpList->List_GetItemCount() - 1))
             {
-                auto cursorY = mDisplay->mDisplay.getCursorY();
-                int separatorY = cursorY + mDisplay->mDisplay.GetLineHeight() - 1;
-                mDisplay->mDisplay.drawFastHLine(0, separatorY, mDisplay->mDisplay.width(), SSD1306_INVERSE);
+                auto cursorY = mDisplay->getCursorY();
+                int separatorY = cursorY + mDisplay->GetLineHeight() - 1;
+                mDisplay->drawFastHLine(0, separatorY, mDisplay->width(), SSD1306_INVERSE);
             }
         }
     }
@@ -67,8 +66,8 @@ struct ListControl2
         mEnc.ClearState(); // important so the next Update() call doesn't incorrectly calculate a delta.
     }
 
-    template<typename Tindex>
-    void Render(CCDisplay *mDisplay,
+    template <typename Tindex>
+    void Render(IDisplay *mDisplay,
                 const RectI &rc,
                 int itemCount,
                 Property<Tindex> &selectedItem,
@@ -78,31 +77,31 @@ struct ListControl2
         if (itemCount == 0)
             return;
 
-        int mVisibleItems = 1 + (rc.height / mDisplay->mDisplay.GetLineHeight());
+        int mVisibleItems = 1 + (rc.height / mDisplay->GetLineHeight());
 
         int itemToRender = RotateIntoRange(selectedItem.GetValue() - 1, itemCount);
         mDisplay->ClearState();
         const int itemsToRender = min(mVisibleItems, itemCount);
-        mDisplay->mDisplay.SetClipRect(rc.x, rc.y, rc.right(), rc.bottom());
-        mDisplay->mDisplay.setCursor(rc.x, rc.y);
-        mDisplay->mDisplay.mTextLeftMargin = rc.x;
+        mDisplay->SetClipRect(rc.x, rc.y, rc.right(), rc.bottom());
+        mDisplay->setCursor(rc.x, rc.y);
+        mDisplay->SetTextLeftMargin(rc.x);
         for (int i = 0; i < itemsToRender; ++i)
         {
             mDisplay->PrintInvertedLine(captionGetter(capture, itemToRender), itemToRender == selectedItem.GetValue());
             itemToRender = RotateIntoRange(itemToRender + 1, itemCount);
             if (itemToRender == (itemCount - 1))
             {
-                auto cursorY = mDisplay->mDisplay.getCursorY();
-                int separatorY = cursorY + mDisplay->mDisplay.GetLineHeight() - 1;
+                auto cursorY = mDisplay->getCursorY();
+                int separatorY = cursorY + mDisplay->GetLineHeight() - 1;
                 if (rc.YInRect(separatorY))
                 {
-                    mDisplay->mDisplay.drawFastHLine(rc.x, separatorY, rc.width, SSD1306_INVERSE);
+                    mDisplay->drawFastHLine(rc.x, separatorY, rc.width, SSD1306_INVERSE);
                 }
             }
         }
     }
 
-    template<typename Tindex>
+    template <typename Tindex>
     void Update(IEncoder *pEncoder, int itemCount, Property<Tindex> &selectedItem)
     {
         mEnc.Update(pEncoder);

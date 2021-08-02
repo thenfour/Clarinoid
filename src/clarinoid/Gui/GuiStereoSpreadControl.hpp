@@ -38,8 +38,8 @@ struct GuiStereoSpreadControl : GuiCompositeControl<float>
                            const Property<T> &binding,
                            const Property<bool> &isSelectable)
         : GuiCompositeControl(page, RectI::Construct(pos, 17, 7), binding, &mRenderer, &mEditor, isSelectable), //
-          mTooltipRenderer(tooltipCaption),                                               //
-          mRenderer(&mValueRenderer, &mTooltipRenderer),                                  //
+          mTooltipRenderer(tooltipCaption),                                                                     //
+          mRenderer(&mValueRenderer, &mTooltipRenderer),                                                        //
           mEditor(range)
     {
     }

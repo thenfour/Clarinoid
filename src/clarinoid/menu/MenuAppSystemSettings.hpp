@@ -24,13 +24,14 @@ struct SystemSettingsApp : SettingsMenuApp
     void *mpCapture;
     Metronome *mpMetronome = nullptr;
 
-    SystemSettingsApp(CCDisplay &d,
+    SystemSettingsApp(IDisplay &d,
                       size_t breathMappingIndex,
                       size_t pitchUpMappingIndex,
                       size_t pitchDownMappingIndex,
                       cc::function<float(void *)>::ptr_t rawBreathGetter,
                       cc::function<float(void *)>::ptr_t rawPitchBendGetter,
-                      void *capture, Metronome *pm)
+                      void *capture,
+                      Metronome *pm)
         : SettingsMenuApp(d), mBreathMappingIndex(breathMappingIndex), mPitchUpMappingIndex(pitchUpMappingIndex),
           mPitchDownMappingIndex(pitchDownMappingIndex), mRawBreathGetter(rawBreathGetter),
           mRawPitchBendGetter(rawPitchBendGetter), mpCapture(capture), mpMetronome(pm)
@@ -47,7 +48,7 @@ struct SystemSettingsApp : SettingsMenuApp
                                                   [](void *cap, const bool &x) {
                                                       auto pThis = (SystemSettingsApp *)cap;
                                                       pThis->mAppSettings->mDisplayDim = x;
-                                                      pThis->mDisplay.mDisplay.dim(x);
+                                                      pThis->mDisplay.dim(x);
                                                   },
                                                   this},
                                    AlwaysEnabled};
@@ -112,39 +113,36 @@ struct SystemSettingsApp : SettingsMenuApp
         },
         this};
 
-
-
     IntSettingItem mNoteChangeFrames = {"Note chg frames",
-                                         NumericEditRangeSpec<int>{0, 25},
-                                         Property<int>{
-                                             [](void *cap) {
-                                                 auto *pThis = (SystemSettingsApp *)cap;
-                                                 return (int)pThis->mAppSettings->mNoteChangeSmoothingFrames;
-                                             }, // getter
-                                             [](void *cap, const int &val) {
-                                                 auto *pThis = (SystemSettingsApp *)cap;
-                                                 pThis->mAppSettings->mNoteChangeSmoothingFrames = val;
-                                             },   // setter
-                                             this // capture val
-                                         },
-                                         AlwaysEnabled};
+                                        NumericEditRangeSpec<int>{0, 25},
+                                        Property<int>{
+                                            [](void *cap) {
+                                                auto *pThis = (SystemSettingsApp *)cap;
+                                                return (int)pThis->mAppSettings->mNoteChangeSmoothingFrames;
+                                            }, // getter
+                                            [](void *cap, const int &val) {
+                                                auto *pThis = (SystemSettingsApp *)cap;
+                                                pThis->mAppSettings->mNoteChangeSmoothingFrames = val;
+                                            },   // setter
+                                            this // capture val
+                                        },
+                                        AlwaysEnabled};
 
-
-    FloatSettingItem mNoteChangeIntFrames = {"Note delta*",
-                                         StandardRangeSpecs::gFloat_0_1,
-                                         Property<float>{
-                                             [](void *cap) {
-                                                 auto *pThis = (SystemSettingsApp *)cap;
-                                                 return pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor;
-                                             }, // getter
-                                             [](void *cap, const float &val) {
-                                                 auto *pThis = (SystemSettingsApp *)cap;
-                                                 pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor = val;
-                                             },   // setter
-                                             this // capture val
-                                         },
-                                         AlwaysEnabled};
-
+    FloatSettingItem mNoteChangeIntFrames = {
+        "Note delta*",
+        StandardRangeSpecs::gFloat_0_1,
+        Property<float>{
+            [](void *cap) {
+                auto *pThis = (SystemSettingsApp *)cap;
+                return pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor;
+            }, // getter
+            [](void *cap, const float &val) {
+                auto *pThis = (SystemSettingsApp *)cap;
+                pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor = val;
+            },   // setter
+            this // capture val
+        },
+        AlwaysEnabled};
 
     IntSettingItem mSelectedPerfPatch = {"Perf patch",
                                          NumericEditRangeSpec<int>{0, clarinoid::PERFORMANCE_PATCH_COUNT - 1},
@@ -157,7 +155,6 @@ struct SystemSettingsApp : SettingsMenuApp
                                                  auto *pThis = (SystemSettingsApp *)cap;
                                                  pThis->mAppSettings->mCurrentPerformancePatch = val;
                                                  pThis->mpMetronome->OnBPMChanged();
-                                                 
                                              },   // setter
                                              this // capture val
                                          },
@@ -167,7 +164,6 @@ struct SystemSettingsApp : SettingsMenuApp
                                          },
                                          AlwaysEnabled,
                                          this};
-
 
     ISettingItem *mArray[7] = {
         &mSelectedPerfPatch,
@@ -190,7 +186,7 @@ struct SystemSettingsApp : SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.ClearState();
-        mDisplay.mDisplay.println(String("System >"));
+        mDisplay.println(String("System >"));
         SettingsMenuApp::RenderFrontPage();
     }
 };

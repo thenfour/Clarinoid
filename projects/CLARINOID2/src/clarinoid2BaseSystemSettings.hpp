@@ -10,11 +10,11 @@ namespace clarinoid
 
 const char gClarinoidVersion[] = "CLARINOID 2";
 
-static const size_t MAX_SYNTH_VOICES = 2;
-#define VOICE_INITIALIZER {0}, {1}, //{2}, {3}, //{4}, {5} 
+static const size_t MAX_SYNTH_VOICES = 8;
+#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 192000; // should be enough right?
-static const size_t LOOPER_TEMP_BUFFER_BYTES = 8192;    // a smaller buffer that's just used for intermediate copy ops
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 128000; // should be enough right?
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;    // a smaller buffer that's just used for intermediate copy ops
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
@@ -37,7 +37,7 @@ static constexpr size_t MAX_MUSICAL_VOICES =
 static const size_t PRESET_NAME_LEN = 16;
 
 static const size_t SYNTH_PRESET_COUNT = 32;
-static const size_t SYNTH_MODULATIONS_MAX = 6; // an additional 5 will be internally created because of FM modulation
+static const size_t SYNTH_MODULATIONS_MAX = 6;
 
 static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
 

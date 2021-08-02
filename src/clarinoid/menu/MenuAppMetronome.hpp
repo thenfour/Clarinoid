@@ -20,7 +20,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
     Metronome *mpMetronome;
     AppSettings *mpAppSettings;
 
-    MetronomeSettingsApp(Metronome *pm, AppSettings *pas, CCDisplay &d)
+    MetronomeSettingsApp(Metronome *pm, AppSettings *pas, IDisplay &d)
         : SettingsMenuApp(d), mpMetronome(pm), mpAppSettings(pas)
     {
     }
@@ -164,25 +164,24 @@ struct MetronomeSettingsApp : public SettingsMenuApp
         mDisplay.ClearState();
         if (highlight)
         {
-            mDisplay.mDisplay.fillScreen(WHITE);
+            mDisplay.fillScreen(WHITE);
         }
-        mDisplay.mDisplay.setTextColor(highlight ? BLACK : WHITE);
-        // mDisplay.mDisplay.setCursor(0,0);
+        mDisplay.setTextColor(highlight ? BLACK : WHITE);
 
-        mDisplay.mDisplay.println(String("METRONOME"));
-        mDisplay.mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");
-        mDisplay.mDisplay.print(" ");
-        mDisplay.mDisplay.println(mpAppSettings->mMetronomeSoundOn ? "LEDOn" : "LEDOff");
-        mDisplay.mDisplay.println(String(" bpm=") + mpAppSettings->GetCurrentPerformancePatch().mBPM);
+        mDisplay.println(String("METRONOME"));
+        mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");
+        mDisplay.print(" ");
+        mDisplay.println(mpAppSettings->mMetronomeSoundOn ? "LEDOn" : "LEDOff");
+        mDisplay.println(String(" bpm=") + mpAppSettings->GetCurrentPerformancePatch().mBPM);
 
         const int r = 4;
         int x = beatFrac * (MAX_DISPLAY_WIDTH - r * 2);
         if (altBeat)
-            x = mDisplay.mDisplay.width() - x;
-        mDisplay.mDisplay.fillCircle(x, mDisplay.mDisplay.getCursorY() + r, r, highlight ? BLACK : WHITE);
+            x = mDisplay.width() - x;
+        mDisplay.fillCircle(x, mDisplay.getCursorY() + r, r, highlight ? BLACK : WHITE);
 
-        mDisplay.mDisplay.println(String(""));
-        mDisplay.mDisplay.println(String("                  -->"));
+        mDisplay.println(String(""));
+        mDisplay.println(String("                  -->"));
 
         SettingsMenuApp::RenderFrontPage();
     }

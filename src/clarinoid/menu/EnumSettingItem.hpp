@@ -30,8 +30,6 @@ struct EnumEditor : ISettingItemEditor
     ListControl mListControl;
 
     EnumEditor(const EnumInfo<T> &enumInfo, const Property<T> &binding) : mBinding(binding), mEnumInfo(enumInfo) //,
-    // mListControl() //   ListControl(const IList* list, CCDisplay* d, IEncoder* penc, Property<int>
-    // selectedItemBinding, int x, int y, int nVisibleItems) :
     {
     }
 
@@ -39,8 +37,6 @@ struct EnumEditor : ISettingItemEditor
     {
         CCASSERT(!!papi);
         mpApi = papi;
-        // if (!mpApi)
-        //  mpApi = this;
         mListControl.Init(&mEnumInfo, &mpApi->GetInputDelegator()->mMenuScrollA, mListSelectedItem); //
         mOldVal = mBinding.GetValue();
     }
@@ -70,7 +66,7 @@ struct EnumEditor : ISettingItemEditor
     virtual void Render()
     {
         mpApi->GetDisplay()->SetupModal();
-        int nitems = mpApi->GetDisplay()->ClippedAreaHeight() / mpApi->GetDisplay()->mDisplay.GetLineHeight();
+        int nitems = mpApi->GetDisplay()->ClippedAreaHeight() / mpApi->GetDisplay()->GetLineHeight();
         mListControl.Render(mpApi->GetDisplay(), 12, 12, nitems);
     }
 };

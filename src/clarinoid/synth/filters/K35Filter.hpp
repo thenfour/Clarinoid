@@ -21,7 +21,8 @@ struct K35Filter : IFilter
 
     virtual void SetType(FilterType type) override
     {
-        if (m_FilterType == type) {
+        if (m_FilterType == type)
+        {
             return;
         }
         switch (type)
@@ -50,7 +51,8 @@ struct K35Filter : IFilter
 
     virtual void SetCutoffFrequency(real hz) override
     {
-        if (FloatEquals(hz, m_cutoffHz)) {
+        if (FloatEquals(hz, m_cutoffHz))
+        {
             return;
         }
         m_cutoffHz = hz;
@@ -59,7 +61,8 @@ struct K35Filter : IFilter
 
     virtual void SetSaturation(real amt) override
     {
-        if (FloatEquals(amt, m_overdrive)) {
+        if (FloatEquals(amt, m_overdrive))
+        {
             return;
         }
         m_overdrive = amt;
@@ -69,7 +72,8 @@ struct K35Filter : IFilter
     // 0-1
     virtual void SetResonance(real res) override
     {
-        if (FloatEquals(res, m_res)) {
+        if (FloatEquals(res, m_res))
+        {
             return;
         }
         // note: m_k must never be zero else division by zero
@@ -82,7 +86,9 @@ struct K35Filter : IFilter
 
     virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
     {
-        if ((m_FilterType == type) && FloatEquals(cutoffHz, m_cutoffHz) && FloatEquals(saturation, m_overdrive) && FloatEquals(reso, m_res)) {
+        if ((m_FilterType == type) && FloatEquals(cutoffHz, m_cutoffHz) && FloatEquals(saturation, m_overdrive) &&
+            FloatEquals(reso, m_res))
+        {
             return;
         }
         switch (type)
@@ -126,7 +132,7 @@ struct K35Filter : IFilter
             InlineProcessSample(samplesL[i], samplesR[i]);
         }
     }
-    virtual void ProcessSample(real& xnL, real& xnR) override
+    virtual void ProcessSample(real &xnL, real &xnR) override
     {
         return InlineProcessSample(xnL, xnR);
     }
@@ -144,7 +150,7 @@ struct K35Filter : IFilter
     real m_cutoffHz = 10000;
     real m_overdrive = 0;
 
-    real m_res = Real(-1);// cached resonance val, just for checking if recalc is not needed
+    real m_res = Real(-1); // cached resonance val, just for checking if recalc is not needed
 
     real m_k = Real(0.01);
     real m_alpha = 0;
@@ -183,9 +189,7 @@ struct K35Filter : IFilter
         return y;
     }
 
-
-
-    inline void InlineProcessSample(real& xnL, real& xnR)
+    inline void InlineProcessSample(real &xnL, real &xnR)
     {
         real yL, yR;
         if (m_FilterType == FilterType::LP)
@@ -196,7 +200,7 @@ struct K35Filter : IFilter
             real uL = m_alpha * (xnL + s35L);
             real uR = m_alpha * (xnR + s35R);
 
-            //y = m_k * m_LPF2.InlineProcessSample(u);
+            // y = m_k * m_LPF2.InlineProcessSample(u);
             m_LPF2.InlineProcessSample(uL, uR);
             yL = uL;
             yR = uR;
@@ -225,8 +229,8 @@ struct K35Filter : IFilter
         xnL = yL;
         xnR = yR;
     }
-    
-        inline void Recalc()
+
+    inline void Recalc()
     {
         // BZT
         real wd = PITimes2 * m_cutoffHz;

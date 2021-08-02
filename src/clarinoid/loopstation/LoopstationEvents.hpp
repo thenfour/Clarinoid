@@ -389,7 +389,7 @@ struct LoopEvent_FullState
 
     LoopEvent_FullState(Ptr &p, uint8_t byte2)
     {
-        //LoopEvent_Construct12BitParam(p, byte2, mBreath01);
+        // LoopEvent_Construct12BitParam(p, byte2, mBreath01);
         p.Read(mPitchN11);
         LoopEvent_ReadTwo12BitValues(p, mSynthPatchAId, mSynthPatchBId);
         LoopEvent_ReadTwo12BitValues(p, mBreath01, mHarmPatchId);
@@ -399,7 +399,7 @@ struct LoopEvent_FullState
     void Write(Ptr &p, event_delay_t delay) const
     {
         LoopEvent_WriteHeaderNoParams(p, delay, LoopEventType::FullState);
-        //LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::FullState, mBreath01);
+        // LoopEvent_WriteHeaderAnd12BitParam(p, delay, LoopEventType::FullState, mBreath01);
         p.Write(mPitchN11);
         LoopEvent_WriteTwo12BitValues(p, mSynthPatchAId, mSynthPatchBId);
         LoopEvent_WriteTwo12BitValues(p, mBreath01, mHarmPatchId);

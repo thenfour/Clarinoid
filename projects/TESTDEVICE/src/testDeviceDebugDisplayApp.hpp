@@ -26,7 +26,7 @@ struct PerformanceApp : SettingsMenuApp
 
     SimpleMovingAverage<30> mCPUUsage;
 
-    PerformanceApp(CCDisplay &d, MusicalStateTask *pMusicalStateTask, Clarinoid2ControlMapper *controls, Metronome *pm)
+    PerformanceApp(IDisplay &d, MusicalStateTask *pMusicalStateTask, Clarinoid2ControlMapper *controls, Metronome *pm)
         : SettingsMenuApp(d), mpMusicalStateTask(pMusicalStateTask), mpControls(controls), mpMetronome(pm)
     {
     }
@@ -159,49 +159,28 @@ struct PerformanceApp : SettingsMenuApp
     {
         auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
-        // // line 0
-        // mDisplay.mDisplay.setTextWrap(false);
-        // mDisplay.mDisplay.println(String("P:") + perf.mName);
-
         // line 1
-        mDisplay.mDisplay.setTextWrap(false);
-        mDisplay.mDisplay.println(String("A:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetA));
+        mDisplay.setTextWrap(false);
+        mDisplay.println(String("A:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetA));
 
-        // // line 2
-        // mDisplay.mDisplay.setTextWrap(false);
-        // mDisplay.mDisplay.println(String("B:") + mAppSettings->GetSynthPatchName(perf.mSynthPresetB));
-
-        // // line 3
-        // mDisplay.mDisplay.println(
-        //     mpMusicalStateTask->mMusicalState.mHarmIsOn
-        //         ? String("H:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)
-        //         : (String("H:off:") +
-        //            mAppSettings->GetHarmPatchName(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)));
-
-        mDisplay.mDisplay.println(String("Enc: ") + mpControls->mEncoder.CurrentValue());
-        mDisplay.mDisplay.println(String("Back: ") + mpControls->mBack.CurrentValue());
-        mDisplay.mDisplay.println(String("OK: ") + mpControls->mOK.CurrentValue());
+        mDisplay.println(String("Enc: ") + mpControls->mEncoder.CurrentValue());
+        mDisplay.println(String("Back: ") + mpControls->mBack.CurrentValue());
+        mDisplay.println(String("OK: ") + mpControls->mOK.CurrentValue());
 
         float peak, heldPeak;
         mPeakMeter.Update(peak, heldPeak);
-        auto y = mDisplay.mDisplay.getCursorY();
-        mDisplay.mDisplay.println(String("Peak ") + heldPeak);
-        mDisplay.mDisplay.fillRoundRect(0, y, peak * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
-        mDisplay.mDisplay.drawFastVLine(heldPeak * mDisplay.mDisplay.width(), y, 8, SSD1306_INVERSE);
+        auto y = mDisplay.getCursorY();
+        mDisplay.println(String("Peak ") + heldPeak);
+        mDisplay.fillRoundRect(0, y, peak * mDisplay.width(), 5, 2, SSD1306_INVERSE);
+        mDisplay.drawFastVLine(heldPeak * mDisplay.width(), y, 8, SSD1306_INVERSE);
 
-        // y = mDisplay.mDisplay.getCursorY();
-        // float val = mpMusicalStateTask->mMusicalState.mCurrentBreath01.GetValue();
-        // mDisplay.mDisplay.println(String("breath ") + val);
-        // mDisplay.mDisplay.fillRoundRect(0, y, val * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
-
-        y = mDisplay.mDisplay.getCursorY();
+        y = mDisplay.getCursorY();
         float val = mpMusicalStateTask->mMusicalState.mCurrentPitchN11.GetValue();
-        // mDisplay.mDisplay.println(String("pitch ") + val);
         static const int pbwidth = 5;
         if (val >= 0)
         {
             int pbextent = std::max(1, (int)(val * mDisplay.GetClientHeight() / 2));
-            mDisplay.mDisplay.fillRect(mDisplay.mDisplay.width() - pbwidth - 1,     // x
+            mDisplay.fillRect(mDisplay.width() - pbwidth - 1,     // x
                                        (mDisplay.GetClientHeight() / 2) - pbextent, // y
                                        5,                                           // width
                                        pbextent,                                    // height
@@ -210,7 +189,7 @@ struct PerformanceApp : SettingsMenuApp
         else
         {
             int pbextent = -val * mDisplay.GetClientHeight() / 2;
-            mDisplay.mDisplay.fillRect(mDisplay.mDisplay.width() - pbwidth - 1, // x
+            mDisplay.fillRect(mDisplay.width() - pbwidth - 1, // x
                                        (mDisplay.GetClientHeight() / 2),        // y
                                        5,                                       // width
                                        pbextent,                                // height
@@ -218,16 +197,16 @@ struct PerformanceApp : SettingsMenuApp
         }
 
         // metronome
-        y = mDisplay.mDisplay.getCursorY();
+        y = mDisplay.getCursorY();
         float beatFrac = mpMetronome->GetBeatFrac();
-        mDisplay.mDisplay.println(String("") + perf.mBPM + " bpm " + mpMetronome->GetBeatInt());
-        mDisplay.mDisplay.fillRoundRect(0, y, beatFrac * mDisplay.mDisplay.width(), 5, 2, SSD1306_INVERSE);
+        mDisplay.println(String("") + perf.mBPM + " bpm " + mpMetronome->GetBeatInt());
+        mDisplay.fillRoundRect(0, y, beatFrac * mDisplay.width(), 5, 2, SSD1306_INVERSE);
 
         static const int R = 24;
         static const int P = 16;
         static const float THRESH = 0.1f;
-        mDisplay.mDisplay.fillCircle(
-            mDisplay.mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
+        mDisplay.fillCircle(
+            mDisplay.width() - P, P, Clamp(THRESH - beatFrac, 0.0f, 1.0f) * R / THRESH, SSD1306_INVERSE);
 
         // state
         {
@@ -236,7 +215,7 @@ struct PerformanceApp : SettingsMenuApp
             p = 1.0f - p;
             mCPUUsage.Update(p);
             p = mCPUUsage.GetValue() * 100;
-            mDisplay.mDisplay.println(String("v:NA") + "/" +
+            mDisplay.println(String("v:NA") + "/" +
                                       MAX_SYNTH_VOICES + " a:" + (int)std::ceil(AudioProcessorUsage()) +
                                       "% tm:" + (int)std::ceil(p) + "%");
         }

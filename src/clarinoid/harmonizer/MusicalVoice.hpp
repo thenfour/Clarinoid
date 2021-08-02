@@ -15,7 +15,8 @@ static constexpr MusicalVoiceID_t MAGIC_VOICE_ID_UNASSIGNED =
 
 static constexpr uint8_t MAGIC_VOICE_ID_LIVE_A = 0; // when we had 1 live voice, this is 0.
 static constexpr uint8_t MAGIC_VOICE_ID_LIVE_B = 1;
-static constexpr uint8_t HarmLayerToVoiceID(int8_t h) {
+static constexpr uint8_t HarmLayerToVoiceID(int8_t h)
+{
     return h + 2;
 }
 
@@ -56,10 +57,11 @@ struct MusicalVoice
     AnalogValue01<> mBreath01;
     AnalogValueN11<> mPitchBendN11;
     int16_t mSynthPatchA = 0;
-    int16_t mSynthPatchB = -1; // this one can be negative to indicate mute / no patch. by the time this object reaches SynthVoice, this is always -1. but it's needed during intermittent processing.
+    int16_t mSynthPatchB = -1; // this one can be negative to indicate mute / no patch. by the time this object reaches
+                               // SynthVoice, this is always -1. but it's needed during intermittent processing.
     int16_t mHarmPatch = 0;
 
-    float mPan = 0; // as specified by harmonizer.
+    float mPan = 0;     // as specified by harmonizer.
     float mGain = 1.0f; // again set by harmonizer
 };
 

@@ -16,8 +16,6 @@ struct Property
     // setter                                                                 x
     // onchange             x
     // capture              x                                                 x
-    //
-    // this shows which items can be "unionized".
 
     T mOwnValue;
     T *mRefBinding = nullptr;
@@ -30,22 +28,7 @@ struct Property
     // copy
     Property(const Property<T> &rhs) = default;
     Property(Property<T> &&rhs) = default;
-    Property<T> &operator=(const Property<T> &rhs)
-    {
-        mOwnValue = rhs.mOwnValue;
-        mRefBinding = rhs.mRefBinding;
-        mGetter = rhs.mGetter;
-        if (rhs.mSetter)
-        {
-            mSetter = rhs.mSetter;
-        }
-        else if (rhs.mOnChange)
-        {
-            mOnChange = rhs.mOnChange;
-        } // yea this union is a bit stupid but ok.
-        mpCapture = rhs.mpCapture;
-        return *this;
-    }
+    Property<T> &operator=(const Property<T> &rhs) = default;
     Property<T> &operator=(Property<T> &&) = delete;
 
     Property(T &binding) : mRefBinding(&binding)
@@ -56,13 +39,12 @@ struct Property
     {
     }
 
-    Property(typename cc::function<T &(void *)>::ptr_t getter, void *cap/*, UseRefGetterHelperType unused*/)
+    Property(typename cc::function<T &(void *)>::ptr_t getter, void *cap)
         : mRefGetter(getter), mpCapture(cap)
     {
     }
 
-    Property(typename cc::function<T(void *)>::ptr_t getter, void *capture)
-        : mGetter(getter), mpCapture(capture)
+    Property(typename cc::function<T(void *)>::ptr_t getter, void *capture) : mGetter(getter), mpCapture(capture)
     {
     }
 
@@ -138,7 +120,5 @@ Property<Tprop> MakePropertyByCasting(Tval *x)
 
     return Property<Tprop>(getter, setter, x);
 }
-
-// static constexpr size_t aoeu3 = sizeof(Property<int>);
 
 } // namespace clarinoid

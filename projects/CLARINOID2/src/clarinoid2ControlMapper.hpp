@@ -14,16 +14,15 @@ namespace clarinoid
 
 struct Clarinoid2ControlMapper : IInputSource, ITask
 {
-    CCDisplay *mDisplay = nullptr;
+    IDisplay *mDisplay = nullptr;
 
-    void Init(CCDisplay *display)
+    void Init(IDisplay *display)
     {
         mDisplay = display;
     }
 
     virtual void TaskRun() override
     {
-        //NoInterrupts _ni;
         mEncoder.Update();
         mMCP.Update();
         mLHMPR.Update();

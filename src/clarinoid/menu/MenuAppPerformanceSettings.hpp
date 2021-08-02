@@ -22,7 +22,7 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
         return mAppSettings->GetCurrentPerformancePatch();
     }
 
-    PerformancePatchSettingsApp(CCDisplay &d) : SettingsMenuApp(d)
+    PerformancePatchSettingsApp(IDisplay &d) : SettingsMenuApp(d)
     {
     }
 
@@ -52,186 +52,176 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                                this},
                                  AlwaysEnabled};
 
-        GainSettingItem mReverbGain = {"Reverb gain",
-                                       StandardRangeSpecs::gGeneralGain,
-                                       Property<float>{[](void *cap) {
-                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                           return pThis->GetBinding().mReverbGain;
-                                                       },
-                                                       [](void *cap, const float &v) {
-                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                           pThis->GetBinding().mReverbGain = v;
-                                                       },
-                                                       this},
-                                       AlwaysEnabled};
+    GainSettingItem mReverbGain = {"Reverb gain",
+                                   StandardRangeSpecs::gGeneralGain,
+                                   Property<float>{[](void *cap) {
+                                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                       return pThis->GetBinding().mReverbGain;
+                                                   },
+                                                   [](void *cap, const float &v) {
+                                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                       pThis->GetBinding().mReverbGain = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
 
-
-
-
-
-        FloatSettingItem mStereoSpread = {"B Spread",
-                                           StandardRangeSpecs::gFloat_0_1,
-                                           Property<float>{[](void *cap) {
-                                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                               return pThis->GetBinding().mSynthStereoSpread;
-                                                           },
-                                                           [](void *cap, const float &v) {
-                                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                               pThis->GetBinding().mSynthStereoSpread = v;
-                                                           },
-                                                           this},
-                                           AlwaysEnabled};
-
-
-        FloatSettingItem mReverbDamping = {"Reverb damp",
-                                           StandardRangeSpecs::gFloat_0_1,
-                                           Property<float>{[](void *cap) {
-                                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                               return pThis->GetBinding().mReverbDamping;
-                                                           },
-                                                           [](void *cap, const float &v) {
-                                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                               pThis->GetBinding().mReverbDamping = v;
-                                                           },
-                                                           this},
-                                           AlwaysEnabled};
-
-
-
-        FloatSettingItem mReverbSize = {"Reverb size",
-                                        StandardRangeSpecs::gFloat_0_1,
-                                        Property<float>{[](void *cap) {
-                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                            return pThis->GetBinding().mReverbSize;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                            pThis->GetBinding().mReverbSize = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
-
-        GainSettingItem mDelayGain = {"Delay gain",
-                                      StandardRangeSpecs::gGeneralGain,
+    FloatSettingItem mStereoSpread = {"B Spread",
+                                      StandardRangeSpecs::gFloat_0_1,
                                       Property<float>{[](void *cap) {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          return pThis->GetBinding().mDelayGain;
+                                                          return pThis->GetBinding().mSynthStereoSpread;
                                                       },
                                                       [](void *cap, const float &v) {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          pThis->GetBinding().mDelayGain = v;
+                                                          pThis->GetBinding().mSynthStereoSpread = v;
                                                       },
                                                       this},
                                       AlwaysEnabled};
 
-        FloatSettingItem mDelayTimeMS = {"Delay Time",
-                                         NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
-                                         Property<float>{[](void *cap) {
-                                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                             return pThis->GetBinding().mDelayMS;
-                                                         },
-                                                         [](void *cap, const float &v) {
-                                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                             pThis->GetBinding().mDelayMS = v;
-                                                         },
-                                                         this},
-                                         AlwaysEnabled};
+    FloatSettingItem mReverbDamping = {"Reverb damp",
+                                       StandardRangeSpecs::gFloat_0_1,
+                                       Property<float>{[](void *cap) {
+                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                           return pThis->GetBinding().mReverbDamping;
+                                                       },
+                                                       [](void *cap, const float &v) {
+                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                           pThis->GetBinding().mReverbDamping = v;
+                                                       },
+                                                       this},
+                                       AlwaysEnabled};
 
-        FloatSettingItem mDelayStereoSep = {" >Width",
-                                            NumericEditRangeSpec<float>(1, 100),
-                                            Property<float>{[](void *cap) {
-                                                                auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                return pThis->GetBinding().mDelayStereoSep;
-                                                            },
-                                                            [](void *cap, const float &v) {
-                                                                auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                pThis->GetBinding().mDelayStereoSep = v;
-                                                            },
-                                                            this},
-                                            AlwaysEnabled};
-
-        FloatSettingItem mDelayFeedbackLevel = {" >FB",
-                                                StandardRangeSpecs::gFloat_0_1,
-                                                Property<float>{[](void *cap) {
-                                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                    return
-                                                                    pThis->GetBinding().mDelayFeedbackLevel;
-                                                                },
-                                                                [](void *cap, const float &v) {
-                                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                    pThis->GetBinding().mDelayFeedbackLevel =
-                                                                    v;
-                                                                },
-                                                                this},
-                                                AlwaysEnabled};
-
-        EnumSettingItem<ClarinoidFilterType> mDelayFilterType = {
-            " >Filter",
-            gClarinoidFilterTypeInfo,
-            Property<ClarinoidFilterType>{[](void *cap) {
-                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                              return pThis->GetBinding().mDelayFilterType;
-                                          },
-                                          [](void *cap, const ClarinoidFilterType &v) {
-                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                              pThis->GetBinding().mDelayFilterType = v;
-                                          },
-                                          this},
-            AlwaysEnabled};
-
-        FloatSettingItem mDelayCutoffFrequency = {
-            " > >Freq",
-            NumericEditRangeSpec<float>(0, 22050),
-            Property<float>{[](void *cap) {
-                                auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                return pThis->GetBinding().mDelayCutoffFrequency;
-                            },
-                            [](void *cap, const float &v) {
-                                auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                pThis->GetBinding().mDelayCutoffFrequency = v;
-                            },
-                            this},
-            AlwaysEnabled};
-
-        FloatSettingItem mDelaySaturation = {" > >Sat",
-                                             StandardRangeSpecs::gFloat_0_1,
-                                             Property<float>{[](void *cap) {
-                                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                 return pThis->GetBinding().mDelaySaturation;
-                                                             },
-                                                             [](void *cap, const float &v) {
-                                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                 pThis->GetBinding().mDelaySaturation = v;
-                                                             },
-                                                             this},
-                                             AlwaysEnabled};
-
-        FloatSettingItem mDelayQ = {" > >Q",
+    FloatSettingItem mReverbSize = {"Reverb size",
                                     StandardRangeSpecs::gFloat_0_1,
                                     Property<float>{[](void *cap) {
                                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                        return pThis->GetBinding().mDelayQ;
+                                                        return pThis->GetBinding().mReverbSize;
                                                     },
                                                     [](void *cap, const float &v) {
                                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                        pThis->GetBinding().mDelayQ = v;
+                                                        pThis->GetBinding().mReverbSize = v;
                                                     },
                                                     this},
                                     AlwaysEnabled};
 
-        BoolSettingItem mMasterFXEnable = {"MasterFX Enable",
-                                           "Yes",
-                                           "No",
-                                           Property<bool>{[](void *cap) {
-                                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                              return pThis->GetBinding().mMasterFXEnable;
-                                                          },
-                                                          [](void *cap, const bool &v) {
-                                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                              pThis->GetBinding().mMasterFXEnable = v;
-                                                          },
-                                                          this},
-                                           AlwaysEnabled};
+    GainSettingItem mDelayGain = {"Delay gain",
+                                  StandardRangeSpecs::gGeneralGain,
+                                  Property<float>{[](void *cap) {
+                                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                      return pThis->GetBinding().mDelayGain;
+                                                  },
+                                                  [](void *cap, const float &v) {
+                                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                      pThis->GetBinding().mDelayGain = v;
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
+
+    FloatSettingItem mDelayTimeMS = {"Delay Time",
+                                     NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
+                                     Property<float>{[](void *cap) {
+                                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                         return pThis->GetBinding().mDelayMS;
+                                                     },
+                                                     [](void *cap, const float &v) {
+                                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                         pThis->GetBinding().mDelayMS = v;
+                                                     },
+                                                     this},
+                                     AlwaysEnabled};
+
+    FloatSettingItem mDelayStereoSep = {" >Width",
+                                        NumericEditRangeSpec<float>(1, 100),
+                                        Property<float>{[](void *cap) {
+                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                            return pThis->GetBinding().mDelayStereoSep;
+                                                        },
+                                                        [](void *cap, const float &v) {
+                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                            pThis->GetBinding().mDelayStereoSep = v;
+                                                        },
+                                                        this},
+                                        AlwaysEnabled};
+
+    FloatSettingItem mDelayFeedbackLevel = {" >FB",
+                                            StandardRangeSpecs::gFloat_0_1,
+                                            Property<float>{[](void *cap) {
+                                                                auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                                return pThis->GetBinding().mDelayFeedbackLevel;
+                                                            },
+                                                            [](void *cap, const float &v) {
+                                                                auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                                pThis->GetBinding().mDelayFeedbackLevel = v;
+                                                            },
+                                                            this},
+                                            AlwaysEnabled};
+
+    EnumSettingItem<ClarinoidFilterType> mDelayFilterType = {
+        " >Filter",
+        gClarinoidFilterTypeInfo,
+        Property<ClarinoidFilterType>{[](void *cap) {
+                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                          return pThis->GetBinding().mDelayFilterType;
+                                      },
+                                      [](void *cap, const ClarinoidFilterType &v) {
+                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                          pThis->GetBinding().mDelayFilterType = v;
+                                      },
+                                      this},
+        AlwaysEnabled};
+
+    FloatSettingItem mDelayCutoffFrequency = {" > >Freq",
+                                              NumericEditRangeSpec<float>(0, 22050),
+                                              Property<float>{[](void *cap) {
+                                                                  auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                                  return pThis->GetBinding().mDelayCutoffFrequency;
+                                                              },
+                                                              [](void *cap, const float &v) {
+                                                                  auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                                  pThis->GetBinding().mDelayCutoffFrequency = v;
+                                                              },
+                                                              this},
+                                              AlwaysEnabled};
+
+    FloatSettingItem mDelaySaturation = {" > >Sat",
+                                         StandardRangeSpecs::gFloat_0_1,
+                                         Property<float>{[](void *cap) {
+                                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                             return pThis->GetBinding().mDelaySaturation;
+                                                         },
+                                                         [](void *cap, const float &v) {
+                                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                             pThis->GetBinding().mDelaySaturation = v;
+                                                         },
+                                                         this},
+                                         AlwaysEnabled};
+
+    FloatSettingItem mDelayQ = {" > >Q",
+                                StandardRangeSpecs::gFloat_0_1,
+                                Property<float>{[](void *cap) {
+                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                    return pThis->GetBinding().mDelayQ;
+                                                },
+                                                [](void *cap, const float &v) {
+                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                    pThis->GetBinding().mDelayQ = v;
+                                                },
+                                                this},
+                                AlwaysEnabled};
+
+    BoolSettingItem mMasterFXEnable = {"MasterFX Enable",
+                                       "Yes",
+                                       "No",
+                                       Property<bool>{[](void *cap) {
+                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                          return pThis->GetBinding().mMasterFXEnable;
+                                                      },
+                                                      [](void *cap, const bool &v) {
+                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                          pThis->GetBinding().mMasterFXEnable = v;
+                                                      },
+                                                      this},
+                                       AlwaysEnabled};
 
     IntSettingItem mSelectedSynthPatchA = {"Synth patch A",
                                            NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
@@ -293,20 +283,20 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                          AlwaysEnabled,
                                          this};
 
-        ISettingItem *mMasterFXSubmenuItems[9] = {
-            &mReverbDamping,
-            &mReverbSize,
-            &mDelayTimeMS,
-            &mDelayStereoSep,
-            &mDelayFeedbackLevel,
-            &mDelayFilterType,
-            &mDelayCutoffFrequency,
-            &mDelaySaturation,
-            &mDelayQ,
-        };
-        SettingsList mMasterFXList = {mMasterFXSubmenuItems};
+    ISettingItem *mMasterFXSubmenuItems[9] = {
+        &mReverbDamping,
+        &mReverbSize,
+        &mDelayTimeMS,
+        &mDelayStereoSep,
+        &mDelayFeedbackLevel,
+        &mDelayFilterType,
+        &mDelayCutoffFrequency,
+        &mDelaySaturation,
+        &mDelayQ,
+    };
+    SettingsList mMasterFXList = {mMasterFXSubmenuItems};
 
-        SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
+    SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
 
     ISettingItem *mArray[10] = {
         &mMasterGain,
@@ -331,8 +321,8 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.ClearState();
-        mDisplay.mDisplay.println(String("Performance > "));
-        mDisplay.mDisplay.println(GetAppSettings()->GetPerfPatchName(GetAppSettings()->mCurrentPerformancePatch));
+        mDisplay.println(String("Performance > "));
+        mDisplay.println(GetAppSettings()->GetPerfPatchName(GetAppSettings()->mCurrentPerformancePatch));
 
         SettingsMenuApp::RenderFrontPage();
     }

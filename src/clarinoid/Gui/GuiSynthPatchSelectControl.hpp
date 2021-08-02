@@ -11,7 +11,7 @@ namespace clarinoid
 {
 
 // ---------------------------------------------------------------------------------------
-template<typename T>
+template <typename T>
 struct GuiSynthPatchAsTextRenderer : IGuiRenderer<T>
 {
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
@@ -21,13 +21,13 @@ struct GuiSynthPatchAsTextRenderer : IGuiRenderer<T>
                                      DisplayApp &app) override
     {
         app.mDisplay.SelectEightiesFont();
-        app.mDisplay.mDisplay.SetClipRect(ctrl.mBounds.x, ctrl.mBounds.y, ctrl.mBounds.right(), ctrl.mBounds.bottom());
-        app.mDisplay.mDisplay.print(app.mAppSettings->GetSynthPatchName(val));
+        app.mDisplay.SetClipRect(ctrl.mBounds.x, ctrl.mBounds.y, ctrl.mBounds.right(), ctrl.mBounds.bottom());
+        app.mDisplay.print(app.mAppSettings->GetSynthPatchName(val));
     }
 };
 
 // ---------------------------------------------------------------------------------------
-template<typename T>
+template <typename T>
 struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
 {
     T mOldVal;
@@ -103,7 +103,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
             [](void *cap, int li) {
                 auto *pThis = (GuiSynthPatchSelectorEditor *)cap;
                 int pi = pThis->ListIndexToPatchIndex(li);
-                //Serial.println(String("li=") + li + " -> pi=" + pi);
+                // Serial.println(String("li=") + li + " -> pi=" + pi);
                 return pThis->mpApp->mAppSettings->GetSynthPatchName(pi);
             },
             this);
@@ -111,7 +111,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
 };
 
 // ---------------------------------------------------------------------------------------
-template<typename T>
+template <typename T>
 struct GuiSynthPatchSelectControl : GuiCompositeControl<T>
 {
     GuiSynthPatchSelectorEditor<T> mEditor;
@@ -126,9 +126,9 @@ struct GuiSynthPatchSelectControl : GuiCompositeControl<T>
                                const Property<T> &binding,
                                const Property<bool> &isSelectable)
         : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
-          mEditor(nullable, binding),                                                     //
-          mTooltipRenderer(tooltipCaption),                                               //
-          mValueRenderer(),                                                               //
+          mEditor(nullable, binding),                                                        //
+          mTooltipRenderer(tooltipCaption),                                                  //
+          mValueRenderer(),                                                                  //
           mRenderer(&mValueRenderer, &mTooltipRenderer)
     {
     }

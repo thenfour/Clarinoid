@@ -55,16 +55,18 @@ struct SynthPresetBMappableFunction : FunctionHandler
     {
         CCASSERT(!!mAppSettings);
         int nv = v.AsRoundedInt();
-        if (nv < -1) {
+        if (nv < -1)
+        {
             nv = SYNTH_PRESET_COUNT - 1;
         }
-        if (nv >= (int)SYNTH_PRESET_COUNT) {
+        if (nv >= (int)SYNTH_PRESET_COUNT)
+        {
             nv = -1;
         }
         int old = mAppSettings->GetCurrentPerformancePatch().mSynthPresetB;
         if (old != nv)
         {
-            //auto &p = mAppSettings->FindSynthPreset(nv);
+            // auto &p = mAppSettings->FindSynthPreset(nv);
             auto name = mAppSettings->GetSynthPatchName(nv);
             mInputSrc->InputSource_ShowToast(String("Synth patch B: ") + nv + " (" + (nv - old) + ")\r\n" + name);
             mAppSettings->GetCurrentPerformancePatch().mSynthPresetB = nv;
@@ -177,8 +179,6 @@ struct TransposeMappableFunction : FunctionHandler
         return ControlValue::IntValue(mAppSettings->GetCurrentPerformancePatch().mTranspose);
     }
 };
-
-
 
 struct InputDelegator
 {
@@ -311,8 +311,8 @@ struct InputDelegator
         switch (m.mModifier)
         {
         case ModifierKey::None: // = 0, // requires no modifiers are pressed.
-            return !mModifierFine.CurrentValue() && !mModifierCourse.CurrentValue() &&
-            !mModifierSynth.CurrentValue() && !mModifierHarm.CurrentValue() && !mModifierPerf.CurrentValue() && !mModifierShift.CurrentValue();
+            return !mModifierFine.CurrentValue() && !mModifierCourse.CurrentValue() && !mModifierSynth.CurrentValue() &&
+                   !mModifierHarm.CurrentValue() && !mModifierPerf.CurrentValue() && !mModifierShift.CurrentValue();
         case ModifierKey::Fine: // = 1,
             return mModifierFine.CurrentValue();
         case ModifierKey::Course: // = 2,

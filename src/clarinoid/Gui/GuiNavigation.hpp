@@ -93,7 +93,6 @@ struct GuiNavigationLogic
             RotateIntoRange(navState.mSelectedScrollSequenceIndex + delta, navState.mScrollSequenceLength);
         return this->GetNavState(list); // yea this could be optimized but not critical.
     }
-
 };
 
 } // namespace clarinoid

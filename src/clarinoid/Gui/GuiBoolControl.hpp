@@ -17,7 +17,7 @@ struct GuiToggleEditor : IGuiEditor<bool>
     }
 };
 
-template<bool invertVal>
+template <bool invertVal>
 struct GuiMuteControlRenderer : IGuiRenderer<bool>
 {
     using T = bool;
@@ -38,12 +38,12 @@ struct GuiMuteControlRenderer : IGuiRenderer<bool>
         app.mDisplay.DrawBitmap(ctrl.mBounds.UpperLeft(), val ? gMuteOnBitmapSpec : gMuteOffBitmapSpec);
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + (val_ ? mTrueValue : mFalseValue));
+            app.mDisplay.print(mStaticCaption + ": " + (val_ ? mTrueValue : mFalseValue));
         }
     }
 };
 
-template<bool invertVal>
+template <bool invertVal>
 struct GuiMuteControl : GuiCompositeControl<bool>
 {
     GuiMuteControlRenderer<invertVal> mRenderer;
@@ -63,7 +63,7 @@ struct GuiMuteControl : GuiCompositeControl<bool>
     }
 };
 
-template<bool invertVal>
+template <bool invertVal>
 struct GuiPatchMuteControlRenderer : IGuiRenderer<bool>
 {
     using T = bool;
@@ -86,18 +86,18 @@ struct GuiPatchMuteControlRenderer : IGuiRenderer<bool>
         app.mDisplay.DrawBitmap(ctrl.mBounds.UpperLeft(), val ? gPatchEnabledSpec : gPatchDisabledSpec);
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + (val_ ? mTrueValue : mFalseValue));
+            app.mDisplay.print(mStaticCaption + ": " + (val_ ? mTrueValue : mFalseValue));
         }
     }
 };
 
-template<bool invertVal>
+template <bool invertVal>
 struct GuiPatchMuteControl : GuiCompositeControl<bool>
 {
     GuiPatchMuteControlRenderer<invertVal> mRenderer;
     GuiToggleEditor mEditor;
 
-    GuiPatchMuteControl(int page, //
+    GuiPatchMuteControl(int page,                          //
                         PointI pt,                         //
                         const String &tooltipCaption,      //
                         const String &trueValue,           //

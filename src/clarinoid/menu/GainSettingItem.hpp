@@ -34,17 +34,17 @@ struct GainEditor : ISettingItemEditor
 
         if (newDB <= MIN_DECIBEL_GAIN)
         {
-        this->mpApi->GetDisplay()->mDisplay.println(String("-inf db"));
+            this->mpApi->GetDisplay()->println(String("-inf db"));
         }
         else
         {
-            this->mpApi->GetDisplay()->mDisplay.println(String("") + newDB + " db");
+            this->mpApi->GetDisplay()->println(String("") + newDB + " db");
         }
         int deltaDb = newDB - oldDB;
-        this->mpApi->GetDisplay()->mDisplay.println(String(" (") + (deltaDb >= 0 ? "+" : "") + deltaDb + " db)");
+        this->mpApi->GetDisplay()->println(String(" (") + (deltaDb >= 0 ? "+" : "") + deltaDb + " db)");
 
-        this->mpApi->GetDisplay()->mDisplay.println("");
-        this->mpApi->GetDisplay()->mDisplay.println(String("") + newLin + " lin");
+        this->mpApi->GetDisplay()->println("");
+        this->mpApi->GetDisplay()->println(String("") + newLin + " lin");
     }
 
     virtual void SetupEditing(ISettingItemEditorActions *papi, int x, int y)

@@ -42,103 +42,11 @@
 namespace clarinoid
 {
 
-struct FontInfo
-{
-    const GFXfont *mpFont;
-    const char *mName;
-};
-
-const FontInfo gAllFonts[] = {
-
-    {&pixChicago4pt7b, "pixChicago4pt7b"},
-
-    {&MatchupPro8pt7b, "MatchupPro8pt7b"},
-    {&Eighties8pt7b, "Eighties8pt7b"},
-
-    {&TomThumb, "TomThumb"},
-
-    {nullptr, "Default 6x8"},
-
-};
-
-struct FontTesterApp : SettingsMenuApp
-{
-    virtual const char *DisplayAppGetName() override
-    {
-        return "FontTesterApp";
-    }
-
-    FontTesterApp(CCDisplay &d) : SettingsMenuApp(d)
-    {
-    }
-
-    size_t mSelectedFont = 0;
-
-    MultiSubmenuSettingItem mFontList = {[](void *cap) { return SizeofStaticArray(gAllFonts); },
-                                         [](void *cap, size_t mi) { // name
-                                             // auto *pThis = (FontTesterApp *)cap;
-                                             return String(gAllFonts[mi].mName);
-                                         },                         // return string name
-                                         [](void *cap, size_t mi) { // get submenu for item
-                                             auto *pThis = (FontTesterApp *)cap;
-                                             pThis->mSelectedFont = mi;
-                                             return &pThis->mSubmenuList;
-                                         },                                         // return submenu
-                                         [](void *cap, size_t mi) { return true; }, // is enabled
-                                         this};                                     // capture
-
-    static const char *const gLoremIpsumLines[12];
-
-    MultiLabelSettingItem mLoremIpsum = {[](void *cap) { return SizeofStaticArray(gLoremIpsumLines); }, // item count
-                                         [](void *cap, size_t i) {
-                                             auto *pThis = (FontTesterApp *)cap;
-                                             pThis->mDisplay.mDisplay.setFont(gAllFonts[pThis->mSelectedFont].mpFont);
-                                             return String(gLoremIpsumLines[i]);
-                                         },                                        // text
-                                         [](void *cap, size_t i) { return true; }, // is enabled
-                                         this};
-
-    ISettingItem *mSubmenuArray[1] = {
-        &mLoremIpsum,
-    };
-    SettingsList mSubmenuList = {mSubmenuArray};
-
-    ISettingItem *mArray[1] = {
-        &mFontList,
-    };
-    SettingsList mRootList = {mArray};
-    virtual SettingsList *GetRootSettingsList()
-    {
-        return &mRootList;
-    }
-
-    virtual void RenderFrontPage()
-    {
-        mDisplay.mDisplay.println("Font tester > ");
-        SettingsMenuApp::RenderFrontPage();
-    }
-};
-
-const char *const FontTesterApp::gLoremIpsumLines[12] = {
-    "{......10}{......20}{......30}{......40}{......50}{......60}",
-    "0123456789",
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    "NOPQRSTUVWXYZ",
-    "abcdefghijklmnopqrstuvwxyz",
-    "nopqrstuvwxyz",
-    "Lorem ipsum dolor sit",
-    "amet, consectetur adipiscing",
-    "elit. Morbi eu lacinia ipsum",
-    "ac luctus nisi. Duis at mi et",
-    "sapien porttitor feugiat. Integer",
-    "id nulla ut magna euismod lobortis.",
-};
-
 struct TestDeviceApp : ISysInfoProvider
 {
     InputDelegator mInputDelegator;
     Clarinoid2ControlMapper mControlMapper;
-    CCDisplay mDisplay;
+    _CCDisplay mDisplay;
     DefaultHud mHud;
     AppSettings mAppSettings;
 
@@ -218,7 +126,6 @@ struct TestDeviceApp : ISysInfoProvider
     {
         mControlMapper.Init(&mDisplay);
 
-        FontTesterApp mFontTesterApp(mDisplay);
         GuiTestApp mGuiTestApp(mDisplay);
         GuiPerformanceApp mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome);
 
@@ -226,7 +133,6 @@ struct TestDeviceApp : ISysInfoProvider
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
             &mGuiTestApp,
             &mGuiPerformanceApp,
-            &mFontTesterApp,
 
             &mPerfPatchApp,
             &mHarmPatchApp,

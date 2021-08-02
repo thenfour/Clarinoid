@@ -73,7 +73,8 @@ struct TimeSpan
         d /= 1000000; // convert micros to seconds.
         return (float)d;
     }
-    float ElapsedBeats(float bpm) const {
+    float ElapsedBeats(float bpm) const
+    {
         return (float)(double(mMicros) * bpm / 60000000);
     }
 
@@ -98,7 +99,8 @@ struct TimeSpan
     {
         return FromMillis(int64_t(60000.0f / bpm));
     }
-    static TimeSpan FromBeats(float beats, float bpm) {
+    static TimeSpan FromBeats(float beats, float bpm)
+    {
         return FromMillis(int64_t(beats * 60000.0f / bpm));
     }
     static TimeSpan FromFPS(float bpm)
@@ -124,7 +126,6 @@ TimeSpan Uptime()
 {
     return TimeSpan::FromMicros(UptimeMicros64());
 }
-
 
 //////////////////////////////////////////////////////////////////////
 // initially running.
@@ -185,15 +186,13 @@ struct Stopwatch
     }
 };
 
-
-
 template <uint32_t holdTimeMS, uint32_t falloffTimeMS>
 struct GenericPeakMeterUtility
 {
     float mHeldPeak = 0;
     Stopwatch mHeldPeakTime; // peak is simply held for a duration.
 
-    float Update(float peak/*in*/)
+    float Update(float peak /*in*/)
     {
         float heldPeak = 0;
         // determine a new held peak
@@ -213,15 +212,11 @@ struct GenericPeakMeterUtility
         else
         {
             // falloff: remap millis from 500-1000 from heldpeak to 0.
-            heldPeak = RemapToRange(
-                holdDurationMS, holdTimeMS, holdTimeMS + falloffTimeMS, mHeldPeak, peak);
+            heldPeak = RemapToRange(holdDurationMS, holdTimeMS, holdTimeMS + falloffTimeMS, mHeldPeak, peak);
         }
         return heldPeak;
     }
 };
-
-
-
 
 //////////////////////////////////////////////////////////////////////
 template <uint32_t TperiodMS>

@@ -17,7 +17,6 @@
 #include <SD.h>
 #include <SerialFlash.h>
 #include <Audio.h>
-//#include <polyBlepOscillator.h> // https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
 #include <Encoder.h>
 #include <WS2812Serial.h>
 #include <Adafruit_GFX.h>
@@ -32,11 +31,12 @@
 
 void setup()
 {
+    AudioNoInterrupts();
     Serial.begin(9600);
-    // while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
-
-    clarinoid::Clarinoid2App app;
-    app.Main();
+    // when you are debugging with serial, uncomment this to ensure you see startup msgs
+    // while (!Serial) { }
+    auto *gApp = new clarinoid::Clarinoid2App();
+    gApp->Main();
 }
 
 void loop()

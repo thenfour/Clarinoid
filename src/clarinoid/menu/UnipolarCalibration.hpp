@@ -135,13 +135,13 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
     // render the range editing screen. 2 columns showing in | out.
     void RenderRange(const String &caption)
     {
-        CCDisplay *d = mpApi->GetDisplay();
-        auto lineHeight = d->mDisplay.GetLineHeight();
+        IDisplay *d = mpApi->GetDisplay();
+        auto lineHeight = d->GetLineHeight();
         bool blinkOn = mBlinker.GetValue01Int(micros());
         bool captionOn = (mEditState != EditState::SelectParam) || blinkOn;
         bool guidelineOn = (mEditState != EditState::EditParam) || blinkOn;
 
-        RectI rcDisplay = {0, 0, d->mDisplay.width(), d->GetClientHeight()};
+        RectI rcDisplay = {0, 0, d->width(), d->GetClientHeight()};
 
         // calculate left & right areas
         RectI rcLeft = rcDisplay;
@@ -152,19 +152,19 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
         rcRight.x = rcLeft.width;
 
         // draw caption & chrome
-        d->mDisplay.setCursor(10, 0);
-        d->mDisplay.println(caption);
+        d->setCursor(10, 0);
+        d->println(caption);
         if (captionOn)
         {
-            d->mDisplay.setCursor(0, 0);
-            d->mDisplay.print(">");
+            d->setCursor(0, 0);
+            d->print(">");
         }
-        d->mDisplay.writeFastHLine(
+        d->drawFastHLine(
             0,
             lineHeight,
             rcDisplay.width,
             SSD1306_WHITE); // virtual void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-        d->mDisplay.writeFastVLine(
+        d->drawFastVLine(
             rcRight.x,
             rcRight.y,
             rcRight.height,
@@ -182,25 +182,25 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
         if (mSelectedParam != SelectedParam::RangeMin || guidelineOn)
         {
             int y = (int)((1.0f - v.mSrcMin) * rcLeft.height);
-            d->mDisplay.DrawDottedHLine(rcLeft.x, rcLeft.width, y + rcLeft.y, SSD1306_WHITE);
+            d->DrawDottedHLine(rcLeft.x, rcLeft.width, y + rcLeft.y, SSD1306_WHITE);
         }
         if (mSelectedParam != SelectedParam::RangeMax || guidelineOn)
         {
             int y = (int)((1.0f - v.mSrcMax) * rcLeft.height);
-            d->mDisplay.DrawDottedHLine(rcLeft.x, rcLeft.width, y + rcLeft.y, SSD1306_WHITE);
+            d->DrawDottedHLine(rcLeft.x, rcLeft.width, y + rcLeft.y, SSD1306_WHITE);
         }
     }
 
     // 3 columns with 1 row caption
     void RenderCurve(const String &caption)
     {
-        CCDisplay *d = mpApi->GetDisplay();
-        auto lineHeight = d->mDisplay.GetLineHeight();
+        IDisplay *d = mpApi->GetDisplay();
+        auto lineHeight = d->GetLineHeight();
         bool blinkOn = mBlinker.GetValue01Int(micros());
         bool captionOn = (mEditState != EditState::SelectParam) || blinkOn;
         bool guidelineOn = (mEditState != EditState::EditParam) || blinkOn;
 
-        RectI rcDisplay = {0, 0, d->mDisplay.width(), d->GetClientHeight()};
+        RectI rcDisplay = {0, 0, d->width(), d->GetClientHeight()};
 
         // calculate left & right areas
         RectI rcLeft = rcDisplay;
@@ -215,24 +215,24 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
         rcRight.x += rcMiddle.width;
 
         // caption & chrome
-        d->mDisplay.setCursor(10, 0);
-        d->mDisplay.print(caption);
+        d->setCursor(10, 0);
+        d->print(caption);
         if (captionOn)
         {
-            d->mDisplay.setCursor(0, 0);
-            d->mDisplay.print(">");
+            d->setCursor(0, 0);
+            d->print(">");
         }
-        d->mDisplay.writeFastHLine(
+        d->drawFastHLine(
             0,
             lineHeight,
             rcDisplay.width,
             SSD1306_WHITE); // virtual void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-        d->mDisplay.writeFastVLine(
+        d->drawFastVLine(
             rcMiddle.x,
             rcMiddle.y,
             rcMiddle.height,
             SSD1306_WHITE); // virtual void writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
-        d->mDisplay.writeFastVLine(
+        d->drawFastVLine(
             rcRight.x,
             rcRight.y,
             rcRight.height,
@@ -253,7 +253,7 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
                                   (float)x / rcLeft.width, v.mCurveP, v.mCurveS); // 1-val for screen vertical flipping
             int y = fy * rcLeft.height;
             // or is it void drawPixel(int16_t x, int16_t y, uint16_t color); ?
-            d->mDisplay.writePixel(
+            d->drawPixel(
                 x, rcLeft.y + y, SSD1306_WHITE); // virtual void writePixel(int16_t x, int16_t y, uint16_t color);
         }
 
@@ -264,17 +264,17 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
             float fhy = 1.0f - Curve2::Eval(v.mCurveP, v.mCurveP, v.mCurveS); // 1-val for screen vertical flipping
             int hx = (int)(v.mCurveP * rcLeft.width);
             int hy = fhy * rcLeft.height;
-            d->mDisplay.DrawDottedRect(rcLeft.x + hx - HandleSize,
-                                       rcLeft.y + hy - HandleSize,
-                                       HandleSize * 2 + 1,
-                                       HandleSize * 2 + 1,
-                                       SSD1306_WHITE);
+            d->DrawDottedRect(rcLeft.x + hx - HandleSize,
+                              rcLeft.y + hy - HandleSize,
+                              HandleSize * 2 + 1,
+                              HandleSize * 2 + 1,
+                              SSD1306_WHITE);
         }
     }
 
     virtual void Render()
     {
-        CCDisplay *d = mpApi->GetDisplay();
+        IDisplay *d = mpApi->GetDisplay();
         d->ClearState();
 
         switch (mSelectedParam)

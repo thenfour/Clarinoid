@@ -142,37 +142,43 @@ static const uint8_t PROGMEM gPrevPageBMP[] = {
 };
 static const BitmapSpec gPrevPageBitmapSpec = BitmapSpec::Construct(gPrevPageBMP, 1, 3);
 
-
-
 static const uint8_t PROGMEM gMuteOnBMP[] = {
-    B_____x__, B________, //
-    B____x___, Bx___x___, //
-    B__xx_x__, B_x_x____, //
-    B__x_x___, B__x_____, //
-    B__xx_x__, B_x_x____, //
-    B____x___, Bx___x___, //
-    B_____x__, B________, //
+    B_____x__,
+    B________, //
+    B____x___,
+    Bx___x___, //
+    B__xx_x__,
+    B_x_x____, //
+    B__x_x___,
+    B__x_____, //
+    B__xx_x__,
+    B_x_x____, //
+    B____x___,
+    Bx___x___, //
+    B_____x__,
+    B________, //
 };
 
 static const BitmapSpec gMuteOnBitmapSpec = BitmapSpec::Construct(gMuteOnBMP, 2, 16);
 
-
-
 static const uint8_t PROGMEM gMuteOffBMP[] = {
-    B_____x__, B___x____, //
-    B____xx__, B_x__x___, //
-    B__xxxx_x, B__x_x___, //
-    B__xxxx__, Bx_x_x___, //
-    B__xxxx_x, B__x_x___, //
-    B____xx__, B_x__x___, //
-    B_____x__, B___x____, //
+    B_____x__,
+    B___x____, //
+    B____xx__,
+    B_x__x___, //
+    B__xxxx_x,
+    B__x_x___, //
+    B__xxxx__,
+    Bx_x_x___, //
+    B__xxxx_x,
+    B__x_x___, //
+    B____xx__,
+    B_x__x___, //
+    B_____x__,
+    B___x____, //
 };
 
 static const BitmapSpec gMuteOffBitmapSpec = BitmapSpec::Construct(gMuteOffBMP, 2, 16);
-
-
-
-
 
 static const uint8_t PROGMEM gPatchEnabledBMP[] = {
     B_x______, //
@@ -197,12 +203,5 @@ static const uint8_t PROGMEM gPatchDisabledBMP[] = {
 };
 
 static const BitmapSpec gPatchDisabledSpec = BitmapSpec::Construct(gPatchDisabledBMP, 1, 7);
-
-
-
-
-
-
-
 
 } // namespace clarinoid

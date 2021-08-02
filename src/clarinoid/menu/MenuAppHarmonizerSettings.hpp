@@ -14,19 +14,19 @@ namespace clarinoid
 struct HarmVoiceSettingsApp
 {
 
-    HarmVoiceSettingsApp(CCDisplay &d) : mDisplay(d)
+    HarmVoiceSettingsApp(IDisplay &d) : mDisplay(d)
     {
     }
 
-    CCDisplay &mDisplay;
+    IDisplay &mDisplay;
 
     int mEditingHarmVoice = -1;
 
     HarmVoiceSettings &EditingVoice()
     {
         CCASSERT(mEditingHarmVoice >= 0 && mEditingHarmVoice < (int)clarinoid::HARM_VOICES);
-        auto &perf = mDisplay.mAppSettings->GetCurrentPerformancePatch();
-        auto &h = mDisplay.mAppSettings->FindHarmPreset(perf.mHarmPreset);
+        auto &perf = mDisplay.GetAppSettings()->GetCurrentPerformancePatch();
+        auto &h = mDisplay.GetAppSettings()->FindHarmPreset(perf.mHarmPreset);
         return h.mVoiceSettings[mEditingHarmVoice];
     }
 
@@ -45,31 +45,31 @@ struct HarmVoiceSettingsApp
                                                                },
                                                                AlwaysEnabled};
 
-    IntSettingItem mOwnSynthPatch = {"Own synth patch",
-                                     NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
-                                     Property<int>{
-                                         [](void *cap) {
-                                             auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                             return (int)pThis->EditingVoice().mVoiceSynthPreset;
-                                         }, // getter
-                                         [](void *cap, const int &val) {
-                                             auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                             pThis->EditingVoice().mVoiceSynthPreset = val;
-                                         },   // setter
-                                         this // capture val
-                                     },
-                                     [](void *cap, int n) { // formatter
-                                         auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                         return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
-                                     },
-                                     Property<bool>{// enabled only if ref type = voice.
-                                                    [](void *cap) {
-                                                        auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                                        return pThis->EditingVoice().mSynthPresetRef ==
-                                                               HarmSynthPresetRefType::Voice;
-                                                    },
-                                                    this},
-                                     this};
+    IntSettingItem mOwnSynthPatch = {
+        "Own synth patch",
+        NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
+        Property<int>{
+            [](void *cap) {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                return (int)pThis->EditingVoice().mVoiceSynthPreset;
+            }, // getter
+            [](void *cap, const int &val) {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                pThis->EditingVoice().mVoiceSynthPreset = val;
+            },   // setter
+            this // capture val
+        },
+        [](void *cap, int n) { // formatter
+            auto *pThis = (HarmVoiceSettingsApp *)cap;
+            return pThis->mDisplay.GetAppSettings()->mSynthSettings.mPresets[n].ToString(n);
+        },
+        Property<bool>{// enabled only if ref type = voice.
+                       [](void *cap) {
+                           auto *pThis = (HarmVoiceSettingsApp *)cap;
+                           return pThis->EditingVoice().mSynthPresetRef == HarmSynthPresetRefType::Voice;
+                       },
+                       this},
+        this};
 
     IntSettingItem mSequenceLength = {"Seq length",
                                       NumericEditRangeSpec<int>{0, clarinoid::HARM_SEQUENCE_LEN - 1},
@@ -272,17 +272,17 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         return "HarmPatchSettingsApp";
     }
 
-    HarmPatchSettingsApp(CCDisplay &d) : SettingsMenuApp(d), mDisplay(d), mHarmVoiceSettingsApp(d)
+    HarmPatchSettingsApp(IDisplay &d) : SettingsMenuApp(d), mDisplay(d), mHarmVoiceSettingsApp(d)
     {
     }
 
-    CCDisplay &mDisplay;
+    IDisplay &mDisplay;
     HarmVoiceSettingsApp mHarmVoiceSettingsApp;
 
     HarmPreset &EditingPreset()
     {
-        auto &perf = this->mDisplay.mAppSettings->GetCurrentPerformancePatch();
-        return this->mDisplay.mAppSettings->mHarmSettings.mPresets[perf.mHarmPreset];
+        auto &perf = this->mAppSettings->GetCurrentPerformancePatch();
+        return this->mAppSettings->mHarmSettings.mPresets[perf.mHarmPreset];
     }
 
     BoolSettingItem mEmitLiveNote = {"Emit live note?",
@@ -344,7 +344,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
                                     },
                                     AlwaysEnabled,
                                     this};
@@ -364,7 +364,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
                                     },
                                     AlwaysEnabled,
                                     this};
@@ -384,7 +384,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
                                     },
                                     AlwaysEnabled,
                                     this};
@@ -404,7 +404,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mDisplay.mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
                                     },
                                     AlwaysEnabled,
                                     this};
@@ -462,13 +462,13 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         HARM_PRESET_COUNT,
         [](void *cap, size_t i) { // itemNameGetter,
             auto *pThis = (HarmPatchSettingsApp *)cap;
-            return String(String("") + i + ":" + pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i].mName);
+            return String(String("") + i + ":" + pThis->mAppSettings->mHarmSettings.mPresets[i].mName);
         },
         [](void *cap,
            size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (HarmPatchSettingsApp *)cap;
-            pThis->mDisplay.mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
-            auto &settings = *pThis->mDisplay.mAppSettings;
+            pThis->mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
+            auto &settings = *pThis->mAppSettings;
             auto &perf = settings.GetCurrentPerformancePatch();
             auto fromName = settings.GetHarmPatchName(perf.mHarmPreset);
             auto toName = settings.GetHarmPatchName(i);
@@ -500,11 +500,11 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.ClearState();
-        mDisplay.mDisplay.println(String("Harmonizer"));
-        mDisplay.mDisplay.println(String("     patch >>"));
+        mDisplay.println(String("Harmonizer"));
+        mDisplay.println(String("     patch >>"));
         auto &perf = GetAppSettings()->GetCurrentPerformancePatch();
         auto name = GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
-        mDisplay.mDisplay.println(name);
+        mDisplay.println(name);
         SettingsMenuApp::RenderFrontPage();
     }
 };
@@ -519,7 +519,7 @@ struct HarmSettingsApp : public SettingsMenuApp
 
     HarmPatchSettingsApp mHarmPatchSettings;
 
-    HarmSettingsApp(CCDisplay &d) : SettingsMenuApp(d), mHarmPatchSettings(d)
+    HarmSettingsApp(IDisplay &d) : SettingsMenuApp(d), mHarmPatchSettings(d)
     {
     }
 
@@ -548,13 +548,13 @@ struct HarmSettingsApp : public SettingsMenuApp
     virtual void RenderFrontPage()
     {
         this->mDisplay.ClearState();
-        this->mDisplay.mDisplay.println("Harmonizer >");
+        this->mDisplay.println("Harmonizer >");
 
-        auto& perf = this->GetAppSettings()->GetCurrentPerformancePatch();
+        auto &perf = this->GetAppSettings()->GetCurrentPerformancePatch();
         auto name = this->GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
-        //auto& h = this->GetAppSettings()->FindHarmPreset(perf.mHarmPreset);
+        // auto& h = this->GetAppSettings()->FindHarmPreset(perf.mHarmPreset);
 
-        this->mDisplay.mDisplay.println(name);
+        this->mDisplay.println(name);
         SettingsMenuApp::RenderFrontPage();
     }
 };

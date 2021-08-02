@@ -29,14 +29,16 @@ struct DiodeFilter : public IFilter
     }
     virtual void SetCutoffFrequency(real hz) override
     {
-        if (FloatEquals(m_cutoffHz, hz)) return;
+        if (FloatEquals(m_cutoffHz, hz))
+            return;
         m_cutoffHz = hz;
         Recalc();
     }
 
     virtual void SetSaturation(real amt) override
     {
-        if (FloatEquals(m_overdrive, amt)) return;
+        if (FloatEquals(m_overdrive, amt))
+            return;
         m_overdrive = amt;
         Recalc();
     }
@@ -45,7 +47,8 @@ struct DiodeFilter : public IFilter
     virtual void SetResonance(real amt) override
     {
         amt *= 16;
-        if (FloatEquals(m_k, amt)) return;
+        if (FloatEquals(m_k, amt))
+            return;
         m_k = amt;
         Recalc();
     }
@@ -81,7 +84,7 @@ struct DiodeFilter : public IFilter
             InlineProcessSample(samplesL[i], samplesR[i]);
         }
     }
-    virtual void ProcessSample(real& xnL, real& xnR) override
+    virtual void ProcessSample(real &xnL, real &xnR) override
     {
         return InlineProcessSample(xnL, xnR);
     }
@@ -169,7 +172,7 @@ struct DiodeFilter : public IFilter
         m_LPF1.m_feedbackL = m_LPF2.getFeedbackOutputL();
 
         real sigmaL = m_sg1 * m_LPF1.getFeedbackOutputL() + m_sg2 * m_LPF2.getFeedbackOutputL() +
-                     m_sg3 * m_LPF3.getFeedbackOutputL() + m_sg4 * m_LPF4.getFeedbackOutputL();
+                      m_sg3 * m_LPF3.getFeedbackOutputL() + m_sg4 * m_LPF4.getFeedbackOutputL();
 
         real k_modded = m_k;
         k_modded = k_modded > 16 ? 16 : k_modded;
@@ -190,7 +193,7 @@ struct DiodeFilter : public IFilter
         return xn;
     }
 
-    inline void InlineProcessSample(real& xnL, real& xnR)
+    inline void InlineProcessSample(real &xnL, real &xnR)
     {
         m_LPF4.m_feedbackL = 0;
         m_LPF3.m_feedbackL = m_LPF4.getFeedbackOutputL();
@@ -198,7 +201,7 @@ struct DiodeFilter : public IFilter
         m_LPF1.m_feedbackL = m_LPF2.getFeedbackOutputL();
 
         real sigmaL = m_sg1 * m_LPF1.getFeedbackOutputL() + m_sg2 * m_LPF2.getFeedbackOutputL() +
-                     m_sg3 * m_LPF3.getFeedbackOutputL() + m_sg4 * m_LPF4.getFeedbackOutputL();
+                      m_sg3 * m_LPF3.getFeedbackOutputL() + m_sg4 * m_LPF4.getFeedbackOutputL();
 
         m_LPF4.m_feedbackR = 0;
         m_LPF3.m_feedbackR = m_LPF4.getFeedbackOutputR();
@@ -206,7 +209,7 @@ struct DiodeFilter : public IFilter
         m_LPF1.m_feedbackR = m_LPF2.getFeedbackOutputR();
 
         real sigmaR = m_sg1 * m_LPF1.getFeedbackOutputR() + m_sg2 * m_LPF2.getFeedbackOutputR() +
-                     m_sg3 * m_LPF3.getFeedbackOutputR() + m_sg4 * m_LPF4.getFeedbackOutputR();
+                      m_sg3 * m_LPF3.getFeedbackOutputR() + m_sg4 * m_LPF4.getFeedbackOutputR();
 
         real k_modded = m_k;
         k_modded = k_modded > 16 ? 16 : k_modded;

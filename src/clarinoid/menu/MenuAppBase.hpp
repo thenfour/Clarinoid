@@ -15,7 +15,7 @@ struct DisplayApp : IDisplayApp
 {
     bool mShowingFrontPage = true;
 
-    CCDisplay &mDisplay;
+    IDisplay &mDisplay;
     AppSettings *mAppSettings;
     InputDelegator *mInput;
 
@@ -23,14 +23,14 @@ struct DisplayApp : IDisplayApp
     SwitchControlReader mBack;
     EncoderReader mEnc;
 
-    DisplayApp(CCDisplay &d) : mDisplay(d)
+    DisplayApp(IDisplay &d) : mDisplay(d)
     {
     }
 
     virtual void DisplayAppInit() override
     {
-        mAppSettings = mDisplay.mAppSettings;
-        mInput = mDisplay.mInput;
+        mAppSettings = mDisplay.GetAppSettings();
+        mInput = mDisplay.GetInput();
     }
 
     virtual void UpdateApp() = 0;

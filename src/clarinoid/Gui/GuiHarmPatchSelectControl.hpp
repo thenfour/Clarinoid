@@ -11,7 +11,7 @@ namespace clarinoid
 {
 
 // ---------------------------------------------------------------------------------------
-template<typename T>
+template <typename T>
 struct GuiHarmPatchAsTextRenderer : IGuiRenderer<T>
 {
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
@@ -21,14 +21,14 @@ struct GuiHarmPatchAsTextRenderer : IGuiRenderer<T>
                                      DisplayApp &app) override
     {
         app.mDisplay.SelectEightiesFont();
-        app.mDisplay.mDisplay.SetClipRect(ctrl.mBounds.x, ctrl.mBounds.y, ctrl.mBounds.right(), ctrl.mBounds.bottom());
-        app.mDisplay.mDisplay.print(app.mAppSettings->GetHarmPatchName(val));
+        app.mDisplay.SetClipRect(ctrl.mBounds.x, ctrl.mBounds.y, ctrl.mBounds.right(), ctrl.mBounds.bottom());
+        app.mDisplay.print(app.mAppSettings->GetHarmPatchName(val));
     }
 };
 
 // ---------------------------------------------------------------------------------------
 // does not support NULL
-template<typename T>
+template <typename T>
 struct GuiHarmPatchSelectorEditor : IGuiEditor<T>
 {
     T mOldVal;
@@ -89,7 +89,7 @@ struct GuiHarmPatchSelectorEditor : IGuiEditor<T>
 };
 
 // ---------------------------------------------------------------------------------------
-template<typename T>
+template <typename T>
 struct GuiHarmPatchSelectControl : GuiCompositeControl<T>
 {
     GuiHarmPatchSelectorEditor<T> mEditor;
@@ -103,9 +103,9 @@ struct GuiHarmPatchSelectControl : GuiCompositeControl<T>
                               const Property<T> &binding,
                               const Property<bool> &isSelectable)
         : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
-          mEditor(binding),                                                               //
-          mTooltipRenderer(tooltipCaption),                                               //
-          mValueRenderer(),                                                               //
+          mEditor(binding),                                                                  //
+          mTooltipRenderer(tooltipCaption),                                                  //
+          mValueRenderer(),                                                                  //
           mRenderer(&mValueRenderer, &mTooltipRenderer)
     {
     }
