@@ -77,6 +77,27 @@ struct GuiLabelValueTooltipRenderer : IGuiRenderer<T>
     }
 };
 
+// ---------------------------------------------------------------------------------------
+template <typename T>
+struct GuiStaticTooltipRenderer : IGuiRenderer<T>
+{
+    String mStaticCaption;
+    GuiStaticTooltipRenderer(const String &staticCaption) : mStaticCaption(staticCaption)
+    {
+    }
+    virtual void IGuiRenderer_Render(IGuiControl &ctrl,
+                                     const T &val,
+                                     bool isSelected,
+                                     bool isEditing,
+                                     DisplayApp &app) override
+    {
+        if (GuiInitiateTooltip(isSelected, isEditing, app))
+        {
+            app.mDisplay.mDisplay.print(mStaticCaption);
+        }
+    }
+};
+
 
 // ---------------------------------------------------------------------------------------
 // no modal, this edits in the tooltip area

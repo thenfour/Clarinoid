@@ -455,7 +455,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
             }
 
             auto cursorY = mDisplay.mDisplay.getCursorY();
-            mDisplay.DrawInvertedLine(line, (itemToRender == (size_t)state.focusedItem));
+            mDisplay.PrintInvertedLine(line, (itemToRender == (size_t)state.focusedItem));
 
             if (itemToRender == (state.pList->Count() - 1))
             {

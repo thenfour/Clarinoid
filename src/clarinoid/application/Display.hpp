@@ -264,7 +264,7 @@ struct CCDisplay
         return mDisplay.height() - GetHudHeight();
     }
 
-    void DrawInvertedText(const String &str, bool isInverted = true)
+    void PrintInvertedText(const String &str, bool isInverted = true)
     {
         if (isInverted)
         {
@@ -282,9 +282,9 @@ struct CCDisplay
         mDisplay.print(str);
     }
 
-    void DrawInvertedLine(const String &str, bool isInverted = true)
+    void PrintInvertedLine(const String &str, bool isInverted = true)
     {
-        DrawInvertedText(str, isInverted);
+        PrintInvertedText(str, isInverted);
         mDisplay.println();
     }
 
@@ -306,13 +306,28 @@ struct CCDisplay
     String mToastMsg;
     size_t mCurrentFontIndex = 0;
 
-    GFXfont const *mGUIFonts[4] = {
+    // NB: CHANGING ANYTHING IN HERE, ALSO CHANGE 
+    // SelectTinyFont().
+    GFXfont const *mGUIFonts[5] = {
         &MatchupPro8pt7b,
-        //&Eighties8pt7b,
         nullptr,
+        &Eighties8pt7b,
         &pixChicago4pt7b,
         &TomThumb,
     };
+
+    void SelectTinyFont() {
+        mDisplay.setFont(mGUIFonts[4]);
+    }
+
+    void SelectEightiesFont() {
+        mDisplay.setFont(mGUIFonts[2]);
+    }
+
+    void SelectNormalFont() {
+        mDisplay.setFont(mGUIFonts[mCurrentFontIndex]);
+    }
+
 
     SwitchControlReader mToggleReader;
 
@@ -407,7 +422,8 @@ struct CCDisplay
     }
 
     // draws & prepares the screen for a modal message. after this just print text whatever.
-    inline void SetupModal(int pad = 1, int rectStart = 2, int textStart = 4)
+    // returns the client area of the modal
+    inline RectI SetupModal(int pad = 1, int rectStart = 2, int textStart = 4)
     {
         ClearState();
         mDisplay.fillRect(pad, pad, mDisplay.width() - pad, GetClientHeight() - pad, SSD1306_BLACK);
@@ -416,6 +432,8 @@ struct CCDisplay
         mDisplay.mTextLeftMargin = textStart;
         ClipToMargin(textStart);
         mDisplay.setCursor(textStart, textStart);
+        auto ret = RectI::Construct(textStart, textStart, mDisplay.width() - textStart, GetClientHeight() - textStart);
+        return ret;
     }
 };
 

@@ -23,6 +23,7 @@ struct ISysInfoProvider
 // this renders a hud so the formatting is not defined by the display object itself.
 struct DefaultHud : IHudProvider
 {
+    GenericPeakMeterUtility<1000, 250> mCPUPeakMeter;
     CCDisplay &mDisplay;
     ISysInfoProvider *mpInfo = nullptr;
     DefaultHud(CCDisplay &display, ISysInfoProvider *infoProvider) : mDisplay(display), mpInfo(infoProvider)
@@ -48,10 +49,12 @@ struct DefaultHud : IHudProvider
     // (int)(std::ceil(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()))) + CHAR_DB " " +
         String dbpeak = DecibelsToIntString(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()));// "-" CHARSTR_INFINITY CHARSTR_DB;
 
-        int cpu = (int)std::ceil(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
+        //int cpu = (int)std::ceil(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
+        float cpu = mCPUPeakMeter.Update(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
+        int icpu = (int)std::ceil(cpu);
         mDisplay.mDisplay.print(
             String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " +
-            cpu + "% " +
+            icpu + "% " +
             dbpeak + " " +
             mpInfo->ISysInfoProvider_GetNote().ToString() + " " CHARSTR_QEQ + (int) std::round(mpInfo->ISysInfoProvider_GetTempo())
             );

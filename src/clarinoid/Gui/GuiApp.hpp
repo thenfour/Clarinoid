@@ -12,6 +12,8 @@
 #include "GuiKnobControl.hpp"
 #include "GuiEnumControl.hpp"
 #include "GuiStereoSpreadControl.hpp"
+#include "GuiSynthPatchSelectControl.hpp"
+#include "GuiHarmPatchSelectControl.hpp"
 
 namespace clarinoid
 {
@@ -252,9 +254,31 @@ struct GuiPerformanceApp : GuiApp
         AlwaysEnabled // selectable
     };
 
-    GuiLabelControl mLabel10 = {5, false, RectI::Construct(14, 34, 50, 8), String("page 6 ~~")};
+    GuiLabelControl mLabel10 = {5, false, RectI::Construct(106, 6, 50, 8), String("page 6 ~~")};
 
-    IGuiControl *mArray[18] = {
+    int mSynthPatchAval = 2;
+    GuiSynthPatchSelectControl mSynthPatchA = {
+        5, false, RectI::Construct(6, 6, 59, 10), "Synth Patch A", mSynthPatchAval, AlwaysEnabled
+    };
+
+    int mSynthPatchBval = 2;
+    GuiSynthPatchSelectControl mSynthPatchB = {
+        5, true, RectI::Construct(6, 16, 59, 10), "Synth Patch B", mSynthPatchBval, AlwaysEnabled
+    };
+
+    int mSynthPatchCval = 2;
+    GuiSynthPatchSelectControl mSynthPatchC = {
+        5, true, RectI::Construct(6, 26, 59, 10), "Synth Patch C", mSynthPatchCval, AlwaysEnabled
+    };
+
+    int mHarmPatchVal = 2;
+    GuiHarmPatchSelectControl mHarmPatch = {
+        5, RectI::Construct(6, 36, 59, 10), "Harm Patch", mHarmPatchVal, AlwaysEnabled
+    };
+
+
+
+    IGuiControl *mArray[22] = {
         &mLabel1,
         &mLabel2,
         &mLabel3,
@@ -273,6 +297,10 @@ struct GuiPerformanceApp : GuiApp
         &mCtrl4a,
         &mCtrl4b,
         &mLabel10,
+        &mSynthPatchA,
+        &mSynthPatchB,
+        &mSynthPatchC,
+        &mHarmPatch,
     };
 
     GuiControlList mList = {mArray};

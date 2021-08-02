@@ -105,6 +105,9 @@ struct RectI
     {
         return PointI::Construct(x + width, y + height);
     }
+    bool YInRect(int y) const {
+        return (y >= this->y) && (y < this->right());
+    }
 };
 struct RectF
 {

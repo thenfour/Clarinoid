@@ -187,6 +187,42 @@ struct Stopwatch
 
 
 
+template <uint32_t holdTimeMS, uint32_t falloffTimeMS>
+struct GenericPeakMeterUtility
+{
+    float mHeldPeak = 0;
+    Stopwatch mHeldPeakTime; // peak is simply held for a duration.
+
+    float Update(float peak/*in*/)
+    {
+        float heldPeak = 0;
+        // determine a new held peak
+        // if the held peak has been holding longer than 500ms, fade linear to 0.
+        uint32_t holdDurationMS = (uint32_t)mHeldPeakTime.ElapsedTime().ElapsedMillisI();
+        if ((peak > mHeldPeak) || holdDurationMS > (holdTimeMS + falloffTimeMS))
+        {
+            // new peak, or after falloff reset.
+            mHeldPeak = peak;
+            heldPeak = peak;
+            mHeldPeakTime.Restart();
+        }
+        else if (holdDurationMS <= holdTimeMS)
+        {
+            heldPeak = mHeldPeak;
+        }
+        else
+        {
+            // falloff: remap millis from 500-1000 from heldpeak to 0.
+            heldPeak = RemapToRange(
+                holdDurationMS, holdTimeMS, holdTimeMS + falloffTimeMS, mHeldPeak, peak);
+        }
+        return heldPeak;
+    }
+};
+
+
+
+
 //////////////////////////////////////////////////////////////////////
 template <uint32_t TperiodMS>
 class CCThrottlerT

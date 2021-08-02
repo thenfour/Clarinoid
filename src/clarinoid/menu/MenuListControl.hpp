@@ -32,9 +32,11 @@ struct ListControl
         const int itemsToRender = min(mVisibleItems, count);
         for (int i = 0; i < itemsToRender; ++i)
         {
-            mDisplay->DrawInvertedLine(mpList->List_GetItemCaption(itemToRender), itemToRender == mSelectedItem.GetValue());
+            mDisplay->PrintInvertedLine(mpList->List_GetItemCaption(itemToRender),
+                                        itemToRender == mSelectedItem.GetValue());
             itemToRender = RotateIntoRange(itemToRender + 1, count);
-            if (itemToRender == (mpList->List_GetItemCount() - 1)) {
+            if (itemToRender == (mpList->List_GetItemCount() - 1))
+            {
                 auto cursorY = mDisplay->mDisplay.getCursorY();
                 int separatorY = cursorY + mDisplay->mDisplay.GetLineHeight() - 1;
                 mDisplay->mDisplay.drawFastHLine(0, separatorY, mDisplay->mDisplay.width(), SSD1306_INVERSE);
@@ -51,6 +53,60 @@ struct ListControl
             return;
         mSelectedItem.SetValue(
             AddConstrained(mSelectedItem.GetValue(), mEnc.GetIntDelta(), 0, mpList->List_GetItemCount() - 1));
+    }
+};
+
+//////////////////////////////////////////////////////////////////////
+// similar to above but more things done on the fly rather than holding state.
+struct ListControl2
+{
+    EncoderReader mEnc;
+
+    void OnShow()
+    {
+        mEnc.ClearState(); // important so the next Update() call doesn't incorrectly calculate a delta.
+    }
+
+    void Render(CCDisplay *mDisplay,
+                const RectI &rc,
+                int itemCount,
+                Property<int> &selectedItem,
+                typename cc::function<String(void *, int)>::ptr_t captionGetter,
+                void *capture)
+    {
+        if (itemCount == 0)
+            return;
+
+        int mVisibleItems = 1 + (rc.height / mDisplay->mDisplay.GetLineHeight());
+
+        int itemToRender = RotateIntoRange(selectedItem.GetValue() - 1, itemCount);
+        mDisplay->ClearState();
+        const int itemsToRender = min(mVisibleItems, itemCount);
+        mDisplay->mDisplay.SetClipRect(rc.x, rc.y, rc.right(), rc.bottom());
+        mDisplay->mDisplay.setCursor(rc.x, rc.y);
+        mDisplay->mDisplay.mTextLeftMargin = rc.x;
+        for (int i = 0; i < itemsToRender; ++i)
+        {
+            mDisplay->PrintInvertedLine(captionGetter(capture, itemToRender), itemToRender == selectedItem.GetValue());
+            itemToRender = RotateIntoRange(itemToRender + 1, itemCount);
+            if (itemToRender == (itemCount - 1))
+            {
+                auto cursorY = mDisplay->mDisplay.getCursorY();
+                int separatorY = cursorY + mDisplay->mDisplay.GetLineHeight() - 1;
+                if (rc.YInRect(separatorY))
+                {
+                    mDisplay->mDisplay.drawFastHLine(rc.x, separatorY, rc.width, SSD1306_INVERSE);
+                }
+            }
+        }
+    }
+
+    virtual void Update(IEncoder *pEncoder, int itemCount, Property<int> &selectedItem)
+    {
+        mEnc.Update(pEncoder);
+        if (itemCount == 0)
+            return;
+        selectedItem.SetValue(AddConstrained(selectedItem.GetValue(), mEnc.GetIntDelta(), 0, itemCount - 1));
     }
 };
 
