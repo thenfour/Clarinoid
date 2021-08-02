@@ -122,6 +122,7 @@ struct GuiLabelControl : IGuiControl
 
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, CCDisplay &display) override
     {
+        display.ClearState();
         display.mDisplay.setTextWrap(false);
         display.mDisplay.setCursor(mBounds.x, mBounds.y);
         if (mClip) {

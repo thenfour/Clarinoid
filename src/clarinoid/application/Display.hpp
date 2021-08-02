@@ -177,6 +177,7 @@ struct CCDisplay
     // method of yielding.
     void UpdateAndRenderTask()
     {
+        //Stopwatch swAll;
         CCASSERT(this->mIsSetup);
 
         mToggleReader.Update(&mInput->mDisplayFontToggle);
@@ -203,10 +204,13 @@ struct CCDisplay
         ClearState();
         mDisplay.clearDisplay();
 
+        //Stopwatch swRender;
+
         if (pMenuApp)
         {
             pMenuApp->DisplayAppRender();
         }
+        //int renderMicros = (int)swRender.ElapsedTime().ElapsedMicros();
 
         if (mIsShowingToast)
         {
@@ -252,7 +256,15 @@ struct CCDisplay
             mDisplay.setCursor(x, 1); // y + 2
             mDisplay.print(s);
         }
+
+        // if (mth.IsReady())
+        // {
+        //     int allMicros = swAll.ElapsedTime().ElapsedMicros();
+        //     //Serial.println(String("render= ") + renderMicros + " other=" + (allMicros - renderMicros));
+        // }
     }
+
+    //CCThrottlerT<50> mth;
 
     int16_t GetHudHeight() const
     {
@@ -262,6 +274,19 @@ struct CCDisplay
     int16_t GetClientHeight() const
     {
         return mDisplay.height() - GetHudHeight();
+    }
+    RectI GetClientRect() const
+    {
+        return RectI::Construct(0, 0, mDisplay.width(), GetClientHeight());
+    }
+
+    // calculates in general, not for a specific location on screen.
+    RectI GetTextBounds(const String &str)
+    {
+        int16_t x, y;
+        uint16_t h, w;
+        mDisplay.getTextBounds(str, 0, 0, &x, &y, &w, &h);
+        return RectI::Construct(x, y, w, h);
     }
 
     void PrintInvertedText(const String &str, bool isInverted = true)
@@ -288,15 +313,13 @@ struct CCDisplay
         mDisplay.println();
     }
 
-    void DrawSelectionRect(const RectI &rc)
+    void DrawSelectionRect(const RectI &z)
     {
-        RectI z = rc.Inflate(2);
         mDisplay.DrawMarchingAntsRectOutline<1, 3, 1>(z.x, z.y, z.width, z.height, (micros() / (1000 * 120)));
     }
 
     void DisplayTask()
     {
-        NoInterrupts _ni;
         mDisplay.mFrameCount++;
         mDisplay.display();
     }
@@ -306,7 +329,7 @@ struct CCDisplay
     String mToastMsg;
     size_t mCurrentFontIndex = 0;
 
-    // NB: CHANGING ANYTHING IN HERE, ALSO CHANGE 
+    // NB: CHANGING ANYTHING IN HERE, ALSO CHANGE
     // SelectTinyFont().
     GFXfont const *mGUIFonts[5] = {
         &MatchupPro8pt7b,
@@ -316,18 +339,20 @@ struct CCDisplay
         &TomThumb,
     };
 
-    void SelectTinyFont() {
+    void SelectTinyFont()
+    {
         mDisplay.setFont(mGUIFonts[4]);
     }
 
-    void SelectEightiesFont() {
+    void SelectEightiesFont()
+    {
         mDisplay.setFont(mGUIFonts[2]);
     }
 
-    void SelectNormalFont() {
+    void SelectNormalFont()
+    {
         mDisplay.setFont(mGUIFonts[mCurrentFontIndex]);
     }
-
 
     SwitchControlReader mToggleReader;
 
@@ -372,8 +397,7 @@ struct CCDisplay
 
     void DrawBitmap(PointI pos, const BitmapSpec &bmp)
     {
-        mDisplay.drawBitmap(pos.x, pos.y, bmp.pBmp, bmp.widthPixels, bmp.heightPixels,
-                            SSD1306_WHITE);
+        mDisplay.drawBitmap(pos.x, pos.y, bmp.pBmp, bmp.widthPixels, bmp.heightPixels, SSD1306_WHITE);
     }
 
     void fillPie(const PointF &origin, float radius, float angleStart, float angleSweep, bool filled = true)

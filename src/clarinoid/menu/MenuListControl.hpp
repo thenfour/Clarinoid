@@ -67,11 +67,12 @@ struct ListControl2
         mEnc.ClearState(); // important so the next Update() call doesn't incorrectly calculate a delta.
     }
 
+    template<typename Tindex>
     void Render(CCDisplay *mDisplay,
                 const RectI &rc,
                 int itemCount,
-                Property<int> &selectedItem,
-                typename cc::function<String(void *, int)>::ptr_t captionGetter,
+                Property<Tindex> &selectedItem,
+                typename cc::function<String(void *, Tindex)>::ptr_t captionGetter,
                 void *capture)
     {
         if (itemCount == 0)
@@ -101,12 +102,13 @@ struct ListControl2
         }
     }
 
-    virtual void Update(IEncoder *pEncoder, int itemCount, Property<int> &selectedItem)
+    template<typename Tindex>
+    void Update(IEncoder *pEncoder, int itemCount, Property<Tindex> &selectedItem)
     {
         mEnc.Update(pEncoder);
         if (itemCount == 0)
             return;
-        selectedItem.SetValue(AddConstrained(selectedItem.GetValue(), mEnc.GetIntDelta(), 0, itemCount - 1));
+        selectedItem.SetValue(AddConstrained((int)selectedItem.GetValue(), mEnc.GetIntDelta(), 0, itemCount - 1));
     }
 };
 

@@ -55,18 +55,20 @@ struct Harmonizer
             }
         }
 
+        auto &perf = mAppSettings->GetCurrentPerformancePatch();
+
         // LIVE note:
         // harmonizing should always output the live note; if it's not part of the
         // real harmonized output, then mark it as muted. it needs to be there so
         // the scale deducer can use it.
-        liveVoice->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote;
+        liveVoice->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote || !perf.mSynthAEnabled;
         liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, MAGIC_VOICE_ID_LIVE_A);
+        liveVoice->mGain *= perf.mSynthAGain;
         if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices)
         {
             ++ret; // live voice is a non-deduced voice.
         }
 
-        auto &perf = mAppSettings->GetCurrentPerformancePatch();
         MusicalVoice *pout = outp;
         if (pout >= end)
         {
@@ -77,6 +79,8 @@ struct Harmonizer
         {
             *pout = *liveVoice; // copy from live voice to get started.
             pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, MAGIC_VOICE_ID_LIVE_B);
+            pout->mGain *= perf.mSynthBGain;
+            pout->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote || !perf.mSynthBEnabled;
             pout->mSynthPatchA = pout->mSynthPatchB;
             pout->mSynthPatchB = liveVoice->mSynthPatchB =
                 -1; // as we split this voice into 2, remove the reference to patch B.
@@ -95,9 +99,6 @@ struct Harmonizer
 
         bool globalDeduced = perf.mGlobalScaleRef == GlobalScaleRefType::Deduced;
         Scale globalScale = globalDeduced ? perf.mDeducedScale : perf.mGlobalScale;
-
-        // CCPlot(String("globalScale:") + globalScale.ToString() + ", isdeduced=" +
-        // (globalDeduced ? "yes" : "no"));
 
         for (size_t nVoice = 0; nVoice < SizeofStaticArray(preset.mVoiceSettings); ++nVoice)
         {
@@ -137,9 +138,10 @@ struct Harmonizer
                 continue;
 
             *pout = *liveVoice; // copy from live voice to get started.
-            pout->mIsNoteCurrentlyMuted = false;
+            pout->mIsNoteCurrentlyMuted = !perf.mHarmEnabled;
             pout->mVoiceId =
                 MakeMusicalVoiceID(loopLayerID, HarmLayerToVoiceID((uint8_t)nVoice)); // +1 because live voice is id 0.
+            pout->mGain *= perf.mHarmGain;
 
             pout->mPan += preset.mStereoSeparation * ((((int)nVoice & 1) * 2) - 1); // turns bit 0 to -1 or 1
 

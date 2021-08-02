@@ -34,7 +34,8 @@ struct DefaultHud : IHudProvider
 
     virtual int16_t IHudProvider_GetHudHeight() override
     {
-        return mDisplay.mDisplay.GetLineHeight() + HUD_LINE_SEPARATOR_HEIGHT - 1; // -1 because the bottom line of the font will not really be used.
+        return mDisplay.mDisplay.GetLineHeight() + HUD_LINE_SEPARATOR_HEIGHT -
+               1; // -1 because the bottom line of the font will not really be used.
     }
 
     virtual void IHudProvider_RenderHud(int16_t displayWidth, int16_t displayHeight) override
@@ -46,25 +47,33 @@ struct DefaultHud : IHudProvider
         mDisplay.mDisplay.setCursor(0, hudYStart + HUD_LINE_SEPARATOR_HEIGHT);
         mDisplay.mDisplay.setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
 
-    // (int)(std::ceil(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()))) + CHAR_DB " " +
-        String dbpeak = DecibelsToIntString(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()));// "-" CHARSTR_INFINITY CHARSTR_DB;
+        // (int)(std::ceil(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()))) + CHAR_DB " " +
+        String dbpeak = DecibelsToIntString(
+            LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak())); // "-" CHARSTR_INFINITY CHARSTR_DB;
 
-        //int cpu = (int)std::ceil(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
-        float cpu = mCPUPeakMeter.Update(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
+        // int cpu = (int)std::ceil(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(),
+        // mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
+        float cpu = mCPUPeakMeter.Update(
+            std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
         int icpu = (int)std::ceil(cpu);
-        mDisplay.mDisplay.print(
-            String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " +
-            icpu + "% " +
-            dbpeak + " " +
-            mpInfo->ISysInfoProvider_GetNote().ToString() + " " CHARSTR_QEQ + (int) std::round(mpInfo->ISysInfoProvider_GetTempo())
-            );
+        mDisplay.mDisplay.print(String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " + icpu + "% " + dbpeak + " " +
+                                mpInfo->ISysInfoProvider_GetNote().ToString());
+
+        String bpmStr = String(CHARSTR_QEQ) + (int)std::round(mpInfo->ISysInfoProvider_GetTempo());
+        auto rcbpm = mDisplay.GetTextBounds(bpmStr);
+
+        mDisplay.mDisplay.setCursor(mDisplay.mDisplay.width() - rcbpm.width, mDisplay.mDisplay.getCursorY());
+        mDisplay.mDisplay.print(bpmStr);
 
         static constexpr int metronomeFlashWidth = 32;
-        if (mpInfo->ISysInfoProvider_GetMetronome()->GetBeatFrac() < 0.10f) {
-            mDisplay.mDisplay.fillRect(displayWidth - metronomeFlashWidth, hudYStart, metronomeFlashWidth, IHudProvider_GetHudHeight(), SSD1306_INVERSE);
+        if (mpInfo->ISysInfoProvider_GetMetronome()->GetBeatFrac() < 0.10f)
+        {
+            mDisplay.mDisplay.fillRect(displayWidth - metronomeFlashWidth,
+                                       hudYStart,
+                                       metronomeFlashWidth,
+                                       IHudProvider_GetHudHeight(),
+                                       SSD1306_INVERSE);
         }
-
-        // todo: one day make special narrow characters for db & "quarter="
     }
 };
 

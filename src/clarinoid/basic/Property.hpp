@@ -4,12 +4,11 @@
 namespace clarinoid
 {
 
-#pragma pack(push, 4)
-
 template <typename T>
 struct Property
 {
     // there are a few variations of property, and to reduce memory usage we union some properties.
+    // <this is out of date but leaving it in case it's useful somehow>
     //                 CHANGE+OWNVALUE          REF simple            REF+getters+setters
     // Ownvalue             x
     // Ref                                           x
@@ -23,10 +22,9 @@ struct Property
     T mOwnValue;
     T *mRefBinding = nullptr;
     typename cc::function<T(void *)>::ptr_t mGetter = nullptr;
-    union {
-        typename cc::function<void(void *, const T &)>::ptr_t mSetter;
-        typename cc::function<void(void *, const T &oldVal, const T &newVal)>::ptr_t mOnChange;
-    };
+    typename cc::function<T &(void *)>::ptr_t mRefGetter = nullptr;
+    typename cc::function<void(void *, const T &)>::ptr_t mSetter = nullptr;
+    typename cc::function<void(void *, const T &oldVal, const T &newVal)>::ptr_t mOnChange = nullptr;
     void *mpCapture = nullptr;
 
     // copy
@@ -50,16 +48,21 @@ struct Property
     }
     Property<T> &operator=(Property<T> &&) = delete;
 
-    Property(T &binding) : mRefBinding(&binding), mSetter(nullptr)
+    Property(T &binding) : mRefBinding(&binding)
     {
     }
 
-    Property(typename cc::function<T(void *)>::ptr_t getter) : mGetter(getter), mSetter(nullptr)
+    Property(typename cc::function<T(void *)>::ptr_t getter) : mGetter(getter)
+    {
+    }
+
+    Property(typename cc::function<T &(void *)>::ptr_t getter, void *cap/*, UseRefGetterHelperType unused*/)
+        : mRefGetter(getter), mpCapture(cap)
     {
     }
 
     Property(typename cc::function<T(void *)>::ptr_t getter, void *capture)
-        : mGetter(getter), mSetter(nullptr), mpCapture(capture)
+        : mGetter(getter), mpCapture(capture)
     {
     }
 
@@ -76,7 +79,7 @@ struct Property
     {
     }
 
-    Property() : mRefBinding(&mOwnValue), mSetter(nullptr)
+    Property() : mRefBinding(&mOwnValue)
     {
     }
 
@@ -86,20 +89,33 @@ struct Property
         {
             return mGetter(mpCapture);
         }
+        if (mRefGetter)
+        {
+            return mRefGetter(mpCapture);
+        }
         CCASSERT(!!mRefBinding);
         return *mRefBinding;
     }
     void SetValue(const T &val)
     {
         T oldVal = GetValue();
+        bool didSet = false;
         if (mRefBinding)
         {
             *mRefBinding = val;
+            didSet = true;
+        }
+        if (mRefGetter)
+        {
+            mRefGetter(mpCapture) = val;
+            didSet = true;
         }
         if (mGetter && mSetter)
         {
             mSetter(mpCapture, val);
+            didSet = true;
         }
+        CCASSERT(didSet);
         if (!mGetter && (oldVal != val) && mOnChange)
         {
             mOnChange(mpCapture, oldVal, val);
@@ -122,8 +138,6 @@ Property<Tprop> MakePropertyByCasting(Tval *x)
 
     return Property<Tprop>(getter, setter, x);
 }
-
-#pragma pack(pop)
 
 // static constexpr size_t aoeu3 = sizeof(Property<int>);
 

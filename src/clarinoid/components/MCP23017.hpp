@@ -234,7 +234,6 @@ struct CCMCP23017
 
     void Update()
     {
-        NoInterrupts _ni;
         auto newCurrentVal = mMcp.readGPIOAB();
         mPreviousValue = mCurrentValue;
         mCurrentValue = newCurrentVal;

@@ -11,10 +11,11 @@ namespace clarinoid
 {
 
 // ---------------------------------------------------------------------------------------
-struct GuiSynthPatchAsTextRenderer : IGuiRenderer<int>
+template<typename T>
+struct GuiSynthPatchAsTextRenderer : IGuiRenderer<T>
 {
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
-                                     const int &val,
+                                     const T &val,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -26,11 +27,12 @@ struct GuiSynthPatchAsTextRenderer : IGuiRenderer<int>
 };
 
 // ---------------------------------------------------------------------------------------
-struct GuiSynthPatchSelectorEditor : IGuiEditor<int>
+template<typename T>
+struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
 {
-    int mOldVal;
+    T mOldVal;
     const bool mIsNullable;
-    Property<int> mBinding;
+    Property<T> mBinding;
 
     // list index does not always correspond to the external binding. EG: NULL synth
     // patch is -1, but -1 is not a valid list index.
@@ -39,22 +41,22 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<int>
     ListControl2 mListControl;
     DisplayApp *mpApp = nullptr; // dirty holder for state during lambda call
 
-    int PatchIndexToListIndex(int pi)
+    T PatchIndexToListIndex(T pi)
     {
         return pi + (mIsNullable ? 1 : 0);
     }
 
-    int ListIndexToPatchIndex(int li)
+    T ListIndexToPatchIndex(T li)
     {
         return li - (mIsNullable ? 1 : 0);
     }
 
-    GuiSynthPatchSelectorEditor(bool isNullable, const Property<int> &binding)
+    GuiSynthPatchSelectorEditor(bool isNullable, const Property<T> &binding)
         : mIsNullable(isNullable), mBinding(binding)
     {
     }
 
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<int> &binding, DisplayApp &app) override
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<T> &binding, DisplayApp &app) override
     {
         mListControl.OnShow();
         mOldVal = mBinding.GetValue();
@@ -62,7 +64,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<int>
     }
 
     virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
-                                        Property<int> &binding,
+                                        Property<T> &binding,
                                         DisplayApp &app,
                                         bool wasCancelled) override
     {
@@ -71,7 +73,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<int>
     }
 
     virtual void IGuiEditor_Update(IGuiControl &ctrl,
-                                   Property<int> &binding,
+                                   Property<T> &binding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -83,7 +85,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<int>
     }
 
     virtual void IGuiEditor_Render(IGuiControl &ctrl,
-                                   Property<int> &binding,
+                                   Property<T> &binding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -109,12 +111,12 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<int>
 };
 
 // ---------------------------------------------------------------------------------------
-struct GuiSynthPatchSelectControl : GuiCompositeControl<int>
+template<typename T>
+struct GuiSynthPatchSelectControl : GuiCompositeControl<T>
 {
-    using T = int;
-    GuiSynthPatchSelectorEditor mEditor;
+    GuiSynthPatchSelectorEditor<T> mEditor;
     GuiStaticTooltipRenderer<T> mTooltipRenderer;
-    GuiSynthPatchAsTextRenderer mValueRenderer;
+    GuiSynthPatchAsTextRenderer<T> mValueRenderer;
     GuiRendererCombiner<T> mRenderer;
 
     GuiSynthPatchSelectControl(int page,
@@ -123,7 +125,7 @@ struct GuiSynthPatchSelectControl : GuiCompositeControl<int>
                                const String &tooltipCaption,
                                const Property<T> &binding,
                                const Property<bool> &isSelectable)
-        : GuiCompositeControl(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
+        : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
           mEditor(nullable, binding),                                                     //
           mTooltipRenderer(tooltipCaption),                                               //
           mValueRenderer(),                                                               //

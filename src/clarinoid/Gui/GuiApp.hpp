@@ -97,7 +97,37 @@ struct GuiApp : public DisplayApp
 
     virtual void RenderFrontPage() override
     {
-        mDisplay.mDisplay.print("gui?");
+        auto *list = GetRootControlList();
+        auto navState = mNavigator.GetNavState(list);
+        for (size_t i = 0; i < list->Count(); ++i)
+        {
+            auto *ctrl = list->GetItem(i);
+            if (ctrl->IGuiControl_GetPage() != navState.mSelectedPage)
+                continue;
+            ctrl->IGuiControl_Render(false, false,
+                                        *this,
+                                        mDisplay);
+        }
+
+        mDisplay.DrawSelectionRect(mDisplay.GetClientRect());
+
+        DrawPageIndicators(navState);
+    }
+
+    void DrawPageIndicators(const GuiNavigationState& navState) {
+        mDisplay.ResetClip();
+        if (navState.mSelectedPage < navState.mPageCount - 1)
+        {
+            mDisplay.DrawBitmap(PointI::Construct(mDisplay.mDisplay.width() - gNextPageBitmapSpec.widthPixels,
+                                                  (mDisplay.GetClientHeight() - gNextPageBitmapSpec.heightPixels) / 2),
+                                gNextPageBitmapSpec);
+        }
+        if (navState.mSelectedPage > 0)
+        {
+            mDisplay.DrawBitmap(
+                PointI::Construct(0, (mDisplay.GetClientHeight() - gPrevPageBitmapSpec.heightPixels) / 2),
+                gPrevPageBitmapSpec);
+        }
     }
 
     virtual void RenderApp() override
@@ -123,23 +153,11 @@ struct GuiApp : public DisplayApp
             }
         }
 
-        mDisplay.ResetClip();
-        if (navState.mSelectedPage < navState.mPageCount - 1)
-        {
-            mDisplay.DrawBitmap(PointI::Construct(mDisplay.mDisplay.width() - gNextPageBitmapSpec.widthPixels,
-                                                  (mDisplay.GetClientHeight() - gNextPageBitmapSpec.heightPixels) / 2),
-                                gNextPageBitmapSpec);
-        }
-        if (navState.mSelectedPage > 0)
-        {
-            mDisplay.DrawBitmap(
-                PointI::Construct(0, (mDisplay.GetClientHeight() - gPrevPageBitmapSpec.heightPixels) / 2),
-                gPrevPageBitmapSpec);
-        }
+        DrawPageIndicators(navState);
 
         if (ctrlToRenderLast)
         {
-            mDisplay.DrawSelectionRect(ctrlToRenderLast->IGuiControl_GetBounds());
+            mDisplay.DrawSelectionRect(ctrlToRenderLast->IGuiControl_GetBounds().Inflate(2));
             ctrlToRenderLast->IGuiControl_Render(ctrlToRenderLast == navState.mSelectedControl,
                                                  mIsEditing && ctrlToRenderLast == navState.mSelectedControl,
                                                  *this,
@@ -161,49 +179,37 @@ struct GuiTestApp : GuiApp
     {
     }
 
-    GuiLabelControl mLabel1 = {0,
-                               PointI::Construct(0, 0),
-                               String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
+    GuiLabelControl mLabel1 = {0, PointI::Construct(0, 0), String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
 
-    GuiLabelControl mLabel2 = {0,
-                               PointI::Construct(12, 16),
-                               String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
+    GuiLabelControl mLabel2 = {0, PointI::Construct(12, 16), String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
     GuiLabelControl mLabel3 = {0, PointI::Construct(20, 4), String("aight")};
-    GuiLabelControl mLabel4 = {0,
-                               PointI::Construct(26, 48),
-                               String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
+    GuiLabelControl mLabel4 = {0, PointI::Construct(26, 48), String("p aoesnut haoesntha oesnutha oesuntaoehu erf")};
     GuiLabelControl mLabel5 = {1, PointI::Construct(5, 4), String("page 2")};
     GuiLabelControl mLabel6 = {1, PointI::Construct(5, 14), String("xyz")};
 
     float floatParam1 = 0.0f;
-    GuiKnobControl mKnob1 = {
-        1,
-        PointI::Construct(5, 30),
-        StandardRangeSpecs::gFloat_N1_1,
-        "Knob1", // formatter for edit
-        floatParam1,
-        AlwaysEnabled
-    };
+    GuiKnobControl mKnob1 = {1,
+                             PointI::Construct(5, 30),
+                             StandardRangeSpecs::gFloat_N1_1,
+                             "Knob1", // formatter for edit
+                             floatParam1,
+                             AlwaysEnabled};
 
     float floatParam2 = 0.0f;
-    GuiKnobControl mKnob2 = {
-        1,
-        PointI::Construct(55, 30),
-        StandardRangeSpecs::gFloat_0_2,
-        "Knob2", // formatter for edit
-        floatParam2,
-        AlwaysEnabled
-    };
+    GuiKnobControl mKnob2 = {1,
+                             PointI::Construct(55, 30),
+                             StandardRangeSpecs::gFloat_0_2,
+                             "Knob2", // formatter for edit
+                             floatParam2,
+                             AlwaysEnabled};
 
     float floatParam3 = 0.0f;
-    GuiKnobGainControl mKnob3 = {
-        1,
-        PointI::Construct(75, 30),
-        StandardRangeSpecs::gMasterGainDb,
-        "Master Gain", // formatter for edit
-        floatParam3,
-        AlwaysEnabled
-    };
+    GuiKnobGainControl mKnob3 = {1,
+                                 PointI::Construct(75, 30),
+                                 StandardRangeSpecs::gMasterGainDb,
+                                 "Master Gain", // formatter for edit
+                                 floatParam3,
+                                 AlwaysEnabled};
 
     float floatParam4 = 0.0f;
     GuiStereoSpreadControl mStereoSpread1 = {
@@ -226,7 +232,7 @@ struct GuiTestApp : GuiApp
                                                   AlwaysEnabled};
 
     bool mMuteParam = false;
-    GuiMuteControl mMute = {2, PointI::Construct(50, 2), "mute?", "yea", "nah", mMuteParam, AlwaysEnabled};
+    GuiMuteControl<true> mMute = {2, PointI::Construct(50, 2), "mute?", "yea", "nah", mMuteParam, AlwaysEnabled};
 
     GuiLabelControl mLabel8 = {3, PointI::Construct(4, 34), String("page 4")};
     GuiLabelControl mLabel9 = {4, PointI::Construct(4, 44), String("page 5")};
@@ -253,51 +259,29 @@ struct GuiTestApp : GuiApp
 
     GuiLabelControl mLabel10 = {5, PointI::Construct(106, 6), String("page 6 ~~")};
 
-    int mSynthPatchAval = 2;
-    GuiSynthPatchSelectControl mSynthPatchA = {
-        5, false, RectI::Construct(6, 6, 59, 10), "Synth Patch A", mSynthPatchAval, AlwaysEnabled
-    };
+    int16_t mSynthPatchAval = 2;
+    GuiSynthPatchSelectControl<int16_t> mSynthPatchA =
+        {5, false, RectI::Construct(6, 6, 59, 10), "Synth Patch A", mSynthPatchAval, AlwaysEnabled};
 
-    int mSynthPatchBval = 2;
-    GuiSynthPatchSelectControl mSynthPatchB = {
-        5, true, RectI::Construct(6, 16, 59, 10), "Synth Patch B", mSynthPatchBval, AlwaysEnabled
-    };
+    int16_t mSynthPatchBval = 2;
+    GuiSynthPatchSelectControl<int16_t> mSynthPatchB =
+        {5, true, RectI::Construct(6, 16, 59, 10), "Synth Patch B", mSynthPatchBval, AlwaysEnabled};
 
-    int mSynthPatchCval = 2;
-    GuiSynthPatchSelectControl mSynthPatchC = {
-        5, true, RectI::Construct(6, 26, 59, 10), "Synth Patch C", mSynthPatchCval, AlwaysEnabled
-    };
+    int16_t mSynthPatchCval = 2;
+    GuiSynthPatchSelectControl<int16_t> mSynthPatchC =
+        {5, true, RectI::Construct(6, 26, 59, 10), "Synth Patch C", mSynthPatchCval, AlwaysEnabled};
 
     int mHarmPatchVal = 2;
-    GuiHarmPatchSelectControl mHarmPatch = {
-        5, RectI::Construct(6, 36, 59, 10), "Harm Patch", mHarmPatchVal, AlwaysEnabled
-    };
-
-
+    GuiHarmPatchSelectControl<int> mHarmPatch = {5,
+                                            RectI::Construct(6, 36, 59, 10),
+                                            "Harm Patch",
+                                            mHarmPatchVal,
+                                            AlwaysEnabled};
 
     IGuiControl *mArray[22] = {
-        &mLabel1,
-        &mLabel2,
-        &mLabel3,
-        &mLabel4,
-        &mLabel5,
-        &mLabel6,
-        &mKnob1,
-        &mKnob2,
-        &mKnob3,
-        &mStereoSpread1,
-        &mLabel7,
-        &mEnum1,
-        &mMute,
-        &mLabel8,
-        &mLabel9,
-        &mCtrl4a,
-        &mCtrl4b,
-        &mLabel10,
-        &mSynthPatchA,
-        &mSynthPatchB,
-        &mSynthPatchC,
-        &mHarmPatch,
+        &mLabel1, &mLabel2,        &mLabel3,      &mLabel4,      &mLabel5,      &mLabel6,    &mKnob1,  &mKnob2,
+        &mKnob3,  &mStereoSpread1, &mLabel7,      &mEnum1,       &mMute,        &mLabel8,    &mLabel9, &mCtrl4a,
+        &mCtrl4b, &mLabel10,       &mSynthPatchA, &mSynthPatchB, &mSynthPatchC, &mHarmPatch,
     };
 
     GuiControlList mList = {mArray};

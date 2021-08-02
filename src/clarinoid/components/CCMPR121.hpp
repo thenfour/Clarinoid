@@ -39,7 +39,6 @@ struct CCMPR121
 
     void Update()
     {
-        NoInterrupts _ni;
         mCurrentValue = mMpr121.touched();
     }
 };

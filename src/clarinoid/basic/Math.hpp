@@ -107,15 +107,15 @@ static float Remap01ToRange(float x01, float destMin, float destMax)
 // same as arduino's map() fn.
 static float RemapToRange(float x, float amin, float amax, float bmin, float bmax)
 {
-  if (FloatEquals(amin - amax, 0.0f))
-    return bmin;
-  if (FloatEquals(bmin - bmax, 0.0f))
-    return bmin;
-  x -= amin;
-  x /= amax - amin;
-  x *= bmax - bmin;
-  x += bmin;
-  return x;
+    if (FloatEquals(amin - amax, 0.0f))
+        return bmin;
+    if (FloatEquals(bmin - bmax, 0.0f))
+        return bmin;
+    x -= amin;
+    x /= amax - amin;
+    x *= bmax - bmin;
+    x += bmin;
+    return x;
 }
 
 inline float Frac(float x)
@@ -182,7 +182,7 @@ inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIB
     return lin;
 }
 
-String GetSignStr(float f)
+inline const char *GetSignStr(float f)
 {
     if (FloatEquals(f, 0.0f))
         return CHARSTR_NARROWPLUSMINUS;
@@ -211,6 +211,11 @@ inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_D
     ret.append(iDecibels);
     ret.append(CHARSTR_DB);
     return ret;
+}
+
+inline String GainToIntString(float gain)
+{
+    return DecibelsToIntString(LinearToDecibels(gain));
 }
 
 // takes a linear X value and snaps it to integral values.
@@ -638,6 +643,16 @@ struct NumericEditRangeSpec
         : mRangeMin(rangeMin), mRangeMax(rangeMax), mCourseStep(courseStep), mNormalStep(normalStep),
           mFineStep(fineStep)
     {
+    }
+
+    template <typename Trhs>
+    NumericEditRangeSpec<Trhs> Cast() const
+    {
+        return NumericEditRangeSpec<Trhs>(static_cast<Trhs>(mRangeMin),
+                                          static_cast<Trhs>(mRangeMax),
+                                          static_cast<Trhs>(mCourseStep),
+                                          static_cast<Trhs>(mNormalStep),
+                                          static_cast<Trhs>(mFineStep));
     }
 
     virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) const

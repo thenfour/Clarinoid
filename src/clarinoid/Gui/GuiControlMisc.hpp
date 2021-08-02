@@ -45,13 +45,25 @@ static bool GuiInitiateTooltip(bool isSelected, bool isEditing, DisplayApp &app)
 template <typename T>
 struct GuiValueAsTextRenderer : IGuiRenderer<T>
 {
+    typename cc::function<String(void *, const T &)>::ptr_t mValueFormatter = nullptr;
+    void *mpCapture = nullptr;
+
+    GuiValueAsTextRenderer() = default;
+
+    GuiValueAsTextRenderer(typename cc::function<String(void *, const T &)>::ptr_t valueFormatter,
+                           void *pCapture)
+        : mValueFormatter(valueFormatter), //
+          mpCapture(pCapture)
+    {
+    }
+
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
     {
-        app.mDisplay.mDisplay.print(String(val));
+        app.mDisplay.mDisplay.print(mValueFormatter ? mValueFormatter(mpCapture, val) : String(val));
     }
 };
 
@@ -61,9 +73,22 @@ template <typename T>
 struct GuiLabelValueTooltipRenderer : IGuiRenderer<T>
 {
     String mStaticCaption;
+    typename cc::function<String(void *, const T &)>::ptr_t mValueFormatter = nullptr;
+    void *mpCapture = nullptr;
+
     GuiLabelValueTooltipRenderer(const String &staticCaption) : mStaticCaption(staticCaption)
     {
     }
+
+    GuiLabelValueTooltipRenderer(const String &staticCaption,
+                                 typename cc::function<String(void *, const T &)>::ptr_t valueFormatter,
+                                 void *pCapture)
+        : mStaticCaption(staticCaption),   //
+          mValueFormatter(valueFormatter), //
+          mpCapture(pCapture)
+    {
+    }
+
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
                                      bool isSelected,
@@ -72,7 +97,8 @@ struct GuiLabelValueTooltipRenderer : IGuiRenderer<T>
     {
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + String(val));
+            String valStr = (mValueFormatter ? mValueFormatter(mpCapture, val) : String(val));
+            app.mDisplay.mDisplay.print(mStaticCaption + ": " + valStr);
         }
     }
 };
@@ -98,13 +124,12 @@ struct GuiStaticTooltipRenderer : IGuiRenderer<T>
     }
 };
 
-
 // ---------------------------------------------------------------------------------------
 // no modal, this edits in the tooltip area
 template <typename Tparam>
 struct GuiNumericEditor : IGuiEditor<Tparam>
 {
-    const NumericEditRangeSpec<Tparam> &mRange;
+    NumericEditRangeSpec<Tparam> mRange;
     Tparam mOldVal;
     GuiNumericEditor(const NumericEditRangeSpec<Tparam> &range) : mRange(range)
     {
@@ -136,13 +161,12 @@ struct GuiNumericEditor : IGuiEditor<Tparam>
         {
             Tparam oldVal = binding.GetValue();
             Tparam newVal = mRange.AdjustValue(oldVal,
-                                            app.mEnc.GetIntDelta(),
-                                            app.mInput->mModifierCourse.CurrentValue(),
-                                            app.mInput->mModifierFine.CurrentValue());
+                                               app.mEnc.GetIntDelta(),
+                                               app.mInput->mModifierCourse.CurrentValue(),
+                                               app.mInput->mModifierFine.CurrentValue());
             binding.SetValue(newVal);
         }
     }
 };
-
 
 } // namespace clarinoid

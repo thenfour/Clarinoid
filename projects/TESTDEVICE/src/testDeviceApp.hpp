@@ -181,7 +181,7 @@ struct TestDeviceApp : ISysInfoProvider
         float p = (float)mTaskPlanner->mPreviousTimeSliceDelayTime.ElapsedMicros();
         p /= mTaskPlanner->mTimesliceDuration.ElapsedMicros();
         p = 1.0f - p;
-        return p* 100.0f;
+        return p * 100.0f;
     }
     virtual float ISysInfoProvider_GetPeak() override
     {
@@ -191,7 +191,7 @@ struct TestDeviceApp : ISysInfoProvider
     }
     virtual MidiNote ISysInfoProvider_GetNote() override
     {
-        return MidiNote(4, millis()/600 % 12);
+        return MidiNote(4, millis() / 600 % 12);
     }
     virtual float ISysInfoProvider_GetTempo() override
     {
@@ -220,7 +220,7 @@ struct TestDeviceApp : ISysInfoProvider
 
         FontTesterApp mFontTesterApp(mDisplay);
         GuiTestApp mGuiTestApp(mDisplay);
-        GuiPerformanceApp mGuiPerformanceApp(mDisplay);
+        GuiPerformanceApp mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome);
 
         IDisplayApp *allApps[] = {
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.

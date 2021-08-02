@@ -55,10 +55,12 @@ struct MusicalVoice
     uint8_t mVelocity = 0;
     AnalogValue01<> mBreath01;
     AnalogValueN11<> mPitchBendN11;
-    float mPan = 0;
     int16_t mSynthPatchA = 0;
-    int16_t mSynthPatchB = -1; // this one can be negative to indicate mute / no patch.
+    int16_t mSynthPatchB = -1; // this one can be negative to indicate mute / no patch. by the time this object reaches SynthVoice, this is always -1. but it's needed during intermittent processing.
     int16_t mHarmPatch = 0;
+
+    float mPan = 0; // as specified by harmonizer.
+    float mGain = 1.0f; // again set by harmonizer
 };
 
 struct MusicalVoiceTransitionEvents

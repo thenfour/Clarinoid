@@ -11,10 +11,11 @@ namespace clarinoid
 {
 
 // ---------------------------------------------------------------------------------------
-struct GuiHarmPatchAsTextRenderer : IGuiRenderer<int>
+template<typename T>
+struct GuiHarmPatchAsTextRenderer : IGuiRenderer<T>
 {
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
-                                     const int &val,
+                                     const T &val,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -27,17 +28,18 @@ struct GuiHarmPatchAsTextRenderer : IGuiRenderer<int>
 
 // ---------------------------------------------------------------------------------------
 // does not support NULL
-struct GuiHarmPatchSelectorEditor : IGuiEditor<int>
+template<typename T>
+struct GuiHarmPatchSelectorEditor : IGuiEditor<T>
 {
-    int mOldVal;
-    Property<int> mBinding;
+    T mOldVal;
+    Property<T> mBinding;
     ListControl2 mListControl;
 
-    GuiHarmPatchSelectorEditor(const Property<int> &binding) : mBinding(binding)
+    GuiHarmPatchSelectorEditor(const Property<T> &binding) : mBinding(binding)
     {
     }
 
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<int> &binding, DisplayApp &app) override
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<T> &binding, DisplayApp &app) override
     {
         mListControl.OnShow();
         mOldVal = mBinding.GetValue();
@@ -45,7 +47,7 @@ struct GuiHarmPatchSelectorEditor : IGuiEditor<int>
     }
 
     virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
-                                        Property<int> &binding,
+                                        Property<T> &binding,
                                         DisplayApp &app,
                                         bool wasCancelled) override
     {
@@ -54,7 +56,7 @@ struct GuiHarmPatchSelectorEditor : IGuiEditor<int>
     }
 
     virtual void IGuiEditor_Update(IGuiControl &ctrl,
-                                   Property<int> &binding,
+                                   Property<T> &binding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -65,7 +67,7 @@ struct GuiHarmPatchSelectorEditor : IGuiEditor<int>
     }
 
     virtual void IGuiEditor_Render(IGuiControl &ctrl,
-                                   Property<int> &binding,
+                                   Property<T> &binding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -78,7 +80,7 @@ struct GuiHarmPatchSelectorEditor : IGuiEditor<int>
             rc,
             HARM_PRESET_COUNT,
             mBinding,
-            [](void *cap, int li) {
+            [](void *cap, T li) {
                 auto *pApp = (DisplayApp *)cap;
                 return pApp->mAppSettings->GetHarmPatchName(li);
             },
@@ -87,12 +89,12 @@ struct GuiHarmPatchSelectorEditor : IGuiEditor<int>
 };
 
 // ---------------------------------------------------------------------------------------
-struct GuiHarmPatchSelectControl : GuiCompositeControl<int>
+template<typename T>
+struct GuiHarmPatchSelectControl : GuiCompositeControl<T>
 {
-    using T = int;
-    GuiHarmPatchSelectorEditor mEditor;
+    GuiHarmPatchSelectorEditor<T> mEditor;
     GuiStaticTooltipRenderer<T> mTooltipRenderer;
-    GuiHarmPatchAsTextRenderer mValueRenderer;
+    GuiHarmPatchAsTextRenderer<T> mValueRenderer;
     GuiRendererCombiner<T> mRenderer;
 
     GuiHarmPatchSelectControl(int page,
@@ -100,7 +102,7 @@ struct GuiHarmPatchSelectControl : GuiCompositeControl<int>
                               const String &tooltipCaption,
                               const Property<T> &binding,
                               const Property<bool> &isSelectable)
-        : GuiCompositeControl(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
+        : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
           mEditor(binding),                                                               //
           mTooltipRenderer(tooltipCaption),                                               //
           mValueRenderer(),                                                               //

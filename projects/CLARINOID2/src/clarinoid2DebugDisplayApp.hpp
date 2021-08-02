@@ -169,10 +169,10 @@ struct PerformanceApp : SettingsMenuApp
 
         // line 3
         mDisplay.mDisplay.println(
-            mpMusicalStateTask->mMusicalState.mHarmIsOn
+            perf.mHarmEnabled
                 ? String("H:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)
                 : (String("H:off:") +
-                   mAppSettings->GetHarmPatchName(mpMusicalStateTask->mMusicalState.mNonZeroHarmPresetID)));
+                   mAppSettings->GetHarmPatchName(perf.mHarmPreset)));
 
         float peak, heldPeak;
         mPeakMeter.Update(peak, heldPeak);

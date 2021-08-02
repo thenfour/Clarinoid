@@ -23,7 +23,7 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
 
     virtual void TaskRun() override
     {
-        NoInterrupts _ni;
+        //NoInterrupts _ni;
         mEncoder.Update();
         mMCP.Update();
         mLHMPR.Update();

@@ -71,7 +71,10 @@ struct TaskPlanner
         void Run(TimeSpan ttd /* the ttd calculated by the task planner */)
         {
             Stopwatch sw;
-            mProc->TaskRun();
+            {
+                NoInterrupts ni;
+                mProc->TaskRun();
+            }
             TimeSpan duration = sw.ElapsedTime();
             mExecutionCount++;
             mExecutionTimeMicros.Update((float)duration.ElapsedMicros());

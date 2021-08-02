@@ -52,6 +52,7 @@ struct PerformancePatch
 
     float mMasterGain = 1.0f;
 
+    float  mMasterFXGain = 1.0f;
     bool mMasterFXEnable = true;
 
     float mReverbGain = DecibelsToLinear(-3.0f);

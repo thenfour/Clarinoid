@@ -551,13 +551,15 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);
 
         // mOscMixerPanner.SetInputPan();
-        mSplitter.SetOutputGain(0, 1.0f);
-        mSplitter.SetOutputGain(1, mPreset->mDelaySend);
-        mSplitter.SetOutputGain(2, mPreset->mVerbSend);
+        mSplitter.SetOutputGain(0, mv.mGain);
+        mSplitter.SetOutputGain(1, mv.mGain * mPreset->mDelaySend);
+        mSplitter.SetOutputGain(2, mv.mGain * mPreset->mVerbSend);
 
         mOscMixerPanner.SetInputPanAndEnabled(
             0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan + mPreset->mStereoSpread, outputEnable[0]);
+
         mOscMixerPanner.SetInputPanAndEnabled(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan, outputEnable[1]);
+
         mOscMixerPanner.SetInputPanAndEnabled(
             2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread, outputEnable[2]);
 
@@ -587,7 +589,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = { VOICE_INITIALIZER };
+Voice gVoices[MAX_SYNTH_VOICES] = {VOICE_INITIALIZER};
 
 struct SynthGraphControl
 {
@@ -644,14 +646,14 @@ struct SynthGraphControl
         CCSynthGraph::delayFilterRight.SetParams(
             perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
 
-        CCSynthGraph::delayWetAmpLeft.gain(perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
-        CCSynthGraph::delayWetAmpRight.gain(perf.mMasterFXEnable ? perf.mDelayGain : 0.0f);
+        CCSynthGraph::delayWetAmpLeft.gain(perf.mMasterFXEnable ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::delayWetAmpRight.gain(perf.mMasterFXEnable ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
 
         CCSynthGraph::verb.roomsize(perf.mReverbSize);
         CCSynthGraph::verb.damping(perf.mReverbDamping);
 
-        CCSynthGraph::verbWetAmpLeft.gain(perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
-        CCSynthGraph::verbWetAmpRight.gain(perf.mMasterFXEnable ? perf.mReverbGain : 0.0f);
+        CCSynthGraph::verbWetAmpLeft.gain(perf.mMasterFXEnable ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::verbWetAmpRight.gain(perf.mMasterFXEnable ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
 
         CCSynthGraph::ampLeft.gain(perf.mMasterGain);
         CCSynthGraph::ampRight.gain(perf.mMasterGain);

@@ -37,6 +37,8 @@
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
 #include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 
+#include <clarinoid/Gui/GuiPerformanceApp.hpp>
+
 namespace clarinoid
 {
 
@@ -165,7 +167,11 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
         MPR121ConfigApp<10, 4> mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask);
 
+        GuiPerformanceApp mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome);
+
         IDisplayApp *allApps[] = {
+            &mGuiPerformanceApp,
+
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
 
             &mPerfPatchApp,
@@ -324,11 +330,12 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2501), &mLed, "mLed"},
 
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5000), &mMusicalStateTask, "MusS2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(5001), &mDisplayTask2, "Display2"},
 
             TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7500), &mMusicalStateTask, "MusS3"},
-
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &nopTask, "Nop"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(7501), &mDisplayTask2, "Display2"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(10000), &mMusicalStateTask, "MusS4"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(12500), &mMusicalStateTask, "MusS5"},
+            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(15000), &nopTask, "Nop"},
         };
 
         mTaskPlanner = &tp;

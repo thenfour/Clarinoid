@@ -25,6 +25,7 @@ struct GuiKnobRenderer : IGuiRenderer<float>
     }
 };
 
+// binds to linear value
 struct GuiGainKnobRenderer : IGuiRenderer<float>
 {
     NumericEditRangeSpecWithBottom mRange;
@@ -33,13 +34,15 @@ struct GuiGainKnobRenderer : IGuiRenderer<float>
     {
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
-                                     const float &val,
+                                     const float &valLinear,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
     {
+        float valDb = LinearToDecibels(valLinear);
+
         float aCenter = KnobDetails::CenterAngle; // Remap01ToRange(0.5f, KnobDetails::MinAngle, KnobDetails::MaxAngle);
-        if (mRange.IsBottom(val))
+        if (mRange.IsBottom(valDb))
         {
             // -inf db,
             app.mDisplay.DrawBitmap(ctrl.mBounds.UpperLeft(), KnobDetails::gKnobOutlineMutedSpec);
@@ -51,14 +54,14 @@ struct GuiGainKnobRenderer : IGuiRenderer<float>
         {
             // negative & positive poles are different scales
             float a0;
-            if (val < 0)
+            if (valDb < 0)
             {
-                float negPos = RemapTo01(val, mRange.mRangeMin, 0.0f);
+                float negPos = RemapTo01(valDb, mRange.mRangeMin, 0.0f);
                 a0 = Remap01ToRange(negPos, KnobDetails::MinAngle, aCenter);
             }
             else
             {
-                float posPos = RemapTo01(val, 0.0f, mRange.mRangeMax);
+                float posPos = RemapTo01(valDb, 0.0f, mRange.mRangeMax);
                 a0 = Remap01ToRange(posPos, aCenter, KnobDetails::MaxAngle);
             }
             app.mDisplay.fillPie(
@@ -67,7 +70,7 @@ struct GuiGainKnobRenderer : IGuiRenderer<float>
         }
         // ONLY attenuation allowed. -inf is full left, max is full right
         float a0;
-        float negPos = RemapTo01(val, mRange.mRangeMin, 0.0f);
+        float negPos = RemapTo01(valDb, mRange.mRangeMin, 0.0f);
         a0 = Remap01ToRange(negPos, KnobDetails::MinAngle, aCenter);
         app.mDisplay.fillPie(KnobDetails::Origin.Add(ctrl.mBounds.UpperLeft()), KnobDetails::Radius, a0, aCenter - a0);
     }
@@ -99,6 +102,7 @@ struct GuiKnobControl : GuiCompositeControl<float>
 
 // ---------------------------------------------------------------------------------------
 // renders a "Label: n" tooltip for GAIN values (notably to display -inf properly and +/- signs and formatting)
+// binds to a linear value.
 template <typename T>
 struct GuiLabelGainTooltipRenderer : IGuiRenderer<T>
 {
@@ -114,10 +118,56 @@ struct GuiLabelGainTooltipRenderer : IGuiRenderer<T>
     {
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + DecibelsToIntString(val));
+            app.mDisplay.mDisplay.print(mStaticCaption + ": " + GainToIntString(val));
         }
     }
 };
+
+// ---------------------------------------------------------------------------------------
+// like numeric editor. binds to linear gain, edits as decibels.
+struct GuiGainEditor : IGuiEditor<float>
+{
+    NumericEditRangeSpecWithBottom mRange;
+    float mOldVal;
+    GuiGainEditor(const NumericEditRangeSpecWithBottom &range) : mRange(range)
+    {
+    }
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<float> &binding, DisplayApp &app)
+    {
+        mOldVal = binding.GetValue();
+        return true;
+    }
+
+    virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
+                                        Property<float> &binding,
+                                        DisplayApp &app,
+                                        bool wasCancelled)
+    {
+        if (wasCancelled)
+        {
+            binding.SetValue(mOldVal);
+        }
+    }
+
+    virtual void IGuiEditor_Render(IGuiControl &ctrl,
+                                   Property<float> &binding,
+                                   bool isSelected,
+                                   bool isEditing,
+                                   DisplayApp &app)
+    {
+        if (isEditing)
+        {
+            float oldValLin = binding.GetValue();
+            float oldValDb = LinearToDecibels(oldValLin);
+            float newValDb = mRange.AdjustValue(oldValDb,
+                                               app.mEnc.GetIntDelta(),
+                                               app.mInput->mModifierCourse.CurrentValue(),
+                                               app.mInput->mModifierFine.CurrentValue());
+            binding.SetValue(DecibelsToLinear(newValDb));
+        }
+    }
+};
+
 
 // ---------------------------------------------------------------------------------------
 struct GuiKnobGainControl : GuiCompositeControl<float>
@@ -126,7 +176,7 @@ struct GuiKnobGainControl : GuiCompositeControl<float>
     GuiLabelGainTooltipRenderer<T> mTooltipRenderer;
     GuiGainKnobRenderer mValueRenderer;
     GuiRendererCombiner<T> mRenderer;
-    GuiNumericEditor<T> mEditor;
+    GuiGainEditor mEditor;
 
     GuiKnobGainControl(int page,
                        PointI pos,

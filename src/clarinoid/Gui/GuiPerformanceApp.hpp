@@ -10,96 +10,244 @@ namespace clarinoid
 // ---------------------------------------------------------------------------------------
 struct GuiPerformanceApp : GuiApp
 {
+    Metronome &mMetronome;
+
     virtual const char *DisplayAppGetName() override
     {
         return "GuiPerformanceApp";
     }
 
-    GuiPerformanceApp(CCDisplay &display) : GuiApp(display)
+    GuiPerformanceApp(CCDisplay &display, Metronome &m) : GuiApp(display), mMetronome(m)
     {
     }
 
-    GuiLabelControl mLabel1 = {0,
-                               PointI::Construct(0, 0),
-                               "p aoesnut haoesntha oesnutha oesuntaoehu erf"};
+    GuiPatchMuteControl<false> mSynthAEnable = {
+        0,
+        PointI::Construct(0, 5),
+        "Synth A",
+        "Enabled",
+        "Muted",
+        {[](void *cap) -> bool & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAEnabled;
+         },
+         this},
+        AlwaysEnabled};
 
-    float floatParam1 = 0.0f;
-    GuiKnobControl mKnob1 = {
-        1,
-        PointI::Construct(5, 30),
-        StandardRangeSpecs::gFloat_N1_1,
-        "Knob1", // formatter for edit
-        floatParam1,
-        AlwaysEnabled
+    GuiPatchMuteControl<false> mSynthBEnable = {
+        0,
+        PointI::Construct(0, 21),
+        "Synth B",
+        "Enabled",
+        "Muted",
+        {[](void *cap) -> bool & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBEnabled;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiPatchMuteControl<false> mHarmonizerEnable = {
+        0,
+        PointI::Construct(0, 37),
+        "Harmonizer",
+        "Enabled",
+        "Muted",
+        {[](void *cap) -> bool & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmEnabled;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiKnobGainControl mSynthAGain = {
+        0,
+        PointI::Construct(8, 1),
+        StandardRangeSpecs::gGeneralGain,
+        "Synth A Gain",
+        {[](void *cap) -> float & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAGain;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiKnobGainControl mSynthBGain = {
+        0,
+        PointI::Construct(8, 17),
+        StandardRangeSpecs::gGeneralGain,
+        "Synth B Gain",
+        {[](void *cap) -> float & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBGain;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiKnobGainControl mHarmGain = {
+        0,
+        PointI::Construct(8, 32),
+        StandardRangeSpecs::gGeneralGain,
+        "Harm Gain",
+        {[](void *cap) -> float & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmGain;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiSynthPatchSelectControl<int16_t> mSynthPatchA = {
+        0,
+        false, // nullable
+        RectI::Construct(24, 5, 45, 9),
+        "Synth Patch A", //
+        {[](void *cap) -> int16_t & {
+             auto *pThis = (GuiPerformanceApp *)cap;
+             return pThis->mAppSettings->GetCurrentPerformancePatch().mSynthPresetA;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiSynthPatchSelectControl<int16_t> mSynthPatchB = {
+        0,
+        true, // nullable
+        RectI::Construct(24, 20, 45, 9),
+        "Synth Patch B", //
+        {[](void *cap) -> int16_t & {
+             auto *pThis = (GuiPerformanceApp *)cap;
+             return pThis->mAppSettings->GetCurrentPerformancePatch().mSynthPresetB;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiHarmPatchSelectControl<int16_t> mHarmPatch = {
+        0,
+        RectI::Construct(24, 35, 45, 9),
+        "Harm Patch",
+        {[](void *cap) -> int16_t & {
+             auto *pThis = (GuiPerformanceApp *)cap;
+             return pThis->mAppSettings->GetCurrentPerformancePatch().mHarmPreset;
+         },
+         this},
+        AlwaysEnabled};
+
+
+    GuiLabelControl mLabelMst = {0, PointI::Construct(70, 4), "Mst"};
+
+    GuiKnobGainControl mGlobalGain = {
+        0,
+        PointI::Construct(90, 0),
+        StandardRangeSpecs::gMasterGainDb,
+        "Master gain",
+        {[](void *cap) -> float & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterGain;
+         },
+         this},
+        AlwaysEnabled};
+
+    GuiStereoSpreadControl mStereoSpread = {
+        0,                               // page
+        PointI::Construct(107, 4),        // pos
+        StandardRangeSpecs::gFloat_N1_1, // range
+        "Stereo spread",                 // tooltip
+        {[](void *cap) -> float & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthStereoSpread;
+         },
+         this},
+        AlwaysEnabled // always en
     };
 
-    // float floatParam4 = 0.0f;
-    // GuiStereoSpreadControl mStereoSpread1 = {
-    //     1,                               // page
-    //     PointI::Construct(75, 10),       // pos
-    //     StandardRangeSpecs::gFloat_N1_1, // range
-    //     "Stereo spread",                 // tooltip
-    //     floatParam4,                     // binding
-    //     AlwaysEnabled                    // always en
-    // };
+    GuiLabelControl mLabelFx = {0, PointI::Construct(70, 18), "Fx"};
 
-    // GuiLabelControl mLabel7 = {2, false, RectI::Construct(5, 24, 50, 8), String("page 3")};
+    GuiKnobGainControl mFXGain = {
+        0,
+        PointI::Construct(90, 14),
+        StandardRangeSpecs::gGeneralGain,
+        "Master gain",
+        {[](void *cap) -> float & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXGain;
+         },
+         this},
+        AlwaysEnabled};
 
-    // ClarinoidFilterType mEnumParam1 = ClarinoidFilterType::HP_K35;
-    // GuiEnumControl<ClarinoidFilterType> mEnum1 = {2,                              // page
-    //                                               RectI::Construct(5, 2, 50, 20), // bounds
-    //                                               "Filter type",
-    //                                               gClarinoidFilterTypeInfo, // enuminfo
-    //                                               mEnumParam1,
-    //                                               AlwaysEnabled};
+    GuiMuteControl<true> mFXEnable = {
+        0,
+        PointI::Construct(107, 17),
+        "FX",
+        "Enabled",
+        "Disabled", //
+        {[](void *cap) -> bool & {
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable; //
+         },
+         this},
+        AlwaysEnabled};
 
-    // bool mMuteParam = false;
-    // GuiMuteControl mMute = {2, PointI::Construct(50, 2), "mute?", "yea", "nah", mMuteParam, AlwaysEnabled};
+    GuiTempoControl mTempo = {0,
+                              RectI::Construct(70, 29, 26, 10),
+                              StandardRangeSpecs::gBPMRange,
+                              "Master BPM",
+                              {[](void *cap) -> float {
+                                   auto *pThis = (GuiPerformanceApp *)cap;
+                                   return pThis->mAppSettings->GetCurrentPerformancePatch().mBPM;
+                               },
+                               [](void *cap, const float &val) -> void {
+                                   auto *pThis = (GuiPerformanceApp *)cap;
+                                   pThis->mAppSettings->GetCurrentPerformancePatch().mBPM = val;
+                                   pThis->mMetronome.OnBPMChanged();
+                               },
+                               this},
+                              AlwaysEnabled,
+                              [](void*cap, DisplayApp& app) { // on toggle handler
+                              app.mAppSettings->mMetronomeSoundOn = !app.mAppSettings->mMetronomeSoundOn;
+                              }};
 
-    // GuiLabelControl mLabel8 = {3, true, RectI::Construct(4, 34, 50, 8), String("page 4")};
-    // GuiLabelControl mLabel9 = {4, false, RectI::Construct(4, 44, 50, 8), String("page 5")};
+    GuiTransposeControl<int8_t> mTranspose = {0,
+                                              RectI::Construct(98, 29, 24, 10),
+                                              StandardRangeSpecs::gTransposeRange.Cast<int8_t>(),
+                                              "Transpose",
+                                              {[](void *cap) -> int8_t & {
+                                                   auto *pThis = (GuiPerformanceApp *)cap;
+                                                   return pThis->mAppSettings->GetCurrentPerformancePatch().mTranspose;
+                                               },
+                                               this},
+                                              AlwaysEnabled};
 
-    // int param1 = 111;
-    // GuiIntegerTextControl<int> mCtrl4a = {
-    //     4,
-    //     RectI::Construct(5, 10, 50, 20),
-    //     StandardRangeSpecs::gMetronomeDecayRange,
-    //     "Param1",
-    //     param1,
-    //     AlwaysEnabled // selectable
-    // };
+    GuiLabelControl mGlobalScale = {0, PointI::Construct(70, 39), "F# hw dim"};
 
-    // int param2 = 2;
-    // GuiIntegerTextControl<int> mCtrl4b = {
-    //     4,
-    //     RectI::Construct(5, 35, 117, 20),
-    //     StandardRangeSpecs::gMetronomeDecayRange,
-    //     "param2",
-    //     param2,
-    //     AlwaysEnabled // selectable
-    // };
+    GuiTransposeControl<int8_t> mTranspose2 = {1,
+                                               RectI::Construct(96, 31, 27, 10),
+                                               StandardRangeSpecs::gTransposeRange.Cast<int8_t>(),
+                                               "Transpose",
+                                               {[](void *cap) -> int8_t & {
+                                                    auto *pThis = (GuiPerformanceApp *)cap;
+                                                    return pThis->mAppSettings->GetCurrentPerformancePatch().mTranspose;
+                                                },
+                                                this},
+                                               AlwaysEnabled};
 
-    // GuiLabelControl mLabel10 = {5, false, RectI::Construct(106, 6, 50, 8), String("page 6 ~~")};
+    IGuiControl *mArray[19] = {
+        // PAGE 1
+        &mSynthAEnable,
+        &mSynthBEnable,
 
-    int mSynthPatchAval = 2;
-    GuiSynthPatchSelectControl mSynthPatchA = {
-        5, false, RectI::Construct(6, 6, 59, 10), "Synth Patch A", mSynthPatchAval, AlwaysEnabled
-    };
+        &mSynthAGain,
+        &mSynthBGain,
 
-    int mSynthPatchBval = 2;
-    GuiSynthPatchSelectControl mSynthPatchB = {
-        5, true, RectI::Construct(6, 16, 59, 10), "Synth Patch B", mSynthPatchBval, AlwaysEnabled
-    };
+        &mSynthPatchA,
+        &mSynthPatchB,
 
-    int mHarmPatchVal = 2;
-    GuiHarmPatchSelectControl mHarmPatch = {
-        5, RectI::Construct(6, 36, 59, 10), "Harm Patch", mHarmPatchVal, AlwaysEnabled
-    };
+        &mHarmonizerEnable,
+        &mHarmGain,
+        &mHarmPatch,
 
+        &mLabelMst,
+        &mGlobalGain,
+        &mStereoSpread,
 
+        &mLabelFx,
+        &mFXGain,
+        &mFXEnable,
 
-    IGuiControl *mArray[1] = {
-        &mLabel1,
+        &mTempo,
+        &mTranspose,
+        &mGlobalScale,
+
+        // PAGE 2
+        &mTranspose2,
     };
 
     GuiControlList mList = {mArray};

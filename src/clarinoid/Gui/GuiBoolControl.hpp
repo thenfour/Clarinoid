@@ -17,6 +17,7 @@ struct GuiToggleEditor : IGuiEditor<bool>
     }
 };
 
+template<bool invertVal>
 struct GuiMuteControlRenderer : IGuiRenderer<bool>
 {
     using T = bool;
@@ -28,22 +29,24 @@ struct GuiMuteControlRenderer : IGuiRenderer<bool>
     {
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
-                                     const T &val,
+                                     const T &val_,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
     {
+        bool val = invertVal ? !val_ : val_;
         app.mDisplay.DrawBitmap(ctrl.mBounds.UpperLeft(), val ? gMuteOnBitmapSpec : gMuteOffBitmapSpec);
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + (val ? mTrueValue : mFalseValue));
+            app.mDisplay.mDisplay.print(mStaticCaption + ": " + (val_ ? mTrueValue : mFalseValue));
         }
     }
 };
 
+template<bool invertVal>
 struct GuiMuteControl : GuiCompositeControl<bool>
 {
-    GuiMuteControlRenderer mRenderer;
+    GuiMuteControlRenderer<invertVal> mRenderer;
     GuiToggleEditor mEditor;
 
     GuiMuteControl(int page,                          //
@@ -60,36 +63,41 @@ struct GuiMuteControl : GuiCompositeControl<bool>
     }
 };
 
+template<bool invertVal>
 struct GuiPatchMuteControlRenderer : IGuiRenderer<bool>
 {
     using T = bool;
     String mStaticCaption;
     String mTrueValue;
     String mFalseValue;
-    GuiPatchMuteControlRenderer(const String &staticCaption, const String &trueValue, const String &falseValue)
+    GuiPatchMuteControlRenderer(const String &staticCaption, //
+                                const String &trueValue,     //
+                                const String &falseValue)
         : mStaticCaption(staticCaption), mTrueValue(trueValue), mFalseValue(falseValue)
     {
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
-                                     const T &val,
+                                     const T &val_,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
     {
+        bool val = (invertVal ? !val_ : val_);
         app.mDisplay.DrawBitmap(ctrl.mBounds.UpperLeft(), val ? gPatchEnabledSpec : gPatchDisabledSpec);
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.mDisplay.print(mStaticCaption + ": " + (val ? mTrueValue : mFalseValue));
+            app.mDisplay.mDisplay.print(mStaticCaption + ": " + (val_ ? mTrueValue : mFalseValue));
         }
     }
 };
 
+template<bool invertVal>
 struct GuiPatchMuteControl : GuiCompositeControl<bool>
 {
-    GuiPatchMuteControlRenderer mRenderer;
+    GuiPatchMuteControlRenderer<invertVal> mRenderer;
     GuiToggleEditor mEditor;
 
-    GuiPatchMuteControl(int page,                          //
+    GuiPatchMuteControl(int page, //
                         PointI pt,                         //
                         const String &tooltipCaption,      //
                         const String &trueValue,           //
