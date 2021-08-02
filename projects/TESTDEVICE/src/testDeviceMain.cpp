@@ -35,8 +35,8 @@ void setup()
     //while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
     //Serial.println("starting normally....");
 
-    clarinoid::TestDeviceApp app;
-    app.Main();
+    auto* app = new clarinoid::TestDeviceApp;
+    app->Main();
 }
 
 void loop()

@@ -36,13 +36,18 @@ struct array_view
     T *mData = nullptr;
 
     array_view() = default;
+    size_t size() const
+    {
+        return mSize;
+    }
 
     template <size_t N>
     array_view(T (&a)[N]) : mSize(N), mData(a)
     {
     }
 
-    T& operator [](size_t i) {
+    T &operator[](size_t i)
+    {
         CCASSERT(i < mSize);
         return mData[i];
     }

@@ -180,13 +180,14 @@ struct TestDeviceApp : ISysInfoProvider
 
         // Important that a state task runs before display tasks, to ensure there's not a single
         // uninitialized glitch frame at startup
-        TaskPlanner tp{
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(2000), &mDisplayTask1, "Display1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS1"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(6000), &mDisplayTask2, "Display2"},
-            TaskPlanner::TaskDeadline{TimeSpan::FromMicros(8000), &nopTask, "Nop"},
+        TaskPlanner::TaskDeadline plan[] = {
+            {TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
+            {TimeSpan::FromMicros(2000), &mDisplayTask1, "Display1"},
+            {TimeSpan::FromMicros(4000), &mMusicalStateTask, "MusS1"},
+            {TimeSpan::FromMicros(6000), &mDisplayTask2, "Display2"},
+            {TimeSpan::FromMicros(8000), &nopTask, "Nop"},
         };
+        TaskPlanner tp{plan};
 
         mTaskPlanner = &tp;
         mPerformanceApp.Init(&tp);
