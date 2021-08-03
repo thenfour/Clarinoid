@@ -97,7 +97,9 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
               },
               this,
               &mMusicalStateTask.mMetronome),
-          mPerfPatchApp(mDisplay), mSynthPatchApp(mDisplay), mAudioMonitorApp(mDisplay),
+          mPerfPatchApp(mDisplay),    //
+          mSynthPatchApp(mDisplay),   //
+          mAudioMonitorApp(mDisplay), //
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
           mHarmVoiceSettingsApp(mDisplay),                            //
           mHarmPatchApp(mDisplay),                                    //

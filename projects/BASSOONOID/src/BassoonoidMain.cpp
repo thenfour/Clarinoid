@@ -34,11 +34,12 @@
 
 void setup()
 {
+    AudioNoInterrupts();
     Serial.begin(9600);
     // while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
 
-    clarinoid::BassoonoidApp app;
-    app.Main();
+    auto *app = new clarinoid::BassoonoidApp;
+    app->Main();
 }
 
 void loop()

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <clarinoid/application/Metronome.hpp>
+
 #include "MenuAppBase.hpp"
 #include "MenuSettings.hpp"
 #include "UnipolarCalibration.hpp"

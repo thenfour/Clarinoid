@@ -20,9 +20,9 @@ struct BassoonoidControlMapper : IInputSource, ITask
     TimeSpan mTimingAnalog;
     TimeSpan mTimingDigital;
 
-    CCDisplay *mDisplay = nullptr;
+    IDisplay *mDisplay = nullptr;
 
-    void Init(CCDisplay *display)
+    void Init(IDisplay *display)
     {
         mDisplay = display;
     }

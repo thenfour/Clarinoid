@@ -22,7 +22,7 @@ struct PerformanceApp : SettingsMenuApp
 
     SimpleMovingAverage<30> mCPUUsage;
 
-    PerformanceApp(CCDisplay &d, MusicalStateTask *pMusicalStateTask, BassoonoidControlMapper *controls)
+    PerformanceApp(IDisplay &d, MusicalStateTask *pMusicalStateTask, BassoonoidControlMapper *controls)
         : SettingsMenuApp(d), mpMusicalStateTask(pMusicalStateTask), mpControls(controls)
     {
     }
@@ -151,13 +151,13 @@ struct PerformanceApp : SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        mDisplay.mDisplay.println(String("PERFormance >"));
-        mDisplay.mDisplay.println(String(" McpL: ") + (int)mpControls->mTimingMcpL.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" McpR: ") + (int)mpControls->mTimingMcpR.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" Breath: ") + (int)mpControls->mTimingBreath.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" Encoders: ") + (int)mpControls->mTimingEncoders.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" Analog: ") + (int)mpControls->mTimingAnalog.ElapsedMicros());
-        mDisplay.mDisplay.println(String(" Digital: ") + (int)mpControls->mTimingDigital.ElapsedMicros());
+        mDisplay.println(String("PERFormance >"));
+        mDisplay.println(String(" McpL: ") + (int)mpControls->mTimingMcpL.ElapsedMicros());
+        mDisplay.println(String(" McpR: ") + (int)mpControls->mTimingMcpR.ElapsedMicros());
+        mDisplay.println(String(" Breath: ") + (int)mpControls->mTimingBreath.ElapsedMicros());
+        mDisplay.println(String(" Encoders: ") + (int)mpControls->mTimingEncoders.ElapsedMicros());
+        mDisplay.println(String(" Analog: ") + (int)mpControls->mTimingAnalog.ElapsedMicros());
+        mDisplay.println(String(" Digital: ") + (int)mpControls->mTimingDigital.ElapsedMicros());
 
         SettingsMenuApp::RenderFrontPage();
     }
@@ -174,7 +174,7 @@ struct DebugDisplayApp : SettingsMenuApp
     BassoonoidControlMapper &mControls;
     MusicalStateTask &mMusicalStateTask;
 
-    DebugDisplayApp(CCDisplay &d, BassoonoidControlMapper &c, MusicalStateTask &mst)
+    DebugDisplayApp(IDisplay &d, BassoonoidControlMapper &c, MusicalStateTask &mst)
         : SettingsMenuApp(d), mControls(c), mMusicalStateTask(mst)
     {
     }
@@ -188,29 +188,6 @@ struct DebugDisplayApp : SettingsMenuApp
                                                    },
                                                    this},
                                   AlwaysEnabled};
-
-    LabelSettingItem mFilterFreq = {
-        Property<String>{
-            [](void *cap) {
-                DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-
-                CCASSERT(pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch >= 0);
-                CCASSERT((size_t)pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch < SYNTH_PRESET_COUNT);
-                auto &synthPatch = pThis->mAppSettings->mSynthSettings
-                                       .mPresets[pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mSynthPatch];
-
-                float filterFreq = clarinoid::Voice::CalcFilterCutoffFreq(
-                    pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mBreath01.GetFloatVal(),
-                    pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote,
-                    synthPatch.mFilterKeytracking,
-                    synthPatch.mFilterMinFreq,
-                    synthPatch.mFilterMaxFreq);
-
-                String ret = String("Filter HZ: ") + filterFreq;
-                return ret;
-            },
-            this},
-        AlwaysEnabled};
 
     LabelSettingItem mBreath = {
         Property<String>{[](void *cap) {
@@ -358,9 +335,9 @@ struct DebugDisplayApp : SettingsMenuApp
                                                               this},
                                              AlwaysEnabled};
 
-    ISettingItem *mArray[16] = {
+    ISettingItem *mArray[15] = {
         &mMidiNote,
-        &mFilterFreq,
+        //&mFilterFreq,
         &mBreath,
         &mLHA,
         &mLHB,
@@ -389,7 +366,7 @@ struct DebugDisplayApp : SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        mDisplay.mDisplay.println(String("Debug info ->"));
+        mDisplay.println(String("Debug info ->"));
         SettingsMenuApp::RenderFrontPage();
     }
 };
@@ -399,7 +376,7 @@ struct AudioMonitorApp : DisplayApp
 {
     Plotter<MAX_DISPLAY_WIDTH> mPlotter;
 
-    AudioMonitorApp(CCDisplay &d) : DisplayApp(d)
+    AudioMonitorApp(IDisplay &d) : DisplayApp(d)
     {
         mPlotter.Plot(0);
     }
@@ -427,10 +404,10 @@ struct AudioMonitorApp : DisplayApp
     }
     virtual void RenderFrontPage() override
     {
-        mDisplay.mDisplay.println(String("Peak"));
+        mDisplay.println(String("Peak"));
         float peak = CCSynth::GetPeakLevel();
         mPlotter.Plot(peak);
-        RectI rcDisplay = {0, 0, this->mDisplay.mDisplay.width(), this->mDisplay.mDisplay.height()};
+        RectI rcDisplay = {0, 0, this->mDisplay.width(), this->mDisplay.height()};
         mPlotter.Render(this->mDisplay, rcDisplay);
     }
 

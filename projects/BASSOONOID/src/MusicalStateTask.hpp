@@ -29,9 +29,9 @@ struct MusicalStateTask : ITask
     SimpleMovingAverage<15> mMusicalStateTiming;
     SimpleMovingAverage<15> mSynthStateTiming;
 
-    MusicalStateTask(AppSettings *appSettings, InputDelegator *input, BassoonoidControlMapper *controlMapper)
-        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(appSettings),
-          mMusicalState(appSettings, mpInput, &mMetronome, &mScaleFollower, controlMapper)
+    MusicalStateTask(IDisplay* display, AppSettings *appSettings, InputDelegator *input, BassoonoidControlMapper *controlMapper)
+        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings),
+          mMusicalState(display, appSettings, mpInput, &mMetronome, &mScaleFollower, controlMapper)
     {
     }
 
@@ -43,6 +43,7 @@ struct MusicalStateTask : ITask
     virtual void TaskRun() override
     {
         {
+            NoInterrupts ni;
             int m1 = micros();
             mControlMapper->TaskRun();
             mpInput->Update();
@@ -50,6 +51,7 @@ struct MusicalStateTask : ITask
             mInputTiming.Update((float)(m2 - m1));
         }
         {
+            NoInterrupts ni;
             int m1 = micros();
             mMusicalState.Update();
             int m2 = micros();
@@ -57,7 +59,7 @@ struct MusicalStateTask : ITask
         }
 
         {
-            // does its own interrupt disabling.
+            NoInterrupts ni;
             int m1 = micros();
             mSynth.Update(mMusicalState.mMusicalVoices, mMusicalState.mMusicalVoices + mMusicalState.mVoiceCount);
             int m2 = micros();
