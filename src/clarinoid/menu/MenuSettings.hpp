@@ -14,6 +14,11 @@ static bool AlwaysEnabled(void *)
     return true;
 }
 
+static bool NeverEnabled(void *)
+{
+    return false;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // implemented by the settings app to provide an aPI to editors
 struct ISettingItemEditorActions

@@ -37,6 +37,9 @@ static constexpr size_t MAX_MUSICAL_VOICES =
 
 static const size_t PRESET_NAME_LEN = 16;
 
+static constexpr size_t BREATH_SIGNAL_SMOOTHING_FRAMES = 6;
+
+
 static const size_t SYNTH_PRESET_COUNT = 32;
 static const size_t SYNTH_MODULATIONS_MAX = 6; // an additional 5 will be internally created because of FM modulation
 

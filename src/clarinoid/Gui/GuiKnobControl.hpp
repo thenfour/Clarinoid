@@ -14,6 +14,7 @@ struct GuiKnobRenderer : IGuiRenderer<float>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const float &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -35,6 +36,7 @@ struct GuiGainKnobRenderer : IGuiRenderer<float>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const float &valLinear,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -90,11 +92,18 @@ struct GuiKnobControl : GuiCompositeControl<float>
                    const NumericEditRangeSpec<float> &range,
                    const String &tooltipCaption,
                    const Property<T> &binding,
+                   const Property<bool> &dblBinding,
                    const Property<bool> &isSelectable)
-        : GuiCompositeControl(page, RectI::Construct(pos, 16, 16), binding, &mRenderer, &mEditor, isSelectable), //
-          mTooltipRenderer(tooltipCaption),                                                                      //
-          mValueRenderer(range),                                                                                 //
-          mRenderer(&mValueRenderer, &mTooltipRenderer),                                                         //
+        : GuiCompositeControl(page,
+                              RectI::Construct(pos, 16, 16),
+                              binding,
+                              dblBinding,
+                              &mRenderer,
+                              &mEditor,
+                              isSelectable),             //
+          mTooltipRenderer(tooltipCaption),              //
+          mValueRenderer(range),                         //
+          mRenderer(&mValueRenderer, &mTooltipRenderer), //
           mEditor(range)
     {
     }
@@ -112,6 +121,7 @@ struct GuiLabelGainTooltipRenderer : IGuiRenderer<T>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -129,37 +139,57 @@ struct GuiGainEditor : IGuiEditor<float>
 {
     NumericEditRangeSpecWithBottom mRange;
     float mOldVal;
+    bool mWasModified = false;
+    Stopwatch mWhenEditingStarted;
     GuiGainEditor(const NumericEditRangeSpecWithBottom &range) : mRange(range)
     {
     }
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<float> &binding, DisplayApp &app)
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl,
+                                         Property<float> &binding,
+                                         Property<bool> &dblBinding,
+                                         DisplayApp &app)
     {
+        mWasModified = false;
+        mWhenEditingStarted.Restart();
         mOldVal = binding.GetValue();
         return true;
     }
 
-    virtual void IGuiEditor_StopEditing(IGuiControl &ctrl, Property<float> &binding, DisplayApp &app, bool wasCancelled)
+    virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
+                                        Property<float> &binding,
+                                        Property<bool> &dblBinding,
+                                        DisplayApp &app,
+                                        bool wasCancelled)
     {
         if (wasCancelled)
         {
             binding.SetValue(mOldVal);
         }
+        else if (!mWasModified && (mWhenEditingStarted.ElapsedTime() < TimeSpan::FromMillis(DOUBLE_CLICK_TIMEOUT_MS)))
+        {
+            // not cancelled (user clicked OK), but did not change value. that's a double click.
+            dblBinding.SetValue(!dblBinding.GetValue());
+        }
     }
 
     virtual void IGuiEditor_Render(IGuiControl &ctrl,
                                    Property<float> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app)
     {
         if (isEditing)
         {
+            auto d = app.mEnc.GetIntDelta();
+            if (d != 0)
+            {
+                mWasModified = true;
+            }
             float oldValLin = binding.GetValue();
             float oldValDb = LinearToDecibels(oldValLin);
-            float newValDb = mRange.AdjustValue(oldValDb,
-                                                app.mEnc.GetIntDelta(),
-                                                app.mInput->mModifierCourse.CurrentValue(),
-                                                app.mInput->mModifierFine.CurrentValue());
+            float newValDb = mRange.AdjustValue(
+                oldValDb, d, app.mInput->mModifierCourse.CurrentValue(), app.mInput->mModifierFine.CurrentValue());
             binding.SetValue(DecibelsToLinear(newValDb));
         }
     }
@@ -179,11 +209,18 @@ struct GuiKnobGainControl : GuiCompositeControl<float>
                        const NumericEditRangeSpecWithBottom &range,
                        const String &tooltipCaption,
                        const Property<T> &binding,
+                       const Property<bool> &dblBinding,
                        const Property<bool> &isSelectable)
-        : GuiCompositeControl(page, RectI::Construct(pos, 16, 16), binding, &mRenderer, &mEditor, isSelectable), //
-          mTooltipRenderer(tooltipCaption),                                                                      //
-          mValueRenderer(range),                                                                                 //
-          mRenderer(&mValueRenderer, &mTooltipRenderer),                                                         //
+        : GuiCompositeControl(page,
+                              RectI::Construct(pos, 16, 16),
+                              binding,
+                              dblBinding,
+                              &mRenderer,
+                              &mEditor,
+                              isSelectable),             //
+          mTooltipRenderer(tooltipCaption),              //
+          mValueRenderer(range),                         //
+          mRenderer(&mValueRenderer, &mTooltipRenderer), //
           mEditor(range)
     {
     }

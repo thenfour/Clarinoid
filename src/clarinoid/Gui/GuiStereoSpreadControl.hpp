@@ -13,6 +13,7 @@ struct GuiStereoSpreadRenderer : IGuiRenderer<float>
 {
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const float &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -37,9 +38,15 @@ struct GuiStereoSpreadControl : GuiCompositeControl<float>
                            const String &tooltipCaption,
                            const Property<T> &binding,
                            const Property<bool> &isSelectable)
-        : GuiCompositeControl(page, RectI::Construct(pos, 17, 7), binding, &mRenderer, &mEditor, isSelectable), //
-          mTooltipRenderer(tooltipCaption),                                                                     //
-          mRenderer(&mValueRenderer, &mTooltipRenderer),                                                        //
+        : GuiCompositeControl(page,
+                              RectI::Construct(pos, 17, 7),
+                              binding,
+                              NullBoolBinding,
+                              &mRenderer,
+                              &mEditor,
+                              isSelectable),             //
+          mTooltipRenderer(tooltipCaption),              //
+          mRenderer(&mValueRenderer, &mTooltipRenderer), //
           mEditor(range)
     {
     }

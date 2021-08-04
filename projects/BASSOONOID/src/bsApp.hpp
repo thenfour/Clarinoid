@@ -245,7 +245,7 @@ struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
             ControlMapping::MomentaryMapping(PhysicalControl::RHTh2, ControlMapping::Function::MetronomeLEDToggle);
 
         mAppSettings.GetCurrentPerformancePatch().mSynthPresetA = SynthPresetID_Bassoonoid;
-        //mAppSettings.GetCurrentPerformancePatch().mMasterGain = 2.0f;
+        mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
 
         DefaultHud hud = {mDisplay, this};
 
@@ -274,14 +274,21 @@ struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
 
         // NB: run an update task before display tasks in order to initialize things on 1st frame.
         TaskPlanner::TaskDeadline plan[] = {
-            {TimeSpan::FromMicros(0), &mMusicalStateTask, "MusS0"},
-            {TimeSpan::FromMicros(1), &mDisplayTask1, "Display1"},
-            {TimeSpan::FromMicros(5000), &mMusicalStateTask, "MusS1"},
-            {TimeSpan::FromMicros(5001), &mLed1, "mLed1"},
-            {TimeSpan::FromMicros(9000), &mMusicalStateTask, "MusS2"},
-            {TimeSpan::FromMicros(9001), &mDisplayTask2, "Display2"},
-            {TimeSpan::FromMicros(14000), &mMusicalStateTask, "MusS3"},
-            {TimeSpan::FromMicros(18000), &nopTask, "Nop"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 0), &mMusicalStateTask, "MusS0"},
+
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "MusS1"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mDisplayTask1, "Display1"},
+
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 2), &mMusicalStateTask, "MusS2"},
+
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mMusicalStateTask, "MusS3"},
+
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 4), &mDisplayTask2, "Display2"},
+
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "MusS4"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mLed1, "mLed1"},
+
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &nopTask, "Nop"},
         };
 
         TaskPlanner tp{plan};

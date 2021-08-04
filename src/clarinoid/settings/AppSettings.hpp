@@ -56,10 +56,12 @@ struct PerformancePatch
     bool mMasterFXEnable = true;
 
     float mReverbGain = DecibelsToLinear(-3.0f);
+    bool mReverbEnabled = true;
     float mReverbDamping = 0.6f;
     float mReverbSize = 0.6f;
 
     float mDelayGain = DecibelsToLinear(-3.0f);
+    bool mDelayEnabled = true;
     float mDelayMS = 225;
     float mDelayStereoSep = 30;
     float mDelayFeedbackLevel = 0.3f;

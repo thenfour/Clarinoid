@@ -34,12 +34,10 @@ struct CCEWIMusicalState
     LooperAndHarmonizer mLooper;
     CCEWIMIDIOut mMidiOut;
 
-    // issue #26: TODO: create a time-based smoother (LPF). throttling and taking samples like this is not very accurate
-    // because of variations in timing. sounds fine today though. BALANCE!
     // - too many samples: you lose attack and things are sluggish
     // - too few samples: noisy
-    SimpleMovingAverage<6> mCurrentBreath01;
-    SimpleMovingAverage<6> mCurrentPitchN11;
+    SimpleMovingAverage<BREATH_SIGNAL_SMOOTHING_FRAMES> mCurrentBreath01;
+    SimpleMovingAverage<BREATH_SIGNAL_SMOOTHING_FRAMES> mCurrentPitchN11;
 
     SwitchControlReader mLoopGoReader;
     SwitchControlReader mLoopStopReader;

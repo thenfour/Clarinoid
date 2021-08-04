@@ -636,14 +636,14 @@ struct SynthGraphControl
         CCSynthGraph::delayFilterRight.SetParams(
             perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
 
-        CCSynthGraph::delayWetAmpLeft.gain(perf.mMasterFXEnable ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
-        CCSynthGraph::delayWetAmpRight.gain(perf.mMasterFXEnable ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::delayWetAmpLeft.gain((perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::delayWetAmpRight.gain((perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
 
         CCSynthGraph::verb.roomsize(perf.mReverbSize);
         CCSynthGraph::verb.damping(perf.mReverbDamping);
 
-        CCSynthGraph::verbWetAmpLeft.gain(perf.mMasterFXEnable ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
-        CCSynthGraph::verbWetAmpRight.gain(perf.mMasterFXEnable ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::verbWetAmpLeft.gain((perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::verbWetAmpRight.gain((perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
 
         CCSynthGraph::ampLeft.gain(perf.mMasterGain);
         CCSynthGraph::ampRight.gain(perf.mMasterGain);

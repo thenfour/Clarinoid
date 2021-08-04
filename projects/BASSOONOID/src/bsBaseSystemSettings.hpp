@@ -24,6 +24,11 @@ static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;    // a smaller buffer that
 static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
 static constexpr float MAX_DELAY_MS = 500;
 
+static constexpr size_t MUSICALSTATE_TIMESLICE_PERIOD_MICROS = 2800;
+static constexpr size_t BREATH_SIGNAL_SMOOTHING_PERIOD_MICROS = 18000;
+static constexpr size_t BREATH_SIGNAL_SMOOTHING_FRAMES =
+    (BREATH_SIGNAL_SMOOTHING_PERIOD_MICROS / MUSICALSTATE_TIMESLICE_PERIOD_MICROS);
+
 static const size_t HARM_PRESET_COUNT = 16;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;

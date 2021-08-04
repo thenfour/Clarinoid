@@ -10,7 +10,10 @@ namespace clarinoid
 // ---------------------------------------------------------------------------------------
 struct GuiToggleEditor : IGuiEditor<bool>
 {
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<bool> &binding, DisplayApp &app) override
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl,
+                                         Property<bool> &binding,
+                                         Property<bool> &dblBinding,
+                                         DisplayApp &app) override
     {
         binding.SetValue(!binding.GetValue());
         return false;
@@ -30,6 +33,7 @@ struct GuiMuteControlRenderer : IGuiRenderer<bool>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val_,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -57,7 +61,7 @@ struct GuiMuteControl : GuiCompositeControl<bool>
                    const Property<bool> &binding,     //
                    const Property<bool> &isSelectable //
                    )
-        : GuiCompositeControl(page, RectI::Construct(pt, 17, 7), binding, &mRenderer, &mEditor, isSelectable),
+        : GuiCompositeControl(page, RectI::Construct(pt, 17, 7), binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable),
           mRenderer(tooltipCaption, trueValue, falseValue)
     {
     }
@@ -78,6 +82,7 @@ struct GuiPatchMuteControlRenderer : IGuiRenderer<bool>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val_,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -91,6 +96,8 @@ struct GuiPatchMuteControlRenderer : IGuiRenderer<bool>
     }
 };
 
+
+// a smaller verison of mute control
 template <bool invertVal>
 struct GuiPatchMuteControl : GuiCompositeControl<bool>
 {
@@ -105,7 +112,7 @@ struct GuiPatchMuteControl : GuiCompositeControl<bool>
                         const Property<bool> &binding,     //
                         const Property<bool> &isSelectable //
                         )
-        : GuiCompositeControl(page, RectI::Construct(pt, 7, 7), binding, &mRenderer, &mEditor, isSelectable),
+        : GuiCompositeControl(page, RectI::Construct(pt, 7, 7), binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable),
           mRenderer(tooltipCaption, trueValue, falseValue)
     {
     }

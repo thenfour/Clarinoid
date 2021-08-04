@@ -64,6 +64,14 @@ struct IDisplay
                                             int w,
                                             int h,
                                             int variation) = 0;
+    virtual void DrawMarchingAntsRectOutline(int LineWidth,
+                                             int AntSize,
+                                             int AntMask,
+                                             int x,
+                                             int y,
+                                             int w,
+                                             int h,
+                                             int variation, AntStyle style, Edges::Flags edges) = 0;
 
     // calculates in general, not for a specific location on screen.
     virtual RectI GetTextBounds(const String &str) = 0;

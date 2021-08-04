@@ -156,7 +156,7 @@ struct GuiApp : public DisplayApp
 
         if (ctrlToRenderLast)
         {
-            mDisplay.DrawSelectionRect(ctrlToRenderLast->IGuiControl_GetBounds().Inflate(2));
+            mDisplay.DrawSelectionRect(ctrlToRenderLast->IGuiControl_GetBounds().Inflate(1));
             ctrlToRenderLast->IGuiControl_Render(ctrlToRenderLast == navState.mSelectedControl,
                                                  mIsEditing && ctrlToRenderLast == navState.mSelectedControl,
                                                  *this,
@@ -192,6 +192,7 @@ struct GuiTestApp : GuiApp
                              StandardRangeSpecs::gFloat_N1_1,
                              "Knob1", // formatter for edit
                              floatParam1,
+                             NullBoolBinding,
                              AlwaysEnabled};
 
     float floatParam2 = 0.0f;
@@ -200,6 +201,7 @@ struct GuiTestApp : GuiApp
                              StandardRangeSpecs::gFloat_0_2,
                              "Knob2", // formatter for edit
                              floatParam2,
+                             NullBoolBinding,
                              AlwaysEnabled};
 
     float floatParam3 = 0.0f;
@@ -208,6 +210,7 @@ struct GuiTestApp : GuiApp
                                  StandardRangeSpecs::gMasterGainDb,
                                  "Master Gain", // formatter for edit
                                  floatParam3,
+                                 NullBoolBinding,
                                  AlwaysEnabled};
 
     float floatParam4 = 0.0f;

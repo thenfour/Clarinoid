@@ -285,7 +285,7 @@ struct _CCDisplay : IDisplay
 
     virtual void DrawSelectionRect(const RectI &z) override
     {
-        mDisplay.DrawMarchingAntsRectOutline(1, 3, 1, z.x, z.y, z.width, z.height, (micros() / (1000 * 120)));
+        mDisplay.DrawMarchingAntsRectOutline(1, 3, 1, z.x, z.y, z.width, z.height, (micros() / (1000 * 120)), AntStyle::Chasing, Edges::All);
     }
 
     virtual void DisplayTask() override
@@ -550,6 +550,10 @@ struct _CCDisplay : IDisplay
     virtual void dim(bool d) override
     {
         mDisplay.dim(d);
+    }
+    virtual void DrawMarchingAntsRectOutline(int LineWidth, int AntSize, int AntMask, int x, int y, int w, int h, int variation, AntStyle style, Edges::Flags edges) override 
+    {
+        mDisplay.DrawMarchingAntsRectOutline(LineWidth, AntSize, AntMask, x, y, w, h, variation, style, edges);
     }
 };
 

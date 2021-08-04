@@ -5,6 +5,8 @@
 namespace clarinoid
 {
 
+static constexpr int DOUBLE_CLICK_TIMEOUT_MS = 1000;
+
 // ---------------------------------------------------------------------------------------
 // For the little one-line editor on the top/bottom of the screen, this function
 // sets up the mini editor state so the caller can just print the text or render or whatever it needs to do.
@@ -55,6 +57,7 @@ struct GuiValueAsTextRenderer : IGuiRenderer<T>
 
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -87,6 +90,7 @@ struct GuiLabelValueTooltipRenderer : IGuiRenderer<T>
 
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -109,6 +113,7 @@ struct GuiStaticTooltipRenderer : IGuiRenderer<T>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -127,41 +132,86 @@ struct GuiNumericEditor : IGuiEditor<Tparam>
 {
     NumericEditRangeSpec<Tparam> mRange;
     Tparam mOldVal;
+    bool mWasModified = false;
+    Stopwatch mWhenEditingStarted;
     GuiNumericEditor(const NumericEditRangeSpec<Tparam> &range) : mRange(range)
     {
     }
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<Tparam> &binding, DisplayApp &app)
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl,
+                                         Property<Tparam> &binding,
+                                         Property<bool> &dblBinding,
+                                         DisplayApp &app) override
     {
+        mWasModified = false;
+        mWhenEditingStarted.Restart();
         mOldVal = binding.GetValue();
         return true;
     }
 
     virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
                                         Property<Tparam> &binding,
+                                        Property<bool> &dblBinding,
                                         DisplayApp &app,
-                                        bool wasCancelled)
+                                        bool wasCancelled) override
     {
         if (wasCancelled)
         {
             binding.SetValue(mOldVal);
         }
+        else if (!mWasModified && (mWhenEditingStarted.ElapsedTime() < TimeSpan::FromMillis(DOUBLE_CLICK_TIMEOUT_MS)))
+        {
+            // not cancelled (user clicked OK), but did not change value. that's a double click.
+            dblBinding.SetValue(!dblBinding.GetValue());
+        }
     }
 
     virtual void IGuiEditor_Render(IGuiControl &ctrl,
                                    Property<Tparam> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
-                                   DisplayApp &app)
+                                   DisplayApp &app) override
     {
         if (isEditing)
         {
             Tparam oldVal = binding.GetValue();
-            Tparam newVal = mRange.AdjustValue(oldVal,
-                                               app.mEnc.GetIntDelta(),
-                                               app.mInput->mModifierCourse.CurrentValue(),
-                                               app.mInput->mModifierFine.CurrentValue());
+            auto d = app.mEnc.GetIntDelta();
+            if (d != 0)
+            {
+                mWasModified = true;
+            }
+            Tparam newVal = mRange.AdjustValue(
+                oldVal, d, app.mInput->mModifierCourse.CurrentValue(), app.mInput->mModifierFine.CurrentValue());
             binding.SetValue(newVal);
         }
+    }
+};
+
+struct GuiRectangleMarquee : IGuiControl
+{
+    Edges::Flags mEdgeFlags;
+    GuiRectangleMarquee(int page, const RectI &bounds, Edges::Flags edges = Edges::All) : mEdgeFlags(edges)
+    {
+        this->mPage = page;
+        this->mBounds = bounds;
+        this->mIsSelectable = false;
+    }
+    virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
+    {
+        // display.ClearState();
+        display.DrawMarchingAntsRectOutline(2,
+                                            3 /*ant size*/,
+                                            1,
+                                            mBounds.x,
+                                            mBounds.y,
+                                            mBounds.width,
+                                            mBounds.height,
+                                            3,
+                                            AntStyle::Continuous,
+                                            mEdgeFlags);
+    }
+    virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
+    {
     }
 };
 

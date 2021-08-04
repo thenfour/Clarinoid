@@ -16,6 +16,7 @@ struct GuiSynthPatchAsTextRenderer : IGuiRenderer<T>
 {
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -56,7 +57,10 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
     {
     }
 
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<T> &binding, DisplayApp &app) override
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl,
+                                         Property<T> &binding,
+                                         Property<bool> &dblBinding,
+                                         DisplayApp &app) override
     {
         mListControl.OnShow();
         mOldVal = mBinding.GetValue();
@@ -65,6 +69,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
 
     virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
                                         Property<T> &binding,
+                                        Property<bool> &dblBinding,
                                         DisplayApp &app,
                                         bool wasCancelled) override
     {
@@ -74,6 +79,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
 
     virtual void IGuiEditor_Update(IGuiControl &ctrl,
                                    Property<T> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -86,6 +92,7 @@ struct GuiSynthPatchSelectorEditor : IGuiEditor<T>
 
     virtual void IGuiEditor_Render(IGuiControl &ctrl,
                                    Property<T> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -125,7 +132,7 @@ struct GuiSynthPatchSelectControl : GuiCompositeControl<T>
                                const String &tooltipCaption,
                                const Property<T> &binding,
                                const Property<bool> &isSelectable)
-        : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
+        : GuiCompositeControl<T>(page, bounds, binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable), //
           mEditor(nullable, binding),                                                        //
           mTooltipRenderer(tooltipCaption),                                                  //
           mValueRenderer(),                                                                  //

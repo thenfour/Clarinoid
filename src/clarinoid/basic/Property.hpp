@@ -7,22 +7,11 @@ namespace clarinoid
 template <typename T>
 struct Property
 {
-    // there are a few variations of property, and to reduce memory usage we union some properties.
-    // <this is out of date but leaving it in case it's useful somehow>
-    //                 CHANGE+OWNVALUE          REF simple            REF+getters+setters
-    // Ownvalue             x
-    // Ref                                           x
-    // getter                                                                 x
-    // setter                                                                 x
-    // onchange             x
-    // capture              x                                                 x
-
     T mOwnValue;
     T *mRefBinding = nullptr;
     typename cc::function<T(void *)>::ptr_t mGetter = nullptr;
     typename cc::function<T &(void *)>::ptr_t mRefGetter = nullptr;
     typename cc::function<void(void *, const T &)>::ptr_t mSetter = nullptr;
-    typename cc::function<void(void *, const T &oldVal, const T &newVal)>::ptr_t mOnChange = nullptr;
     void *mpCapture = nullptr;
 
     // copy
@@ -55,11 +44,6 @@ struct Property
     {
     }
 
-    Property(typename cc::function<void(void *capture, const T &oldVal, const T &newVal)>::ptr_t onChange,
-             void *capture)
-        : mOnChange(onChange), mpCapture(capture)
-    {
-    }
 
     Property() : mRefBinding(&mOwnValue)
     {
@@ -81,6 +65,7 @@ struct Property
     void SetValue(const T &val)
     {
         T oldVal = GetValue();
+        if (oldVal == val) return;
         bool didSet = false;
         if (mRefBinding)
         {
@@ -98,10 +83,6 @@ struct Property
             didSet = true;
         }
         CCASSERT(didSet);
-        if (!mGetter && (oldVal != val) && mOnChange)
-        {
-            mOnChange(mpCapture, oldVal, val);
-        }
     }
 };
 

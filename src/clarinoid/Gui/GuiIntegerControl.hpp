@@ -24,7 +24,7 @@ struct GuiIntegerTextControl : GuiCompositeControl<T>
                           const String &tooltipCaption,
                           const Property<T> &binding,
                           const Property<bool> &isSelectable)
-        : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable),
+        : GuiCompositeControl<T>(page, bounds, binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable),
           mTooltipRenderer(tooltipCaption), mRenderer(&mValueRenderer, &mTooltipRenderer), mEditor(range)
     {
     }
@@ -39,18 +39,15 @@ struct GuiTempoControl : GuiCompositeControl<float>
     GuiValueAsTextRenderer<T> mValueRenderer;
     GuiRendererCombiner<T> mRenderer;
     GuiNumericEditor<T> mEditor;
-    typename cc::function<void(void *, DisplayApp &app)>::ptr_t mOnToggleHandler = nullptr;
-    void *mpCapture = nullptr;
 
     GuiTempoControl(int page,
                     RectI bounds,
                     const NumericEditRangeSpec<T> &range,
                     const String &tooltipCaption,
                     const Property<T> &binding,
-                    const Property<bool> &isSelectable,
-                    typename cc::function<void(void *, DisplayApp &app)>::ptr_t onToggleHandler = nullptr,
-                    void *capture = nullptr)
-        : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable),
+                    const Property<bool> &dblBinding,
+                    const Property<bool> &isSelectable)
+        : GuiCompositeControl<T>(page, bounds, binding, dblBinding, &mRenderer, &mEditor, isSelectable),
           mTooltipRenderer(
               tooltipCaption,
               [](void *cap, const float &bpm) { return String(String(CHARSTR_QEQ) + (int)std::round(bpm)); },
@@ -58,29 +55,8 @@ struct GuiTempoControl : GuiCompositeControl<float>
           mValueRenderer([](void *cap, const float &bpm) { return String(String(CHARSTR_QEQ) + (int)std::round(bpm)); },
                          this),                          //
           mRenderer(&mValueRenderer, &mTooltipRenderer), //
-          mEditor(range), mOnToggleHandler(onToggleHandler), mpCapture(capture)
+          mEditor(range)
     {
-    }
-
-    T oldVal;
-
-    virtual bool IGuiControl_EditBegin(DisplayApp &app) override
-    {
-        oldVal = mBinding.GetValue();
-        return GuiCompositeControl<float>::IGuiControl_EditBegin(app);
-    }
-
-    virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
-    {
-        if (!wasCancelled && mOnToggleHandler)
-        {
-            // if you enter edit mode with no changes, toggle metronome on.
-            if (FloatEquals(oldVal, mBinding.GetValue()))
-            {
-                mOnToggleHandler(mpCapture, app);
-            }
-        }
-        GuiCompositeControl<float>::IGuiControl_EditEnd(app, wasCancelled);
     }
 };
 
@@ -97,8 +73,9 @@ struct GuiTransposeControl : GuiCompositeControl<T>
                         const NumericEditRangeSpec<T> &range,
                         const String &tooltipCaption,
                         const Property<T> &binding,
+                        const Property<bool> &dblBinding,
                         const Property<bool> &isSelectable)
-        : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable),
+        : GuiCompositeControl<T>(page, bounds, binding, dblBinding, &mRenderer, &mEditor, isSelectable),
           mTooltipRenderer(
               tooltipCaption,
               [](void *cap, const T &val) -> String { return String("t") + GetSignStr(val) + val; },

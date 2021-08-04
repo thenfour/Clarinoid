@@ -143,6 +143,7 @@ struct IGuiRenderer
 {
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal, // value of double-click binding
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) = 0;
@@ -153,13 +154,17 @@ template <typename Tparam>
 struct IGuiEditor
 {
     // return true if the editor should be shown (for example simple toggles don't enter an editing state)
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<Tparam> &binding, DisplayApp &app)
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl,
+                                         Property<Tparam> &binding,
+                                         Property<bool> &dblBinding,
+                                         DisplayApp &app)
     {
         return false;
     }
 
     virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
                                         Property<Tparam> &binding,
+                                        Property<bool> &dblBinding,
                                         DisplayApp &app,
                                         bool wasCancelled)
     {
@@ -168,6 +173,7 @@ struct IGuiEditor
     // called ALWAYS, not only when editing. so check if editing.
     virtual void IGuiEditor_Update(IGuiControl &ctrl,
                                    Property<Tparam> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app)
@@ -175,6 +181,7 @@ struct IGuiEditor
     }
     virtual void IGuiEditor_Render(IGuiControl &ctrl,
                                    Property<Tparam> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app)
@@ -218,16 +225,22 @@ struct GuiCompositeControl : IGuiControl
     IGuiRenderer<Tparam> *mRenderCtrl = nullptr;
     IGuiEditor<Tparam> *mEditor = nullptr;
     Property<Tparam> mBinding;
+    Property<bool> mDblBinding; // special binding for double-clicking
     Property<bool> mIsSelectable;
 
     GuiCompositeControl(int page,
                         RectI bounds,
                         const Property<Tparam> &binding,
+                        const Property<bool> &dblBinding,
                         IGuiRenderer<Tparam> *renderFn,
                         IGuiEditor<Tparam> *editor,
                         const Property<bool> &isSelectable)
-        : IGuiControl(page, bounds), mRenderCtrl(renderFn), mEditor(editor), mBinding(binding),
-          mIsSelectable(isSelectable)
+        : IGuiControl(page, bounds),  //
+          mRenderCtrl(renderFn),      //
+          mEditor(editor),            //
+          mBinding(binding),          //
+          mDblBinding(dblBinding),    //
+          mIsSelectable(isSelectable) //
     {
     }
 
@@ -235,22 +248,30 @@ struct GuiCompositeControl : IGuiControl
     {
         display.ClearState();
         display.setCursor(mBounds.x, mBounds.y);
-        mRenderCtrl->IGuiRenderer_Render(*this, mBinding.GetValue(), isSelected, isEditing, app);
-        mEditor->IGuiEditor_Render(*this, mBinding, isSelected, isEditing, app);
+        mRenderCtrl->IGuiRenderer_Render(
+            *this, mBinding.GetValue(), mDblBinding.GetValue(), isSelected, isEditing, app);
+        mEditor->IGuiEditor_Render(*this, mBinding, mDblBinding, isSelected, isEditing, app);
     }
     virtual bool IGuiControl_EditBegin(DisplayApp &app) override
     {
-        return mEditor->IGuiEditor_StartEditing(*this, mBinding, app);
+        return mEditor->IGuiEditor_StartEditing(*this, mBinding, mDblBinding, app);
     }
     virtual void IGuiControl_EditEnd(DisplayApp &app, bool wasCancelled) override
     {
-        mEditor->IGuiEditor_StopEditing(*this, mBinding, app, wasCancelled);
+        mEditor->IGuiEditor_StopEditing(*this, mBinding, mDblBinding, app, wasCancelled);
     }
     virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
     {
-        mEditor->IGuiEditor_Update(*this, mBinding, isSelected, isEditing, app);
+        mEditor->IGuiEditor_Update(*this, mBinding, mDblBinding, isSelected, isEditing, app);
+    }
+    virtual bool IGuiControl_IsSelectable() override
+    {
+        return mIsSelectable.GetValue();
     }
 };
+
+// ---------------------------------------------------------------------------------------
+bool NullBoolBinding;
 
 // ---------------------------------------------------------------------------------------
 // allows chaining renderers together
@@ -263,15 +284,20 @@ struct GuiRendererCombiner : IGuiRenderer<T>
     GuiRendererCombiner(IGuiRenderer<T> *a, IGuiRenderer<T> *b) : mRenderer1(a), mRenderer2(b)
     {
     }
-    virtual void IGuiRenderer_Render(IGuiControl &ctrl, const T &val, bool isSelected, bool isEditing, DisplayApp &app)
+    virtual void IGuiRenderer_Render(IGuiControl &ctrl,
+                                     const T &val,
+                                     bool dblVal,
+                                     bool isSelected,
+                                     bool isEditing,
+                                     DisplayApp &app)
     {
         if (mRenderer1)
         {
-            mRenderer1->IGuiRenderer_Render(ctrl, val, isSelected, isEditing, app);
+            mRenderer1->IGuiRenderer_Render(ctrl, val, dblVal, isSelected, isEditing, app);
         }
         if (mRenderer2)
         {
-            mRenderer2->IGuiRenderer_Render(ctrl, val, isSelected, isEditing, app);
+            mRenderer2->IGuiRenderer_Render(ctrl, val, dblVal, isSelected, isEditing, app);
         }
     }
 };

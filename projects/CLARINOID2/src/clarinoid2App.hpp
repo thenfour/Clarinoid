@@ -317,38 +317,37 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
                                        pThis->mDisplay.DisplayTask();
                                    }};
 
-        // the "Musical state" is the most critical. So let's run it periodically, spread through the whole time slice.
-        // display tasks are also very heavy. Display1 is update/state, Display2 is SPI render.
-        // musical state = about <2400 microseconds
-        // display1 = about <1500 microseconds
-        // display2 = about <2000 microseconds
-        // LED tasks tend to be almost instantaneous (~<10 microseconds) so they can all live in the same slot.
         NopTask nopTask;
-
         TaskPlanner::TaskDeadline plan[] = {
             // NB: run an update task before display tasks in order to initialize things on 1st frame.
+            // let's give musicalstatetask a period of <2900 micros, because that's the length of each audio buffer
+            // size.
+            // and a total plan length that gives the display about 60fps (1667 micros)
 
-            // 0: mus, led
+            //
             {TimeSpan::FromMicros(0), &mMusicalStateTask, "Mus1"},
             {TimeSpan::FromMicros(0), &mLed, "Led1"},
 
-            {TimeSpan::FromMicros(3000), &mMusicalStateTask, "Mus2"},
-            {TimeSpan::FromMicros(3000), &mDisplayTask1, "Display1"},
+            //
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "Mus2"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mDisplayTask1, "Display1"},
 
-            // 6000
-            {TimeSpan::FromMicros(6000), &mMusicalStateTask, "Mus3"},
+            //
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 2), &mMusicalStateTask, "Mus3"},
 
-            // 9000
-            {TimeSpan::FromMicros(9000), &mMusicalStateTask, "Mus4"},
-            {TimeSpan::FromMicros(9000), &mLed, "Led2"},
+            //
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mMusicalStateTask, "Mus4"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mLed, "Led2"},
 
-            // 12000
-            {TimeSpan::FromMicros(12000), &mMusicalStateTask, "Mus5"},
-            {TimeSpan::FromMicros(12000), &mDisplayTask2, "Display2"},
+            //
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 4), &mMusicalStateTask, "Mus5"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 4), &mDisplayTask2, "Display2"},
 
-            // 15000
-            {TimeSpan::FromMicros(15000), &nopTask, "Nop"},
+            //
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "Mus5"},
 
+            //
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &nopTask, "Nop"},
         };
 
         TaskPlanner tp = {plan};

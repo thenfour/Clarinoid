@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <clarinoid/Gui/Bitmaps.hpp>
 #include "Display.hpp"
 #include "Metronome.hpp"
 
@@ -63,9 +64,15 @@ struct DefaultHud : IHudProvider
         auto rcbpm = mDisplay.GetTextBounds(bpmStr);
 
         mDisplay.setCursor(mDisplay.width() - rcbpm.width, mDisplay.getCursorY());
+        if (mpInfo->ISysInfoProvider_GetSettings()->mMetronomeSoundOn)
+        {
+            mDisplay.DrawBitmap(PointI::Construct((mDisplay.width() - rcbpm.width - gPatchDisabledSpec.widthPixels) - 1,
+                                                  mDisplay.GetClientRect().bottom() + 2),
+                                gPatchEnabledSpec);
+        }
         mDisplay.print(bpmStr);
 
-        static constexpr int metronomeFlashWidth = 32;
+        static constexpr int metronomeFlashWidth = 48;
         if (mpInfo->ISysInfoProvider_GetMetronome()->GetBeatFrac() < 0.10f)
         {
             mDisplay.fillRect(displayWidth - metronomeFlashWidth,

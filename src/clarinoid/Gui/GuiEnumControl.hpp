@@ -19,6 +19,7 @@ struct GuiEnumAsTextRenderer : IGuiRenderer<T>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -40,6 +41,7 @@ struct GuiLabelEnumTooltipRenderer : IGuiRenderer<T>
     }
     virtual void IGuiRenderer_Render(IGuiControl &ctrl,
                                      const T &val,
+                                     bool dblVal,
                                      bool isSelected,
                                      bool isEditing,
                                      DisplayApp &app) override
@@ -76,7 +78,10 @@ struct GuiEnumEditor : IGuiEditor<T>
     {
     }
 
-    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl, Property<T> &binding, DisplayApp &app) override
+    virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl,
+                                         Property<T> &binding,
+                                         Property<bool> &dblBinding,
+                                         DisplayApp &app) override
     {
         mListControl.Init(&mEnumInfo, &app.mInput->mMenuScrollA, mListSelectedItem); //
         mOldVal = mBinding.GetValue();
@@ -85,6 +90,7 @@ struct GuiEnumEditor : IGuiEditor<T>
 
     virtual void IGuiEditor_StopEditing(IGuiControl &ctrl,
                                         Property<T> &binding,
+                                        Property<bool> &dblBinding,
                                         DisplayApp &app,
                                         bool wasCancelled) override
     {
@@ -96,6 +102,7 @@ struct GuiEnumEditor : IGuiEditor<T>
 
     virtual void IGuiEditor_Update(IGuiControl &ctrl,
                                    Property<T> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -107,6 +114,7 @@ struct GuiEnumEditor : IGuiEditor<T>
 
     virtual void IGuiEditor_Render(IGuiControl &ctrl,
                                    Property<T> &binding,
+                                   Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
                                    DisplayApp &app) override
@@ -133,7 +141,7 @@ struct GuiEnumControl : GuiCompositeControl<T>
                    const EnumInfo<T> &enumInfo,
                    const Property<T> &binding,
                    const Property<bool> &isSelectable)
-        : GuiCompositeControl<T>(page, bounds, binding, &mRenderer, &mEditor, isSelectable), //
+        : GuiCompositeControl<T>(page, bounds, binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable), //
           mEditor(enumInfo, binding),                                                        //
           mTooltipRenderer(enumInfo, tooltipCaption),                                        //
           mValueRenderer(enumInfo), mRenderer(&mValueRenderer, &mTooltipRenderer)

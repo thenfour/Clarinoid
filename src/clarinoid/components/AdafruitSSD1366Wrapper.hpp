@@ -53,6 +53,20 @@ inline uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont)
 #endif //__AVR__
 }
 
+struct Edges
+{
+    using Flags = uint8_t;
+    static constexpr Flags Left = 1, Top = 2, Right = 4, Bottom = 8,
+
+                           All = 0xff;
+};
+
+enum struct AntStyle
+{
+    Continuous,
+    Chasing,
+};
+
 // i need to subclass in order to support some things:
 // text left margin (so println() new line doesn't set x=0)
 // clipping bounds
@@ -219,23 +233,37 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
     }
 
     // template <int LineWidth, int AntSize, int AntMask>
-    void DrawMarchingAntsRectOutline(int LineWidth, int AntSize, int AntMask, int x, int y, int w, int h, int variation)
+    void DrawMarchingAntsRectOutline(int LineWidth,
+                                     int AntSize,
+                                     int AntMask,
+                                     int x,
+                                     int y,
+                                     int w,
+                                     int h,
+                                     int variation,
+                                     AntStyle style,
+                                     Edges::Flags edges)
     {
+        int n1 = style == AntStyle::Chasing ? -1 : 1;
         // draw rect INSIDE the given coords
-        DrawMarchingAntsFilledRect(AntSize, AntMask, 1, 1, x, y, w, LineWidth, variation); // top rect
-        DrawMarchingAntsFilledRect(
-            AntSize, AntMask, 1, -1, x, y + h - LineWidth, w, LineWidth, variation); // bottom rect
-        DrawMarchingAntsFilledRect(
-            AntSize, AntMask, -1, -1, x, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // left
-        DrawMarchingAntsFilledRect(AntSize,
-                                   AntMask,
-                                   1,
-                                   1,
-                                   x + w - LineWidth,
-                                   y + LineWidth,
-                                   LineWidth,
-                                   h - LineWidth - LineWidth,
-                                   variation); // right
+        if (edges & Edges::Top)
+            DrawMarchingAntsFilledRect(AntSize, AntMask, 1, 1, x, y, w, LineWidth, variation); // top rect
+        if (edges & Edges::Bottom)
+            DrawMarchingAntsFilledRect(
+                AntSize, AntMask, 1, n1, x, y + h - LineWidth, w, LineWidth, variation); // bottom rect
+        if (edges & Edges::Left)
+            DrawMarchingAntsFilledRect(
+                AntSize, AntMask, n1, n1, x, y + LineWidth, LineWidth, h - LineWidth - LineWidth, variation); // left
+        if (edges & Edges::Right)
+            DrawMarchingAntsFilledRect(AntSize,
+                                       AntMask,
+                                       1,
+                                       1,
+                                       x + w - LineWidth,
+                                       y + LineWidth,
+                                       LineWidth,
+                                       h - LineWidth - LineWidth,
+                                       variation); // right
     }
 
     uint16_t GetLineHeight() const

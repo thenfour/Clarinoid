@@ -110,9 +110,9 @@ struct TaskPlanner
     {
         // assert every task in order.
         TimeSpan lastTS = TimeSpan::Zero();
-        for (size_t i = 0; i < mTaskCursor; ++ i)
+        for (size_t i = 0; i < mTaskCursor; ++i)
         {
-            auto& t = mTasks[i];
+            auto &t = mTasks[i];
             CCASSERT(t.mTimeSliceDeadline >= lastTS);
             lastTS = t.mTimeSliceDeadline;
         }
@@ -177,6 +177,7 @@ struct TaskPlanner
         {
             auto a = GetNextAction();
             ExecuteAction(a);
+            yield();
         }
     }
 };
