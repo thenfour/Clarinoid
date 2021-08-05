@@ -62,7 +62,7 @@ class CCEWIMIDIOut
                 currentPitchBendRaw = pb;
             }
 
-            float breathAdj = liveVoice.mBreath01.GetFloatVal(); // powf(ms.breath01.GetValue(), MIDI_BREATH_CURVE);
+            float breathAdj = liveVoice.mBreath01.GetFloatVal();
             int breath = Calc14BitBreath(breathAdj);
 
             if (breath != currentBreathCC14Bit)

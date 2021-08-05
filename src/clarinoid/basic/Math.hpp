@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "fastonebigheader.hpp"
 
 namespace clarinoid
 {
@@ -168,7 +169,7 @@ static constexpr float MIN_DECIBEL_GAIN = -60.0f;
  */
 inline float LinearToDecibels(float aLinearValue, float aMinDecibels = MIN_DECIBEL_GAIN)
 {
-    return aLinearValue ? 20.0f * std::log10(aLinearValue) : aMinDecibels;
+    return aLinearValue ? 20.0f * ::fastlog(aLinearValue) : aMinDecibels;
 }
 
 /**
@@ -176,7 +177,7 @@ inline float LinearToDecibels(float aLinearValue, float aMinDecibels = MIN_DECIB
  */
 inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIBEL_GAIN)
 {
-    float lin = std::pow(10.0f, 0.05f * aDecibels);
+    float lin = ::fastpow(10.0f, 0.05f * aDecibels);
     if (lin <= aNegInfDecibels)
         return 0.0f;
     return lin;
@@ -232,7 +233,7 @@ inline float SnapPitchBend(float x, float snapStrength)
     float q = snapStrength * 3;
     q = q * q * q * q * q;
     q += 1;
-    return z + std::pow(p, q);
+    return z + ::fastpow(p, q);
 }
 
 // this is all utilities for shaping curves using this style:
@@ -245,9 +246,9 @@ namespace Curve2
 {
 static float Curve2_F(float c, float x, float n)
 {
-    float d = ::powf(n, c - 1);
+    float d = ::fastpow(n, c - 1);
     d = std::max(d, 0.0001f); // prevent div0
-    return ::powf(x, c) / d;
+    return ::fastpow(x, c) / d;
 }
 
 // this is the basic function for the curve.

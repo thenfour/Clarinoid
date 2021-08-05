@@ -12,7 +12,7 @@ namespace clarinoid
 inline float MIDINoteToFreq(float x)
 {
     float a = 440;
-    return (a / 32.0f) * powf(2.0f, (((float)x - 9.0f) / 12.0f));
+    return (a / 32.0f) * ::fastpow(2.0f, (((float)x - 9.0f) / 12.0f));
 }
 
 ////////////////////////////////////////////////////
