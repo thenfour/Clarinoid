@@ -147,7 +147,7 @@ struct GuiGainEditor : IGuiEditor<float>
     virtual bool IGuiEditor_StartEditing(IGuiControl &ctrl,
                                          Property<float> &binding,
                                          Property<bool> &dblBinding,
-                                         DisplayApp &app)
+                                         DisplayApp &app) override
     {
         mWasModified = false;
         mWhenEditingStarted.Restart();
@@ -159,10 +159,11 @@ struct GuiGainEditor : IGuiEditor<float>
                                         Property<float> &binding,
                                         Property<bool> &dblBinding,
                                         DisplayApp &app,
-                                        bool wasCancelled)
+                                        bool wasCancelled) override
     {
         if (wasCancelled)
         {
+            Serial.println("setting value because of cancel");
             binding.SetValue(mOldVal);
         }
         else if (!mWasModified && (mWhenEditingStarted.ElapsedTime() < TimeSpan::FromMillis(DOUBLE_CLICK_TIMEOUT_MS)))
@@ -172,12 +173,12 @@ struct GuiGainEditor : IGuiEditor<float>
         }
     }
 
-    virtual void IGuiEditor_Render(IGuiControl &ctrl,
+    virtual void IGuiEditor_Update(IGuiControl &ctrl,
                                    Property<float> &binding,
                                    Property<bool> &dblBinding,
                                    bool isSelected,
                                    bool isEditing,
-                                   DisplayApp &app)
+                                   DisplayApp &app) override
     {
         if (isEditing)
         {
@@ -188,9 +189,14 @@ struct GuiGainEditor : IGuiEditor<float>
             }
             float oldValLin = binding.GetValue();
             float oldValDb = LinearToDecibels(oldValLin);
-            float newValDb = mRange.AdjustValue(
+            auto r = mRange.AdjustValue(
                 oldValDb, d, app.mInput->mModifierCourse.CurrentValue(), app.mInput->mModifierFine.CurrentValue());
-            binding.SetValue(DecibelsToLinear(newValDb));
+            if (r.first)
+            {
+                float newValDb = r.second;
+                float lin = DecibelsToLinear(newValDb);
+                binding.SetValue(lin);
+            }
         }
     }
 };

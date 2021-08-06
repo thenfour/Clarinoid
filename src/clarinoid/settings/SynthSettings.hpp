@@ -64,15 +64,15 @@ EnumInfo<ClarinoidFilterType> gClarinoidFilterTypeInfo("FilterType", gClarinoidF
 enum class ModulationSource : uint8_t
 {
     None, // Gets special handling. see below.
-    Breath,
-    PitchStrip,
-    LFO1,
-    LFO2,
-    ENV1,
-    ENV2,
-    Osc1FB,
-    Osc2FB,
-    Osc3FB,
+    Breath, // K-rate
+    PitchStrip, // K-rate
+    LFO1, // a-rate
+    LFO2, // a-rate
+    ENV1, // a-rate
+    ENV2, // a-rate
+    Osc1FB, // a-rate
+    Osc2FB, // a-rate
+    Osc3FB, // a-rate
 };
 
 EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
@@ -139,10 +139,12 @@ EnumItemInfo<ModulationDestination> gModulationDestinationItems[13] = {
     {ModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
     {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
     {ModulationDestination::Osc1Phase, "Osc1Phase"},
+
     {ModulationDestination::Osc2Frequency, "Osc2Frequency"},
     {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
     {ModulationDestination::Osc2Phase, "Osc2Phase"},
     {ModulationDestination::Osc2Amplitude, "Osc2Amplitude"},
+
     {ModulationDestination::Osc3Frequency, "Osc3Frequency"},
     {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
     {ModulationDestination::Osc3Phase, "Osc3Phase"},

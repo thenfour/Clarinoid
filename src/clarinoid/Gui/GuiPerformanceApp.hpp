@@ -246,7 +246,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_0_1,
         "Size",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverbGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverbSize;
          },
          this},
         NullBoolBinding,

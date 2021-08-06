@@ -60,22 +60,30 @@ struct GainEditor : ISettingItemEditor
     {
         float valLinear = mBindingLinear.GetValue();
         float valInDb = LinearToDecibels(valLinear);
-        float adjValDb = mRangeInDb.AdjustValue(valInDb,
-                                                encIntDelta,
-                                                mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                                mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
-        mBindingLinear.SetValue(DecibelsToLinear(adjValDb));
+        auto r = mRangeInDb.AdjustValue(valInDb,
+                                        encIntDelta,
+                                        mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
+                                        mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+        if (r.first)
+        {
+            float adjValDb = r.second;
+            mBindingLinear.SetValue(DecibelsToLinear(adjValDb));
+        }
     }
 
     virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
     {
         float valLinear = mBindingLinear.GetValue();
         float valInDb = LinearToDecibels(valLinear);
-        float adjValDb = mRangeInDb.AdjustValue(valInDb,
-                                                encIntDelta,
-                                                mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                                mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
-        mBindingLinear.SetValue(DecibelsToLinear(adjValDb));
+        auto r = mRangeInDb.AdjustValue(valInDb,
+                                        encIntDelta,
+                                        mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
+                                        mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+        if (r.first)
+        {
+            float adjValDb = r.second;
+            mBindingLinear.SetValue(DecibelsToLinear(adjValDb));
+        }
 
         if (backWasPressed)
         {

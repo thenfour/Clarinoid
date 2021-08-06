@@ -37,20 +37,28 @@ struct NumericEditor : ISettingItemEditor
     // with encoder button pressed here.
     virtual void UpdateMomentaryMode(int encIntDelta)
     {
-        T val = mRange.AdjustValue(mBinding.GetValue(),
-                                   encIntDelta,
-                                   mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                   mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
-        mBinding.SetValue(val);
+        auto r = mRange.AdjustValue(mBinding.GetValue(),
+                                    encIntDelta,
+                                    mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
+                                    mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+        if (r.first)
+        {
+            T val = r.second;
+            mBinding.SetValue(val);
+        }
     }
 
     virtual void Update(bool backWasPressed, bool encWasPressed, int encIntDelta)
     {
-        T val = mRange.AdjustValue(mBinding.GetValue(),
-                                   encIntDelta,
-                                   mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                   mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
-        mBinding.SetValue(val);
+        auto r = mRange.AdjustValue(mBinding.GetValue(),
+                                    encIntDelta,
+                                    mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
+                                    mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+        if (r.first)
+        {
+            T val = r.second;
+            mBinding.SetValue(val);
+        }
 
         if (backWasPressed)
         {

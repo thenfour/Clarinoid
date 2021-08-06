@@ -28,6 +28,16 @@ inline float discohead_fastTanh(float var)
     return 4.15f * var / (4.29f + var * var);
 }
 
+inline float fastlog10f(float x)
+{
+    return ::fastlog2(x) / 3.32192809489f;
+}
+
+inline float fasterlog10f(float x)
+{
+    return ::fasterlog2(x) / 3.32192809489f;
+}
+
 uint16_t ClampUint32ToUint16(uint32_t a)
 {
     if (a > std::numeric_limits<uint16_t>::max())
@@ -40,11 +50,34 @@ inline int FloatRoundToInt(float f)
     return (int)::floorf(f + 0.5f);
 }
 
-inline bool FloatEquals(float f1, float f2, float eps = 0.000001f)
+static constexpr float FloatEpsilon = 0.000001f;
+
+inline bool FloatEquals(float f1, float f2, float eps = FloatEpsilon)
 {
     return fabs(f1 - f2) < eps;
 }
 
+inline bool FloatLessThanOrEquals(float lhs, float rhs, float eps = FloatEpsilon)
+{
+    return lhs <= (rhs + eps);
+}
+
+inline bool FloatIsAbove(float lhs, float rhs, float eps = FloatEpsilon)
+{
+    return lhs > (rhs + eps);
+}
+
+template <typename T>
+inline bool NumberEquals(T lhs, T rhs)
+{
+    static_assert(std::is_integral<T>::value, "Integral required.");
+    return lhs == rhs;
+}
+
+inline bool NumberEquals(float lhs, float rhs)
+{
+    return FloatEquals(lhs, rhs);
+}
 inline bool FloatRoundedEqualsInt(float f, int n)
 {
     return (int)FloatRoundToInt(f) == n;
@@ -169,7 +202,7 @@ static constexpr float MIN_DECIBEL_GAIN = -60.0f;
  */
 inline float LinearToDecibels(float aLinearValue, float aMinDecibels = MIN_DECIBEL_GAIN)
 {
-    return aLinearValue ? 20.0f * ::fastlog(aLinearValue) : aMinDecibels;
+    return (aLinearValue > FloatEpsilon) ? 20.0f * fastlog10f(aLinearValue) : aMinDecibels;
 }
 
 /**
@@ -183,11 +216,12 @@ inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIB
     return lin;
 }
 
-inline const char *GetSignStr(float f)
+template<typename T>
+inline const char *GetSignStr(T f)
 {
-    if (FloatEquals(f, 0.0f))
+    if (NumberEquals(f, T(0)))
         return CHARSTR_NARROWPLUSMINUS;
-    if (f > 0)
+    if (f > T(0))
         return CHARSTR_NARROWPLUS;
     return CHARSTR_NARROWMINUS;
 }
@@ -203,13 +237,13 @@ inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_D
     {
         return CHARSTR_NARROWMINUS CHARSTR_INFINITY CHARSTR_DB; // -oodb
     }
-    String ret = GetSignStr(aDecibels);
-    int iDecibels = (int)std::ceil(abs(aDecibels));
-    if (iDecibels < 10)
+    int iDecibels = (int)std::round(aDecibels);
+    String ret = GetSignStr(iDecibels);
+    if (abs(iDecibels) < 10)
     {
         ret.append(CHARSTR_DIGITWIDTHSPACE);
     }
-    ret.append(iDecibels);
+    ret.append(abs(iDecibels));
     ret.append(CHARSTR_DB);
     return ret;
 }
@@ -546,10 +580,10 @@ PieData fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) 
         vx, vy,     // v
         sx, sy;     // pixel position
     rr = r * r;
-    ux = (r)*cosf(a0);
-    uy = (r)*sinf(a0);
-    vx = (r)*cosf(a1);
-    vy = (r)*sinf(a1);
+    ux = (r) * ::arm_cos_f32(a0);
+    uy = (r) * ::arm_sin_f32(a0);
+    vx = (r) * ::arm_cos_f32(a1);
+    vy = (r) * ::arm_sin_f32(a1);
     PieData ret;
     ret.p0 = PointF::Construct(ux, uy);
     ret.p1 = PointF::Construct(vx, vy);
@@ -656,7 +690,7 @@ struct NumericEditRangeSpec
                                           static_cast<Trhs>(mFineStep));
     }
 
-    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) const
+    virtual std::pair<bool, T> AdjustValue(T oldVal, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) const
     {
         T step = mNormalStep;
         if (isCoursePressed && !isFinePressed)
@@ -664,9 +698,11 @@ struct NumericEditRangeSpec
         if (isFinePressed && !isCoursePressed)
             step = mFineStep;
 
-        T ret = f + (step * encoderIntDelta);
-        ret = ClampInclusive(ret, mRangeMin, mRangeMax);
-        return ret;
+        T ret = oldVal + (step * encoderIntDelta);
+
+        ret = Clamp(ret, mRangeMin, mRangeMax);
+
+        return std::make_pair(!NumberEquals(oldVal, ret), ret);
     }
 
     virtual float remap(T val, float newMin, float newMax) const
@@ -704,7 +740,10 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
         return val <= BOTTOM_VALUE;
     }
 
-    virtual T AdjustValue(T f, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) const override
+    virtual std::pair<bool, T> AdjustValue(T oldVal,
+                                           int encoderIntDelta,
+                                           bool isCoursePressed,
+                                           bool isFinePressed) const override
     {
         T step = mNormalStep;
         if (isCoursePressed && !isFinePressed)
@@ -712,9 +751,9 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
         if (isFinePressed && !isCoursePressed)
             step = mFineStep;
 
-        T ret = f;
+        T ret = oldVal;
 
-        if (encoderIntDelta > 0 && FloatEquals(f, BOTTOM_VALUE))
+        if (encoderIntDelta > 0 && FloatLessThanOrEquals(oldVal, BOTTOM_VALUE))
         {
             // handle the first encoder detent jumping from 0 to the range min.
             ret = mRangeMin;
@@ -722,15 +761,29 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
         }
 
         ret += (step * encoderIntDelta);
+
+        // if you're within finestep/2 of a value rounded to 0.25, then round it.
+        float quantizedValue = floorf((ret+0.125f) * 4) / 4;
+        if (fabsf(quantizedValue - ret) < (mFineStep / 2.0f)) {
+            ret = quantizedValue;
+        }
+
+        //transition from >min to =min, if you're within a finestep away.
+        if (ret > mRangeMin && ret <= (mRangeMin + (mFineStep / 2)))
+        {
+            ret = mRangeMin;
+        }
+
         if (ret < mRangeMin)
         {
-            ret = BOTTOM_VALUE;
+            ret = BOTTOM_VALUE - 1; // minus one to allow for imprecision during round trips
         }
         else if (ret > mRangeMax)
         {
             ret = mRangeMax;
         }
-        return ret;
+
+        return std::make_pair(!NumberEquals(ret, oldVal), ret);
     }
 };
 
@@ -755,7 +808,7 @@ static const NumericEditRangeSpec<float> gPortamentoRange = NumericEditRangeSpec
 // osc pitch and global transpose
 static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int>{-48, 48, 6, 1, 1};
 static const NumericEditRangeSpec<float> gDelayStereoSpread = NumericEditRangeSpec<float>{0.0f, 100.0f};
-static const NumericEditRangeSpec<float> gFilterFreqRange =  NumericEditRangeSpec<float>{0.0f, 20000.0f};
+static const NumericEditRangeSpec<float> gFilterFreqRange = NumericEditRangeSpec<float>{0.0f, 20000.0f};
 
 static const NumericEditRangeSpec<float> gFreqMulRange = NumericEditRangeSpec<float>{0, 24, 1.0f, 0.10f, 0.05f};
 static const NumericEditRangeSpec<float> gFreqOffsetRange = NumericEditRangeSpec<float>{-5000, 5000, 500, 100, 10};

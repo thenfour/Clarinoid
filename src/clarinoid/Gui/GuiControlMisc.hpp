@@ -165,7 +165,7 @@ struct GuiNumericEditor : IGuiEditor<Tparam>
         }
     }
 
-    virtual void IGuiEditor_Render(IGuiControl &ctrl,
+    virtual void IGuiEditor_Update(IGuiControl &ctrl,
                                    Property<Tparam> &binding,
                                    Property<bool> &dblBinding,
                                    bool isSelected,
@@ -180,9 +180,13 @@ struct GuiNumericEditor : IGuiEditor<Tparam>
             {
                 mWasModified = true;
             }
-            Tparam newVal = mRange.AdjustValue(
+            auto r = mRange.AdjustValue(
                 oldVal, d, app.mInput->mModifierCourse.CurrentValue(), app.mInput->mModifierFine.CurrentValue());
-            binding.SetValue(newVal);
+            if (r.first)
+            {
+                Tparam newVal = r.second;
+                binding.SetValue(newVal);
+            }
         }
     }
 };
