@@ -61,17 +61,29 @@ namespace clarinoid
 #include "TestTaskManager.hpp"
 #include "TestInputMapping.hpp"
 #include "TestFilter.hpp"
+#include "TestModulation.hpp"
 
 int main()
 //int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR lpCmdLine, int)
 {
-  bool b = false;
-  clarinoid::Property<bool> prop = b;
-  prop.GetValue();
-  prop.SetValue(true);
+  //float f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(1.0f));
+  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
+  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
+  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
+  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
+  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
+  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
+  //double d = log2(10);
+  //bool b = false;
+  //clarinoid::Property<bool> prop = b;
+  //prop.GetValue();
+  //prop.SetValue(true);
 
   //TestFilter();
-  TestFilterPerformance();
+  //TestFilterPerformance();
+
+
+  TestModulation();
 
   //clarinoid::TestInputDelegator(); // test that input, mapping, and functions work.
   //TestControlReaders();

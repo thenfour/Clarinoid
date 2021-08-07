@@ -83,12 +83,12 @@ namespace clarinoid
       TestTask t2;
       t2.mDelayMicros = 1100; // this will take too long.
       NopTask nt;
-      TaskPlanner p
-      {
-        TaskPlanner::TaskDeadline { TimeSpan::Zero(), &t1, "t1" },
-        TaskPlanner::TaskDeadline { TimeSpan::FromMicros(1000), &t2, "t2" },
-        TaskPlanner::TaskDeadline { TimeSpan::FromMicros(2000), &nt, "nop" },
+      TaskPlanner::TaskDeadline plan[] = {
+        { TimeSpan::Zero(), &t1, "t1" },
+        { TimeSpan::FromMicros(1000), &t2, "t2" },
+        { TimeSpan::FromMicros(2000), &nt, "nop" },
       };
+      TaskPlanner p { plan };
 
       auto a = p.GetNextAction(); // T1
       TestEq(a.mTTD, TimeSpan::FromMicros(0)); // we're at the beginning of the timeslice and there's t1 ready to run.

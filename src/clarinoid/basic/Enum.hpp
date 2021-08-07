@@ -57,11 +57,16 @@ template <typename T>
 struct EnumInfo : /*GenericEnumItemInfo,*/ GenericEnumInfo
 {
     const EnumItemInfo<T> *mItems;
+    const size_t mCount;
+
+    size_t count() const
+    {
+        return mCount;
+    }
 
     template <size_t N>
     EnumInfo(const char *typeName, const EnumItemInfo<T> (&enumItems)[N])
-        : // GenericEnumItemInfo(N, typeName),
-          GenericEnumInfo(N, typeName), mItems(enumItems)
+        : GenericEnumInfo(N, typeName), mItems(enumItems), mCount(N)
     {
         for (size_t i = 0; i < N; ++i)
         {

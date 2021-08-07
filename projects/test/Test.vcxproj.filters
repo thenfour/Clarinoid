@@ -39,6 +39,7 @@
       <Filter>filters</Filter>
     </ClInclude>
     <ClInclude Include="testBaseSettings.hpp" />
+    <ClInclude Include="TestModulation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="filters">

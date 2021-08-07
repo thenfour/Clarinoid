@@ -37,20 +37,14 @@ class FilterNode : public AudioStream
             return;
         int16_t *p = block->data;
         float tempBufferSource[AUDIO_BLOCK_SAMPLES];
-        for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
-        {
-            tempBufferSource[i] = (float)p[i] / 32767.0f;
-        }
+        fast::Sample16To32Buffer(p, tempBufferSource);
         mSelectedFilter->ProcessInPlace(tempBufferSource, AUDIO_BLOCK_SAMPLES);
         if (mDCEnabled)
         {
             mDC.ProcessInPlace(tempBufferSource, AUDIO_BLOCK_SAMPLES);
         }
-        for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
-        {
-            float f = tempBufferSource[i];
-            p[i] = saturate16(int32_t(f * 32768.0f));
-        }
+
+        fast::Sample32To16Buffer(tempBufferSource, p);
 
         transmit(block);
         release(block);

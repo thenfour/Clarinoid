@@ -17,10 +17,32 @@ namespace clarinoid
 #define CHARSTR_DIGITWIDTHSPACE "\x87"
 
 template <typename T, size_t N>
+struct StaticArray
+{
+    T (&mArray)[N];
+    static constexpr size_t Size = N;
+    StaticArray(T (&x)[N]) : mArray(x) {}
+};
+
+template <typename T, size_t N>
 constexpr size_t SizeofStaticArray(const T (&x)[N])
 {
     return N;
 }
+
+template<typename T, size_t N>
+void CopyPODArray(const T (&from)[N], T (&to)[N])
+{
+    memcpy(to, from, sizeof(T) * N);
+}
+
+template<typename T>
+void CopyPODArray(const T* from, T* to, size_t N)
+{
+    memcpy(to, from, sizeof(T) * N);
+}
+
+
 struct PointI
 {
     int x;

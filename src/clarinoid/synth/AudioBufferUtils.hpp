@@ -12,7 +12,7 @@ static inline int32_t gainToSignedMultiply32x16(float n)
         n = 32767.0f;
     else if (n < -32767.0f)
         n = -32767.0f;
-    return n * 65536.0f;
+    return (int32_t)(n * 65536.0f);
 }
 
 // takes a single input buffer
@@ -84,40 +84,40 @@ inline static void audioBufferCopy(int16_t *out /* in/out */, const int16_t *in)
     }
 }
 
-// this does effectively DATA += (IN * MULT)
-// useful for adding a signal to another one with gain applied.
-// copied from applyGainThenAdd
-static void audioBufferMixInPlaceWithGain(int16_t *data, const int16_t *in, int32_t mult)
-{
-    static constexpr int32_t MULTI_UNITYGAIN = 65536;
-    uint32_t *dst = (uint32_t *)data;
-    const uint32_t *src = (uint32_t *)in;
-    const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);
+// // this does effectively DATA += (IN * MULT)
+// // useful for adding a signal to another one with gain applied.
+// // copied from applyGainThenAdd
+// static void audioBufferMixInPlaceWithGain(int16_t *data, const int16_t *in, int32_t mult)
+// {
+//     static constexpr int32_t MULTI_UNITYGAIN = 65536;
+//     uint32_t *dst = (uint32_t *)data;
+//     const uint32_t *src = (uint32_t *)in;
+//     const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);
 
-    if (mult == MULTI_UNITYGAIN)
-    {
-        do
-        {
-            uint32_t tmp32 = *dst;
-            *dst++ = signed_add_16_and_16(tmp32, *src++);
-            tmp32 = *dst;
-            *dst++ = signed_add_16_and_16(tmp32, *src++);
-        } while (dst < end);
-    }
-    else
-    {
-        do
-        {
-            uint32_t tmp32 = *src++; // read 2 samples from *data
-            int32_t val1 = signed_multiply_32x16b(mult, tmp32);
-            int32_t val2 = signed_multiply_32x16t(mult, tmp32);
-            val1 = signed_saturate_rshift(val1, 16, 0);
-            val2 = signed_saturate_rshift(val2, 16, 0);
-            tmp32 = pack_16b_16b(val2, val1);
-            uint32_t tmp32b = *dst;
-            *dst++ = signed_add_16_and_16(tmp32, tmp32b);
-        } while (dst < end);
-    }
-}
+//     if (mult == MULTI_UNITYGAIN)
+//     {
+//         do
+//         {
+//             uint32_t tmp32 = *dst;
+//             *dst++ = signed_add_16_and_16(tmp32, *src++);
+//             tmp32 = *dst;
+//             *dst++ = signed_add_16_and_16(tmp32, *src++);
+//         } while (dst < end);
+//     }
+//     else
+//     {
+//         do
+//         {
+//             uint32_t tmp32 = *src++; // read 2 samples from *data
+//             int32_t val1 = signed_multiply_32x16b(mult, tmp32);
+//             int32_t val2 = signed_multiply_32x16t(mult, tmp32);
+//             val1 = signed_saturate_rshift(val1, 16, 0);
+//             val2 = signed_saturate_rshift(val2, 16, 0);
+//             tmp32 = pack_16b_16b(val2, val1);
+//             uint32_t tmp32b = *dst;
+//             *dst++ = signed_add_16_and_16(tmp32, tmp32b);
+//         } while (dst < end);
+//     }
+// }
 
 } // namespace clarinoid

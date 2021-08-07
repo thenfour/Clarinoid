@@ -281,7 +281,7 @@ struct AudioBandlimitedOsci : public AudioStream
 
             if (pm1)
             {
-                mT += Sample16To32(pm1->data[i]) * mPMMultiplier;
+                mT += fast::Sample16To32(pm1->data[i]) * mPMMultiplier;
             }
 
             if (fm1)
@@ -308,7 +308,7 @@ struct AudioBandlimitedOsci : public AudioStream
             // pulse Width Modulation:
             if (pwm1)
             {
-                mPulseWidth = mPulseWidthTarget01 + Sample16To32(pwm1->data[i]);
+                mPulseWidth = mPulseWidthTarget01 + fast::Sample16To32(pwm1->data[i]);
             }
             mPulseWidth = Clamp(mPulseWidth, 0.001f, 0.999f);
         }
@@ -318,7 +318,7 @@ struct AudioBandlimitedOsci : public AudioStream
             float o = mOutput * mGain;
             if (am)
             {
-                o *= std::abs(Sample16To32(am->data[i])) + mAMMinimumGain;
+                o *= std::abs(fast::Sample16To32(am->data[i])) + mAMMinimumGain;
             }
 
             out->data[i] = o * 32768.0f;
@@ -344,7 +344,7 @@ struct AudioBandlimitedOsci : public AudioStream
             {
             case OscWaveformShape::Sine: {
                 mT -= floorf(mT);
-                mOutput = arm_sin_f32((mT + fboutput * mPMFeedbackAmt) * TWO_PI);
+                mOutput = fast::sin((mT + fboutput * mPMFeedbackAmt) * TWO_PI);
                 break;
             }
 

@@ -108,7 +108,7 @@ AudioConnection patchDelayVerbInputRight = {delayFilterRight, 0, verbInputMixerR
 
 } // namespace CCSynthGraph
 
-struct Voice
+struct Voice : IModulationKRateProvider
 {
     //
     // [mOsc] osc1 --> 0
@@ -127,33 +127,22 @@ struct Voice
     CCPatch mPatchDCToEnv2 = {mEnv2PeakDC, 0, mEnv2, 0};
     AudioSynthWaveform mLfo1;
     AudioSynthWaveform mLfo2;
-    AudioSynthWaveformDc mBreathModSource;
-    AudioSynthWaveformDc mPitchBendModSource;
 
     // have to track these because they're private members of AudioWaveform.
     short mLfo1Waveshape = 0xff; // invalid so 1st run will always set the shape.
     short mLfo2Waveshape = 0xff; // invalid so 1st run will always set the shape.
 
-    // patch modulation sources in
-    CCPatch mPatchEnv1ToMod = {mEnv1, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::ENV1)};
-    CCPatch mPatchEnv2ToMod = {mEnv2, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::ENV2)};
-    CCPatch mPatchLfo1ToMod = {mLfo1, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO1)};
-    CCPatch mPatchLfo2ToMod = {mLfo2, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::LFO2)};
+    // patch a-rate modulation sources in
+    CCPatch mPatchEnv1ToMod = {mEnv1, 0, mModMatrix, (uint8_t)ARateModulationSource::ENV1};
+    CCPatch mPatchEnv2ToMod = {mEnv2, 0, mModMatrix, (uint8_t)ARateModulationSource::ENV2};
+    CCPatch mPatchLfo1ToMod = {mLfo1, 0, mModMatrix, (uint8_t)ARateModulationSource::LFO1};
+    CCPatch mPatchLfo2ToMod = {mLfo2, 0, mModMatrix, (uint8_t)ARateModulationSource::LFO2};
 
-    CCPatch mPatchBreathToMod = {mBreathModSource,
-                                 0,
-                                 mModMatrix,
-                                 (uint8_t)ModulationSourceToIndex(ModulationSource::Breath)};
-    CCPatch mPatchPitchStripToMod = {mPitchBendModSource,
-                                     0,
-                                     mModMatrix,
-                                     (uint8_t)ModulationSourceToIndex(ModulationSource::PitchStrip)};
+    CCPatch mOsc1FBToMod = {mOsc, 0, mModMatrix, (uint8_t)ARateModulationSource::Osc1FB};
+    CCPatch mOsc2FBToMod = {mOsc, 1, mModMatrix, (uint8_t)ARateModulationSource::Osc2FB};
+    CCPatch mOsc3FBToMod = {mOsc, 2, mModMatrix, (uint8_t)ARateModulationSource::Osc3FB};
 
-    CCPatch mOsc1FBToMod = {mOsc, 0, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc1FB)};
-    CCPatch mOsc2FBToMod = {mOsc, 1, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc2FB)};
-    CCPatch mOsc3FBToMod = {mOsc, 2, mModMatrix, (uint8_t)ModulationSourceToIndex(ModulationSource::Osc3FB)};
-
-    // Patch modulation destinations
+    // Patch a-rate modulation destinations
     /*
 Input 0: Frequency Modulation for Oscillator 1
 Input 1: Pulse Width Modulation for Oscillator 1
@@ -163,56 +152,46 @@ Input 4: Frequency Modulation for Oscillator 3
 Input 5: Pulse Width Modulation for Oscillator 3
     */
     CCPatch mPatchModToOsc1PWM = {mModMatrix,
-                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1PulseWidth),
+                                  (uint8_t)ARateModulationDestination::Osc1PulseWidth,
                                   mOsc,
                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm1};
     CCPatch mPatchModToOsc2PWM = {mModMatrix,
-                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2PulseWidth),
+                                  (uint8_t)ARateModulationDestination::Osc2PulseWidth,
                                   mOsc,
                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm2};
     CCPatch mPatchModToOsc3PWM = {mModMatrix,
-                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3PulseWidth),
+                                  (uint8_t)ARateModulationDestination::Osc3PulseWidth,
                                   mOsc,
                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm3};
 
-    CCPatch mPatchModToOsc1Freq = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Frequency),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::fm1};
-    CCPatch mPatchModToOsc2Freq = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Frequency),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::fm2};
-    CCPatch mPatchModToOsc3Freq = {mModMatrix,
-                                   (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Frequency),
-                                   mOsc,
-                                   (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::fm3};
-
     CCPatch mPatchModToOsc1Phase = {mModMatrix,
-                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Phase),
+                                    (uint8_t)ARateModulationDestination::Osc1Phase,
                                     mOsc,
                                     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm1};
     CCPatch mPatchModToOsc2Phase = {mModMatrix,
-                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Phase),
+                                    (uint8_t)ARateModulationDestination::Osc2Phase,
                                     mOsc,
                                     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm2};
     CCPatch mPatchModToOsc3Phase = {mModMatrix,
-                                    (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Phase),
+                                    (uint8_t)ARateModulationDestination::Osc3Phase,
                                     mOsc,
                                     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm3};
 
-    CCPatch mPatchModToOsc1Amp = {mModMatrix,
-                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc1Amplitude),
-                                  mOsc,
-                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am1};
-    CCPatch mPatchModToOsc2Amp = {mModMatrix,
-                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc2Amplitude),
-                                  mOsc,
-                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am2};
-    CCPatch mPatchModToOsc3Amp = {mModMatrix,
-                                  (uint8_t)ModulationDestinationToIndex(ModulationDestination::Osc3Amplitude),
-                                  mOsc,
-                                  (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am3};
+    // CCPatch mPatchModToOsc1Amp = {
+    //     mModMatrix,
+    //     (uint8_t)ModulationDestinationInfo::GetARateIndex(ModulationDestination::Osc1Amplitude),
+    //     mOsc,
+    //     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am1};
+    // CCPatch mPatchModToOsc2Amp = {
+    //     mModMatrix,
+    //     (uint8_t)ModulationDestinationInfo::GetARateIndex(ModulationDestination::Osc2Amplitude),
+    //     mOsc,
+    //     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am2};
+    // CCPatch mPatchModToOsc3Amp = {
+    //     mModMatrix,
+    //     (uint8_t)ModulationDestinationInfo::GetARateIndex(ModulationDestination::Osc3Amplitude),
+    //     mOsc,
+    //     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am3};
 
     // ...
     MultiMixerPannerNode<3> mOscMixerPanner;
@@ -273,24 +252,24 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchLfo1ToMod.connect();
         mPatchLfo2ToMod.connect();
 
-        mPatchBreathToMod.connect();
-        mPatchPitchStripToMod.connect();
+        // mPatchBreathToMod.connect();
+        // mPatchPitchStripToMod.connect();
 
         mPatchModToOsc1PWM.connect();
         mPatchModToOsc2PWM.connect();
         mPatchModToOsc3PWM.connect();
 
-        mPatchModToOsc1Freq.connect();
-        mPatchModToOsc2Freq.connect();
-        mPatchModToOsc3Freq.connect();
+        // mPatchModToOsc1Freq.connect();
+        // mPatchModToOsc2Freq.connect();
+        // mPatchModToOsc3Freq.connect();
 
         mPatchModToOsc1Phase.connect();
         mPatchModToOsc2Phase.connect();
         mPatchModToOsc3Phase.connect();
 
-        mPatchModToOsc1Amp.connect();
-        mPatchModToOsc2Amp.connect();
-        mPatchModToOsc3Amp.connect();
+        // mPatchModToOsc1Amp.connect();
+        // mPatchModToOsc2Amp.connect();
+        // mPatchModToOsc3Amp.connect();
 
         mPatchDCToEnv1.connect();
         mPatchDCToEnv2.connect();
@@ -319,11 +298,58 @@ Input 5: Pulse Width Modulation for Oscillator 3
         return filterFreq;
     }
 
+    float mLatestBreathVal = 0.0f;
+    float mLatestPitchbendVal = 0.0f;
+
+    virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) override
+    {
+        switch (src)
+        {
+        case KRateModulationSource::Breath:
+            return mLatestBreathVal;
+        default:
+        case KRateModulationSource::PitchStrip:
+            break;
+        }
+        return mLatestPitchbendVal;
+    }
+
+//     // when the synth graph runs, 
+// float mKRateVoiceFilterCutoff = 0;
+// float mKRateOsc1Frequency = 0;
+// float mKRateOsc1Amplitude = 0;
+// float mKRateOsc2Frequency = 0;
+// float mKRateOsc2Amplitude = 0;
+// float mKRateOsc3Frequency = 0;
+// float mKRateOsc3Amplitude = 0;
+
+    virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
+                                                                           float val) override
+    {
+        // switch (d)
+        // {
+        // case KRateModulationDestination::VoiceFilterCutoff:
+        //     return;
+        // case KRateModulationDestination::Osc1Frequency:
+        //     return;
+        // case KRateModulationDestination::Osc1Amplitude:
+        //     return;
+        // case KRateModulationDestination::Osc2Frequency:
+        //     return;
+        // case KRateModulationDestination::Osc2Amplitude:
+        //     return;
+        // case KRateModulationDestination::Osc3Frequency:
+        //     return;
+        // case KRateModulationDestination::Osc3Amplitude:
+        //     return;
+        // }
+    }
+
     // NOTE: we don't care about SynthPatchB at this point.
     void Update(const MusicalVoice &mv)
     {
         mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatchA);
-        mModMatrix.SetSynthPatch(mPreset);
+        mModMatrix.SetSynthPatch(mPreset, this);
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
         bool voiceOrPatchChanged =
             (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatchA != mv.mSynthPatchA);
@@ -410,8 +436,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mLfo1.frequency(mPreset->mLfo1Rate);
         mLfo2.frequency(mPreset->mLfo2Rate);
 
-        mBreathModSource.amplitude(mv.mBreath01.GetFloatVal());
-        mPitchBendModSource.amplitude(mv.mPitchBendN11.GetFloatVal());
+        // mBreathModSource.amplitude(mv.mBreath01.GetFloatVal());
+        // mPitchBendModSource.amplitude(mv.mPitchBendN11.GetFloatVal());
 
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
@@ -636,14 +662,18 @@ struct SynthGraphControl
         CCSynthGraph::delayFilterRight.SetParams(
             perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
 
-        CCSynthGraph::delayWetAmpLeft.gain((perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
-        CCSynthGraph::delayWetAmpRight.gain((perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::delayWetAmpLeft.gain(
+            (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::delayWetAmpRight.gain(
+            (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
 
         CCSynthGraph::verb.roomsize(perf.mReverbSize);
         CCSynthGraph::verb.damping(perf.mReverbDamping);
 
-        CCSynthGraph::verbWetAmpLeft.gain((perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
-        CCSynthGraph::verbWetAmpRight.gain((perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::verbWetAmpLeft.gain(
+            (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
+        CCSynthGraph::verbWetAmpRight.gain(
+            (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
 
         CCSynthGraph::ampLeft.gain(perf.mMasterGain);
         CCSynthGraph::ampRight.gain(perf.mMasterGain);

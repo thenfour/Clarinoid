@@ -32,8 +32,10 @@
 void setup()
 {
     Serial.begin(9600);
-    while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
-    //Serial.println("starting normally....");
+    // while (!Serial)
+    // {
+    // } // when you are debugging with serial, uncomment this to ensure you see startup msgs
+    // Serial.println("starting normally....");
 
     auto* app = new clarinoid::TestDeviceApp;
     app->Main();

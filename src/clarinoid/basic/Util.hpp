@@ -8,17 +8,6 @@
 namespace clarinoid
 {
 
-template <typename T, T minOutput, T maxOutput>
-static T Float01ToInt(float f)
-{
-    if (f <= 0.0f)
-        return minOutput;
-    if (f >= 1.0f)
-        return maxOutput;
-    T ret = (T)(f * (maxOutput - minOutput));
-    return ret;
-}
-
 // use as a global var to run init code
 struct StaticInit
 {
@@ -95,23 +84,23 @@ struct NoInterrupts
 
 int NoInterrupts::gNoInterruptRefs = 0;
 
-static String IndexToChar(int i)
-{
-    char r[2] = {0};
-    if (i < 10)
-    { // 0-9
-        r[0] = '0' + i;
-    }
-    else if (i < 37)
-    { // 10-36
-        r[0] = 'A' + (i - 10);
-    }
-    else
-    {
-        r[0] = '!';
-    }
-    return String(r);
-}
+// static String IndexToChar(int i)
+// {
+//     char r[2] = {0};
+//     if (i < 10)
+//     { // 0-9
+//         r[0] = '0' + i;
+//     }
+//     else if (i < 37)
+//     { // 10-36
+//         r[0] = 'A' + (i - 10);
+//     }
+//     else
+//     {
+//         r[0] = '!';
+//     }
+//     return String(r);
+// }
 
 // // allows throttled plotting to Serial.
 // class PlotHelper : UpdateObjectT<ProfileObjectType::PlotHelper>

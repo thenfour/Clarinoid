@@ -23,7 +23,7 @@ constexpr real Real1 = 1;
 constexpr real Real2 = 2;
 inline real fasttanh(real p_input, real p_tanh_factor)
 {
-    return ::clarinoid::discohead_fastTanh(p_tanh_factor * p_input);
+    return ::clarinoid::fast::tanh(p_tanh_factor * p_input);
 }
 
 constexpr real SampleRate = 44100;

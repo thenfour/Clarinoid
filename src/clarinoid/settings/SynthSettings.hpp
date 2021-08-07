@@ -61,132 +61,202 @@ EnumItemInfo<ClarinoidFilterType> gClarinoidFilterTypeItems[12] = {
 
 EnumInfo<ClarinoidFilterType> gClarinoidFilterTypeInfo("FilterType", gClarinoidFilterTypeItems);
 
-enum class ModulationSource : uint8_t
+enum class ARateModulationSource : uint8_t
 {
-    None, // Gets special handling. see below.
-    Breath, // K-rate
+    // NB: IF you change something here, keep ModulationMatrixNode in sync. (ModulationSourceInfo)
+    // these are INDICES used by synthvoice / modulationmatrix
+    LFO1 = 0, // a-rate
+    LFO2,     // a-rate
+    ENV1,     // a-rate
+    ENV2,     // a-rate
+    Osc1FB,   // a-rate
+    Osc2FB,   // a-rate
+    Osc3FB,   // a-rate
+};
+
+EnumItemInfo<ARateModulationSource> gARateModulationSourceItems[7] = {
+    {ARateModulationSource::LFO1, "LFO1"},
+    {ARateModulationSource::LFO2, "LFO2"},
+    {ARateModulationSource::ENV1, "ENV1"},
+    {ARateModulationSource::ENV2, "ENV2"},
+    {ARateModulationSource::Osc1FB, "Osc1FB"},
+    {ARateModulationSource::Osc2FB, "Osc2FB"},
+    {ARateModulationSource::Osc3FB, "Osc3FB"},
+};
+static constexpr size_t gARateModulationSourceCount = SizeofStaticArray(gARateModulationSourceItems);
+
+EnumInfo<ARateModulationSource> gARateModulationSourceInfo("ARateModSource", gARateModulationSourceItems);
+
+enum class KRateModulationSource : uint8_t
+{
+    // NB: IF you change something here, keep ModulationMatrixNode in sync. (ModulationSourceInfo)
+    // these are INDICES used by synthvoice / modulationmatrix
+    Breath = 0, // K-rate
     PitchStrip, // K-rate
-    LFO1, // a-rate
-    LFO2, // a-rate
-    ENV1, // a-rate
-    ENV2, // a-rate
-    Osc1FB, // a-rate
-    Osc2FB, // a-rate
-    Osc3FB, // a-rate
 };
 
-EnumItemInfo<ModulationSource> gModulationSourceItems[10] = {
-    {ModulationSource::None, "None"}, // Gets special handling. see below.
-    {ModulationSource::Breath, "Breath"},
-    {ModulationSource::PitchStrip, "PitchBend"},
-    {ModulationSource::LFO1, "LFO1"},
-    {ModulationSource::LFO2, "LFO2"},
-    {ModulationSource::ENV1, "ENV1"},
-    {ModulationSource::ENV2, "ENV2"},
-    {ModulationSource::Osc1FB, "Osc1FB"},
-    {ModulationSource::Osc2FB, "Osc2FB"},
-    {ModulationSource::Osc3FB, "Osc3FB"},
+EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[2] = {
+    {KRateModulationSource::Breath, "Breath"},
+    {KRateModulationSource::PitchStrip, "PitchBend"},
 };
-static constexpr size_t ModulationSourceSkip = 1; // 1 for the None value.
-static constexpr size_t ModulationSourceViableCount =
-    SizeofStaticArray(gModulationSourceItems) -
-    ModulationSourceSkip; // -1 because "none" is not actually a valid value.
-static constexpr bool ModulationSourceToIndex(ModulationSource s, size_t &i)
-{
-    i = (size_t)s;
-    if (i < ModulationSourceSkip)
-        return false;
-    i -= ModulationSourceSkip;
-    if (i >= ModulationSourceViableCount)
-        return false;
-    return true;
-}
-static constexpr size_t ModulationSourceToIndex(ModulationSource s)
-{
-    size_t i = 0;
-    ModulationSourceToIndex(s, i);
-    return i;
-}
+static constexpr size_t gKRateModulationSourceCount = SizeofStaticArray(gKRateModulationSourceItems);
 
-EnumInfo<ModulationSource> gModulationSourceInfo("ModSource", gModulationSourceItems);
+EnumInfo<KRateModulationSource> gKRateModulationSourceInfo("KRateModSource", gKRateModulationSourceItems);
 
-enum class ModulationDestination : uint8_t
+enum class AnyModulationSource : uint8_t
 {
-    None, // Gets special handling. see below.
-    // VoiceFilterCutoff,
-    // VoiceFilterQ,
-    // VoiceFilterSaturation,
-    Osc1Frequency,
-    Osc1Amplitude,
-    Osc1PulseWidth,
-    Osc1Phase,
-    Osc2Frequency,
-    Osc2PulseWidth,
-    Osc2Phase,
-    Osc2Amplitude,
-    Osc3Frequency,
-    Osc3PulseWidth,
-    Osc3Phase,
-    Osc3Amplitude,
+    None = 0,
+    LFO1,       // a-rate
+    LFO2,       // a-rate
+    ENV1,       // a-rate
+    ENV2,       // a-rate
+    Osc1FB,     // a-rate
+    Osc2FB,     // a-rate
+    Osc3FB,     // a-rate
+    Breath,     // K-rate
+    PitchStrip, // K-rate
 };
 
-EnumItemInfo<ModulationDestination> gModulationDestinationItems[13] = {
-    {ModulationDestination::None, "None"},
-    // {ModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
-    // {ModulationDestination::VoiceFilterQ, "VoiceFilterQ"},
-    // {ModulationDestination::VoiceFilterSaturation, "VoiceFilterSaturation"},
-    {ModulationDestination::Osc1Frequency, "Osc1Frequency"},
-    {ModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
-    {ModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
-    {ModulationDestination::Osc1Phase, "Osc1Phase"},
-
-    {ModulationDestination::Osc2Frequency, "Osc2Frequency"},
-    {ModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
-    {ModulationDestination::Osc2Phase, "Osc2Phase"},
-    {ModulationDestination::Osc2Amplitude, "Osc2Amplitude"},
-
-    {ModulationDestination::Osc3Frequency, "Osc3Frequency"},
-    {ModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
-    {ModulationDestination::Osc3Phase, "Osc3Phase"},
-    {ModulationDestination::Osc3Amplitude, "Osc3Amplitude"},
+EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[10] = {
+    {AnyModulationSource::None, "None"},
+    {AnyModulationSource::LFO1, "LFO1"},
+    {AnyModulationSource::LFO2, "LFO2"},
+    {AnyModulationSource::ENV1, "ENV1"},
+    {AnyModulationSource::ENV2, "ENV2"},
+    {AnyModulationSource::Osc1FB, "Osc1FB"},
+    {AnyModulationSource::Osc2FB, "Osc2FB"},
+    {AnyModulationSource::Osc3FB, "Osc3FB"},
+    {AnyModulationSource::Breath, "Breath"},
+    {AnyModulationSource::PitchStrip, "PitchBend"},
 };
-static constexpr size_t ModulationDestinationSkip = 1; // 1 for the None value.
-static constexpr size_t ModulationDestinationViableCount =
-    SizeofStaticArray(gModulationDestinationItems) -
-    ModulationDestinationSkip; // -1 because "none" is not actually a valid value.
-static constexpr bool ModulationDestinationToIndex(ModulationDestination d, size_t &i)
-{
-    i = (size_t)d;
-    if (i < ModulationDestinationSkip)
-        return false;
-    i -= ModulationDestinationSkip;
-    if (i >= ModulationDestinationViableCount)
-        return false;
-    return true;
-}
-static constexpr size_t ModulationDestinationToIndex(ModulationDestination d)
-{
-    size_t i = 0;
-    ModulationDestinationToIndex(d, i);
-    return i;
-}
 
-EnumInfo<ModulationDestination> gModulationDestinationInfo("ModDest", gModulationDestinationItems);
+static constexpr size_t gAnyModulationSourceCount = SizeofStaticArray(gAnyModulationSourceItems);
+
+EnumInfo<AnyModulationSource> gAnyModulationSourceInfo("AnyModSource", gAnyModulationSourceItems);
+
+enum class ARateModulationDestination : uint8_t
+{
+    // these are INDICES used by synthvoice / modulationmatrix
+    Osc1PulseWidth = 0, // a-rate
+    Osc1Phase,          // a-rate
+    Osc2PulseWidth,     // a-rate
+    Osc2Phase,          // a-rate
+    Osc3PulseWidth,     // a-rate
+    Osc3Phase,          // a-rate
+};
+
+EnumItemInfo<ARateModulationDestination> gARateModulationDestinationItems[6] = {
+    {ARateModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
+    {ARateModulationDestination::Osc1Phase, "Osc1Phase"},
+
+    {ARateModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
+    {ARateModulationDestination::Osc2Phase, "Osc2Phase"},
+
+    {ARateModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
+    {ARateModulationDestination::Osc3Phase, "Osc3Phase"},
+};
+
+static constexpr size_t gARateModulationDestinationCount = SizeofStaticArray(gARateModulationDestinationItems);
+
+EnumInfo<ARateModulationDestination> gARateModulationDestinationInfo("ARateModDest", gARateModulationDestinationItems);
+
+enum class KRateModulationDestination : uint8_t
+{
+    // these are INDICES used by synthvoice / modulationmatrix
+    VoiceFilterCutoff = 0, // k-rate
+    Osc1Frequency,         // k-rate
+    Osc1Amplitude,         // k-rate
+    Osc2Frequency,         // k-rate
+    Osc2Amplitude,         // k-rate
+    Osc3Frequency,         // k-rate
+    Osc3Amplitude,         // k-rate
+};
+
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[7] = {
+    {KRateModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
+    {KRateModulationDestination::Osc1Frequency, "Osc1Frequency"},
+    {KRateModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
+    {KRateModulationDestination::Osc2Frequency, "Osc2Frequency"},
+    {KRateModulationDestination::Osc2Amplitude, "Osc2Amplitude"},
+    {KRateModulationDestination::Osc3Frequency, "Osc3Frequency"},
+    {KRateModulationDestination::Osc3Amplitude, "Osc3Amplitude"},
+};
+
+static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKRateModulationDestinationItems);
+
+EnumInfo<KRateModulationDestination> gKRateModulationDestinationInfo("KRateModDest", gKRateModulationDestinationItems);
+
+enum class AnyModulationDestination : uint8_t
+{
+    None = 0,
+    Osc1PulseWidth, // a-rate
+    Osc1Phase,      // a-rate
+    Osc2PulseWidth, // a-rate
+    Osc2Phase,      // a-rate
+    Osc3PulseWidth, // a-rate
+    Osc3Phase,      // a-rate
+
+    VoiceFilterCutoff, // k-rate
+    Osc1Frequency,     // k-rate
+    Osc1Amplitude,     // k-rate
+    Osc2Frequency,     // k-rate
+    Osc2Amplitude,     // k-rate
+    Osc3Frequency,     // k-rate
+    Osc3Amplitude,     // k-rate
+};
+
+EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[14] = {
+    {AnyModulationDestination::None, "None"},
+    {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
+    {AnyModulationDestination::Osc1Phase, "Osc1Phase"},
+    {AnyModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
+    {AnyModulationDestination::Osc2Phase, "Osc2Phase"},
+    {AnyModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
+    {AnyModulationDestination::Osc3Phase, "Osc3Phase"},
+
+    {AnyModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
+    {AnyModulationDestination::Osc1Frequency, "Osc1Frequency"},
+    {AnyModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
+    {AnyModulationDestination::Osc2Frequency, "Osc2Frequency"},
+    {AnyModulationDestination::Osc2Amplitude, "Osc2Amplitude"},
+    {AnyModulationDestination::Osc3Frequency, "Osc3Frequency"},
+    {AnyModulationDestination::Osc3Amplitude, "Osc3Amplitude"},
+};
+
+static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyModulationDestinationItems);
+
+EnumInfo<AnyModulationDestination> gAnyModulationDestinationInfo("AnyModDest", gAnyModulationDestinationItems);
 
 struct SynthModulationSpec
 {
-    ModulationSource mSource = ModulationSource::None;
-    ModulationDestination mDest = ModulationDestination::None;
-    float mScaleN11 = 0.5f; // -1 to 1
+    AnyModulationSource mSource = AnyModulationSource::None;
+    AnyModulationDestination mDest = AnyModulationDestination::None;
+
+    // each modulation source/dest has its own ranges (for example phase is -1 to 1, breath is 0-1, filter freq is 0-22000 hz)
+    // i think the best way to support polar behavior is to specify range from -1 to 1 always.
+    // it means -1 to 0 represents the negative pole of the defined range, and 0-1 represents the positive pole.
+    // so for example breath, specifying a src range of -1 or 0 makes no difference because there's no negative pole.
+    // or for something fictional that has a defined range of like -20 to +70, a src range of -0.25 would represent -5.
+    // float mSrcRangeMinN11 = 0.0f;
+    // float mSrcRangeMaxN11 = 1.0f;
+    // float mDestRangeMinN11 = 0.0f;
+    // float mDestRangeMaxN11 = 0.5f;
+    float mScaleN11 = 0.5f;
+
+    // to mimic old behavior with 0 offset and just a scale.
+    void SetScaleN11_Legacy(float scaleN11)
+    {
+        mScaleN11 = scaleN11;
+    }
 
     String ToString() const
     {
-        if (mSource == ModulationSource::None)
+        if (mSource == AnyModulationSource::None)
             return "--";
-        if (mDest == ModulationDestination::None)
+        if (mDest == AnyModulationDestination::None)
             return "--";
-        return String(gModulationSourceInfo.GetValueString(mSource)) + ">" +
-               gModulationDestinationInfo.GetValueString(mDest);
+        return String(gAnyModulationSourceInfo.GetValueString(mSource)) + ">" +
+               gAnyModulationDestinationInfo.GetValueString(mDest);
     }
 };
 
@@ -473,9 +543,9 @@ struct SynthSettings
         p.mFilterQ = 0.1f;
         p.mFilterKeytracking = 0.0f;
 
-        p.mModulations[0].mDest = ModulationDestination::Osc2Frequency;
-        p.mModulations[0].mSource = ModulationSource::LFO2;
-        p.mModulations[0].mScaleN11 = 0.02f;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+        p.mModulations[0].mSource = AnyModulationSource::LFO2;
+        p.mModulations[0].SetScaleN11_Legacy(0.02f);
     }
 
     static void InitHarmPulseLead(SynthPreset &p)
@@ -534,13 +604,13 @@ struct SynthSettings
         p.mFilterQ = 0.2f;
         p.mFilterType = ClarinoidFilterType::LP_SEM12;
 
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        p.mModulations[0].mScaleN11 = 0.14f;
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
+        p.mModulations[0].SetScaleN11_Legacy(0.14f);
 
-        p.mModulations[1].mSource = ModulationSource::LFO2;
-        p.mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[1].mScaleN11 = 0.20f;
+        p.mModulations[1].mSource = AnyModulationSource::LFO2;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
+        p.mModulations[1].SetScaleN11_Legacy(0.20f);
     }
 
     static void InitCinematicTagPatch(SynthPreset &p, float gain)
@@ -574,13 +644,13 @@ struct SynthSettings
     {
         // start with defaults
         p.mName = "Bellycrawl";
-        p.mModulations[0].mScaleN11 = 0.9f;
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mDest = ModulationDestination::Osc2Frequency;
+        p.mModulations[0].SetScaleN11_Legacy(0.9f);
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
 
-        p.mModulations[1].mScaleN11 = 0.015f;
-        p.mModulations[1].mSource = ModulationSource::LFO2;
-        p.mModulations[1].mDest = ModulationDestination::Osc1Frequency;
+        p.mModulations[1].SetScaleN11_Legacy(0.015f);
+        p.mModulations[1].mSource = AnyModulationSource::LFO2;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
     }
 
     static void InitPanFlutePreset(SynthPreset &p, float gain)
@@ -599,9 +669,9 @@ struct SynthSettings
 
         p.mEnv1.mDecayMS = 100;
 
-        p.mModulations[1].mSource = ModulationSource::ENV1;
-        p.mModulations[1].mDest = ModulationDestination::Osc2Frequency;
-        p.mModulations[1].mScaleN11 = 0.05f;
+        p.mModulations[1].mSource = AnyModulationSource::ENV1;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc2Frequency;
+        p.mModulations[1].SetScaleN11_Legacy(0.05f);
     }
 
     static void InitFunkyLeadPreset(SynthPreset &p)
@@ -642,23 +712,23 @@ struct SynthSettings
 
         p.mLfo2Rate = p.mLfo1Rate;
 
-        p.mModulations[0].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mScaleN11 = 0.2f;
-        p.mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[1].mSource = ModulationSource::LFO2;
-        p.mModulations[1].mScaleN11 = 0.2f;
-        p.mModulations[2].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[2].mSource = ModulationSource::LFO1;
-        p.mModulations[2].mScaleN11 = 0.2f;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].SetScaleN11_Legacy(0.2f);
+        p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
+        p.mModulations[1].mSource = AnyModulationSource::LFO2;
+        p.mModulations[1].SetScaleN11_Legacy(0.2f);
+        p.mModulations[2].mDest = AnyModulationDestination::Osc1PulseWidth;
+        p.mModulations[2].mSource = AnyModulationSource::LFO1;
+        p.mModulations[2].SetScaleN11_Legacy(0.2f);
 
-        p.mModulations[3].mDest = ModulationDestination::Osc3Frequency;
-        p.mModulations[3].mSource = ModulationSource::Breath;
-        p.mModulations[3].mScaleN11 = -0.03f;
+        p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
+        p.mModulations[3].mSource = AnyModulationSource::Breath;
+        p.mModulations[3].SetScaleN11_Legacy(-0.03f);
 
-        p.mModulations[4].mDest = ModulationDestination::Osc1Frequency;
-        p.mModulations[4].mSource = ModulationSource::ENV1;
-        p.mModulations[4].mScaleN11 = 0.03f;
+        p.mModulations[4].mDest = AnyModulationDestination::Osc1Frequency;
+        p.mModulations[4].mSource = AnyModulationSource::ENV1;
+        p.mModulations[4].SetScaleN11_Legacy(0.03f);
     }
 
     static void InitBassoonoidPreset(SynthPreset &p,
@@ -720,35 +790,35 @@ struct SynthSettings
         p.mOsc[2].mPulseWidth = 0.0f;
         p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
 
-        p.mModulations[0].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mScaleN11 = 0.2f;
-        p.mModulations[1].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[1].mSource = ModulationSource::LFO2;
-        p.mModulations[1].mScaleN11 = 0.2f;
-        p.mModulations[2].mDest = ModulationDestination::Osc1PulseWidth;
-        p.mModulations[2].mSource = ModulationSource::LFO1;
-        p.mModulations[2].mScaleN11 = 0.2f;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].SetScaleN11_Legacy(0.2f);
+        p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
+        p.mModulations[1].mSource = AnyModulationSource::LFO2;
+        p.mModulations[1].SetScaleN11_Legacy(0.2f);
+        p.mModulations[2].mDest = AnyModulationDestination::Osc1PulseWidth;
+        p.mModulations[2].mSource = AnyModulationSource::LFO1;
+        p.mModulations[2].SetScaleN11_Legacy(0.2f);
 
-        p.mModulations[3].mDest = ModulationDestination::Osc3Frequency;
-        p.mModulations[3].mSource = ModulationSource::Breath;
-        p.mModulations[3].mScaleN11 = -0.03f;
+        p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
+        p.mModulations[3].mSource = AnyModulationSource::Breath;
+        p.mModulations[3].SetScaleN11_Legacy(-0.03f);
 
-        p.mModulations[4].mDest = ModulationDestination::Osc1Frequency;
-        p.mModulations[4].mSource = ModulationSource::ENV1;
-        p.mModulations[4].mScaleN11 = 0.03f;
+        p.mModulations[4].mDest = AnyModulationDestination::Osc1Frequency;
+        p.mModulations[4].mSource = AnyModulationSource::ENV1;
+        p.mModulations[4].SetScaleN11_Legacy(0.03f);
     }
 
     static void InitSynccyLead(SynthPreset &p)
     {
         p.mName = "Synccy Lead"; // default.
-        p.mModulations[0].mScaleN11 = 0.9f;
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mDest = ModulationDestination::Osc2Frequency;
+        p.mModulations[0].SetScaleN11_Legacy(0.9f);
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
 
-        p.mModulations[1].mScaleN11 = 0.015f;
-        p.mModulations[1].mSource = ModulationSource::LFO2;
-        p.mModulations[1].mDest = ModulationDestination::Osc1Frequency;
+        p.mModulations[1].SetScaleN11_Legacy(0.015f);
+        p.mModulations[1].mSource = AnyModulationSource::LFO2;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
     }
 
     static void InitPWMLead2(SynthPreset &p)
@@ -756,12 +826,12 @@ struct SynthSettings
         InitBasicLeadPreset("PWM Mono Lead", OscWaveformShape::Pulse, 0.50f, p);
         p.mFilterMaxFreq = 12000;
         p.mFilterType = ClarinoidFilterType::LP_SEM12;
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        p.mModulations[0].mScaleN11 = 0.20f;
-        p.mModulations[1].mSource = ModulationSource::Breath;
-        p.mModulations[1].mDest = ModulationDestination::Osc2PulseWidth;
-        p.mModulations[1].mScaleN11 = 0.20f;
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
+        p.mModulations[0].SetScaleN11_Legacy(0.20f);
+        p.mModulations[1].mSource = AnyModulationSource::Breath;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc2PulseWidth;
+        p.mModulations[1].SetScaleN11_Legacy(0.20f);
     }
 
     static void InitPWMLeadStack(SynthPreset &p)
@@ -774,18 +844,18 @@ struct SynthSettings
         p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
         p.mOsc[2].mPulseWidth = 0.5f;
         p.mOsc[2].mGain = .15f;
-        p.mModulations[0].mSource = ModulationSource::LFO1;
-        p.mModulations[0].mDest = ModulationDestination::Osc2PulseWidth;
-        p.mModulations[0].mScaleN11 = 0.20f;
-        p.mModulations[1].mSource = ModulationSource::Breath;
-        p.mModulations[1].mDest = ModulationDestination::Osc2PulseWidth;
-        p.mModulations[1].mScaleN11 = 0.20f;
-        p.mModulations[2].mSource = ModulationSource::LFO2;
-        p.mModulations[2].mDest = ModulationDestination::Osc3PulseWidth;
-        p.mModulations[2].mScaleN11 = -0.08f;
-        p.mModulations[3].mSource = ModulationSource::Breath;
-        p.mModulations[3].mDest = ModulationDestination::Osc3Frequency;
-        p.mModulations[3].mScaleN11 = 0.04f;
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
+        p.mModulations[0].SetScaleN11_Legacy(0.20f);
+        p.mModulations[1].mSource = AnyModulationSource::Breath;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc2PulseWidth;
+        p.mModulations[1].SetScaleN11_Legacy(0.20f);
+        p.mModulations[2].mSource = AnyModulationSource::LFO2;
+        p.mModulations[2].mDest = AnyModulationDestination::Osc3PulseWidth;
+        p.mModulations[2].SetScaleN11_Legacy(-0.08f);
+        p.mModulations[3].mSource = AnyModulationSource::Breath;
+        p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
+        p.mModulations[3].SetScaleN11_Legacy(0.04f);
     }
 
     static void InitFluvial(SynthPreset &p, float gain)
@@ -813,12 +883,12 @@ struct SynthSettings
         p.mFilterQ = 0.25f;
         p.mFilterKeytracking = 1.0f;
 
-        p.mModulations[0].mSource = ModulationSource::Breath;
-        p.mModulations[0].mDest = ModulationDestination::Osc3Frequency;
-        p.mModulations[0].mScaleN11 = -0.02f;
-        p.mModulations[1].mSource = ModulationSource::Breath;
-        p.mModulations[1].mDest = ModulationDestination::Osc3PulseWidth;
-        p.mModulations[1].mScaleN11 = -0.3f;
+        p.mModulations[0].mSource = AnyModulationSource::Breath;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc3Frequency;
+        p.mModulations[0].SetScaleN11_Legacy(-0.02f);
+        p.mModulations[1].mSource = AnyModulationSource::Breath;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc3PulseWidth;
+        p.mModulations[1].SetScaleN11_Legacy(-0.3f);
     }
 
     static void InitSynthTrumpetPreset(SynthPreset &p, float gain)
@@ -842,13 +912,13 @@ struct SynthSettings
         p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
 
-        p.mModulations[0].mSource = ModulationSource::ENV1;
-        p.mModulations[0].mDest = ModulationDestination::Osc1Frequency;
-        p.mModulations[0].mScaleN11 = 0.05f;
+        p.mModulations[0].mSource = AnyModulationSource::ENV1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc1Frequency;
+        p.mModulations[0].SetScaleN11_Legacy(0.05f);
 
-        p.mModulations[1].mSource = ModulationSource::ENV2;
-        p.mModulations[1].mDest = ModulationDestination::Osc3Frequency;
-        p.mModulations[1].mScaleN11 = -0.02f;
+        p.mModulations[1].mSource = AnyModulationSource::ENV2;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc3Frequency;
+        p.mModulations[1].SetScaleN11_Legacy(-0.02f);
 
         p.mEnv1.mDelayMS = 0;
         p.mEnv1.mAttackMS = 0;
@@ -919,9 +989,9 @@ struct SynthSettings
 
         mPresets[i].mEnv1.mDecayMS = 100;
 
-        mPresets[i].mModulations[1].mSource = ModulationSource::ENV1;
-        mPresets[i].mModulations[1].mDest = ModulationDestination::Osc2Frequency;
-        mPresets[i].mModulations[1].mScaleN11 = 0.16f;
+        mPresets[i].mModulations[1].mSource = AnyModulationSource::ENV1;
+        mPresets[i].mModulations[1].mDest = AnyModulationDestination::Osc2Frequency;
+        mPresets[i].mModulations[1].SetScaleN11_Legacy(0.16f);
         ++i;
 
         InitDetunedLeadPreset(

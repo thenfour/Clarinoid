@@ -29,6 +29,12 @@ inline void TestEq_(const Tx& x, const Ty& y, const char *str, bool expectFailur
   Test_(x == y, str, expectFailure, explanation);
 }
 
+template<typename Tx, typename Ty>
+inline void TestFloatEq_(const Tx& x, const Ty& y, const char *str, bool expectFailure, const char *explanation) {
+  Test_(clarinoid::FloatEquals(x, y), str, expectFailure, explanation);
+}
+
 #define Test(x) (Test_(x, #x, false, ""))
 #define TestEq(x, y) (TestEq_(x, y, #x " EQ " #y, false, ""))
+#define TestFloatEq(x, y) (TestFloatEq_(x, y, #x " FLEQ " #y, false, ""))
 #define TestExpectFailure(x,y) (Test_(x, #x, true, y))

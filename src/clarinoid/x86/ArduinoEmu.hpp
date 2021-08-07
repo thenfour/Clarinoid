@@ -62,6 +62,8 @@ void delayMicroseconds(uint32_t m)
     gTestClockMicros += m;
 }
 
+void yield() {}
+
 #else
 #error huh
 #endif
@@ -207,3 +209,65 @@ struct Encoder
         return 0;
     }
 };
+
+#define AUDIO_BLOCK_SAMPLES 128
+
+
+struct audio_block_t
+{
+  int16_t data[AUDIO_BLOCK_SAMPLES];
+  int transmittedAsIndex = 0;
+};
+
+static audio_block_t gTestSrcBuffers[100];
+static audio_block_t gTestDestBuffers[100];
+static audio_block_t gTestTransmittedBuffers[100];
+static size_t gAllocatedDestBuffers = 0;
+
+void FillAudioBuffer(audio_block_t& b, int16_t val)
+{
+  for (int16_t& s : b.data) {
+    s = val;
+  }
+}
+
+void TestResetAudioStreams() {
+  gAllocatedDestBuffers = 0;
+  for (auto& b : gTestSrcBuffers) {
+    FillAudioBuffer(b, 0);
+  }
+  for (auto& b : gTestDestBuffers) {
+    FillAudioBuffer(b, 0);
+  }
+  for (auto& b : gTestTransmittedBuffers) {
+    FillAudioBuffer(b, 0);
+  }
+}
+
+struct AudioStream
+{
+  AudioStream(unsigned char ninput, audio_block_t **iqueue)
+  {
+  }
+  static audio_block_t * allocate(void) {
+    auto* ret = &gTestDestBuffers[gAllocatedDestBuffers];
+    gAllocatedDestBuffers++;
+    return ret;
+  }
+  static void release(audio_block_t * block) {
+  }
+  void transmit(audio_block_t *block, unsigned char index){
+    block->transmittedAsIndex = index;
+    gTestTransmittedBuffers[index] = *block;
+  }
+  audio_block_t * receiveReadOnly(unsigned int index){
+    return &gTestSrcBuffers[index];
+  }
+  audio_block_t * receiveWritable(unsigned int index){
+    return &gTestSrcBuffers[index];
+  }
+
+  virtual void update() = 0;
+};
+
+

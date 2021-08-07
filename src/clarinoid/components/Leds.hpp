@@ -41,9 +41,9 @@ struct Leds
     void SetPixel(uint8_t pixel, ColorF c)
     {
         SetPixel(pixel,
-                 Float01ToInt<uint8_t, 0, 255>(c.r),
-                 Float01ToInt<uint8_t, 0, 255>(c.g),
-                 Float01ToInt<uint8_t, 0, 255>(c.b));
+                 (uint8_t)(c.r * 255),
+                 (uint8_t)(c.g * 255),
+                 (uint8_t)(c.b * 255));
     }
 
     void Show()
@@ -69,7 +69,7 @@ struct DigitalPinLed
 
     void SetPixel(float c)
     {
-        SetPixel(Float01ToInt<uint8_t, 0, 255>(c));
+        SetPixel(uint8_t(c * 255));
     }
 };
 

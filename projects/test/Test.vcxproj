@@ -181,6 +181,7 @@
     <ClInclude Include="TestInputMapping.hpp" />
     <ClInclude Include="TestLoopstation.hpp" />
     <ClInclude Include="TestMemory.hpp" />
+    <ClInclude Include="TestModulation.hpp" />
     <ClInclude Include="TestScaleFollower.hpp" />
     <ClInclude Include="TestScales.hpp" />
     <ClInclude Include="TestTaskManager.hpp" />

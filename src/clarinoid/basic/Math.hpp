@@ -5,38 +5,224 @@
 #include <cmath>
 #include "fastonebigheader.hpp"
 
+#ifdef CLARINOID_PLATFORM_X86
+inline float arm_sin_f32(float x)
+{
+    return ::sinf(x);
+}
+inline float arm_cos_f32(float x)
+{
+    return ::cosf(x);
+}
+inline int16_t saturate16(int32_t n)
+{
+  if (n < std::numeric_limits<int16_t>::min()) return std::numeric_limits<int16_t>::min();
+  if (n > std::numeric_limits<int16_t>::max()) return std::numeric_limits<int16_t>::max();
+  return (int16_t)n;
+}
+
+void arm_q15_to_float(const int16_t* in, float* out, size_t n) {
+  for (size_t i = 0; i < n; ++i) {
+    out[i] = in[i] / 32767.0f;
+  }
+}
+
+void arm_fill_f32(float val, float *out, size_t n) {
+  for (size_t i = 0; i < n; ++i) {
+    out[i] = val;
+  }
+}
+
+void  arm_fill_q15(int16_t val, int16_t* out, size_t n) {
+  for (size_t i = 0; i < n; ++i) {
+    out[i] = val;
+  }
+  }
+
+void arm_add_q15(int16_t * pSrcA, int16_t * pSrcB, int16_t * pDst, uint32_t blockSize) {
+  for (uint32_t i = 0; i < blockSize; ++i) {
+    pDst[i] = pSrcA[i] + pSrcB[i];
+  }
+}
+
+
+void arm_offset_q15(int16_t * pSrc, int16_t offset, int16_t * pDst, uint32_t blockSize) {
+  for (uint32_t i = 0; i < blockSize; ++i) {
+    pDst[i] = pSrc[i] + offset;
+  }
+}
+
+void arm_scale_q15(int16_t * pSrc, int16_t scaleFract, int8_t shift, int16_t * pDst, uint32_t blockSize)
+{
+  for (uint32_t i = 0; i < blockSize; ++i) {
+    pDst[i] = (int16_t)(pSrc[i] * (scaleFract / 32767.0f));
+  }
+}
+
+
+// computes ((a[15:0] << 16) | b[15:0])
+static inline uint32_t pack_16b_16b(int32_t a, int32_t b)
+{
+  return (a << 16) | (b & 0xffff);
+}
+
+// computes (((a[31:16] + b[31:16]) << 16) | (a[15:0 + b[15:0]))  (saturates)
+static inline uint32_t signed_add_16_and_16(uint32_t a, uint32_t b)
+{
+  return 0;
+}
+
+// computes ((a[31:0] * b[15:0]) >> 16)
+static inline int32_t signed_multiply_32x16b(int32_t a, uint32_t b)
+{
+  return 0;
+}
+
+
+// computes ((a[31:0] * b[31:16]) >> 16)
+static inline int32_t signed_multiply_32x16t(int32_t a, uint32_t b)
+{
+  return 0;
+
+}
+
+// computes limit((val >> rshift), 2**bits)
+static inline int32_t signed_saturate_rshift(int32_t val, int bits, int rshift)
+{
+  return 0;
+
+}
+
+
+#endif
+
+
+
+
+
 namespace clarinoid
 {
-
 template <typename T>
 constexpr T gPI = T(3.1415926535897932385);
 
-// https://www.kvraudio.com/forum/viewtopic.php?f=33&t=388650&start=45
-inline float vox_fasttanh2(const float x)
-{
-    const float ax = fabsf(x);
-    const float x2 = x * x;
+template <typename T>
+constexpr T gLog2of10 = T(3.3219280948873622);
 
-    return (x * (2.45550750702956f + 2.45550750702956f * ax + (0.893229853513558f + 0.821226666969744f * ax) * x2) /
-            (2.44506634652299f + (2.44506634652299f + x2) * fabsf(x + 0.814642734961073f * x * ax)));
+// hand-selected evidence-based routines to prefer for performance. see experiments
+namespace fast
+{
+// fastlog / fasterlog don't really give much difference in performance, but faster* is less precise.
+inline float ln(float x)
+{
+    return fastmath::fastlog(x);
+}
+inline float log2(float x)
+{
+    return fastmath::fastlog2(x);
+}
+inline float log10(float x)
+{
+    return fastmath::fastlog2(x) / gLog2of10<float>;
+}
+inline float fasterlog10f(float x)
+{
+    return fastmath::fasterlog2(x) / gLog2of10<float>;
+}
+inline float pow(float x, float p)
+{
+    return fastmath::fastpow(x, p);
 }
 
+// just as fast as ::fastsin* etc.
+inline float sin(float x)
+{
+    return arm_sin_f32(x);
+}
+inline float cos(float x)
+{
+    return arm_cos_f32(x);
+}
 // https://github.com/discohead/LXR_JCM/blob/14b4b06ce5c9f4a60528d0c2d181f47227ae87df/mainboard/LxrStm32/src/DSPAudio/ResonantFilter.c
 // slightly faster than vox_fasttanh2, but it's slightly less accurate.
-inline float discohead_fastTanh(float var)
+// inline float discohead_fastTanh(float var)
+inline float tanh(float var)
 {
     return 4.15f * var / (4.29f + var * var);
 }
 
-inline float fastlog10f(float x)
+// // to consider:
+// // https://www.kvraudio.com/forum/viewtopic.php?f=33&t=388650&start=45
+// inline float vox_fasttanh2(const float x)
+// {
+//     const float ax = fabsf(x);
+//     const float x2 = x * x;
+
+//     return (x * (2.45550750702956f + 2.45550750702956f * ax + (0.893229853513558f + 0.821226666969744f * ax) * x2) /
+//             (2.44506634652299f + (2.44506634652299f + x2) * fabsf(x + 0.814642734961073f * x * ax)));
+// }
+
+// http://blog.bjornroche.com/2009/12/int-float-int-its-jungle-out-there.html
+// and some discussion:
+// https://www.kvraudio.com/forum/viewtopic.php?f=33&t=414666&sid=df76550b6763db018d3d732d9606c0f8&start=15 basically,
+// even though the "accurate" versions below will scale full range -1 to 1, they are not correct because values in the
+// positive & negative should be equal, not scaled by 1/32768 to fill out the range. so instead of trynig to saturate
+// the whole range, just accept that there's 1 value that won't be accessible. -32768,32767 -> -1,1
+//
+// NOTE : try not to process things sample-by-sample though.
+// there are block operations for this kind of thing:
+// https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicAdd.html et al.
+static inline float Sample16To32(int16_t s)
 {
-    return ::fastlog2(x) / 3.32192809489f;
+    if (s == -32768)
+        return -1.0f;
+    return s / 32767.0f;
 }
 
-inline float fasterlog10f(float x)
+// -32768,32767 -> -1,1
+// NOTE : try not to process things sample-by-sample though.
+// there are block operations for this kind of thing:
+// https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicAdd.html et al.
+static inline int16_t Sample32To16(float s)
 {
-    return ::fasterlog2(x) / 3.32192809489f;
+    // saturate16(int32_t(pf[i] * 32768.0f));
+    return saturate16(int32_t(s * 32767.0f));
+    // return (int16_t)(Clamp(s * 32767.0f, (float)std::numeric_limits<int16_t>::min(),
+    // (float)std::numeric_limits<int16_t>::max()));
 }
+
+// for some reason this is still 2x faster than arm_float_to_q15.
+inline void Sample32To16Buffer(const float *in, int16_t *out)
+{
+    for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+    {
+        out[i] = Sample32To16(in[i]);
+    }
+}
+
+// 3x faster than naive copy
+//template <size_t N>
+inline void Sample16To32Buffer(int16_t *in, float *out)
+{
+    arm_q15_to_float(in, out, AUDIO_BLOCK_SAMPLES);
+}
+
+// 20x faster than naive copy
+inline void FillBufferWithConstant(float val, float* out)
+{
+    arm_fill_f32(val, out, AUDIO_BLOCK_SAMPLES);
+}
+
+// 20x faster than naive copy
+inline void FillBufferWithConstant(int16_t val, int16_t *out)
+{
+    arm_fill_q15(val, out, AUDIO_BLOCK_SAMPLES);
+}
+
+// adding a constant to a buffer: arm_offset_q15  <-- ~2x faster than manual
+// adding 2 buffers: arm_add_q15 <-- ~2x faster than manual
+// multiply 2 buffers: arm_mult_q15 <-- this is actually a very interesting function, scaling everything, multiplying as a vector, and saturating, with possibility of scaling to allow >1 scales
+
+} // namespace fast
 
 uint16_t ClampUint32ToUint16(uint32_t a)
 {
@@ -179,21 +365,6 @@ inline float blep1(float x)
     return -x * x;
 }
 
-static inline float Sample16To32(int16_t s)
-{
-    return float(s) / 32768;
-}
-
-static inline float Sample16ToSignedRange(int16_t s, float pole)
-{
-    return Sample16To32(s) * pole;
-}
-
-static inline int16_t Sample32To16(float s)
-{
-    return (int16_t)(Clamp(s, 0.0f, 1.0f) * 32768.0f);
-}
-
 static constexpr float MIN_DECIBEL_GAIN = -60.0f;
 
 /**
@@ -202,7 +373,7 @@ static constexpr float MIN_DECIBEL_GAIN = -60.0f;
  */
 inline float LinearToDecibels(float aLinearValue, float aMinDecibels = MIN_DECIBEL_GAIN)
 {
-    return (aLinearValue > FloatEpsilon) ? 20.0f * fastlog10f(aLinearValue) : aMinDecibels;
+    return (aLinearValue > FloatEpsilon) ? 20.0f * fast::log10(aLinearValue) : aMinDecibels;
 }
 
 /**
@@ -210,13 +381,13 @@ inline float LinearToDecibels(float aLinearValue, float aMinDecibels = MIN_DECIB
  */
 inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIBEL_GAIN)
 {
-    float lin = ::fastpow(10.0f, 0.05f * aDecibels);
+    float lin = fast::pow(10.0f, 0.05f * aDecibels);
     if (lin <= aNegInfDecibels)
         return 0.0f;
     return lin;
 }
 
-template<typename T>
+template <typename T>
 inline const char *GetSignStr(T f)
 {
     if (NumberEquals(f, T(0)))
@@ -267,7 +438,7 @@ inline float SnapPitchBend(float x, float snapStrength)
     float q = snapStrength * 3;
     q = q * q * q * q * q;
     q += 1;
-    return z + ::fastpow(p, q);
+    return z + fast::pow(p, q);
 }
 
 // this is all utilities for shaping curves using this style:
@@ -280,9 +451,9 @@ namespace Curve2
 {
 static float Curve2_F(float c, float x, float n)
 {
-    float d = ::fastpow(n, c - 1);
+    float d = fast::pow(n, c - 1);
     d = std::max(d, 0.0001f); // prevent div0
-    return ::fastpow(x, c) / d;
+    return fast::pow(x, c) / d;
 }
 
 // this is the basic function for the curve.
@@ -580,10 +751,10 @@ PieData fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) 
         vx, vy,     // v
         sx, sy;     // pixel position
     rr = r * r;
-    ux = (r) * ::arm_cos_f32(a0);
-    uy = (r) * ::arm_sin_f32(a0);
-    vx = (r) * ::arm_cos_f32(a1);
-    vy = (r) * ::arm_sin_f32(a1);
+    ux = (r)*fast::cos(a0);
+    uy = (r)*fast::sin(a0);
+    vx = (r)*fast::cos(a1);
+    vy = (r)*fast::sin(a1);
     PieData ret;
     ret.p0 = PointF::Construct(ux, uy);
     ret.p1 = PointF::Construct(vx, vy);
@@ -690,7 +861,10 @@ struct NumericEditRangeSpec
                                           static_cast<Trhs>(mFineStep));
     }
 
-    virtual std::pair<bool, T> AdjustValue(T oldVal, int encoderIntDelta, bool isCoursePressed, bool isFinePressed) const
+    virtual std::pair<bool, T> AdjustValue(T oldVal,
+                                           int encoderIntDelta,
+                                           bool isCoursePressed,
+                                           bool isFinePressed) const
     {
         T step = mNormalStep;
         if (isCoursePressed && !isFinePressed)
@@ -763,12 +937,13 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
         ret += (step * encoderIntDelta);
 
         // if you're within finestep/2 of a value rounded to 0.25, then round it.
-        float quantizedValue = floorf((ret+0.125f) * 4) / 4;
-        if (fabsf(quantizedValue - ret) < (mFineStep / 2.0f)) {
+        float quantizedValue = floorf((ret + 0.125f) * 4) / 4;
+        if (fabsf(quantizedValue - ret) < (mFineStep / 2.0f))
+        {
             ret = quantizedValue;
         }
 
-        //transition from >min to =min, if you're within a finestep away.
+        // transition from >min to =min, if you're within a finestep away.
         if (ret > mRangeMin && ret <= (mRangeMin + (mFineStep / 2)))
         {
             ret = mRangeMin;

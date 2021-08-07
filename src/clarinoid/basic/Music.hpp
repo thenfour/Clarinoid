@@ -12,7 +12,7 @@ namespace clarinoid
 inline float MIDINoteToFreq(float x)
 {
     float a = 440;
-    return (a / 32.0f) * ::fastpow(2.0f, (((float)x - 9.0f) / 12.0f));
+    return (a / 32.0f) * fast::pow(2.0f, (((float)x - 9.0f) / 12.0f));
 }
 
 ////////////////////////////////////////////////////
@@ -538,9 +538,9 @@ struct Scale
             if (ctx.mEnharmonic == 0)
             {
                 CCASSERT(ctx.mScaleDegree >= 0 &&
-                         ctx.mScaleDegree < (int8_t)this->GetScaleFlavor().mDegreeCharacteristicStrengths.size());
+                         ctx.mScaleDegree < (int8_t)this->GetScaleFlavor().mDegreeCharacteristicStrengthsCount);
                 ret.push_back(
-                    std::make_pair(n, this->GetScaleFlavor().mDegreeCharacteristicStrengths.begin()[ctx.mScaleDegree]));
+                    std::make_pair(n, this->GetScaleFlavor().mDegreeCharacteristicStrengths[ctx.mScaleDegree]));
             }
         }
         return ret;

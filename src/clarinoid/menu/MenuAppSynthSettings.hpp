@@ -709,28 +709,28 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         return GetBinding().mModulations[mEditingModulationIndex];
     }
 
-    EnumSettingItem<ModulationSource> mModSource = {
+    EnumSettingItem<AnyModulationSource> mModSource = {
         "Source",
-        gModulationSourceInfo,
-        Property<ModulationSource>{[](void *cap) {
+        gAnyModulationSourceInfo,
+        Property<AnyModulationSource>{[](void *cap) {
                                        auto *pThis = (SynthPatchMenuApp *)cap;
                                        return pThis->GetModulationBinding().mSource;
                                    },
-                                   [](void *cap, const ModulationSource &v) {
+                                   [](void *cap, const AnyModulationSource &v) {
                                        auto *pThis = (SynthPatchMenuApp *)cap;
                                        pThis->GetModulationBinding().mSource = v;
                                    },
                                    this},
         AlwaysEnabled};
 
-    EnumSettingItem<ModulationDestination> mModDest = {
+    EnumSettingItem<AnyModulationDestination> mModDest = {
         "Dest",
-        gModulationDestinationInfo,
-        Property<ModulationDestination>{[](void *cap) {
+        gAnyModulationDestinationInfo,
+        Property<AnyModulationDestination>{[](void *cap) {
                                             auto *pThis = (SynthPatchMenuApp *)cap;
                                             return pThis->GetModulationBinding().mDest;
                                         },
-                                        [](void *cap, const ModulationDestination &v) {
+                                        [](void *cap, const AnyModulationDestination &v) {
                                             auto *pThis = (SynthPatchMenuApp *)cap;
                                             pThis->GetModulationBinding().mDest = v;
                                         },
