@@ -143,14 +143,6 @@ struct Voice : IModulationKRateProvider
     CCPatch mOsc3FBToMod = {mOsc, 2, mModMatrix, (uint8_t)ARateModulationSource::Osc3FB};
 
     // Patch a-rate modulation destinations
-    /*
-Input 0: Frequency Modulation for Oscillator 1
-Input 1: Pulse Width Modulation for Oscillator 1
-Input 2: Frequency Modulation for Oscillator 2
-Input 3: Pulse Width Modulation for Oscillator 2
-Input 4: Frequency Modulation for Oscillator 3
-Input 5: Pulse Width Modulation for Oscillator 3
-    */
     CCPatch mPatchModToOsc1PWM = {mModMatrix,
                                   (uint8_t)ARateModulationDestination::Osc1PulseWidth,
                                   mOsc,
@@ -176,22 +168,6 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                     (uint8_t)ARateModulationDestination::Osc3Phase,
                                     mOsc,
                                     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm3};
-
-    // CCPatch mPatchModToOsc1Amp = {
-    //     mModMatrix,
-    //     (uint8_t)ModulationDestinationInfo::GetARateIndex(ModulationDestination::Osc1Amplitude),
-    //     mOsc,
-    //     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am1};
-    // CCPatch mPatchModToOsc2Amp = {
-    //     mModMatrix,
-    //     (uint8_t)ModulationDestinationInfo::GetARateIndex(ModulationDestination::Osc2Amplitude),
-    //     mOsc,
-    //     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am2};
-    // CCPatch mPatchModToOsc3Amp = {
-    //     mModMatrix,
-    //     (uint8_t)ModulationDestinationInfo::GetARateIndex(ModulationDestination::Osc3Amplitude),
-    //     mOsc,
-    //     (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::am3};
 
     // ...
     MultiMixerPannerNode<3> mOscMixerPanner;
@@ -252,34 +228,19 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mPatchLfo1ToMod.connect();
         mPatchLfo2ToMod.connect();
 
-        // mPatchBreathToMod.connect();
-        // mPatchPitchStripToMod.connect();
-
         mPatchModToOsc1PWM.connect();
         mPatchModToOsc2PWM.connect();
         mPatchModToOsc3PWM.connect();
-
-        // mPatchModToOsc1Freq.connect();
-        // mPatchModToOsc2Freq.connect();
-        // mPatchModToOsc3Freq.connect();
 
         mPatchModToOsc1Phase.connect();
         mPatchModToOsc2Phase.connect();
         mPatchModToOsc3Phase.connect();
 
-        // mPatchModToOsc1Amp.connect();
-        // mPatchModToOsc2Amp.connect();
-        // mPatchModToOsc3Amp.connect();
-
         mPatchDCToEnv1.connect();
         mPatchDCToEnv2.connect();
     }
 
-    static float CalcFilterCutoffFreq(float breath01,
-                                      float midiNote,
-                                      float keyTrackingAmt,
-                                      float freqMin,
-                                      float freqMax)
+    float CalcFilterCutoffFreq(float breath01, float midiNote, float keyTrackingAmt, float freqMin, float freqMax)
     {
         // perform breath & key tracking for filter. we will basically multiply the
         // effects. velocity we will only track between notes from 7jam code: const
@@ -292,7 +253,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
                        filterKS); // map ks amt 0-1 to 1-fulleffect
 
         float filterP = filterKS * breath01;
-        filterP = ClampInclusive(filterP, 0.0f, 1.0f);
+        filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
 
         float filterFreq = map(filterP, 0.0f, 1.0f, freqMin, freqMax);
         return filterFreq;
@@ -314,48 +275,62 @@ Input 5: Pulse Width Modulation for Oscillator 3
         return mLatestPitchbendVal;
     }
 
-//     // when the synth graph runs, 
-// float mKRateVoiceFilterCutoff = 0;
-// float mKRateOsc1Frequency = 0;
-// float mKRateOsc1Amplitude = 0;
-// float mKRateOsc2Frequency = 0;
-// float mKRateOsc2Amplitude = 0;
-// float mKRateOsc3Frequency = 0;
-// float mKRateOsc3Amplitude = 0;
+    float mKRateVoiceFilterCutoffN11 = 0;
+    float mKRateFrequencyN11[3] = {0};
+    float mKRateAmplitudeN11[3] = {0};
 
     virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
                                                                            float val) override
     {
-        // switch (d)
-        // {
-        // case KRateModulationDestination::VoiceFilterCutoff:
-        //     return;
-        // case KRateModulationDestination::Osc1Frequency:
-        //     return;
-        // case KRateModulationDestination::Osc1Amplitude:
-        //     return;
-        // case KRateModulationDestination::Osc2Frequency:
-        //     return;
-        // case KRateModulationDestination::Osc2Amplitude:
-        //     return;
-        // case KRateModulationDestination::Osc3Frequency:
-        //     return;
-        // case KRateModulationDestination::Osc3Amplitude:
-        //     return;
-        // }
+        switch (d)
+        {
+        case KRateModulationDestination::VoiceFilterCutoff:
+            mKRateVoiceFilterCutoffN11 = val;
+            return;
+        case KRateModulationDestination::Osc1Frequency:
+            mKRateFrequencyN11[0] = val;
+            return;
+        case KRateModulationDestination::Osc1Amplitude:
+            mKRateAmplitudeN11[0] = val;
+            return;
+        case KRateModulationDestination::Osc2Frequency:
+            mKRateFrequencyN11[1] = val;
+            return;
+        case KRateModulationDestination::Osc2Amplitude:
+            mKRateAmplitudeN11[1] = val;
+            return;
+        case KRateModulationDestination::Osc3Frequency:
+            mKRateFrequencyN11[2] = val;
+            return;
+        case KRateModulationDestination::Osc3Amplitude:
+            mKRateAmplitudeN11[2] = val;
+            return;
+        }
     }
 
     // NOTE: we don't care about SynthPatchB at this point.
     void Update(const MusicalVoice &mv)
     {
         mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatchA);
-        mModMatrix.SetSynthPatch(mPreset, this);
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
         bool voiceOrPatchChanged =
             (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatchA != mv.mSynthPatchA);
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
             mOsc.removeNote();
+            // reset saved krate mod values, so modulations don't leak across patch changes
+            mKRateVoiceFilterCutoffN11 = 0;
+            for (auto &v : mKRateFrequencyN11)
+            {
+                v = 0;
+            }
+
+            for (auto &v : mKRateAmplitudeN11)
+            {
+                v = 1;
+            }
+
+            mModMatrix.SetSynthPatch(mPreset, this);
         }
         if (voiceOrPatchChanged || transition.mNeedsNoteOn)
         {
@@ -436,6 +411,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
         mLfo1.frequency(mPreset->mLfo1Rate);
         mLfo2.frequency(mPreset->mLfo2Rate);
 
+        mLatestBreathVal = mv.mBreath01.GetFloatVal();
+        mLatestPitchbendVal = mv.mPitchBendN11.GetFloatVal();
+
         // mBreathModSource.amplitude(mv.mBreath01.GetFloatVal());
         // mPitchBendModSource.amplitude(mv.mPitchBendN11.GetFloatVal());
 
@@ -493,7 +471,9 @@ Input 5: Pulse Width Modulation for Oscillator 3
             // if the output is disabled, then the multimixerpanner will disable this channel,
             // and its output is only designed for modulation sources. then the gain will be
             // specified in the modulation amount.
-            mOsc.mOsc[i].amplitude(outputEnable[i] ? mPreset->mOsc[i].mGain : 1.0f);
+            float gain = outputEnable[i] ? mPreset->mOsc[i].mGain : 1.0f;
+            gain *= mKRateAmplitudeN11[i];
+            mOsc.mOsc[i].amplitude(gain);
             mOsc.mOsc[i].SetPhaseOffset(mPreset->mOsc[i].mPhase01);
 
             mOsc.mOsc[i].portamentoTime(mPreset->mOsc[i].mPortamentoTime);
@@ -502,7 +482,7 @@ Input 5: Pulse Width Modulation for Oscillator 3
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
             mOsc.mOsc[i].fmAmount(1);
             mOsc.mOsc[i].mPMMultiplier = mPreset->mFMStrength;
-            mOsc.mOsc[i].mAMMinimumGain = mPreset->mOsc[i].mAMMinimumGain;
+            // mOsc.mOsc[i].mAMMinimumGain = mPreset->mOsc[i].mAMMinimumGain;
             mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain;
         }
 
@@ -513,8 +493,10 @@ Input 5: Pulse Width Modulation for Oscillator 3
                            int pitchSemis,
                            float detune,
                            float freqMul,
-                           float freqOffset) {
-            float ret = midiNote + pitchFine + pitchSemis + detune + SnapPitchBend(pbSemis, pbSnap);
+                           float freqOffset,
+                           float krateFreqModN11) {
+            float ret =
+                midiNote + pitchFine + pitchSemis + detune + SnapPitchBend(pbSemis, pbSnap) + (12.0f * krateFreqModN11);
             ret = (MIDINoteToFreq(ret) * freqMul) + freqOffset;
             return Clamp(ret, 0.0f, 22050.0f);
         };
@@ -527,7 +509,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                 mPreset->mOsc[0].mPitchSemis,
                                 -mPreset->mDetune,
                                 mPreset->mOsc[0].mFreqMultiplier,
-                                mPreset->mOsc[0].mFreqOffset));
+                                mPreset->mOsc[0].mFreqOffset,
+                                mKRateFrequencyN11[0]));
         mOsc.frequency(3,
                        calcFreq(midiNote,
                                 mPreset->mOsc[2].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
@@ -536,7 +519,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                 mPreset->mOsc[2].mPitchSemis,
                                 mPreset->mDetune,
                                 mPreset->mOsc[2].mFreqMultiplier,
-                                mPreset->mOsc[2].mFreqOffset));
+                                mPreset->mOsc[2].mFreqOffset,
+                                mKRateFrequencyN11[2]));
 
         if (mPreset->mSync)
         {
@@ -547,7 +531,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                   mPreset->mOsc[1].mPitchSemis,
                                   0,
                                   mPreset->mOsc[1].mFreqMultiplier,
-                                  mPreset->mOsc[1].mFreqOffset);
+                                  mPreset->mOsc[1].mFreqOffset,
+                                  mKRateFrequencyN11[1]);
             float freqSync =
                 map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * mPreset->mSyncMultMin, freq * mPreset->mSyncMultMax);
             mOsc.frequency(2, freqSync);
@@ -562,7 +547,8 @@ Input 5: Pulse Width Modulation for Oscillator 3
                                     mPreset->mOsc[1].mPitchSemis,
                                     0,
                                     mPreset->mOsc[1].mFreqMultiplier,
-                                    mPreset->mOsc[1].mFreqOffset));
+                                    mPreset->mOsc[1].mFreqOffset,
+                                    mKRateFrequencyN11[1]));
         }
 
         // perform breath & key tracking for filter. we will basically multiply the

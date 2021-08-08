@@ -69,28 +69,27 @@ static inline uint32_t pack_16b_16b(int32_t a, int32_t b)
 // computes (((a[31:16] + b[31:16]) << 16) | (a[15:0 + b[15:0]))  (saturates)
 static inline uint32_t signed_add_16_and_16(uint32_t a, uint32_t b)
 {
-  return 0;
+  return 0;// todo
 }
 
 // computes ((a[31:0] * b[15:0]) >> 16)
 static inline int32_t signed_multiply_32x16b(int32_t a, uint32_t b)
 {
-  return 0;
+  return 0;// todo
 }
 
 
 // computes ((a[31:0] * b[31:16]) >> 16)
 static inline int32_t signed_multiply_32x16t(int32_t a, uint32_t b)
 {
-  return 0;
+  return 0;// todo
 
 }
 
 // computes limit((val >> rshift), 2**bits)
 static inline int32_t signed_saturate_rshift(int32_t val, int bits, int rshift)
 {
-  return 0;
-
+  return 0;// todo
 }
 
 

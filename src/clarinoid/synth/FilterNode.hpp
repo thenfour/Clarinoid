@@ -142,7 +142,7 @@ class StereoFilterNode : public AudioStream
 
     float mRampGain = 1.0f;
     static constexpr int mRampLengthSamples = AUDIO_SAMPLE_RATE_EXACT * 250 / 1000; // 250 ms ramp
-    static constexpr float mRampGainIncreasePerSample = 1.0f / mRampLengthSamples;
+    static constexpr float mRampGainIncreasePerFrame = 1.0f / mRampLengthSamples * AUDIO_BLOCK_SAMPLES;
 
     audio_block_t *inputQueueArray[2];
 
@@ -173,25 +173,18 @@ class StereoFilterNode : public AudioStream
         int16_t *pR = blockR->data;
         float tempBufferSourceL[AUDIO_BLOCK_SAMPLES];
         float tempBufferSourceR[AUDIO_BLOCK_SAMPLES];
-        for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
-        {
-            tempBufferSourceL[i] = (float)pL[i] / 32767.0f;
-            tempBufferSourceR[i] = (float)pR[i] / 32767.0f;
-        }
+        fast::Sample16To32Buffer(pL, tempBufferSourceL);
+        fast::Sample16To32Buffer(pR, tempBufferSourceR);
         mSelectedFilter->ProcessInPlace(tempBufferSourceL, tempBufferSourceR, AUDIO_BLOCK_SAMPLES);
         if (mDCEnabled)
         {
             mDC.ProcessInPlace(tempBufferSourceL, tempBufferSourceR, AUDIO_BLOCK_SAMPLES);
         }
-        for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
-        {
-            float fL = tempBufferSourceL[i];
-            float fR = tempBufferSourceR[i];
-            float m = 32768.0f * mRampGain;
-            mRampGain = std::min(1.0f, mRampGain + mRampGainIncreasePerSample);
-            pL[i] = saturate16(int32_t(fL * m));
-            pR[i] = saturate16(int32_t(fR * m));
-        }
+        arm_scale_f32(tempBufferSourceL, mRampGain, tempBufferSourceL, AUDIO_BLOCK_SAMPLES);
+        arm_scale_f32(tempBufferSourceR, mRampGain, tempBufferSourceR, AUDIO_BLOCK_SAMPLES);
+        fast::Sample32To16Buffer(tempBufferSourceL, pL);
+        fast::Sample32To16Buffer(tempBufferSourceR, pR);
+        mRampGain = std::min(1.0f, mRampGain + mRampGainIncreasePerFrame);
 
         transmit(blockL, 0);
         release(blockL);

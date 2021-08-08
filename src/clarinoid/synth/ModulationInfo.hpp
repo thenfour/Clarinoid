@@ -8,7 +8,7 @@ namespace clarinoid
 struct IModulationKRateProvider
 {
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) = 0;
-    virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d, float) = 0;
+    virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d, float val) = 0;
 };
 
 enum class ModulationRate : uint8_t

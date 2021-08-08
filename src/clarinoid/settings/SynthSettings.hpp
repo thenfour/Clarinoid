@@ -317,7 +317,7 @@ struct SynthOscillatorSettings
     float mPulseWidth = 0.5f;
 
     float mFMFeedbackGain = 0.0f; // 0 to 1
-    float mAMMinimumGain = 0.0f;  // in order to allow amplitude modulations to be non-zero
+    //float mAMMinimumGain = 0.0f;  // in order to allow amplitude modulations to be non-zero
 };
 
 struct SynthPreset

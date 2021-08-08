@@ -173,18 +173,18 @@ struct SynthPatchOscillatorMenuStuff
                                                     this},
                                     AlwaysEnabled};
 
-    GainSettingItem mAMMinimumGain = {"AM Baseline",
-                                      StandardRangeSpecs::gGeneralGain,
-                                      Property<float>{[](void *cap) {
-                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                          return pThis->GetBinding().mAMMinimumGain;
-                                                      },
-                                                      [](void *cap, const float &v) {
-                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                          pThis->GetBinding().mAMMinimumGain = v;
-                                                      },
-                                                      this},
-                                      AlwaysEnabled};
+    // GainSettingItem mAMMinimumGain = {"AM Baseline",
+    //                                   StandardRangeSpecs::gGeneralGain,
+    //                                   Property<float>{[](void *cap) {
+    //                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+    //                                                       return pThis->GetBinding().mAMMinimumGain;
+    //                                                   },
+    //                                                   [](void *cap, const float &v) {
+    //                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+    //                                                       pThis->GetBinding().mAMMinimumGain = v;
+    //                                                   },
+    //                                                   this},
+    //                                   AlwaysEnabled};
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
@@ -331,11 +331,11 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                      AlwaysEnabled};
 
-    ISettingItem *mArray[15] = {
+    ISettingItem *mArray[14] = {
         &mWaveform,
         &mGain,
         &mFMFeedback,
-        &mAMMinimumGain,
+        //&mAMMinimumGain,
         &mPan,
         &mPitchbendRange,
         &mPitchbendSnap,

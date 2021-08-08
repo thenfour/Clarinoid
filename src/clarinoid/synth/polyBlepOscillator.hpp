@@ -37,26 +37,6 @@ namespace clarinoid
     |  .`      |  .`      |  .`      |  .`
     |.`        |.`        |.`        |.`
 
-    INPUT CONNECTIONS (12):
-    0 = fm1
-    1 = pwm1
-    2 = pm1
-    3 = am1
-
-    4 = fm2
-    5 = pwm2
-    6 = pm2
-    7 = am2
-
-    8 = fm3
-    9 = pwm3
-    10 = pm3
-    11 = am3
-
-    OUTPUT CONNECTIONS:
-    0 = osc1
-    1 = osc2
-    2 = osc3
 */
 
 // https://gitlab.com/flojawi/teensy-polyblep-oscillator
@@ -84,24 +64,21 @@ namespace clarinoid
 
 struct AudioBandlimitedOsci : public AudioStream
 {
-    static constexpr size_t INPUT_CONNECTION_COUNT = 12;
     enum class INPUT_INDEX
     {
-        fm1 = 0,
-        pwm1 = 1,
-        pm1 = 2,
-        am1 = 3,
+        //fm1,
+        pwm1 = 0,
+        pm1,
 
-        fm2 = 4,
-        pwm2 = 5,
-        pm2 = 6,
-        am2 = 7,
+        //fm2,
+        pwm2,
+        pm2,
 
-        fm3 = 8,
-        pwm3 = 9,
-        pm3 = 10,
-        am3 = 11,
+        //fm3,
+        pwm3,
+        pm3,
     };
+    static constexpr size_t INPUT_CONNECTION_COUNT = 6;
 
     AudioBandlimitedOsci() : AudioStream(INPUT_CONNECTION_COUNT, inputQueueArray)
     {
@@ -206,7 +183,7 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mOutput = 0;           // osc1_output
         float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
-        float mAMMinimumGain = 0.0f; // when modulating amplitude, this is the minimum
+        //float mAMMinimumGain = 0.0f; // when modulating amplitude, this is the minimum
         float mPMFeedbackAmt = 0.0f;
 
         void amplitude(float a)
@@ -272,7 +249,7 @@ struct AudioBandlimitedOsci : public AudioStream
         }
 
         // call before calculating the sample; this does A-rate modulation stuff
-        inline void PreStep(size_t i, audio_block_t *fm1, audio_block_t *pwm1, audio_block_t *pm1)
+        inline void PreStep(size_t i, /* audio_block_t *fm1,*/ audio_block_t *pwm1, audio_block_t *pm1)
         {
             if (mPortamentoSamples > 0 && mCurrentPortamentoSample++ < mPortamentoSamples)
             {
@@ -284,23 +261,23 @@ struct AudioBandlimitedOsci : public AudioStream
                 mT += fast::Sample16To32(pm1->data[i]) * mPMMultiplier;
             }
 
-            if (fm1)
-            {
-                int32_t n = fm1->data[i] * mPitchModAmount;
-                int32_t ipart = n >> 27;
-                n = n & 0x7FFFFFF;
-                n = (n + 134217728) << 3;
-                n = multiply_32x32_rshift32_rounded(n, n);
-                n = multiply_32x32_rshift32_rounded(n, 715827883) << 3;
-                n = n + 715827882;
+            // if (fm1)
+            // {
+            //     int32_t n = fm1->data[i] * mPitchModAmount;
+            //     int32_t ipart = n >> 27;
+            //     n = n & 0x7FFFFFF;
+            //     n = (n + 134217728) << 3;
+            //     n = multiply_32x32_rshift32_rounded(n, n);
+            //     n = multiply_32x32_rshift32_rounded(n, 715827883) << 3;
+            //     n = n + 715827882;
 
-                uint32_t scale = n >> (15 - ipart);
-                mFreq = mFrequency * scale * 0.00003051757;
-            }
-            else
-            {
+            //     uint32_t scale = n >> (15 - ipart);
+            //     mFreq = mFrequency * scale * 0.00003051757;
+            // }
+            // else
+            // {
                 mFreq = mFrequency;
-            }
+            //}
 
             mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each
                                                    // sample. very small.
@@ -313,15 +290,10 @@ struct AudioBandlimitedOsci : public AudioStream
             mPulseWidth = Clamp(mPulseWidth, 0.001f, 0.999f);
         }
 
-        inline void PostStep(size_t i, audio_block_t *out, audio_block_t *am)
+        inline void PostStep(size_t i, audio_block_t *out)
         {
             float o = mOutput * mGain;
-            if (am)
-            {
-                o *= std::abs(fast::Sample16To32(am->data[i])) + mAMMinimumGain;
-            }
-
-            out->data[i] = o * 32768.0f;
+            out->data[i] = fast::Sample32To16(o);// o * 32768.0f;
         }
 
         template <bool TperformSync>
@@ -532,6 +504,8 @@ void AudioBandlimitedOsci::update()
 {
     if (!mEnabled)
         return;
+    if (mNotesPlaying <= 0)
+        return;
     audio_block_t *out1 = allocate();
     if (!out1)
         return;
@@ -542,34 +516,27 @@ void AudioBandlimitedOsci::update()
     if (!out3)
         return;
 
-    audio_block_t *fm1 = receiveReadOnly((int)INPUT_INDEX::fm1);
+    //audio_block_t *fm1 = receiveReadOnly((int)INPUT_INDEX::fm1);
     audio_block_t *pwm1 = receiveReadOnly((int)INPUT_INDEX::pwm1);
     audio_block_t *pm1 = receiveReadOnly((int)INPUT_INDEX::pm1);
-    audio_block_t *am1 = receiveReadOnly((int)INPUT_INDEX::am1);
-    audio_block_t *fm2 = receiveReadOnly((int)INPUT_INDEX::fm2);
+    //audio_block_t *fm2 = receiveReadOnly((int)INPUT_INDEX::fm2);
     audio_block_t *pwm2 = receiveReadOnly((int)INPUT_INDEX::pwm2);
     audio_block_t *pm2 = receiveReadOnly((int)INPUT_INDEX::pm2);
-    audio_block_t *am2 = receiveReadOnly((int)INPUT_INDEX::am2);
-    audio_block_t *fm3 = receiveReadOnly((int)INPUT_INDEX::fm3);
+    //audio_block_t *fm3 = receiveReadOnly((int)INPUT_INDEX::fm3);
     audio_block_t *pwm3 = receiveReadOnly((int)INPUT_INDEX::pwm3);
     audio_block_t *pm3 = receiveReadOnly((int)INPUT_INDEX::pm3);
-    audio_block_t *am3 = receiveReadOnly((int)INPUT_INDEX::am3);
 
     for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
     {
-        mOsc[0].PreStep(i, fm1, pwm1, pm1);
-        mOsc[1].PreStep(i, fm2, pwm2, pm2);
-        mOsc[2].PreStep(i, fm3, pwm3, pm3);
+        mOsc[0].PreStep(i,/*fm1,*/ pwm1, pm1);
+        mOsc[1].PreStep(i,/*fm2,*/ pwm2, pm2);
+        mOsc[2].PreStep(i,/*fm3,*/ pwm3, pm3);
 
         osc1Step(); // This steps actually all oscillators.
 
-        mOsc[0].PostStep(i, out1, am1);
-        mOsc[1].PostStep(i, out2, am2);
-        mOsc[2].PostStep(i, out3, am3);
-
-        // out1->data[i] = (int16_t)(mOsc[0].mOutput * 32768.0 * mOsc[0].mGain);
-        // out2->data[i] = (int16_t)(mOsc[1].mOutput * 32768.0 * mOsc[1].mGain);
-        // out3->data[i] = (int16_t)(mOsc[2].mOutput * 32768.0 * mOsc[2].mGain);
+        mOsc[0].PostStep(i, out1);
+        mOsc[1].PostStep(i, out2);
+        mOsc[2].PostStep(i, out3);
     }
 
     transmit(out1, 0);
@@ -581,31 +548,24 @@ void AudioBandlimitedOsci::update()
     transmit(out3, 2);
     release(out3);
 
-    if (fm1)
-        release(fm1);
+    // if (fm1)
+    //     release(fm1);
     if (pwm1)
         release(pwm1);
     if (pm1)
         release(pm1);
-    if (am1)
-        release(am1);
-    if (fm2)
-        release(fm2);
+    // if (fm2)
+    //     release(fm2);
     if (pwm2)
         release(pwm2);
     if (pm2)
         release(pm2);
-    if (am2)
-        release(am2);
-
-    if (fm3)
-        release(fm3);
+    // if (fm3)
+    //     release(fm3);
     if (pwm3)
         release(pwm3);
     if (pm3)
         release(pm3);
-    if (am3)
-        release(am3);
 }
 
 inline void AudioBandlimitedOsci::osc3Step()
