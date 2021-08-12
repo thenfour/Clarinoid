@@ -21,3 +21,5 @@
 #include "Tristate.hpp"
 #include "SortedArray.hpp"
 #include "Control.hpp"
+#include "ModCurve.hpp"
+

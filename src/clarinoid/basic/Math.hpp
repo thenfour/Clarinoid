@@ -277,6 +277,7 @@ static float Clamp(float x, float low, float hi)
     return x;
 }
 
+
 template <typename T>
 static T ClampInclusive(T x, T minInclusive, T maxInclusive)
 {
@@ -873,7 +874,7 @@ struct NumericEditRangeSpec
 
         T ret = oldVal + (step * encoderIntDelta);
 
-        ret = Clamp(ret, mRangeMin, mRangeMax);
+        ret = (T)Clamp((float)ret, (float)mRangeMin, (float)mRangeMax);
 
         return std::make_pair(!NumberEquals(oldVal, ret), ret);
     }

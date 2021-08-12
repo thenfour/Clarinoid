@@ -5,6 +5,9 @@
 #error This is only for x86 unit test stuff.
 #endif
 
+#define PROGMEM
+#define EXTMEM
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>

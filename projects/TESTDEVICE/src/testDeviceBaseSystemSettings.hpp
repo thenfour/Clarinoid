@@ -41,7 +41,7 @@ static constexpr size_t BREATH_SIGNAL_SMOOTHING_FRAMES = 6;
 
 
 static const size_t SYNTH_PRESET_COUNT = 32;
-static const size_t SYNTH_MODULATIONS_MAX = 6; // an additional 5 will be internally created because of FM modulation
+static const size_t SYNTH_MODULATIONS_MAX = 6; // an additional 5 can be internally created because of FM modulation
 
 static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the "mapped control value sequence"
 

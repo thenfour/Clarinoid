@@ -93,6 +93,9 @@ enum class KRateModulationSource : uint8_t
     // these are INDICES used by synthvoice / modulationmatrix
     Breath = 0, // K-rate
     PitchStrip, // K-rate
+    // RandomTrigger,
+    // Keytracking
+    // macro1, 2, etc
 };
 
 EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[2] = {
@@ -198,11 +201,16 @@ enum class AnyModulationDestination : uint8_t
 
     VoiceFilterCutoff, // k-rate
     Osc1Frequency,     // k-rate
-    Osc1Amplitude,     // k-rate
+    Osc1Amplitude,     // k-rate  // OUTPUT amplitude
     Osc2Frequency,     // k-rate
-    Osc2Amplitude,     // k-rate
+    Osc2Amplitude,     // k-rate  // OUTPUT amplitude
     Osc3Frequency,     // k-rate
-    Osc3Amplitude,     // k-rate
+    Osc3Amplitude,     // k-rate  // OUTPUT amplitude
+
+    // oscillator FM amplitude
+    // oscillator FM feedback
+    // lfo rate
+    // env ?
 };
 
 EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[14] = {
@@ -232,15 +240,6 @@ struct SynthModulationSpec
     AnyModulationSource mSource = AnyModulationSource::None;
     AnyModulationDestination mDest = AnyModulationDestination::None;
 
-    // each modulation source/dest has its own ranges (for example phase is -1 to 1, breath is 0-1, filter freq is 0-22000 hz)
-    // i think the best way to support polar behavior is to specify range from -1 to 1 always.
-    // it means -1 to 0 represents the negative pole of the defined range, and 0-1 represents the positive pole.
-    // so for example breath, specifying a src range of -1 or 0 makes no difference because there's no negative pole.
-    // or for something fictional that has a defined range of like -20 to +70, a src range of -0.25 would represent -5.
-    // float mSrcRangeMinN11 = 0.0f;
-    // float mSrcRangeMaxN11 = 1.0f;
-    // float mDestRangeMinN11 = 0.0f;
-    // float mDestRangeMaxN11 = 0.5f;
     float mScaleN11 = 0.5f;
 
     // to mimic old behavior with 0 offset and just a scale.
