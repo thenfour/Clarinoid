@@ -69,7 +69,7 @@ void TestHarmonizer()
   Test(mv[1].mIsNoteCurrentlyMuted == false);
   Test(mv[1].mMidiNote == MidiNote(5, Note::Db).GetMidiValue());
   Test(mv[1].mVelocity == 50);
-  Test(mv[1].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 1));
+  //Test(mv[1].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 1));
 
   // global scale usage { E major pentatonic -2} 
   preset = clarinoid::HarmPreset();
@@ -86,7 +86,7 @@ void TestHarmonizer()
   Test(mv[1].mIsNoteCurrentlyMuted == false);
   Test(mv[1].mMidiNote == MidiNote(4, Note::Db).GetMidiValue());
   Test(mv[1].mVelocity == 50);
-  Test(mv[1].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 1));
+  //Test(mv[1].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 1));
 
 
   // { chromatic +perfect5th ; E major -2} 
@@ -109,17 +109,17 @@ void TestHarmonizer()
   Test(lv.mIsNoteCurrentlyMuted == false);
   Test(lv.mMidiNote == MidiNote(4, Note::Gb).GetMidiValue());
   Test(lv.mVelocity == 50);
-  Test(lv.mVoiceId == clarinoid::MakeMusicalVoiceID(2, 0));
+  //Test(lv.mVoiceId == clarinoid::MakeMusicalVoiceID(2, 0));
 
   Test(mv[1].mIsNoteCurrentlyMuted == false);
   Test(mv[1].mMidiNote == MidiNote(5, Note::Db).GetMidiValue());
   Test(mv[1].mVelocity == 50);
-  Test(mv[1].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 1));
+  //Test(mv[1].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 1));
 
   Test(mv[2].mIsNoteCurrentlyMuted == false);
   Test(mv[2].mMidiNote == MidiNote(3, Note::B).GetMidiValue());
   Test(mv[2].mVelocity == 50);
-  Test(mv[2].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 2));
+  //Test(mv[2].mVoiceId == clarinoid::MakeMusicalVoiceID(2, 2));
 
   // test sequence (note on required)
   // test deduced voice

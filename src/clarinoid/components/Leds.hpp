@@ -40,10 +40,7 @@ struct Leds
 
     void SetPixel(uint8_t pixel, ColorF c)
     {
-        SetPixel(pixel,
-                 (uint8_t)(c.r * 255),
-                 (uint8_t)(c.g * 255),
-                 (uint8_t)(c.b * 255));
+        SetPixel(pixel, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255));
     }
 
     void Show()

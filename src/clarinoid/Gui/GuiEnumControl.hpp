@@ -142,8 +142,8 @@ struct GuiEnumControl : GuiCompositeControl<T>
                    const Property<T> &binding,
                    const Property<bool> &isSelectable)
         : GuiCompositeControl<T>(page, bounds, binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable), //
-          mEditor(enumInfo, binding),                                                        //
-          mTooltipRenderer(enumInfo, tooltipCaption),                                        //
+          mEditor(enumInfo, binding),                                                                         //
+          mTooltipRenderer(enumInfo, tooltipCaption),                                                         //
           mValueRenderer(enumInfo), mRenderer(&mValueRenderer, &mTooltipRenderer)
     {
     }

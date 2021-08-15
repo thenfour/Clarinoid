@@ -713,28 +713,28 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         "Source",
         gAnyModulationSourceInfo,
         Property<AnyModulationSource>{[](void *cap) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       return pThis->GetModulationBinding().mSource;
-                                   },
-                                   [](void *cap, const AnyModulationSource &v) {
-                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                       pThis->GetModulationBinding().mSource = v;
-                                   },
-                                   this},
+                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                          return pThis->GetModulationBinding().mSource;
+                                      },
+                                      [](void *cap, const AnyModulationSource &v) {
+                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                          pThis->GetModulationBinding().mSource = v;
+                                      },
+                                      this},
         AlwaysEnabled};
 
     EnumSettingItem<AnyModulationDestination> mModDest = {
         "Dest",
         gAnyModulationDestinationInfo,
         Property<AnyModulationDestination>{[](void *cap) {
-                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                            return pThis->GetModulationBinding().mDest;
-                                        },
-                                        [](void *cap, const AnyModulationDestination &v) {
-                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                            pThis->GetModulationBinding().mDest = v;
-                                        },
-                                        this},
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               return pThis->GetModulationBinding().mDest;
+                                           },
+                                           [](void *cap, const AnyModulationDestination &v) {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               pThis->GetModulationBinding().mDest = v;
+                                           },
+                                           this},
         AlwaysEnabled};
 
     FloatSettingItem mModScale = {"Scale",

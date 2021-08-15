@@ -110,9 +110,9 @@ struct GuiHarmPatchSelectControl : GuiCompositeControl<T>
                               const Property<T> &binding,
                               const Property<bool> &isSelectable)
         : GuiCompositeControl<T>(page, bounds, binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable), //
-          mEditor(binding),                                                                  //
-          mTooltipRenderer(tooltipCaption),                                                  //
-          mValueRenderer(),                                                                  //
+          mEditor(binding),                                                                                   //
+          mTooltipRenderer(tooltipCaption),                                                                   //
+          mValueRenderer(),                                                                                   //
           mRenderer(&mValueRenderer, &mTooltipRenderer)
     {
     }

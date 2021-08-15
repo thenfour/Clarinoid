@@ -48,10 +48,10 @@ static inline double modCurve_xN11_kN11(double x, double k)
 template <int LutSizeXLog2, int LutSizeYLog2, int ValueScaleLog2>
 struct ModulationCurveLUT
 {
-  using q15_t = int16_t;
-  using q31_t = int32_t;
-  using q63_t = int64_t;
-  // optimized version of arm_linear_interp_q15, by assuming x is in range, and 16.16 format instead of 12.20.
+    using q15_t = int16_t;
+    using q31_t = int32_t;
+    using q63_t = int64_t;
+    // optimized version of arm_linear_interp_q15, by assuming x is in range, and 16.16 format instead of 12.20.
     // that avoids extra shifting to cram the 16-bit sample value into the 12-bit integral portion
     q15_t arm_linear_interp_q15(q15_t *pYData, q31_t x)
     {
@@ -85,6 +85,7 @@ struct ModulationCurveLUT
 
     static constexpr int LutSizeX = 1 << LutSizeXLog2;
     static constexpr int LutSizeY = 1 << LutSizeYLog2;
+    static constexpr int LinearYIndex = LutSizeY / 2;
     static constexpr int LutSizeTotal = 1 << (LutSizeXLog2 + LutSizeYLog2);
     static constexpr int ValueScale = 1 << ValueScaleLog2;
 
@@ -171,19 +172,37 @@ struct ModulationCurveLUT
     //  return ((numerator << IntegralPartHeadroomBits) >> denominatorShift) << (20 - IntegralPartHeadroomBits);
     //}
 
-    inline q15_t *BeginLookup(float kN11)
+    inline q15_t *BeginLookupF(float kN11)
     {
         int32_t lutY = (kN11 * .5 + .5) * LutSizeY;
+        return BeginLookupI(lutY);
+    }
+
+    inline q15_t *BeginLookupI(int32_t lutY)
+    {
         if (lutY >= LutSizeY)
             lutY = LutSizeY - 1; // for kN11 == 1.
+        if (lutY < 0)
+            lutY = 0;
+        if (lutY == (LutSizeY / 2))
+            return nullptr; // special case for linear
         auto ret = mpLut + LutSizeX * lutY;
         return ret;
     }
 
-    inline int16_t Transfer(int16_t inpVal, q15_t *pLutRow)
+    inline int16_t Transfer16(int16_t inpVal, q15_t *pLutRow)
     {
+        if (!pLutRow)
+            return inpVal;
         int32_t lutX12p20 = To16p16(int32_t(inpVal) + ValueScale, TransferDenominator);
         return arm_linear_interp_q15(pLutRow, lutX12p20);
+    }
+    inline float Transfer32(float inpVal, q15_t *pLutRow)
+    {
+        if (!pLutRow)
+            return inpVal;
+        int32_t lutX12p20 = To16p16(int32_t(fast::Sample32To16(inpVal)) + ValueScale, TransferDenominator);
+        return fast::Sample16To32(arm_linear_interp_q15(pLutRow, lutX12p20));
     }
 };
 

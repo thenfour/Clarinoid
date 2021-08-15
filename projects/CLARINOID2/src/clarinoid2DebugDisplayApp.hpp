@@ -6,7 +6,7 @@
 namespace clarinoid
 {
 
-static String IndexToChar(int i) 
+static String IndexToChar(int i)
 {
     char r[2] = {0};
     if (i < 10)

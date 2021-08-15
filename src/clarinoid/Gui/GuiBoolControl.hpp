@@ -61,7 +61,13 @@ struct GuiMuteControl : GuiCompositeControl<bool>
                    const Property<bool> &binding,     //
                    const Property<bool> &isSelectable //
                    )
-        : GuiCompositeControl(page, RectI::Construct(pt, 17, 7), binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable),
+        : GuiCompositeControl(page,
+                              RectI::Construct(pt, 17, 7),
+                              binding,
+                              NullBoolBinding,
+                              &mRenderer,
+                              &mEditor,
+                              isSelectable),
           mRenderer(tooltipCaption, trueValue, falseValue)
     {
     }
@@ -96,7 +102,6 @@ struct GuiPatchMuteControlRenderer : IGuiRenderer<bool>
     }
 };
 
-
 // a smaller verison of mute control
 template <bool invertVal>
 struct GuiPatchMuteControl : GuiCompositeControl<bool>
@@ -112,7 +117,13 @@ struct GuiPatchMuteControl : GuiCompositeControl<bool>
                         const Property<bool> &binding,     //
                         const Property<bool> &isSelectable //
                         )
-        : GuiCompositeControl(page, RectI::Construct(pt, 7, 7), binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable),
+        : GuiCompositeControl(page,
+                              RectI::Construct(pt, 7, 7),
+                              binding,
+                              NullBoolBinding,
+                              &mRenderer,
+                              &mEditor,
+                              isSelectable),
           mRenderer(tooltipCaption, trueValue, falseValue)
     {
     }

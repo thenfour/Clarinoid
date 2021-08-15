@@ -385,6 +385,11 @@ struct LoopEvent_FullState
           mSynthPatchBId(mv.mSynthPatchB), mBreath01(mv.mBreath01.Serialize12Bit()), mHarmPatchId(mv.mHarmPatch),
           mMidiNote(mv.mMidiNote), mVelocity(mv.mVelocity)
     {
+        // synthpatch B can be invalid so make sure it fits into 12 bits.
+        if (mSynthPatchBId < 0 || mSynthPatchBId >= SYNTH_PRESET_COUNT)
+        {
+            mSynthPatchBId = SYNTH_PRESET_COUNT;
+        }
     }
 
     LoopEvent_FullState(Ptr &p, uint8_t byte2)

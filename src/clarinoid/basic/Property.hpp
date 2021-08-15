@@ -28,8 +28,7 @@ struct Property
     {
     }
 
-    Property(typename cc::function<T &(void *)>::ptr_t getter, void *cap)
-        : mRefGetter(getter), mpCapture(cap)
+    Property(typename cc::function<T &(void *)>::ptr_t getter, void *cap) : mRefGetter(getter), mpCapture(cap)
     {
     }
 
@@ -43,7 +42,6 @@ struct Property
         : mGetter(getter), mSetter(setter), mpCapture(capture)
     {
     }
-
 
     Property() : mRefBinding(&mOwnValue)
     {
@@ -65,7 +63,8 @@ struct Property
     void SetValue(const T &val)
     {
         T oldVal = GetValue();
-        if (oldVal == val) return;
+        if (oldVal == val)
+            return;
         bool didSet = false;
         if (mRefBinding)
         {

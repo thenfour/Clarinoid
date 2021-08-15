@@ -259,7 +259,8 @@ struct ScaleFlavor
                 break;
             span += i;
         }
-        if (span != 12) {
+        if (span != 12)
+        {
             Serial.println(String("no 12 in ") + longName + "; mIntervalCount=" + mIntervalCount);
         }
         CCASSERT(span == 12);

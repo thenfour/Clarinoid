@@ -133,9 +133,9 @@ struct GuiSynthPatchSelectControl : GuiCompositeControl<T>
                                const Property<T> &binding,
                                const Property<bool> &isSelectable)
         : GuiCompositeControl<T>(page, bounds, binding, NullBoolBinding, &mRenderer, &mEditor, isSelectable), //
-          mEditor(nullable, binding),                                                        //
-          mTooltipRenderer(tooltipCaption),                                                  //
-          mValueRenderer(),                                                                  //
+          mEditor(nullable, binding),                                                                         //
+          mTooltipRenderer(tooltipCaption),                                                                   //
+          mValueRenderer(),                                                                                   //
           mRenderer(&mValueRenderer, &mTooltipRenderer)
     {
     }

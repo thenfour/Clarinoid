@@ -71,7 +71,9 @@ struct IDisplay
                                              int y,
                                              int w,
                                              int h,
-                                             int variation, AntStyle style, Edges::Flags edges) = 0;
+                                             int variation,
+                                             AntStyle style,
+                                             Edges::Flags edges) = 0;
 
     // calculates in general, not for a specific location on screen.
     virtual RectI GetTextBounds(const String &str) = 0;

@@ -16,88 +16,118 @@ inline float arm_cos_f32(float x)
 }
 inline int16_t saturate16(int32_t n)
 {
-  if (n < std::numeric_limits<int16_t>::min()) return std::numeric_limits<int16_t>::min();
-  if (n > std::numeric_limits<int16_t>::max()) return std::numeric_limits<int16_t>::max();
-  return (int16_t)n;
+    if (n < std::numeric_limits<int16_t>::min())
+        return std::numeric_limits<int16_t>::min();
+    if (n > std::numeric_limits<int16_t>::max())
+        return std::numeric_limits<int16_t>::max();
+    return (int16_t)n;
 }
 
-void arm_q15_to_float(const int16_t* in, float* out, size_t n) {
-  for (size_t i = 0; i < n; ++i) {
-    out[i] = in[i] / 32767.0f;
-  }
-}
-
-void arm_fill_f32(float val, float *out, size_t n) {
-  for (size_t i = 0; i < n; ++i) {
-    out[i] = val;
-  }
-}
-
-void  arm_fill_q15(int16_t val, int16_t* out, size_t n) {
-  for (size_t i = 0; i < n; ++i) {
-    out[i] = val;
-  }
-  }
-
-void arm_add_q15(int16_t * pSrcA, int16_t * pSrcB, int16_t * pDst, uint32_t blockSize) {
-  for (uint32_t i = 0; i < blockSize; ++i) {
-    pDst[i] = pSrcA[i] + pSrcB[i];
-  }
-}
-
-
-void arm_offset_q15(int16_t * pSrc, int16_t offset, int16_t * pDst, uint32_t blockSize) {
-  for (uint32_t i = 0; i < blockSize; ++i) {
-    pDst[i] = pSrc[i] + offset;
-  }
-}
-
-void arm_scale_q15(int16_t * pSrc, int16_t scaleFract, int8_t shift, int16_t * pDst, uint32_t blockSize)
+void arm_q15_to_float(const int16_t *in, float *out, size_t n)
 {
-  for (uint32_t i = 0; i < blockSize; ++i) {
-    pDst[i] = (int16_t)(pSrc[i] * (scaleFract / 32767.0f));
-  }
+    for (size_t i = 0; i < n; ++i)
+    {
+        out[i] = in[i] / 32767.0f;
+    }
 }
 
+void arm_fill_f32(float val, float *out, size_t n)
+{
+    for (size_t i = 0; i < n; ++i)
+    {
+        out[i] = val;
+    }
+}
+
+void arm_fill_q15(int16_t val, int16_t *out, size_t n)
+{
+    for (size_t i = 0; i < n; ++i)
+    {
+        out[i] = val;
+    }
+}
+
+void arm_add_q15(int16_t *pSrcA, int16_t *pSrcB, int16_t *pDst, uint32_t blockSize)
+{
+    for (uint32_t i = 0; i < blockSize; ++i)
+    {
+        pDst[i] = pSrcA[i] + pSrcB[i];
+    }
+}
+
+void arm_offset_q15(int16_t *pSrc, int16_t offset, int16_t *pDst, uint32_t blockSize)
+{
+    for (uint32_t i = 0; i < blockSize; ++i)
+    {
+        pDst[i] = pSrc[i] + offset;
+    }
+}
+
+void arm_scale_q15(int16_t *pSrc, int16_t scaleFract, int8_t shift, int16_t *pDst, uint32_t blockSize)
+{
+    for (uint32_t i = 0; i < blockSize; ++i)
+    {
+        pDst[i] = (int16_t)(pSrc[i] * (scaleFract / 32767.0f));
+    }
+}
 
 // computes ((a[15:0] << 16) | b[15:0])
 static inline uint32_t pack_16b_16b(int32_t a, int32_t b)
 {
-  return (a << 16) | (b & 0xffff);
+    return (a << 16) | (b & 0xffff);
 }
 
 // computes (((a[31:16] + b[31:16]) << 16) | (a[15:0 + b[15:0]))  (saturates)
 static inline uint32_t signed_add_16_and_16(uint32_t a, uint32_t b)
 {
-  return 0;// todo
+    union packed {
+        uint32_t u32;
+        int16_t i16[2];
+    };
+    packed ap;
+    ap.u32 = a;
+    packed bp;
+    bp.u32 = b;
+    int32_t ret1 = ap.i16[0] + bp.i16[0];
+
+    packed ret;
+    ret.i16[0] = saturate16(ret1);
+    ret.i16[1] = saturate16(int32_t(ap.i16[1]) + bp.i16[1]);
+    return ret.u32;
 }
 
 // computes ((a[31:0] * b[15:0]) >> 16)
 static inline int32_t signed_multiply_32x16b(int32_t a, uint32_t b)
 {
-  return 0;// todo
+    return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
 }
-
 
 // computes ((a[31:0] * b[31:16]) >> 16)
 static inline int32_t signed_multiply_32x16t(int32_t a, uint32_t b)
 {
-  return 0;// todo
-
+    return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
 }
 
 // computes limit((val >> rshift), 2**bits)
 static inline int32_t signed_saturate_rshift(int32_t val, int bits, int rshift)
 {
-  return 0;// todo
+    int32_t out, max;
+    out = val >> rshift;
+    max = 1 << (bits - 1);
+    if (out >= 0)
+    {
+        if (out > max - 1)
+            out = max - 1;
+    }
+    else
+    {
+        if (out < -max)
+            out = -max;
+    }
+    return out;
 }
 
-
 #endif
-
-
-
-
 
 namespace clarinoid
 {
@@ -199,14 +229,14 @@ inline void Sample32To16Buffer(const float *in, int16_t *out)
 }
 
 // 3x faster than naive copy
-//template <size_t N>
+// template <size_t N>
 inline void Sample16To32Buffer(int16_t *in, float *out)
 {
     arm_q15_to_float(in, out, AUDIO_BLOCK_SAMPLES);
 }
 
 // 20x faster than naive copy
-inline void FillBufferWithConstant(float val, float* out)
+inline void FillBufferWithConstant(float val, float *out)
 {
     arm_fill_f32(val, out, AUDIO_BLOCK_SAMPLES);
 }
@@ -219,7 +249,8 @@ inline void FillBufferWithConstant(int16_t val, int16_t *out)
 
 // adding a constant to a buffer: arm_offset_q15  <-- ~2x faster than manual
 // adding 2 buffers: arm_add_q15 <-- ~2x faster than manual
-// multiply 2 buffers: arm_mult_q15 <-- this is actually a very interesting function, scaling everything, multiplying as a vector, and saturating, with possibility of scaling to allow >1 scales
+// multiply 2 buffers: arm_mult_q15 <-- this is actually a very interesting function, scaling everything, multiplying as
+// a vector, and saturating, with possibility of scaling to allow >1 scales
 
 } // namespace fast
 
@@ -276,7 +307,6 @@ static float Clamp(float x, float low, float hi)
         return hi;
     return x;
 }
-
 
 template <typename T>
 static T ClampInclusive(T x, T minInclusive, T maxInclusive)

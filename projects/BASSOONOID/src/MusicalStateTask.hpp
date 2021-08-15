@@ -29,7 +29,10 @@ struct MusicalStateTask : ITask
     SimpleMovingAverage<15> mMusicalStateTiming;
     SimpleMovingAverage<15> mSynthStateTiming;
 
-    MusicalStateTask(IDisplay* display, AppSettings *appSettings, InputDelegator *input, BassoonoidControlMapper *controlMapper)
+    MusicalStateTask(IDisplay *display,
+                     AppSettings *appSettings,
+                     InputDelegator *input,
+                     BassoonoidControlMapper *controlMapper)
         : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings),
           mMusicalState(display, appSettings, mpInput, &mMetronome, &mScaleFollower, controlMapper)
     {

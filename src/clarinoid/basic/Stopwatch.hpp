@@ -155,6 +155,14 @@ struct Stopwatch
         mIsRunning = true;
     }
 
+    void PauseAndReset(TimeSpan newTime = TimeSpan::FromMicros(0))
+    {
+        mExtraTime = TimeSpan::Zero();
+        mPauseTime = newTime;
+        mStartUptime = Uptime();
+        mIsRunning = false;
+    }
+
     TimeSpan ElapsedTime()
     {
         if (mIsRunning)

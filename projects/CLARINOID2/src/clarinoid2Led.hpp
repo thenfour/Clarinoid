@@ -146,9 +146,7 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         }
 
         mPeakMeter.Update([&](int n, uint32_t c) { this->SetPixel(23 - n, c); },
-                          [&](int n, uint32_t c) {
-                              this->SetPixel(23 - n, c);
-                          });
+                          [&](int n, uint32_t c) { this->SetPixel(23 - n, c); });
 
         if (mpProvider->ILEDDataProvider_GetMusicalState()->mHoldingBaseNote)
         {

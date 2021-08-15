@@ -155,10 +155,11 @@ ModulationSourceInfo *gARateModulationSourceInfoPtrs[gARateModulationSourceCount
 StaticInit gModSourceInit = {[]() {
     // ensure indices are sequential, match the any enum val
     int prevIndex = -1;
-    for (auto& info : gModulationSourceInfo) {
+    for (auto &info : gModulationSourceInfo)
+    {
         CCASSERT(info.mIndexOverall == (size_t)info.mAnyEnumVal);
         CCASSERT((int)info.mIndexOverall == (prevIndex + 1));
-        prevIndex ++;
+        prevIndex++;
     }
 
     // populate simple lookup tables
@@ -375,10 +376,11 @@ ModulationDestinationInfo *gARateModulationDestinationInfoPtrs[gARateModulationD
 StaticInit gModDestinationInit = {[]() {
     // ensure indices are sequential, match the any enum val
     int prevIndex = -1;
-    for (auto& info : gModulationDestinationInfo) {
+    for (auto &info : gModulationDestinationInfo)
+    {
         CCASSERT(info.mIndexOverall == (size_t)info.mAnyEnumVal);
         CCASSERT((int)info.mIndexOverall == (prevIndex + 1));
-        prevIndex ++;
+        prevIndex++;
     }
 
     // populate simple lookup tables

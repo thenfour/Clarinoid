@@ -63,62 +63,47 @@ namespace clarinoid
 #include "TestFilter.hpp"
 #include "TestModulation.hpp"
 
+
 int main()
 //int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR lpCmdLine, int)
 {
-  //float f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(1.0f));
-  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
-  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
-  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
-  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
-  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
-  //f = clarinoid::DecibelsToLinear(clarinoid::LinearToDecibels(f));
-  //double d = log2(10);
-  //bool b = false;
-  //clarinoid::Property<bool> prop = b;
-  //prop.GetValue();
-  //prop.SetValue(true);
-
-  //TestFilter();
+  TestFilter();
   //TestFilterPerformance();
-
 
   TestModulation();
 
   //clarinoid::TestInputDelegator(); // test that input, mapping, and functions work.
-  //TestControlReaders();
-  //TestInputMappings(); // test conditions 
 
-  //TestBufferUnification();
+  TestBufferUnification();
 
-  //TestReadHeader();
-  //Test12BitParam();
-  //TestDivRem();
+  TestReadHeader();
+  Test12BitParam();
+  TestDivRem();
 
-  //TestHappyFlow();
-  //TestConsumeMultipleEvents();
-  //TestMuted();
-  //TestReadingAfterLooped();
-  //TestReadingEmptyBuffer();
+  TestHappyFlow();
+  TestConsumeMultipleEvents();
+  TestMuted();
+  TestReadingAfterLooped();
+  TestReadingEmptyBuffer();
 
-  //TestScenarioOOM_PartialLoop();
+  TestScenarioOOM_PartialLoop();
 
-  //TestEndRecordingWithFullLoopSimple(); // PZE
-  //TestScenarioEP();
+  TestEndRecordingWithFullLoopSimple(); // PZE
+  TestScenarioEP();
 
-  //TestFullMusicalState1();
-  //TestFullMusicalState2();
+  TestFullMusicalState1();
+  TestFullMusicalState2();
 
   //TestVoiceID();
   //TestLoopstationLegato();
   //TestLoopstationSynth();
 
-  //clarinoid::TestTaskManager();
+  clarinoid::TestTaskManager();
 
-  //TestScales();
+  TestScales();
 
   //TestScaleFollower();
-  //TestHarmonizer();
+  TestHarmonizer();
 
   return 0;
 }

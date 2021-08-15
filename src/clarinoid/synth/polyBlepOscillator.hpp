@@ -66,15 +66,15 @@ struct AudioBandlimitedOsci : public AudioStream
 {
     enum class INPUT_INDEX
     {
-        //fm1,
+        // fm1,
         pwm1 = 0,
         pm1,
 
-        //fm2,
+        // fm2,
         pwm2,
         pm2,
 
-        //fm3,
+        // fm3,
         pwm3,
         pm3,
     };
@@ -183,7 +183,7 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mOutput = 0;           // osc1_output
         float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
-        //float mAMMinimumGain = 0.0f; // when modulating amplitude, this is the minimum
+        // float mAMMinimumGain = 0.0f; // when modulating amplitude, this is the minimum
         float mPMFeedbackAmt = 0.0f;
 
         void amplitude(float a)
@@ -276,7 +276,7 @@ struct AudioBandlimitedOsci : public AudioStream
             // }
             // else
             // {
-                mFreq = mFrequency;
+            mFreq = mFrequency;
             //}
 
             mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each
@@ -293,7 +293,7 @@ struct AudioBandlimitedOsci : public AudioStream
         inline void PostStep(size_t i, audio_block_t *out)
         {
             float o = mOutput * mGain;
-            out->data[i] = fast::Sample32To16(o);// o * 32768.0f;
+            out->data[i] = fast::Sample32To16(o); // o * 32768.0f;
         }
 
         template <bool TperformSync>
@@ -516,21 +516,21 @@ void AudioBandlimitedOsci::update()
     if (!out3)
         return;
 
-    //audio_block_t *fm1 = receiveReadOnly((int)INPUT_INDEX::fm1);
+    // audio_block_t *fm1 = receiveReadOnly((int)INPUT_INDEX::fm1);
     audio_block_t *pwm1 = receiveReadOnly((int)INPUT_INDEX::pwm1);
     audio_block_t *pm1 = receiveReadOnly((int)INPUT_INDEX::pm1);
-    //audio_block_t *fm2 = receiveReadOnly((int)INPUT_INDEX::fm2);
+    // audio_block_t *fm2 = receiveReadOnly((int)INPUT_INDEX::fm2);
     audio_block_t *pwm2 = receiveReadOnly((int)INPUT_INDEX::pwm2);
     audio_block_t *pm2 = receiveReadOnly((int)INPUT_INDEX::pm2);
-    //audio_block_t *fm3 = receiveReadOnly((int)INPUT_INDEX::fm3);
+    // audio_block_t *fm3 = receiveReadOnly((int)INPUT_INDEX::fm3);
     audio_block_t *pwm3 = receiveReadOnly((int)INPUT_INDEX::pwm3);
     audio_block_t *pm3 = receiveReadOnly((int)INPUT_INDEX::pm3);
 
     for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
     {
-        mOsc[0].PreStep(i,/*fm1,*/ pwm1, pm1);
-        mOsc[1].PreStep(i,/*fm2,*/ pwm2, pm2);
-        mOsc[2].PreStep(i,/*fm3,*/ pwm3, pm3);
+        mOsc[0].PreStep(i, /*fm1,*/ pwm1, pm1);
+        mOsc[1].PreStep(i, /*fm2,*/ pwm2, pm2);
+        mOsc[2].PreStep(i, /*fm3,*/ pwm3, pm3);
 
         osc1Step(); // This steps actually all oscillators.
 

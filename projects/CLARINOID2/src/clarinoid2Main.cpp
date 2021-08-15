@@ -35,9 +35,13 @@ void setup()
     Serial.begin(9600);
     // when you are debugging with serial, uncomment this to ensure you see startup msgs
     // while (!Serial) { }
+    // Serial.println("starting normally...");
+
     auto *gApp = new clarinoid::Clarinoid2App();
     gApp->Main();
 }
+
+static constexpr size_t aoeuuoeuaouoeu = sizeof(clarinoid::Clarinoid2App);
 
 void loop()
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <clarinoid/basic/Basic.hpp>
+#include <utility>
 #include "AudioBufferUtils.hpp"
 #include "ModulationInfo.hpp"
 
@@ -12,6 +13,93 @@ namespace clarinoid
 // inputs are modulation sources,
 struct VoiceModulationMatrixNode : public AudioStream
 {
+    // specifies params to use in x = x * mul + add
+    struct PolarityConversionKernel15p16
+    {
+        static constexpr int32_t To15p16(int32_t num, int32_t den)
+        {
+            return (int32_t(num) << 16) / den;
+        };
+
+        static constexpr int16_t AddToSample16(int32_t num, int32_t den)
+        {
+            return int16_t((int32_t(num) * 32767) / den); // or 32768 saturated?
+        };
+
+        const int32_t mul; // is 15.16
+        const int16_t add; // is NOT 15.16. just an integer.
+
+        PolarityConversionKernel15p16(int mulNum, int mulDen, int addNum, int addDen)
+            : mul(To15p16(mulNum, mulDen)), add(AddToSample16(addNum, addDen))
+        {
+        }
+
+        // not actually used in clarinoid; it's for testing.
+        int16_t Transfer(int16_t x) const
+        {
+            return ((int32_t(x) * mul) >> 16) + add;
+        }
+    };
+
+    // specifies params to use in x = x * mul + add
+    struct PolarityConversionKernelFloat
+    {
+        const float mul; // is 15.16
+        const float add; // is NOT 15.16. just an integer.
+        PolarityConversionKernelFloat(int mulNum, int mulDen, int addNum, int addDen)
+            : mul(float(mulNum) / mulDen), add(float(addNum) / addDen)
+        {
+        }
+        float Transfer(float x) const
+        {
+            return x * mul + add;
+        }
+    };
+
+    template <typename T>
+    static T GetPolarityConversion(ModulationPoleType inpPolarity, ModulationPolarityTreatment outpPolarity)
+    {
+        if (inpPolarity == clarinoid::ModulationPoleType::Positive01 &&
+            outpPolarity == clarinoid::ModulationPolarityTreatment::AsBipolar)
+        {
+            // return (x - .5) * 2; // or x*2-1
+            // return {To15p16(2, 1), To15p16(-1, 1)};
+            return {2, 1, -1, 1};
+        }
+        else if (inpPolarity == clarinoid::ModulationPoleType::N11 &&
+                 outpPolarity == clarinoid::ModulationPolarityTreatment::AsPositive01)
+        {
+            // return x * .5 + .5;
+            return {1, 2, 1, 2};
+        }
+        else if (inpPolarity == clarinoid::ModulationPoleType::Positive01 &&
+                 outpPolarity == clarinoid::ModulationPolarityTreatment::AsPositive01Inverted)
+        {
+            // return 1 - x; // or x*-1+1
+            return {-1, 1, 1, 1};
+        }
+        else if (inpPolarity == clarinoid::ModulationPoleType::N11 &&
+                 outpPolarity == clarinoid::ModulationPolarityTreatment::AsPositive01Inverted)
+        {
+            // return .5 - x * .5; // or x*-.5+.5
+            return {-1, 2, 1, 2};
+        }
+        else if (inpPolarity == clarinoid::ModulationPoleType::Positive01 &&
+                 outpPolarity == clarinoid::ModulationPolarityTreatment::AsBipolarInverted)
+        {
+            // return .5 - x * 2; // or x*-2+1
+            return {-2, 1, 1, 1};
+        }
+        else if (inpPolarity == clarinoid::ModulationPoleType::N11 &&
+                 outpPolarity == clarinoid::ModulationPolarityTreatment::AsBipolarInverted)
+        {
+            // return -x; // x*-1+0
+            return {-1, 1, 0, 1};
+        }
+        // return x; // x*1+0
+        return {1, 1, 0, 1};
+    }
+
     audio_block_t *inputQueueArray[gARateModulationSourceCount];
 
     SynthPreset *mSynthPatch = nullptr;
@@ -43,6 +131,45 @@ struct VoiceModulationMatrixNode : public AudioStream
             0}; // default-initialize to false. https://stackoverflow.com/a/1920481/402169
     };
 
+    float EnsureKRateSource(Buffers &buffers, const ModulationSourceInfo &sourceInfo)
+    {
+        // ensure we have a source
+        if (buffers.kRateSourcesFilled[sourceInfo.mIndexForRate])
+        {
+            return buffers.kRateSourceValuesN11[sourceInfo.mIndexForRate];
+        }
+
+        buffers.kRateSourcesFilled[sourceInfo.mIndexForRate] = true;
+        float ret = mpkRateProvider->IModulationProvider_GetKRateModulationSourceValueN11(sourceInfo.mKRateEnumVal);
+        buffers.kRateSourceValuesN11[sourceInfo.mIndexForRate] = ret;
+        return ret;
+    }
+
+    audio_block_t *EnsureARateSource(Buffers &buffers, const ModulationSourceInfo &sourceInfo, float &valAsKRate)
+    {
+        audio_block_t *source = buffers.aRateSsources[sourceInfo.mIndexForRate];
+        if (source)
+        {
+            valAsKRate = buffers.aRateSourceAsKRateN11[sourceInfo.mIndexForRate];
+        }
+        else
+        {
+            source = receiveReadOnly(sourceInfo.mIndexForRate);
+            if (!source)
+                return nullptr; // act like this modulation just doesn't exist.
+            buffers.aRateSsources[sourceInfo.mIndexForRate] = source;
+
+            // tempting to think about other ways to do this, but this is really the best because:
+            // - this value is guaranteed to actually be in the buffer (for example if you do some kind of average or
+            // interpolation, a square wave would turn into silence) now whether it's best to take the first, middle,
+            // last sample of the buffer, i don't think it really matters tbh.
+            valAsKRate = fast::Sample16To32(source->data[0]);
+
+            buffers.aRateSourceAsKRateN11[sourceInfo.mIndexForRate] = valAsKRate;
+        }
+        return source;
+    }
+
     audio_block_t *EnsureARateDest(Buffers &buffers, bool &isFirstAcquire, const ModulationDestinationInfo &dest)
     {
         audio_block_t *destBuffer = buffers.aRateDestinations[dest.mIndexForRate];
@@ -62,73 +189,240 @@ struct VoiceModulationMatrixNode : public AudioStream
         // audioBufferMixInPlaceWithGain(dest->data, source->data, gainToSignedMultiply32x16(modulation.mScaleN11));
     }
 
-    inline float MapSourceN11ToDestN11Value(float srcN11,
-                                            const SynthModulationSpec &modSpec,
-                                            const ModulationSourceInfo &srcInfo,
-                                            const ModulationDestinationInfo &destInfo)
+    std::pair<bool, float> GetKRateSourceValueFromAnySource(Buffers &buffers, const ModulationSourceInfo &sourceInfo)
     {
-        return srcN11 * modSpec.mScaleN11;
-        // remap N11 source value from src range to dest output range
-        // note that requires that poles are either 0 (unipolar, like filter cutoff hz) or balanced (-1 to +1 or -2 to
-        // +2). otherwise if the poles are not equal, the 0 point will not be centered throughout the mapping
-        // return RemapToRange(srcN11,
-        //                     modSpec.mSrcRangeMinN11,
-        //                     modSpec.mSrcRangeMaxN11,
-        //                     modSpec.mDestRangeMinN11,
-        //                     modSpec.mDestRangeMaxN11);
-        // TODO: Optimize, use curves, whatever.
+        if (sourceInfo.mRate == ModulationRate::KRate)
+        {
+            return std::make_pair(true, EnsureKRateSource(buffers, sourceInfo));
+        }
+        // A-Rate source
+        float sourceAsKRate;
+        audio_block_t *source =
+            EnsureARateSource(buffers, sourceInfo, sourceAsKRate); // buffers.aRateSsources[sourceInfo.mIndexForRate];
+        if (!source)
+            return std::make_pair(false, 0.0f);
+        return std::make_pair(true, sourceAsKRate);
     }
 
-    // inline int16_t MapSourceN11ToDestN11Value(int16_t src,
-    //                                           const SynthModulationSpec &modSpec,
-    //                                           const ModulationSourceInfo &srcInfo,
-    //                                           const ModulationDestinationInfo &destInfo)
-    // {
-    //     // todo: optimize by doing this all in integer math
-    //     return MapSourceN11ToDestN11Value(fast::Sample16To32(src), modSpec, srcInfo, destInfo);
-    // }
-
-    float ApplyFloatValueToFloatValue(float val, float valDest, SynthModulationSpec &modulation)
+    // converts a single krate source value to a destination +/- value to apply
+    inline float MapKRateValue(float x,
+                               Buffers &buffers,
+                               const SynthModulationSpec &modSpec,
+                               const ModulationSourceInfo &sourceInfo,
+                               const ModulationDestinationInfo &destInfo)
     {
-        // TODO: define blending operators (multiply, add)
+        auto polarityMapping =
+            GetPolarityConversion<PolarityConversionKernelFloat>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+        float ret = polarityMapping.Transfer(x);
+        auto curveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
+        ret = gModCurveLUT.Transfer32(ret, curveState);
+        ret *= modSpec.mScaleN11;
+
+        const auto &auxInfo = GetModulationSourceInfo(modSpec.mAuxSource);
+        if (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount01)
+        {
+            // we need to apply aux source.
+            auto optAuxVal = GetKRateSourceValueFromAnySource(buffers, auxInfo);
+            if (optAuxVal.first)
+            {
+                auto auxPolarityMapping =
+                    GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity);
+                float auxVal = auxPolarityMapping.Transfer(optAuxVal.second);
+                auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
+                auxVal = gModCurveLUT.Transfer32(auxVal, auxCurveState);
+                auxVal *= modSpec.mAuxAmount01;
+
+                ret *= auxVal;
+            }
+        }
+        return ret;
+    }
+
+    void MapARateToARateAndApply_NoAux(audio_block_t *src,
+                                       audio_block_t *dest,
+                                       SynthModulationSpec &modSpec,
+                                       const ModulationSourceInfo &sourceInfo,
+                                       const ModulationDestinationInfo &destInfo)
+    {
+        auto srcCurveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
+        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
+        auto srcPolarityConv =
+            GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+
+        uint32_t *bufSrc32 = (uint32_t *)(src->data);
+        uint32_t *bufDest32 = (uint32_t *)(dest->data);
+
+        for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
+        {
+            uint32_t x32 = bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
+
+            // this ordering is much faster than processing all x1 first then x2
+            int32_t x1 = signed_multiply_32x16b(srcPolarityConv.mul, x32); // unpacks & multiplies
+            int32_t x2 = signed_multiply_32x16t(srcPolarityConv.mul, x32);
+            x1 = x1 + srcPolarityConv.add;
+            x2 = x2 + srcPolarityConv.add;
+            x1 = gModCurveLUT.Transfer16(saturate16(x1), srcCurveState);
+            x2 = gModCurveLUT.Transfer16(saturate16(x2), srcCurveState);
+            x1 = signed_multiply_32x16b(sourceScale16p16, x1);
+            x2 = signed_multiply_32x16b(sourceScale16p16, x2);
+            x32 = pack_16b_16b(x1, x2);
+            bufDest32[i32] = signed_add_16_and_16(bufDest32[i32], x32);
+        }
+    }
+
+    void MapARateToARateAndApply_KRateAux(Buffers &buffers,
+                                          audio_block_t *src,
+                                          audio_block_t *dest,
+                                          SynthModulationSpec &modSpec,
+                                          const ModulationSourceInfo &sourceInfo,
+                                          const ModulationDestinationInfo &destInfo,
+                                          const ModulationSourceInfo &auxInfo)
+    {
+        auto srcCurveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
+        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
+
+        auto srcPolarityConv =
+            GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+
+        uint32_t *bufSrc32 = (uint32_t *)(src->data);
+        uint32_t *bufDest32 = (uint32_t *)(dest->data);
+
+        float auxVal = EnsureKRateSource(buffers, auxInfo);
+        auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
+        auto auxPolarityConv =
+            GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity);
+
+        auxVal = auxPolarityConv.Transfer(auxVal);
+        auxVal = gModCurveLUT.Transfer32(auxVal, auxCurveState);
+        auxVal = auxVal * modSpec.mAuxAmount01;
+        int32_t auxVal16 = int32_t(auxVal * 65536);
+
+        for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
+        {
+            uint32_t x32 = bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
+
+            // this ordering is much faster than processing all x1 first then x2
+            int32_t x1 = signed_multiply_32x16b(srcPolarityConv.mul, x32); // unpacks & multiplies
+            int32_t x2 = signed_multiply_32x16t(srcPolarityConv.mul, x32);
+            x1 = x1 + srcPolarityConv.add;
+            x2 = x2 + srcPolarityConv.add;
+            x1 = gModCurveLUT.Transfer16(saturate16(x1), srcCurveState);
+            x2 = gModCurveLUT.Transfer16(saturate16(x2), srcCurveState);
+            x1 = signed_multiply_32x16b(sourceScale16p16, x1);
+            x2 = signed_multiply_32x16b(sourceScale16p16, x2);
+
+            // aux
+            x1 = signed_multiply_32x16b(auxVal16, x1);
+            x2 = signed_multiply_32x16b(auxVal16, x2);
+
+            x32 = pack_16b_16b(x1, x2);
+            bufDest32[i32] = signed_add_16_and_16(bufDest32[i32], x32);
+        }
+    }
+
+    void MapARateToARateAndApply_ARateAux(Buffers &buffers,
+                                          audio_block_t *src,
+                                          audio_block_t *dest,
+                                          SynthModulationSpec &modSpec,
+                                          const ModulationSourceInfo &sourceInfo,
+                                          const ModulationDestinationInfo &destInfo,
+                                          const ModulationSourceInfo &auxInfo)
+    {
+        float auxValAsKRate_Unused;
+        auto *auxBuf = EnsureARateSource(buffers, auxInfo, auxValAsKRate_Unused);
+        if (!auxBuf)
+            return;
+
+        auto srcCurveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
+        auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
+        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
+        int32_t auxScale16p16 = int32_t(modSpec.mAuxAmount01 * 65536);
+
+        auto srcPolarityConv =
+            GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+        auto auxPolarityConv =
+            GetPolarityConversion<PolarityConversionKernel15p16>(auxInfo.mPoleType, modSpec.mAuxPolarity);
+
+        uint32_t *bufSrc32 = (uint32_t *)(src->data);
+        uint32_t *bufAux32 = (uint32_t *)(auxBuf->data);
+        uint32_t *bufDest32 = (uint32_t *)(dest->data);
+
+        for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
+        {
+            uint32_t x32 = bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
+
+            // this ordering is much faster than processing all x1 first then x2
+            int32_t x1 = signed_multiply_32x16b(srcPolarityConv.mul, x32); // unpacks & multiplies
+            int32_t x2 = signed_multiply_32x16t(srcPolarityConv.mul, x32);
+            x1 = x1 + srcPolarityConv.add;
+            x2 = x2 + srcPolarityConv.add;
+            x1 = gModCurveLUT.Transfer16(saturate16(x1), srcCurveState);
+            x2 = gModCurveLUT.Transfer16(saturate16(x2), srcCurveState);
+            x1 = signed_multiply_32x16b(sourceScale16p16, x1);
+            x2 = signed_multiply_32x16b(sourceScale16p16, x2);
+
+            int32_t aux32 = bufAux32[i32];
+            int32_t aux1 = signed_multiply_32x16b(auxPolarityConv.mul, aux32);
+            int32_t aux2 = signed_multiply_32x16t(auxPolarityConv.mul, aux32);
+            aux1 += auxPolarityConv.add;
+            aux2 += auxPolarityConv.add;
+            aux1 = gModCurveLUT.Transfer16(saturate16(aux1), auxCurveState);
+            aux2 = gModCurveLUT.Transfer16(saturate16(aux2), auxCurveState);
+            aux1 = signed_multiply_32x16b(auxScale16p16, aux1);
+            aux2 = signed_multiply_32x16b(auxScale16p16, aux2);
+            x1 = signed_multiply_32x16b(aux1 << 1,
+                                        x1); // <<1 because it's a sample value (15bits), but this wants 16bits.
+            x2 = signed_multiply_32x16b(aux2 << 1, x2);
+
+            x32 = pack_16b_16b(x1, x2);
+            bufDest32[i32] = signed_add_16_and_16(bufDest32[i32], x32);
+        }
+    }
+
+    // a-rate to a-rate calculation. this is done using only integer math.
+    // three variations:
+    // - no aux
+    // - k-rate aux
+    // - a-rate aux
+    void MapARateToARateAndApply(Buffers &buffers,
+                                 audio_block_t *src,
+                                 audio_block_t *dest,
+                                 SynthModulationSpec &modSpec,
+                                 const ModulationSourceInfo &sourceInfo,
+                                 const ModulationDestinationInfo &destInfo,
+                                 const ModulationSourceInfo &auxInfo)
+    {
+        bool auxEnabled = (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount01);
+        if (!auxEnabled)
+        {
+            MapARateToARateAndApply_NoAux(src, dest, modSpec, sourceInfo, destInfo);
+            return;
+        }
+        if (auxInfo.mRate == ModulationRate::KRate)
+        {
+            MapARateToARateAndApply_KRateAux(buffers, src, dest, modSpec, sourceInfo, destInfo, auxInfo);
+            return;
+        }
+        MapARateToARateAndApply_ARateAux(buffers, src, dest, modSpec, sourceInfo, destInfo, auxInfo);
+    }
+
+    float ApplyFloatValueToFloatValue(float val, float valDest)
+    {
         return val + valDest;
     }
 
     // for k-rate to a-rate
-    void ApplyFloatValueToBuffer(float val, audio_block_t *dest, SynthModulationSpec &modulation)
+    void ApplyKRateValueToARateDest(float val, audio_block_t *dest, SynthModulationSpec &modulation)
     {
         int16_t v16 = fast::Sample32To16(val);
         arm_offset_q15(dest->data, v16, dest->data, AUDIO_BLOCK_SAMPLES);
     }
 
-    // a-rate to a-rate calculation.
-    // here we have not yet mapped the values through modulation mapping.
-    void ApplyMappingToBufferAndAssign(audio_block_t *src, audio_block_t *dest, SynthModulationSpec &modulation)
-    {
-        arm_scale_q15(src->data, fast::Sample32To16(modulation.mScaleN11), 0, dest->data, AUDIO_BLOCK_SAMPLES);
-    }
+    // "Map" means converting
+    // "Apply" means applying a mapped value to the output buffer (assigning or combining modulations to the same dest)
+    // "Assign" applies for the first time
 
-    // // used for a-rate to a-rate calculation
-    void ApplyMappingToBufferAndApply(audio_block_t *src, audio_block_t *dest, SynthModulationSpec &modulation)
-    {
-        int16_t t[AUDIO_BLOCK_SAMPLES];
-        arm_scale_q15(src->data, fast::Sample32To16(modulation.mScaleN11), 0, t, AUDIO_BLOCK_SAMPLES);
-        arm_add_q15(dest->data, t, dest->data, AUDIO_BLOCK_SAMPLES);
-    }
-
-    float ARateBufferToKRateValue(audio_block_t *b)
-    {
-        // tempting to think about other ways to do this, but this is really the best because:
-        // - this value is guaranteed to actually be in the buffer (for example if you do some kind of average or
-        // interpolation, a square wave would turn into silence) now whether it's best to take the first, middle, last
-        // sample of the buffer, i don't think it really matters tbh.
-        return fast::Sample16To32(b->data[0]);
-    }
-
-    void ApplyFloatValueToKRateDest(float val,
-                                    Buffers &buffers,
-                                    size_t destIndexForRate,
-                                    SynthModulationSpec &modulation)
+    void ApplyKRateValueToKRateDest(float val, Buffers &buffers, size_t destIndexForRate)
     {
         // k-rate to k-rate; easy.
         if (!buffers.kRateDestinationsFilled[destIndexForRate])
@@ -136,100 +430,111 @@ struct VoiceModulationMatrixNode : public AudioStream
             // 1st time setting dest.
             buffers.kRateDestinationsFilled[destIndexForRate] = true;
             buffers.kRateDestinationValuesN11[destIndexForRate] = val;
+            return;
         }
-        else
-        {
-            // apply to existing.
-            buffers.kRateDestinationValuesN11[destIndexForRate] =
-                ApplyFloatValueToFloatValue(val, buffers.kRateDestinationValuesN11[destIndexForRate], modulation);
-        }
+
+        // apply to existing.
+        buffers.kRateDestinationValuesN11[destIndexForRate] =
+            ApplyFloatValueToFloatValue(val, buffers.kRateDestinationValuesN11[destIndexForRate]);
     }
 
-    void ProcessModulation(Buffers &buffers, SynthModulationSpec &modulation)
+    void ProcessKRateToKRate(Buffers &buffers,
+                             SynthModulationSpec &modulation,
+                             const ModulationSourceInfo &sourceInfo,
+                             const ModulationDestinationInfo &destInfo)
     {
-        auto sourceInfo = GetModulationSourceInfo(modulation.mSource);
-        if (!sourceInfo.mIsValidModulation) return;
-        auto destInfo = GetModulationDestinationInfo(modulation.mDest);
-        if (!destInfo.mIsValidModulation) return;
+        float val = EnsureKRateSource(buffers, sourceInfo);
+        val = MapKRateValue(val, buffers, modulation, sourceInfo, destInfo);
+        ApplyKRateValueToKRateDest(val, buffers, destInfo.mIndexForRate);
+    }
 
-        if (sourceInfo.mRate == ModulationRate::KRate)
-        {
-            // ensure we have a source
-            float val;
-            if (buffers.kRateSourcesFilled[sourceInfo.mIndexForRate])
-            {
-                val = buffers.kRateSourceValuesN11[sourceInfo.mIndexForRate];
-            }
-            else
-            {
-                buffers.kRateSourcesFilled[sourceInfo.mIndexForRate] = true;
-                val = mpkRateProvider->IModulationProvider_GetKRateModulationSourceValueN11(sourceInfo.mKRateEnumVal);
-                buffers.kRateSourceValuesN11[sourceInfo.mIndexForRate] = val;
-            }
+    void ProcessKRateToARate(Buffers &buffers,
+                             SynthModulationSpec &modulation,
+                             const ModulationSourceInfo &sourceInfo,
+                             const ModulationDestinationInfo &destInfo)
+    {
+        float val = EnsureKRateSource(buffers, sourceInfo);
+        val = MapKRateValue(val, buffers, modulation, sourceInfo, destInfo);
 
-            val = MapSourceN11ToDestN11Value(val, modulation, sourceInfo, destInfo); // transform val.
-
-            // we have a source value; apply to destination
-            if (destInfo.mRate == ModulationRate::KRate)
-            {
-                // k-rate to k-rate; easy.
-                ApplyFloatValueToKRateDest(val, buffers, destInfo.mIndexForRate, modulation);
-                return;
-            }
-
-            // k-rate source to a-rate dest
-            bool isFirstAquire = true;
-            auto *dest = EnsureARateDest(buffers, isFirstAquire, destInfo);
-            if (!dest)
-                return; // act like this modulation just doesn't exist.
-            if (isFirstAquire)
-            {
-                int16_t s16 = fast::Sample32To16(val);
-                fast::FillBufferWithConstant(s16, dest->data);
-                return;
-            }
-
-            ApplyFloatValueToBuffer(val, dest, modulation);
-            return;
-        }
-
-        // ensure we have the A-Rate source buffer
-        audio_block_t *source = buffers.aRateSsources[sourceInfo.mIndexForRate];
-        float sourceAsKRate;
-        if (source)
-        {
-            sourceAsKRate = buffers.aRateSourceAsKRateN11[sourceInfo.mIndexForRate];
-        }
-        else
-        {
-            source = receiveReadOnly(sourceInfo.mIndexForRate);
-            if (!source)
-                return; // act like this modulation just doesn't exist.
-            buffers.aRateSsources[sourceInfo.mIndexForRate] = source;
-            sourceAsKRate = ARateBufferToKRateValue(source);
-            buffers.aRateSourceAsKRateN11[sourceInfo.mIndexForRate] = sourceAsKRate;
-        }
-
-        // we have a source buffer; modulate.
-        if (destInfo.mRate == ModulationRate::KRate)
-        {
-            // a-rate source to k-rate dest. treat the a-rate like k-rate, and do like above with k-rate source to
-            // k-rate dest.
-            float mappedVal = MapSourceN11ToDestN11Value(sourceAsKRate, modulation, sourceInfo, destInfo);
-            ApplyFloatValueToKRateDest(mappedVal, buffers, destInfo.mIndexForRate, modulation);
-            return;
-        }
-        // a-rate source to a-rate dest.
         bool isFirstAquire = true;
         auto *dest = EnsureARateDest(buffers, isFirstAquire, destInfo);
         if (!dest)
             return; // act like this modulation just doesn't exist.
         if (isFirstAquire)
         {
-            ApplyMappingToBufferAndAssign(source, dest, modulation);
+            int16_t s16 = fast::Sample32To16(val);
+            fast::FillBufferWithConstant(s16, dest->data);
             return;
         }
-        ApplyMappingToBufferAndApply(source, dest, modulation);
+
+        ApplyKRateValueToARateDest(val, dest, modulation);
+    }
+
+    void ProcessARateToKRate(Buffers &buffers,
+                             SynthModulationSpec &modulation,
+                             const ModulationSourceInfo &sourceInfo,
+                             const ModulationDestinationInfo &destInfo)
+    {
+        float sourceAsKRate;
+        audio_block_t *source =
+            EnsureARateSource(buffers, sourceInfo, sourceAsKRate); // buffers.aRateSsources[sourceInfo.mIndexForRate];
+        if (!source)
+            return;
+        float mappedVal = MapKRateValue(sourceAsKRate, buffers, modulation, sourceInfo, destInfo);
+        ApplyKRateValueToKRateDest(mappedVal, buffers, destInfo.mIndexForRate);
+    }
+
+    void ProcessARateToARate(Buffers &buffers,
+                             SynthModulationSpec &modulation,
+                             const ModulationSourceInfo &sourceInfo,
+                             const ModulationDestinationInfo &destInfo)
+    {
+        float sourceAsKRate;
+        audio_block_t *source =
+            EnsureARateSource(buffers, sourceInfo, sourceAsKRate); // buffers.aRateSsources[sourceInfo.mIndexForRate];
+        if (!source)
+            return;
+
+        bool isFirstAquire = true;
+        auto *dest = EnsureARateDest(buffers, isFirstAquire, destInfo);
+        if (!dest)
+            return; // act like this modulation just doesn't exist.
+        if (isFirstAquire)
+        {
+            fast::FillBufferWithConstant(0, dest->data);
+        }
+        const auto &auxInfo = GetModulationSourceInfo(modulation.mAuxSource);
+        MapARateToARateAndApply(buffers, source, dest, modulation, sourceInfo, destInfo, auxInfo);
+    }
+
+    void ProcessModulation(Buffers &buffers, SynthModulationSpec &modulation)
+    {
+        auto sourceInfo = GetModulationSourceInfo(modulation.mSource);
+        if (!sourceInfo.mIsValidModulation)
+            return;
+        auto destInfo = GetModulationDestinationInfo(modulation.mDest);
+        if (!destInfo.mIsValidModulation)
+            return;
+
+        // depending on the combination of A-Rate & K-rate, take an optimized path.
+        if (sourceInfo.mRate == ModulationRate::KRate)
+        {
+            if (destInfo.mRate == ModulationRate::KRate)
+            {
+                ProcessKRateToKRate(buffers, modulation, sourceInfo, destInfo);
+                return;
+            }
+            ProcessKRateToARate(buffers, modulation, sourceInfo, destInfo);
+            return;
+        }
+
+        if (destInfo.mRate == ModulationRate::KRate)
+        {
+            ProcessARateToKRate(buffers, modulation, sourceInfo, destInfo);
+            return;
+        }
+
+        ProcessARateToARate(buffers, modulation, sourceInfo, destInfo);
         return;
     };
 
@@ -320,7 +625,7 @@ struct VoiceModulationMatrixNode : public AudioStream
         {
             if (!buffers.aRateDestinations[i])
                 continue;
-            transmit(buffers.aRateDestinations[i], i);
+            transmit(buffers.aRateDestinations[i], (uint8_t)i);
             release(buffers.aRateDestinations[i]);
         }
     }

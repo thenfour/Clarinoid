@@ -93,9 +93,9 @@ enum class KRateModulationSource : uint8_t
     // these are INDICES used by synthvoice / modulationmatrix
     Breath = 0, // K-rate
     PitchStrip, // K-rate
-    // RandomTrigger,
-    // Keytracking
-    // macro1, 2, etc
+                // RandomTrigger,
+                // Keytracking
+                // macro1, 2, etc
 };
 
 EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[2] = {
@@ -235,12 +235,28 @@ static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyM
 
 EnumInfo<AnyModulationDestination> gAnyModulationDestinationInfo("AnyModDest", gAnyModulationDestinationItems);
 
+enum class ModulationPolarityTreatment : uint8_t
+{
+    AsPositive01,         // force it to 0-1 positive polarity
+    AsBipolar,            // force it to -1,1 bi-polarity
+    AsPositive01Inverted, // same as Positive01, but signal is inverted so 0,1 translates 1,0. (1-x)
+    AsBipolarInverted,    // same as AsBipolar, but signal is inverted so -1,1 translates 1,-1 (-x)
+};
+
 struct SynthModulationSpec
 {
     AnyModulationSource mSource = AnyModulationSource::None;
     AnyModulationDestination mDest = AnyModulationDestination::None;
-
     float mScaleN11 = 0.5f;
+    ModulationPolarityTreatment mSourcePolarity = ModulationPolarityTreatment::AsPositive01;
+    int mCurveShape = gModCurveLUT.LinearYIndex; // integral, because we don't interpolate; mod curves are actually
+                                                 // discrete. it also simplifies the "0" case where it's linear.
+
+    AnyModulationSource mAuxSource = AnyModulationSource::None;
+    float mAuxAmount01 = 0.0f; // amount of attenuation
+    bool mAuxEnabled = true;   // just allows bypassing without removing the aux source
+    ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::AsPositive01;
+    int mAuxCurveShape = gModCurveLUT.LinearYIndex;
 
     // to mimic old behavior with 0 offset and just a scale.
     void SetScaleN11_Legacy(float scaleN11)
@@ -316,7 +332,7 @@ struct SynthOscillatorSettings
     float mPulseWidth = 0.5f;
 
     float mFMFeedbackGain = 0.0f; // 0 to 1
-    //float mAMMinimumGain = 0.0f;  // in order to allow amplitude modulations to be non-zero
+    // float mAMMinimumGain = 0.0f;  // in order to allow amplitude modulations to be non-zero
 };
 
 struct SynthPreset
