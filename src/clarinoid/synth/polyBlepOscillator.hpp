@@ -162,6 +162,8 @@ struct AudioBandlimitedOsci : public AudioStream
         OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
         uint32_t mPitchModAmount = 4096; // osc1_pitchModAmount
 
+        int mCurveIndex = ::gModCurveLUT.LinearYIndex;
+
         float mPulseWidthTarget01 = 0; // pulseWidth1
         float mPulseWidth = 0.5;       // osc1_pulseWidth
 
@@ -248,6 +250,8 @@ struct AudioBandlimitedOsci : public AudioStream
             mPitchModAmount = octaves * 4096.0f;
         }
 
+        int16_t *curveLookupState;
+
         // call before calculating the sample; this does A-rate modulation stuff
         inline void PreStep(size_t i, /* audio_block_t *fm1,*/ audio_block_t *pwm1, audio_block_t *pm1)
         {
@@ -282,6 +286,8 @@ struct AudioBandlimitedOsci : public AudioStream
             mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each
                                                    // sample. very small.
 
+            curveLookupState = gModCurveLUT.BeginLookupI(mCurveIndex);
+
             // pulse Width Modulation:
             if (pwm1)
             {
@@ -292,7 +298,8 @@ struct AudioBandlimitedOsci : public AudioStream
 
         inline void PostStep(size_t i, audio_block_t *out)
         {
-            float o = mOutput * mGain;
+            float o = gModCurveLUT.Transfer32(mOutput, curveLookupState);
+            o = o * mGain;
             out->data[i] = fast::Sample32To16(o); // o * 32768.0f;
         }
 

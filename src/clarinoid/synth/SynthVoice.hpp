@@ -484,6 +484,7 @@ struct Voice : IModulationKRateProvider
             mOsc.mOsc[i].mPMMultiplier = mPreset->mFMStrength;
             // mOsc.mOsc[i].mAMMinimumGain = mPreset->mOsc[i].mAMMinimumGain;
             mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain;
+            mOsc.mOsc[i].mCurveIndex = mPreset->mOsc[i].mCurveIndex;
         }
 
         auto calcFreq = [](float midiNote,
