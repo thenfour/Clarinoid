@@ -20,93 +20,104 @@
 namespace clarinoid
 {
 
-namespace CCSynthGraph
+struct SynthGraph
 {
-/*
-https://www.pjrc.com/teensy/gui/index.html
-// this is the after-oscillator processing.
+    /*
+    https://www.pjrc.com/teensy/gui/index.html
+    // this is the after-oscillator processing.
 
-*/
-// GUItool: begin automatically generated code
-AudioAmplifier delayFeedbackAmpLeft;  // xy=535,170
-AudioEffectDelay delayRight;          // xy=536,478
-AudioEffectDelay delayLeft;           // xy=537,261
-AudioAmplifier delayFeedbackAmpRight; // xy=537,390
-AudioAmplifier delayWetAmpLeft;       // xy=781,234
-AudioAmplifier delayWetAmpRight;      // xy=802,469
-AudioMixer4 verbInputMixer;           // xy=920,561
-AudioSynthWaveformSine metronomeOsc;  // xy=956,990
-AudioEffectFreeverbStereo verb;       // xy=1070,567
-AudioEffectEnvelope metronomeEnv;     // xy=1157,992
-AudioAmplifier verbWetAmpLeft;        // xy=1229,548
-AudioAmplifier verbWetAmpRight;       // xy=1236,586
-AudioMixer4 postMixerLeft;            // xy=1411,775
-AudioMixer4 postMixerRight;           // xy=1413,858
-AudioAmplifier ampLeft;               // xy=1573,776
-AudioAmplifier ampRight;              // xy=1576,857
-AudioOutputI2S i2s1;                  // xy=1758,809
-AudioAnalyzePeak peakL;               // xy=1801,588
-AudioAnalyzePeak peakR;               // xy=1851,598
-AudioConnection patchCord1(delayWetAmpLeft, 0, postMixerLeft, 1);
-AudioConnection patchCord2(delayWetAmpRight, 0, postMixerRight, 1);
-AudioConnection patchCord3(verbInputMixer, verb);
-AudioConnection patchCord4(metronomeOsc, metronomeEnv);
-AudioConnection patchCord5(verb, 0, verbWetAmpLeft, 0);
-AudioConnection patchCord6(verb, 1, verbWetAmpRight, 0);
-AudioConnection patchCord7(metronomeEnv, 0, postMixerRight, 3);
-AudioConnection patchCord8(metronomeEnv, 0, postMixerLeft, 3);
-AudioConnection patchCord9(verbWetAmpLeft, 0, postMixerLeft, 2);
-AudioConnection patchCord10(verbWetAmpRight, 0, postMixerRight, 2);
-AudioConnection patchCord11(postMixerLeft, ampLeft);
-AudioConnection patchCord12(postMixerRight, ampRight);
-AudioConnection patchCord13(ampLeft, peakL);
-AudioConnection patchCord14(ampRight, peakR);
-AudioConnection patchCord15(ampLeft, 0, i2s1, 1);
-AudioConnection patchCord16(ampRight, 0, i2s1, 0);
-// GUItool: end automatically generated code
+    */
+    // GUItool: begin automatically generated code
+    AudioAmplifier delayFeedbackAmpLeft;  // xy=535,170
+    AudioEffectDelay delayRight;          // xy=536,478
+    AudioEffectDelay delayLeft;           // xy=537,261
+    AudioAmplifier delayFeedbackAmpRight; // xy=537,390
+    AudioAmplifier delayWetAmpLeft;       // xy=781,234
+    AudioAmplifier delayWetAmpRight;      // xy=802,469
+    AudioMixer4 verbInputMixer;           // xy=920,561
+    AudioSynthWaveformSine metronomeOsc;  // xy=956,990
+    AudioEffectFreeverbStereo verb;       // xy=1070,567
+    AudioEffectEnvelope metronomeEnv;     // xy=1157,992
+    AudioAmplifier verbWetAmpLeft;        // xy=1229,548
+    AudioAmplifier verbWetAmpRight;       // xy=1236,586
+    AudioMixer4 postMixerLeft;            // xy=1411,775
+    AudioMixer4 postMixerRight;           // xy=1413,858
+    AudioAmplifier ampLeft;               // xy=1573,776
+    AudioAmplifier ampRight;              // xy=1576,857
+    AudioOutputI2S i2s1;                  // xy=1758,809
+    AudioAnalyzePeak peakL;               // xy=1801,588
+    AudioAnalyzePeak peakR;               // xy=1851,598
+    AudioConnection patchCord1 = {delayWetAmpLeft, 0, postMixerLeft, 1};
+    AudioConnection patchCord2 = {delayWetAmpRight, 0, postMixerRight, 1};
+    AudioConnection patchCord3 = {verbInputMixer, verb};
+    AudioConnection patchCord4 = {metronomeOsc, metronomeEnv};
+    AudioConnection patchCord5 = {verb, 0, verbWetAmpLeft, 0};
+    AudioConnection patchCord6 = {verb, 1, verbWetAmpRight, 0};
+    AudioConnection patchCord7 = {metronomeEnv, 0, postMixerRight, 3};
+    AudioConnection patchCord8 = {metronomeEnv, 0, postMixerLeft, 3};
+    AudioConnection patchCord9 = {verbWetAmpLeft, 0, postMixerLeft, 2};
+    AudioConnection patchCord10 = {verbWetAmpRight, 0, postMixerRight, 2};
+    AudioConnection patchCord11 = {postMixerLeft, ampLeft};
+    AudioConnection patchCord12 = {postMixerRight, ampRight};
+    AudioConnection patchCord13 = {ampLeft, peakL};
+    AudioConnection patchCord14 = {ampRight, peakR};
+    AudioConnection patchCord15 = {ampLeft, 0, i2s1, 1};
+    AudioConnection patchCord16 = {ampRight, 0, i2s1, 0};
+    // GUItool: end automatically generated code
 
-// insert the delay filters.
-// ...[delayLeft]---->[delayFilterLeft]--------------->[delayFeedbackAmpLeft]...
-//                                     \-------------->[delayWetAmpLeft]...
-::clarinoid::FilterNode delayFilterLeft;
-AudioConnection mPatchDelayToFilterLeft = {delayLeft, 0, delayFilterLeft, 0};
-AudioConnection mPatchDelayFilterToFeedbackAmpLeft = {delayFilterLeft, 0, delayFeedbackAmpLeft, 0};
+    // insert the delay filters.
+    // ...[delayLeft]---->[delayFilterLeft]--------------->[delayFeedbackAmpLeft]...
+    //                                     \-------------->[delayWetAmpLeft]...
+    ::clarinoid::FilterNode delayFilterLeft;
+    AudioConnection mPatchDelayToFilterLeft = {delayLeft, 0, delayFilterLeft, 0};
+    AudioConnection mPatchDelayFilterToFeedbackAmpLeft = {delayFilterLeft, 0, delayFeedbackAmpLeft, 0};
 
-::clarinoid::FilterNode delayFilterRight;
-AudioConnection mPatchDelayToFilterRight = {delayRight, 0, delayFilterRight, 0};
-AudioConnection mPatchDelayFilterToFeedbackAmpRight = {delayFilterRight, 0, delayFeedbackAmpRight, 0};
+    ::clarinoid::FilterNode delayFilterRight;
+    AudioConnection mPatchDelayToFilterRight = {delayRight, 0, delayFilterRight, 0};
+    AudioConnection mPatchDelayFilterToFeedbackAmpRight = {delayFilterRight, 0, delayFeedbackAmpRight, 0};
 
-// delay output connection
-AudioConnection mPatchDelayFilterToAmpLeft = {delayFilterLeft, 0, delayWetAmpLeft, 0};
-AudioConnection mPatchDelayFilterToAmpRight = {delayFilterRight, 0, delayWetAmpRight, 0};
+    // delay output connection
+    AudioConnection mPatchDelayFilterToAmpLeft = {delayFilterLeft, 0, delayWetAmpLeft, 0};
+    AudioConnection mPatchDelayFilterToAmpRight = {delayFilterRight, 0, delayWetAmpRight, 0};
 
-// voice mixer & dry output connection
-::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryLeft;  // all voices input here.
-::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryRight; // all voices input here.
-AudioConnection patchVoicesDryToOutpLeft = {voiceMixerDryLeft, 0, postMixerLeft, 0};
-AudioConnection patchVoicesDryToOutpRight = {voiceMixerDryRight, 0, postMixerRight, 0};
+    // voice mixer & dry output connection
+    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryLeft;  // all voices input here.
+    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryRight; // all voices input here.
+    AudioConnection patchVoicesDryToOutpLeft = {voiceMixerDryLeft, 0, postMixerLeft, 0};
+    AudioConnection patchVoicesDryToOutpRight = {voiceMixerDryRight, 0, postMixerRight, 0};
 
-// delay input mix
-::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> delayInputMixerLeft;  // +1 to account for the delay feedback signal
-::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> delayInputMixerRight; // +1 to account for the delay feedback signal
-AudioConnection patchDelayInputMixToDelayL = {delayInputMixerLeft, 0, delayLeft, 0};
-AudioConnection patchDelayInputMixToDelayR = {delayInputMixerRight, 0, delayRight, 0};
+    // delay input mix
+    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1>
+        delayInputMixerLeft; // +1 to account for the delay feedback signal
+    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1>
+        delayInputMixerRight; // +1 to account for the delay feedback signal
+    AudioConnection patchDelayInputMixToDelayL = {delayInputMixerLeft, 0, delayLeft, 0};
+    AudioConnection patchDelayInputMixToDelayR = {delayInputMixerRight, 0, delayRight, 0};
 
-// delay fb
-AudioConnection patchDelayFBBackToInputLeft = {delayFeedbackAmpLeft, 0, delayInputMixerLeft, MAX_SYNTH_VOICES};
-AudioConnection patchDelayFBBackToInputRight = {delayFeedbackAmpRight, 0, delayInputMixerRight, MAX_SYNTH_VOICES};
+    // delay fb
+    AudioConnection patchDelayFBBackToInputLeft = {delayFeedbackAmpLeft, 0, delayInputMixerLeft, MAX_SYNTH_VOICES};
+    AudioConnection patchDelayFBBackToInputRight = {delayFeedbackAmpRight, 0, delayInputMixerRight, MAX_SYNTH_VOICES};
 
-// verb input mix
-::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerLeft;  // all voices input here + 1 for delay line
-::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerRight; // all voices input here + 1 for delay line
-AudioConnection patchVerbInputToVerbL = {verbInputMixerLeft, 0, verbInputMixer, 0};
-AudioConnection patchVerbInputToVerbR = {verbInputMixerRight, 0, verbInputMixer, 1};
+    // verb input mix
+    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerLeft;  // all voices input here + 1 for delay line
+    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerRight; // all voices input here + 1 for delay line
+    AudioConnection patchVerbInputToVerbL = {verbInputMixerLeft, 0, verbInputMixer, 0};
+    AudioConnection patchVerbInputToVerbR = {verbInputMixerRight, 0, verbInputMixer, 1};
 
-// delay verb
-AudioConnection patchDelayVerbInputLeft = {delayFilterLeft, 0, verbInputMixerLeft, MAX_SYNTH_VOICES};
-AudioConnection patchDelayVerbInputRight = {delayFilterRight, 0, verbInputMixerRight, MAX_SYNTH_VOICES};
+    // delay verb
+    AudioConnection patchDelayVerbInputLeft = {delayFilterLeft, 0, verbInputMixerLeft, MAX_SYNTH_VOICES};
+    AudioConnection patchDelayVerbInputRight = {delayFilterRight, 0, verbInputMixerRight, MAX_SYNTH_VOICES};
 
-} // namespace CCSynthGraph
+}; // namespace CCSynthGraph
+
+// dynamic allocate to ensure it goes into RAM2
+SynthGraph *gpSynthGraph = nullptr;
+//std::reference_wrapper<SynthGraph> CCSynthGraph;
+
+StaticInit __synthGraphInit([]() {
+    gpSynthGraph = new SynthGraph();
+    //CCSynthGraph = *gpSynthGraph;
+});
 
 struct Voice : IModulationKRateProvider
 {
@@ -592,12 +603,12 @@ struct Voice : IModulationKRateProvider
     }
 
     Voice(int16_t vid)
-        : mPatchOutDryLeft(mSplitter, 0, CCSynthGraph::voiceMixerDryLeft, vid),
-          mPatchOutDryRight(mSplitter, 1, CCSynthGraph::voiceMixerDryRight, vid),
-          mPatchOutDelayLeft(mSplitter, 2, CCSynthGraph::delayInputMixerLeft, vid),
-          mPatchOutDelayRight(mSplitter, 3, CCSynthGraph::delayInputMixerRight, vid),
-          mPatchOutVerbLeft(mSplitter, 4, CCSynthGraph::verbInputMixerLeft, vid),
-          mPatchOutVerbRight(mSplitter, 5, CCSynthGraph::verbInputMixerLeft, vid)
+        : mPatchOutDryLeft(mSplitter, 0, gpSynthGraph->voiceMixerDryLeft, vid),
+          mPatchOutDryRight(mSplitter, 1, gpSynthGraph->voiceMixerDryRight, vid),
+          mPatchOutDelayLeft(mSplitter, 2, gpSynthGraph->delayInputMixerLeft, vid),
+          mPatchOutDelayRight(mSplitter, 3, gpSynthGraph->delayInputMixerRight, vid),
+          mPatchOutVerbLeft(mSplitter, 4, gpSynthGraph->verbInputMixerLeft, vid),
+          mPatchOutVerbRight(mSplitter, 5, gpSynthGraph->verbInputMixerLeft, vid)
     {
     }
 };
@@ -625,61 +636,61 @@ struct SynthGraphControl
             v.EnsurePatchConnections(appSettings /*, modulationSourceSource*/);
         }
 
-        CCSynthGraph::ampLeft.gain(1);
-        CCSynthGraph::ampRight.gain(1);
+        gpSynthGraph->ampLeft.gain(1);
+        gpSynthGraph->ampRight.gain(1);
 
-        CCSynthGraph::metronomeEnv.delay(0);
-        CCSynthGraph::metronomeEnv.attack(0);
-        CCSynthGraph::metronomeEnv.hold(0);
-        CCSynthGraph::metronomeEnv.releaseNoteOn(0);
-        CCSynthGraph::metronomeEnv.sustain(0);
+        gpSynthGraph->metronomeEnv.delay(0);
+        gpSynthGraph->metronomeEnv.attack(0);
+        gpSynthGraph->metronomeEnv.hold(0);
+        gpSynthGraph->metronomeEnv.releaseNoteOn(0);
+        gpSynthGraph->metronomeEnv.sustain(0);
     }
 
     void UpdatePostFx()
     {
         auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
-        CCSynthGraph::delayFeedbackAmpLeft.gain(perf.mDelayFeedbackLevel);
-        CCSynthGraph::delayFeedbackAmpRight.gain(perf.mDelayFeedbackLevel);
-        CCSynthGraph::delayLeft.delay(0, perf.mDelayMS);
-        CCSynthGraph::delayRight.delay(0, perf.mDelayMS + perf.mDelayStereoSep);
+        gpSynthGraph->delayFeedbackAmpLeft.gain(perf.mDelayFeedbackLevel);
+        gpSynthGraph->delayFeedbackAmpRight.gain(perf.mDelayFeedbackLevel);
+        gpSynthGraph->delayLeft.delay(0, perf.mDelayMS);
+        gpSynthGraph->delayRight.delay(0, perf.mDelayMS + perf.mDelayStereoSep);
 
-        CCSynthGraph::delayFilterLeft.SetParams(
+        gpSynthGraph->delayFilterLeft.SetParams(
             perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
-        CCSynthGraph::delayFilterRight.SetParams(
+        gpSynthGraph->delayFilterRight.SetParams(
             perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
 
-        CCSynthGraph::delayWetAmpLeft.gain(
+        gpSynthGraph->delayWetAmpLeft.gain(
             (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
-        CCSynthGraph::delayWetAmpRight.gain(
+        gpSynthGraph->delayWetAmpRight.gain(
             (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
 
-        CCSynthGraph::verb.roomsize(perf.mReverbSize);
-        CCSynthGraph::verb.damping(perf.mReverbDamping);
+        gpSynthGraph->verb.roomsize(perf.mReverbSize);
+        gpSynthGraph->verb.damping(perf.mReverbDamping);
 
-        CCSynthGraph::verbWetAmpLeft.gain(
+        gpSynthGraph->verbWetAmpLeft.gain(
             (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
-        CCSynthGraph::verbWetAmpRight.gain(
+        gpSynthGraph->verbWetAmpRight.gain(
             (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
 
-        CCSynthGraph::ampLeft.gain(perf.mMasterGain);
-        CCSynthGraph::ampRight.gain(perf.mMasterGain);
+        gpSynthGraph->ampLeft.gain(perf.mMasterGain);
+        gpSynthGraph->ampRight.gain(perf.mMasterGain);
 
         if (!mAppSettings->mMetronomeSoundOn)
         {
-            CCSynthGraph::metronomeOsc.amplitude(0);
+            gpSynthGraph->metronomeOsc.amplitude(0);
         }
         else
         {
-            CCSynthGraph::metronomeEnv.decay(mAppSettings->mMetronomeDecayMS);
-            CCSynthGraph::metronomeOsc.amplitude(mAppSettings->mMetronomeGain);
-            CCSynthGraph::metronomeOsc.frequency(MIDINoteToFreq(mAppSettings->mMetronomeNote));
+            gpSynthGraph->metronomeEnv.decay(mAppSettings->mMetronomeDecayMS);
+            gpSynthGraph->metronomeOsc.amplitude(mAppSettings->mMetronomeGain);
+            gpSynthGraph->metronomeOsc.frequency(MIDINoteToFreq(mAppSettings->mMetronomeNote));
 
             float metronomeBeatFrac = mMetronome->GetBeatFrac();
             if (metronomeBeatFrac < mPrevMetronomeBeatFrac)
             { // beat boundary is when the frac drops back
               // to 0
-                CCSynthGraph::metronomeEnv.noteOn();
+                gpSynthGraph->metronomeEnv.noteOn();
             }
             mPrevMetronomeBeatFrac = metronomeBeatFrac;
         }

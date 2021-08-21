@@ -23,12 +23,12 @@ static constexpr int TOAST_DURATION_MILLIS = 1700;
 //////////////////////////////////////////////////////////////////////
 struct _CCDisplay : IDisplay
 {
-  private:
-    static CCAdafruitSSD1306
-        *gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in general.
+//   private:
+//     static CCAdafruitSSD1306
+//         *gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in general.
 
   public:
-    CCAdafruitSSD1306 mDisplay;
+    CCAdafruitSSD1306& mDisplay;
 
     AppSettings *mAppSettings = nullptr;
     InputDelegator *mInput = nullptr;
@@ -41,26 +41,8 @@ struct _CCDisplay : IDisplay
     int mCurrentAppIndex = 0;
 
     // hardware SPI
-    _CCDisplay(uint8_t w,
-               uint8_t h,
-               SPIClass *spi,
-               int8_t dc_pin,
-               int8_t rst_pin,
-               int8_t cs_pin,
-               uint32_t bitrate = 8000000UL)
-        : mDisplay(w,
-                   h,
-                   spi,
-                   dc_pin,
-                   rst_pin,
-                   cs_pin,
-                   bitrate) // 128, 64, &SPI, 9/*DC*/, 8/*RST*/, 10/*CS*/, 44 * 1000000UL)
-    {
-    }
-
-    // bit-bang
-    _CCDisplay(uint8_t w, uint8_t h, int8_t mosi_pin, int8_t sclk_pin, int8_t dc_pin, int8_t rst_pin, int8_t cs_pin)
-        : mDisplay(w, h, mosi_pin, sclk_pin, dc_pin, rst_pin, cs_pin)
+    _CCDisplay(CCAdafruitSSD1306& display)
+        : mDisplay(display)
     {
     }
 
@@ -74,8 +56,6 @@ struct _CCDisplay : IDisplay
         // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
         mDisplay.begin(SSD1306_SWITCHCAPVCC);
         mIsSetup = true;
-
-        gDisplay = &mDisplay;
 
         // fix fonts up a bit
         for (auto &glyph : MatchupPro8pt7bGlyphs)
@@ -94,22 +74,6 @@ struct _CCDisplay : IDisplay
         {
             glyph.yOffset += 6;
         }
-
-        // pfnCrashHandler = []() {
-        //     Serial.println(gCrashMessage);
-        //     Serial.println(String("Display ptr = ") + (uintptr_t)gDisplay);
-        //     // why doesn't this work???
-        //     // gDisplay->clearDisplay();
-        //     // gDisplay->mSolidText = true;
-        //     // gDisplay->mTextLeftMargin = 0;
-        //     // gDisplay->ResetClip();
-        //     // gDisplay->setTextSize(1);
-        //     // gDisplay->setTextColor(SSD1306_WHITE, SSD1306_BLACK); // normal text
-        //     // gDisplay->setCursor(0,0);
-        //     // gDisplay->println(gCrashMessage);
-        //     // gDisplay->display();
-        //     DefaultCrashHandler();
-        // };
 
         mDisplay.dim(mAppSettings->mDisplayDim);
 
@@ -566,7 +530,5 @@ struct _CCDisplay : IDisplay
         mDisplay.DrawMarchingAntsRectOutline(LineWidth, AntSize, AntMask, x, y, w, h, variation, style, edges);
     }
 };
-
-CCAdafruitSSD1306 *_CCDisplay::gDisplay = nullptr; // for debug!
 
 } // namespace clarinoid

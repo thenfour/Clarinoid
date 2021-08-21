@@ -64,17 +64,17 @@ struct CCSynth
     {
         mCurrentPolyphony = 0;
 
-        if (CCSynthGraph::peakL.available() && CCSynthGraph::peakR.available())
+        if (gpSynthGraph->peakL.available() && gpSynthGraph->peakR.available())
         {
-            gPeak = std::max(CCSynthGraph::peakL.readPeakToPeak(), CCSynthGraph::peakR.readPeakToPeak());
+            gPeak = std::max(gpSynthGraph->peakL.readPeakToPeak(), gpSynthGraph->peakR.readPeakToPeak());
         }
-        else if (CCSynthGraph::peakL.available())
+        else if (gpSynthGraph->peakL.available())
         {
-            gPeak = std::max(CCSynthGraph::peakL.readPeakToPeak(), gPeak);
+            gPeak = std::max(gpSynthGraph->peakL.readPeakToPeak(), gPeak);
         }
-        else if (CCSynthGraph::peakR.available())
+        else if (gpSynthGraph->peakR.available())
         {
-            gPeak = std::max(CCSynthGraph::peakR.readPeakToPeak(), gPeak);
+            gPeak = std::max(gpSynthGraph->peakR.readPeakToPeak(), gPeak);
         }
 
         for (auto &v : gVoices)

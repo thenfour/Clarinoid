@@ -210,7 +210,8 @@ enum class AnyModulationDestination : uint8_t
     // oscillator FM amplitude
     // oscillator FM feedback
     // lfo rate
-    // env ?
+    // env stuff
+    // osc waveform shape
 };
 
 EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[14] = {

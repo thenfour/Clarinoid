@@ -14,11 +14,11 @@ struct EnvelopeMenuApp
 {
     FloatSettingItem mDelayMS = {"Delay",
                                  StandardRangeSpecs::gEnvDelayMS,
-                                 Property<float>{[](void *cap) {
+                                 Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
                                                      return pThis->mBinding->mDelayMS;
                                                  },
-                                                 [](void *cap, const float &v) {
+                                                 [](void *cap, const float &v) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
                                                      pThis->mBinding->mDelayMS = v;
                                                  },
@@ -27,11 +27,11 @@ struct EnvelopeMenuApp
 
     FloatSettingItem mAttackMS = {"Attack",
                                   StandardRangeSpecs::gEnvAttackMS,
-                                  Property<float>{[](void *cap) {
+                                  Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
                                                       return pThis->mBinding->mAttackMS;
                                                   },
-                                                  [](void *cap, const float &v) {
+                                                  [](void *cap, const float &v)FLASHMEM  {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
                                                       pThis->mBinding->mAttackMS = v;
                                                   },
@@ -40,11 +40,11 @@ struct EnvelopeMenuApp
 
     FloatSettingItem mHoldMS = {"Hold",
                                 StandardRangeSpecs::gEnvHoldMS,
-                                Property<float>{[](void *cap) {
+                                Property<float>{[](void *cap) FLASHMEM {
                                                     auto *pThis = (EnvelopeMenuApp *)cap;
                                                     return pThis->mBinding->mHoldMS;
                                                 },
-                                                [](void *cap, const float &v) {
+                                                [](void *cap, const float &v) FLASHMEM {
                                                     auto *pThis = (EnvelopeMenuApp *)cap;
                                                     pThis->mBinding->mHoldMS = v;
                                                 },
@@ -53,11 +53,11 @@ struct EnvelopeMenuApp
 
     FloatSettingItem mDecayMS = {"Decay",
                                  StandardRangeSpecs::gEnvDecayMS,
-                                 Property<float>{[](void *cap) {
+                                 Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
                                                      return pThis->mBinding->mDecayMS;
                                                  },
-                                                 [](void *cap, const float &v) {
+                                                 [](void *cap, const float &v) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
                                                      pThis->mBinding->mDecayMS = v;
                                                  },
@@ -66,11 +66,11 @@ struct EnvelopeMenuApp
 
     FloatSettingItem mSustainLevel = {"Sustain",
                                       StandardRangeSpecs::gEnvSustainLevel,
-                                      Property<float>{[](void *cap) {
+                                      Property<float>{[](void *cap)FLASHMEM  {
                                                           auto *pThis = (EnvelopeMenuApp *)cap;
                                                           return pThis->mBinding->mSustainLevel;
                                                       },
-                                                      [](void *cap, const float &v) {
+                                                      [](void *cap, const float &v)FLASHMEM  {
                                                           auto *pThis = (EnvelopeMenuApp *)cap;
                                                           pThis->mBinding->mSustainLevel = v;
                                                       },
@@ -79,11 +79,11 @@ struct EnvelopeMenuApp
 
     FloatSettingItem mReleaseMS = {"Release",
                                    StandardRangeSpecs::gEnvReleaseMS,
-                                   Property<float>{[](void *cap) {
+                                   Property<float>{[](void *cap) FLASHMEM {
                                                        auto *pThis = (EnvelopeMenuApp *)cap;
                                                        return pThis->mBinding->mReleaseMS;
                                                    },
-                                                   [](void *cap, const float &v) {
+                                                   [](void *cap, const float &v)FLASHMEM  {
                                                        auto *pThis = (EnvelopeMenuApp *)cap;
                                                        pThis->mBinding->mReleaseMS = v;
                                                    },
@@ -92,11 +92,11 @@ struct EnvelopeMenuApp
 
     FloatSettingItem mReleaseNoteOnMS = {"ReleaseNoteOn",
                                          StandardRangeSpecs::gEnvReleaseMS,
-                                         Property<float>{[](void *cap) {
+                                         Property<float>{[](void *cap)FLASHMEM  {
                                                              auto *pThis = (EnvelopeMenuApp *)cap;
                                                              return pThis->mBinding->mReleaseNoteOnMS;
                                                          },
-                                                         [](void *cap, const float &v) {
+                                                         [](void *cap, const float &v) FLASHMEM {
                                                              auto *pThis = (EnvelopeMenuApp *)cap;
                                                              pThis->mBinding->mReleaseNoteOnMS = v;
                                                          },
@@ -136,11 +136,11 @@ struct SynthPatchOscillatorMenuStuff
     EnumSettingItem<OscWaveformShape> mWaveform = {
         "Waveform",
         gOscWaveformShapeInfo,
-        Property<OscWaveformShape>{[](void *cap) {
+        Property<OscWaveformShape>{[](void *cap) FLASHMEM {
                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                        return pThis->GetBinding().mWaveform;
                                    },
-                                   [](void *cap, const OscWaveformShape &v) {
+                                   [](void *cap, const OscWaveformShape &v) FLASHMEM {
                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                        pThis->GetBinding().mWaveform = v;
                                    },
@@ -149,11 +149,11 @@ struct SynthPatchOscillatorMenuStuff
 
     GainSettingItem mGain = {"Gain",
                              StandardRangeSpecs::gGeneralGain,
-                             Property<float>{[](void *cap) {
+                             Property<float>{[](void *cap)FLASHMEM  {
                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                  return pThis->GetBinding().mGain;
                                              },
-                                             [](void *cap, const float &v) {
+                                             [](void *cap, const float &v)FLASHMEM  {
                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                  pThis->GetBinding().mGain = v;
                                              },
@@ -162,11 +162,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mFMFeedback = {"FM Feedback",
                                     StandardRangeSpecs::gFloat_0_1,
-                                    Property<float>{[](void *cap) {
+                                    Property<float>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         return pThis->GetBinding().mFMFeedbackGain;
                                                     },
-                                                    [](void *cap, const float &v) {
+                                                    [](void *cap, const float &v) FLASHMEM {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         pThis->GetBinding().mFMFeedbackGain = v;
                                                     },
@@ -175,11 +175,11 @@ struct SynthPatchOscillatorMenuStuff
 
     IntSettingItem mCurve = {"Curve",
                              StandardRangeSpecs::gCurveIndexRange,
-                             Property<int>{[](void *cap) {
+                             Property<int>{[](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                return (int)pThis->GetBinding().mCurveIndex;
                                            },
-                                           [](void *cap, const int &v) {
+                                           [](void *cap, const int &v) FLASHMEM {
                                                auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                pThis->GetBinding().mCurveIndex = v;
                                            },
@@ -188,11 +188,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
-                             Property<float>{[](void *cap) {
+                             Property<float>{[](void *cap)FLASHMEM  {
                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                  return pThis->GetBinding().mPan;
                                              },
-                                             [](void *cap, const float &v) {
+                                             [](void *cap, const float &v) FLASHMEM {
                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                  pThis->GetBinding().mPan = v;
                                              },
@@ -201,11 +201,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mPortamentoTime = {"Portamento",
                                         StandardRangeSpecs::gPortamentoRange,
-                                        Property<float>{[](void *cap) {
+                                        Property<float>{[](void *cap) FLASHMEM {
                                                             auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                             return pThis->GetBinding().mPortamentoTime;
                                                         },
-                                                        [](void *cap, const float &v) {
+                                                        [](void *cap, const float &v)FLASHMEM  {
                                                             auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                             pThis->GetBinding().mPortamentoTime = v;
                                                         },
@@ -215,11 +215,11 @@ struct SynthPatchOscillatorMenuStuff
     // there's a bit of a conflict here because it's defined as float but this is int.
     IntSettingItem mPitchbendRange = {"Pitchbend range",
                                       NumericEditRangeSpec<int>{0, 48},
-                                      Property<int>{[](void *cap) {
+                                      Property<int>{[](void *cap)FLASHMEM  {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         return (int)pThis->GetBinding().mPitchBendRange;
                                                     },
-                                                    [](void *cap, const int &v) {
+                                                    [](void *cap, const int &v) FLASHMEM {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         pThis->GetBinding().mPitchBendRange = (float)v;
                                                     },
@@ -228,11 +228,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mPitchbendSnap = {"Pitchbend snap",
                                        StandardRangeSpecs::gFloat_0_1,
-                                       Property<float>{[](void *cap) {
+                                       Property<float>{[](void *cap)FLASHMEM  {
                                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                            return pThis->GetBinding().mPitchBendSnap;
                                                        },
-                                                       [](void *cap, const float &v) {
+                                                       [](void *cap, const float &v) FLASHMEM {
                                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                            pThis->GetBinding().mPitchBendSnap = v;
                                                        },
@@ -241,11 +241,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mFreqMul = {"FreqMul",
                                  StandardRangeSpecs::gFreqMulRange,
-                                 Property<float>{[](void *cap) {
+                                 Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                      return pThis->GetBinding().mFreqMultiplier;
                                                  },
-                                                 [](void *cap, const float &v) {
+                                                 [](void *cap, const float &v) FLASHMEM {
                                                      auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                      pThis->GetBinding().mFreqMultiplier = v;
                                                  },
@@ -254,11 +254,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mFreqOffset = {"FreqOffset",
                                     StandardRangeSpecs::gFreqOffsetRange,
-                                    Property<float>{[](void *cap) {
+                                    Property<float>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         return pThis->GetBinding().mFreqOffset;
                                                     },
-                                                    [](void *cap, const float &v) {
+                                                    [](void *cap, const float &v)FLASHMEM  {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         pThis->GetBinding().mFreqOffset = v;
                                                     },
@@ -267,11 +267,11 @@ struct SynthPatchOscillatorMenuStuff
 
     IntSettingItem mPitchSemis = {"PitchSemis",
                                   StandardRangeSpecs::gTransposeRange,
-                                  Property<int>{[](void *cap) {
+                                  Property<int>{[](void *cap) FLASHMEM {
                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                     return pThis->GetBinding().mPitchSemis;
                                                 },
-                                                [](void *cap, const int &v) {
+                                                [](void *cap, const int &v) FLASHMEM {
                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                     pThis->GetBinding().mPitchSemis = v;
                                                 },
@@ -280,11 +280,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mPitchFine = {"PitchFine",
                                    StandardRangeSpecs::gFloat_N1_1,
-                                   Property<float>{[](void *cap) {
+                                   Property<float>{[](void *cap)FLASHMEM  {
                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                        return pThis->GetBinding().mPitchFine;
                                                    },
-                                                   [](void *cap, const float &v) {
+                                                   [](void *cap, const float &v)FLASHMEM  {
                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                        pThis->GetBinding().mPitchFine = v;
                                                    },
@@ -293,11 +293,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mPulseWidth = {"PulseWidth",
                                     StandardRangeSpecs::gFloat_0_1,
-                                    Property<float>{[](void *cap) {
+                                    Property<float>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         return pThis->GetBinding().mPulseWidth;
                                                     },
-                                                    [](void *cap, const float &v) {
+                                                    [](void *cap, const float &v)FLASHMEM  {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         pThis->GetBinding().mPulseWidth = v;
                                                     },
@@ -307,11 +307,11 @@ struct SynthPatchOscillatorMenuStuff
     BoolSettingItem mPhaseRestart = {"PhaseRestart",
                                      "Yes",
                                      "No",
-                                     Property<bool>{[](void *cap) {
+                                     Property<bool>{[](void *cap)FLASHMEM  {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         return pThis->GetBinding().mPhaseRestart;
                                                     },
-                                                    [](void *cap, const bool &v) {
+                                                    [](void *cap, const bool &v) FLASHMEM {
                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                         pThis->GetBinding().mPhaseRestart = v;
                                                     },
@@ -320,11 +320,11 @@ struct SynthPatchOscillatorMenuStuff
 
     FloatSettingItem mPhaseOffset = {"PhaseOffset",
                                      StandardRangeSpecs::gFloat_0_1,
-                                     Property<float>{[](void *cap) {
+                                     Property<float>{[](void *cap)FLASHMEM  {
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                          return pThis->GetBinding().mPhase01;
                                                      },
-                                                     [](void *cap, const float &v) {
+                                                     [](void *cap, const float &v)FLASHMEM {
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                          pThis->GetBinding().mPhase01 = v;
                                                      },
@@ -382,11 +382,11 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     // String& falseCaption, const Property<bool>& binding, typename cc::function<bool()>::ptr_t isEnabled) :
     FloatSettingItem mDetune = {"Detune",
                                 StandardRangeSpecs::gFloat_0_2,
-                                Property<float>{[](void *cap) {
+                                Property<float>{[](void *cap)FLASHMEM  {
                                                     auto *pThis = (SynthPatchMenuApp *)cap;
                                                     return pThis->GetBinding().mDetune;
                                                 },
-                                                [](void *cap, const float &v) {
+                                                [](void *cap, const float &v)FLASHMEM  {
                                                     auto *pThis = (SynthPatchMenuApp *)cap;
                                                     pThis->GetBinding().mDetune = v;
                                                 },
@@ -395,11 +395,11 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
-                             Property<float>{[](void *cap) {
+                             Property<float>{[](void *cap)FLASHMEM  {
                                                  auto *pThis = (SynthPatchMenuApp *)cap;
                                                  return pThis->GetBinding().mPan;
                                              },
-                                             [](void *cap, const float &v) {
+                                             [](void *cap, const float &v)FLASHMEM  {
                                                  auto *pThis = (SynthPatchMenuApp *)cap;
                                                  pThis->GetBinding().mPan = v;
                                              },
@@ -408,7 +408,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     GainSettingItem mVerbSend = {"Verb Send",
                                  StandardRangeSpecs::gSendGain,
-                                 Property<float>{[](void *cap) {
+                                 Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (SynthPatchMenuApp *)cap;
                                                      return pThis->GetBinding().mVerbSend;
                                                  },
@@ -421,7 +421,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     GainSettingItem mDelaySend = {"Dly Send",
                                   StandardRangeSpecs::gSendGain,
-                                  Property<float>{[](void *cap) {
+                                  Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
                                                       return pThis->GetBinding().mDelaySend;
                                                   },
@@ -435,7 +435,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     BoolSettingItem mSync = {"Sync",
                              "On",
                              "Off",
-                             Property<bool>{[](void *cap) {
+                             Property<bool>{[](void *cap) FLASHMEM {
                                                 auto *pThis = (SynthPatchMenuApp *)cap;
                                                 return pThis->GetBinding().mSync;
                                             },
@@ -448,7 +448,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mStereoSpread = {"Stereo Spread",
                                       StandardRangeSpecs::gFloat_0_1,
-                                      Property<float>{[](void *cap) {
+                                      Property<float>{[](void *cap) FLASHMEM {
                                                           auto *pThis = (SynthPatchMenuApp *)cap;
                                                           return pThis->GetBinding().mStereoSpread;
                                                       },
@@ -461,7 +461,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     EnumSettingItem<FMAlgo> mFMAlgo = {"FM Algo",
                                        gFMAlgoInfo,
-                                       Property<FMAlgo>{[](void *cap) {
+                                       Property<FMAlgo>{[](void *cap) FLASHMEM {
                                                             auto *pThis = (SynthPatchMenuApp *)cap;
                                                             return pThis->GetBinding().mFMAlgo;
                                                         },
@@ -474,7 +474,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mFMStrength = {"FM Strength",
                                     NumericEditRangeSpec<float>{0.0f, 0.25f},
-                                    Property<float>{[](void *cap) {
+                                    Property<float>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (SynthPatchMenuApp *)cap;
                                                         return pThis->GetBinding().mFMStrength;
                                                     },
@@ -487,7 +487,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mSyncMultMin = {" - mult min",
                                      NumericEditRangeSpec<float>{0.0f, 15.0f},
-                                     Property<float>{[](void *cap) {
+                                     Property<float>{[](void *cap) FLASHMEM {
                                                          auto *pThis = (SynthPatchMenuApp *)cap;
                                                          return pThis->GetBinding().mSyncMultMin;
                                                      },
@@ -496,7 +496,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                          pThis->GetBinding().mSyncMultMin = v;
                                                      },
                                                      this},
-                                     Property<bool>{[](void *cap) {
+                                     Property<bool>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (SynthPatchMenuApp *)cap;
                                                         return pThis->GetBinding().mSync;
                                                     },
@@ -504,7 +504,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mSyncMultMax = {" - mult max",
                                      NumericEditRangeSpec<float>{0.0f, 15.0f},
-                                     Property<float>{[](void *cap) {
+                                     Property<float>{[](void *cap) FLASHMEM {
                                                          auto *pThis = (SynthPatchMenuApp *)cap;
                                                          return pThis->GetBinding().mSyncMultMax;
                                                      },
@@ -513,7 +513,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                          pThis->GetBinding().mSyncMultMax = v;
                                                      },
                                                      this},
-                                     Property<bool>{[](void *cap) {
+                                     Property<bool>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (SynthPatchMenuApp *)cap;
                                                         return pThis->GetBinding().mSync;
                                                     },
@@ -524,7 +524,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     EnumSettingItem<ClarinoidFilterType> mBreathFiltType = {
         "Filter",
         gClarinoidFilterTypeInfo,
-        Property<ClarinoidFilterType>{[](void *cap) {
+        Property<ClarinoidFilterType>{[](void *cap) FLASHMEM {
                                           auto *pThis = (SynthPatchMenuApp *)cap;
                                           return pThis->GetBinding().mFilterType;
                                       },
@@ -537,7 +537,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mBreathFiltQ = {" - Reso",
                                      NumericEditRangeSpec<float>{0.0f, 1.0f, .1f, .05f, 0.1f},
-                                     Property<float>{[](void *cap) {
+                                     Property<float>{[](void *cap) FLASHMEM {
                                                          auto *pThis = (SynthPatchMenuApp *)cap;
                                                          return pThis->GetBinding().mFilterQ;
                                                      },
@@ -550,7 +550,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mBreathFiltSaturation = {" - saturation",
                                               NumericEditRangeSpec<float>{0.0f, 1.0f},
-                                              Property<float>{[](void *cap) {
+                                              Property<float>{[](void *cap) FLASHMEM {
                                                                   auto *pThis = (SynthPatchMenuApp *)cap;
                                                                   return pThis->GetBinding().mFilterSaturation;
                                                               },
@@ -563,7 +563,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mBreathFiltMin = {" - filt min",
                                        NumericEditRangeSpec<float>{0.0f, 3000.0f},
-                                       Property<float>{[](void *cap) {
+                                       Property<float>{[](void *cap) FLASHMEM {
                                                            auto *pThis = (SynthPatchMenuApp *)cap;
                                                            return pThis->GetBinding().mFilterMinFreq;
                                                        },
@@ -576,7 +576,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mBreathFiltMax = {" - filt max",
                                        NumericEditRangeSpec<float>{0.0f, 25000.0f},
-                                       Property<float>{[](void *cap) {
+                                       Property<float>{[](void *cap) FLASHMEM {
                                                            auto *pThis = (SynthPatchMenuApp *)cap;
                                                            return pThis->GetBinding().mFilterMaxFreq;
                                                        },
@@ -589,7 +589,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mBreathFiltKS = {" - filt KS",
                                       NumericEditRangeSpec<float>{0.0f, 2.0f, .2f, .1f, 0.01f},
-                                      Property<float>{[](void *cap) {
+                                      Property<float>{[](void *cap) FLASHMEM {
                                                           auto *pThis = (SynthPatchMenuApp *)cap;
                                                           return pThis->GetBinding().mFilterKeytracking;
                                                       },
@@ -603,7 +603,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     BoolSettingItem mDCEnabled = {"DC filter",
                                   "On",
                                   "Off",
-                                  Property<bool>{[](void *cap) {
+                                  Property<bool>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (SynthPatchMenuApp *)cap;
                                                      return pThis->GetBinding().mDCFilterEnabled;
                                                  },
@@ -616,7 +616,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mDCCutoff = {" - cutoff",
                                   NumericEditRangeSpec<float>{0.01f, 100.0f},
-                                  Property<float>{[](void *cap) {
+                                  Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
                                                       return pThis->GetBinding().mDCFilterCutoff;
                                                   },
@@ -625,7 +625,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                       pThis->GetBinding().mDCFilterCutoff = v;
                                                   },
                                                   this},
-                                  Property<bool>{[](void *cap) {
+                                  Property<bool>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (SynthPatchMenuApp *)cap;
                                                      return pThis->GetBinding().mDCFilterEnabled;
                                                  },
@@ -652,7 +652,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mLfo1Frequency = {"LFO1 Freq",
                                        StandardRangeSpecs::gLFOFrequency,
-                                       Property<float>{[](void *cap) {
+                                       Property<float>{[](void *cap) FLASHMEM {
                                                            auto *pThis = (SynthPatchMenuApp *)cap;
                                                            return pThis->GetBinding().mLfo1Rate;
                                                        },
@@ -666,7 +666,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     EnumSettingItem<OscWaveformShape> mLfo1Waveform = {
         " >Wave",
         gOscWaveformShapeInfo,
-        Property<OscWaveformShape>{[](void *cap) {
+        Property<OscWaveformShape>{[](void *cap) FLASHMEM {
                                        auto *pThis = (SynthPatchMenuApp *)cap;
                                        return pThis->GetBinding().mLfo1Shape;
                                    },
@@ -679,7 +679,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mLfo2Frequency = {"LFO2 Freq",
                                        StandardRangeSpecs::gLFOFrequency,
-                                       Property<float>{[](void *cap) {
+                                       Property<float>{[](void *cap) FLASHMEM {
                                                            auto *pThis = (SynthPatchMenuApp *)cap;
                                                            return pThis->GetBinding().mLfo2Rate;
                                                        },
@@ -693,7 +693,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     EnumSettingItem<OscWaveformShape> mLfo2Waveform = {
         " >Wave",
         gOscWaveformShapeInfo,
-        Property<OscWaveformShape>{[](void *cap) {
+        Property<OscWaveformShape>{[](void *cap) FLASHMEM {
                                        auto *pThis = (SynthPatchMenuApp *)cap;
                                        return pThis->GetBinding().mLfo2Shape;
                                    },
@@ -713,7 +713,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     EnumSettingItem<AnyModulationSource> mModSource = {
         "Source",
         gAnyModulationSourceInfo,
-        Property<AnyModulationSource>{[](void *cap) {
+        Property<AnyModulationSource>{[](void *cap) FLASHMEM {
                                           auto *pThis = (SynthPatchMenuApp *)cap;
                                           return pThis->GetModulationBinding().mSource;
                                       },
@@ -727,7 +727,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     EnumSettingItem<AnyModulationDestination> mModDest = {
         "Dest",
         gAnyModulationDestinationInfo,
-        Property<AnyModulationDestination>{[](void *cap) {
+        Property<AnyModulationDestination>{[](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
                                                return pThis->GetModulationBinding().mDest;
                                            },
@@ -740,7 +740,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     FloatSettingItem mModScale = {"Scale",
                                   StandardRangeSpecs::gFloat_N1_1,
-                                  Property<float>{[](void *cap) {
+                                  Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
                                                       return pThis->GetModulationBinding().mScaleN11;
                                                   },
@@ -758,7 +758,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     };
     SettingsList mModulationSubmenuList = {mModulationSubmenu};
 
-    MultiSubmenuSettingItem mModulationsList = {[](void *cap) { return SYNTH_MODULATIONS_MAX; },
+    MultiSubmenuSettingItem mModulationsList = {[](void *cap) FLASHMEM { return SYNTH_MODULATIONS_MAX; },
                                                 [](void *cap, size_t i) {
                                                     auto *pThis = (SynthPatchMenuApp *)cap;
                                                     return String(String("#") + i + " " +
@@ -775,7 +775,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     EnvelopeMenuApp mEnvEditor;
 
     SubmenuSettingItem mModEnv1SubmenuItem = {String("ENV1"),
-                                              [](void *cap) {
+                                              [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
                                                   return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnv1);
                                               },
@@ -783,7 +783,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               this};
 
     SubmenuSettingItem mModEnv2SubmenuItem = {String("ENV2"),
-                                              [](void *cap) {
+                                              [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
                                                   return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnv2);
                                               },
@@ -806,7 +806,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     SynthPatchOscillatorMenuStuff mOscSubmenuStuff;
 
     SubmenuSettingItem mOsc1SubmenuItem = {String("OSC1"),
-                                           [](void *cap) {
+                                           [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
                                                pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[0];
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
@@ -815,7 +815,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                            this};
 
     SubmenuSettingItem mOsc2SubmenuItem = {String("OSC2"),
-                                           [](void *cap) {
+                                           [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
                                                pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[1];
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
@@ -824,7 +824,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                            this};
 
     SubmenuSettingItem mOsc3SubmenuItem = {String("OSC3"),
-                                           [](void *cap) {
+                                           [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
                                                pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[2];
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;

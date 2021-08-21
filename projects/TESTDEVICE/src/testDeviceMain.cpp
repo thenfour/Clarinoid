@@ -29,6 +29,8 @@
 
 #include "testDeviceApp.hpp"
 
+using namespace clarinoid;
+
 void ModCurveMain()
 {
     while (!Serial)
@@ -71,7 +73,8 @@ void ModCurveMain()
     }
     Serial.println(String("micros: ") + (int)sw.ElapsedTime().ElapsedMicros());
 
-    while (true)
+    uint32_t target = millis() + 4000;
+    while (millis() < target)
     {
         display.clearDisplay();
         display.drawRect(0, 0, graphWidth + 3, graphHeight + 3, SSD1306_WHITE);
@@ -112,6 +115,9 @@ void ModCurveMain()
 
         display.display();
     }
+
+    int *a = nullptr;
+    *a = 1;
 }
 
 void RandomizeBuffer(int16_t *buf)
@@ -411,7 +417,7 @@ void ModBenchmarkMain()
                     aux2 = gModCurveLUT.Transfer16(saturate16(aux2), auxCurveState);
                     aux1 = (aux1 * auxScale16p16) >> 16;
                     aux2 = (aux2 * auxScale16p16) >> 16;
-                    x1 = (x1 * aux1) >> 16; 
+                    x1 = (x1 * aux1) >> 16;
                     x2 = (x2 * aux2) >> 16;
                 }
 
@@ -574,9 +580,6 @@ void ModBenchmarkMain()
         Serial.println(String("same but with optimized mulshifts: ") + (int)sw.ElapsedTime().ElapsedMicros());
     }
 
-
-
-
     {
         srand(1500);
 
@@ -615,7 +618,8 @@ void ModBenchmarkMain()
 
             for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
             {
-                uint32_t x32 = bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
+                uint32_t x32 =
+                    bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
 
                 // this ordering is much faster than processing all x1 first then x2
                 int32_t x1 = signed_multiply_32x16b(srcPolarityConv.mul, x32); // unpacks & multiplies
@@ -650,8 +654,6 @@ void ModBenchmarkMain()
         Serial.println(String("same with reordered ops: ") + (int)sw.ElapsedTime().ElapsedMicros());
     }
 
-
-
     {
         srand(1500);
 
@@ -690,7 +692,8 @@ void ModBenchmarkMain()
 
             for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
             {
-                uint32_t x32 = bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
+                uint32_t x32 =
+                    bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
 
                 // this ordering is much faster than processing all x1 first then x2
                 int32_t x1 = signed_multiply_32x16b(srcPolarityConv.mul, x32); // unpacks & multiplies
@@ -724,8 +727,6 @@ void ModBenchmarkMain()
         }
         Serial.println(String("same with int16_t: ") + (int)sw.ElapsedTime().ElapsedMicros());
     }
-
-
 
     {
         srand(1500);
@@ -764,7 +765,8 @@ void ModBenchmarkMain()
 
             for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
             {
-                uint32_t x32 = bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
+                uint32_t x32 =
+                    bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
 
                 // this ordering is much faster than processing all x1 first then x2
                 int32_t x1 = signed_multiply_32x16b(srcPolarityConv.mul, x32); // unpacks & multiplies
@@ -799,9 +801,6 @@ void ModBenchmarkMain()
         Serial.println(String("no curves: ") + (int)sw.ElapsedTime().ElapsedMicros());
     }
 
-
-
-
     {
         srand(1500);
 
@@ -812,7 +811,7 @@ void ModBenchmarkMain()
         spec.mCurveShape = gModCurveLUT.LutSizeY / 2;
         spec.mAuxSource = clarinoid::AnyModulationSource::Breath;
         spec.mAuxAmount01 = 0.3f; // amount of attenuation
-        spec.mAuxEnabled = false;  // just allows bypassing without removing the aux source
+        spec.mAuxEnabled = false; // just allows bypassing without removing the aux source
         spec.mAuxPolarity = clarinoid::ModulationPolarityTreatment::AsPositive01;
         spec.mAuxCurveShape = 12;
 
@@ -839,7 +838,8 @@ void ModBenchmarkMain()
 
             for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
             {
-                uint32_t x32 = bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
+                uint32_t x32 =
+                    bufSrc32[i32]; // process 2 16-bit samples per loop to take advantage of 32-bit processing
 
                 // this ordering is much faster than processing all x1 first then x2
                 int32_t x1 = signed_multiply_32x16b(srcPolarityConv.mul, x32); // unpacks & multiplies
@@ -880,16 +880,20 @@ void ModBenchmarkMain()
 
 void setup()
 {
-    ModCurveMain();
-    //ModBenchmarkMain();
+    clarinoid::gCrashHandlers[0] = &clarinoid::gSerialCrashHandler;
+    clarinoid::gCrashHandlers[1] = &gDisplay;
+    clarinoid::CheckCrashReport();
+
+    // ModCurveMain();
+    ModBenchmarkMain();
     Serial.begin(9600);
     // while (!Serial)
     // {
     // } // when you are debugging with serial, uncomment this to ensure you see startup msgs
     // Serial.println("starting normally....");
 
-    // auto* app = new clarinoid::TestDeviceApp;
-    // app->Main();
+    auto *app = new clarinoid::TestDeviceApp;
+    app->Main();
 }
 
 void loop()

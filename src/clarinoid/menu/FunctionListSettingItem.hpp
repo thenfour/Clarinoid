@@ -64,7 +64,7 @@ struct FunctionListEditor : ISettingItemEditor
         mpApi = papi;
         mListControl.Init(&mList,
                           &mpApi->GetInputDelegator()->mMenuScrollA,
-                          Property<int>{[](void *cap) {
+                          Property<int>{[](void *cap) FLASHMEM {
                                             auto *pThis = (FunctionListEditor *)cap;
                                             return pThis->mListSelectedItem;
                                         },

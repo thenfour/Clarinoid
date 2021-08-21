@@ -326,4 +326,6 @@ struct CCEWIMusicalState
     }
 };
 
+static constexpr auto aoeusnthcphic = sizeof (CCEWIMusicalState);
+
 } // namespace clarinoid

@@ -6,6 +6,81 @@
 namespace clarinoid
 {
 
+struct IClarinoidCrashReportOutput
+{
+    virtual void IClarinoidCrashReportOutput_Init() = 0;
+    virtual void IClarinoidCrashReportOutput_Blink() = 0;
+    virtual void IClarinoidCrashReportOutput_Print(const char *) = 0;
+};
+
+IClarinoidCrashReportOutput *gCrashHandlers[10] = {0};
+
+struct SerialCrashHandler : IClarinoidCrashReportOutput
+{
+    virtual void IClarinoidCrashReportOutput_Init() override
+    {
+    }
+    virtual void IClarinoidCrashReportOutput_Blink() override
+    {
+    }
+    virtual void IClarinoidCrashReportOutput_Print(const char *s) override
+    {
+        Serial.begin(9600);
+        Serial.print(s);
+    }
+};
+
+SerialCrashHandler gSerialCrashHandler;
+
+struct PrintToString : Print
+{
+    String acc;
+    virtual size_t write(uint8_t b) override
+    {
+        acc.append((char)b);
+        return 1;
+    }
+};
+
+inline void CheckCrashReport()
+{
+    if (CrashReport)
+    {
+        for (auto *p : gCrashHandlers)
+        {
+            if (p)
+            {
+                p->IClarinoidCrashReportOutput_Init();
+            }
+        }
+        for (int i = 0; i < 4; ++i)
+        {
+            for (auto *p : gCrashHandlers)
+            {
+                if (p)
+                {
+                    p->IClarinoidCrashReportOutput_Blink();
+                }
+            }
+        }
+        PrintToString s;
+        CrashReport.printTo(s);
+
+        while (true)
+        {
+            for (auto *p : gCrashHandlers)
+            {
+                if (p)
+                {
+                    p->IClarinoidCrashReportOutput_Blink();
+                    p->IClarinoidCrashReportOutput_Print(s.acc.c_str());
+                }
+            }
+            delay(1500);
+        }
+    }
+}
+
 inline void DebugBlink(int n, int period = 120)
 {
     pinMode(13, OUTPUT);

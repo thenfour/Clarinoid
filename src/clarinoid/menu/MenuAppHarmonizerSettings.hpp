@@ -33,7 +33,7 @@ struct HarmVoiceSettingsApp
     EnumSettingItem<HarmSynthPresetRefType> mSynthPresetRef = {"Synth patch ref",
                                                                gHarmSynthPresetRefTypeInfo,
                                                                Property<HarmSynthPresetRefType>{
-                                                                   [](void *cap) {
+                                                                   [](void *cap) FLASHMEM {
                                                                        auto *pThis = (HarmVoiceSettingsApp *)cap;
                                                                        return pThis->EditingVoice().mSynthPresetRef;
                                                                    }, // getter
@@ -49,7 +49,7 @@ struct HarmVoiceSettingsApp
         "Own synth patch",
         NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
         Property<int>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
                 return (int)pThis->EditingVoice().mVoiceSynthPreset;
             }, // getter
@@ -64,7 +64,7 @@ struct HarmVoiceSettingsApp
             return pThis->mDisplay.GetAppSettings()->mSynthSettings.mPresets[n].ToString(n);
         },
         Property<bool>{// enabled only if ref type = voice.
-                       [](void *cap) {
+                       [](void *cap) FLASHMEM {
                            auto *pThis = (HarmVoiceSettingsApp *)cap;
                            return pThis->EditingVoice().mSynthPresetRef == HarmSynthPresetRefType::Voice;
                        },
@@ -74,7 +74,7 @@ struct HarmVoiceSettingsApp
     IntSettingItem mSequenceLength = {"Seq length",
                                       NumericEditRangeSpec<int>{0, clarinoid::HARM_SEQUENCE_LEN - 1},
                                       Property<int>{
-                                          [](void *cap) {
+                                          [](void *cap) FLASHMEM {
                                               auto *pThis = (HarmVoiceSettingsApp *)cap;
                                               return (int)pThis->EditingVoice().mSequenceLength;
                                           }, // getter
@@ -114,7 +114,7 @@ struct HarmVoiceSettingsApp
     IntSettingItem mMinOutpNote = {"Min note",
                                    NumericEditRangeSpec<int>{0, 127},
                                    Property<int>{
-                                       [](void *cap) {
+                                       [](void *cap) FLASHMEM {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
                                            return (int)pThis->EditingVoice().mMinOutpNote;
                                        }, // getter
@@ -129,7 +129,7 @@ struct HarmVoiceSettingsApp
     IntSettingItem mMaxOutpNote = {"Max note",
                                    NumericEditRangeSpec<int>{0, 127},
                                    Property<int>{
-                                       [](void *cap) {
+                                       [](void *cap) FLASHMEM {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
                                            return (int)pThis->EditingVoice().mMaxOutpNote;
                                        }, // getter
@@ -144,7 +144,7 @@ struct HarmVoiceSettingsApp
     EnumSettingItem<NoteOOBBehavior> mOOBBehavior = {"OOB behav",
                                                      gNoteOOBBehaviorInfo,
                                                      Property<NoteOOBBehavior>{
-                                                         [](void *cap) {
+                                                         [](void *cap) FLASHMEM {
                                                              auto *pThis = (HarmVoiceSettingsApp *)cap;
                                                              return pThis->EditingVoice().mNoteOOBBehavior;
                                                          }, // getter
@@ -159,7 +159,7 @@ struct HarmVoiceSettingsApp
     EnumSettingItem<HarmScaleRefType> mScaleRefType = {"Scale ref",
                                                        gHarmScaleRefTypeInfo,
                                                        Property<HarmScaleRefType>{
-                                                           [](void *cap) {
+                                                           [](void *cap) FLASHMEM {
                                                                auto *pThis = (HarmVoiceSettingsApp *)cap;
                                                                return pThis->EditingVoice().mScaleRef;
                                                            }, // getter
@@ -175,7 +175,7 @@ struct HarmVoiceSettingsApp
         "My Scale Root",
         gNoteInfo,
         Property<Note>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
                 return pThis->EditingVoice().mLocalScale.mRootNoteIndex;
             }, // getter
@@ -197,7 +197,7 @@ struct HarmVoiceSettingsApp
         " ->Flav",
         gScaleFlavorIndexInfo,
         Property<ScaleFlavorIndex>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
                 return pThis->EditingVoice().mLocalScale.mFlavorIndex;
             }, // getter
@@ -219,7 +219,7 @@ struct HarmVoiceSettingsApp
         "OOS behav",
         gNonDiatonicBehaviorInfo,
         Property<NonDiatonicBehavior>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
                 return pThis->EditingVoice().mNonDiatonicBehavior;
             }, // getter
@@ -235,7 +235,7 @@ struct HarmVoiceSettingsApp
         "PB behav",
         gPitchBendParticipationInfo,
         Property<PitchBendParticipation>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
                 return pThis->EditingVoice().mPitchBendParticipation;
             }, // getter
@@ -289,7 +289,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                      "Yes",
                                      "No",
                                      Property<bool>{
-                                         [](void *cap) { // getter
+                                         [](void *cap) FLASHMEM { // getter
                                              auto *pThis = (HarmPatchSettingsApp *)cap;
                                              return pThis->EditingPreset().mEmitLiveNote;
                                          },
@@ -303,7 +303,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
 
     FloatSettingItem mStereoSeparation = {"Stereo Sep",
                                           StandardRangeSpecs::gFloat_0_1,
-                                          Property<float>{[](void *cap) {
+                                          Property<float>{[](void *cap) FLASHMEM {
                                                               auto *pThis = (HarmPatchSettingsApp *)cap;
                                                               return pThis->EditingPreset().mStereoSeparation;
                                                           },
@@ -317,7 +317,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     IntSettingItem mMinRotationTimeMS = {"Min Rotation MS",
                                          NumericEditRangeSpec<int>{0, 10000},
                                          Property<int>{
-                                             [](void *cap) {
+                                             [](void *cap) FLASHMEM {
                                                  auto *pThis = (HarmPatchSettingsApp *)cap;
                                                  return (int)pThis->EditingPreset().mMinRotationTimeMS;
                                              }, // getter
@@ -332,7 +332,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     IntSettingItem mSynthPreset1 = {"Synth preset 1",
                                     NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
                                     Property<int>{
-                                        [](void *cap) {
+                                        [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
                                             return (int)pThis->EditingPreset().mSynthPreset1;
                                         }, // getter
@@ -352,7 +352,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     IntSettingItem mSynthPreset2 = {"Synth preset 2",
                                     NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
                                     Property<int>{
-                                        [](void *cap) {
+                                        [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
                                             return (int)pThis->EditingPreset().mSynthPreset2;
                                         }, // getter
@@ -372,7 +372,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     IntSettingItem mSynthPreset3 = {"Synth preset 3",
                                     NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
                                     Property<int>{
-                                        [](void *cap) {
+                                        [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
                                             return (int)pThis->EditingPreset().mSynthPreset3;
                                         }, // getter
@@ -392,7 +392,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     IntSettingItem mSynthPreset4 = {"Synth preset 4",
                                     NumericEditRangeSpec<int>{0, SYNTH_PRESET_COUNT - 1},
                                     Property<int>{
-                                        [](void *cap) {
+                                        [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
                                             return (int)pThis->EditingPreset().mSynthPreset4;
                                         }, // getter
@@ -412,7 +412,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     EnumSettingItem<Note> mPresetScaleNote = {"Scale Root",
                                               gNoteInfo,
                                               Property<Note>{
-                                                  [](void *cap) {
+                                                  [](void *cap) FLASHMEM {
                                                       auto *pThis = (HarmPatchSettingsApp *)cap;
                                                       return pThis->EditingPreset().mPresetScale.mRootNoteIndex;
                                                   }, // getter
@@ -428,7 +428,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         " ->Flav",
         gScaleFlavorIndexInfo,
         Property<ScaleFlavorIndex>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto *pThis = (HarmPatchSettingsApp *)cap;
                 return pThis->EditingPreset().mPresetScale.mFlavorIndex;
             }, // getter
@@ -440,7 +440,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         },
         AlwaysEnabled};
 
-    MultiSubmenuSettingItem mVoiceSubmenu = {[](void *cap) { return clarinoid::HARM_VOICES; },
+    MultiSubmenuSettingItem mVoiceSubmenu = {[](void *cap) FLASHMEM { return clarinoid::HARM_VOICES; },
                                              [](void *cap, size_t mi) { // name
                                                  auto *pThis = (HarmPatchSettingsApp *)cap;
                                                  // like
@@ -524,7 +524,7 @@ struct HarmSettingsApp : public SettingsMenuApp
     }
 
     MultiSubmenuSettingItem mPatchSubmenu = {
-        [](void *cap) { return clarinoid::HARM_PRESET_COUNT; }, // get item count
+        [](void *cap) FLASHMEM { return clarinoid::HARM_PRESET_COUNT; }, // get item count
         [](void *cap, size_t mi) {                              // get item name
             auto *pThis = (HarmSettingsApp *)cap;
             return (String)(String("") + mi + ":" + pThis->GetAppSettings()->mHarmSettings.mPresets[mi].mName);

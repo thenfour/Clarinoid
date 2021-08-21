@@ -22,7 +22,7 @@ static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;    // a smaller buffer that
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
-static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 700;
+static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
 static constexpr float MAX_DELAY_MS = 500;
 
 static constexpr size_t MUSICALSTATE_TIMESLICE_PERIOD_MICROS = 2800;

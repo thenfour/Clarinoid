@@ -204,7 +204,7 @@ struct MultiNumericSettingItem : public ISettingItem
           mValueGetter(valueGetter), mValueSetter(valueSetter), mIsEnabled(isEnabled), mCapture(capture),
           mEditor(range_,
                   Property<T>{
-                      [](void *cap) { // get
+                      [](void *cap) FLASHMEM { // get
                           auto *pThis = (MultiNumericSettingItem *)cap;
                           return pThis->mValueGetter(pThis->mCapture, pThis->mEditingMultiIndex);
                       },

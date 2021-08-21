@@ -43,7 +43,7 @@ struct SystemSettingsApp : SettingsMenuApp
     BoolSettingItem mDimDisplay = {"Display dim?",
                                    "Yes",
                                    "No",
-                                   Property<bool>{[](void *cap) {
+                                   Property<bool>{[](void *cap) FLASHMEM {
                                                       auto pThis = (SystemSettingsApp *)cap;
                                                       return pThis->mAppSettings->mDisplayDim;
                                                   }, // getter
@@ -58,7 +58,7 @@ struct SystemSettingsApp : SettingsMenuApp
     UnipolarCalibrationSettingItem mBreath = {
         "Breath",
         Property<UnipolarMapping>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto pThis = (SystemSettingsApp *)cap;
                 UnipolarMapping ret =
                     pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping;
@@ -69,7 +69,7 @@ struct SystemSettingsApp : SettingsMenuApp
                 pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping = x;
             },
             this},
-        [](void *cap) {
+        [](void *cap) FLASHMEM {
             auto pThis = (SystemSettingsApp *)cap;
             return pThis->mRawBreathGetter(pThis->mpCapture);
         },
@@ -78,7 +78,7 @@ struct SystemSettingsApp : SettingsMenuApp
     UnipolarCalibrationSettingItem mPitchUp = {
         "Pitch Up",
         Property<UnipolarMapping>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto pThis = (SystemSettingsApp *)cap;
                 UnipolarMapping ret =
                     pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping;
@@ -89,7 +89,7 @@ struct SystemSettingsApp : SettingsMenuApp
                 pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping = x;
             },
             this},
-        [](void *cap) {
+        [](void *cap) FLASHMEM {
             auto pThis = (SystemSettingsApp *)cap;
             return pThis->mRawPitchBendGetter(pThis->mpCapture);
         },
@@ -98,7 +98,7 @@ struct SystemSettingsApp : SettingsMenuApp
     UnipolarCalibrationSettingItem mPitchDown = {
         "Pitch Down",
         Property<UnipolarMapping>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto pThis = (SystemSettingsApp *)cap;
                 UnipolarMapping ret =
                     pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping;
@@ -109,7 +109,7 @@ struct SystemSettingsApp : SettingsMenuApp
                 pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping = x;
             },
             this},
-        [](void *cap) {
+        [](void *cap) FLASHMEM {
             auto pThis = (SystemSettingsApp *)cap;
             return pThis->mRawPitchBendGetter(pThis->mpCapture);
         },
@@ -118,7 +118,7 @@ struct SystemSettingsApp : SettingsMenuApp
     IntSettingItem mNoteChangeFrames = {"Note chg frames",
                                         NumericEditRangeSpec<int>{0, 25},
                                         Property<int>{
-                                            [](void *cap) {
+                                            [](void *cap) FLASHMEM {
                                                 auto *pThis = (SystemSettingsApp *)cap;
                                                 return (int)pThis->mAppSettings->mNoteChangeSmoothingFrames;
                                             }, // getter
@@ -134,7 +134,7 @@ struct SystemSettingsApp : SettingsMenuApp
         "Note delta*",
         StandardRangeSpecs::gFloat_0_1,
         Property<float>{
-            [](void *cap) {
+            [](void *cap) FLASHMEM {
                 auto *pThis = (SystemSettingsApp *)cap;
                 return pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor;
             }, // getter
@@ -149,7 +149,7 @@ struct SystemSettingsApp : SettingsMenuApp
     IntSettingItem mSelectedPerfPatch = {"Perf patch",
                                          NumericEditRangeSpec<int>{0, clarinoid::PERFORMANCE_PATCH_COUNT - 1},
                                          Property<int>{
-                                             [](void *cap) {
+                                             [](void *cap) FLASHMEM {
                                                  auto *pThis = (SystemSettingsApp *)cap;
                                                  return (int)pThis->mAppSettings->mCurrentPerformancePatch;
                                              }, // getter

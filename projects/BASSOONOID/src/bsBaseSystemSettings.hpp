@@ -16,13 +16,13 @@ static const int8_t PERFORMANCE_PATCH_COUNT = 16;
 static const size_t MAX_SYNTH_VOICES = 4;
 #define VOICE_INITIALIZER {0}, {1}, {2}, {3}, // {4},
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 64000; // should be enough right?
-static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;   // a smaller buffer that's just used for intermediate copy ops
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 32000;
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 1024;   // a smaller buffer that's just used for intermediate copy ops
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
 static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
-static constexpr float MAX_DELAY_MS = 500;
+static constexpr float MAX_DELAY_MS = 300;
 
 static constexpr size_t MUSICALSTATE_TIMESLICE_PERIOD_MICROS = 2800;
 static constexpr size_t BREATH_SIGNAL_SMOOTHING_PERIOD_MICROS = 18000;
@@ -48,7 +48,7 @@ static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the
 static const size_t MAX_DISPLAY_WIDTH = 128; // in order to maintain some static buffers.
 
 // assignable slots.
-static const size_t MAX_CONTROL_MAPPINGS = 64;
+static const size_t MAX_CONTROL_MAPPINGS = 48;
 
 enum class PhysicalControl : uint8_t
 {

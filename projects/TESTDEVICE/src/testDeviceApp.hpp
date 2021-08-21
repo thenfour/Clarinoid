@@ -41,6 +41,7 @@
 
 namespace clarinoid
 {
+CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL};
 
 struct TestDeviceApp : ISysInfoProvider
 {
@@ -62,7 +63,8 @@ struct TestDeviceApp : ISysInfoProvider
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
     TestDeviceApp()
-        : mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL), mHud(mDisplay, this),
+        : mDisplay(gDisplay), //
+        mHud(mDisplay, this),
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome),
           mPerfPatchApp(mDisplay), mSynthPatchApp(mDisplay),
@@ -166,12 +168,12 @@ struct TestDeviceApp : ISysInfoProvider
 
         Wire1.setClock(400000); // use high speed mode. default speed = 100k
 
-        FunctionTask mDisplayTask1{this, [](void *cap) {
+        FunctionTask mDisplayTask1{this, [](void *cap) FLASHMEM {
                                        TestDeviceApp *pThis = (TestDeviceApp *)cap;
                                        pThis->mDisplay.UpdateAndRenderTask();
                                    }};
 
-        FunctionTask mDisplayTask2{this, [](void *cap) {
+        FunctionTask mDisplayTask2{this, [](void *cap) FLASHMEM {
                                        TestDeviceApp *pThis = (TestDeviceApp *)cap;
                                        pThis->mDisplay.DisplayTask();
                                    }};

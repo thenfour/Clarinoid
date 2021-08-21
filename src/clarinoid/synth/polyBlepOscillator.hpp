@@ -162,7 +162,7 @@ struct AudioBandlimitedOsci : public AudioStream
         OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
         uint32_t mPitchModAmount = 4096; // osc1_pitchModAmount
 
-        int mCurveIndex = ::gModCurveLUT.LinearYIndex;
+        int mCurveIndex = gModCurveLUT.LinearYIndex;
 
         float mPulseWidthTarget01 = 0; // pulseWidth1
         float mPulseWidth = 0.5;       // osc1_pulseWidth

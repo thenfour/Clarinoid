@@ -29,11 +29,11 @@ static const int SCALE_FOLLOWER_TRANSIENT_NOTE_THRESH_MILLIS = 50;
 //   [4 bits scale flavor index]
 //
 // if instead we wanted to like, use sorted list of notes, it gets more complex, and i'm not sure it's worth it.
-#include "ScaleFollowerLUT.hpp"
-#ifndef CLARINOID_SCALE_FOLLOWER_LUT
-#define CLARINOID_SCALE_FOLLOWER_LUT
-uint8_t gScaleToScaleMappings[65536] = {0};
-#endif
+// #include "ScaleFollowerLUT.hpp"
+// #ifndef CLARINOID_SCALE_FOLLOWER_LUT
+// #define CLARINOID_SCALE_FOLLOWER_LUT
+// //uint8_t gScaleToScaleMappings[65536] = {0};
+// #endif
 
 // playing notes below this threshold will not even be considered for scale follower
 static const int SCALE_FOLLOWER_IMPORTANCE_THRESHOLD = 100;
@@ -432,10 +432,10 @@ struct ScaleFollower
 
         auto fnGetScale = [](uint16_t k, const Scale &currentScale) {
             // convert map value to scale.
-            auto v = ScaleFollowerDetail::MapValue::Deserialize(gScaleToScaleMappings[k]);
+            // auto v = ScaleFollowerDetail::MapValue::Deserialize(gScaleToScaleMappings[k]);
             Scale ret;
-            ret.mFlavorIndex = v.mScaleFlavor;
-            int8_t root = v.mRelativeRoot;
+            ret.mFlavorIndex = ScaleFlavorIndex::Blues; // v.mScaleFlavor;
+            int8_t root = 69;                           // v.mRelativeRoot;
             root += (uint8_t)currentScale.mRootNoteIndex;
             ret.mRootNoteIndex = (Note)RotateIntoRangeByte(root, 12);
             return ret;

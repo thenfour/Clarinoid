@@ -110,7 +110,11 @@ struct ModulationCurveLUT
 
     int16_t *mpLut = nullptr;
 
-    ModulationCurveLUT(int16_t *plut) : mpLut(plut)
+    void setLUTData(int16_t *plut) {
+        mpLut = plut;
+    }
+
+    explicit ModulationCurveLUT(int16_t *plut) : mpLut(plut)
     {
     }
 
@@ -210,3 +214,19 @@ struct ModulationCurveLUT
 } // namespace clarinoid
 
 #include "ModCurveLUT.hpp"
+
+namespace clarinoid
+{
+    static int16_t *gModCurveLUTData = nullptr;
+    static ModCurve::ModulationCurveLUT<7, 7, 15> gModCurveLUT(gModCurveLUTData);
+
+    StaticInit __initModCurveLUT([](){
+        gModCurveLUTData = new int16_t[SizeofStaticArray(gModCurveLUTData_PROGMEM)];
+        for (size_t i = 0; i < SizeofStaticArray(gModCurveLUTData_PROGMEM); ++ i){
+            gModCurveLUTData[i] = gModCurveLUTData_PROGMEM[i];
+        }
+        gModCurveLUT.setLUTData(gModCurveLUTData);
+    });
+}
+
+

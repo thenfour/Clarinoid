@@ -31,6 +31,10 @@
 
 void setup()
 {
+    clarinoid::gCrashHandlers[0] = &clarinoid::gSerialCrashHandler;
+    clarinoid::gCrashHandlers[1] = &clarinoid::gDisplay;
+    clarinoid::CheckCrashReport();
+
     AudioNoInterrupts();
     Serial.begin(9600);
     // when you are debugging with serial, uncomment this to ensure you see startup msgs

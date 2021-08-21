@@ -71,7 +71,7 @@ enum struct AntStyle
 // text left margin (so println() new line doesn't set x=0)
 // clipping bounds
 // disabled text
-struct CCAdafruitSSD1306 : public Adafruit_SSD1306
+struct CCAdafruitSSD1306 : public Adafruit_SSD1306, clarinoid::IClarinoidCrashReportOutput
 {
     CCAdafruitSSD1306(uint8_t w,
                       uint8_t h,
@@ -105,6 +105,29 @@ struct CCAdafruitSSD1306 : public Adafruit_SSD1306
                       int8_t cs_pin)
         : Adafruit_SSD1306(w, h, mosi_pin, sclk_pin, dc_pin, rst_pin, cs_pin), mClipRight(w), mClipBottom(h)
     {
+    }
+
+    virtual void IClarinoidCrashReportOutput_Init() override
+    {
+        begin(SSD1306_SWITCHCAPVCC);
+    }
+
+    virtual void IClarinoidCrashReportOutput_Blink() override
+    {
+        fillScreen(SSD1306_WHITE);
+        display();
+        delay(150);
+        fillScreen(SSD1306_BLACK);
+        display();
+        delay(150);
+    }
+    virtual void IClarinoidCrashReportOutput_Print(const char *s) override
+    {
+        setTextColor(SSD1306_WHITE);
+        setCursor(0, 0);
+        clearDisplay();
+        print(s);
+        display();
     }
 
     bool mSolidText = true;

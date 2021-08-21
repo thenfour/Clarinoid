@@ -42,6 +42,9 @@
 namespace clarinoid
 {
 
+// global for debugging / crash handling purposes
+CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL};
+
 struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 {
     static constexpr size_t breathMappingIndex = 0;
@@ -77,7 +80,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
     Clarinoid2App()
         : mLed(this),                                                                                    //
-          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL),                       //
+          mDisplay(gDisplay),                                                                            //
           mHud(mDisplay, this),                                                                          //
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),                //
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome), //
@@ -87,11 +90,11 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
               breathMappingIndex,
               pitchUpMappingIndex,
               pitchDownMappingIndex,
-              [](void *cap) { // raw breath value getter
+              [](void *cap) FLASHMEM { // raw breath value getter
                   Clarinoid2App *pThis = (Clarinoid2App *)cap;
                   return pThis->mControlMapper.mBreath.CurrentValue01();
               },
-              [](void *cap) { // raw pitchbend value getter
+              [](void *cap) FLASHMEM { // raw pitchbend value getter
                   Clarinoid2App *pThis = (Clarinoid2App *)cap;
                   return pThis->mControlMapper.mPitchStrip.CurrentValue01();
               },
@@ -305,13 +308,13 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mDisplay.Init(&mAppSettings, &mInputDelegator, &mHud, allApps);
         mMusicalStateTask.Init();
 
-        FunctionTask mDisplayTask1{this, [](void *cap) {
+        FunctionTask mDisplayTask1{this, [](void *cap) FLASHMEM {
                                        Clarinoid2App *pThis = (Clarinoid2App *)cap;
                                        NoInterrupts ni;
                                        pThis->mDisplay.UpdateAndRenderTask();
                                    }};
 
-        FunctionTask mDisplayTask2{this, [](void *cap) {
+        FunctionTask mDisplayTask2{this, [](void *cap) FLASHMEM {
                                        Clarinoid2App *pThis = (Clarinoid2App *)cap;
                                        NoInterrupts ni;
                                        pThis->mDisplay.DisplayTask();

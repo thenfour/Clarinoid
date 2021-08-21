@@ -41,6 +41,8 @@
 namespace clarinoid
 {
 
+CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/};
+
 struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
 {
     static constexpr size_t breathMappingIndex = 13;
@@ -68,9 +70,10 @@ struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
     SimpleMovingAverage<30> mCPUUsage;
     PeakMeterUtility<2000, 300> mPeakMeter;
 
+    static constexpr auto xaoeu = sizeof(mAppSettings);
+
     BassoonoidApp()
-        : mLed1(this), mLed2(this), mBreathLED(this),
-          mDisplay(128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/ /*, 44 * 1000000UL*/),
+        : mLed1(this), mLed2(this), mBreathLED(this), mDisplay(gDisplay),
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
@@ -79,11 +82,11 @@ struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
               breathMappingIndex,
               joyPitchMappingIndex,
               joyPitchMappingIndex,
-              [](void *cap) { // raw breath value getter
+              [](void *cap) FLASHMEM { // raw breath value getter
                   BassoonoidApp *pThis = (BassoonoidApp *)cap;
                   return pThis->mControlMapper.mBreath.CurrentValue01();
               },
-              [](void *cap) { // raw joy pitchbend value getter
+              [](void *cap) FLASHMEM { // raw joy pitchbend value getter
                   BassoonoidApp *pThis = (BassoonoidApp *)cap;
                   return pThis->mControlMapper.mJoyY.CurrentValue01();
               },
@@ -233,14 +236,6 @@ struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[joyPitchMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
         mAppSettings.mControlMappings[joyPitchMappingIndex].mUnipolarMapping.mCurveS = 0; //-0.50f;
 
-        // mAppSettings.mControlMappings[22] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx5, ControlMapping::Function::LoopGo);
-        // mAppSettings.mControlMappings[23] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx4, ControlMapping::Function::LoopStop);
-
-        // this is a cool feature but would take a lot of practice to get right, plus accidentally hitting this key
-        // causes chaos. mAppSettings.mControlMappings[24] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHTh3, ControlMapping::Function::BaseNoteHoldToggle);
         mAppSettings.mControlMappings[25] =
             ControlMapping::MomentaryMapping(PhysicalControl::RHTh2, ControlMapping::Function::MetronomeLEDToggle);
 
@@ -252,13 +247,13 @@ struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
         mDisplay.Init(&mAppSettings, &mInputDelegator, &hud, allApps);
         mMusicalStateTask.Init();
 
-        FunctionTask mDisplayTask1{this, [](void *cap) {
+        FunctionTask mDisplayTask1{this, [](void *cap) FLASHMEM {
                                        NoInterrupts ni;
                                        BassoonoidApp *pThis = (BassoonoidApp *)cap;
                                        pThis->mDisplay.UpdateAndRenderTask();
                                    }};
 
-        FunctionTask mDisplayTask2{this, [](void *cap) {
+        FunctionTask mDisplayTask2{this, [](void *cap) FLASHMEM {
                                        NoInterrupts ni;
                                        BassoonoidApp *pThis = (BassoonoidApp *)cap;
                                        pThis->mDisplay.DisplayTask();
@@ -299,5 +294,9 @@ struct BassoonoidApp : ILEDDataProvider, ISysInfoProvider
         tp.Main();
     }
 };
+
+static constexpr auto a3oeu = sizeof(HarmSettingsApp);
+static constexpr auto ao4eu = sizeof(SynthPatchMenuApp);
+static constexpr auto aoe5u = sizeof(TaskPlanner::TaskDeadline);
 
 } // namespace clarinoid

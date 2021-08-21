@@ -30,7 +30,7 @@ struct PerformanceApp : SettingsMenuApp
     MultiSubmenuSettingItem mTiming;
 
     LabelSettingItem mDelay = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "TS Delay: ";
                              // ret += String((uint32_t)cap);
@@ -41,7 +41,7 @@ struct PerformanceApp : SettingsMenuApp
         AlwaysEnabled};
 
     LabelSettingItem mTimesliceLen = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "TS Len: ";
                              ret += (int)pThis->mTaskManager->mTimesliceDuration.ElapsedMicros();
@@ -51,7 +51,7 @@ struct PerformanceApp : SettingsMenuApp
         AlwaysEnabled};
 
     LabelSettingItem mCPU = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "CPU usage: ";
                              float p = (float)pThis->mTaskManager->mPreviousTimeSliceDelayTime.ElapsedMicros();
@@ -66,7 +66,7 @@ struct PerformanceApp : SettingsMenuApp
                          this},
         AlwaysEnabled};
 
-    LabelSettingItem mInput = {Property<String>{[](void *cap) {
+    LabelSettingItem mInput = {Property<String>{[](void *cap) FLASHMEM {
                                                     PerformanceApp *pThis = (PerformanceApp *)cap;
                                                     String ret = "M->Input:";
                                                     ret += (int)pThis->mpMusicalStateTask->mInputTiming.GetValue();
@@ -76,7 +76,7 @@ struct PerformanceApp : SettingsMenuApp
                                AlwaysEnabled};
 
     LabelSettingItem mMusicalState = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "M->Music:";
                              ret += (int)pThis->mpMusicalStateTask->mMusicalStateTiming.GetValue();
@@ -86,7 +86,7 @@ struct PerformanceApp : SettingsMenuApp
         AlwaysEnabled};
 
     LabelSettingItem mSynthState = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "M->Synth:";
                              ret += (int)pThis->mpMusicalStateTask->mSynthStateTiming.GetValue();
@@ -100,7 +100,7 @@ struct PerformanceApp : SettingsMenuApp
         mTaskManager = tm;
 
         mTiming.Init(
-            [](void *cap) { // get item count
+            [](void *cap) FLASHMEM { // get item count
                 PerformanceApp *pThis = (PerformanceApp *)cap;
                 return pThis->mTaskManager->mTasks.size();
             },
@@ -122,7 +122,7 @@ struct PerformanceApp : SettingsMenuApp
             this);
     }
 
-    LabelSettingItem mSubitemTmp = {Property<String>{[](void *cap) {
+    LabelSettingItem mSubitemTmp = {Property<String>{[](void *cap) FLASHMEM {
                                                          // PerformanceApp* pThis = (PerformanceApp*)cap;
                                                          return String("tmp.");
                                                      },
@@ -179,7 +179,7 @@ struct DebugDisplayApp : SettingsMenuApp
     {
     }
 
-    LabelSettingItem mMidiNote = {Property<String>{[](void *cap) {
+    LabelSettingItem mMidiNote = {Property<String>{[](void *cap) FLASHMEM {
                                                        DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                        String ret =
                                                            String("MidiNote: ") +
@@ -190,7 +190,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                   AlwaysEnabled};
 
     LabelSettingItem mBreath = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                              return (String)(
                                  (String("Breath: ") + int(pThis->mControls.mBreath.CurrentValue01() * 1000)));
@@ -198,7 +198,7 @@ struct DebugDisplayApp : SettingsMenuApp
                          this},
         AlwaysEnabled};
 
-    LabelSettingItem mLHA = {Property<String>{[](void *cap) {
+    LabelSettingItem mLHA = {Property<String>{[](void *cap) FLASHMEM {
                                                   DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                   String ret = "LHA:";
                                                   for (size_t i = 0; i < 8; ++i)
@@ -212,7 +212,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                               this},
                              AlwaysEnabled};
 
-    LabelSettingItem mLHB = {Property<String>{[](void *cap) {
+    LabelSettingItem mLHB = {Property<String>{[](void *cap) FLASHMEM {
                                                   DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                   String ret = "LHB:";
                                                   for (size_t i = 8; i < 16; ++i)
@@ -226,7 +226,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                               this},
                              AlwaysEnabled};
 
-    LabelSettingItem mRHA = {Property<String>{[](void *cap) {
+    LabelSettingItem mRHA = {Property<String>{[](void *cap) FLASHMEM {
                                                   DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                   String ret = "RHA:";
                                                   for (size_t i = 0; i < 8; ++i)
@@ -240,7 +240,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                               this},
                              AlwaysEnabled};
 
-    LabelSettingItem mRHB = {Property<String>{[](void *cap) {
+    LabelSettingItem mRHB = {Property<String>{[](void *cap) FLASHMEM {
                                                   DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                   String ret = "RHB:";
                                                   for (size_t i = 8; i < 16; ++i)
@@ -254,7 +254,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                               this},
                              AlwaysEnabled};
 
-    LabelSettingItem mCPEnc = {Property<String>{[](void *cap) {
+    LabelSettingItem mCPEnc = {Property<String>{[](void *cap) FLASHMEM {
                                                     DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                     String ret = String("CP Encoder raw:") +
                                                                  pThis->mControls.mCPEncoder.RawValue();
@@ -263,7 +263,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                                 this},
                                AlwaysEnabled};
 
-    LabelSettingItem mLHEnc = {Property<String>{[](void *cap) {
+    LabelSettingItem mLHEnc = {Property<String>{[](void *cap) FLASHMEM {
                                                     DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                     String ret = String("LH Encoder raw:") +
                                                                  pThis->mControls.mLHEncoder.RawValue();
@@ -272,7 +272,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                                 this},
                                AlwaysEnabled};
 
-    LabelSettingItem mRHEnc = {Property<String>{[](void *cap) {
+    LabelSettingItem mRHEnc = {Property<String>{[](void *cap) FLASHMEM {
                                                     DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                     String ret = String("RH Encoder raw:") +
                                                                  pThis->mControls.mRHEncoder.RawValue();
@@ -281,7 +281,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                                 this},
                                AlwaysEnabled};
 
-    LabelSettingItem mToggleUp = {Property<String>{[](void *cap) {
+    LabelSettingItem mToggleUp = {Property<String>{[](void *cap) FLASHMEM {
                                                        DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                        String ret =
                                                            String("Toggle up:") +
@@ -292,7 +292,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                   AlwaysEnabled};
 
     LabelSettingItem mSynthPoly = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                              String ret = String("Synth poly:") + (pThis->mMusicalStateTask.mSynth.mCurrentPolyphony);
                              return ret;
@@ -300,7 +300,7 @@ struct DebugDisplayApp : SettingsMenuApp
                          this},
         AlwaysEnabled};
 
-    LabelSettingItem mAudioProcessorUsage = {Property<String>{[](void *cap) {
+    LabelSettingItem mAudioProcessorUsage = {Property<String>{[](void *cap) FLASHMEM {
                                                                   // DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
                                                                   String ret =
                                                                       String("Audio CPU %:") + AudioProcessorUsage();
@@ -309,7 +309,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                                               this},
                                              AlwaysEnabled};
 
-    LabelSettingItem mAudioProcessorUsageMax = {Property<String>{[](void *cap) {
+    LabelSettingItem mAudioProcessorUsageMax = {Property<String>{[](void *cap) FLASHMEM {
                                                                      // DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
                                                                      String ret = String("Audio max CPU %:") +
                                                                                   AudioProcessorUsageMax();
@@ -318,7 +318,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                                                  this},
                                                 AlwaysEnabled};
 
-    LabelSettingItem mAudioMemoryUsage = {Property<String>{[](void *cap) {
+    LabelSettingItem mAudioMemoryUsage = {Property<String>{[](void *cap) FLASHMEM {
                                                                // DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
                                                                String ret = String("Audio mem:") + AudioMemoryUsage();
                                                                return ret;
@@ -326,7 +326,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                                            this},
                                           AlwaysEnabled};
 
-    LabelSettingItem mAudioMemoryUsageMax = {Property<String>{[](void *cap) {
+    LabelSettingItem mAudioMemoryUsageMax = {Property<String>{[](void *cap) FLASHMEM {
                                                                   // DebugDisplayApp* pThis = (DebugDisplayApp*)cap;
                                                                   String ret =
                                                                       String("Audio mem max:") + AudioMemoryUsageMax();
@@ -392,8 +392,8 @@ struct AudioMonitorApp : DisplayApp
         {
             GoToFrontPage();
         }
-        // float rms01 = CCSynthGraph::rms1.read();
-        // CCSynthGraph::peak1.readPeakToPeak();
+        // float rms01 = gpSynthGraph->rms1.read();
+        // gpSynthGraph->peak1.readPeakToPeak();
     }
     virtual void RenderApp() override
     {

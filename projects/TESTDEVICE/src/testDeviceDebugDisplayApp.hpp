@@ -34,7 +34,7 @@ struct PerformanceApp : SettingsMenuApp
     MultiSubmenuSettingItem mTiming;
 
     LabelSettingItem mDelay = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "TS Delay: ";
                              // ret += String((uint32_t)cap);
@@ -45,7 +45,7 @@ struct PerformanceApp : SettingsMenuApp
         AlwaysEnabled};
 
     LabelSettingItem mTimesliceLen = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "TS Len: ";
                              ret += (int)pThis->mTaskManager->mTimesliceDuration.ElapsedMicros();
@@ -55,7 +55,7 @@ struct PerformanceApp : SettingsMenuApp
         AlwaysEnabled};
 
     LabelSettingItem mCPU = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "CPU usage: ";
                              float p = (float)pThis->mTaskManager->mPreviousTimeSliceDelayTime.ElapsedMicros();
@@ -70,7 +70,7 @@ struct PerformanceApp : SettingsMenuApp
                          this},
         AlwaysEnabled};
 
-    LabelSettingItem mInput = {Property<String>{[](void *cap) {
+    LabelSettingItem mInput = {Property<String>{[](void *cap) FLASHMEM {
                                                     PerformanceApp *pThis = (PerformanceApp *)cap;
                                                     String ret = "M->Input:";
                                                     ret += (int)pThis->mpMusicalStateTask->mInputTiming.GetValue();
@@ -80,7 +80,7 @@ struct PerformanceApp : SettingsMenuApp
                                AlwaysEnabled};
 
     LabelSettingItem mMusicalState = {
-        Property<String>{[](void *cap) {
+        Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
                              String ret = "M->Music:";
                              ret += (int)pThis->mpMusicalStateTask->mMusicalStateTiming.GetValue();
@@ -90,7 +90,7 @@ struct PerformanceApp : SettingsMenuApp
         AlwaysEnabled};
 
     // LabelSettingItem mSynthState = {
-    //     Property<String>{[](void *cap) {
+    //     Property<String>{[](void *cap) FLASHMEM {
     //                          PerformanceApp *pThis = (PerformanceApp *)cap;
     //                          String ret = "M->Synth:";
     //                          ret += (int)pThis->mpMusicalStateTask->mSynthStateTiming.GetValue();
@@ -104,7 +104,7 @@ struct PerformanceApp : SettingsMenuApp
         mTaskManager = tm;
 
         mTiming.Init(
-            [](void *cap) { // get item count
+            [](void *cap) FLASHMEM { // get item count
                 PerformanceApp *pThis = (PerformanceApp *)cap;
                 return pThis->mTaskManager->mTasks.size();
             },
@@ -126,7 +126,7 @@ struct PerformanceApp : SettingsMenuApp
             this);
     }
 
-    LabelSettingItem mSubitemTmp = {Property<String>{[](void *cap) {
+    LabelSettingItem mSubitemTmp = {Property<String>{[](void *cap) FLASHMEM {
                                                          // PerformanceApp* pThis = (PerformanceApp*)cap;
                                                          return String("tmp.");
                                                      },

@@ -110,7 +110,7 @@ struct TaskPlanner
     {
         // assert every task in order.
         TimeSpan lastTS = TimeSpan::Zero();
-        for (size_t i = 0; i < mTaskCursor; ++i)
+        for (size_t i = 0; i < mTaskCursor; ++i) // um this is a bug?
         {
             auto &t = mTasks[i];
             CCASSERT(t.mTimeSliceDeadline >= lastTS);
