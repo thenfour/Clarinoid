@@ -121,11 +121,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                      NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
                                      Property<float>{[](void *cap) FLASHMEM {
                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                         return pThis->GetBinding().mDelayMS;
+                                                         return pThis->GetBinding().mDelayTime.mTimeMS;
                                                      },
                                                      [](void *cap, const float &v) {
                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                         pThis->GetBinding().mDelayMS = v;
+                                                         pThis->GetBinding().mDelayTime.mTimeMS = v;
                                                      },
                                                      this},
                                      AlwaysEnabled};

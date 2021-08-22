@@ -395,6 +395,24 @@ inline float blep1(float x)
     return -x * x;
 }
 
+// 1 hz = 1000 ms
+// 2 hz = 500 ms
+float HertzToCycleMS(float hz)
+{
+    return 1000.0f / hz;
+}
+
+float CycleMSToHertz(float ms)
+{
+    return 1000.0f / ms;
+}
+
+// 1/1 @ 60bpm = 1000 ms.
+float NoteLengthToMS(float bpmIfNeeded, float numerator, float denom)
+{
+    return 60000.0f * numerator / denom;
+}
+
 static constexpr float MIN_DECIBEL_GAIN = -60.0f;
 
 /**

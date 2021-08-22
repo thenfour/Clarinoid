@@ -155,14 +155,14 @@ struct AudioBandlimitedOsci : public AudioStream
 
     struct OscillatorState
     {
-        float mFrequency = 0; // frequency1
-        float mFreq = 0;      // osc1_freq
+        float mFrequency = 0; // frequency1 - the frequency the user has specified.
+        float mFreq = 0;      // the frequency the oscillator is actually using. think portamento.
 
         float mGain = 0; // osc1_gain
         OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
         uint32_t mPitchModAmount = 4096; // osc1_pitchModAmount
 
-        int mCurveIndex = gModCurveLUT.LinearYIndex;
+        float mWaveformMorph01 = 0.5f; // = gModCurveLUT.LinearYIndex;
 
         float mPulseWidthTarget01 = 0; // pulseWidth1
         float mPulseWidth = 0.5;       // osc1_pulseWidth
@@ -181,12 +181,16 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mT = 0; // position in wave cycle, [0-1) // osc1_t
         float mPhaseOffset = 0;
-        float mDt = 0; // cycles per sample, very small. amount of cycle to advance each sample. // osc1_dt
+        float mDt = 0; // cycles per sample, very small. amount of 0-1 cycle to advance each sample. // osc1_dt
 
         float mOutput = 0;           // osc1_output
         float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
         // float mAMMinimumGain = 0.0f; // when modulating amplitude, this is the minimum
         float mPMFeedbackAmt = 0.0f;
+
+        // float mSyncFreq = 0;
+        // float mSyncT = 0; // like mT but for sync
+        // float mSyncDt = 0; // like mDt but for sync
 
         void amplitude(float a)
         {
@@ -286,7 +290,7 @@ struct AudioBandlimitedOsci : public AudioStream
             mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each
                                                    // sample. very small.
 
-            curveLookupState = gModCurveLUT.BeginLookupI(mCurveIndex);
+            curveLookupState = gModCurveLUT.BeginLookupF(mWaveformMorph01 * 2 - 1);
 
             // pulse Width Modulation:
             if (pwm1)
@@ -348,7 +352,12 @@ struct AudioBandlimitedOsci : public AudioStream
                         if (mT < 1)
                             break;
 
-                        float x = (mT - 1) / mDt;
+                        // we have crossed over phase,
+                        // remainder phase 0-1 / (freq/samplerate)
+                        mT -= 1;
+                        // x = number of master samples crossed over phase, but because we're processing 1 sample at a
+                        // time, this is always 0-1.
+                        float x = mT / mDt;
 
                         if (TperformSync)
                         {
@@ -368,7 +377,6 @@ struct AudioBandlimitedOsci : public AudioStream
                         mBlepDelay += scale * blamp1(x);
 
                         mPulseStage = false;
-                        mT -= 1;
                     }
                 }
 
@@ -409,7 +417,11 @@ struct AudioBandlimitedOsci : public AudioStream
                         if (mT < 1)
                             break;
 
-                        float x = (mT - 1) / mDt;
+                        // we have crossed over phase.
+                        mT -= 1;
+                        // x = number of master samples crossed over phase, but because we're processing 1 sample at a
+                        // time, this is always 0-1.
+                        float x = mT / mDt;
 
                         if (TperformSync)
                         {
@@ -427,7 +439,6 @@ struct AudioBandlimitedOsci : public AudioStream
                         mBlepDelay += blep1(x);
 
                         mPulseStage = false;
-                        mT -= 1;
                     }
                 }
 

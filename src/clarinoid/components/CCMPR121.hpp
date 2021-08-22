@@ -31,6 +31,12 @@ struct CCMPR121
         BitButton{mCurrentValue, 11},
     };
 
+    void SoftReset() {
+        NoInterrupts _ni;
+        mMpr121.SoftReset();
+        mCurrentValue = 0;
+    }
+
     explicit CCMPR121(TwoWire *theWire, int address, uint8_t electrodesInUse)
     {
         NoInterrupts _ni;

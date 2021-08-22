@@ -573,8 +573,8 @@ struct MPR121ConfigApp : SettingsMenuApp
     TriggerSettingItem mSoftReset = {String("Soft reset"),
                                      [](void *cap) FLASHMEM {
                                          auto *pThis = (MPR121ConfigApp *)cap;
-                                         pThis->mControls.mLHMPR.mMpr121.SoftReset();
-                                         pThis->mControls.mRHMPR.mMpr121.SoftReset();
+                                         pThis->mControls.mLHMPR.SoftReset();
+                                         pThis->mControls.mRHMPR.SoftReset();
                                      },
                                      this,
                                      []() { return true; }};

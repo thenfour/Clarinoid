@@ -37,16 +37,16 @@ struct PerformancePatch
     Scale mDeducedScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic}; // this is automatically populated always
 
     int16_t mSynthPresetA = 0;
-    float mSynthAGain = 1.0f;
     bool mSynthAEnabled = true;
+    float mSynthAGain = 1.0f;
 
     int16_t mSynthPresetB = -1; // -1 = mute, no patch.
-    float mSynthBGain = 1.0f;
     bool mSynthBEnabled = true;
+    float mSynthBGain = 1.0f;
 
     int16_t mHarmPreset = 0;
-    float mHarmGain = 1.0f;
     bool mHarmEnabled = true;
+    float mHarmGain = 1.0f;
 
     float mSynthStereoSpread = 0.35f; // -1 to 1
 
@@ -56,13 +56,15 @@ struct PerformancePatch
     bool mMasterFXEnable = true;
 
     float mReverbGain = DecibelsToLinear(-3.0f);
-    bool mReverbEnabled = true;
     float mReverbDamping = 0.6f;
     float mReverbSize = 0.6f;
+    bool mReverbEnabled = true;
 
-    float mDelayGain = DecibelsToLinear(-3.0f);
     bool mDelayEnabled = true;
-    float mDelayMS = 225;
+    float mDelayGain = DecibelsToLinear(-3.0f);
+
+    TimeWithBasis mDelayTime;
+
     float mDelayStereoSep = 30;
     float mDelayFeedbackLevel = 0.3f;
     ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog2;
@@ -70,11 +72,19 @@ struct PerformancePatch
     float mDelaySaturation = 0.2f;
     float mDelayQ = 0.1f;
 
+    PerformancePatch()
+    {
+        mDelayTime.mBasis = TimeBasis::Milliseconds;
+        mDelayTime.mTimeMS = 225;
+    }
+
     String ToString(int index) const
     {
         return String("") + index + ":" + mName;
     }
 };
+
+static constexpr auto aosenuthaoesuth = sizeof (PerformancePatch);
 
 struct AppSettings
 {
@@ -177,6 +187,9 @@ struct AppSettings
 };
 
 static constexpr auto appsettingssize = sizeof(AppSettings);
-// static constexpr auto rththth = sizeof(AppSettings::mControlMappings);
+static constexpr auto appsettingssize67 = sizeof(AppSettings::mHarmSettings);
+static constexpr auto appsettingssize55 = sizeof(AppSettings::mPerformancePatches);
+static constexpr auto appsettingssize44 = sizeof(AppSettings::mSynthSettings);
+static constexpr auto rththth = sizeof(AppSettings::mControlMappings);
 
 } // namespace clarinoid

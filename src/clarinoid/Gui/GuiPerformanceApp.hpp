@@ -338,7 +338,7 @@ struct GuiPerformanceApp : GuiApp
         NumericEditRangeSpec<float>(0, MAX_DELAY_MS),
         "Time(MS)",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayMS;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayTime.mTimeMS;
          },
          this},
         NullBoolBinding,

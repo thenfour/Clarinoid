@@ -19,6 +19,7 @@
 
 namespace clarinoid
 {
+static constexpr float KRateFrequencyModulationMultiplier = 12.0f;
 
 struct SynthGraph
 {
@@ -112,11 +113,11 @@ struct SynthGraph
 
 // dynamic allocate to ensure it goes into RAM2
 SynthGraph *gpSynthGraph = nullptr;
-//std::reference_wrapper<SynthGraph> CCSynthGraph;
+// std::reference_wrapper<SynthGraph> CCSynthGraph;
 
 StaticInit __synthGraphInit([]() {
     gpSynthGraph = new SynthGraph();
-    //CCSynthGraph = *gpSynthGraph;
+    // CCSynthGraph = *gpSynthGraph;
 });
 
 struct Voice : IModulationKRateProvider
@@ -323,6 +324,7 @@ struct Voice : IModulationKRateProvider
     void Update(const MusicalVoice &mv)
     {
         mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatchA);
+        auto &perf = mAppSettings->GetCurrentPerformancePatch();
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
         bool voiceOrPatchChanged =
             (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatchA != mv.mSynthPatchA);
@@ -406,8 +408,8 @@ struct Voice : IModulationKRateProvider
             return WAVEFORM_SINE;
         };
 
-        short wantsWaveType1 = convertWaveType(mPreset->mLfo1Shape);
-        short wantsWaveType2 = convertWaveType(mPreset->mLfo2Shape);
+        short wantsWaveType1 = convertWaveType(mPreset->mLFO1.mWaveShape);
+        short wantsWaveType2 = convertWaveType(mPreset->mLFO2.mWaveShape);
         if (mLfo1Waveshape != wantsWaveType1)
         {
             mLfo1.begin(wantsWaveType1);
@@ -419,8 +421,8 @@ struct Voice : IModulationKRateProvider
             mLfo2.amplitude(1.0f);
         }
 
-        mLfo1.frequency(mPreset->mLfo1Rate);
-        mLfo2.frequency(mPreset->mLfo2Rate);
+        mLfo1.frequency(mPreset->mLFO1.mTime.ToHertz(perf.mBPM));
+        mLfo2.frequency(mPreset->mLFO2.mTime.ToHertz(perf.mBPM));
 
         mLatestBreathVal = mv.mBreath01.GetFloatVal();
         mLatestPitchbendVal = mv.mPitchBendN11.GetFloatVal();
@@ -449,33 +451,33 @@ struct Voice : IModulationKRateProvider
         outputEnable[2] = true;
         static_assert(POLYBLEP_OSC_COUNT == 3, "this is designed only for 3 oscillators");
 
-        switch (mPreset->mFMAlgo)
-        {
-        default:
-        case FMAlgo::c1c2c3_NoFM: // [1][2][3]
-            break;
-        case FMAlgo::c1m2m3_Chain: // [1<2<3]
-            outputEnable[1] = false;
-            outputEnable[2] = false;
-            break;
-        case FMAlgo::m1c2c3_FM21_NoFM3: // [1>2][3]
-            outputEnable[0] = false;
-            break;
-        case FMAlgo::c1m2c3_FM12_NoFM3:  // [1<2][3]
-        case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
-            outputEnable[1] = false;
-            break;
-        case FMAlgo::c1c2m3_FM32_NoFM1: // [1][2<3]
-            outputEnable[2] = false;
-            break;
-        case FMAlgo::c1m2c3_FM23_NoFM1: // [1][2>3]
-            outputEnable[1] = false;
-            break;
-        case FMAlgo::c1m23: // [1<(2&3)]
-            outputEnable[1] = false;
-            outputEnable[2] = false;
-            break;
-        }
+        // switch (mPreset->mFMAlgo)
+        // {
+        // default:
+        // case FMAlgo::c1c2c3_NoFM: // [1][2][3]
+        //     break;
+        // case FMAlgo::c1m2m3_Chain: // [1<2<3]
+        //     outputEnable[1] = false;
+        //     outputEnable[2] = false;
+        //     break;
+        // case FMAlgo::m1c2c3_FM21_NoFM3: // [1>2][3]
+        //     outputEnable[0] = false;
+        //     break;
+        // case FMAlgo::c1m2c3_FM12_NoFM3:  // [1<2][3]
+        // case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
+        //     outputEnable[1] = false;
+        //     break;
+        // case FMAlgo::c1c2m3_FM32_NoFM1: // [1][2<3]
+        //     outputEnable[2] = false;
+        //     break;
+        // case FMAlgo::c1m2c3_FM23_NoFM1: // [1][2>3]
+        //     outputEnable[1] = false;
+        //     break;
+        // case FMAlgo::c1m23: // [1<(2&3)]
+        //     outputEnable[1] = false;
+        //     outputEnable[2] = false;
+        //     break;
+        // }
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
@@ -492,75 +494,43 @@ struct Voice : IModulationKRateProvider
             mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
             mOsc.mOsc[i].fmAmount(1);
-            mOsc.mOsc[i].mPMMultiplier = mPreset->mFMStrength;
+            mOsc.mOsc[i].mPMMultiplier = mPreset->mOverallFMStrength;
             // mOsc.mOsc[i].mAMMinimumGain = mPreset->mOsc[i].mAMMinimumGain;
             mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain;
-            mOsc.mOsc[i].mCurveIndex = mPreset->mOsc[i].mCurveIndex;
+            mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
         }
 
-        auto calcFreq = [](float midiNote,
-                           float pbSemis,
-                           float pbSnap,
-                           float pitchFine,
-                           int pitchSemis,
-                           float detune,
-                           float freqMul,
-                           float freqOffset,
-                           float krateFreqModN11) {
-            float ret =
-                midiNote + pitchFine + pitchSemis + detune + SnapPitchBend(pbSemis, pbSnap) + (12.0f * krateFreqModN11);
-            ret = (MIDINoteToFreq(ret) * freqMul) + freqOffset;
+        auto calcFreq = [&](const SynthOscillatorSettings &osc, float midiNote, float detune, float krateFreqModN11) {
+            float userPB = mv.mPitchBendN11.GetFloatVal();
+            float pbSemis = 0;
+            if (userPB > 0)
+            {
+                pbSemis = userPB * osc.mPitchBendRangePositive;
+            }
+            else
+            {
+                pbSemis = userPB * (-osc.mPitchBendRangeNegative);
+            }
+            float ret = midiNote + osc.mPitchFine + osc.mPitchSemis + detune +
+                        SnapPitchBend(pbSemis, osc.mPitchBendSnap) +
+                        (KRateFrequencyModulationMultiplier * krateFreqModN11);
+            ret = (MIDINoteToFreq(ret) * osc.mFreqMultiplier) + osc.mFreqOffset;
             return Clamp(ret, 0.0f, 22050.0f);
         };
 
-        mOsc.frequency(1,
-                       calcFreq(midiNote,
-                                mPreset->mOsc[0].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
-                                mPreset->mOsc[0].mPitchBendSnap,
-                                mPreset->mOsc[0].mPitchFine,
-                                mPreset->mOsc[0].mPitchSemis,
-                                -mPreset->mDetune,
-                                mPreset->mOsc[0].mFreqMultiplier,
-                                mPreset->mOsc[0].mFreqOffset,
-                                mKRateFrequencyN11[0]));
-        mOsc.frequency(3,
-                       calcFreq(midiNote,
-                                mPreset->mOsc[2].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
-                                mPreset->mOsc[2].mPitchBendSnap,
-                                mPreset->mOsc[2].mPitchFine,
-                                mPreset->mOsc[2].mPitchSemis,
-                                mPreset->mDetune,
-                                mPreset->mOsc[2].mFreqMultiplier,
-                                mPreset->mOsc[2].mFreqOffset,
-                                mKRateFrequencyN11[2]));
+        mOsc.frequency(1, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
+        mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune, mKRateFrequencyN11[2]));
 
         if (mPreset->mSync)
         {
-            float freq = calcFreq(midiNote,
-                                  mPreset->mOsc[1].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
-                                  mPreset->mOsc[1].mPitchBendSnap,
-                                  mPreset->mOsc[1].mPitchFine,
-                                  mPreset->mOsc[1].mPitchSemis,
-                                  0,
-                                  mPreset->mOsc[1].mFreqMultiplier,
-                                  mPreset->mOsc[1].mFreqOffset,
-                                  mKRateFrequencyN11[1]);
+            float freq = calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]);
             float freqSync =
                 map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * mPreset->mSyncMultMin, freq * mPreset->mSyncMultMax);
             mOsc.frequency(2, freqSync);
         }
         else
         {
-            mOsc.frequency(2,
-                           calcFreq(midiNote,
-                                    mPreset->mOsc[1].mPitchBendRange * mv.mPitchBendN11.GetFloatVal(),
-                                    mPreset->mOsc[1].mPitchBendSnap,
-                                    mPreset->mOsc[1].mPitchFine,
-                                    mPreset->mOsc[1].mPitchSemis,
-                                    0,
-                                    mPreset->mOsc[1].mFreqMultiplier,
-                                    mPreset->mOsc[1].mFreqOffset,
-                                    mKRateFrequencyN11[1]));
+            mOsc.frequency(2, calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]));
         }
 
         // perform breath & key tracking for filter. we will basically multiply the
@@ -652,8 +622,8 @@ struct SynthGraphControl
 
         gpSynthGraph->delayFeedbackAmpLeft.gain(perf.mDelayFeedbackLevel);
         gpSynthGraph->delayFeedbackAmpRight.gain(perf.mDelayFeedbackLevel);
-        gpSynthGraph->delayLeft.delay(0, perf.mDelayMS);
-        gpSynthGraph->delayRight.delay(0, perf.mDelayMS + perf.mDelayStereoSep);
+        gpSynthGraph->delayLeft.delay(0, perf.mDelayTime.ToMS(perf.mBPM) - perf.mDelayStereoSep * .5f);
+        gpSynthGraph->delayRight.delay(0, perf.mDelayTime.ToMS(perf.mBPM) + perf.mDelayStereoSep * .5f);
 
         gpSynthGraph->delayFilterLeft.SetParams(
             perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);

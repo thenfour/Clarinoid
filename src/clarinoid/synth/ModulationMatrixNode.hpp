@@ -562,49 +562,49 @@ struct VoiceModulationMatrixNode : public AudioStream
             ProcessModulation(buffers, modulation);
         }
 
-        // process FM algo modulations. The selected FM algorithm will make certain fixed FB->phase connections in
-        // addition to user-specified modulations.
-        switch (mSynthPatch->mFMAlgo)
-        {
-        default:
-        case FMAlgo::c1c2c3_NoFM: // [1][2][3]
-            // nop. no modulations necessary.
-            break;
-        case FMAlgo::c1m2m3_Chain: // [1<2<3]
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[2], AnyModulationSource::Osc3FB, AnyModulationDestination::Osc2Phase);
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
-            break;
-        case FMAlgo::c1m2c3_FM12_NoFM3: // [1<2][3]
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
-            break;
-        case FMAlgo::m1c2c3_FM21_NoFM3: // [1>2][3]
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[0], AnyModulationSource::Osc1FB, AnyModulationDestination::Osc2Phase);
-            break;
-        case FMAlgo::c1c2m3_FM32_NoFM1: // [1][2<3]
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[2], AnyModulationSource::Osc3FB, AnyModulationDestination::Osc2Phase);
-            break;
-        case FMAlgo::c1m2c3_FM23_NoFM1: // [1][2>3]
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc3Phase);
-            break;
-        case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc3Phase);
-            break;
-        case FMAlgo::c1m23: // [1<(2&3)]
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[2], AnyModulationSource::Osc3FB, AnyModulationDestination::Osc1Phase);
-            ProcessFMModulation(
-                buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
-            break;
-        }
+        // // process FM algo modulations. The selected FM algorithm will make certain fixed FB->phase connections in
+        // // addition to user-specified modulations.
+        // switch (mSynthPatch->mFMAlgo)
+        // {
+        // default:
+        // case FMAlgo::c1c2c3_NoFM: // [1][2][3]
+        //     // nop. no modulations necessary.
+        //     break;
+        // case FMAlgo::c1m2m3_Chain: // [1<2<3]
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[2], AnyModulationSource::Osc3FB, AnyModulationDestination::Osc2Phase);
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
+        //     break;
+        // case FMAlgo::c1m2c3_FM12_NoFM3: // [1<2][3]
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
+        //     break;
+        // case FMAlgo::m1c2c3_FM21_NoFM3: // [1>2][3]
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[0], AnyModulationSource::Osc1FB, AnyModulationDestination::Osc2Phase);
+        //     break;
+        // case FMAlgo::c1c2m3_FM32_NoFM1: // [1][2<3]
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[2], AnyModulationSource::Osc3FB, AnyModulationDestination::Osc2Phase);
+        //     break;
+        // case FMAlgo::c1m2c3_FM23_NoFM1: // [1][2>3]
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc3Phase);
+        //     break;
+        // case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc3Phase);
+        //     break;
+        // case FMAlgo::c1m23: // [1<(2&3)]
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[2], AnyModulationSource::Osc3FB, AnyModulationDestination::Osc1Phase);
+        //     ProcessFMModulation(
+        //         buffers, mSynthPatch->mOsc[1], AnyModulationSource::Osc2FB, AnyModulationDestination::Osc1Phase);
+        //     break;
+        // }
 
         for (auto *src : buffers.aRateSsources)
         {

@@ -48,7 +48,7 @@ static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the
 static const size_t MAX_DISPLAY_WIDTH = 128; // in order to maintain some static buffers.
 
 // assignable slots.
-static const size_t MAX_CONTROL_MAPPINGS = 48;
+static const size_t MAX_CONTROL_MAPPINGS = 24;
 
 enum class PhysicalControl : uint8_t
 {

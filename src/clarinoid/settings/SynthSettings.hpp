@@ -10,7 +10,141 @@ static constexpr size_t POLYBLEP_OSC_COUNT = 3;
 static constexpr float ReasonableOscillatorGain = 0.25f;
 static constexpr float ReasonableOscillatorGainForHarm = 0.19f;
 
-enum class OscWaveformShape
+enum class TimeBasis : uint8_t
+{
+    Milliseconds,
+    Hertz,
+    Half,
+    Quarter,
+    Eighth,
+    Sixteenth,
+    ThirtySecond,
+    DottedHalf,
+    DottedQuarter,
+    DottedEighth,
+    DottedSixteenth,
+    TripletHalf,
+    TripletQuarter,
+    TripletEighth,
+    TripletSixteenth,
+};
+
+EnumItemInfo<TimeBasis> gTimeBasisItems[15] = {
+    {TimeBasis::Milliseconds, "Milliseconds"},
+    {TimeBasis::Hertz, "Hertz"},
+    //
+    {TimeBasis::Half, "Half"},
+    {TimeBasis::Quarter, "Quarter"},
+    {TimeBasis::Eighth, "Eighth"},
+    {TimeBasis::Sixteenth, "Sixteenth"},
+    {TimeBasis::ThirtySecond, "ThirtySecond"},
+    //
+    {TimeBasis::DottedHalf, "DottedHalf"},
+    {TimeBasis::DottedQuarter, "DottedQuarter"},
+    {TimeBasis::DottedEighth, "DottedEighth"},
+    {TimeBasis::DottedSixteenth, "DottedSixteenth"},
+    //
+    {TimeBasis::TripletHalf, "TripletHalf"},
+    {TimeBasis::TripletQuarter, "TripletQuarter"},
+    {TimeBasis::TripletEighth, "TripletEighth"},
+    {TimeBasis::TripletSixteenth, "TripletSixteenth"},
+};
+
+EnumInfo<TimeBasis> gTimeBasisInfo("TimeBasis", gTimeBasisItems);
+
+struct TimeWithBasis
+{
+    TimeBasis mBasis = TimeBasis::Milliseconds;
+    float mTimeMS = 100;
+    float mHz = 6;
+    float mTimeBeats = 1;
+
+    void SetFrequency(float hz)
+    {
+        mBasis = TimeBasis::Hertz;
+        mHz = hz;
+    }
+    float ToHertz(float bpmIfNeeded) const
+    {
+        switch (mBasis)
+        {
+        default:
+        case TimeBasis::Milliseconds:
+            return CycleMSToHertz(mTimeMS);
+        case TimeBasis::Hertz:
+            return mHz;
+        case TimeBasis::Half:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 2, 1)); // 2
+        case TimeBasis::Quarter:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 1, 1)); // 1
+        case TimeBasis::Eighth:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 1, 2)); // 0.5
+        case TimeBasis::Sixteenth:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 1, 4));
+        case TimeBasis::ThirtySecond:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 1, 8));
+            //
+        case TimeBasis::DottedHalf:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 3, 1)); // 3
+        case TimeBasis::DottedQuarter:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 3, 2)); // 1.5
+        case TimeBasis::DottedEighth:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 3, 4)); // 0.75
+        case TimeBasis::DottedSixteenth:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 3, 8));
+            //
+        case TimeBasis::TripletHalf:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 4, 3)); // 1.33
+        case TimeBasis::TripletQuarter:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 4, 6)); //
+        case TimeBasis::TripletEighth:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 4, 12));
+        case TimeBasis::TripletSixteenth:
+            return CycleMSToHertz(NoteLengthToMS(bpmIfNeeded, 4, 24));
+        }
+    }
+    float ToMS(float bpmIfNeeded) const
+    {
+        switch (mBasis)
+        {
+        default:
+        case TimeBasis::Milliseconds:
+            return mTimeMS;
+        case TimeBasis::Hertz:
+            return HertzToCycleMS(mHz);
+        case TimeBasis::Half:
+            return NoteLengthToMS(bpmIfNeeded, 2, 1); // 2
+        case TimeBasis::Quarter:
+            return NoteLengthToMS(bpmIfNeeded, 1, 1); // 1
+        case TimeBasis::Eighth:
+            return NoteLengthToMS(bpmIfNeeded, 1, 2); // 0.5
+        case TimeBasis::Sixteenth:
+            return NoteLengthToMS(bpmIfNeeded, 1, 4);
+        case TimeBasis::ThirtySecond:
+            return NoteLengthToMS(bpmIfNeeded, 1, 8);
+            //
+        case TimeBasis::DottedHalf:
+            return NoteLengthToMS(bpmIfNeeded, 3, 1); // 3
+        case TimeBasis::DottedQuarter:
+            return NoteLengthToMS(bpmIfNeeded, 3, 2); // 1.5
+        case TimeBasis::DottedEighth:
+            return NoteLengthToMS(bpmIfNeeded, 3, 4); // 0.75
+        case TimeBasis::DottedSixteenth:
+            return NoteLengthToMS(bpmIfNeeded, 3, 8);
+            //
+        case TimeBasis::TripletHalf:
+            return NoteLengthToMS(bpmIfNeeded, 4, 3); // 1.33
+        case TimeBasis::TripletQuarter:
+            return NoteLengthToMS(bpmIfNeeded, 4, 6); //
+        case TimeBasis::TripletEighth:
+            return NoteLengthToMS(bpmIfNeeded, 4, 12);
+        case TimeBasis::TripletSixteenth:
+            return NoteLengthToMS(bpmIfNeeded, 4, 24);
+        }
+    }
+};
+
+enum class OscWaveformShape : uint8_t
 {
     Sine = 0,
     VarTriangle = 1,
@@ -93,9 +227,6 @@ enum class KRateModulationSource : uint8_t
     // these are INDICES used by synthvoice / modulationmatrix
     Breath = 0, // K-rate
     PitchStrip, // K-rate
-                // RandomTrigger,
-                // Keytracking
-                // macro1, 2, etc
 };
 
 EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[2] = {
@@ -118,6 +249,9 @@ enum class AnyModulationSource : uint8_t
     Osc3FB,     // a-rate
     Breath,     // K-rate
     PitchStrip, // K-rate
+    // random trigger
+    // keytracking
+    // macro1, 2, 3, 4
 };
 
 EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[10] = {
@@ -207,11 +341,33 @@ enum class AnyModulationDestination : uint8_t
     Osc3Frequency,     // k-rate
     Osc3Amplitude,     // k-rate  // OUTPUT amplitude
 
-    // oscillator FM amplitude
-    // oscillator FM feedback
+    // osc FM feedback
+    // osc waveform morph (now replaces SYNC freq)
+    // osc pan
+    // patch verb mix
+    // patch delay send
+    // patch detune
+    // patch spread
+    // FM brightness
+    // FM strength Osc2 => Osc1
+    // FM strength Osc3 => Osc1
+    // FM strength Osc1 => Osc2
+    // FM strength Osc3 => Osc2
+    // FM strength Osc1 => Osc3
+    // FM strength Osc2 => Osc3
+    // filter stereo spread
+    // filter saturation
+    // filter Q
     // lfo rate
-    // env stuff
-    // osc waveform shape
+    // lfo phase
+    // lfo wave morph
+    // lfo pulse width
+    // env delay
+    // env attack
+    // env hold
+    // env decay
+    // env sustain
+    // env release
 };
 
 EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[14] = {
@@ -248,16 +404,16 @@ struct SynthModulationSpec
 {
     AnyModulationSource mSource = AnyModulationSource::None;
     AnyModulationDestination mDest = AnyModulationDestination::None;
-    float mScaleN11 = 0.5f;
     ModulationPolarityTreatment mSourcePolarity = ModulationPolarityTreatment::AsPositive01;
-    int mCurveShape = gModCurveLUT.LinearYIndex; // integral, because we don't interpolate; mod curves are actually
-                                                 // discrete. it also simplifies the "0" case where it's linear.
+    int16_t mCurveShape = gModCurveLUT.LinearYIndex; // integral, because we don't interpolate; mod curves are actually
+                                                     // discrete. it also simplifies the "0" case where it's linear.
+    float mScaleN11 = 0.5f;
 
     AnyModulationSource mAuxSource = AnyModulationSource::None;
-    float mAuxAmount01 = 0.0f; // amount of attenuation
-    bool mAuxEnabled = true;   // just allows bypassing without removing the aux source
     ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::AsPositive01;
-    int mAuxCurveShape = gModCurveLUT.LinearYIndex;
+    bool mAuxEnabled = true; // just allows bypassing without removing the aux source
+    int16_t mAuxCurveShape = gModCurveLUT.LinearYIndex;
+    float mAuxAmount01 = 0.0f; // amount of attenuation
 
     // to mimic old behavior with 0 offset and just a scale.
     void SetScaleN11_Legacy(float scaleN11)
@@ -287,43 +443,21 @@ struct EnvelopeSpec
     float mReleaseNoteOnMS = 0.0f;
 };
 
-enum class FMAlgo : uint8_t
-{
-    c1c2c3_NoFM,        // [1][2][3]
-    c1m2c3_FM12_NoFM3,  // [1<2][3]
-    m1c2c3_FM21_NoFM3,  // [1>2][3]
-    c1c2m3_FM32_NoFM1,  // [1][2<3]
-    c1m2c3_FM23_NoFM1,  // [1][2>3]
-    c1m2m3_Chain,       // [1<2<3]
-    c1m23,              // [1<(2&3)]
-    c2m2c3_FM13_Split2, // [1<2][2>3]
-};
-
-EnumItemInfo<FMAlgo> gFMAlgoItems[8] = {
-    {FMAlgo::c1c2c3_NoFM, "[1][2][3]"},
-    {FMAlgo::c1m2c3_FM12_NoFM3, "[1<2][3]"},
-    {FMAlgo::m1c2c3_FM21_NoFM3, "[1>2][3]"},
-    {FMAlgo::c1c2m3_FM32_NoFM1, "[1][2<3]"},
-    {FMAlgo::c1m2c3_FM23_NoFM1, "[1][2>3]"},
-    {FMAlgo::c1m2m3_Chain, "[1<2<3]"},
-    {FMAlgo::c1m23, "[1<(2+3)]"},
-    {FMAlgo::c2m2c3_FM13_Split2, "[1<2][2>3]"},
-};
-EnumInfo<FMAlgo> gFMAlgoInfo("FMAlgo", gFMAlgoItems);
-
 struct SynthOscillatorSettings
 {
     float mGain = 0;
     float mPortamentoTime = 0.0f;
+
     float mFreqMultiplier = 1.0f; // midinotefreq * this
     float mFreqOffset = 0.0f;
-
-    float mPitchBendRange = 2.0f;
-    float mPitchBendSnap = 0; // 0= no snap, 1=total snap
-
     int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
                           // not so great at being very precise.
     float mPitchFine = 0; // in semitones, just for detuning
+
+    float mPitchBendRangePositive = 1.0f;
+    float mPitchBendRangeNegative = -2.0f;
+    float mPitchBendSnap = 0; // 0= no snap, 1=total snap
+
     float mPan = 0;
 
     bool mPhaseRestart = false;
@@ -333,9 +467,19 @@ struct SynthOscillatorSettings
     float mPulseWidth = 0.5f;
 
     float mFMFeedbackGain = 0.0f; // 0 to 1
-    // float mAMMinimumGain = 0.0f;  // in order to allow amplitude modulations to be non-zero
 
-    int mCurveIndex = gModCurveLUT.LinearYIndex;
+    // this depends on the type of waveform (eventually)
+    // currently it only controls "curve", where 0.5 is linear.
+    float mWaveformMorph01 = 0.5f;
+};
+
+struct LFOSpec
+{
+    OscWaveformShape mWaveShape = OscWaveformShape::Sine;
+    float mPulseWidth = 0.5f;
+    TimeWithBasis mTime;
+    bool mPhaseRestart = false;
+    float mWaveformMorph01 = 0.0f;
 };
 
 struct SynthPreset
@@ -351,16 +495,14 @@ struct SynthPreset
     EnvelopeSpec mEnv1;
     EnvelopeSpec mEnv2;
 
-    bool mSync = true;
-    float mSyncMultMin = 1.4f;
-    float mSyncMultMax = 3.0f;
-
-    OscWaveformShape mLfo1Shape = OscWaveformShape::Sine;
-    float mLfo1Rate = 0.8f;
-    OscWaveformShape mLfo2Shape = OscWaveformShape::Sine;
-    float mLfo2Rate = 3.5f;
+    LFOSpec mLFO1;
+    LFOSpec mLFO2;
 
     float mDetune = 0;
+
+    float mSyncMultMin = 1.4f;
+    float mSyncMultMax = 3.0f;
+    bool mSync = true;
 
     bool mDCFilterEnabled = true;
     float mDCFilterCutoff = 10.0f;
@@ -373,13 +515,22 @@ struct SynthPreset
     float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
                                      // applied (low notes get higher freq cutoff)
 
-    FMAlgo mFMAlgo = FMAlgo::c1c2c3_NoFM;
-    float mFMStrength = 0.1f;
+    float mFMStrength2To1 = 0;
+    float mFMStrength3To1 = 0;
+    float mFMStrength1To2 = 0;
+    float mFMStrength3To2 = 0;
+    float mFMStrength1To3 = 0;
+    float mFMStrength2To3 = 0;
+
+    float mOverallFMStrength = 0.1f;
 
     SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
 
     SynthPreset()
     {
+        mLFO1.mTime.SetFrequency(0.8f);
+        mLFO2.mTime.SetFrequency(3.5f);
+
         mOsc[0].mGain = 0;
         mOsc[1].mGain = ReasonableOscillatorGain;
         mOsc[2].mGain = ReasonableOscillatorGain;
@@ -615,7 +766,7 @@ struct SynthSettings
 
         p.mOsc[1].mPitchSemis = -12;
 
-        p.mLfo2Rate = 0.7f;
+        p.mLFO2.mTime.SetFrequency(0.7f);
 
         p.mFilterKeytracking = 0;
         p.mFilterMaxFreq = 12000;
@@ -728,7 +879,7 @@ struct SynthSettings
         p.mOsc[2].mPulseWidth = 0.3f;
         p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
 
-        p.mLfo2Rate = p.mLfo1Rate;
+        p.mLFO2.mTime = p.mLFO1.mTime;
 
         p.mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
         p.mModulations[0].mSource = AnyModulationSource::LFO1;
@@ -789,7 +940,7 @@ struct SynthSettings
         p.mDelaySend = .50f;
         p.mSync = false;
 
-        p.mLfo2Rate = 2.0f;
+        p.mLFO2.mTime.SetFrequency(2.0f);
 
         p.mFilterType = ClarinoidFilterType::LP_Moog2;
         p.mFilterSaturation = 0.16f;
@@ -857,7 +1008,7 @@ struct SynthSettings
         InitBasicLeadPreset("PWM Lead Stack", OscWaveformShape::Pulse, 0.50f, p);
         p.mFilterMaxFreq = 12000;
         p.mFilterType = ClarinoidFilterType::LP_SEM12;
-        p.mLfo2Rate = 2.0f;
+        p.mLFO2.mTime.SetFrequency(2.0f);
         p.mOsc[2].mFreqMultiplier = 4.0f;
         p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
         p.mOsc[2].mPulseWidth = 0.5f;
