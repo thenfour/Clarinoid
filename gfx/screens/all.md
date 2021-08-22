@@ -46,14 +46,14 @@
 <img src="synth/00PatchOverview.png" alt="00PatchOverview" width="384px"/>
 
 1. Patch gain
-1. Oscillator stereo spread
-1. Oscillator detune
-1. Patch verb mix
-1. Patch delay mix
-1. Macro 1 amount
-1. Macro 2 amount
-1. Macro 3 amount
-1. Macro 4 amount
+1. Stereo spread
+1. Detune
+1. Patch verb MIX
+1. Patch delay SEND
+1. Macro 1 amount (0-1)
+1. Macro 2 amount (0-1)
+1. Macro 3 amount (0-1)
+1. Macro 4 amount (0-1)
 
 
 # Synth Patch Page 2/x: OSC settings page 1
@@ -61,24 +61,25 @@
 
 1. Osc1 Amp
     1. double click: mute / unmute
+1. Osc1 Pan
 1. Osc1 wave type (square, etc)
 1. Osc1 wave shape parameter. TBD
 1. Osc1 pulse width
-1. Osc1 frequency semis
-1. Osc1 frequency finetune
+1. Osc1 Phase
+    1. double click: phase restart / phase continuous
 
 (repeat for Osc2 and Osc3)
 
 # Synth Patch Page 3/x: OSC settings page 2
 <img src="synth/02PatchOSC2.png" alt="02PatchOSC2" width="384px"/>
 
-1. Osc1 Pan
 1. Osc1 Portamento time
-1. Osc1 Phase
-    1. double click: phase restart / phase continuous
+1. Osc1 frequency semis
+1. Osc1 frequency finetune
 1. Osc1 Pitchbend range POSITIVE
 1. Osc1 Pitchbend range NEGATIVE
 1. Osc1 Pitchbend semitone snap
+1. Osc1 Pitchbend semitone snap period
 
 (repeat for Osc2 and Osc3)
 
@@ -111,7 +112,6 @@
 <img src="synth/04PatchFilter.png" alt="04PatchFilter" width="384px"/>
 
 1. Filter type
-1. Filter key tracking
 1. Filter stereo separator
 1. Filter cutoff Hz
 1. Filter saturation
