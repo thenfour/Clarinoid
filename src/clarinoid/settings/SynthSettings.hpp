@@ -454,7 +454,7 @@ struct SynthOscillatorSettings
                           // not so great at being very precise.
     float mPitchFine = 0; // in semitones, just for detuning
 
-    float mPitchBendRangePositive = 1.0f;
+    float mPitchBendRangePositive = 2.0f;
     float mPitchBendRangeNegative = -2.0f;
     float mPitchBendSnap = 0; // 0= no snap, 1=total snap
 

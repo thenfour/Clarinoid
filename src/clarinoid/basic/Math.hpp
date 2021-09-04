@@ -373,22 +373,26 @@ inline float Frac(float x)
     return x - floorf(x);
 }
 
+// x^3 curve centered around 0.
 inline float blamp0(float x)
 {
     return 1 / 3.0f * x * x * x;
 }
 
+// upside down from blamp0; y=0@x=1
 inline float blamp1(float x)
 {
     x = x - 1;
     return -1 / 3.0f * x * x * x;
 }
 
+// just a parabola, y=0 @x=0, y=1 @x=1
 inline float blep0(float x)
 {
     return x * x;
 }
 
+// upside down parabola where y=0@x=1.     y=-1 @ x=0
 inline float blep1(float x)
 {
     x = 1 - x;
