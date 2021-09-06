@@ -8,6 +8,55 @@
 namespace clarinoid
 {
 
+int KeyStateToRelativeNote(bool LH1, bool LH2, bool LH3, bool LH4, bool RH1, bool RH2, bool RH3, bool RH4)
+{
+    int relativeNote = 0;
+    if (LH1)
+        relativeNote -= 2; // B from C#
+    if (LH2)
+        relativeNote -= LH1 ? 2 : 1;
+    if (LH3)
+        relativeNote -= 2;
+    if (LH4)
+        relativeNote += 1;
+
+    if (RH1)
+    {
+        // naturally we expect this to be -2 (for G-F trill for example)
+        // but we need to support Bb.
+        if (LH1 && !LH2)
+            relativeNote -= 1;
+        else
+            relativeNote -= 2;
+    }
+    if (RH2)
+        relativeNote -= 1;
+    if (RH3)
+    {
+        // coming from G  0 000 -> 001 this is -1 F#
+        // coming from F# 0 010 -> 011 this is -1 F   <-- allows rh2 trill between F and F#
+        // coming from F  0 100 -> 101 this is -1 E
+        // coming from E  0 110 -> 111 this is -2 D
+
+        // Normally you want to use LH4 as a +1 key, but when it's down you often still want to +1 (Eb - E or Db - D). it's natural to use rh2 for this.
+        // coming from G# 1 000 -> 001 this is -1 F#
+        // coming from G  1 010 -> 011 this is -1 F   <-- allows rh2 trill between F and F#
+        // coming from F# 1 100 -> 101 this is -1 E
+        // coming from F  1 110 -> 111 this is -2 D
+        relativeNote --;;
+        if (!LH4 && RH2 && RH1) { 
+            relativeNote --;
+        } else if (LH4) {
+            relativeNote --;
+        }
+
+        // the ugly thing about enabling those trills is that now LH4 no longer acts as a +1, but i think it's an acceptable compromise.
+    }
+    if (RH4)
+        relativeNote -= 2;
+    return relativeNote;
+}
+
 struct CCEWIMusicalState
 {
     IDisplay *mpDisplay;
@@ -21,11 +70,12 @@ struct CCEWIMusicalState
     int mIncomingMidiNote = 0;
     int mIncomingMidiNoteAgeFrames = 0;
 
-    // MusicalVoice mIncomingVoice; // the voice that you are physically playing, but with age = 0. In order to avoid
-    // very
-    //                              // small glitchy notes, we don't apply a note change unless it's of a certain age.
-    MusicalVoice mLiveVoice; // the voice that's actually playing that represents what the player is playing (not a
-                             // harmonized voice or looped voice)
+    // MusicalVoice mIncomingVoice; // the voice that you are physically playing, but with age = 0. In order to
+    // avoid very
+    //                              // small glitchy notes, we don't apply a note change unless it's of a
+    //                              certain age.
+    MusicalVoice mLiveVoice; // the voice that's actually playing that represents what the player is playing
+                             // (not a harmonized voice or looped voice)
     MusicalVoice
         mMusicalVoices[MAX_MUSICAL_VOICES]; // these are all the voices that WANT to be played (after transpose,
                                             // harmonize, looping, etc). May be more than synth polyphony.
@@ -98,54 +148,19 @@ struct CCEWIMusicalState
         mNewState.mHarmPatch = perf.mHarmPreset;
         mNewState.mSynthPatchA = perf.mSynthPresetA;
         mNewState.mSynthPatchB = perf.mSynthPresetB;
-        mNewState.mPan = 0; // panning is part of musical state because harmonizer needs it per voice, but it's actually
-                            // calculated by the synth based on synth preset.
+        mNewState.mPan = 0; // panning is part of musical state because harmonizer needs it per voice, but it's
+                            // actually calculated by the synth based on synth preset.
 
         // the rules are rather weird for keys. open is a C#...
         // https://bretpimentel.com/flexible-ewi-fingerings/
-        int relativeNote = 0;
-        if (mInput->mKeyLH1.CurrentValue())
-        {
-            relativeNote -= 2;
-        }
-        if (mInput->mKeyLH2.CurrentValue())
-        {
-            relativeNote -= mInput->mKeyLH1.CurrentValue() ? 2 : 1;
-        }
-        if (mInput->mKeyLH3.CurrentValue())
-        {
-            relativeNote -= 2;
-        }
-        if (mInput->mKeyLH4.CurrentValue())
-        {
-            relativeNote += 1;
-        }
-
-        if (mInput->mKeyRH1.CurrentValue())
-        {
-            // naturally we expect this to be -2 (for G-F trill for example)
-            // but we need to support Bb.
-            if (mInput->mKeyLH1.CurrentValue() && !mInput->mKeyLH2.CurrentValue())
-            {
-                relativeNote -= 1;
-            }
-            else
-            {
-                relativeNote -= 2;
-            }
-        }
-        if (mInput->mKeyRH2.CurrentValue())
-        {
-            relativeNote -= 1;
-        }
-        if (mInput->mKeyRH3.CurrentValue())
-        {
-            relativeNote -= mInput->mKeyRH2.CurrentValue() ? 2 : 1; // deviation from akai. feels more flute-friendly.
-        }
-        if (mInput->mKeyRH4.CurrentValue())
-        {
-            relativeNote -= 2;
-        }
+        int relativeNote = KeyStateToRelativeNote(mInput->mKeyLH1.CurrentValue(),
+                                                  mInput->mKeyLH2.CurrentValue(),
+                                                  mInput->mKeyLH3.CurrentValue(),
+                                                  mInput->mKeyLH4.CurrentValue(),
+                                                  mInput->mKeyRH1.CurrentValue(),
+                                                  mInput->mKeyRH2.CurrentValue(),
+                                                  mInput->mKeyRH3.CurrentValue(),
+                                                  mInput->mKeyRH4.CurrentValue());
 
 #ifdef THREE_BUTTON_OCTAVES
         // Buttons   Transpose:
@@ -212,9 +227,9 @@ struct CCEWIMusicalState
         // transpose
         relativeNote += mAppSettings->GetCurrentPerformancePatch().mTranspose;
 
-        // hold pitch is cool, but if we set the new base pitch while you're holding keys down (which is kinda 100%),
-        // then you immediately start playing relative to the existing pitch. very ugly, and literally never intended.
-        // so continue playing the existing note until the relative pitch changes.
+        // hold pitch is cool, but if we set the new base pitch while you're holding keys down (which is kinda
+        // 100%), then you immediately start playing relative to the existing pitch. very ugly, and literally
+        // never intended. so continue playing the existing note until the relative pitch changes.
         int newNote = 0;
         if (mWaitingForRelativePitchToChange && (mRelativeNoteWhenPitchHeld != relativeNote))
         {
@@ -326,6 +341,6 @@ struct CCEWIMusicalState
     }
 };
 
-static constexpr auto aoeusnthcphic = sizeof (CCEWIMusicalState);
+static constexpr auto aoeusnthcphic = sizeof(CCEWIMusicalState);
 
 } // namespace clarinoid

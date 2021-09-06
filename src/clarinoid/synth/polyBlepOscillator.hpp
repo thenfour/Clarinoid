@@ -288,7 +288,7 @@ struct AudioBandlimitedOsci : public AudioStream
         {
             // do some sync
             float x;
-            if (mSyncPhase.Step(x)) {
+            if (mSyncEnabled && mSyncPhase.Step(x)) {
                 this->Sync(x);
             }
 
