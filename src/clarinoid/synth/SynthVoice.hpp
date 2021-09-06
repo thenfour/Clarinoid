@@ -518,19 +518,28 @@ struct Voice : IModulationKRateProvider
             return Clamp(ret, 0.0f, 22050.0f);
         };
 
-        mOsc.frequency(1, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
-        mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune, mKRateFrequencyN11[2]));
-
         if (mPreset->mSync)
         {
             float freq = calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]);
             float freqSync =
                 map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * mPreset->mSyncMultMin, freq * mPreset->mSyncMultMax);
+
+            mOsc.mOsc[0].SetSyncParams(false, 0);
+            mOsc.mOsc[1].SetSyncParams(true, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
+            mOsc.mOsc[2].SetSyncParams(false, 0);
+
+            mOsc.frequency(1, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
             mOsc.frequency(2, freqSync);
+            mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune, mKRateFrequencyN11[2]));
         }
         else
         {
+            mOsc.mOsc[0].SetSyncParams(false, 0);
+            mOsc.mOsc[1].SetSyncParams(false, 0);
+            mOsc.mOsc[2].SetSyncParams(false, 0);
+            mOsc.frequency(1, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
             mOsc.frequency(2, calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]));
+            mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune, mKRateFrequencyN11[2]));
         }
 
         // perform breath & key tracking for filter. we will basically multiply the
