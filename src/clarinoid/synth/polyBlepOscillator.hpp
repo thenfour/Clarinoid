@@ -1,4 +1,3 @@
-// todo:
 
 #pragma once
 
@@ -103,26 +102,6 @@ struct AudioBandlimitedOsci : public AudioStream
         mOsc[oscillator - 1].frequency(freq, mNotesPlaying);
     }
 
-    void waveform(uint8_t oscillator, OscWaveformShape wform)
-    {
-        mOsc[oscillator - 1].waveform(wform);
-    }
-
-    void pulseWidth(uint8_t oscillator, float pulseWidth)
-    {
-        mOsc[oscillator - 1].pulseWidth(pulseWidth);
-    }
-
-    void portamentoTime(uint8_t oscillator, float seconds)
-    {
-        mOsc[oscillator - 1].portamentoTime(seconds);
-    }
-
-    void fmAmount(uint8_t oscillator, float octaves)
-    {
-        mOsc[oscillator - 1].fmAmount(octaves);
-    }
-
     void SetPhaseModRange(float r)
     {
         mOsc[0].mPMMultiplier = r;
@@ -162,10 +141,9 @@ struct AudioBandlimitedOsci : public AudioStream
 
         float mGain = 0; // osc1_gain
         OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
-        uint32_t mPitchModAmount = 4096; // osc1_pitchModAmount
 
         float mPulseWidthTarget01 = 0; // pulseWidth1
-        float mPulseWidth = 0.5;       // osc1_pulseWidth
+        float mPulseWidth = 0.5;       // osc1_pulseWidth 0,1
 
         float mBlepDelay = 0;     // osc1_blepDelay
         float mWidthDelay = 0;    // osc1_widthDelay
@@ -245,14 +223,8 @@ struct AudioBandlimitedOsci : public AudioStream
 
         void pulseWidth(float pulseWidth)
         {
-            // pulseWidth gets limited to [0.001, 0.999] later on
+            mPulseWidth = Clamp(pulseWidth, 0.001f, 0.999f);
             mPulseWidth = mPulseWidthTarget01 = pulseWidth;
-        }
-
-        void fmAmount(float octaves)
-        {
-            octaves = Clamp(octaves, 0.1f, 12.0f);
-            mPitchModAmount = octaves * 4096.0f;
         }
 
         int16_t *curveLookupState;
@@ -263,6 +235,9 @@ struct AudioBandlimitedOsci : public AudioStream
             if (mPortamentoSamples > 0 && mCurrentPortamentoSample++ < mPortamentoSamples)
             {
                 mFrequency += mPortamentoIncrement;
+                mFreq = mFrequency;
+                mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each
+                                                       // sample. very small.
             }
 
             if (pm1)
@@ -270,25 +245,20 @@ struct AudioBandlimitedOsci : public AudioStream
                 mT += fast::Sample16To32(pm1->data[i]) * mPMMultiplier;
             }
 
-            mFreq = mFrequency;
-            mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each
-                                                   // sample. very small.
-
-            curveLookupState = gModCurveLUT.BeginLookupF(mWaveformMorph01 * 2 - 1);
-
             // pulse Width Modulation:
             if (pwm1)
             {
                 mPulseWidth = mPulseWidthTarget01 + fast::Sample16To32(pwm1->data[i]);
+                mPulseWidth = Clamp(mPulseWidth, 0.001f, 0.999f);
             }
-            mPulseWidth = Clamp(mPulseWidth, 0.001f, 0.999f);
         }
 
         inline void PostStep(size_t i, audio_block_t *out)
         {
             // do some sync
             float x;
-            if (mSyncEnabled && mSyncPhase.Step(x)) {
+            if (mSyncEnabled && mSyncPhase.Step(x))
+            {
                 this->Sync(x);
             }
 
@@ -414,7 +384,6 @@ struct AudioBandlimitedOsci : public AudioStream
 
                 if (mT < mDt)
                 {
-
                     float x = mT / mDt;
                     mOutput -= 0.5 * blep0(x);
                     mBlepDelay -= 0.5 * blep1(x);
@@ -434,8 +403,17 @@ struct AudioBandlimitedOsci : public AudioStream
             }
         }
 
-        inline void Sync(float x/*, OscillatorState &masterOsc*/)
+        inline void Sync(float x)
         {
+            if (mWaveformShape != OscWaveformShape::SawSync)
+            {
+                // this is actually kinda broken. aliased and 
+                mT = x * mDt + mPhaseOffset;
+                mPulseStage = false;
+                return;
+            }
+
+            // OscWaveformShape::SawSync
             mOutput = mBlepDelay;
             mBlepDelay = 0;
 
@@ -472,7 +450,32 @@ struct AudioBandlimitedOsci : public AudioStream
 
             mOutput = mOutput * 2 - 1;
         }
-    };
+
+        template <typename Ta, typename Tb>
+        void update(AudioStream &stream, Ta &&receiveReadOnly, Tb &&transmit, uint8_t outId, int pwmId, int pmId)
+        {
+            audio_block_t *out1 = stream.allocate();
+            if (!out1)
+                return;
+            audio_block_t *pwm1 = receiveReadOnly(pwmId);
+            audio_block_t *pm1 = receiveReadOnly(pmId);
+            for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+            {
+                this->curveLookupState = gModCurveLUT.BeginLookupF(this->mWaveformMorph01 * 2 - 1);
+                this->PreStep(i, pwm1, pm1);
+                this->Step();
+                this->PostStep(i, out1);
+            }
+
+            transmit(out1, outId);
+            stream.release(out1);
+
+            if (pwm1)
+                stream.release(pwm1);
+            if (pm1)
+                stream.release(pm1);
+        }
+    }; // struct OscillatorState
 
     OscillatorState mOsc[3];
 }; // namespace clarinoid
@@ -481,59 +484,11 @@ void AudioBandlimitedOsci::update()
 {
     if (mNotesPlaying <= 0)
         return;
-    audio_block_t *out1 = allocate();
-    if (!out1)
-        return;
-    audio_block_t *out2 = allocate();
-    if (!out2)
-        return;
-    audio_block_t *out3 = allocate();
-    if (!out3)
-        return;
-
-    audio_block_t *pwm1 = receiveReadOnly((int)INPUT_INDEX::pwm1);
-    audio_block_t *pm1 = receiveReadOnly((int)INPUT_INDEX::pm1);
-    audio_block_t *pwm2 = receiveReadOnly((int)INPUT_INDEX::pwm2);
-    audio_block_t *pm2 = receiveReadOnly((int)INPUT_INDEX::pm2);
-    audio_block_t *pwm3 = receiveReadOnly((int)INPUT_INDEX::pwm3);
-    audio_block_t *pm3 = receiveReadOnly((int)INPUT_INDEX::pm3);
-
-    for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-    {
-        mOsc[0].PreStep(i, pwm1, pm1);
-        mOsc[1].PreStep(i, pwm2, pm2);
-        mOsc[2].PreStep(i, pwm3, pm3);
-
-        mOsc[0].Step();
-        mOsc[1].Step();
-        mOsc[2].Step();
-
-        mOsc[0].PostStep(i, out1);
-        mOsc[1].PostStep(i, out2);
-        mOsc[2].PostStep(i, out3);
-    }
-
-    transmit(out1, 0);
-    release(out1);
-
-    transmit(out2, 1);
-    release(out2);
-
-    transmit(out3, 2);
-    release(out3);
-
-    if (pwm1)
-        release(pwm1);
-    if (pm1)
-        release(pm1);
-    if (pwm2)
-        release(pwm2);
-    if (pm2)
-        release(pm2);
-    if (pwm3)
-        release(pwm3);
-    if (pm3)
-        release(pm3);
+    auto callableReceiveReadOnly = [&](unsigned int i) { return this->receiveReadOnly(i); };
+    auto callableTransmit = [&](audio_block_t *block, uint8_t id) { this->transmit(block, id); };
+    mOsc[0].update(*this, callableReceiveReadOnly, callableTransmit, 0, (int)INPUT_INDEX::pwm1, (int)INPUT_INDEX::pm1);
+    mOsc[1].update(*this, callableReceiveReadOnly, callableTransmit, 1, (int)INPUT_INDEX::pwm2, (int)INPUT_INDEX::pm2);
+    mOsc[2].update(*this, callableReceiveReadOnly, callableTransmit, 2, (int)INPUT_INDEX::pwm3, (int)INPUT_INDEX::pm3);
 }
 
 } // namespace clarinoid

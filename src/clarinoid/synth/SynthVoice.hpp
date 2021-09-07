@@ -113,11 +113,9 @@ struct SynthGraph
 
 // dynamic allocate to ensure it goes into RAM2
 SynthGraph *gpSynthGraph = nullptr;
-// std::reference_wrapper<SynthGraph> CCSynthGraph;
 
 StaticInit __synthGraphInit([]() {
     gpSynthGraph = new SynthGraph();
-    // CCSynthGraph = *gpSynthGraph;
 });
 
 struct Voice : IModulationKRateProvider
@@ -364,18 +362,9 @@ struct Voice : IModulationKRateProvider
             {
                 mOsc.mOsc[i].amplitude(0);
             }
-            // for CPU saving (currently causes glitches)
-            // mOsc.Disable();
-            // mFilter.Disable();
             mRunningVoice = mv;
             return;
         }
-        else
-        {
-            // mOsc.Enable();
-            // mFilter.Enable();
-        }
-
         // configure envelopes (DADSR x 3)
         mEnv1.delay(mPreset->mEnv1.mDelayMS);
         mEnv1.attack(mPreset->mEnv1.mAttackMS);
@@ -451,34 +440,6 @@ struct Voice : IModulationKRateProvider
         outputEnable[2] = true;
         static_assert(POLYBLEP_OSC_COUNT == 3, "this is designed only for 3 oscillators");
 
-        // switch (mPreset->mFMAlgo)
-        // {
-        // default:
-        // case FMAlgo::c1c2c3_NoFM: // [1][2][3]
-        //     break;
-        // case FMAlgo::c1m2m3_Chain: // [1<2<3]
-        //     outputEnable[1] = false;
-        //     outputEnable[2] = false;
-        //     break;
-        // case FMAlgo::m1c2c3_FM21_NoFM3: // [1>2][3]
-        //     outputEnable[0] = false;
-        //     break;
-        // case FMAlgo::c1m2c3_FM12_NoFM3:  // [1<2][3]
-        // case FMAlgo::c2m2c3_FM13_Split2: // [1<2][2>3]
-        //     outputEnable[1] = false;
-        //     break;
-        // case FMAlgo::c1c2m3_FM32_NoFM1: // [1][2<3]
-        //     outputEnable[2] = false;
-        //     break;
-        // case FMAlgo::c1m2c3_FM23_NoFM1: // [1][2>3]
-        //     outputEnable[1] = false;
-        //     break;
-        // case FMAlgo::c1m23: // [1<(2&3)]
-        //     outputEnable[1] = false;
-        //     outputEnable[2] = false;
-        //     break;
-        // }
-
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
             // if the output is disabled, then the multimixerpanner will disable this channel,
@@ -493,9 +454,7 @@ struct Voice : IModulationKRateProvider
 
             mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
-            mOsc.mOsc[i].fmAmount(1);
             mOsc.mOsc[i].mPMMultiplier = mPreset->mOverallFMStrength;
-            // mOsc.mOsc[i].mAMMinimumGain = mPreset->mOsc[i].mAMMinimumGain;
             mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain;
             mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
         }

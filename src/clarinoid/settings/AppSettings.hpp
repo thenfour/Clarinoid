@@ -157,6 +157,8 @@ struct AppSettings
     {
         p.mName = "Thicc";
         p.mSynthStereoSpread = 0.35f;
+        p.mMasterGain = DecibelsToLinear(-4);
+        p.mMasterFXGain = DecibelsToLinear(-8);
         p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
     }
 
@@ -166,8 +168,7 @@ struct AppSettings
         p.mSynthPresetA = SynthPresetID_PanFlute;
         p.mSynthPresetB = SynthPresetID_CinematicTag;
         p.mBPM = 110;
-        p.mReverbGain = DecibelsToLinear(-12.0f);
-        p.mDelayGain = DecibelsToLinear(-12.0f);
+        p.mMasterFXGain = DecibelsToLinear(-12);
     }
 
     static void InitSoaringGuitarPerf(PerformancePatch &p)
@@ -175,6 +176,7 @@ struct AppSettings
         p.mName = "Soaring Guitar";
         p.mSynthPresetA = SynthPresetID_Fluvial;
         p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+        p.mMasterFXGain = DecibelsToLinear(-12);
     }
 
     AppSettings()
