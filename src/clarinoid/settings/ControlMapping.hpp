@@ -239,6 +239,19 @@ struct ControlMapping
         return ret;
     }
 
+    // for touch keys, when state gets messed up, the TriggerUpDownValue will never reset.
+    // this simply passes through the value, so it's always in sync with the touch key state,
+    // but you lose the ability to stack mappings (which would be unreasonable anyway)
+    static ControlMapping UniqueMomentaryMapping(PhysicalControl source, Function d)
+    {
+        ControlMapping ret;
+        ret.mSource = source;
+        ret.mFunction = d;
+        ret.mOperator = Operator::Set;
+        ret.mStyle = MapStyle::Passthrough;
+        return ret;
+    }
+
     // triggers when down pressed, adds a value to the param.
     static ControlMapping ButtonIncrementMapping(PhysicalControl source,
                                                  Function fn,

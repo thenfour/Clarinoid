@@ -144,17 +144,27 @@ struct TimeWithBasis
     }
 };
 
+// shaping possibilities
+// - Sync freq we don't want to give to all oscillators, because it's something
+//   that needs to be enabled or disabled. so make them distinct.
 enum class OscWaveformShape : uint8_t
 {
-    Sine = 0,
-    VarTriangle = 1,
-    Pulse = 2,
-    SawSync = 3 // not available in osc 1 (only 2 & 3)
+    //                                  shape        sync freq
+    //                                 --------     --------
+    Sine = 0,        // [todo:sin-tri]  fb amount
+    VarTriangle = 1, // [aka Saw-Tri]   shape
+    Pulse = 2,       //                 pulsewidth
+
+    // SineSync = 4, //                 fb amount    sync freq
+
+    SawSync = 3, //                                  sync freq
+
+    // PWMSync = 5,  //                 pulsewidth   sync freq
 };
 
 EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[4] = {
     {OscWaveformShape::Sine, "Sine"},
-    {OscWaveformShape::VarTriangle, "VarTriangle"},
+    {OscWaveformShape::VarTriangle, "Tri-Saw"},
     {OscWaveformShape::Pulse, "Pulse"},
     {OscWaveformShape::SawSync, "SawSync"},
 };

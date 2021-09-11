@@ -114,9 +114,7 @@ struct SynthGraph
 // dynamic allocate to ensure it goes into RAM2
 SynthGraph *gpSynthGraph = nullptr;
 
-StaticInit __synthGraphInit([]() {
-    gpSynthGraph = new SynthGraph();
-});
+StaticInit __synthGraphInit([]() { gpSynthGraph = new SynthGraph(); });
 
 struct Voice : IModulationKRateProvider
 {
@@ -328,7 +326,6 @@ struct Voice : IModulationKRateProvider
             (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatchA != mv.mSynthPatchA);
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
-            mOsc.removeNote();
             // reset saved krate mod values, so modulations don't leak across patch changes
             mKRateVoiceFilterCutoffN11 = 0;
             for (auto &v : mKRateFrequencyN11)
@@ -345,8 +342,6 @@ struct Voice : IModulationKRateProvider
         }
         if (voiceOrPatchChanged || transition.mNeedsNoteOn)
         {
-            mOsc.addNote(); // this also engages portamento
-
             for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
             {
                 if (mPreset->mOsc[i].mPhaseRestart)
@@ -358,13 +353,11 @@ struct Voice : IModulationKRateProvider
 
         if (!mv.IsPlaying() || mv.mIsNoteCurrentlyMuted)
         {
-            for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
-            {
-                mOsc.mOsc[i].amplitude(0);
-            }
+            mOsc.mIsPlaying = false;
             mRunningVoice = mv;
             return;
         }
+        mOsc.mIsPlaying = true;
         // configure envelopes (DADSR x 3)
         mEnv1.delay(mPreset->mEnv1.mDelayMS);
         mEnv1.attack(mPreset->mEnv1.mAttackMS);
@@ -416,9 +409,6 @@ struct Voice : IModulationKRateProvider
         mLatestBreathVal = mv.mBreath01.GetFloatVal();
         mLatestPitchbendVal = mv.mPitchBendN11.GetFloatVal();
 
-        // mBreathModSource.amplitude(mv.mBreath01.GetFloatVal());
-        // mPitchBendModSource.amplitude(mv.mPitchBendN11.GetFloatVal());
-
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
             mEnv1.noteOff();
@@ -434,29 +424,19 @@ struct Voice : IModulationKRateProvider
         // update
         float midiNote = (float)mv.mMidiNote;
 
-        bool outputEnable[POLYBLEP_OSC_COUNT];
-        outputEnable[0] = true;
-        outputEnable[1] = true;
-        outputEnable[2] = true;
-        static_assert(POLYBLEP_OSC_COUNT == 3, "this is designed only for 3 oscillators");
-
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
             // if the output is disabled, then the multimixerpanner will disable this channel,
             // and its output is only designed for modulation sources. then the gain will be
             // specified in the modulation amount.
-            float gain = outputEnable[i] ? mPreset->mOsc[i].mGain : 1.0f;
-            gain *= mKRateAmplitudeN11[i];
-            mOsc.mOsc[i].amplitude(gain);
-            mOsc.mOsc[i].SetPhaseOffset(mPreset->mOsc[i].mPhase01);
-
-            mOsc.mOsc[i].portamentoTime(mPreset->mOsc[i].mPortamentoTime);
-
+            float gain = mPreset->mOsc[i].mGain * mKRateAmplitudeN11[i];
+            mOsc.mOsc[i].SetAmplitude(gain);
+            // mOsc.mOsc[i].SetBasicParams(, false, mPreset->mOsc[i].mPhase01, mPreset->mOsc[i].mPortamentoTime, );
             mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
             mOsc.mOsc[i].mPMMultiplier = mPreset->mOverallFMStrength;
             mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain;
-            mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
+            // mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
         }
 
         auto calcFreq = [&](const SynthOscillatorSettings &osc, float midiNote, float detune, float krateFreqModN11) {
@@ -477,28 +457,44 @@ struct Voice : IModulationKRateProvider
             return Clamp(ret, 0.0f, 22050.0f);
         };
 
+        float freq0 = calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]);
+        float freq1 = calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]);
+        float freq2 = calcFreq(mPreset->mOsc[2], midiNote, -mPreset->mDetune, mKRateFrequencyN11[2]);
+
         if (mPreset->mSync)
         {
-            float freq = calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]);
-            float freqSync =
-                map(mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq * mPreset->mSyncMultMin, freq * mPreset->mSyncMultMax);
+            // sync only supported in osc1 for the moment.
+            float freqSync = map(
+                mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq1 * mPreset->mSyncMultMin, freq1 * mPreset->mSyncMultMax);
 
-            mOsc.mOsc[0].SetSyncParams(false, 0);
-            mOsc.mOsc[1].SetSyncParams(true, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
-            mOsc.mOsc[2].SetSyncParams(false, 0);
+            mOsc.mOsc[0].SetBasicParams(
+                freq0, false, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTime, false, 0);
+            mOsc.mOsc[1].SetBasicParams(
+                freq0, false, mPreset->mOsc[1].mPhase01, mPreset->mOsc[1].mPortamentoTime, true, freqSync);
+            mOsc.mOsc[2].SetBasicParams(
+                freq2, false, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTime, false, 0);
 
-            mOsc.frequency(1, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
-            mOsc.frequency(2, freqSync);
-            mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune, mKRateFrequencyN11[2]));
+            // mOsc.mOsc[0].SetSyncParams(false, 0);
+            // mOsc.mOsc[1].SetSyncParams(true, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune,
+            // mKRateFrequencyN11[0])); mOsc.mOsc[2].SetSyncParams(false, 0); mOsc.frequency(1,
+            // calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0])); mOsc.frequency(2,
+            // freqSync); mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune,
+            // mKRateFrequencyN11[2]));
         }
         else
         {
-            mOsc.mOsc[0].SetSyncParams(false, 0);
-            mOsc.mOsc[1].SetSyncParams(false, 0);
-            mOsc.mOsc[2].SetSyncParams(false, 0);
-            mOsc.frequency(1, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
-            mOsc.frequency(2, calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]));
-            mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune, mKRateFrequencyN11[2]));
+            mOsc.mOsc[0].SetBasicParams(
+                freq0, false, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTime, false, 0);
+            mOsc.mOsc[1].SetBasicParams(
+                freq1, false, mPreset->mOsc[1].mPhase01, mPreset->mOsc[1].mPortamentoTime, false, 0);
+            mOsc.mOsc[2].SetBasicParams(
+                freq2, false, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTime, false, 0);
+            // mOsc.mOsc[0].SetSyncParams(false, 0);
+            // mOsc.mOsc[1].SetSyncParams(false, 0);
+            // mOsc.mOsc[2].SetSyncParams(false, 0);
+            // mOsc.frequency(1, calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]));
+            // mOsc.frequency(2, calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]));
+            // mOsc.frequency(3, calcFreq(mPreset->mOsc[2], midiNote, mPreset->mDetune, mKRateFrequencyN11[2]));
         }
 
         // perform breath & key tracking for filter. we will basically multiply the
@@ -518,12 +514,12 @@ struct Voice : IModulationKRateProvider
         mSplitter.SetOutputGain(2, mv.mGain * mPreset->mVerbSend);
 
         mOscMixerPanner.SetInputPanAndEnabled(
-            0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan + mPreset->mStereoSpread, outputEnable[0]);
+            0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan + mPreset->mStereoSpread, true);
 
-        mOscMixerPanner.SetInputPanAndEnabled(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan, outputEnable[1]);
+        mOscMixerPanner.SetInputPanAndEnabled(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan, true);
 
         mOscMixerPanner.SetInputPanAndEnabled(
-            2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread, outputEnable[2]);
+            2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread, true);
 
         mRunningVoice = mv;
     }

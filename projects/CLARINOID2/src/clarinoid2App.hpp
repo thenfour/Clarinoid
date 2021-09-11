@@ -228,35 +228,35 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::DisplayFontToggle);
 
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Oct1, ControlMapping::Function::Oct1);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct1, ControlMapping::Function::Oct1);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Oct2, ControlMapping::Function::Oct2);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct2, ControlMapping::Function::Oct2);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Oct3, ControlMapping::Function::Oct3);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct3, ControlMapping::Function::Oct3);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Oct4, ControlMapping::Function::Oct4);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct4, ControlMapping::Function::Oct4);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Oct5, ControlMapping::Function::Oct5);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct5, ControlMapping::Function::Oct5);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Oct6, ControlMapping::Function::Oct6);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct6, ControlMapping::Function::Oct6);
 
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHKey1, ControlMapping::Function::LH1);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::LHKey1, ControlMapping::Function::LH1);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHKey2, ControlMapping::Function::LH2);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::LHKey2, ControlMapping::Function::LH2);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHKey3, ControlMapping::Function::LH3);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::LHKey3, ControlMapping::Function::LH3);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHKey4, ControlMapping::Function::LH4);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::LHKey4, ControlMapping::Function::LH4);
 
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHKey1, ControlMapping::Function::RH1);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::RHKey1, ControlMapping::Function::RH1);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHKey2, ControlMapping::Function::RH2);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::RHKey2, ControlMapping::Function::RH2);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHKey3, ControlMapping::Function::RH3);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::RHKey3, ControlMapping::Function::RH3);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
