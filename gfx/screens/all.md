@@ -61,25 +61,26 @@
 
 1. Osc1 Amp
     1. double click: mute / unmute
-1. Osc1 Pan
-1. Osc1 wave type (square, etc)
-1. Osc1 wave shape parameter. TBD
-1. Osc1 pulse width
+1. Osc1 waveform select (square, etc)
+1. Osc1 wave shape parameter 1. for PWM, this is pulse width. for vartri or other wave-wave types, blend. anything which morphs the wave.
+1. Osc1 wave shape parameter 2. for PWM, not used. for vartri, curve. for sine, PM feedback amount.
 1. Osc1 Phase
     1. double click: phase restart / phase continuous
+1. Hard sync base frequency.
+    1. double-click: enable / disable hard sync
 
 (repeat for Osc2 and Osc3)
 
 # Synth Patch Page 3/x: OSC settings page 2
 <img src="synth/02PatchOSC2.png" alt="02PatchOSC2" width="384px"/>
 
-1. Osc1 Portamento time
 1. Osc1 frequency semis
 1. Osc1 frequency finetune
+1. Osc1 Portamento time
 1. Osc1 Pitchbend range POSITIVE
 1. Osc1 Pitchbend range NEGATIVE
-1. Osc1 Pitchbend semitone snap
 1. Osc1 Pitchbend semitone snap period
+1. Osc1 Pan
 
 (repeat for Osc2 and Osc3)
 
