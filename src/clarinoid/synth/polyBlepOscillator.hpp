@@ -133,6 +133,199 @@ struct PhaseAccumulator
     }
 };
 
+struct SineWaveformProvider // : public WaveformProviderBase
+{
+    template <typename TOscillator>
+    static void ResetPhaseDueToSync(TOscillator &caller, float x)
+    {
+        caller.mMainPhase.mT = x * caller.mMainPhase.mDt + caller.mMainPhase.mPhaseOffset;
+        caller.mPulseStage = false;
+    }
+    template <typename TOscillator>
+    static void Step(TOscillator &caller, float &fboutput)
+    {
+        caller.mOutput = fast::sin((caller.mMainPhase.mT + fboutput * caller.mPMFeedbackAmt) * TWO_PI);
+    }
+};
+
+struct VarTriangleWaveformProvider // : public WaveformProviderBase
+{
+    template <typename TOscillator>
+    static void ResetPhaseDueToSync(TOscillator &caller, float x)
+    {
+        caller.mMainPhase.mT = x * caller.mMainPhase.mDt + caller.mMainPhase.mPhaseOffset;
+        caller.mPulseStage = false;
+    }
+
+    template <typename TOscillator>
+    static void Step(TOscillator &caller, float &fboutput)
+    {
+        while (true)
+        {
+            if (!caller.mPulseStage)
+            {
+                if (caller.mMainPhase.mT < caller.mPulseWidth)
+                    break;
+
+                float x = (caller.mMainPhase.mT - caller.mPulseWidth) /
+                          (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
+                float scale = caller.mMainPhase.mDt / (caller.mPulseWidth - caller.mPulseWidth * caller.mPulseWidth);
+
+                caller.mOutput -= scale * blamp0(x);
+                caller.mBlepDelay -= scale * blamp1(x);
+
+                caller.mPulseStage = true;
+            }
+            if (caller.mPulseStage)
+            {
+                if (caller.mMainPhase.mT < 1)
+                    break;
+
+                // we have crossed over phase,
+                // remainder phase 0-1 / (freq/samplerate)
+                caller.mMainPhase.mT -= 1;
+                // x = number of master samples crossed over phase, but because we're processing 1 sample at a
+                // time, this is always 0-1.
+                float x = caller.mMainPhase.mT / caller.mMainPhase.mDt;
+
+                float scale = caller.mMainPhase.mDt / (caller.mPulseWidth - caller.mPulseWidth * caller.mPulseWidth);
+
+                caller.mOutput += scale * blamp0(x);
+                caller.mBlepDelay += scale * blamp1(x);
+
+                caller.mPulseStage = false;
+            }
+        }
+
+        float naiveWave;
+
+        if (caller.mMainPhase.mT <= caller.mPulseWidth)
+        {
+            naiveWave = 2 * caller.mMainPhase.mT / caller.mPulseWidth - 1;
+        }
+        else
+        {
+            naiveWave = -2 * (caller.mMainPhase.mT - caller.mPulseWidth) / (1 - caller.mPulseWidth) + 1;
+        }
+
+        caller.mBlepDelay += naiveWave;
+
+        caller.mWidthDelay = caller.mPulseWidth;
+    }
+};
+
+struct PulseWaveformProvider
+{
+    template <typename TOscillator>
+    static void ResetPhaseDueToSync(TOscillator &caller, float x)
+    {
+        caller.mMainPhase.mT = x * caller.mMainPhase.mDt + caller.mMainPhase.mPhaseOffset;
+        caller.mPulseStage = false;
+    }
+    template <typename TOscillator>
+    static void Step(TOscillator &caller, float &fboutput)
+    {
+        while (true)
+        {
+            if (!caller.mPulseStage)
+            {
+                if (caller.mMainPhase.mT < caller.mPulseWidth)
+                    break;
+
+                float x = (caller.mMainPhase.mT - caller.mPulseWidth) /
+                          (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
+
+                caller.mOutput -= blep0(x);
+                caller.mBlepDelay -= blep1(x);
+
+                caller.mPulseStage = true;
+            }
+            if (caller.mPulseStage)
+            {
+                if (caller.mMainPhase.mT < 1)
+                    break;
+
+                // we have crossed over phase.
+                caller.mMainPhase.mT -= 1;
+                // x = number of master samples crossed over phase, but because we're processing 1 sample at a
+                // time, this is always 0-1.
+                float x = caller.mMainPhase.mT / caller.mMainPhase.mDt;
+
+                caller.mOutput += blep0(x);
+                caller.mBlepDelay += blep1(x);
+
+                caller.mPulseStage = false;
+            }
+        }
+
+        float naiveWave = caller.mPulseStage ? -1.0f : 1.0f;
+
+        caller.mBlepDelay += naiveWave;
+
+        caller.mWidthDelay = caller.mPulseWidth;
+    }
+};
+
+struct SawWaveformProvider
+{
+    template <typename TOscillator>
+    static void ResetPhaseDueToSync(TOscillator &caller, float x)
+    {
+        caller.mOutput = caller.mBlepDelay;
+        caller.mBlepDelay = 0;
+
+        float scale = caller.mMainPhase.mDt / caller.mSyncPhase.mDt;
+        scale -= floorf(scale);
+        if (scale <= 0)
+        {
+            scale = 1;
+        }
+
+        caller.mOutput -= 0.5 * scale * blep0(x);
+        caller.mBlepDelay -= 0.5 * scale * blep1(x);
+
+        // increase slave phase by partial sample
+        float dt = (1 - x) * caller.mMainPhase.mDt;
+        caller.mMainPhase.mT += dt;
+        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
+
+        if (caller.mMainPhase.mT < dt)
+        {
+            caller.mMainPhase.mT += x * caller.mMainPhase.mDt;
+            caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
+
+            // process transition for the slave
+            float x2 = caller.mMainPhase.mT / caller.mMainPhase.mDt;
+            caller.mOutput -= 0.5 * blep0(x2);
+            caller.mBlepDelay -= 0.5 * blep1(x2);
+        }
+
+        // reset slave phase:
+        caller.mMainPhase.mT = x * caller.mMainPhase.mDt;
+
+        caller.mBlepDelay += caller.mMainPhase.mT;
+
+        caller.mOutput = caller.mOutput * 2 - 1;
+    }
+
+    template <typename TOscillator>
+    static void Step(TOscillator &caller, float &fboutput)
+    {
+        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
+
+        if (caller.mMainPhase.mT < caller.mMainPhase.mDt)
+        {
+            float x = caller.mMainPhase.mT / caller.mMainPhase.mDt;
+            caller.mOutput -= 0.5 * blep0(x);
+            caller.mBlepDelay -= 0.5 * blep1(x);
+        }
+
+        caller.mBlepDelay += caller.mMainPhase.mT;
+
+        caller.mOutput = caller.mOutput * 2 - 1;
+    }
+};
+
 struct Oscillator
 {
     PhaseAccumulator mMainPhase;
@@ -141,7 +334,7 @@ struct Oscillator
                                  // of mMainPhase.
     bool mSyncEnabled = false;
     float mAmplitude = 0;
-    //float mWaveformMorph01 = 0.5f; // curve: gModCurveLUT.LinearYIndex;
+    // float mWaveformMorph01 = 0.5f; // curve: gModCurveLUT.LinearYIndex;
 
     OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
 
@@ -169,7 +362,8 @@ struct Oscillator
         mWaveformShape = wform;
     }
 
-    void SetAmplitude(float amplitude01) {
+    void SetAmplitude(float amplitude01)
+    {
         mAmplitude = amplitude01;
     }
 
@@ -198,221 +392,81 @@ struct Oscillator
         mPulseWidth = mPulseWidthTarget01 = pulseWidth;
     }
 
-    inline void Step(size_t i, audio_block_t *pwm1, audio_block_t *pm1, audio_block_t *out)
+    template <typename TWaveformProvider>
+    inline void Step(size_t i, bool doPWM, float* pwm32, bool doPM, float* pm32, float *out)
     {
-        if (pm1)
+        if (doPM)
         {
-            mMainPhase.mT += fast::Sample16To32(pm1->data[i]) * mPMMultiplier;
+            mMainPhase.mT += pm32[i];
         }
 
-        // pulse Width Modulation:
-        if (pwm1)
+        if (doPWM)
         {
-            mPulseWidth = mPulseWidthTarget01 + fast::Sample16To32(pwm1->data[i]);
+            mPulseWidth = pwm32[i];
             mPulseWidth = Clamp(mPulseWidth, 0.001f, 0.999f);
         }
+
+        mMainPhase.StepWithoutFrac();
 
         float fboutput = mOutput;
         mOutput = mBlepDelay;
         mBlepDelay = 0;
 
-        mMainPhase.StepWithoutFrac();
+        TWaveformProvider::Step(*this, fboutput);
 
-        // triangle and sawtooth wave
-        switch (mWaveformShape)
-        {
-        case OscWaveformShape::Sine: {
-            mOutput = fast::sin((mMainPhase.mT + fboutput * mPMFeedbackAmt) * TWO_PI);
-            break;
-        }
-
-        case OscWaveformShape::VarTriangle: {
-            while (true)
-            {
-                if (!mPulseStage)
-                {
-                    if (mMainPhase.mT < mPulseWidth)
-                        break;
-
-                    float x = (mMainPhase.mT - mPulseWidth) / (mWidthDelay - mPulseWidth + mMainPhase.mDt);
-                    float scale = mMainPhase.mDt / (mPulseWidth - mPulseWidth * mPulseWidth);
-
-                    mOutput -= scale * blamp0(x);
-                    mBlepDelay -= scale * blamp1(x);
-
-                    mPulseStage = true;
-                }
-                if (mPulseStage)
-                {
-                    if (mMainPhase.mT < 1)
-                        break;
-
-                    // we have crossed over phase,
-                    // remainder phase 0-1 / (freq/samplerate)
-                    mMainPhase.mT -= 1;
-                    // x = number of master samples crossed over phase, but because we're processing 1 sample at a
-                    // time, this is always 0-1.
-                    float x = mMainPhase.mT / mMainPhase.mDt;
-
-                    float scale = mMainPhase.mDt / (mPulseWidth - mPulseWidth * mPulseWidth);
-
-                    mOutput += scale * blamp0(x);
-                    mBlepDelay += scale * blamp1(x);
-
-                    mPulseStage = false;
-                }
-            }
-
-            float naiveWave;
-
-            if (mMainPhase.mT <= mPulseWidth)
-            {
-                naiveWave = 2 * mMainPhase.mT / mPulseWidth - 1;
-            }
-            else
-            {
-                naiveWave = -2 * (mMainPhase.mT - mPulseWidth) / (1 - mPulseWidth) + 1;
-            }
-
-            mBlepDelay += naiveWave;
-
-            mWidthDelay = mPulseWidth;
-        }
-        break;
-
-        case OscWaveformShape::Pulse: {
-            while (true)
-            {
-                if (!mPulseStage)
-                {
-                    if (mMainPhase.mT < mPulseWidth)
-                        break;
-
-                    float x = (mMainPhase.mT - mPulseWidth) / (mWidthDelay - mPulseWidth + mMainPhase.mDt);
-
-                    mOutput -= blep0(x);
-                    mBlepDelay -= blep1(x);
-
-                    mPulseStage = true;
-                }
-                if (mPulseStage)
-                {
-                    if (mMainPhase.mT < 1)
-                        break;
-
-                    // we have crossed over phase.
-                    mMainPhase.mT -= 1;
-                    // x = number of master samples crossed over phase, but because we're processing 1 sample at a
-                    // time, this is always 0-1.
-                    float x = mMainPhase.mT / mMainPhase.mDt;
-
-                    mOutput += blep0(x);
-                    mBlepDelay += blep1(x);
-
-                    mPulseStage = false;
-                }
-            }
-
-            float naiveWave = mPulseStage ? -1.0f : 1.0f;
-
-            mBlepDelay += naiveWave;
-
-            mWidthDelay = mPulseWidth;
-        }
-        break;
-
-        case OscWaveformShape::SawSync: {
-            mMainPhase.mT -= floorf(mMainPhase.mT);
-
-            if (mMainPhase.mT < mMainPhase.mDt)
-            {
-                float x = mMainPhase.mT / mMainPhase.mDt;
-                mOutput -= 0.5 * blep0(x);
-                mBlepDelay -= 0.5 * blep1(x);
-            }
-
-            mBlepDelay += mMainPhase.mT;
-
-            mOutput = mOutput * 2 - 1;
-        }
-        break;
-
-        default: {
-            mMainPhase.mT -= floorf(mMainPhase.mT);
-            mOutput = 0;
-            break;
-        }
-        }
-
-        // do some sync
         float x;
         if (mSyncEnabled && mSyncPhase.StepWithFrac(x))
         {
-            this->ResetPhaseDueToSync(x);
+            TWaveformProvider::ResetPhaseDueToSync(*this, x);
         }
 
-        //float o = gModCurveLUT.Transfer32(mOutput, curveLookupState);
-
-        out->data[i] = fast::Sample32To16(mOutput * mAmplitude);
+        out[i] = mOutput * mAmplitude;
     } // void Step() {
-
-    inline void ResetPhaseDueToSync(float x)
-    {
-        if (mWaveformShape != OscWaveformShape::SawSync)
-        {
-            // this is actually kinda broken, but better than the fallthrough case
-            mMainPhase.mT = x * mMainPhase.mDt + mMainPhase.mPhaseOffset;
-            mPulseStage = false;
-            return;
-        }
-
-        // OscWaveformShape::SawSync
-        mOutput = mBlepDelay;
-        mBlepDelay = 0;
-
-        float scale = mMainPhase.mDt / mSyncPhase.mDt;
-        scale -= floorf(scale);
-        if (scale <= 0)
-        {
-            scale = 1;
-        }
-
-        mOutput -= 0.5 * scale * blep0(x);
-        mBlepDelay -= 0.5 * scale * blep1(x);
-
-        // increase slave phase by partial sample
-        float dt = (1 - x) * mMainPhase.mDt;
-        mMainPhase.mT += dt;
-        mMainPhase.mT -= floorf(mMainPhase.mT);
-
-        if (mMainPhase.mT < dt)
-        {
-            mMainPhase.mT += x * mMainPhase.mDt;
-            mMainPhase.mT -= floorf(mMainPhase.mT);
-
-            // process transition for the slave
-            float x2 = mMainPhase.mT / mMainPhase.mDt;
-            mOutput -= 0.5 * blep0(x2);
-            mBlepDelay -= 0.5 * blep1(x2);
-        }
-
-        // reset slave phase:
-        mMainPhase.mT = x * mMainPhase.mDt;
-
-        mBlepDelay += mMainPhase.mT;
-
-        mOutput = mOutput * 2 - 1;
-    }
 
     void ProcessBlock(audio_block_t *pwm, audio_block_t *pm, audio_block_t *pOut)
     {
-        //this->curveLookupState = gModCurveLUT.BeginLookupF(this->mWaveformMorph01 * 2 - 1);
-        for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-        {
-            this->Step(i, pwm, pm, pOut);
+        float pwm32[AUDIO_BLOCK_SAMPLES];
+        float pm32[AUDIO_BLOCK_SAMPLES];
+        float out32[AUDIO_BLOCK_SAMPLES];
+        if (pwm) {
+            fast::Sample16To32Buffer(pwm->data, pwm32);
+            fast::BufferOffsetInPlace(pwm32, mPulseWidthTarget01);
         }
+        if (pm) {
+            fast::Sample16To32Buffer(pm->data, pm32);
+            fast::BufferScaleInPlace(pm32, mPMMultiplier);
+        }
+        switch (mWaveformShape)
+        {
+        case OscWaveformShape::VarTriangle:
+            for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+            {
+                this->Step<VarTriangleWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+            }
+            break;
+        case OscWaveformShape::Pulse:
+            for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+            {
+                this->Step<PulseWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+            }
+            break;
+        case OscWaveformShape::SawSync:
+            for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+            {
+                this->Step<SawWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+            }
+            break;
+        case OscWaveformShape::Sine:
+        default:
+            for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+            {
+                this->Step<SineWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+            }
+            break;
+        }
+        fast::Sample32To16Buffer(out32, pOut->data);
     }
-}; // struct OscillatorState
+}; // struct Oscillator
 
 //////////////////////////////////////////////////////////////////////////////
 struct AudioBandlimitedOsci : public AudioStream
@@ -438,7 +492,8 @@ struct AudioBandlimitedOsci : public AudioStream
 
     Oscillator mOsc[3];
 
-    void ProcessOsc(Oscillator& osc, int pwmId, int pmId, int outId) {
+    void ProcessOsc(Oscillator &osc, int pwmId, int pmId, int outId)
+    {
         audio_block_t *out = allocate();
         if (!out)
             return;
