@@ -6,6 +6,8 @@
 namespace clarinoid
 {
 
+static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 13;
+static constexpr size_t SynthPresetID_Crystal = SYNTH_PRESET_COUNT - 12;
 static constexpr size_t SynthPresetID_CinematicTag = SYNTH_PRESET_COUNT - 11;
 static constexpr size_t SynthPresetID_Fluvial = SYNTH_PRESET_COUNT - 10;
 static constexpr size_t SynthPresetID_PanFlute = SYNTH_PRESET_COUNT - 9;
@@ -491,10 +493,10 @@ struct HarmSettings
         p.mVoiceSettings[3].mSequence[2] = -9; // C
     }
 
-    static void InitBigBandPreset(HarmPreset &p)
+    static void InitBigBandPreset(HarmPreset &p, const char *name, Note scaleRoot)
     {
-        p.mName = "World Peace Eb";
-        p.mPresetScale.mRootNoteIndex = Note::Eb;
+        p.mName = name;//"World Peace Eb";
+        p.mPresetScale.mRootNoteIndex = scaleRoot;//Note::Eb;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
 
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
@@ -581,6 +583,13 @@ struct HarmSettings
     {
         size_t iPreset = 1;
 
+        InitBigBandPreset(mPresets[iPreset++], "World Peace Eb", Note::Eb);
+        InitColBassPreset(mPresets[iPreset++]);
+        InitQuartalHarmPreset2(mPresets[iPreset++]);
+        InitFuzionPreset(mPresets[iPreset++]);
+
+        InitBigBandPreset(mPresets[iPreset++], "World Peace Db", Note::Db);
+
         // InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
         // InitSlumsHarmPreset(mPresets[iPreset++]);
         // InitBotanicalHarmPreset(mPresets[iPreset++]);
@@ -588,20 +597,16 @@ struct HarmSettings
 
         // InitOctDownPreset(mPresets[iPreset++]);
         // InitColDetSawsPreset(mPresets[iPreset++]);
-        InitColBassPreset(mPresets[iPreset++]);
         // InitSpicePreset(mPresets[iPreset++]);
         // Init5thPreset(mPresets[iPreset++]);
 
         InitFunkyHarmPreset(mPresets[iPreset++]);
         InitMajInv2Preset(mPresets[iPreset++]);
-        InitBigBandPreset(mPresets[iPreset++]);
-
         InitBigPreset(mPresets[iPreset++]);
-        InitFuzionPreset(mPresets[iPreset++]);
+
         InitMin6Preset(mPresets[iPreset++]);
         InitQuartQuintHarmPreset(mPresets[iPreset++]);
         // InitQuartalHarmPreset1(mPresets[iPreset++]); <-- it's nice, but too similar to the other quartal
-        InitQuartalHarmPreset2(mPresets[iPreset++]);
     }
 };
 

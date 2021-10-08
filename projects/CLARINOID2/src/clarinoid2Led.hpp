@@ -73,13 +73,13 @@ struct PeakMeter
         {
             uint32_t color1 = 0; // default off=black.
             uint32_t color2 = 0; // default off=black.
-            uint32_t onColor = GRB(0, 4, 0);
+            uint32_t onColor = GRB(0, 128, 0);
             if (i == (ledsPerBank - 1))
                 onColor = GRB(128, 0, 0);
             else if (i == (ledsPerBank - 2))
-                onColor = GRB(16, 16, 0);
+                onColor = GRB(128, 128, 0);
             else if (i == (ledsPerBank - 3))
-                onColor = GRB(4, 4, 0);
+                onColor = GRB(128, 128, 0);
             // else if (i == (ledsPerBank - 4))
             //     onColor = GRB(4, 4, 0);
 
@@ -133,7 +133,7 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         {
             if (IsInnerLED(i))
             {
-                this->SetPixel(i, 0, 0, 64);
+                this->SetPixel(i, 0, 0, 96);
             }
             else if (i >= 6 && i < 12)
             {

@@ -144,29 +144,29 @@ struct TimeWithBasis
     }
 };
 
-// shaping possibilities
-// - Sync freq we don't want to give to all oscillators, because it's something
-//   that needs to be enabled or disabled. so make them distinct.
+// some notes about the selection of waveforms:
+// - Sync is available in all oscillators.
+//   - we want it to be prominent in settings.
+//   - it's something that can be added to any oscillator
+// - Then, sawsync doesn't really feel necessary because of vartriangle doubling as a saw, and also supports sync.
+//   so that's a bit weird but we'll take it. I'll just label it "HQ saw".
+// - We need 2 "shaping" params. We could probably get away with only 1, but we have GUI space for 2, and it allows
+//   more experimenting (curve? morph?) and room for future things
 enum class OscWaveformShape : uint8_t
 {
-    //                                  shape        sync freq
+    //                                  param1       param2
     //                                 --------     --------
-    Sine = 0,        // [todo:sin-tri]  fb amount
+    Sine = 0,        // [todo:sin-tri]  fb amount    curve
     VarTriangle = 1, // [aka Saw-Tri]   shape
     Pulse = 2,       //                 pulsewidth
-
-    // SineSync = 4, //                 fb amount    sync freq
-
-    SawSync = 3, //                                  sync freq
-
-    // PWMSync = 5,  //                 pulsewidth   sync freq
+    SawSync = 3,     //                 ??           curve
 };
 
 EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[4] = {
     {OscWaveformShape::Sine, "Sine"},
     {OscWaveformShape::VarTriangle, "Tri-Saw"},
     {OscWaveformShape::Pulse, "Pulse"},
-    {OscWaveformShape::SawSync, "SawSync"},
+    {OscWaveformShape::SawSync, "HQ Saw"},
 };
 
 EnumInfo<OscWaveformShape> gOscWaveformShapeInfo("OscWaveformShape", gOscWaveformShapeItems);
@@ -770,6 +770,7 @@ struct SynthSettings
     {
         InitBasicLeadPreset("CrystalFields", OscWaveformShape::Pulse, 0.40f, p);
         p.mOsc[0].mGain = p.mOsc[1].mGain;
+        p.mOsc[0].mGain *= DecibelsToLinear(-9);
         p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
         p.mOsc[0].mPulseWidth = 0.5f;
         p.mOsc[0].mPitchSemis = -5;
@@ -790,9 +791,13 @@ struct SynthSettings
         p.mModulations[1].mSource = AnyModulationSource::LFO2;
         p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
         p.mModulations[1].SetScaleN11_Legacy(0.20f);
+
+        p.mModulations[2].mSource = AnyModulationSource::LFO1; // helps perturb for overdrive
+        p.mModulations[2].mDest = AnyModulationDestination::Osc1Frequency;
+        p.mModulations[2].SetScaleN11_Legacy(0.01f);
     }
 
-    static void InitCinematicTagPatch(SynthPreset &p, float gain)
+    static void InitCinematicTagPatch(SynthPreset &p)
     {
         p.mName = "Cinematic Tag";
         p.mSync = false;
@@ -806,17 +811,17 @@ struct SynthSettings
         p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[0].mPulseWidth = 0;
         p.mOsc[0].mPitchFine = 0.02f;
-        p.mOsc[0].mGain = ReasonableOscillatorGain * gain;
+        p.mOsc[0].mGain = ReasonableOscillatorGain;
 
         p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[1].mPulseWidth = 0;
         p.mOsc[1].mPitchFine = 0.02f;
-        p.mOsc[1].mGain = ReasonableOscillatorGain * gain;
+        p.mOsc[1].mGain = ReasonableOscillatorGain;
 
         p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[2].mPulseWidth = 0;
         p.mOsc[2].mPitchFine = -0.08f;
-        p.mOsc[2].mGain = ReasonableOscillatorGain * gain;
+        p.mOsc[2].mGain = ReasonableOscillatorGain;
     }
 
     static void InitBellycrawlPreset(SynthPreset &p)
@@ -832,11 +837,11 @@ struct SynthSettings
         p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
     }
 
-    static void InitPanFlutePreset(SynthPreset &p, float gain)
+    static void InitPanFlutePreset(SynthPreset &p)
     {
         InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, p);
         // make osc1 and osc2 equal
-        p.mOsc[1].mGain = p.mOsc[0].mGain = ReasonableOscillatorGain * 0.75f * gain;
+        p.mOsc[1].mGain = p.mOsc[0].mGain = ReasonableOscillatorGain * 0.75f;
         p.mOsc[1].mWaveform = p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
         p.mDetune = 0.04f;
 
@@ -1037,7 +1042,7 @@ struct SynthSettings
         p.mModulations[3].SetScaleN11_Legacy(0.04f);
     }
 
-    static void InitFluvial(SynthPreset &p, float gain)
+    static void InitFluvial(SynthPreset &p)
     {
         p.mName = "Fluvial";
         p.mOsc[0].mGain = 0.0f;
@@ -1048,10 +1053,10 @@ struct SynthSettings
         p.mVerbSend = 0.1f;
         p.mDelaySend = 0.1f;
 
-        p.mOsc[1].mGain = 0.15f * gain;
+        p.mOsc[1].mGain = 0.15f; // * gain;
         p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
 
-        p.mOsc[2].mGain = 0.15f * gain;
+        p.mOsc[2].mGain = 0.15f; // * gain;
         p.mOsc[2].mPulseWidth = 0.5f;
         p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
 
@@ -1070,7 +1075,7 @@ struct SynthSettings
         p.mModulations[1].SetScaleN11_Legacy(-0.3f);
     }
 
-    static void InitSynthTrumpetPreset(SynthPreset &p, float gain)
+    static void InitSynthTrumpetPreset(SynthPreset &p)
     {
         p.mName = "Trumpet";
         p.mSync = false;
@@ -1087,7 +1092,7 @@ struct SynthSettings
         p.mFilterKeytracking = 0;
 
         p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain =
-            (ReasonableOscillatorGain / 2.5f) * DecibelsToLinear(gain);
+            (ReasonableOscillatorGain / 2.5f); // * DecibelsToLinear(gain);
         p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
 
@@ -1136,16 +1141,16 @@ struct SynthSettings
         size_t i = 0;
 
         // InitFMPreset(mPresets[i++]);
-        InitFluvial(mPresets[i++], 1.0f);
+        InitFluvial(mPresets[i++]);
         InitSynccyLead(mPresets[i++]);
         InitPWMLead2(mPresets[i++]);
         InitPWMLeadStack(mPresets[i++]);
         InitDetunePWMLead(mPresets[i++]);
         InitCloudsStars(mPresets[i++]);
         InitCrystalFieldsPatch(mPresets[i++]);
-        InitCinematicTagPatch(mPresets[i++], 1.0f);
-        InitPanFlutePreset(mPresets[i++], 1.0f);
-        InitSynthTrumpetPreset(mPresets[i++], 0);
+        InitCinematicTagPatch(mPresets[i++]);
+        InitPanFlutePreset(mPresets[i++]);
+        InitSynthTrumpetPreset(mPresets[i++]);
         InitFunkyLeadPreset(mPresets[i++]);
         InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
 
@@ -1185,14 +1190,16 @@ struct SynthSettings
         InitBassoonoidPreset(
             mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
-        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag], DecibelsToLinear(-6.04f));
-        InitFluvial(mPresets[SynthPresetID_Fluvial], DecibelsToLinear(-6.04f));
+        InitSynccyLead(mPresets[SynthPresetID_SynccyLead]);
+        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag]);
+        InitFluvial(mPresets[SynthPresetID_Fluvial]);
         InitHarmSyncLead(mPresets[SynthPresetID_HarmSync]);
         InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);
         InitHarmPulseLead(mPresets[SynthPresetID_HarmPulse]);
         InitHarmSawLead(mPresets[SynthPresetID_HarmSaw]);
-        InitSynthTrumpetPreset(mPresets[SynthPresetID_SynthTrumpetDoubler], DecibelsToLinear(-6.04f));
-        InitPanFlutePreset(mPresets[SynthPresetID_PanFlute], DecibelsToLinear(-6.04f));
+        InitSynthTrumpetPreset(mPresets[SynthPresetID_SynthTrumpetDoubler]);
+        InitPanFlutePreset(mPresets[SynthPresetID_PanFlute]);
+        InitCrystalFieldsPatch(mPresets[SynthPresetID_Crystal]);
     }
 };
 
