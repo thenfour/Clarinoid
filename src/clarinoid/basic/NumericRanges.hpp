@@ -171,6 +171,9 @@ static const NumericEditRangeSpec<float> gFloat_0_1 =
     NumericEditRangeSpec<float>{0.0f, 1.0f, 0.2f /*course*/, 0.05f /*normal*/, 0.01f /*fine*/};
 static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<float>{-1.0f, 1.0f};
 
+static const NumericEditRangeSpec<float> gBreathMin =
+    NumericEditRangeSpec<float>{0.0f, 0.3f, 0.01f /*course*/, 0.005f /*normal*/, 0.001f /*fine*/};
+
 // used by detune
 static const NumericEditRangeSpec<float> gFloat_0_2 = NumericEditRangeSpec<float>{0.0f, 2.0f};
 

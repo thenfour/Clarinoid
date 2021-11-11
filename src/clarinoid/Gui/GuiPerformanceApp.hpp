@@ -11,13 +11,15 @@ namespace clarinoid
 struct GuiPerformanceApp : GuiApp
 {
     Metronome &mMetronome;
+    UnipolarMapping *mBreathCalibration = nullptr;
 
     virtual const char *DisplayAppGetName() override
     {
         return "GuiPerformanceApp";
     }
 
-    GuiPerformanceApp(IDisplay &display, Metronome &m) : GuiApp(display), mMetronome(m)
+    GuiPerformanceApp(IDisplay &display, Metronome &m /* PROMISE ME YOU WILL SET mBreathCalibration */)
+        : GuiApp(display), mMetronome(m)
     {
     }
 
@@ -158,6 +160,19 @@ struct GuiPerformanceApp : GuiApp
         "Stereo spread",                 // tooltip
         {[](void *cap) -> float & {
              return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthStereoSpread;
+         },
+         this},
+        AlwaysEnabled // always en
+    };
+
+    GuiBreathMinControl mBreathMin = {
+        0,                              // page
+        PointI::Construct(120, 7),      // pos
+        StandardRangeSpecs::gBreathMin, // range
+        "Breath min",                   // tooltip
+        {[](void *cap) -> float & {
+             CCASSERT(!!((GuiPerformanceApp *)cap)->mBreathCalibration);
+             return ((GuiPerformanceApp *)cap)->mBreathCalibration->mSrcMin;
          },
          this},
         AlwaysEnabled // always en
@@ -417,7 +432,7 @@ struct GuiPerformanceApp : GuiApp
         NullBoolBinding,
         AlwaysEnabled};
 
-    IGuiControl *mArray[43] = {
+    IGuiControl *mArray[44] = {
         // PAGE 1
         &mSynthAEnable,
         &mSynthBEnable,
@@ -435,6 +450,8 @@ struct GuiPerformanceApp : GuiApp
         &mLabelMst,
         &mGlobalGain,
         &mStereoSpread,
+
+        &mBreathMin,
 
         &mLabelFx,
         &mFXGain,

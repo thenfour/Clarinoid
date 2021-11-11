@@ -101,6 +101,7 @@ struct CCEWIMusicalState
     int noteOns = 0;
 
     int mLastPlayedNote = 0; // valid even when mLiveVoice is not.
+    int mLiveOctave = 0; // whether or not you're playing a note, indicates the octave # you're fingering. used for LED indication.
 
     int mDefaultBaseNote = 49; // C#2
     bool mHoldingBaseNote = false;
@@ -162,22 +163,26 @@ struct CCEWIMusicalState
                                                   mInput->mKeyRH3.CurrentValue(),
                                                   mInput->mKeyRH4.CurrentValue());
 
+        mLiveOctave = 2;
+
 #ifdef THREE_BUTTON_OCTAVES
-        // Buttons   Transpose:
-        //     1+2   -24
-        //     1     -12
-        //           0
-        //     2     +12
-        //     2+3   +24
-        //     3     +36
+        // Buttons   Transpose:   mLiveOctave
+        //     1+2   -24               0
+        //     1     -12               1
+        //           0                 2
+        //     2     +12               3
+        //     2+3   +24               4
+        //     3     +36               5
         if (mInput->mKeyOct1.CurrentValue())
         {
             if (mInput->mKeyOct2.CurrentValue())
             {
+                mLiveOctave = 0;
                 relativeNote -= 24; // holding both 1&2 keys = sub-bass
             }
             else
             {
+                mLiveOctave = 1;
                 relativeNote -= 12; // button 1 only
             }
         }
@@ -185,29 +190,35 @@ struct CCEWIMusicalState
         {
             if (mInput->mKeyOct3.CurrentValue())
             {
+                mLiveOctave = 4;
                 relativeNote += 24; // holding 2+3
             }
             else
             {
+                mLiveOctave = 3;
                 relativeNote += 12; // holding only 2
             }
         }
         else if (mInput->mKeyOct3.CurrentValue())
         {
+            mLiveOctave = 5;
             relativeNote += 36; // holding only 3
         }
 #endif
 #ifdef SIX_OCTAVE_SEQ_BUTTONS
         if (mInput->mKeyOct6.CurrentValue())
         {
+            mLiveOctave = 5;
             relativeNote += 36;
         }
         else if (mInput->mKeyOct5.CurrentValue())
         {
+            mLiveOctave = 4;
             relativeNote += 24;
         }
         else if (mInput->mKeyOct4.CurrentValue())
         {
+            mLiveOctave = 3;
             relativeNote += 12;
         }
         else if (mInput->mKeyOct3.CurrentValue())
@@ -216,10 +227,12 @@ struct CCEWIMusicalState
         }
         else if (mInput->mKeyOct2.CurrentValue())
         {
+            mLiveOctave = 1;
             relativeNote -= 12;
         }
         else if (mInput->mKeyOct1.CurrentValue())
         {
+            mLiveOctave = 0;
             relativeNote -= 24;
         }
 #endif

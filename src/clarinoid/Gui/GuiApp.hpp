@@ -14,6 +14,7 @@
 #include "GuiStereoSpreadControl.hpp"
 #include "GuiSynthPatchSelectControl.hpp"
 #include "GuiHarmPatchSelectControl.hpp"
+#include "GuiBreathSensitivityControl.hpp"
 
 namespace clarinoid
 {

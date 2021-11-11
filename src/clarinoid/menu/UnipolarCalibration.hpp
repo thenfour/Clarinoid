@@ -276,6 +276,7 @@ struct UnipolarCalibrationEditor : ISettingItemEditor
     {
         IDisplay *d = mpApi->GetDisplay();
         d->ClearState();
+        d->fillScreen(SSD1306_BLACK);
 
         switch (mSelectedParam)
         {
