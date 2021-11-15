@@ -72,13 +72,13 @@ struct PeakMeter
         {
             uint32_t color1 = 0; // default off=black.
             uint32_t color2 = 0; // default off=black.
-            uint32_t onColor = GRB(0, 128, 0);
+            uint32_t onColor = GRB(0, 128, 0); // GREEN
             if (i == (ledsPerBank - 1))
-                onColor = GRB(128, 0, 0);
+                onColor = GRB(((millis() / 180) & 1) * 128, 0, 0); // LAST LED = blinking RED
             else if (i == (ledsPerBank - 2))
-                onColor = GRB(128, 128, 0);
-            else if (i == (ledsPerBank - 3))
-                onColor = GRB(128, 128, 0);
+                onColor = GRB(32, 30, 0); // ORANGE
+            //else if (i == (ledsPerBank - 3))
+                //onColor = GRB(128, 128, 0); // also orange
             // else if (i == (ledsPerBank - 4))
             //     onColor = GRB(4, 4, 0);
 
@@ -101,20 +101,20 @@ DMAMEM byte gLED1DisplayMemory[28 * 12]; // 12 bytes per LED
 
 struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
 {
-    //     <---------10-------->                     <------------10------------->
-    //     2 3 4 5 6 7 8 9 10 11                     16 17 18 19 20 21 22 23 24 25
-    // 0 1                       12 13 ------- 14 15                               26 27
-    //                                                                       |  |
-    //                                                                       |  +- note held
-    //                                                                       +---- metronome
-    //                                               16 17 18 19 20 21 22 23
-    //                                                  +--+--+--+--+--+--+ peak
+    //     <---------10-------->                     <------------10------->
+    //     2 3 4 5 6 7 8 9 10 11                     16 17 18 19 20 21 22 23
+    // 0 1                       12 13 ------- 14 15                               
+    //                                                                 |  |
+    //                                                                 |  +- note held
+    //                                                                 +---- metronome
+    //                                               16 17 18 19 20 21
+    //                                                  +--+--+--+--+ peak
     //                                               + octave indicator.
     static constexpr int8_t iOctaveIndicator = 16;
-    static constexpr int8_t iFirstPeak = 23;
-    static constexpr int8_t iPeakCount = 7;
-    static constexpr int8_t iMetronomeIndicator = 24;
-    static constexpr int8_t iNoteHoldIndicator = 25;
+    static constexpr int8_t iFirstPeak = 21;
+    static constexpr int8_t iPeakCount = 5;
+    static constexpr int8_t iMetronomeIndicator = 22;
+    static constexpr int8_t iNoteHoldIndicator = 23;
 
     size_t serialCount = 0;
     PeakMeter<iPeakCount /* # leds */, 2500 /*holdtime*/, 200 /*fallofftime*/> mPeakMeter;
@@ -130,8 +130,6 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         case 13:
         case 14:
         case 15:
-            // case 26: // these are completely covered up
-            // case 27: // these are completely covered up
             return true;
         }
         return false;
@@ -148,7 +146,7 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         {
             if (IsInnerLED(i))
             {
-                this->SetPixel(i, 0, 0, 96); // inner leds = blue
+                this->SetPixel(i, 0, 0, 128); // inner leds = blue
             }
             else if (i >= 6 && i < 12)
             {
@@ -169,26 +167,27 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
         }
 
         // clarinoid & bassoonoid both have octave 0-5
+        float brightness = 0.25f;
         switch (mpProvider->ILEDDataProvider_GetMusicalState()->mLiveOctave)
         {
         case 0:
-            this->SetPixel(iOctaveIndicator, 0, 0, 0); // lowest = purple
+            this->SetPixel(iOctaveIndicator, GRBBrightness(32, 8, 8, brightness)); // lowest = brick red
             break;
         case 1:
-            this->SetPixel(iOctaveIndicator, 128, 0, 128); // green
+            this->SetPixel(iOctaveIndicator, GRBBrightness(0, 96, 12, brightness)); // green
             break;
         case 2:
-            this->SetPixel(iOctaveIndicator, 0, 0, 0); // default octave = off
+            this->SetPixel(iOctaveIndicator, GRBBrightness(32, 48, 10, brightness)); // default octave = sherbert
             break;
         case 3:
-            this->SetPixel(iOctaveIndicator, 0, 0, 128); // blue
+            this->SetPixel(iOctaveIndicator, GRBBrightness(0, 112, 112, brightness)); // foam green
             break;
         case 4:
-            this->SetPixel(iOctaveIndicator, 128, 0, 0); // red
+            this->SetPixel(iOctaveIndicator, GRBBrightness(36, 0, 128, brightness)); // purple
             break;
         default:
         case 5:
-            this->SetPixel(iOctaveIndicator, 128, 128, 128); // white
+            this->SetPixel(iOctaveIndicator, GRBBrightness(0, 0,192, brightness)); // blue
             break;
         }
 

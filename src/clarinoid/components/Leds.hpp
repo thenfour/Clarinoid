@@ -12,6 +12,14 @@ static constexpr uint32_t GRB(uint8_t r, uint8_t g, uint8_t b)
     return (r << 16) | (g << 8) | b;
 }
 
+static constexpr uint32_t GRBBrightness(uint8_t r, uint8_t g, uint8_t b, float brightness)
+{
+    r = (uint8_t)(brightness * r);
+    g = (uint8_t)(brightness * g);
+    b = (uint8_t)(brightness * b);
+    return GRB(r, g, b);
+}
+
 // wrapper around the ws2812serial, not really necessary but it helps a bit.
 template <uint8_t Tcount, uint8_t Tpin>
 struct Leds
