@@ -1190,6 +1190,7 @@ struct SynthSettings
         InitBassoonoidPreset(
             mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
+        InitPWMLead2(mPresets[SynthPresetID_PWMMono]);
         InitSynccyLead(mPresets[SynthPresetID_SynccyLead]);
         InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag]);
         InitFluvial(mPresets[SynthPresetID_Fluvial]);

@@ -6,7 +6,8 @@
 namespace clarinoid
 {
 
-static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 13;
+static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 14;
+static constexpr size_t SynthPresetID_PWMMono = SYNTH_PRESET_COUNT - 13;
 static constexpr size_t SynthPresetID_Crystal = SYNTH_PRESET_COUNT - 12;
 static constexpr size_t SynthPresetID_CinematicTag = SYNTH_PRESET_COUNT - 11;
 static constexpr size_t SynthPresetID_Fluvial = SYNTH_PRESET_COUNT - 10;

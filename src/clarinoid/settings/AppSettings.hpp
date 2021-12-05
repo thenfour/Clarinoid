@@ -153,18 +153,29 @@ struct AppSettings
         return mSynthSettings.mPresets[id];
     }
 
-    static void InitSpacecarPerf(PerformancePatch &p) // originally thicc
+    static void InitSoaringGuitarPerf(PerformancePatch &p) // originally thicc
     {
-        p.mName = "Spacecar";
+        p.mName = "Guitar";
         // p.mSynthStereoSpread = 0.35f;
         p.mMasterGain = DecibelsToLinear(0);
         p.mMasterFXGain = DecibelsToLinear(-8);
         p.mMasterFXEnable = false;
         p.mSynthPresetA = SynthPresetID_Fluvial;
-        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthAGain = DecibelsToLinear(-6);
         p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
-        p.mSynthBGain = DecibelsToLinear(-3);
+        p.mSynthBGain = DecibelsToLinear(-5);
     }
+
+    // static void InitSoaringGuitarPerf(PerformancePatch &p)
+    // {
+    //     p.mName = "Fluvial Guitar";
+    //     p.mMasterGain = DecibelsToLinear(0);
+    //     p.mMasterFXGain = DecibelsToLinear(-12);
+    //     p.mSynthPresetA = SynthPresetID_Fluvial;
+    //     p.mSynthAGain = DecibelsToLinear(-3);
+    //     p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+    //     p.mSynthBGain = DecibelsToLinear(-3);
+    // }
 
     static void InitCrystalPerf(PerformancePatch &p) // originally thicc
     {
@@ -174,23 +185,52 @@ struct AppSettings
         p.mMasterFXGain = DecibelsToLinear(-8);
         p.mMasterFXEnable = false;
         p.mSynthPresetA = SynthPresetID_Crystal;
-        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthAGain = DecibelsToLinear(-4.5f);
         p.mSynthPresetB = SynthPresetID_SynccyLead;
-        p.mSynthBGain = DecibelsToLinear(-3);
+        p.mSynthBGain = DecibelsToLinear(-8);
     }
 
-    static void InitSyntheticPerf(PerformancePatch &p) // originally thicc
-    {
-        p.mName = "SyntheticBeach";
-        // p.mSynthStereoSpread = 0.35f;
-        p.mMasterGain = DecibelsToLinear(0);
-        p.mMasterFXGain = DecibelsToLinear(-8);
-        p.mMasterFXEnable = false;
-        p.mSynthPresetA = SynthPresetID_Fluvial;
-        p.mSynthAGain = DecibelsToLinear(-3);
-        p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
-        p.mSynthBGain = DecibelsToLinear(-3);
-    }
+    // static void InitSyntheticPerf(PerformancePatch &p) // originally thicc
+    // {
+    //     p.mName = "SyntheticBeach";
+    //     // p.mSynthStereoSpread = 0.35f;
+    //     p.mMasterGain = DecibelsToLinear(0);
+    //     p.mMasterFXGain = DecibelsToLinear(-8);
+    //     p.mMasterFXEnable = false;
+    //     p.mSynthPresetA = SynthPresetID_Fluvial;
+    //     p.mSynthAGain = DecibelsToLinear(-3);
+    //     p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+    //     p.mSynthBGain = DecibelsToLinear(-3);
+    // }
+
+    // static void InitHightechPerf(PerformancePatch &p) // originally thicc
+    // {
+    //     p.mName = "Hightech";
+    //     // p.mSynthStereoSpread = 0.35f;
+    //     p.mMasterGain = DecibelsToLinear(0);
+    //     p.mMasterFXGain = DecibelsToLinear(-8);
+    //     p.mMasterFXEnable = false;
+    //     p.mSynthPresetA = SynthPresetID_Fluvial;
+    //     p.mSynthAGain = DecibelsToLinear(-3);
+    //     p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+    //     p.mSynthBGain = DecibelsToLinear(-3);
+    // }
+
+    // static void InitBellyPerf(PerformancePatch &p) // originally thicc
+    // {
+    //     p.mName = "BellyCrawl";
+    //     // p.mSynthStereoSpread = 0.35f;
+    //     p.mMasterGain = DecibelsToLinear(0);
+    //     p.mMasterFXGain = DecibelsToLinear(-8);
+    //     p.mMasterFXEnable = false;
+    //     p.mSynthPresetA = SynthPresetID_Fluvial;
+    //     p.mSynthAGain = DecibelsToLinear(-3);
+    //     p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+    //     p.mSynthBGain = DecibelsToLinear(-3);
+    // }
+
+
+
 
     static void InitClarinoidSoloPerf(PerformancePatch &p)
     {
@@ -223,71 +263,52 @@ struct AppSettings
         p.mHarmGain = DecibelsToLinear(-3);
     }
 
-    
-
-    static void InitHightechPerf(PerformancePatch &p) // originally thicc
-    {
-        p.mName = "Hightech";
-        // p.mSynthStereoSpread = 0.35f;
-        p.mMasterGain = DecibelsToLinear(0);
-        p.mMasterFXGain = DecibelsToLinear(-8);
-        p.mMasterFXEnable = false;
-        p.mSynthPresetA = SynthPresetID_Fluvial;
-        p.mSynthAGain = DecibelsToLinear(-3);
-        p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
-        p.mSynthBGain = DecibelsToLinear(-3);
-    }
-
-    static void InitBellyPerf(PerformancePatch &p) // originally thicc
-    {
-        p.mName = "BellyCrawl";
-        // p.mSynthStereoSpread = 0.35f;
-        p.mMasterGain = DecibelsToLinear(0);
-        p.mMasterFXGain = DecibelsToLinear(-8);
-        p.mMasterFXEnable = false;
-        p.mSynthPresetA = SynthPresetID_Fluvial;
-        p.mSynthAGain = DecibelsToLinear(-3);
-        p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
-        p.mSynthBGain = DecibelsToLinear(-3);
-    }
-
     static void InitSilkSuspendersPerf(PerformancePatch &p)
     {
-        p.mName = "Silk Susp";
+        p.mName = "Pan Flute";
         p.mMasterGain = DecibelsToLinear(0);
         p.mSynthPresetA = SynthPresetID_PanFlute;
-        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthAGain = DecibelsToLinear(-6);
         p.mSynthPresetB = SynthPresetID_CinematicTag;
-        p.mSynthBGain = DecibelsToLinear(-3);
+        p.mSynthBGain = DecibelsToLinear(-5.5f);
         p.mMasterFXEnable = false;
         p.mMasterFXGain = DecibelsToLinear(-10);
         p.mBPM = 110;
     }
 
-    static void InitSoaringGuitarPerf(PerformancePatch &p)
+    // a mellow synthwave style lead
+    static void InitSawyPerf(PerformancePatch &p)
     {
-        p.mName = "Soaring Guitar";
+        p.mName = "Sawy Lead";
         p.mMasterGain = DecibelsToLinear(0);
-        p.mSynthPresetA = SynthPresetID_Fluvial;
-        p.mSynthAGain = DecibelsToLinear(-3);
-        p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
-        p.mSynthBGain = DecibelsToLinear(-3);
-        p.mMasterFXGain = DecibelsToLinear(-12);
+        p.mSynthPresetA = SynthPresetID_CinematicTag;
+        p.mSynthAGain = DecibelsToLinear(-5.5);
+        p.mSynthPresetB = SynthPresetID_PWMMono;
+        p.mSynthBGain = DecibelsToLinear(-5);
+        p.mMasterFXEnable = false;
+        p.mMasterFXGain = DecibelsToLinear(-10);
+    }
+
+    static void InitSyncyPerf(PerformancePatch &p)
+    {
+        p.mName = "Default Sync";
+        p.mMasterFXEnable = false;
+        p.mSynthAGain = DecibelsToLinear(-4.5f);
+        p.mMasterFXGain = DecibelsToLinear(-10);
     }
 
     AppSettings()
     {
         size_t i = 1;                                // 0 = default, no performance
-        InitSpacecarPerf(mPerformancePatches[i++]);  // spacecar
-        InitCrystalPerf(mPerformancePatches[i++]);   // crystal
-        InitSyntheticPerf(mPerformancePatches[i++]); // synthetic
-        InitClarinoidSoloPerf(mPerformancePatches[i++]); // 
-        InitHightechPerf(mPerformancePatches[i++]);  // hightech
-        InitBellyPerf(mPerformancePatches[i++]);     // belly
-        InitSilkSuspendersPerf(mPerformancePatches[i++]);
-        InitChameleon(mPerformancePatches[i++]);
 
         InitSoaringGuitarPerf(mPerformancePatches[i++]);
+        InitCrystalPerf(mPerformancePatches[i++]);   // crystal
+        InitSawyPerf(mPerformancePatches[i++]);
+        InitSyncyPerf(mPerformancePatches[i++]);
+        InitSilkSuspendersPerf(mPerformancePatches[i++]);
+
+        InitChameleon(mPerformancePatches[i++]);
+        InitClarinoidSoloPerf(mPerformancePatches[i++]); // 
     }
 };
 
