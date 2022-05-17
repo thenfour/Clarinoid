@@ -511,7 +511,7 @@ struct SynthPreset
     float mDetune = 0;
 
     float mSyncMultMin = 1.4f;
-    float mSyncMultMax = 3.0f;
+    float mSyncMultMax = 4.0f;
     bool mSync = true;
 
     bool mDCFilterEnabled = true;
@@ -797,30 +797,31 @@ struct SynthSettings
         p.mModulations[2].SetScaleN11_Legacy(0.01f);
     }
 
-    static void InitCinematicTagPatch(SynthPreset &p)
+    static void InitCinematicTagPatch(SynthPreset &p, const char *name, float detuneAmt, float pitchA, float pitchB)
     {
-        p.mName = "Cinematic Tag";
+        p.mName = name;//"Cinematic Tag";
         p.mSync = false;
-        p.mDetune = 0.06f;
+        p.mDetune = detuneAmt;
+        p.mFilterKeytracking = 0.8f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog2;
-        p.mFilterMaxFreq = 8750;
-        p.mFilterSaturation = 0.20f;
+        p.mFilterMaxFreq = 22050;
+        p.mFilterSaturation = 0.0f;
         p.mFilterQ = 0.0f;
 
         p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[0].mPulseWidth = 0;
-        p.mOsc[0].mPitchFine = 0.02f;
+        p.mOsc[0].mPitchFine = pitchA;
         p.mOsc[0].mGain = ReasonableOscillatorGain;
 
         p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[1].mPulseWidth = 0;
-        p.mOsc[1].mPitchFine = 0.02f;
+        p.mOsc[1].mPitchFine = pitchA;
         p.mOsc[1].mGain = ReasonableOscillatorGain;
 
         p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[2].mPulseWidth = 0;
-        p.mOsc[2].mPitchFine = -0.08f;
+        p.mOsc[2].mPitchFine = pitchB;
         p.mOsc[2].mGain = ReasonableOscillatorGain;
     }
 
@@ -1005,6 +1006,21 @@ struct SynthSettings
         p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
     }
 
+    static void InitCrystalSyncLead(SynthPreset &p)
+    {
+        p.mName = "CrystalSync"; // default.
+        p.mModulations[0].SetScaleN11_Legacy(0.9f);
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+
+        p.mModulations[1].SetScaleN11_Legacy(0.015f);
+        p.mModulations[1].mSource = AnyModulationSource::LFO2;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
+
+        p.mSyncMultMin = 2.5f;
+        p.mSyncMultMax = 0.7f;
+    }
+
     static void InitPWMLead2(SynthPreset &p)
     {
         InitBasicLeadPreset("PWM Mono Lead", OscWaveformShape::Pulse, 0.50f, p);
@@ -1148,7 +1164,7 @@ struct SynthSettings
         InitDetunePWMLead(mPresets[i++]);
         InitCloudsStars(mPresets[i++]);
         InitCrystalFieldsPatch(mPresets[i++]);
-        InitCinematicTagPatch(mPresets[i++]);
+        InitCinematicTagPatch(mPresets[i++], "Cinematic", 0.06f , 0.02f, -0.08f);
         InitPanFlutePreset(mPresets[i++]);
         InitSynthTrumpetPreset(mPresets[i++]);
         InitFunkyLeadPreset(mPresets[i++]);
@@ -1191,8 +1207,9 @@ struct SynthSettings
             mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
         InitPWMLead2(mPresets[SynthPresetID_PWMMono]);
+        InitCrystalSyncLead(mPresets[SynthPresetID_CrystalSync]);
         InitSynccyLead(mPresets[SynthPresetID_SynccyLead]);
-        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag]);
+        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag], "SynthwaveB", 0.06f , 0.025f, -0.09f);
         InitFluvial(mPresets[SynthPresetID_Fluvial]);
         InitHarmSyncLead(mPresets[SynthPresetID_HarmSync]);
         InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);
@@ -1201,6 +1218,7 @@ struct SynthSettings
         InitSynthTrumpetPreset(mPresets[SynthPresetID_SynthTrumpetDoubler]);
         InitPanFlutePreset(mPresets[SynthPresetID_PanFlute]);
         InitCrystalFieldsPatch(mPresets[SynthPresetID_Crystal]);
+        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTagAlt], "SynthwaveA", 0.1f , 0.015f, -0.07f);
     }
 };
 

@@ -198,7 +198,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
         mAppSettings.mControlMappings[breathMappingIndex] =
-            ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.10f, 0.5f);
+            ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.10f, 0.35f);
         mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveP = 0.38f;
         mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0;
         mGuiPerformanceApp.mBreathCalibration = &(mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping);
@@ -206,10 +206,10 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[pitchUpMappingIndex] = ControlMapping::MakeUnipolarMapping(
             PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);
         mAppSettings.mControlMappings[pitchUpMappingIndex].mOperator = ControlMapping::Operator::Set;
-        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMin = 0.43f;
-        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMax = 0.06f;
-        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
-        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveS = 0;
+        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMin = 0.45f;
+        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mSrcMax = 0.08f;
+        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveP = 0.0f;
+        mAppSettings.mControlMappings[pitchUpMappingIndex].mUnipolarMapping.mCurveS = -0.4f;
 
         mAppSettings.mControlMappings[pitchDownMappingIndex] = ControlMapping::MakeUnipolarMapping(
             PhysicalControl::Pitch, ControlMapping::Function::PitchBend, 0.0f, 1.0f);

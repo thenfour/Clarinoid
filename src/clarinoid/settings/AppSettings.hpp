@@ -97,7 +97,7 @@ struct AppSettings
     // the idea here is that the bigger the interval, the bigger the delay required to lock in the note
     float mNoteChangeSmoothingIntervalFrameFactor = 0.30f;
 
-    bool mDisplayDim = true;
+    bool mDisplayDim = false;
 
     bool mMetronomeSoundOn = false;
     float mMetronomeGain = 0.34f;
@@ -155,15 +155,29 @@ struct AppSettings
 
     static void InitSoaringGuitarPerf(PerformancePatch &p) // originally thicc
     {
-        p.mName = "Guitar";
-        // p.mSynthStereoSpread = 0.35f;
-        p.mMasterGain = DecibelsToLinear(0);
-        p.mMasterFXGain = DecibelsToLinear(-8);
+        p.mName = "/k Spacecar";
+        p.mMasterGain = DecibelsToLinear(-10);
         p.mMasterFXEnable = false;
-        p.mSynthPresetA = SynthPresetID_Fluvial;
-        p.mSynthAGain = DecibelsToLinear(-6);
+        p.mSynthPresetA = SynthPresetID_PWMMono;
+        p.mSynthAGain = DecibelsToLinear(-3);
         p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
-        p.mSynthBGain = DecibelsToLinear(-5);
+        p.mSynthBGain = DecibelsToLinear(-12);
+        p.mHarmPreset = HarmPresetID_WorldPeace_Bb;
+        p.mHarmEnabled = false;
+    }
+
+    static void InitRoadPerf(PerformancePatch &p) // originally thicc
+    {
+        p.mName = "/k Road";
+        p.mMasterGain = DecibelsToLinear(-9.5);
+        p.mMasterFXEnable = false;
+        p.mSynthPresetA = SynthPresetID_PWMMono;
+        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthPresetB = SynthPresetID_SynthTrumpetDoubler;
+        p.mSynthBGain = DecibelsToLinear(-12);
+        p.mHarmPreset = HarmPresetID_Road;
+        p.mHarmGain = DecibelsToLinear(-6);
+        p.mHarmEnabled = false;
     }
 
     // static void InitSoaringGuitarPerf(PerformancePatch &p)
@@ -179,14 +193,12 @@ struct AppSettings
 
     static void InitCrystalPerf(PerformancePatch &p) // originally thicc
     {
-        p.mName = "Crystal";
-        // p.mSynthStereoSpread = 0.35f;
-        p.mMasterGain = DecibelsToLinear(0);
-        p.mMasterFXGain = DecibelsToLinear(-8);
+        p.mName = "/k Crystal";
+        p.mMasterGain = DecibelsToLinear(-8.7f);
         p.mMasterFXEnable = false;
         p.mSynthPresetA = SynthPresetID_Crystal;
         p.mSynthAGain = DecibelsToLinear(-4.5f);
-        p.mSynthPresetB = SynthPresetID_SynccyLead;
+        p.mSynthPresetB = SynthPresetID_CrystalSync;
         p.mSynthBGain = DecibelsToLinear(-8);
     }
 
@@ -243,7 +255,7 @@ struct AppSettings
         p.mSynthAGain = DecibelsToLinear(-3);
         p.mSynthPresetB = 4; // detuned PWM lead
         p.mSynthBGain = DecibelsToLinear(-3);
-        p.mHarmPreset = 1; // world peace Eb -> col bass -> quintal -> fusion
+        p.mHarmPreset = HarmPresetID_WorldPeace_Eb; // world peace Eb -> col bass -> quintal -> fusion
         p.mHarmEnabled = false;
         p.mHarmGain = DecibelsToLinear(-3);
     }
@@ -258,15 +270,15 @@ struct AppSettings
         p.mSynthAGain = DecibelsToLinear(-3);
         p.mSynthPresetB = 4; // detuned PWM lead
         p.mSynthBGain = DecibelsToLinear(-10);
-        p.mHarmPreset = 5; // world peace Db
-        p.mHarmEnabled = true;
+        p.mHarmPreset = HarmPresetID_WorldPeace_Db;
+        p.mHarmEnabled = false;
         p.mHarmGain = DecibelsToLinear(-3);
     }
 
     static void InitSilkSuspendersPerf(PerformancePatch &p)
     {
-        p.mName = "Pan Flute";
-        p.mMasterGain = DecibelsToLinear(0);
+        p.mName = "/k Pan Flute";
+        p.mMasterGain = DecibelsToLinear(-8);
         p.mSynthPresetA = SynthPresetID_PanFlute;
         p.mSynthAGain = DecibelsToLinear(-6);
         p.mSynthPresetB = SynthPresetID_CinematicTag;
@@ -274,25 +286,32 @@ struct AppSettings
         p.mMasterFXEnable = false;
         p.mMasterFXGain = DecibelsToLinear(-10);
         p.mBPM = 110;
+        p.mHarmEnabled = false;
+        p.mHarmPreset = HarmPresetID_WorldPeace_F;
     }
 
     // a mellow synthwave style lead
-    static void InitSawyPerf(PerformancePatch &p)
+    static void InitSynthwavePerf(PerformancePatch &p)
     {
-        p.mName = "Sawy Lead";
-        p.mMasterGain = DecibelsToLinear(0);
+        p.mName = "/k Synthwave";
+        p.mMasterGain = DecibelsToLinear(-7);
+        p.mSynthStereoSpread = 0.8f;
         p.mSynthPresetA = SynthPresetID_CinematicTag;
-        p.mSynthAGain = DecibelsToLinear(-5.5);
-        p.mSynthPresetB = SynthPresetID_PWMMono;
-        p.mSynthBGain = DecibelsToLinear(-5);
+        p.mSynthAGain = DecibelsToLinear(-6);
+        p.mSynthPresetB = SynthPresetID_CinematicTagAlt;
+        p.mSynthBGain = DecibelsToLinear(-6);
         p.mMasterFXEnable = false;
         p.mMasterFXGain = DecibelsToLinear(-10);
+        p.mHarmEnabled = false;
+        p.mHarmPreset = HarmPresetID_WorldPeace_Gb;
+        p.mHarmGain = DecibelsToLinear(-6);
     }
 
     static void InitSyncyPerf(PerformancePatch &p)
     {
-        p.mName = "Default Sync";
+        p.mName = "/k Sync";
         p.mMasterFXEnable = false;
+        p.mMasterGain = DecibelsToLinear(-10);
         p.mSynthAGain = DecibelsToLinear(-4.5f);
         p.mMasterFXGain = DecibelsToLinear(-10);
     }
@@ -302,10 +321,11 @@ struct AppSettings
         size_t i = 1;                                // 0 = default, no performance
 
         InitSoaringGuitarPerf(mPerformancePatches[i++]);
-        InitCrystalPerf(mPerformancePatches[i++]);   // crystal
-        InitSawyPerf(mPerformancePatches[i++]);
+        InitRoadPerf(mPerformancePatches[i++]);
         InitSyncyPerf(mPerformancePatches[i++]);
+        InitSynthwavePerf(mPerformancePatches[i++]);
         InitSilkSuspendersPerf(mPerformancePatches[i++]);
+        InitCrystalPerf(mPerformancePatches[i++]);   // crystal
 
         InitChameleon(mPerformancePatches[i++]);
         InitClarinoidSoloPerf(mPerformancePatches[i++]); // 

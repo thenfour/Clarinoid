@@ -6,6 +6,8 @@
 namespace clarinoid
 {
 
+static constexpr size_t SynthPresetID_CrystalSync = SYNTH_PRESET_COUNT - 16;
+static constexpr size_t SynthPresetID_CinematicTagAlt = SYNTH_PRESET_COUNT - 15;
 static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 14;
 static constexpr size_t SynthPresetID_PWMMono = SYNTH_PRESET_COUNT - 13;
 static constexpr size_t SynthPresetID_Crystal = SYNTH_PRESET_COUNT - 12;
@@ -20,6 +22,13 @@ static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
 static constexpr size_t SynthPresetID_HarmDetunedSaws = SYNTH_PRESET_COUNT - 3;
 static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
 static constexpr size_t SynthPresetID_HarmTri = SYNTH_PRESET_COUNT - 1;
+
+static constexpr size_t HarmPresetID_WorldPeace_Eb = HARM_PRESET_COUNT - 1;
+static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
+static constexpr size_t HarmPresetID_WorldPeace_F = HARM_PRESET_COUNT - 3;
+static constexpr size_t HarmPresetID_WorldPeace_Db = HARM_PRESET_COUNT - 4;
+static constexpr size_t HarmPresetID_WorldPeace_Gb = HARM_PRESET_COUNT - 5;
+static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 6;
 
 enum class HarmScaleRefType : uint8_t
 {
@@ -499,6 +508,7 @@ struct HarmSettings
         p.mName = name;//"World Peace Eb";
         p.mPresetScale.mRootNoteIndex = scaleRoot;//Note::Eb;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
+        p.mStereoSeparation = 0.7f;
 
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
@@ -522,6 +532,34 @@ struct HarmSettings
         p.mVoiceSettings[3].mSequenceLength = 2;
         p.mVoiceSettings[3].mSequence[0] = -5; // D
         p.mVoiceSettings[3].mSequence[1] = -7; // Bb
+    }
+
+    static void InitRoadPreset(HarmPreset &p)
+    {
+        p.mName = "Road Ephryg";
+        p.mPresetScale.mRootNoteIndex = Note::F_;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
+        p.mStereoSeparation = 0.7f;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -1; // A
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = -3; // F
+
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[2].mSequenceLength = 1;
+        p.mVoiceSettings[2].mSequence[0] = -4; // E
+
+        // p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
+        // p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+        // p.mVoiceSettings[3].mSequenceLength = 1;
+        // p.mVoiceSettings[3].mSequence[0] = -5; // D
     }
 
     void InitOctDownPreset(HarmPreset &p)
@@ -589,8 +627,6 @@ struct HarmSettings
         InitQuartalHarmPreset2(mPresets[iPreset++]);
         InitFuzionPreset(mPresets[iPreset++]);
 
-        InitBigBandPreset(mPresets[iPreset++], "World Peace Db", Note::Db);
-
         // InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
         // InitSlumsHarmPreset(mPresets[iPreset++]);
         // InitBotanicalHarmPreset(mPresets[iPreset++]);
@@ -608,6 +644,13 @@ struct HarmSettings
         InitMin6Preset(mPresets[iPreset++]);
         InitQuartQuintHarmPreset(mPresets[iPreset++]);
         // InitQuartalHarmPreset1(mPresets[iPreset++]); <-- it's nice, but too similar to the other quartal
+
+        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Db], "World Peace Db", Note::Db);
+        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_F], "World Peace F", Note::F_);
+        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Bb], "World Peace Bb", Note::Bb);
+        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Eb], "World Peace Eb", Note::Eb);
+        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Gb], "World Peace Gb", Note::Gb);
+        InitRoadPreset(mPresets[HarmPresetID_Road]);
     }
 };
 
