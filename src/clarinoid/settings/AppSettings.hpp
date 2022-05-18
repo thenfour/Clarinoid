@@ -294,7 +294,7 @@ struct AppSettings
     static void InitSynthwavePerf(PerformancePatch &p)
     {
         p.mName = "/k Synthwave";
-        p.mMasterGain = DecibelsToLinear(-7.5f);
+        p.mMasterGain = DecibelsToLinear(-5.5f);
         p.mSynthStereoSpread = 0.8f;
         p.mSynthPresetA = SynthPresetID_CinematicTag;
         p.mSynthAGain = DecibelsToLinear(-6);

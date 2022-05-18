@@ -847,12 +847,12 @@ struct SynthSettings
         p.mDetune = 0.04f;
 
         p.mFilterType = ClarinoidFilterType::BP_Moog4;
-        p.mFilterMaxFreq = 11000.0f;
-        p.mFilterKeytracking = 1.0f;
+        p.mFilterKeytracking = 0.8f;
+        p.mFilterMaxFreq = 15000;
         p.mFilterQ = 0.0f;
-        p.mFilterSaturation = 0.3f;
+        p.mFilterSaturation = 0.2f;
 
-        p.mEnv1.mDecayMS = 100;
+        p.mEnv1.mDecayMS = 115;
 
         p.mModulations[1].mSource = AnyModulationSource::ENV1;
         p.mModulations[1].mDest = AnyModulationDestination::Osc2Frequency;
@@ -997,6 +997,8 @@ struct SynthSettings
     static void InitSynccyLead(SynthPreset &p)
     {
         p.mName = "Synccy Lead"; // default.
+        p.mFilterKeytracking = 0.8f;
+        p.mFilterMaxFreq = 22000;
         p.mModulations[0].SetScaleN11_Legacy(0.9f);
         p.mModulations[0].mSource = AnyModulationSource::LFO1;
         p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
