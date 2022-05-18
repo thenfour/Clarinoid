@@ -169,7 +169,7 @@ struct AppSettings
     static void InitRoadPerf(PerformancePatch &p) // originally thicc
     {
         p.mName = "/k Road";
-        p.mMasterGain = DecibelsToLinear(-9.5);
+        p.mMasterGain = DecibelsToLinear(-10);
         p.mMasterFXEnable = false;
         p.mSynthPresetA = SynthPresetID_PWMMono;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -194,7 +194,7 @@ struct AppSettings
     static void InitCrystalPerf(PerformancePatch &p) // originally thicc
     {
         p.mName = "/k Crystal";
-        p.mMasterGain = DecibelsToLinear(-8.7f);
+        p.mMasterGain = DecibelsToLinear(-8.7f + 0.6f);
         p.mMasterFXEnable = false;
         p.mSynthPresetA = SynthPresetID_Crystal;
         p.mSynthAGain = DecibelsToLinear(-4.5f);
@@ -278,7 +278,7 @@ struct AppSettings
     static void InitSilkSuspendersPerf(PerformancePatch &p)
     {
         p.mName = "/k Pan Flute";
-        p.mMasterGain = DecibelsToLinear(-8);
+        p.mMasterGain = DecibelsToLinear(-8.0f + 3.3f - 0.5f);
         p.mSynthPresetA = SynthPresetID_PanFlute;
         p.mSynthAGain = DecibelsToLinear(-6);
         p.mSynthPresetB = SynthPresetID_CinematicTag;
@@ -294,7 +294,7 @@ struct AppSettings
     static void InitSynthwavePerf(PerformancePatch &p)
     {
         p.mName = "/k Synthwave";
-        p.mMasterGain = DecibelsToLinear(-7);
+        p.mMasterGain = DecibelsToLinear(-7.5f);
         p.mSynthStereoSpread = 0.8f;
         p.mSynthPresetA = SynthPresetID_CinematicTag;
         p.mSynthAGain = DecibelsToLinear(-6);
@@ -311,7 +311,7 @@ struct AppSettings
     {
         p.mName = "/k Sync";
         p.mMasterFXEnable = false;
-        p.mMasterGain = DecibelsToLinear(-10);
+        p.mMasterGain = DecibelsToLinear(-10.0f + 1.4f);
         p.mSynthAGain = DecibelsToLinear(-4.5f);
         p.mMasterFXGain = DecibelsToLinear(-10);
     }
