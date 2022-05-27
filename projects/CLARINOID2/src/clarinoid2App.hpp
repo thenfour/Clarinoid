@@ -198,7 +198,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
         mAppSettings.mControlMappings[breathMappingIndex] =
-            ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.10f, 0.35f);
+            ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.102f, 0.35f);
         mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveP = 0.38f;
         mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0;
         mGuiPerformanceApp.mBreathCalibration = &(mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping);

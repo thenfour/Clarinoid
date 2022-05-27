@@ -1,10 +1,14 @@
 {
 	"folders": [
-    {
-      "path": "projects\\CLARINOID2"
-    },
+		{
+			"path": "projects\\CLARINOID2"
+		},
 		{
 			"path": "src"
+		},
+		{
+			"name": "midi_inserter",
+			"path": "midi_inserter\\midi_inserter"
 		}
 	],
 	"settings": {

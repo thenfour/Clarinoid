@@ -1008,6 +1008,39 @@ struct SynthSettings
         p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
     }
 
+    static void InitFluvial(SynthPreset &p)
+    {
+        p.mName = "Fluvial";
+        p.mOsc[0].mGain = 0.0f;
+        p.mSync = true;
+        p.mSyncMultMin = 0.15f;
+        p.mSyncMultMax = 1.95f;
+        p.mDetune = 0.0f;
+        p.mVerbSend = 0.1f;
+        p.mDelaySend = 0.1f;
+
+        p.mOsc[1].mGain = 0.15f; // * gain;
+        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+
+        p.mOsc[2].mGain = 0.15f; // * gain;
+        p.mOsc[2].mPulseWidth = 0.5f;
+        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+
+        p.mFilterType = ClarinoidFilterType::LP_K35;
+        p.mFilterMinFreq = 0.0f;
+        p.mFilterMaxFreq = 22000;
+        p.mFilterSaturation = 0.60f;
+        p.mFilterQ = 0.25f;
+        p.mFilterKeytracking = 0.8f;
+
+        p.mModulations[0].mSource = AnyModulationSource::Breath;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc3Frequency;
+        p.mModulations[0].SetScaleN11_Legacy(-0.02f);
+        p.mModulations[1].mSource = AnyModulationSource::Breath;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc3PulseWidth;
+        p.mModulations[1].SetScaleN11_Legacy(-0.3f);
+    }
+
     static void InitCrystalSyncLead(SynthPreset &p)
     {
         p.mName = "CrystalSync"; // default.
@@ -1058,39 +1091,6 @@ struct SynthSettings
         p.mModulations[3].mSource = AnyModulationSource::Breath;
         p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
         p.mModulations[3].SetScaleN11_Legacy(0.04f);
-    }
-
-    static void InitFluvial(SynthPreset &p)
-    {
-        p.mName = "Fluvial";
-        p.mOsc[0].mGain = 0.0f;
-        p.mSync = true;
-        p.mSyncMultMin = 0.15f;
-        p.mSyncMultMax = 1.95f;
-        p.mDetune = 0.0f;
-        p.mVerbSend = 0.1f;
-        p.mDelaySend = 0.1f;
-
-        p.mOsc[1].mGain = 0.15f; // * gain;
-        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
-
-        p.mOsc[2].mGain = 0.15f; // * gain;
-        p.mOsc[2].mPulseWidth = 0.5f;
-        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
-
-        p.mFilterType = ClarinoidFilterType::LP_K35;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 22000;
-        p.mFilterSaturation = 0.60f;
-        p.mFilterQ = 0.25f;
-        p.mFilterKeytracking = 1.0f;
-
-        p.mModulations[0].mSource = AnyModulationSource::Breath;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc3Frequency;
-        p.mModulations[0].SetScaleN11_Legacy(-0.02f);
-        p.mModulations[1].mSource = AnyModulationSource::Breath;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc3PulseWidth;
-        p.mModulations[1].SetScaleN11_Legacy(-0.3f);
     }
 
     static void InitSynthTrumpetPreset(SynthPreset &p)
