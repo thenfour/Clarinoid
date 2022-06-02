@@ -1,3 +1,0 @@
-(sym_lib_table
-  (lib (name "clarinoid3-rescue")(type "Legacy")(uri "${KIPRJMOD}/clarinoid3-rescue.lib")(options "")(descr ""))
-)
