@@ -1,4 +1,4 @@
-20346837817733003
+20356767534518771
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -78792,12 +78792,26 @@ rotary encoder
 5
 4
 SamacSys_Parts
+1043
+1043-3
+Undefined or Miscellaneous
+0
+5
+5
+SamacSys_Parts
 21992304
 2199230-4_1
 Connector
 0
 69
 69
+SamacSys_Parts
+ABPMAND001PG2A3
+ABPMAND001PG2A3-2
+Undefined or Miscellaneous
+0
+6
+6
 SamacSys_Parts
 B3F-4055
 B3F-4055
@@ -78847,6 +78861,13 @@ Integrated Circuit
 0
 16
 16
+SamacSys_Parts
+TL3305AF160QG
+TL3305AF160QG
+Switch
+0
+4
+4
 Sensor
 Aosong_DHT11_5.5x12.0_P2.54mm
 Temperature and humidity module, http://akizukidenshi.com/download/ds/aosong/DHT11.pdf
@@ -85953,6 +85974,13 @@ HILETGOPCM5102
 15
 15
 clarinoid2
+Inductor_MCS0630-1R0MN2
+https://lcsc.com/search?q=MCS0630-1R0MN2
+
+0
+2
+2
+clarinoid2
 Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal
 3.5 mm, Stereo, Right Angle, Surface Mount (SMT), Audio Jack Connector (https://www.cui.com/product/resource/sj-352x-smt-series.pdf)
 3.5mm audio cui horizontal jack stereo
@@ -86051,6 +86079,13 @@ SON160P500X500X140-6N
 6
 6
 clarinoid2
+SSD1306_128x64_approximate
+
+
+0
+0
+0
+clarinoid2
 SolderWire-0.25sqmm_1x07_P4.2mm_D0.65mm_OD1.7mm
 Soldered wire connection, for 7 times 0.25 mm² wires, basic insulation, conductor diameter 0.65mm, outer diameter 1.7mm, size source Multi-Contact FLEXI-E_0.25 (https://ec.staubli.com/AcroFiles/Catalogues/TM_Cab-Main-11014119_(en)_hi.pdf), bend radius 3 times outer diameter, generated with kicad-footprint-generator
 connector wire 0.25sqmm
@@ -86085,6 +86120,13 @@ Teensy_LC
 0
 28
 28
+clarinoid2
+USB_C_Receptacle_XKB_U262-16XN-4BVC11
+USB Type C, right-angle, SMT, https://datasheet.lcsc.com/szlcsc/1811141824_XKB-Enterprise-U262-161N-4BVC11_C319148.pdf
+USB C Type-C Receptacle SMD
+0
+20
+17
 clarinoid2
 USB_Micro-B_Amphenol_10103594-0001LF_Horizontal
 Micro USB Type B 10103594-0001LF, http://cdn.amphenol-icc.com/media/wysiwyg/files/drawing/10103594.pdf
