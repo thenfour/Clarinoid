@@ -1,0 +1,5 @@
+Default	True	2.0	3
+gnd	False	2.0	3
+power3v3	False	2.0	3
+power5v	False	2.0	3
+False	True
