@@ -1,4 +1,4 @@
-20401488850152171
+20411444721438481
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -86023,6 +86023,13 @@ Bourns_ENC_PEC11R-4215F-S0024
 7
 7
 clarinoid2
+Bourns_ENC_PEC11R-4215F-S0024 panel cutout shaft downward
+
+
+0
+0
+0
+clarinoid2
 Bourns_POT_PTR902-2020K-A103 Panel interconnect
 match with subboard
 
@@ -86065,7 +86072,7 @@ CLARINOID_M6_6OCTAVES_p13.00_offset1.0mm
 6
 6
 clarinoid2
-CLARINOID_M6_6OCTAVES_p13.25_offset1.0mm_copy
+CLARINOID_M6_6OCTAVES_p13.3_offset1.0mm
 
 
 0
@@ -86078,6 +86085,20 @@ CLARINOID_M6_6OCTAVES_sandbox
 0
 36
 6
+clarinoid2
+DecorativeGroundPad
+
+
+0
+96
+1
+clarinoid2
+DevboardCorner
+
+
+0
+1
+0
 clarinoid2
 HILETGOPCM5102
 
@@ -86120,6 +86141,13 @@ DIPS1524W75P254L2520H805Q18N many-segment led thing
 0
 0
 0
+clarinoid2
+LED_WS2812B-B Worldsemi
+LCSC C2761795
+
+0
+4
+4
 clarinoid2
 MAT060-B100K-231-A01
 
@@ -86198,6 +86226,13 @@ NKK_FB_PANEL
 0
 0
 clarinoid2
+Pad_Plain
+for test points etc with NO markings, NOthing special.
+
+0
+1
+1
+clarinoid2
 SOFNG TF-15x15 (LCSC C111196)
 edited version of mouser's GCT (GLOBAL CONNECTOR TECHNOLOGY) MEM2075-00-140-01-A
 Connector
@@ -86220,6 +86255,13 @@ SSD1306_128x64_approximate
 0
 clarinoid2
 SWITCHCRAFT_35RAPC4BV4
+
+
+0
+5
+5
+clarinoid2
+SWITCHCRAFT_35RAPC4BV4_OvalHoles
 
 
 0
