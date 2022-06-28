@@ -21,3 +21,9 @@ for proto & testing of physical:
      this will put it together as it's more critical for spacing / grounding,
      and it will ensure everything is close to the audio out jack. let's go to 02.
 02 = trying adding more to pot subboard
+03 = subboards & routings are done. but i'm not satisfied with the interconnect headers;
+     i don't like that these are directly exposed on the outside wall;
+     let's try SMT pin header footprints.
+     i had also considered more sub-boards, maybe again mounted @ 90 degrees like
+     the potentiometer. but mechanical stress & complexity concern me.
+     in the spirit of experimenting/testing, let's go for SMD pin headers.

@@ -275,14 +275,29 @@ struct AppSettings
         p.mHarmGain = DecibelsToLinear(-3);
     }
 
+    static void InitCaveBouncer(PerformancePatch &p)
+    {
+        p.mName = "CaveBouncer";
+        p.mMasterGain = DecibelsToLinear(-2.5f);
+        p.mMasterFXGain = DecibelsToLinear(-5);
+        p.mMasterFXEnable = false;
+        p.mSynthPresetA = SynthPresetID_FunkyCave; // funky
+        p.mSynthAGain = DecibelsToLinear(-1);
+        p.mSynthPresetB = SynthPresetID_CinematicTag; // detuned PWM lead
+        p.mSynthBGain = DecibelsToLinear(-24);
+        p.mHarmPreset = HarmPresetID_WorldPeace_F;
+        p.mHarmEnabled = false;
+        p.mHarmGain = DecibelsToLinear(-12);
+    }
+
     static void InitSilkSuspendersPerf(PerformancePatch &p)
     {
         p.mName = "/k Pan Flute";
         p.mMasterGain = DecibelsToLinear(-8.0f + 3.3f - 0.5f);
         p.mSynthPresetA = SynthPresetID_PanFlute;
-        p.mSynthAGain = DecibelsToLinear(-6);
+        p.mSynthAGain = DecibelsToLinear(-4);
         p.mSynthPresetB = SynthPresetID_CinematicTag;
-        p.mSynthBGain = DecibelsToLinear(-5.5f);
+        p.mSynthBGain = DecibelsToLinear(-7.5f);
         p.mMasterFXEnable = false;
         p.mMasterFXGain = DecibelsToLinear(-10);
         p.mBPM = 110;
@@ -326,6 +341,7 @@ struct AppSettings
         InitSynthwavePerf(mPerformancePatches[i++]);
         InitSilkSuspendersPerf(mPerformancePatches[i++]);
         InitCrystalPerf(mPerformancePatches[i++]);   // crystal
+        InitCaveBouncer(mPerformancePatches[i++]);
 
         InitChameleon(mPerformancePatches[i++]);
         InitClarinoidSoloPerf(mPerformancePatches[i++]); // 

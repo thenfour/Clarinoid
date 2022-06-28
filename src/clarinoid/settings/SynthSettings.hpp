@@ -848,7 +848,7 @@ struct SynthSettings
 
         p.mFilterType = ClarinoidFilterType::BP_Moog4;
         p.mFilterKeytracking = 0.8f;
-        p.mFilterMaxFreq = 15000;
+        p.mFilterMaxFreq = 5000;
         p.mFilterQ = 0.0f;
         p.mFilterSaturation = 0.2f;
 
@@ -867,6 +867,10 @@ struct SynthSettings
         p.mDetune = 0;
         p.mFilterQ = 0.40f;
         p.mFilterMaxFreq = 11500;
+
+        // p.mOsc[0].mFreqMultiplier = 0.9995f;
+        // p.mOsc[2].mFreqMultiplier = 1.003f;
+
         p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
         p.mOsc[2].mPulseWidth = 0.1f;
         p.mOsc[2].mGain = ReasonableOscillatorGain;
@@ -1135,24 +1139,30 @@ struct SynthSettings
         p.mEnv2.mReleaseMS = p.mEnv2.mReleaseNoteOnMS = 0;
     }
 
-    // static void InitFMPreset(SynthPreset &p)
-    // {
-    //     p.mName = "FM test";
-    //     p.mSync = false;
-    //     p.mDetune = 0.0f;
-    //     p.mVerbSend = 0.07f;
-    //     p.mDelaySend = 0.07f;
-    //     p.mFilterType = ClarinoidFilterType::LP_Moog2;
-    //     p.mFilterMinFreq = 0.0f;
-    //     p.mFilterMaxFreq = 15000;
-    //     p.mFilterSaturation = 0.0f;
-    //     p.mFilterQ = 0.15f;
-    //     p.mFilterKeytracking = 0;
+    static void InitBraker(SynthPreset &p)
+    {
+        p.mName = "Braker Solo";
+        p.mSync = true;
+        p.mSyncMultMax = 0.70f;
+        p.mSyncMultMin = 0.17f;
+        p.mDetune = 0;
+        p.mFilterQ = 0.35f;
+        p.mFilterSaturation = 0.2f;
+        p.mFilterMaxFreq = 11000;
+        p.mFilterType = ClarinoidFilterType::LP_Diode;
 
-    //     p.mOsc[0].mGain = p.mOsc[1].mGain = DecibelsToLinear(-6.0f);
-    //     p.mOsc[2].mGain = 0;
-    //     p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::Sine;
-    // }
+        p.mOsc[0].mFreqMultiplier = 0.998f;
+
+        p.mOsc[2].mFreqMultiplier = 1.003f;
+
+        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+        p.mOsc[2].mPulseWidth = 0.47f;
+        p.mOsc[2].mGain = ReasonableOscillatorGain;
+
+        p.mModulations[0].mSource = AnyModulationSource::LFO1;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc1Frequency;
+        p.mModulations[0].SetScaleN11_Legacy(0.017f);
+    }
 
     SynthSettings()
     {
@@ -1170,6 +1180,7 @@ struct SynthSettings
         InitPanFlutePreset(mPresets[i++]);
         InitSynthTrumpetPreset(mPresets[i++]);
         InitFunkyLeadPreset(mPresets[i++]);
+        InitBraker(mPresets[i++]);
         InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
 
         InitFifthLeadPresetA(mPresets[i++]);
@@ -1221,6 +1232,7 @@ struct SynthSettings
         InitPanFlutePreset(mPresets[SynthPresetID_PanFlute]);
         InitCrystalFieldsPatch(mPresets[SynthPresetID_Crystal]);
         InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTagAlt], "SynthwaveA", 0.1f , 0.015f, -0.07f);
+        InitBraker(mPresets[SynthPresetID_FunkyCave]);
     }
 };
 

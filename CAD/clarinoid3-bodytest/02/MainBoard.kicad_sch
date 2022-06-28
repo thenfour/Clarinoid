@@ -1161,7 +1161,6 @@
     )
   )
 
-
   (junction (at 45.72 90.805) (diameter 0) (color 0 0 0 0)
     (uuid 091e9acc-68df-4d02-a21f-228448185f9d)
   )
@@ -1671,6 +1670,10 @@
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid ec2e11cb-736a-46c4-b70c-cbe4a62a7767)
   )
+  (label "audio_gnd" (at 222.758 156.21 180)
+    (effects (font (size 1.27 1.27)) (justify right bottom))
+    (uuid ed1b2327-35f8-4d06-aa21-15fb72ae2a80)
+  )
   (label "main_5v" (at 113.284 131.572 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid f10185f6-0e1e-4b56-a746-3b9e3831a338)
@@ -2167,7 +2170,7 @@
     (property "Value" "AudioOut" (id 1) (at 252.603 159.2579 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Footprint" "clarinoid2:SWITCHCRAFT_35RAPC4BV4" (id 2) (at 250.698 147.828 0)
+    (property "Footprint" "clarinoid2:SWITCHCRAFT_35RAPC4BV4_OvalHoles" (id 2) (at 250.698 147.828 0)
       (effects (font (size 1.27 1.27)) (justify left bottom) hide)
     )
     (property "Datasheet" "" (id 3) (at 245.618 157.988 0)

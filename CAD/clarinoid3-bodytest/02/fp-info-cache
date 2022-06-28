@@ -1,4 +1,4 @@
-20414758018016917
+20419726828365058
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -86296,6 +86296,13 @@ Switchcraft_35RAPC4BH3_3.5mm_female_jack_nosw_downfacing
 3
 3
 clarinoid2
+Teensy 4.0 Side pins only
+
+
+0
+28
+28
+clarinoid2
 Teensy_4.0_MicroMod outline fab
 
 
@@ -86372,6 +86379,20 @@ fork of PinSocket_1x14_P2.54mm_Vertical
 0
 17
 17
+clarinoid2
+clarinoid3-sd subboard castellated
+
+
+0
+27
+23
+clarinoid2
+clarinoid3-sd subboard smd
+
+
+0
+27
+23
 clarinoid2
 dip switch XKB DS-02
 

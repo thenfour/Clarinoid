@@ -33,59 +33,23 @@
 // sysex identification & commands can happen on both midi ports.
 // identification on 1 port will send the response to both.
 
+// WS2812 leds
+// 0-7 are free for callers to program
+// 8 = ??
+// 9 = ??
+// 10 = identify status
+// 11 = heartbeat
+
+// TODO: long press = test + "screen saver" mode.
+
 #include <Arduino.h>
 #include <algorithm>
 #include <Adafruit_NeoPixel.h>
 #include <Bounce.h>
 #include <MIDI.h>
 #include "misc.hpp"
-
-
-struct SlashKickSettings
-{
-    /*! Running status enables short messages when sending multiple values
-    of the same type and channel.\n
-    Must be disabled to send USB MIDI messages to a computer
-    Warning: does not work with some hardware, enable with caution.
-    */
-    static const bool UseRunningStatus = false;
-
-    /*! NoteOn with 0 velocity should be handled as NoteOf.\n
-    Set to true  to get NoteOff events when receiving null-velocity NoteOn messages.\n
-    Set to false to get NoteOn  events when receiving null-velocity NoteOn messages.
-    */
-    static const bool HandleNullVelocityNoteOnAsNoteOff = true;
-
-    /*! Setting this to true will make MIDI.read parse only one byte of data for each
-    call when data is available. This can speed up your application if receiving
-    a lot of traffic, but might induce MIDI Thru and treatment latency.
-    */
-    static const bool Use1ByteParsing = true;
-
-    /*! Maximum size of SysEx receivable. Decrease to save RAM if you don't expect
-    to receive SysEx, or adjust accordingly.
-    */
-    static const unsigned SysExMaxSize = 512; // big payloads to set all launchpad buttons are like 350 bytes long.
-
-    static const bool UseSenderActiveSensing = false;
-    static const bool UseReceiverActiveSensing = false;
-    static const uint16_t SenderActiveSensingPeriodicity = 0;
-};
-
-
-midi::SerialMIDI<HardwareSerial> serialMIDIA(Serial1);
-midi::MidiInterface<midi::SerialMIDI<HardwareSerial>, SlashKickSettings> MIDIA(serialMIDIA);
-
-midi::SerialMIDI<HardwareSerial> serialMIDIB(Serial3);
-midi::MidiInterface<midi::SerialMIDI<HardwareSerial>, SlashKickSettings> MIDIB(serialMIDIB);
-
-constexpr int gWS2812Pin = 10;   // Digital IO pin connected to the NeoPixels.
-constexpr int gWS2812Count = 12; // Number of NeoPixels
-
-Adafruit_NeoPixel strip(gWS2812Count, gWS2812Pin, NEO_GRB + NEO_KHZ800);
-bool gStripDirty = false;
-clarinoid::Stopwatch gGuiTimer; // don't update leds EVERY loop; update max 60fps
-static constexpr int gGuiIntervalMS = 1000 / 60;
+#include "midibus.hpp"
+#include "anim.hpp"
 
 constexpr uint8_t gSysex_subid1 = 1;
 constexpr uint8_t gSysex_subid2 = 2;
@@ -135,159 +99,26 @@ clarinoid::Stopwatch gNoteOffTimer; // when a noteon happens, set a timer to sen
 bool gWaitingForNoteOff = false;
 static constexpr int gNoteOffDelayMS = 50;
 
-LEDPin gLedPin_OrangeTriangle{17, 80, 240, 1.0, 100};
-LEDPin gLedPin_BlueTriangle{16, 80, 240, 1.0, 100};
-LEDPin gLedPin_RedTriangle{20, 240, 3000, 1.0, 100};
-LEDPin gLedPin_MidiA_RX{3, 30, 360, 0.05, 200};
-LEDPin gLedPin_MidiB_TX{4, 30, 360, 0.05, 200};
-LEDPin gLedPin_MidiB_RX{23, 30, 360, 0.05, 200};
-LEDPin gLedPin_MidiA_TX{22, 30, 360, 0.05, 200};
-
 constexpr int gGoNote = 14;
 
-void PresentLeds(bool doOrangeAndBlue = false)
+void ErrorCallbackA(int8_t n);
+void ErrorCallbackB(int8_t n);
+
+MidiBus midiBusA(Serial1, ErrorCallbackA);
+MidiBus midiBusB(Serial1, ErrorCallbackB);
+
+void ErrorCallbackA(int8_t n)
 {
-    gLedPin_MidiA_RX.Present();
-    gLedPin_MidiA_TX.Present();
-    gLedPin_MidiB_RX.Present();
-    gLedPin_MidiB_TX.Present();
-    gLedPin_RedTriangle.Present();
-
-    if (doOrangeAndBlue)
-    {
-        gLedPin_BlueTriangle.Present();
-        gLedPin_OrangeTriangle.Present();
-    }
-
-    if (gStripDirty)
-    {
-        gStripDirty = false;
-        strip.show();
-    }
+    midiBusA.ResetBus();
 }
 
-void DoDemo1()
+void ErrorCallbackA(int8_t n)
 {
-    // startup sequence
-    int triFrame = 0;
-    int txrxFrame = 0;
-    int ws2812Frame = 0;
-    clarinoid::Stopwatch swws2812;
-    clarinoid::Stopwatch swtriangle;
-    clarinoid::Stopwatch swtxrx;
-    while (true)
-    {
-        if (swtriangle.ElapsedTime().ElapsedMillisI() > 120)
-        {
-            swtriangle.Restart();
-            triFrame++;
-
-            if ((triFrame % 3) == 0)
-                gLedPin_OrangeTriangle.Trigger();
-            if ((triFrame % 3) == 1)
-                gLedPin_BlueTriangle.Trigger();
-            if ((triFrame % 3) == 2)
-                gLedPin_RedTriangle.Trigger();
-        }
-        if (swtxrx.ElapsedTime().ElapsedMillisI() > 80)
-        {
-            swtxrx.Restart();
-            txrxFrame++;
-            if ((txrxFrame % 4) == 0)
-                gLedPin_MidiA_RX.Trigger();
-            if ((txrxFrame % 4) == 1)
-                gLedPin_MidiB_TX.Trigger();
-            if ((txrxFrame % 4) == 2)
-                gLedPin_MidiB_RX.Trigger();
-            if ((txrxFrame % 4) == 3)
-                gLedPin_MidiA_TX.Trigger();
-        }
-        if (swws2812.ElapsedTime().ElapsedMillisI() > 2)
-        {
-            swws2812.Restart();
-            ws2812Frame++;
-            if (ws2812Frame > 24 * 7)
-                break;
-            //  0: first we fill 12 leds with red,
-            // 12: then erase them
-            // 24: then fill with green
-            // 36: erase them
-            //
-            int shade = (ws2812Frame / 24) % 7; // this is if it's red, green, blue, or otherwise.
-            int brightness = 16;
-            shade += 1;
-            int r = brightness * (shade & 1);
-            int g = brightness * ((shade >> 1) & 1);
-            int b = brightness * ((shade >> 2) & 1);
-            int iled = ws2812Frame % 24; // which led frame within this shade?
-            if (iled < 12)
-            {
-                // fill
-                for (int i = 0; i < 12; ++i)
-                {
-                    if (i > iled)
-                    {
-                        strip.setPixelColor(i, 0);
-                    }
-                    else
-                    {
-                        strip.setPixelColor(i, r, g, b);
-                    }
-                }
-            }
-            else
-            {
-                // erase
-                iled -= 12;
-                for (int i = 0; i < 12; ++i)
-                {
-                    if (i < iled)
-                    {
-                        strip.setPixelColor(i, 0);
-                    }
-                    else
-                    {
-                        strip.setPixelColor(i, r, g, b);
-                    }
-                }
-            }
-            strip.show();
-        }
-
-        PresentLeds(true);
-        delay(12);
-    }
-
-    gLedPin_OrangeTriangle.SetLevel(0);
-    gLedPin_BlueTriangle.SetLevel(0);
-    gLedPin_RedTriangle.Trigger();
-    gLedPin_MidiA_RX.Trigger();
-    gLedPin_MidiB_TX.Trigger();
-    gLedPin_MidiB_RX.Trigger();
-    gLedPin_MidiA_TX.Trigger();
-
-    for (int i = 0; i < 12; ++i)
-    {
-        strip.setPixelColor(i, 0);
-    }
-    strip.show();
-    PresentLeds();
+    midiBusA.ResetBus();
 }
 
 void setup()
 {
-    gGuiTimer.Restart();
-
-    strip.begin();
-    for (int i = 0; i < gWS2812Count; ++i)
-    {
-        strip.setPixelColor(i, 0);
-    }
-    strip.show();
-
-    MIDIA.begin();
-    MIDIB.begin();
-
     DoDemo1();
 }
 
@@ -297,27 +128,18 @@ constexpr int identifyWaitMS = 500;
 clarinoid::Stopwatch identifyTimer;
 
 // assumes there's a sysex message in the hopper
-void HandleIdentify(decltype(MIDIA) &device, const byte *sysexData, const int sysexLen)
+void HandleIdentify(MidiBus &midiBus, const byte *sysexData, const int sysexLen)
 {
-    if (waitingForIdentify) {
-        if (identifyTimer.ElapsedTime().ElapsedMillisI() >= identifyWaitMS) {
-            waitingForIdentify = false;
-            //MIDIA.sendSysEx(SizeofStaticArray(gMIDIIdentifyResponse), gMIDIIdentifyResponse, true);
-            //MIDIB.sendSysEx(SizeofStaticArray(gMIDIIdentifyResponse), gMIDIIdentifyResponse, true);
-            gLedPin_MidiA_TX.Trigger();
-            gLedPin_MidiB_TX.Trigger();
-        }
-        return;
-    }
-    if (!IsArrayEqual(sysexLen, sysexData, gMIDIIdentifyRequest))
+    if (IsArrayEqual(sysexLen, sysexData, gMIDIIdentifyRequest))
     {
+        gLedstrip.SetIdentifyState(IdentifyState::Requested);
         identifyTimer.Restart();
         waitingForIdentify = true;
     }
 }
 
 // assumes there's a sysex message in the hopper
-void HandleLEDCommand(decltype(MIDIA) &device, const byte *sysexData, int sysexLen)
+void HandleLEDCommand(MidiBus &midiBus, const byte *sysexData, int sysexLen)
 {
     // const byte *sysexData = device.getSysExArray();
     // int sysexLen = device.getSysExArrayLength();
@@ -386,7 +208,8 @@ void HandleLEDCommand(decltype(MIDIA) &device, const byte *sysexData, int sysexL
         {
             int nled = sysexData[0];
             nled -= gMIDICommandSetNRGB;
-            if (nled < 0 || nled >= gWS2812Count)
+            if (nled < 0 || nled >= Ledstrip::gWS2812Count) // this actually gives callers the possibility of setting
+                                                            // our built-in LEDs as well; no worries
             {
                 gLedPin_RedTriangle.Trigger();
                 // Serial.println(String("ERROR: unknown command."));
@@ -394,7 +217,7 @@ void HandleLEDCommand(decltype(MIDIA) &device, const byte *sysexData, int sysexL
             }
             // Serial.println(String("LED #") + nled);
 
-            nled = gWS2812Count - nled - 1; // the way it's constructed, they're reversed.
+            nled = Ledstrip::gWS2812Count - nled - 1; // the way it's constructed, they're reversed.
             // Serial.println(String(" --> #") + nled);
 
             // sysexData++;                    // advance past command byte
@@ -406,8 +229,7 @@ void HandleLEDCommand(decltype(MIDIA) &device, const byte *sysexData, int sysexL
                 break; // malformed.
             }
 
-            strip.setPixelColor(nled, sysexData[1], sysexData[2], sysexData[3]);
-            gStripDirty = true;
+            gLedstrip.setPixelColor(nled, sysexData[1], sysexData[2], sysexData[3]);
 
             sysexData += 4;
             sysexLen -= 4;
@@ -419,74 +241,63 @@ void HandleLEDCommand(decltype(MIDIA) &device, const byte *sysexData, int sysexL
     }
 }
 
-TriggerLed gtriggerTest{400};
+// return true if there's any activity
+bool ProcessMIDIBusActivity(MidiBus &bus, LEDPin &txLed, LEDPin &rxLed)
+{
+    if (!bus.mMIDI.read())
+        return false;
+
+    txLed.Trigger(); // if there's data, assume it goes thru.
+    rxLed.Trigger();
+
+    if (bus.mMIDI.getType() != midi::SystemExclusive)
+        return true;
+    const byte *sysexData = bus.mMIDI.getSysExArray();
+    const int sysexLen = bus.mMIDI.getSysExArrayLength();
+    HandleIdentify(bus, sysexData, sysexLen);
+    HandleLEDCommand(bus, sysexData, sysexLen);
+    return true;
+}
 
 void loop()
 {
-    // READ MIDI A
-    while (true)
+    bool activityA = false;
+    bool activityB = false;
+    do
     {
-        bool activity = false;
-        if (MIDIA.read())
+        // READ MIDI A
+        activityA = ProcessMIDIBusActivity(midiBusA, gLedPin_MidiA_TX, gLedPin_MidiA_RX);
+        activityB = ProcessMIDIBusActivity(midiBusB, gLedPin_MidiB_TX, gLedPin_MidiB_RX);
+    } while (activityA || activityB);
+
+    if (waitingForIdentify)
+    {
+        if (identifyTimer.ElapsedTime().ElapsedMillisI() >= identifyWaitMS)
         {
-            activity = true;
-            gLedPin_MidiA_TX.Trigger(); // if there's data, assume it goes through.
-            gLedPin_MidiA_RX.Trigger();
-
-            // Serial.println(String("MIDI A input: ") + (int)MIDIA.getType());
-
-            if (MIDIA.getType() == midi::SystemExclusive)
-            {
-                const byte *sysexData = MIDIA.getSysExArray();
-                const int sysexLen = MIDIA.getSysExArrayLength();
-                HandleIdentify(MIDIA, sysexData, sysexLen);
-                HandleLEDCommand(MIDIA, sysexData, sysexLen);
-            }
-        }
-
-        // READ MIDI B
-        if (MIDIB.read())
-        {
-            activity = true;
-            gLedPin_MidiB_RX.Trigger();
+            gLedstrip.SetIdentifyState(IdentifyState::Sent);
+            waitingForIdentify = false;
+            midiBusA.mMIDI.sendSysEx(SizeofStaticArray(gMIDIIdentifyResponse), gMIDIIdentifyResponse, true);
+            midiBusB.mMIDI.sendSysEx(SizeofStaticArray(gMIDIIdentifyResponse), gMIDIIdentifyResponse, true);
+            gLedPin_MidiA_TX.Trigger();
             gLedPin_MidiB_TX.Trigger();
-
-            // Serial.println(String("MIDI B input: ") + (int)MIDIB.getType());
-            if (MIDIB.getType() == midi::SystemExclusive)
-            {
-                const byte *sysexData = MIDIB.getSysExArray();
-                const int sysexLen = MIDIB.getSysExArrayLength();
-                HandleIdentify(MIDIB, sysexData, sysexLen);
-                HandleLEDCommand(MIDIB, sysexData, sysexLen);
-            }
         }
-
-        if (!activity)
-            break;
     }
 
     // HANDLE BIG BUTTON NOTE INSERTION & SUBSEQUENT NOTE-OFF
     if (gBigButton.DidTrigger())
     {
         gLedPin_RedTriangle.Trigger();
-        MIDIB.sendNoteOn(gGoNote, 126, 1);
+        midiBusB.mMIDI.sendNoteOn(gGoNote, 126, 1);
         gLedPin_MidiB_TX.Trigger();
-        // MIDIA.sendNoteOn(gGoNote, 126, 1);
         gNoteOffTimer.Restart();
         gWaitingForNoteOff = true;
-        
-        //Serial.println("you hit the big button");
-        // gtriggerTest.Trigger();
     }
     if (gWaitingForNoteOff && gNoteOffTimer.ElapsedTime().ElapsedMillisI() >= gNoteOffDelayMS)
     {
-        MIDIB.sendNoteOff(gGoNote, 0, 1);
-        gWaitingForNoteOff = false;
+        midiBusB.mMIDI.sendNoteOff(gGoNote, 0, 1);
         gLedPin_MidiB_TX.Trigger();
+        gWaitingForNoteOff = false;
     }
 
-    if (gGuiTimer.ElapsedTime().ElapsedMillisI() >= gGuiIntervalMS)
-    {
-        PresentLeds();
-    }
+    delayMicroseconds(50);
 }

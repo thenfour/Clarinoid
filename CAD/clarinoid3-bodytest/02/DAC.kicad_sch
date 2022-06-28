@@ -493,7 +493,6 @@
     )
   )
 
-
   (junction (at 175.26 142.24) (diameter 0) (color 0 0 0 0)
     (uuid 0f9b2b48-39a6-4a0e-b0e6-d1bab30eda78)
   )
@@ -1174,7 +1173,7 @@
   (symbol (lib_id "clarinoid2:clarinoid3 DAC and POT subboard interconnect") (at 51.054 86.868 180) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 4a5399ee-ce99-46ee-8f6b-2619c3977670)
-    (property "Reference" "J16" (id 0) (at 27.94 73.406 0))
+    (property "Reference" "J15" (id 0) (at 27.94 73.406 0))
     (property "Value" "clarinoid3 DAC and POT subboard interconnect" (id 1) (at 32.766 65.786 0))
     (property "Footprint" "clarinoid2:Bourns_POT_PTR902-2020K-A103 Panel subboard castellated header" (id 2) (at 51.054 86.868 0)
       (effects (font (size 1.27 1.27)) hide)
@@ -1524,7 +1523,7 @@
   (symbol (lib_id "power:PWR_FLAG") (at 58.166 57.15 0) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid f9d04721-393d-413e-a9f5-66104777a7ca)
-    (property "Reference" "#FLG06" (id 0) (at 58.166 55.245 0)
+    (property "Reference" "#FLG0102" (id 0) (at 58.166 55.245 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "PWR_FLAG" (id 1) (at 58.166 52.07 0))
