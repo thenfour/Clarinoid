@@ -169,6 +169,8 @@ namespace StandardRangeSpecs
 {
 static const NumericEditRangeSpec<float> gFloat_0_1 =
     NumericEditRangeSpec<float>{0.0f, 1.0f, 0.2f /*course*/, 0.05f /*normal*/, 0.01f /*fine*/};
+static const NumericEditRangeSpec<float> gFloat_0_1_Fine =
+    NumericEditRangeSpec<float>{0.0f, 1.0f, 0.1f /*course*/, 0.025f /*normal*/, 0.01f /*fine*/};
 static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<float>{-1.0f, 1.0f};
 
 static const NumericEditRangeSpec<float> gBreathMin =

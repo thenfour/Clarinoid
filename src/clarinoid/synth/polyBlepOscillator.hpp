@@ -144,7 +144,9 @@ struct SineWaveformProvider // : public WaveformProviderBase
     template <typename TOscillator>
     static void Step(TOscillator &caller, float &fboutput)
     {
+        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
         caller.mOutput = fast::sin((caller.mMainPhase.mT + fboutput * caller.mPMFeedbackAmt) * TWO_PI);
+        // caller.mOutput = sinf((caller.mMainPhase.mT) * TWO_PI);
     }
 };
 
@@ -333,7 +335,7 @@ struct Oscillator
     PhaseAccumulator mSyncPhase; // when sync is enabled, this is the phase of the "main" frequency. it resets the phase
                                  // of mMainPhase.
     bool mSyncEnabled = false;
-    float mAmplitude = 0;
+    // float mAmplitude = 0;
     // float mWaveformMorph01 = 0.5f; // curve: gModCurveLUT.LinearYIndex;
 
     OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
@@ -362,10 +364,10 @@ struct Oscillator
         mWaveformShape = wform;
     }
 
-    void SetAmplitude(float amplitude01)
-    {
-        mAmplitude = amplitude01;
-    }
+    // void SetAmplitude(float amplitude01)
+    // {
+    //     mAmplitude = amplitude01;
+    // }
 
     void SetBasicParams(float freq,
                         bool instantFreq,
@@ -393,7 +395,7 @@ struct Oscillator
     }
 
     template <typename TWaveformProvider>
-    inline void Step(size_t i, bool doPWM, float* pwm32, bool doPM, float* pm32, float *out)
+    inline void Step(size_t i, bool doPWM, float *pwm32, bool doPM, float *pm32, float *out)
     {
         if (doPM)
         {
@@ -420,19 +422,21 @@ struct Oscillator
             TWaveformProvider::ResetPhaseDueToSync(*this, x);
         }
 
-        out[i] = mOutput * mAmplitude;
-    } // void Step() {
+        out[i] = mOutput; // * mAmplitude;
+    }                     // void Step() {
 
     void ProcessBlock(audio_block_t *pwm, audio_block_t *pm, audio_block_t *pOut)
     {
         float pwm32[AUDIO_BLOCK_SAMPLES];
         float pm32[AUDIO_BLOCK_SAMPLES];
         float out32[AUDIO_BLOCK_SAMPLES];
-        if (pwm) {
+        if (pwm)
+        {
             fast::Sample16To32Buffer(pwm->data, pwm32);
             fast::BufferOffsetInPlace(pwm32, mPulseWidthTarget01);
         }
-        if (pm) {
+        if (pm)
+        {
             fast::Sample16To32Buffer(pm->data, pm32);
             fast::BufferScaleInPlace(pm32, mPMMultiplier);
         }

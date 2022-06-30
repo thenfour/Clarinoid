@@ -276,6 +276,7 @@ struct Voice : IModulationKRateProvider
         {
         case KRateModulationSource::Breath:
             return mLatestBreathVal;
+
         default:
         case KRateModulationSource::PitchStrip:
             break;
@@ -283,9 +284,47 @@ struct Voice : IModulationKRateProvider
         return mLatestPitchbendVal;
     }
 
+    virtual float IModulationProvider_GetKRateModulationDestinationValueN11(KRateModulationDestination dest) override
+    {
+        switch (dest)
+        {
+        case KRateModulationDestination::Osc1FMFeedback:
+            return mKRateOscFMFeedback[0];
+        case KRateModulationDestination::Osc2FMFeedback:
+            return mKRateOscFMFeedback[1];
+        case KRateModulationDestination::Osc3FMFeedback:
+            return mKRateOscFMFeedback[2];
+        case KRateModulationDestination::OverallFMStrength:
+            return mKRateOverallFMStrength;
+        case KRateModulationDestination::FMStrength2To1:
+            return mKRateFMStrength2To1;
+        case KRateModulationDestination::FMStrength3To1:
+            return mKRateFMStrength3To1;
+        case KRateModulationDestination::FMStrength1To2:
+            return mKRateFMStrength1To2;
+        case KRateModulationDestination::FMStrength3To2:
+            return mKRateFMStrength3To2;
+        case KRateModulationDestination::FMStrength1To3:
+            return mKRateFMStrength1To3;
+        case KRateModulationDestination::FMStrength2To3:
+            return mKRateFMStrength2To3;
+        default:
+            return 0;
+        }
+    }
+
+    // store k-rate running values here
     float mKRateVoiceFilterCutoffN11 = 0;
     float mKRateFrequencyN11[3] = {0};
     float mKRateAmplitudeN11[3] = {0};
+    float mKRateOscFMFeedback[3] = {0};
+    float mKRateOverallFMStrength = 0;
+    float mKRateFMStrength2To1 = 0;
+    float mKRateFMStrength3To1 = 0;
+    float mKRateFMStrength1To2 = 0;
+    float mKRateFMStrength3To2 = 0;
+    float mKRateFMStrength1To3 = 0;
+    float mKRateFMStrength2To3 = 0;
 
     virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
                                                                            float val) override
@@ -313,6 +352,36 @@ struct Voice : IModulationKRateProvider
         case KRateModulationDestination::Osc3Amplitude:
             mKRateAmplitudeN11[2] = val;
             return;
+        case KRateModulationDestination::Osc1FMFeedback:
+            mKRateOscFMFeedback[0] = val;
+            return;
+        case KRateModulationDestination::Osc2FMFeedback:
+            mKRateOscFMFeedback[1] = val;
+            return;
+        case KRateModulationDestination::Osc3FMFeedback:
+            mKRateOscFMFeedback[2] = val;
+            return;
+        case KRateModulationDestination::OverallFMStrength:
+            mKRateOverallFMStrength = val;
+            return;
+        case KRateModulationDestination::FMStrength2To1:
+            mKRateFMStrength2To1 = val;
+            return;
+        case KRateModulationDestination::FMStrength3To1:
+            mKRateFMStrength3To1 = val;
+            return;
+        case KRateModulationDestination::FMStrength1To2:
+            mKRateFMStrength1To2 = val;
+            return;
+        case KRateModulationDestination::FMStrength3To2:
+            mKRateFMStrength3To2 = val;
+            return;
+        case KRateModulationDestination::FMStrength1To3:
+            mKRateFMStrength1To3 = val;
+            return;
+        case KRateModulationDestination::FMStrength2To3:
+            mKRateFMStrength2To3 = val;
+            return;
         }
     }
 
@@ -337,6 +406,19 @@ struct Voice : IModulationKRateProvider
             {
                 v = 1;
             }
+
+            for (auto &v : mKRateOscFMFeedback)
+            {
+                v = 0;
+            }
+
+            mKRateOverallFMStrength = 0;
+            mKRateFMStrength2To1 = 0;
+            mKRateFMStrength3To1 = 0;
+            mKRateFMStrength1To2 = 0;
+            mKRateFMStrength3To2 = 0;
+            mKRateFMStrength1To3 = 0;
+            mKRateFMStrength2To3 = 0;
 
             mModMatrix.SetSynthPatch(mPreset, this);
         }
@@ -429,13 +511,22 @@ struct Voice : IModulationKRateProvider
             // if the output is disabled, then the multimixerpanner will disable this channel,
             // and its output is only designed for modulation sources. then the gain will be
             // specified in the modulation amount.
-            float gain = mPreset->mOsc[i].mGain * mKRateAmplitudeN11[i];
-            mOsc.mOsc[i].SetAmplitude(gain);
+
+            // Q: should gain be applied here, at the osc output, before modulations are applied?
+            //    OR, after modulations in the multi mixer node?
+            //    at osc output it lets you apply 2 gains (sorta using osc gain as a way to control all modulations),
+            //    but it has a fatal flaw: you cannot control output gain.
+            // for FM you often want an osc to be a mod source but not actually output that oscillator. a gain of 0
+            // means modulations can't happen. so, apply gain only at the multi mixer.
+            // TODO. https://github.com/thenfour/Clarinoid/issues/131
+            // float gain = mPreset->mOsc[i].mGain * mKRateAmplitudeN11[i];
+            // mOsc.mOsc[i].SetAmplitude(gain);
+
             // mOsc.mOsc[i].SetBasicParams(, false, mPreset->mOsc[i].mPhase01, mPreset->mOsc[i].mPortamentoTime, );
             mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
-            mOsc.mOsc[i].mPMMultiplier = mPreset->mOverallFMStrength;
-            mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain;
+            mOsc.mOsc[i].mPMMultiplier = mPreset->mOverallFMStrength + mKRateOverallFMStrength;
+            mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain + mKRateOscFMFeedback[i];
             // mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
         }
 
@@ -451,7 +542,7 @@ struct Voice : IModulationKRateProvider
                 pbSemis = userPB * (-osc.mPitchBendRangeNegative);
             }
             float ret = midiNote + osc.mPitchFine + osc.mPitchSemis + detune +
-                        SnapPitchBend(pbSemis, osc.mPitchBendSnap) +
+                        pbSemis + // SnapPitchBend(pbSemis, osc.mPitchBendSnap) +
                         (KRateFrequencyModulationMultiplier * krateFreqModN11);
             ret = (MIDINoteToFreq(ret) * osc.mFreqMultiplier) + osc.mFreqOffset;
             return Clamp(ret, 0.0f, 22050.0f);
@@ -513,13 +604,20 @@ struct Voice : IModulationKRateProvider
         mSplitter.SetOutputGain(1, mv.mGain * mPreset->mDelaySend);
         mSplitter.SetOutputGain(2, mv.mGain * mPreset->mVerbSend);
 
-        mOscMixerPanner.SetInputPanAndEnabled(
-            0, mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan + mPreset->mStereoSpread, true);
+        mOscMixerPanner.SetInputPanGainAndEnabled(0,
+                                                  mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan +
+                                                      mPreset->mStereoSpread,
+                                                  mPreset->mOsc[0].mGain * mKRateAmplitudeN11[0],
+                                                  true);
 
-        mOscMixerPanner.SetInputPanAndEnabled(1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan, true);
+        mOscMixerPanner.SetInputPanGainAndEnabled(
+            1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan, mPreset->mOsc[1].mGain * mKRateAmplitudeN11[1], true);
 
-        mOscMixerPanner.SetInputPanAndEnabled(
-            2, mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan - mPreset->mStereoSpread, true);
+        mOscMixerPanner.SetInputPanGainAndEnabled(2,
+                                                  mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan -
+                                                      mPreset->mStereoSpread,
+                                                  mPreset->mOsc[2].mGain * mKRateAmplitudeN11[2],
+                                                  true);
 
         mRunningVoice = mv;
     }

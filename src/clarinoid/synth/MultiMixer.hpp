@@ -55,6 +55,7 @@ struct MultiMixerPannerNode : public AudioStream
     audio_block_t *inputQueueArray[NInputs];
 
     float mInputPanN11[NInputs];
+    float mInputGain01[NInputs];
     int32_t mInputMultipliersLeft[NInputs]; // bakes inputpan into L/R multipliers for each input. After this multiply,
                                             // the samples can be added together for a single L/R channel
     int32_t mInputMultipliersRight[NInputs];
@@ -66,6 +67,7 @@ struct MultiMixerPannerNode : public AudioStream
         {
             mEnabled[i] = true;
             mInputPanN11[i] = 0;
+            mInputGain01[i] = 0;
             RecalcInput(i);
         }
     }
@@ -73,7 +75,6 @@ struct MultiMixerPannerNode : public AudioStream
     void RecalcInput(size_t inputChannel)
     {
         CCASSERT(inputChannel < SizeofStaticArray(mInputPanN11));
-        float panN11 = mInputPanN11[inputChannel];
 
         if (!mEnabled[inputChannel])
         {
@@ -82,28 +83,32 @@ struct MultiMixerPannerNode : public AudioStream
             return;
         }
 
+        float panN11 = mInputPanN11[inputChannel];
+        float gain01 = mInputGain01[inputChannel];
+
         // SQRT pan law
         // -1..+1  -> 1..0
         float normPan = (-panN11 + 1) / 2;
         float leftChannel = sqrtf(normPan);
         float rightChannel = sqrtf(1.0f - normPan);
 
-        mInputMultipliersLeft[inputChannel] = gainToSignedMultiply32x16(leftChannel);
-        mInputMultipliersRight[inputChannel] = gainToSignedMultiply32x16(rightChannel);
+        mInputMultipliersLeft[inputChannel] = gainToSignedMultiply32x16(leftChannel * gain01);
+        mInputMultipliersRight[inputChannel] = gainToSignedMultiply32x16(rightChannel * gain01);
     }
 
-    void SetInputPanAndEnabled(size_t inputChannel, float panN11, bool enabled)
+    void SetInputPanGainAndEnabled(size_t inputChannel, float panN11, float gain01, bool enabled)
     {
         if (panN11 < -1)
             panN11 = -1;
         if (panN11 > 1)
             panN11 = 1;
-        if ((mEnabled[inputChannel] == enabled) && FloatEquals(panN11, mInputPanN11[inputChannel]))
+        if ((mEnabled[inputChannel] == enabled) && FloatEquals(panN11, mInputPanN11[inputChannel]) && FloatEquals(gain01, mInputGain01[inputChannel]))
         {
             return;
         }
         mEnabled[inputChannel] = enabled;
         mInputPanN11[inputChannel] = panN11;
+        mInputGain01[inputChannel] = gain01;
         RecalcInput(inputChannel);
     }
 

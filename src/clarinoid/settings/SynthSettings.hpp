@@ -317,9 +317,19 @@ enum class KRateModulationDestination : uint8_t
     Osc2Amplitude,         // k-rate
     Osc3Frequency,         // k-rate
     Osc3Amplitude,         // k-rate
+    Osc1FMFeedback,        // k-rate
+    Osc2FMFeedback,        // k-rate
+    Osc3FMFeedback,        // k-rate
+    OverallFMStrength,     // k-rate
+    FMStrength2To1,        // k-rate
+    FMStrength3To1,        // k-rate
+    FMStrength1To2,        // k-rate
+    FMStrength3To2,        // k-rate
+    FMStrength1To3,        // k-rate
+    FMStrength2To3,        // k-rate
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[7] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[17] = {
     {KRateModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
     {KRateModulationDestination::Osc1Frequency, "Osc1Frequency"},
     {KRateModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
@@ -327,6 +337,17 @@ EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[7] = {
     {KRateModulationDestination::Osc2Amplitude, "Osc2Amplitude"},
     {KRateModulationDestination::Osc3Frequency, "Osc3Frequency"},
     {KRateModulationDestination::Osc3Amplitude, "Osc3Amplitude"},
+
+    {KRateModulationDestination::Osc1FMFeedback, "Osc1FMFeedback"},
+    {KRateModulationDestination::Osc2FMFeedback, "Osc2FMFeedback"},
+    {KRateModulationDestination::Osc3FMFeedback, "Osc3FMFeedback"},
+    {KRateModulationDestination::OverallFMStrength, "OverallFMStrength"},
+    {KRateModulationDestination::FMStrength2To1, "FMStrength2To1"},
+    {KRateModulationDestination::FMStrength3To1, "FMStrength3To1"},
+    {KRateModulationDestination::FMStrength1To2, "FMStrength1To2"},
+    {KRateModulationDestination::FMStrength3To2, "FMStrength3To2"},
+    {KRateModulationDestination::FMStrength1To3, "FMStrength1To3"},
+    {KRateModulationDestination::FMStrength2To3, "FMStrength2To3"},
 };
 
 static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKRateModulationDestinationItems);
@@ -351,20 +372,24 @@ enum class AnyModulationDestination : uint8_t
     Osc3Frequency,     // k-rate
     Osc3Amplitude,     // k-rate  // OUTPUT amplitude
 
-    // osc FM feedback
+    Osc1FMFeedback,    // k-rate
+    Osc2FMFeedback,    // k-rate
+    Osc3FMFeedback,    // k-rate
+    OverallFMStrength, // k-rate
+    FMStrength2To1,    // k-rate
+    FMStrength3To1,    // k-rate
+    FMStrength1To2,    // k-rate
+    FMStrength3To2,    // k-rate
+    FMStrength1To3,    // k-rate
+    FMStrength2To3,    // k-rate
+
     // osc waveform morph (now replaces SYNC freq)
     // osc pan
+    // patch gain
     // patch verb mix
     // patch delay send
     // patch detune
     // patch spread
-    // FM brightness
-    // FM strength Osc2 => Osc1
-    // FM strength Osc3 => Osc1
-    // FM strength Osc1 => Osc2
-    // FM strength Osc3 => Osc2
-    // FM strength Osc1 => Osc3
-    // FM strength Osc2 => Osc3
     // filter stereo spread
     // filter saturation
     // filter Q
@@ -380,7 +405,7 @@ enum class AnyModulationDestination : uint8_t
     // env release
 };
 
-EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[14] = {
+EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[24] = {
     {AnyModulationDestination::None, "None"},
     {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
     {AnyModulationDestination::Osc1Phase, "Osc1Phase"},
@@ -396,6 +421,17 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[14] = {
     {AnyModulationDestination::Osc2Amplitude, "Osc2Amplitude"},
     {AnyModulationDestination::Osc3Frequency, "Osc3Frequency"},
     {AnyModulationDestination::Osc3Amplitude, "Osc3Amplitude"},
+
+    {AnyModulationDestination::Osc1FMFeedback, "Osc1FMFeedback"},
+    {AnyModulationDestination::Osc2FMFeedback, "Osc2FMFeedback"},
+    {AnyModulationDestination::Osc3FMFeedback, "Osc3FMFeedback"},
+    {AnyModulationDestination::OverallFMStrength, "OverallFMStrength"},
+    {AnyModulationDestination::FMStrength2To1, "FMStrength2To1"},
+    {AnyModulationDestination::FMStrength3To1, "FMStrength3To1"},
+    {AnyModulationDestination::FMStrength1To2, "FMStrength1To2"},
+    {AnyModulationDestination::FMStrength3To2, "FMStrength3To2"},
+    {AnyModulationDestination::FMStrength1To3, "FMStrength1To3"},
+    {AnyModulationDestination::FMStrength2To3, "FMStrength2To3"},
 };
 
 static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyModulationDestinationItems);
@@ -409,6 +445,18 @@ enum class ModulationPolarityTreatment : uint8_t
     AsPositive01Inverted, // same as Positive01, but signal is inverted so 0,1 translates 1,0. (1-x)
     AsBipolarInverted,    // same as AsBipolar, but signal is inverted so -1,1 translates 1,-1 (-x)
 };
+
+EnumItemInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentItems[4] = {
+    {ModulationPolarityTreatment::AsPositive01, "AsPositive01"},
+    {ModulationPolarityTreatment::AsBipolar, "AsBipolar"},
+    {ModulationPolarityTreatment::AsPositive01Inverted, "AsPositive01Inverted"},
+    {ModulationPolarityTreatment::AsBipolarInverted, "AsBipolarInverted"},
+};
+
+static constexpr size_t gModulationPolarityTreatmentCount = SizeofStaticArray(gAnyModulationDestinationItems);
+
+EnumInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentInfo("ModulationPolarity",
+                                                                       gModulationPolarityTreatmentItems);
 
 struct SynthModulationSpec
 {
@@ -525,6 +573,7 @@ struct SynthPreset
     float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
                                      // applied (low notes get higher freq cutoff)
 
+    // for FM modulation matrix.
     float mFMStrength2To1 = 0;
     float mFMStrength3To1 = 0;
     float mFMStrength1To2 = 0;
@@ -799,7 +848,7 @@ struct SynthSettings
 
     static void InitCinematicTagPatch(SynthPreset &p, const char *name, float detuneAmt, float pitchA, float pitchB)
     {
-        p.mName = name;//"Cinematic Tag";
+        p.mName = name; //"Cinematic Tag";
         p.mSync = false;
         p.mDetune = detuneAmt;
         p.mFilterKeytracking = 0.8f;
@@ -1164,19 +1213,56 @@ struct SynthSettings
         p.mModulations[0].SetScaleN11_Legacy(0.017f);
     }
 
+    static void InitBasicSine(SynthPreset &p)
+    {
+        p.mName = "INIT SINE";
+        p.mSync = false;
+        p.mDetune = 0;
+        p.mStereoSpread = 0;
+        p.mFilterQ = 0;
+        p.mFilterSaturation = 0;
+        p.mFilterKeytracking = 0;
+        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
+        p.mOsc[1].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[2].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[1].mGain = 0;
+        p.mOsc[2].mGain = 0;
+    }
+
+    static void InitFMTest(SynthPreset &p)
+    {
+        p.mName = "Braker Solo";
+        p.mSync = false;
+        p.mDetune = 0;
+        p.mStereoSpread = 0;
+        p.mFMStrength1To2 = 0.50f;
+        p.mOverallFMStrength = 0.1f;
+        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[0].mFreqMultiplier = .5;
+        p.mOsc[0].mFreqOffset = 1;
+        p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
+
+        p.mOsc[1].mWaveform = OscWaveformShape::Sine;
+    }
+
     SynthSettings()
     {
         size_t i = 0;
 
-        // InitFMPreset(mPresets[i++]);
         InitFluvial(mPresets[i++]);
+
+        // InitFMTest(mPresets[i++]);
+        InitBasicSine(mPresets[i++]);
+
+        // InitFMPreset(mPresets[i++]);
         InitSynccyLead(mPresets[i++]);
         InitPWMLead2(mPresets[i++]);
         InitPWMLeadStack(mPresets[i++]);
         InitDetunePWMLead(mPresets[i++]);
         InitCloudsStars(mPresets[i++]);
         InitCrystalFieldsPatch(mPresets[i++]);
-        InitCinematicTagPatch(mPresets[i++], "Cinematic", 0.06f , 0.02f, -0.08f);
+        InitCinematicTagPatch(mPresets[i++], "Cinematic", 0.06f, 0.02f, -0.08f);
         InitPanFlutePreset(mPresets[i++]);
         InitSynthTrumpetPreset(mPresets[i++]);
         InitFunkyLeadPreset(mPresets[i++]);
@@ -1222,7 +1308,7 @@ struct SynthSettings
         InitPWMLead2(mPresets[SynthPresetID_PWMMono]);
         InitCrystalSyncLead(mPresets[SynthPresetID_CrystalSync]);
         InitSynccyLead(mPresets[SynthPresetID_SynccyLead]);
-        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag], "SynthwaveB", 0.06f , 0.025f, -0.09f);
+        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag], "SynthwaveB", 0.06f, 0.025f, -0.09f);
         InitFluvial(mPresets[SynthPresetID_Fluvial]);
         InitHarmSyncLead(mPresets[SynthPresetID_HarmSync]);
         InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);
@@ -1231,7 +1317,7 @@ struct SynthSettings
         InitSynthTrumpetPreset(mPresets[SynthPresetID_SynthTrumpetDoubler]);
         InitPanFlutePreset(mPresets[SynthPresetID_PanFlute]);
         InitCrystalFieldsPatch(mPresets[SynthPresetID_Crystal]);
-        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTagAlt], "SynthwaveA", 0.1f , 0.015f, -0.07f);
+        InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTagAlt], "SynthwaveA", 0.1f, 0.015f, -0.07f);
         InitBraker(mPresets[SynthPresetID_FunkyCave]);
     }
 };

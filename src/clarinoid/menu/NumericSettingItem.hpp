@@ -118,9 +118,9 @@ struct FloatEditor : NumericEditor<float>
 
     virtual void DrawValue(float n, float oldVal)
     {
-        this->mpApi->GetDisplay()->print(String("") + n);
+        this->mpApi->GetDisplay()->print(String(n, 3));
         float delta = n - oldVal;
-        this->mpApi->GetDisplay()->print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+        this->mpApi->GetDisplay()->print(String(" (") + (delta >= 0 ? "+" : "") + String(delta, 3) + ")");
     }
 };
 
