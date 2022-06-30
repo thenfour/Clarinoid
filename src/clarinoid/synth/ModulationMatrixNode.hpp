@@ -564,62 +564,63 @@ struct VoiceModulationMatrixNode : public AudioStream
             ProcessModulation(buffers, modulation);
         }
 
-        if (mSynthPatch->mFMStrength2To1 > 0.0001f)
+        float krateFMStrength2To1 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
+            KRateModulationDestination::FMStrength2To1);
+        float krateFMStrength3To1 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
+            KRateModulationDestination::FMStrength3To1);
+        float krateFMStrength1To2 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
+            KRateModulationDestination::FMStrength1To2);
+        float krateFMStrength3To2 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
+            KRateModulationDestination::FMStrength3To2);
+        float krateFMStrength1To3 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
+            KRateModulationDestination::FMStrength1To3);
+        float krateFMStrength2To3 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
+            KRateModulationDestination::FMStrength2To3);
+
+        if (!FloatEquals(mSynthPatch->mFMStrength2To1, 0) || !FloatEquals(krateFMStrength2To1, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength2To1 +
-                                    this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-                                        KRateModulationDestination::FMStrength2To1),
+                                mSynthPatch->mFMStrength2To1 + krateFMStrength2To1,
                                 mSynthPatch->mOsc[1],
                                 AnyModulationSource::Osc2FB,
                                 AnyModulationDestination::Osc1Phase);
         }
-        if (mSynthPatch->mFMStrength3To1 > 0.0001f)
+        if (!FloatEquals(mSynthPatch->mFMStrength3To1, 0) || !FloatEquals(krateFMStrength3To1, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength3To1 +
-                                    this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-                                        KRateModulationDestination::FMStrength3To1),
+                                mSynthPatch->mFMStrength3To1 + krateFMStrength3To1,
                                 mSynthPatch->mOsc[2],
                                 AnyModulationSource::Osc3FB,
                                 AnyModulationDestination::Osc1Phase);
         }
-        if (mSynthPatch->mFMStrength1To2 > 0.0001f)
+        if (!FloatEquals(mSynthPatch->mFMStrength1To2, 0) || !FloatEquals(krateFMStrength1To2, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength1To2 +
-                                    this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-                                        KRateModulationDestination::FMStrength1To2),
+                                mSynthPatch->mFMStrength1To2 + krateFMStrength1To2,
                                 mSynthPatch->mOsc[0],
                                 AnyModulationSource::Osc1FB,
                                 AnyModulationDestination::Osc2Phase);
         }
-        if (mSynthPatch->mFMStrength3To2 > 0.0001f)
+        if (!FloatEquals(mSynthPatch->mFMStrength3To2, 0) || !FloatEquals(krateFMStrength3To2, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength3To2 +
-                                    this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-                                        KRateModulationDestination::FMStrength3To2),
+                                mSynthPatch->mFMStrength3To2 + krateFMStrength3To2,
                                 mSynthPatch->mOsc[2],
                                 AnyModulationSource::Osc3FB,
                                 AnyModulationDestination::Osc2Phase);
         }
-        if (mSynthPatch->mFMStrength1To3 > 0.0001f)
+        if (!FloatEquals(mSynthPatch->mFMStrength1To3, 0) || !FloatEquals(krateFMStrength1To3, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength1To3 +
-                                    this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-                                        KRateModulationDestination::FMStrength1To3),
+                                mSynthPatch->mFMStrength1To3 + krateFMStrength1To3,
                                 mSynthPatch->mOsc[0],
                                 AnyModulationSource::Osc1FB,
                                 AnyModulationDestination::Osc3Phase);
         }
-        if (mSynthPatch->mFMStrength2To3 > 0.0001f)
+        if (!FloatEquals(mSynthPatch->mFMStrength2To3, 0) || !FloatEquals(krateFMStrength2To3, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength2To3 +
-                                    this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-                                        KRateModulationDestination::FMStrength2To3),
+                                mSynthPatch->mFMStrength2To3 + krateFMStrength2To3,
                                 mSynthPatch->mOsc[1],
                                 AnyModulationSource::Osc2FB,
                                 AnyModulationDestination::Osc3Phase);

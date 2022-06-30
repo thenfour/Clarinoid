@@ -318,6 +318,8 @@ struct Voice : IModulationKRateProvider
     float mKRateFrequencyN11[3] = {0};
     float mKRateAmplitudeN11[3] = {0};
     float mKRateOscFMFeedback[3] = {0};
+    float mKRateOscFreqMul[3] = {0};
+    float mKRateOscFreqOffset[3] = {0};
     float mKRateOverallFMStrength = 0;
     float mKRateFMStrength2To1 = 0;
     float mKRateFMStrength3To1 = 0;
@@ -381,6 +383,30 @@ struct Voice : IModulationKRateProvider
             return;
         case KRateModulationDestination::FMStrength2To3:
             mKRateFMStrength2To3 = val;
+            return;
+
+        case KRateModulationDestination::Osc1FreqMul:
+            mKRateOscFreqMul[0] = val;
+            return;
+
+        case KRateModulationDestination::Osc2FreqMul:
+            mKRateOscFreqMul[1] = val;
+            return;
+
+        case KRateModulationDestination::Osc3FreqMul:
+            mKRateOscFreqMul[2] = val;
+            return;
+
+        case KRateModulationDestination::Osc1FreqOffset:
+            mKRateOscFreqOffset[0] = val;
+            return;
+
+        case KRateModulationDestination::Osc2FreqOffset:
+            mKRateOscFreqOffset[1] = val;
+            return;
+
+        case KRateModulationDestination::Osc3FreqOffset:
+            mKRateOscFreqOffset[2] = val;
             return;
         }
     }
@@ -530,7 +556,7 @@ struct Voice : IModulationKRateProvider
             // mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
         }
 
-        auto calcFreq = [&](const SynthOscillatorSettings &osc, float midiNote, float detune, float krateFreqModN11) {
+        auto calcFreq = [&](const SynthOscillatorSettings &osc, float midiNote, float detune, float krateFreqModN11, float krateFreqMul, float krateFreqOff) {
             float userPB = mv.mPitchBendN11.GetFloatVal();
             float pbSemis = 0;
             if (userPB > 0)
@@ -544,13 +570,13 @@ struct Voice : IModulationKRateProvider
             float ret = midiNote + osc.mPitchFine + osc.mPitchSemis + detune +
                         pbSemis + // SnapPitchBend(pbSemis, osc.mPitchBendSnap) +
                         (KRateFrequencyModulationMultiplier * krateFreqModN11);
-            ret = (MIDINoteToFreq(ret) * osc.mFreqMultiplier) + osc.mFreqOffset;
+            ret = (MIDINoteToFreq(ret) * osc.mFreqMultiplier + krateFreqMul) + osc.mFreqOffset + krateFreqOff;
             return Clamp(ret, 0.0f, 22050.0f);
         };
 
-        float freq0 = calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0]);
-        float freq1 = calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1]);
-        float freq2 = calcFreq(mPreset->mOsc[2], midiNote, -mPreset->mDetune, mKRateFrequencyN11[2]);
+        float freq0 = calcFreq(mPreset->mOsc[0], midiNote, -mPreset->mDetune, mKRateFrequencyN11[0], mKRateOscFreqMul[0], mKRateOscFreqOffset[0]);
+        float freq1 = calcFreq(mPreset->mOsc[1], midiNote, 0, mKRateFrequencyN11[1], mKRateOscFreqMul[1], mKRateOscFreqOffset[1]);
+        float freq2 = calcFreq(mPreset->mOsc[2], midiNote, -mPreset->mDetune, mKRateFrequencyN11[2], mKRateOscFreqMul[2], mKRateOscFreqOffset[2]);
 
         if (mPreset->mSync)
         {

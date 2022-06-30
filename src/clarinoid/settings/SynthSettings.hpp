@@ -327,9 +327,15 @@ enum class KRateModulationDestination : uint8_t
     FMStrength3To2,        // k-rate
     FMStrength1To3,        // k-rate
     FMStrength2To3,        // k-rate
+    Osc1FreqMul,  // k-rate
+Osc1FreqOffset,  // k-rate
+Osc2FreqMul,  // k-rate
+Osc2FreqOffset,  // k-rate
+Osc3FreqMul,  // k-rate
+Osc3FreqOffset,  // k-rate
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[17] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[23] = {
     {KRateModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
     {KRateModulationDestination::Osc1Frequency, "Osc1Frequency"},
     {KRateModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
@@ -348,6 +354,12 @@ EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[17] = 
     {KRateModulationDestination::FMStrength3To2, "FMStrength3To2"},
     {KRateModulationDestination::FMStrength1To3, "FMStrength1To3"},
     {KRateModulationDestination::FMStrength2To3, "FMStrength2To3"},
+    {KRateModulationDestination::Osc1FreqMul, "Osc1FreqMul"},
+    {KRateModulationDestination::Osc1FreqOffset, "Osc1FreqOffset"},
+    {KRateModulationDestination::Osc2FreqMul, "Osc2FreqMul"},
+    {KRateModulationDestination::Osc2FreqOffset, "Osc2FreqOffset"},
+    {KRateModulationDestination::Osc3FreqMul, "Osc3FreqMul"},
+    {KRateModulationDestination::Osc3FreqOffset, "Osc3FreqOffset"},
 };
 
 static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKRateModulationDestinationItems);
@@ -383,6 +395,13 @@ enum class AnyModulationDestination : uint8_t
     FMStrength1To3,    // k-rate
     FMStrength2To3,    // k-rate
 
+    Osc1FreqMul,     // k-rate
+    Osc1FreqOffset,     // k-rate
+    Osc2FreqMul,     // k-rate
+    Osc2FreqOffset,     // k-rate
+    Osc3FreqMul,     // k-rate
+    Osc3FreqOffset,     // k-rate
+
     // osc waveform morph (now replaces SYNC freq)
     // osc pan
     // patch gain
@@ -405,7 +424,7 @@ enum class AnyModulationDestination : uint8_t
     // env release
 };
 
-EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[24] = {
+EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[30] = {
     {AnyModulationDestination::None, "None"},
     {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
     {AnyModulationDestination::Osc1Phase, "Osc1Phase"},
@@ -432,6 +451,13 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[24] = {
     {AnyModulationDestination::FMStrength3To2, "FMStrength3To2"},
     {AnyModulationDestination::FMStrength1To3, "FMStrength1To3"},
     {AnyModulationDestination::FMStrength2To3, "FMStrength2To3"},
+
+    {AnyModulationDestination::Osc1FreqMul, "Osc1FreqMul"},
+    {AnyModulationDestination::Osc1FreqOffset, "Osc1FreqOffset"},
+    {AnyModulationDestination::Osc2FreqMul, "Osc2FreqMul"},
+    {AnyModulationDestination::Osc2FreqOffset, "Osc2FreqOffset"},
+    {AnyModulationDestination::Osc3FreqMul, "Osc3FreqMul"},
+    {AnyModulationDestination::Osc3FreqOffset, "Osc3FreqOffset"},
 };
 
 static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyModulationDestinationItems);
@@ -514,7 +540,6 @@ struct SynthOscillatorSettings
 
     float mPitchBendRangePositive = 2.0f;
     float mPitchBendRangeNegative = -2.0f;
-    float mPitchBendSnap = 0; // 0= no snap, 1=total snap
 
     float mPan = 0;
 

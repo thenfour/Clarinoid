@@ -212,33 +212,6 @@ struct SynthPatchOscillatorMenuStuff
                                                         this},
                                         AlwaysEnabled};
 
-    // // there's a bit of a conflict here because it's defined as float but this is int.
-    // IntSettingItem mPitchbendRange = {"Pitchbend range",
-    //                                   NumericEditRangeSpec<int>{0, 48},
-    //                                   Property<int>{[](void *cap)FLASHMEM  {
-    //                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-    //                                                     return (int)pThis->GetBinding().mPitchBendRange;
-    //                                                 },
-    //                                                 [](void *cap, const int &v) FLASHMEM {
-    //                                                     auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-    //                                                     pThis->GetBinding().mPitchBendRange = (float)v;
-    //                                                 },
-    //                                                 this},
-    //                                   AlwaysEnabled};
-
-    FloatSettingItem mPitchbendSnap = {"Pitchbend snap",
-                                       StandardRangeSpecs::gFloat_0_1,
-                                       Property<float>{[](void *cap) FLASHMEM {
-                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                           return pThis->GetBinding().mPitchBendSnap;
-                                                       },
-                                                       [](void *cap, const float &v) FLASHMEM {
-                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                           pThis->GetBinding().mPitchBendSnap = v;
-                                                       },
-                                                       this},
-                                       AlwaysEnabled};
-
     FloatSettingItem mFreqMul = {"FreqMul",
                                  StandardRangeSpecs::gFreqMulRange,
                                  Property<float>{[](void *cap) FLASHMEM {
@@ -331,15 +304,13 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                      AlwaysEnabled};
 
-    ISettingItem *mArray[13] = {
+    ISettingItem *mArray[12] = {
         &mWaveform,
         &mGain,
         &mFMFeedback,
         //&mCurve,
         //&mAMMinimumGain,
         &mPan,
-        //&mPitchbendRange,
-        &mPitchbendSnap,
         &mPortamentoTime,
         &mFreqMul,
         &mFreqOffset,
@@ -856,6 +827,19 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               this},
         AlwaysEnabled};
 
+    IntSettingItem mModCurve = {"Curve",
+                             StandardRangeSpecs::gCurveIndexRange,
+                             Property<int>{[](void *cap) FLASHMEM {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               return (int)pThis->GetModulationBinding().mCurveShape;
+                                           },
+                                           [](void *cap, const int &v) FLASHMEM {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               pThis->GetModulationBinding().mCurveShape = v;
+                                           },
+                                           this},
+                             AlwaysEnabled};
+
     BoolSettingItem mModAuxEnable = {"Aux enable",
                                      "On",
                                      "Off",
@@ -911,16 +895,31 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               this},
         AlwaysEnabled};
 
-    ISettingItem *mModulationSubmenu[8] = {
+    IntSettingItem mModAuxCurve = {" - Aux Curve",
+                             StandardRangeSpecs::gCurveIndexRange,
+                             Property<int>{[](void *cap) FLASHMEM {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               return (int)pThis->GetModulationBinding().mAuxCurveShape;
+                                           },
+                                           [](void *cap, const int &v) FLASHMEM {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               pThis->GetModulationBinding().mAuxCurveShape = v;
+                                           },
+                                           this},
+                             AlwaysEnabled};
+
+    ISettingItem *mModulationSubmenu[10] = {
         &mModSource,
         &mModDest,
         &mModScale,
         &mModSourcePolarity,
+        &mModCurve,
 
         &mModAuxEnable,
         &mModAuxSource,
         &mModAuxAmount,
         &mModAuxPolarity,
+        &mModAuxCurve,
     };
     SettingsList mModulationSubmenuList = {mModulationSubmenu};
 

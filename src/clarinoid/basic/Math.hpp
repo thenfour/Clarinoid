@@ -493,22 +493,22 @@ inline String GainToIntString(float gain)
     return DecibelsToIntString(LinearToDecibels(gain));
 }
 
-// takes a linear X value and snaps it to integral values.
-// when snapStrength is 0, no snapping occurs and the output is the same linear as input.
-// when snapStrength is 1, this is effecitvely a floor() function.
-inline float SnapPitchBend(float x, float snapStrength)
-{
-    if (snapStrength < 0.000001f)
-        return x;
-    float z = std::floor(x);
-    if (snapStrength > 0.99999f)
-        return z;
-    float p = x - z;
-    float q = snapStrength * 3;
-    q = q * q * q * q * q;
-    q += 1;
-    return z + fast::pow(p, q);
-}
+// // takes a linear X value and snaps it to integral values.
+// // when snapStrength is 0, no snapping occurs and the output is the same linear as input.
+// // when snapStrength is 1, this is effecitvely a floor() function.
+// inline float SnapPitchBend(float x, float snapStrength)
+// {
+//     if (snapStrength < 0.000001f)
+//         return x;
+//     float z = std::floor(x);
+//     if (snapStrength > 0.99999f)
+//         return z;
+//     float p = x - z;
+//     float q = snapStrength * 3;
+//     q = q * q * q * q * q;
+//     q += 1;
+//     return z + fast::pow(p, q);
+// }
 
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd
