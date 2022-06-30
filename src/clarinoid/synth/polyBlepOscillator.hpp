@@ -38,6 +38,48 @@ namespace clarinoid
 
 */
 
+struct PortamentoCalc
+{
+    float mValue = 0;
+    int mDurationBlocks = 0;
+    float mDeltaPerBlock = 0;
+    int mCursorBlocks = 0; // cursor
+
+    // call this every audio buffer interval; returns a smoothed frequency signal.
+    float KStep(float targetValue, int durationMS, bool restart)
+    {
+        // calculate params
+        if (durationMS > 0)
+        {
+            if (restart)
+            {
+                mCursorBlocks = 0;
+                float durationSamples = float(durationMS) / 1000 * AUDIO_SAMPLE_RATE_EXACT;
+                mDurationBlocks = ::floorf(durationSamples / AUDIO_BLOCK_SAMPLES);
+                mDeltaPerBlock = (targetValue - mValue) / mDurationBlocks;
+            }
+        }
+        else
+        {
+            // duration 0; instant transition and no running
+            mDurationBlocks = 0;
+            mCursorBlocks = 0;
+            mDeltaPerBlock = 0;
+            mValue = targetValue;
+        }
+
+        // and evaluate this block.
+        if (mCursorBlocks >= mDurationBlocks)
+        {
+            return mValue;
+        }
+
+        mValue += mDeltaPerBlock;
+        mCursorBlocks++;
+        return mValue;
+    }
+};
+
 // https://gitlab.com/flojawi/teensy-polyblep-oscillator
 
 /*
@@ -58,18 +100,9 @@ namespace clarinoid
 // tracks phase and frequency supporting portamento
 struct PhaseAccumulator
 {
-  private:
-    float mFrequency = 0; // frequency1 - the frequency the user has specified.
-    float mPortamentoSeconds =
-        0; // osc1_portamentoTime - the configured duration, in seconds, of the portamento duration
-    uint64_t mPortamentoSamples = 0; // osc1_portamentoSamples - the configured duration, in complete samples
-    float mPortamentoIncrement = 0; // osc1_portamentoIncrement - frequency delta per sample, within portamento duration
-    uint64_t mCurrentPortamentoSample =
-        0; // osc1_currentPortamentoSample -- position within portamento segemnt (0-mPortamentoSamples)
-
-  public:
-    float mFreq = 0; // the LIVE frequency the oscillator is actually using; is adjusted
-    float mT = 0;    // position in wave cycle, [0-1) // osc1_t
+    float mFreq =
+        0; // the LIVE frequency the oscillator is actually using (only differs from mFrequency during portamento)
+    float mT = 0; // position in wave cycle, [0-1) // osc1_t
     float mPhaseOffset = 0;
     float mDt = 0; // cycles per sample, very small. amount of 0-1 cycle to advance each sample. // osc1_dt
 
@@ -80,24 +113,10 @@ struct PhaseAccumulator
 
     // it's easier to control implementation details when all params are set at once. this is also how SynthVoice does
     // things anyway so..
-    void SetParams(float freq, bool instantFreq, float phaseOffset01, float portamentoSeconds)
+    void SetParams(float freq, float phaseOffset01)
     {
-        // set how long the oscillator sweeps up or down to the new frequency
-        mPortamentoSeconds = portamentoSeconds;
-        mPortamentoSamples = floorf(portamentoSeconds * AUDIO_SAMPLE_RATE_EXACT);
-
-        // frequency
-        freq = Clamp(freq, 0.0f, AUDIO_SAMPLE_RATE_EXACT / 2.0f);
-        if (mPortamentoSamples > 0 && !instantFreq)
-        {
-            mPortamentoIncrement = (freq - mFrequency) / (float)mPortamentoSamples;
-            mCurrentPortamentoSample = 0;
-        }
-        else
-        {
-            mFrequency = freq;
-        }
-        mDt = mFrequency / AUDIO_SAMPLE_RATE_EXACT;
+        mFreq = freq;
+        mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT;
 
         if (FloatEquals(phaseOffset01, mPhaseOffset))
         {
@@ -117,13 +136,6 @@ struct PhaseAccumulator
     // returns true if phase has cycled, and then x is populated with the subsample
     bool StepWithFrac(float &x)
     {
-        if (mPortamentoSamples > 0 && mCurrentPortamentoSample++ < mPortamentoSamples)
-        {
-            mFrequency += mPortamentoIncrement;
-            mFreq = mFrequency;
-            mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT; // cycles per sample. the amount of waveform to advance each
-                                                   // sample. very small.
-        }
         mT += mDt;
         if (mT < 1)
             return false;
@@ -369,22 +381,17 @@ struct Oscillator
     //     mAmplitude = amplitude01;
     // }
 
-    void SetBasicParams(float freq,
-                        bool instantFreq,
-                        float phaseOffset01,
-                        float portamentoSeconds,
-                        bool syncEnabled,
-                        float syncFreq)
+    void SetBasicParams(float freq, float phaseOffset01, int portamentoMS, bool syncEnabled, float syncFreq)
     {
         mSyncEnabled = syncEnabled;
         if (syncEnabled)
         {
-            mSyncPhase.SetParams(freq, instantFreq, phaseOffset01, portamentoSeconds);
-            mMainPhase.SetParams(syncFreq, true, 0, 0);
+            mSyncPhase.SetParams(freq, phaseOffset01);
+            mMainPhase.SetParams(syncFreq, 0);
         }
         else
         {
-            mMainPhase.SetParams(freq, instantFreq, phaseOffset01, portamentoSeconds);
+            mMainPhase.SetParams(freq, phaseOffset01);
         }
     }
 

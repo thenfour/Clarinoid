@@ -199,15 +199,15 @@ struct SynthPatchOscillatorMenuStuff
                                              this},
                              AlwaysEnabled};
 
-    FloatSettingItem mPortamentoTime = {"Portamento",
+    IntSettingItem mPortamentoTimeMS = {"Portamento MS",
                                         StandardRangeSpecs::gPortamentoRange,
-                                        Property<float>{[](void *cap) FLASHMEM {
+                                        Property<int>{[](void *cap) FLASHMEM {
                                                             auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                            return pThis->GetBinding().mPortamentoTime;
+                                                            return pThis->GetBinding().mPortamentoTimeMS;
                                                         },
-                                                        [](void *cap, const float &v) FLASHMEM {
+                                                        [](void *cap, const int &v) FLASHMEM {
                                                             auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                            pThis->GetBinding().mPortamentoTime = v;
+                                                            pThis->GetBinding().mPortamentoTimeMS = v;
                                                         },
                                                         this},
                                         AlwaysEnabled};
@@ -311,7 +311,7 @@ struct SynthPatchOscillatorMenuStuff
         //&mCurve,
         //&mAMMinimumGain,
         &mPan,
-        &mPortamentoTime,
+        &mPortamentoTimeMS,
         &mFreqMul,
         &mFreqOffset,
         &mPitchSemis,

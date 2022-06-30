@@ -186,7 +186,7 @@ static const NumericEditRangeSpecWithBottom gGeneralGain =
 static const NumericEditRangeSpecWithBottom gSendGain =
     NumericEditRangeSpecWithBottom{-30.0f, 0.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
 
-static const NumericEditRangeSpec<float> gPortamentoRange = NumericEditRangeSpec<float>{0.0f, 0.2f};
+static const NumericEditRangeSpec<int> gPortamentoRange = NumericEditRangeSpec<int>{0, 1000};
 
 // osc pitch and global transpose
 static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int>{-48, 48, 6, 1, 1};

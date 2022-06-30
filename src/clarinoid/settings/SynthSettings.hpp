@@ -530,7 +530,7 @@ struct EnvelopeSpec
 struct SynthOscillatorSettings
 {
     float mGain = 0;
-    float mPortamentoTime = 0.0f;
+    int mPortamentoTimeMS = 0;
 
     float mFreqMultiplier = 1.0f; // midinotefreq * this
     float mFreqOffset = 0.0f;
