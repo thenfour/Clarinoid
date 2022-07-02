@@ -195,8 +195,10 @@ static const NumericEditRangeSpec<int> gCurveIndexRange = NumericEditRangeSpec<i
 static const NumericEditRangeSpec<float> gDelayStereoSpread = NumericEditRangeSpec<float>{0.0f, 100.0f};
 static const NumericEditRangeSpec<float> gFilterFreqRange = NumericEditRangeSpec<float>{0.0f, 20000.0f};
 
-static const NumericEditRangeSpec<float> gFreqMulRange = NumericEditRangeSpec<float>{0, 24, 1.0f, 0.10f, 0.05f};
-static const NumericEditRangeSpec<float> gFreqOffsetRange = NumericEditRangeSpec<float>{-5000, 5000, 500, 100, 10};
+static const NumericEditRangeSpec<float> gFreqMulRange = NumericEditRangeSpec<float>{0, 24, 1.0f, 0.05f, 0.002f};
+static const NumericEditRangeSpec<float> gFreqOffsetRange = NumericEditRangeSpec<float>{-5000, 5000, 500, 10, 0.2};
+
+static const NumericEditRangeSpec<float> gOverallFMStrengthRange = NumericEditRangeSpec<float>{0.0f, 1.0f, 0.1f, 0.01f, 0.001f};
 
 static const NumericEditRangeSpec<float> gLFOFrequency = NumericEditRangeSpec<float>{0.01f, 15.0f};
 

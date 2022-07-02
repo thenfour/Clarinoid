@@ -606,7 +606,7 @@ struct SynthPreset
     float mFMStrength1To3 = 0;
     float mFMStrength2To3 = 0;
 
-    float mOverallFMStrength = 0.1f;
+    float mOverallFMStrength = 1.00f;
 
     SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
 

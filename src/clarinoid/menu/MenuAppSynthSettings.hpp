@@ -431,7 +431,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                       AlwaysEnabled};
 
     FloatSettingItem mFMStrength = {"FM strength",
-                                    StandardRangeSpecs::gFloat_0_1_Fine,
+                                    StandardRangeSpecs::gOverallFMStrengthRange,
                                     Property<float>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (SynthPatchMenuApp *)cap;
                                                         return pThis->GetBinding().mOverallFMStrength;

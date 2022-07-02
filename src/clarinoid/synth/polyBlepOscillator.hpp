@@ -154,10 +154,10 @@ struct SineWaveformProvider // : public WaveformProviderBase
         caller.mPulseStage = false;
     }
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput)
+    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
         caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
-        caller.mOutput = fast::sin((caller.mMainPhase.mT + fboutput * caller.mPMFeedbackAmt) * TWO_PI);
+        caller.mOutput = fast::sin((caller.mMainPhase.mT + phaseShift + fboutput * caller.mPMFeedbackAmt) * TWO_PI);
         // caller.mOutput = sinf((caller.mMainPhase.mT) * TWO_PI);
     }
 };
@@ -172,8 +172,9 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
     }
 
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput)
+    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
+        // TODO: use phase shift
         while (true)
         {
             if (!caller.mPulseStage)
@@ -237,8 +238,9 @@ struct PulseWaveformProvider
         caller.mPulseStage = false;
     }
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput)
+    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
+        // TODO: use phase shift
         while (true)
         {
             if (!caller.mPulseStage)
@@ -323,8 +325,9 @@ struct SawWaveformProvider
     }
 
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput)
+    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
+        // TODO: use phase shift
         caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
 
         if (caller.mMainPhase.mT < caller.mMainPhase.mDt)
@@ -404,9 +407,11 @@ struct Oscillator
     template <typename TWaveformProvider>
     inline void Step(size_t i, bool doPWM, float *pwm32, bool doPM, float *pm32, float *out)
     {
+        float phaseShift = 0;
         if (doPM)
         {
-            mMainPhase.mT += pm32[i];
+            phaseShift += pm32[i];
+            //mMainPhase.mT += pm32[i];
         }
 
         if (doPWM)
@@ -421,7 +426,7 @@ struct Oscillator
         mOutput = mBlepDelay;
         mBlepDelay = 0;
 
-        TWaveformProvider::Step(*this, fboutput);
+        TWaveformProvider::Step(*this, fboutput, phaseShift);
 
         float x;
         if (mSyncEnabled && mSyncPhase.StepWithFrac(x))
