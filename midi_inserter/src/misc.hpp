@@ -1,8 +1,8 @@
-
-
 #pragma once
 
 #include "Stopwatch.hpp"
+
+#undef B01 // from binary.h, i hate crap like this that conflicts
 
 template <typename T>
 T clamp(T v, T low, T top)
@@ -59,53 +59,98 @@ String byteArrayToString(int len, const byte *data)
     return ret;
 }
 
-// struct Blinker
-// {
-//     clarinoid::Stopwatch sw;
-//     int mPeriodMS;
-//     explicit Blinker(int periodMS) : mPeriodMS(periodMS)
-//     {
-//     }
+static float Lerp(float a, float b, float t)
+{
+    return a * (1.0f - t) + b * t;
+}
 
-//     bool GetState()
-//     {
-//         auto p2x = sw.ElapsedTime().ElapsedMillisI() % (mPeriodMS * 2);
-//         return p2x < mPeriodMS;
-//     }
-// };
+// bits must be able to fit in a signed int size.
+template <int TresolutionBits>
+struct ColorT
+{
+    using this_t = ColorT<TresolutionBits>;
+    int R = 0;
+    int G = 0;
+    int B = 0;
 
-// // pin-driven LED which you trigger to blink it. the green LEDs, plus the RED led basically.
-// // doesn't actually drive the LED; just calculates the brightness level for caller to use.
-// struct TriggerLed
-// {
-//     clarinoid::Stopwatch sw;
-//     const int mDurationMS;
-//     explicit TriggerLed(int durationMS) : mDurationMS(durationMS)
-//     {
-//     }
+    float R01() const
+    {
+        return AnalogTo01(R);
+    }
+    float G01() const
+    {
+        return AnalogTo01(G);
+    }
+    float B01() const
+    {
+        return AnalogTo01(B);
+    }
 
-//     void Trigger()
-//     {
-//         sw.Restart();
-//     }
+    static constexpr int MaxValue = (1 << TresolutionBits) - 1;
 
-//     double GetState(bool log = false)
-//     {
-//         //int elapsed = sw.ElapsedTime().ElapsedMillisI();
-//         // return elapsed > mDurationMS ? 0 : 1;
+    float AnalogTo01(int x) const
+    {
+        return float(x) / MaxValue;
+    }
 
-//         int elapsed = sw.ElapsedTime().ElapsedMillisI();
-//         elapsed = mDurationMS - elapsed;
-//         double x = elapsed;
-//         x /= mDurationMS;
-//         if (x >= 0 && x <= 1 && log)
-//         {
-//             Serial.println(String("ElapsedMS:") + elapsed + ", durationMS:" + mDurationMS + ", x:" + x +
-//                            ", ret:" + clamp(x, (double)0.0, (double)1.0));
-//         }
-//         return clamp(x, (double)0.0, (double)1.0);
-//     }
-// };
+    int _01ToAnalog(float x) const
+    {
+        return int(x * MaxValue);
+    }
+
+    ColorT()
+    {
+    }
+    ColorT(int r, int g, int b) : R(r), G(g), B(b)
+    {
+    }
+    ColorT(float r01, float g01, float b01) : R(_01ToAnalog(r01)), G(_01ToAnalog(g01)), B(_01ToAnalog(b01))
+    {
+    }
+
+    bool Equals(const this_t &rhs) const
+    {
+        if (rhs.R != this->R)
+            return false;
+        if (rhs.G != this->G)
+            return false;
+        if (rhs.B != this->B)
+            return false;
+        return true;
+    }
+
+    int GetLevel() const
+    {
+        return R;
+    }
+
+    float GetLevel01() const
+    {
+        return AnalogTo01(this->R);
+    }
+    void SetLevel01(float x)
+    {
+        this->G = this->B = this->R = _01ToAnalog(x);
+    }
+    this_t &operator=(const this_t &rhs) = default;
+
+    static this_t Mix(const this_t &lhs, const this_t &rhs, float x01)
+    {
+        if (x01 <= 0)
+            return lhs;
+        if (x01 >= 1)
+            return rhs;
+        return {Lerp(lhs.R01(), rhs.R01(), x01), Lerp(lhs.G01(), rhs.G01(), x01), Lerp(lhs.B01(), rhs.B01(), x01)};
+    }
+};
+
+using Color = ColorT<gLEDPWMResolution>;
+
+namespace Colors
+{
+static const Color Black = {};
+static const Color White = {1.0f, 1.0f, 1.0f};
+}; // namespace Colors
 
 struct BigButtonReader
 {
@@ -137,56 +182,3 @@ struct BigButtonReader
         return r;
     }
 };
-
-// struct LEDPin
-// {
-//     int mPin;
-//     TriggerLed fastPulse;
-//     TriggerLed slowPulse;
-//     double mBrightness;
-//     int mMinTriggerIntervalMS;
-//     clarinoid::Stopwatch mTriggerStopwatch;
-
-//     // static constexpr float gamma = 2.2f;
-
-//     LEDPin(int pin, int fastMS, int slowMS, double brightness, int minTriggerIntervalMS)
-//         : mPin(pin), fastPulse(fastMS), slowPulse(slowMS), mBrightness(brightness),
-//           mMinTriggerIntervalMS(minTriggerIntervalMS)
-//     {
-//         pinMode(mPin, OUTPUT);
-
-//         // setting analog resolution causes other problems and ugliness. don't.
-//         // see https://www.pjrc.com/teensy/td_pulse.html
-//         // on how to balance these values.
-//         // analogWriteResolution(10); // now analogWrite is 0 - 1023
-//         // analogWriteFrequency(pin, 46875);
-//     }
-
-//     void Trigger()
-//     {
-//         if (mTriggerStopwatch.ElapsedTime().ElapsedMillisI() < mMinTriggerIntervalMS)
-//             return;
-//         mTriggerStopwatch.Restart();
-//         fastPulse.Trigger();
-//         slowPulse.Trigger();
-//     }
-
-//     int GetAnalogLevel(double f)
-//     {
-//         // gamma correct; try to make these things a bit more linear.
-//         return clamp((int)(f * f * f * f * mBrightness * 255), 0, 255);
-//     }
-
-//     void SetLevel(double f)
-//     {
-//         analogWrite(mPin, GetAnalogLevel(f));
-//     }
-
-//     // called to present the trigger state
-//     void Present()
-//     {
-//         double val = std::max(fastPulse.GetState(), slowPulse.GetState() * 0.40);
-//         // double val = slowPulse.GetState();
-//         SetLevel(val);
-//     }
-// };

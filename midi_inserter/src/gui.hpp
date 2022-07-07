@@ -1,5 +1,12 @@
 #pragma once
+
 #include "ledstrip.hpp"
+#include "anim.hpp"
+
+// LED STRIP
+// 0 = heartbeat (blue = healthy, red = error)
+// 1 = status (green / red)
+// 2 = identify state
 
 enum class IdentifyState
 {
@@ -8,191 +15,229 @@ enum class IdentifyState
     Sent,
 };
 
-struct Color
+// hardware driver which applies an animation to a pin PWM led.
+template <int Tpin>
+struct PinLed : IAnimationTarget
 {
-    byte R = 0;
-    byte G = 0;
-    byte B = 0;
-    // byte level; <-- always just returns R.
+    IAnimation *mpCurrentAnimation = &gOffAnimation;
 
-    bool Equals(const Color &rhs)
+    PinLed()
     {
-        if (rhs.R != this->R)
-            return false;
-        if (rhs.G != this->G)
-            return false;
-        if (rhs.B != this->B)
-            return false;
-        return true;
+        pinMode(Tpin, OUTPUT);
+        // setting analog resolution causes other problems and ugliness. don't.
+        // see https://www.pjrc.com/teensy/td_pulse.html
+        // on how to balance these values.
+        analogWriteFrequency(Tpin, gLEDPWMFrequency);
+        analogWriteResolution(gLEDPWMResolution);
     }
 
-    byte GetLevel()
+    virtual void IAnimationTarget_SetAnimation(IAnimation *anim) override
     {
-        return R;
+        mpCurrentAnimation = anim;
     }
 
-    Color &operator=(const Color &rhs) = default;
-
-    static Color Black;
-};
-
-// represents a signal curve over time, for RGB colors
-struct IAnimation
-{
-    virtual Color IAnimation_GetColor() = 0;
-};
-
-struct OffAnimation : IAnimation
-{
-    Color IAnimation_GetColor() override
+    static int _01ToAnalogLevel(float f)
     {
-        return {0, 0, 0};
+        return gLEDPWMMaxValue * std::pow(f, 4.5f); // gamma-correct pin LEDs
+    }
+
+    virtual void Render()
+    {
+        auto c = mpCurrentAnimation->IAnimation_GetColor();
+        auto level01 = c.GetLevel01();
+        analogWrite(Tpin, _01ToAnalogLevel(level01));
     }
 };
 
-OffAnimation gOffAnimation;
+static DMAMEM byte gWS2812_DisplayMemory[12 /*count*/ * 12 /*bytes per pixel storage*/];
+Ledstrip<14, 12> gWS2812 = {gWS2812_DisplayMemory};
 
-struct SolidColor : IAnimation
+PinLed<2> gGreen1;
+PinLed<3> gGreen2;
+PinLed<4> gGreen3;
+PinLed<5> gGreen4;
+PinLed<6> gOrangeTriangle;
+PinLed<18> gBlueTriangle;
+PinLed<19> gRedTriangle;
+
+// various animations
+namespace animations
 {
-    Color IAnimation_GetColor() override
+PulseAnimation gRedPulse = {1000};
+PulseAnimation gBluePulse = {500};
+PulseAnimation gOrangePulse;
+
+PulseAnimation gHeartbeatPulse = {300};
+PulseAnimation gErrorPulse = {30000};
+SolidColor gNoErrorSolid;
+SolidColor gLed4Solid; // not used at the moment.
+
+SolidColor gBlueSolid;
+SolidColor gOrangeSolid;
+
+PulseAnimation gTXA = {100};
+PulseAnimation gTXB = {100};
+PulseAnimation gRXA = {100};
+PulseAnimation gRXB = {100};
+
+SolidColor gIdentifyStateSolid;
+
+SolidColor gWS2812Solids[12];
+
+PulseAnimation gBeatTrigger = {150};
+
+} // namespace animations
+
+struct MidiPerformerGui
+{
+    clarinoid::Stopwatch mGuiTimer; // don't update leds EVERY loop; update max 60fps
+    static constexpr int gGuiIntervalMS = 1000 / gFrameRate;
+
+    int mFrame = 0;
+
+    clarinoid::Stopwatch mHeartbeatTimer;
+    static constexpr int gHeartbeatIntervalMS = 500;
+
+    MidiPerformerGui()
     {
-        return {0, 0, 0};
+        animations::gHeartbeatPulse.mForeColor = {0.1f, 0.1f, 0.5f};
+        animations::gOrangePulse.mForeColor.SetLevel01(0.5f);
+        animations::gBluePulse.mForeColor.SetLevel01(0.5f);
+
+        animations::gNoErrorSolid.mColor = {0.1f, 0.1f, 0.5f};
+        gWS2812.mLeds[1].IAnimationTarget_SetAnimation(&animations::gNoErrorSolid);
+
+        animations::gLed4Solid.mColor = {0.1f, 0.1f, 0.5f};
+        gWS2812.mLeds[3].IAnimationTarget_SetAnimation(&animations::gLed4Solid);
+
+        animations::gTXA.mForeColor.SetLevel01(0.33f);
+        animations::gTXB.mForeColor.SetLevel01(0.33f);
+        animations::gRXA.mForeColor.SetLevel01(0.33f);
+        animations::gRXB.mForeColor.SetLevel01(0.33f);
+
+        animations::gBeatTrigger.mForeColor.SetLevel01(0.55f);
     }
-};
 
-struct TriggerAnim : IAnimation
-{
-};
-
-// struct LedPin
-// {
-//     const IAnimation *mCurrentAnimation = &gOff;
-
-//     // because i avoid dynamic allocation, each led should have its own copy of all the animations it will need.
-//     // so OrangeLed will have its own trigger animation object it can trigger with etc.
-//     // exception: immutable animation types like Off.
-//     // then to trigger the OrangeLed, call .Trigger on its trigger animation object.
-//     void SetAnimation(const IAnimation *anim)
-//     {
-//         mCurrentAnimation = anim;
-//     }
-// };
-
-// enum class PinLeds
-// {
-//   Green1 = 3,
-//   Green2 = 4,
-//   Green3 = 23,
-//   Green4 = 22,
-//   Orange = 17,
-//   Blue = 16,
-//   Red = 20,
-// };
-
-struct ILed
-{
-    virtual void SetColor(Color c) = 0;
-    //virtual void SetAnimation(IAnimation* anim) = 0;
-    virtual void Render() = 0;
-};
-
-struct PinLed : ILed
-{
-    int mPin;
-    Color mCurrentColor;
-    bool mDirty;
-
-    PinLed(int pin) : mPin(pin), mCurrentColor(Color::Black), mDirty(true)
+    void OnFrame()
     {
-        pinMode(mPin, OUTPUT);
-        //         // setting analog resolution causes other problems and ugliness. don't.
-        //         // see https://www.pjrc.com/teensy/td_pulse.html
-        //         // on how to balance these values.
-        //         // analogWriteResolution(10); // now analogWrite is 0 - 1023
-        //         // analogWriteFrequency(pin, 46875);
-    }
-
-    virtual void SetColor(Color c) override
-    {
-        if (mCurrentColor.Equals(c))
+        if (mGuiTimer.ElapsedTime().ElapsedMillisI() < gGuiIntervalMS)
+        {
             return;
-        mCurrentColor = c;
-        mDirty = true;
+        }
+
+        mFrame++;
+        mGuiTimer.Restart();
+
+        if (mHeartbeatTimer.ElapsedTime().ElapsedMillisI() >= gHeartbeatIntervalMS)
+        {
+            mHeartbeatTimer.Restart();
+            gWS2812.mLeds[0].IAnimationTarget_SetAnimation(&animations::gHeartbeatPulse);
+            animations::gHeartbeatPulse.Trigger();
+        }
+
+        gGreen1.Render();
+        gGreen2.Render();
+        gGreen3.Render();
+        gGreen4.Render();
+        gOrangeTriangle.Render();
+        gBlueTriangle.Render();
+        gRedTriangle.Render();
+
+        gWS2812.Render();
     }
 
-    int GetAnalogLevel(double f)
+    void SetIdentifyState(IdentifyState state)
     {
-        // gamma correct; try to make these things a bit more linear.
-        // return clamp((int)(f * f * f * f * 255), 0, 255);
+        switch (state)
+        {
+        default:
+        case IdentifyState::None:
+            animations::gIdentifyStateSolid.mColor = {};
+            break;
+        case IdentifyState::Requested:
+            animations::gIdentifyStateSolid.mColor = {0.4f, 0.4f, 0.0f};
+            break;
+        case IdentifyState::Sent:
+            animations::gIdentifyStateSolid.mColor = {0.0f, 0.0f, 0.7f};
+            break;
+        }
+        gWS2812.mLeds[2].IAnimationTarget_SetAnimation(&animations::gIdentifyStateSolid);
     }
 
-    virtual void Render() override
+    void OnMidiARXTX()
     {
-        if (!mDirty)
+        animations::gRXA.Trigger();
+        gGreen1.IAnimationTarget_SetAnimation(&animations::gRXA);
+        OnMidiATX();
+    }
+
+    void OnMidiBRXTX()
+    {
+        animations::gRXB.Trigger();
+        gGreen3.IAnimationTarget_SetAnimation(&animations::gRXB);
+        OnMidiBTX();
+    }
+
+    void OnMidiABTX()
+    {
+        OnMidiBTX();
+        OnMidiATX();
+    }
+
+    void OnMidiATX()
+    {
+        animations::gTXA.Trigger();
+        gGreen4.IAnimationTarget_SetAnimation(&animations::gTXA);
+    }
+
+    void OnMidiBTX()
+    {
+        animations::gTXB.Trigger();
+        gGreen2.IAnimationTarget_SetAnimation(&animations::gTXB);
+    }
+
+    void OnBigButtonSendNoteViaBusB()
+    {
+        gRedTriangle.IAnimationTarget_SetAnimation(&animations::gRedPulse);
+        animations::gRedPulse.Trigger();
+    }
+    void OnError()
+    {
+        animations::gErrorPulse.Trigger();
+        animations::gErrorPulse.mForeColor = {0.5f, 0.0f, 0.0f};
+        gWS2812.mLeds[1].IAnimationTarget_SetAnimation(&animations::gErrorPulse);
+    }
+    void SetLedStripColor(int nled, const Color &c)
+    {
+        if (nled < 0)
+        {
+            OnError();
             return;
-        mDirty = false;
-        // analogWrite(mPin, GetAnalogLevel(f));
-        analogWrite(mPin, mCurrentColor.GetLevel());
+        }
+        nled += 4; // skip the ones for system use
+        if (nled >= 12)
+        {
+            OnError();
+            return;
+        }
+
+        animations::gWS2812Solids[nled].mColor = c;
+        gWS2812.mLeds[nled].IAnimationTarget_SetAnimation(&animations::gWS2812Solids[nled]);
+    }
+    void OnSetBlueLevel(float level01)
+    {
+        animations::gBlueSolid.mColor.SetLevel01(level01);
+        gBlueTriangle.IAnimationTarget_SetAnimation(&animations::gBlueSolid);
+    }
+    void OnSetOrangeLevel(float level01)
+    {
+        animations::gOrangeSolid.mColor.SetLevel01(level01);
+        gOrangeTriangle.IAnimationTarget_SetAnimation(&animations::gOrangeSolid);
     }
 
-    //
+    void OnBeatTrigger()
+    {
+        animations::gBeatTrigger.Trigger();
+        gOrangeTriangle.IAnimationTarget_SetAnimation(&animations::gBeatTrigger);
+    }
 };
-
-// enum class Leds
-// {
-// };
-
-// struct MidiPerformerGui
-// {
-//     clarinoid::Stopwatch gGuiTimer; // don't update leds EVERY loop; update max 60fps
-//     static constexpr int gGuiIntervalMS = 1000 / 60;
-
-//     // LEDPin gLedPin_OrangeTriangle{17, 80, 240, 1.0, 100};
-//     // LEDPin gLedPin_BlueTriangle{16, 80, 240, 1.0, 100};
-//     // LEDPin gLedPin_RedTriangle{20, 240, 3000, 1.0, 100};
-//     // LEDPin gLedPin_MidiA_RX{3, 30, 360, 0.05, 200};
-//     // LEDPin gLedPin_MidiB_TX{4, 30, 360, 0.05, 200};
-//     // LEDPin gLedPin_MidiB_RX{23, 30, 360, 0.05, 200};
-//     // LEDPin gLedPin_MidiA_TX{22, 30, 360, 0.05, 200};
-
-//     Ledstrip gLedstrip;
-
-//     void Render()
-//     {
-//         // process heartbeat
-//         // process identify state
-
-//         // gLedPin_MidiA_RX.Present();
-//         // gLedPin_MidiA_TX.Present();
-//         // gLedPin_MidiB_RX.Present();
-//         // gLedPin_MidiB_TX.Present();
-//         // gLedPin_RedTriangle.Present();
-
-//         // if (doOrangeAndBlue)
-//         // {
-//         //     gLedPin_BlueTriangle.Present();
-//         //     gLedPin_OrangeTriangle.Present();
-//         // }
-
-//         // gLedstrip.Render();
-
-//         // if (gGuiTimer.ElapsedTime().ElapsedMillisI() >= gGuiIntervalMS)
-//         // {
-//         //     PresentLeds();
-//         // }
-//     }
-
-//     void SetIdentifyState(IdentifyState state)
-//     {
-//         //
-//     }
-
-//     // void TriggerMidiATX() {}
-//     // void TriggerMidiARX() {}
-//     // void TriggerMidiBTX() {}
-//     // void TriggerMidiBRX() {}
-
-//     // void TriggerOrange() {}
-//     // void TriggerBlue() {}
-//     // void TriggerRed() {}
-// };
