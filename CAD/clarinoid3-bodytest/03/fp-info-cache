@@ -1,4 +1,4 @@
-20419726829761459
+20439607162334938
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -86463,6 +86463,90 @@ solder point DIP 1x12
 0
 12
 12
+pkl_mechanical.pretty
+Drill_0.5mm
+0.5mm drill hole for mouse bites
+
+0
+0
+0
+pkl_mechanical.pretty
+Drill_1.0mm
+0.5mm drill hole for mouse bites
+
+0
+0
+0
+pkl_mechanical.pretty
+MountingHole_3.5mm_M.2_Pad
+PCIe M.2 NGFF module stand-off ground pad, for M3 x 0.5mm screw
+PCIe M.2 NGFF module standoff
+0
+3
+1
+pkl_mechanical.pretty
+MountingHole_3.5mm_M.2_Pad_Via
+PCIe M.2 NGFF module stand-off ground pad, with vias, for M3 x 0.5mm screw
+PCIe M.2 NGFF module standoff
+0
+10
+1
+pkl_mechanical.pretty
+MountingHole_3.5mm_M.2_Standoff
+PCIe M.2 NGFF module stand-off ground pad, for M3 x 0.5mm screw
+PCIe M.2 NGFF module standoff
+0
+1
+1
+pkl_mechanical.pretty
+MountingHole_3mm
+Mounting hole, Befestigungsbohrung, 3mm, No Annular, Kein Restring,
+Mounting hole, Befestigungsbohrung, 3mm, No Annular, Kein Restring,
+0
+1
+0
+pkl_mechanical.pretty
+OSHTab
+0.5mm holes and 3mm wide tab
+OSHPark recommended panel tab
+0
+0
+0
+pkl_mechanical.pretty
+OSHTab-2mm
+0.5mm holes and 3mm wide tab
+OSHPark recommended panel tab
+0
+0
+0
+pkl_mechanical.pretty
+OSHTab-4.45mm
+0.5mm holes and 6.5mm wide tab
+OSHPark recommended panel tab
+0
+0
+0
+pkl_mechanical.pretty
+OSHTab-6.5mm
+0.5mm holes and 6.5mm wide tab
+OSHPark recommended panel tab
+0
+0
+0
+pkl_mechanical.pretty
+OSHTabSlim-2mm
+0.5mm holes and 3mm wide tab
+OSHPark recommended panel tab
+0
+0
+0
+pkl_mechanical.pretty
+PogoPin_D0.68mm_L16.5mm_AlignmentHole
+Pogo Pin, 0.68mm diameter (0.5mm diameter pin), 16.5mm long (13mm sleeve, 2.65mm full stroke), Alignment Hole
+pogo pin alignment hole
+0
+0
+0
 teensy
 Teensy1.0
 11
