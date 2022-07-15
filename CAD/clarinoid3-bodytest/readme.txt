@@ -27,3 +27,6 @@ for proto & testing of physical:
      i had also considered more sub-boards, maybe again mounted @ 90 degrees like
      the potentiometer. but mechanical stress & complexity concern me.
      in the spirit of experimenting/testing, let's go for SMD pin headers.
+
+04 = micromod is not ideal for our design. benefit does not outweigh the cost regarding
+     vibration, complexity, stability, convention.

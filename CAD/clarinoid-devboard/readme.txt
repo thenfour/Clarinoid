@@ -13,3 +13,5 @@
      - would be nice to have a way to switch between battery  or usb power
 
      20220620: 04 is being produced by jlcpcb
+
+05 - now using teensy 4.1 with pins
