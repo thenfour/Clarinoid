@@ -45,7 +45,7 @@
         "silk_text_upright": false,
         "zones": {
           "45_degree_only": false,
-          "min_clearance": 0.508
+          "min_clearance": 0.3
         }
       },
       "diff_pair_dimensions": [
@@ -401,12 +401,19 @@
         "microvia_drill": 0.1,
         "name": "power3v3",
         "nets": [
+          "+3V3",
+          "3.3v Peripheral",
+          "3v3 reg output",
           "A3v3",
-          "D3v3"
+          "D3v3",
+          "dac_3v3",
+          "i2c_3v3",
+          "sd_3v3",
+          "spi_3v3"
         ],
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.2,
+        "track_width": 0.3,
         "via_diameter": 0.8,
         "via_drill": 0.4,
         "wire_width": 6.0
@@ -422,13 +429,17 @@
         "microvia_drill": 0.1,
         "name": "power5v",
         "nets": [
+          "+5v before power switch",
+          "/5v tap input",
+          "/charger output",
           "Batt+",
           "Supply+5v",
-          "USB_Vin5v"
+          "USB_Vin5v",
+          "charger input +5v"
         ],
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.2,
+        "track_width": 0.3,
         "via_diameter": 0.8,
         "via_drill": 0.4,
         "wire_width": 6.0

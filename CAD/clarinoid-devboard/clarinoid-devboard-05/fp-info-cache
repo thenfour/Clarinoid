@@ -1,4 +1,4 @@
-20454527954300131
+20457846972755269
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -86164,7 +86164,7 @@ ISSY IS31FL3236-QFLS2-TR QFN40P500X500X80-44N
 45
 clarinoid2
 Inductor_MCS0630-1R0MN2
-https://lcsc.com/search?q=MCS0630-1R0MN2
+https://lcsc.com/search?q=MCS0630-1R0MN2 also works with MWSA0603S (Sunlord, C112125)
 
 0
 2
@@ -86190,6 +86190,13 @@ DIPS1524W75P254L2520H805Q18N many-segment led thing
 0
 0
 0
+clarinoid2
+LED WS2812B-4020
+
+LED RGB NeoPixel
+0
+4
+4
 clarinoid2
 LED_WS2812B-B Worldsemi
 LCSC C2761795
@@ -86470,6 +86477,13 @@ Switch
 0
 12
 12
+clarinoid2
+mouse-bite-2mm-slot
+
+
+0
+0
+0
 clarinoid2
 solder point DIP 1x2
 

@@ -14,4 +14,5 @@
 
      20220620: 04 is being produced by jlcpcb
 
-05 - now using teensy 4.1 with pins
+05 - now using teensy 4.1 with pins. ready for assembly.
+06 - experimenting with even more modular design
