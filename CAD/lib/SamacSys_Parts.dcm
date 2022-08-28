@@ -1,0 +1,39 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP NE555DR
+D Single Precision Timer
+K
+F http://www.ti.com/lit/ds/symlink/ne555.pdf
+$ENDCMP
+#
+$CMP 2199230-8
+D AMP - TE CONNECTIVITY - 2199230-8 - CONNECTOR, CARD EDGE, RCPT, 67POS, 2ROW
+K
+F 
+$ENDCMP
+#
+$CMP 1043
+D KEYSTONE - 1043 - BATTERY HOLDER, 18650, TH
+K
+F http://www.keyelco.com/product-pdf.cfm?p=919
+$ENDCMP
+#
+$CMP MCP23017-E_SS
+D 16-bit Input/Output Expander, I2C
+K
+F 
+$ENDCMP
+#
+$CMP ABPMAND001PG2A3
+D ABPMAND001PG2A3, Differential Pressure Sensor 1psi 6-Pin SMT
+K
+F https://componentsearchengine.com/Datasheets/1/ABPMAND001PG2A3.pdf
+$ENDCMP
+#
+$CMP 1042P
+D KEYSTONE - 1042P - BATTERY HOLDER, 18650, SMD
+K
+F http://www.keyelco.com/product-pdf.cfm?p=13957
+$ENDCMP
+#
+#End Doc Library

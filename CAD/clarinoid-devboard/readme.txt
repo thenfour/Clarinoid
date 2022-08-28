@@ -15,4 +15,9 @@
      20220620: 04 is being produced by jlcpcb
 
 05 - now using teensy 4.1 with pins. ready for assembly.
-06 - experimenting with even more modular design
+     and even more modular design
+
+     this was rejected; added 05-asm and 05-noasm to separate assembly versus non-assembly boards in hopes
+     of cost savings and build simplification.
+
+06 - that still wasn't enough; need to break yet into <=6 designs per board.

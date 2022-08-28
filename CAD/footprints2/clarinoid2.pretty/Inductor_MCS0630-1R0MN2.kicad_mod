@@ -1,7 +1,7 @@
 (footprint "Inductor_MCS0630-1R0MN2" (version 20211014) (generator pcbnew)
   (layer "F.Cu")
   (tedit 5D90E51A)
-  (descr "https://lcsc.com/search?q=MCS0630-1R0MN2")
+  (descr "https://lcsc.com/search?q=MCS0630-1R0MN2 also works with MWSA0603S (Sunlord, C112125)")
   (attr smd)
   (fp_text reference "REF**" (at 0.4 -7.55) (layer "F.SilkS")
     (effects (font (size 1 1) (thickness 0.15)))

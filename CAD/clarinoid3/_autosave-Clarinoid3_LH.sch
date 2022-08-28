@@ -1,0 +1,210 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 9 10
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L clarinoidSymbols:CLARINOID_OCTAVES U?
+U 1 1 61497632
+P 3600 3700
+F 0 "U?" H 3978 3879 50  0000 L CNN
+F 1 "CLARINOID_OCTAVES" H 3978 3788 50  0000 L CNN
+F 2 "" H 3600 3700 50  0001 C CNN
+F 3 "" H 3600 3700 50  0001 C CNN
+	1    3600 3700
+	1    0    0    -1  
+$EndComp
+$Comp
+L clarinoidSymbols:AdafruitMPR121 U?
+U 1 1 61497F3F
+P 4100 2150
+F 0 "U?" H 4033 3065 50  0000 C CNN
+F 1 "AdafruitMPR121" H 4033 2974 50  0000 C CNN
+F 2 "" H 4200 1650 50  0001 C CNN
+F 3 "" H 4200 1650 50  0001 C CNN
+	1    4100 2150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x05 J?
+U 1 1 61499239
+P 2550 3000
+AR Path="/61499239" Ref="J?"  Part="1" 
+AR Path="/6152E849/61499239" Ref="J?"  Part="1" 
+F 0 "J?" H 2630 3042 50  0000 L CNN
+F 1 "LHkeys" H 2630 2951 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0005_1x05_P2.54mm_Vertical" H 2550 3000 50  0001 C CNN
+F 3 "~" H 2550 3000 50  0001 C CNN
+	1    2550 3000
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Interface_Expansion:MCP23017_SP U?
+U 1 1 6149A1DF
+P 7500 2950
+AR Path="/6149A1DF" Ref="U?"  Part="1" 
+AR Path="/6152E849/6149A1DF" Ref="U?"  Part="1" 
+F 0 "U?" H 7500 4231 50  0000 C CNN
+F 1 "MCP23017_SP" H 7500 4140 50  0000 C CNN
+F 2 "Package_DIP:DIP-28_W7.62mm" H 7700 1950 50  0001 L CNN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf" H 7700 1850 50  0001 L CNN
+	1    7500 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW?
+U 1 1 6149C33F
+P 5650 5400
+AR Path="/6149C33F" Ref="SW?"  Part="1" 
+AR Path="/6152E849/6149C33F" Ref="SW?"  Part="1" 
+F 0 "SW?" H 5650 5685 50  0000 C CNN
+F 1 "RHx1" H 5650 5594 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 5650 5600 50  0001 C CNN
+F 3 "~" H 5650 5600 50  0001 C CNN
+	1    5650 5400
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW?
+U 1 1 6149C345
+P 6850 5800
+AR Path="/6149C345" Ref="SW?"  Part="1" 
+AR Path="/6152E849/6149C345" Ref="SW?"  Part="1" 
+F 0 "SW?" H 6850 6085 50  0000 C CNN
+F 1 "RHx3" H 6850 5994 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 6850 6000 50  0001 C CNN
+F 3 "~" H 6850 6000 50  0001 C CNN
+	1    6850 5800
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW?
+U 1 1 6149C34B
+P 7350 5350
+AR Path="/6149C34B" Ref="SW?"  Part="1" 
+AR Path="/6152E849/6149C34B" Ref="SW?"  Part="1" 
+F 0 "SW?" H 7350 5635 50  0000 C CNN
+F 1 "RHx4" H 7350 5544 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 7350 5550 50  0001 C CNN
+F 3 "~" H 7350 5550 50  0001 C CNN
+	1    7350 5350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW?
+U 1 1 6149C351
+P 6300 5400
+AR Path="/6149C351" Ref="SW?"  Part="1" 
+AR Path="/6152E849/6149C351" Ref="SW?"  Part="1" 
+F 0 "SW?" H 6300 5685 50  0000 C CNN
+F 1 "RHx2" H 6300 5594 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 6300 5600 50  0001 C CNN
+F 3 "~" H 6300 5600 50  0001 C CNN
+	1    6300 5400
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW?
+U 1 1 6149C357
+P 7900 5800
+AR Path="/6149C357" Ref="SW?"  Part="1" 
+AR Path="/6152E849/6149C357" Ref="SW?"  Part="1" 
+F 0 "SW?" H 7900 6085 50  0000 C CNN
+F 1 "RHx5" H 7900 5994 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 7900 6000 50  0001 C CNN
+F 3 "~" H 7900 6000 50  0001 C CNN
+	1    7900 5800
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW?
+U 1 1 6149C35D
+P 8500 5350
+AR Path="/6149C35D" Ref="SW?"  Part="1" 
+AR Path="/6152E849/6149C35D" Ref="SW?"  Part="1" 
+F 0 "SW?" H 8500 5635 50  0000 C CNN
+F 1 "RHx4" H 8500 5544 50  0000 C CNN
+F 2 "clarinoid3:MB2511S2G45" H 8500 5550 50  0001 C CNN
+F 3 "~" H 8500 5550 50  0001 C CNN
+	1    8500 5350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x05 J?
+U 1 1 614AAAD4
+P 12600 2050
+F 0 "J?" H 12680 2092 50  0000 L CNN
+F 1 "RHkeys" H 12680 2001 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0005_1x05_P2.54mm_Vertical" H 12600 2050 50  0001 C CNN
+F 3 "~" H 12600 2050 50  0001 C CNN
+	1    12600 2050
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 614AAADA
+P 11800 2850
+F 0 "J?" H 11880 2842 50  0000 L CNN
+F 1 "BREATHI2C" H 11880 2751 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0004_1x04_P2.54mm_Vertical" H 11800 2850 50  0001 C CNN
+F 3 "~" H 11800 2850 50  0001 C CNN
+	1    11800 2850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x05 J?
+U 1 1 614AAAE0
+P 13950 2000
+F 0 "J?" H 14030 2042 50  0000 L CNN
+F 1 "LHkeys" H 14030 1951 50  0000 L CNN
+F 2 "Connector_Molex:Molex_SL_171971-0005_1x05_P2.54mm_Vertical" H 13950 2000 50  0001 C CNN
+F 3 "~" H 13950 2000 50  0001 C CNN
+	1    13950 2000
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	14150 2200 14150 2250
+$Comp
+L power:GND #PWR?
+U 1 1 614AAAE7
+P 11600 3050
+F 0 "#PWR?" H 11600 2800 50  0001 C CNN
+F 1 "GND" H 11605 2877 50  0000 C CNN
+F 2 "" H 11600 3050 50  0001 C CNN
+F 3 "" H 11600 3050 50  0001 C CNN
+	1    11600 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x05 J?
+U 1 1 614AAAED
+P 11950 3850
+F 0 "J?" H 12030 3892 50  0000 L CNN
+F 1 "RHswitchIC" H 12030 3801 50  0000 L CNN
+F 2 "" H 11950 3850 50  0001 C CNN
+F 3 "~" H 11950 3850 50  0001 C CNN
+	1    11950 3850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:Rotary_Encoder_Switch SW?
+U 1 1 614AAAF3
+P 9950 3350
+F 0 "SW?" H 9950 3717 50  0000 C CNN
+F 1 "Rotary_Encoder_Switch" H 9950 3626 50  0000 C CNN
+F 2 "clarinoid3:Bourns_ENC_PEC11R-4215F-S0024" H 9800 3510 50  0001 C CNN
+F 3 "~" H 9950 3610 50  0001 C CNN
+	1    9950 3350
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
