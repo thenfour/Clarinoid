@@ -14,10 +14,26 @@
 
      20220620: 04 is being produced by jlcpcb
 
+     THIS IS REV 1
+
 05 - now using teensy 4.1 with pins. ready for assembly.
      and even more modular design
 
      this was rejected; added 05-asm and 05-noasm to separate assembly versus non-assembly boards in hopes
      of cost savings and build simplification.
 
+
 06 - that still wasn't enough; need to break yet into <=6 designs per board.
+     this is exactly the same design as 05, but broken into more separate projects.
+     produced by jlcpcb.
+
+     THIS IS REV 2
+
+07 - the battery charge board of 05/06 was faulty somehow. i don't understand why and 2 fried.
+     so here a variation with:
+     - EH pad as it was on 04
+     - inductor correct part #
+     - 0.5mm traces
+     - output capacitors
+     - component sizes matching that of MH-CD42
+
