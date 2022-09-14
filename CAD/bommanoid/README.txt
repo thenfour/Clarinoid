@@ -1,0 +1,6 @@
+korgmicrokey37.FCStd = nothing really
+sketch1.FCStd = nothing really
+ideal.FCStd = some bell placement ideas (obsolete mostly)
+speakercab1.FCStd = proposed prod design of cab, with actual dimensions
+bommanoid00 = sketches of keyboard case design; not for prod
+bommanoid01 = fork of clarinoid test device 05
