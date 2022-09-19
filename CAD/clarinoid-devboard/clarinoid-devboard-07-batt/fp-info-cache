@@ -1,4 +1,4 @@
-20518783269184860
+20523773096829966
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -78953,6 +78953,20 @@ Undefined or Miscellaneous
 6
 6
 SamacSys_Parts
+ACJSMHOM
+ACJS-MHOM-2
+Connector
+0
+6
+6
+SamacSys_Parts
+DIPS1524W75P254L2520H805Q18N
+PDC54-11GWA
+Display
+0
+18
+18
+SamacSys_Parts
 NE555DR
 D (R-PDSO-G8)
 Integrated Circuit
@@ -86064,6 +86078,13 @@ varistor SIOV
 0
 2
 2
+clarinoid2
+Amphenol ACJS-MHOM
+Amphenol ACJS-MHOM forked from mouser
+Connector
+0
+6
+6
 clarinoid2
 Bourns PEC11R4230KS0024
 PEC11R-4230K-S0024-2

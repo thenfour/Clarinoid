@@ -36,4 +36,16 @@ K
 F http://www.keyelco.com/product-pdf.cfm?p=13957
 $ENDCMP
 #
+$CMP ACJS-MHOM
+D Phone Connectors 1/4"HOR Snap-fit CHASSIS CONN
+K
+F https://www.amphenol-sine.com/pdf/datasheet/ACJS-MHOM.pdf
+$ENDCMP
+#
+$CMP PDC54-11GWA
+D DISPLAY, ALPHANUM., 0.54" GREEN CATH; LED Color:Green; Forward Current If:20mA; Luminous Intensity:6.9mcd; No. of Digits / Alpha:2; Character Size:13.8mm; Supply Voltage:2.2V; Display Area Width:25.2mm; Character Format:14 Segment RoHS Compliant: Yes
+K
+F 
+$ENDCMP
+#
 #End Doc Library

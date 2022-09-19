@@ -399,11 +399,6 @@
         "microvia_drill": 0.1,
         "name": "power3v3",
         "nets": [
-          "/+3.3v regulator output",
-          "/captouch_capsense/i2c_3v3",
-          "/captouch_mpr121/i2c_3v3",
-          "/processor_mm/+3.3v regulator output",
-          "/processor_t4/3v3",
           "A3v3",
           "D3v3"
         ],
@@ -424,19 +419,7 @@
         "microvia_diameter": 0.3,
         "microvia_drill": 0.1,
         "name": "power5v",
-        "nets": [
-          "/5v from processor",
-          "/5v regulated",
-          "/Power board output +5v",
-          "/USB VIN 5v",
-          "/power_battery/5v input",
-          "/power_battery/battery + 5v",
-          "/power_battery/charger output +5v",
-          "/power_header/5v input",
-          "/power_usb/5v input",
-          "/processor_mm/5v input",
-          "/processor_t4/5v input"
-        ],
+        "nets": [],
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.3,
@@ -505,32 +488,28 @@
       ""
     ],
     [
-      "c8e0a6ad-c475-47fa-9e7e-525305e146f8",
-      "power_battery"
+      "312cd47e-2399-433f-8e2e-fa58305aa002",
+      "bommanoid_main_top"
     ],
     [
-      "4e71141b-89d5-428e-b259-8fd99b4b21ee",
-      "power_header"
+      "5c8557e5-ad30-4cf1-ac23-e01491d326d0",
+      "bommanoid_main_bottom"
     ],
     [
-      "6adb90f3-5299-4fb2-b792-5cf5caf9f55b",
-      "power_usb"
+      "52b49612-2fe8-4490-b83a-691c8eed5a2a",
+      "bommanoid_batt_top"
     ],
     [
-      "e2910527-2f4f-4ae8-a31c-5aee65be03d3",
-      "processor_mm"
+      "d6ffc425-b2a4-403c-9081-0987376d4051",
+      "bommanoid_batt_bottom"
     ],
     [
-      "afabe02b-af24-4902-b37d-a84f00927e95",
-      "processor_t4"
+      "eb288a9f-e0a2-4b9d-9a00-f9fd49d37940",
+      "cab"
     ],
     [
-      "95a8e04a-bb1a-41c4-9836-5c80b0d3a535",
-      "captouch_mpr121"
-    ],
-    [
-      "ee1d3e2c-baeb-4d0b-80da-a83e0ca7b00c",
-      "captouch_capsense"
+      "eac1df32-fa28-4a71-977a-b69c15e2a7ad",
+      "bell"
     ]
   ],
   "text_variables": {}
