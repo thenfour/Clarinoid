@@ -1,0 +1,561 @@
+132368586775343
+clarinoid2
+APCI0108-P001A M.2 MicroMod 21992304
+2199230-4_1
+Connector
+0
+69
+69
+clarinoid2
+Amphenol ACJS-MHOM
+Amphenol ACJS-MHOM forked from mouser
+Connector
+0
+6
+6
+clarinoid2
+Bourns PEC11R4230KS0024
+PEC11R-4230K-S0024-2
+Integrated Circuit
+0
+7
+7
+clarinoid2
+Bourns_ENC_PEC11R-4215F-S0024
+
+
+0
+7
+7
+clarinoid2
+Bourns_ENC_PEC11R-4215F-S0024 panel cutout shaft downward
+
+
+0
+0
+0
+clarinoid2
+Bourns_POT_PTR902-2020K-A103 Panel interconnect
+match with subboard
+
+0
+10
+10
+clarinoid2
+Bourns_POT_PTR902-2020K-A103 Panel subboard castellated header
+match with interconnect
+
+0
+10
+10
+clarinoid2
+Bourns_POT_PTR902-2020K-A103_PANEL
+
+
+0
+8
+8
+clarinoid2
+CLARINOID_M6_6OCTAVES
+CLARINOID_M6_6OCTAVES
+
+0
+6
+6
+clarinoid2
+CLARINOID_M6_6OCTAVES_offset
+
+
+0
+6
+6
+clarinoid2
+CLARINOID_M6_6OCTAVES_p13.00_offset1.0mm
+
+
+0
+6
+6
+clarinoid2
+CLARINOID_M6_6OCTAVES_p13.3_offset1.0mm
+
+
+0
+6
+6
+clarinoid2
+CLARINOID_M6_6OCTAVES_sandbox
+
+
+0
+36
+6
+clarinoid2
+DecorativeGroundPad
+
+
+0
+96
+1
+clarinoid2
+DevboardCorner
+
+
+0
+1
+0
+clarinoid2
+HILETGOPCM5102
+
+
+0
+15
+15
+clarinoid2
+ISSY IS31FL3236-QFLS2-TR QFN40P500X500X80-44N
+
+
+0
+45
+45
+clarinoid2
+Inductor_MCS0630-1R0MN2
+https://lcsc.com/search?q=MCS0630-1R0MN2 also works with MWSA0603S (Sunlord, C112125)
+
+0
+2
+2
+clarinoid2
+Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal
+3.5 mm, Stereo, Right Angle, Surface Mount (SMT), Audio Jack Connector (https://www.cui.com/product/resource/sj-352x-smt-series.pdf)
+3.5mm audio cui horizontal jack stereo
+0
+3
+3
+clarinoid2
+KEYSTONE_1043
+
+
+0
+2
+2
+clarinoid2
+Kingbright PDC54 template
+Kingbright PDC54-11GWA
+DIPS1524W75P254L2520H805Q18N many-segment led thing
+0
+0
+0
+clarinoid2
+LED WS2812B-4020
+
+LED RGB NeoPixel
+0
+4
+4
+clarinoid2
+LED_D5.0mm_withbottomtext
+LED, diameter 5.0mm, 2 pins, http://cdn-reichelt.de/documents/datenblatt/A500/LL-504BC2E-009.pdf
+LED diameter 5.0mm 2 pins
+0
+2
+2
+clarinoid2
+LED_WS2812B-B Worldsemi
+LCSC C2761795
+
+0
+4
+4
+clarinoid2
+MAT060-B100K-231-A01
+
+
+0
+3
+3
+clarinoid2
+MB2511S2G45
+
+
+0
+3
+3
+clarinoid2
+MB2511S4W01-BC
+
+
+0
+0
+0
+clarinoid2
+MH-CD42
+
+
+0
+6
+6
+clarinoid2
+MH-CD42_flip
+
+
+0
+6
+6
+clarinoid2
+MH-CD42_flip_window
+
+
+0
+6
+6
+clarinoid2
+MOLEX_503398-1892
+
+
+0
+14
+14
+clarinoid2
+MPR121
+
+
+0
+22
+20
+clarinoid2
+MPR121_hdr_0keys_copy
+removing some elements which don't need through holes, and assuming you'll hand-solder the keys
+
+0
+7
+7
+clarinoid2
+MPR121_hdr_12keys
+removing some elements which don't need through holes
+
+0
+19
+19
+clarinoid2
+MountingHole_3.2mm_M3_Pad_SQUARE
+Mounting Hole 3.2mm, M3 except square and "humanized"
+mounting hole 3.2mm m3
+0
+1
+1
+clarinoid2
+NKK_FB_PANEL
+
+
+0
+0
+0
+clarinoid2
+NetTie-2_SMD_Pad0.5mm
+Net tie, 2 pin, 0.5mm square SMD pads
+net tie
+0
+2
+2
+clarinoid2
+NetTie-2_SMD_Pad1.0mm
+Net tie, 2 pin, 1.0mm SMD pads
+net tie
+0
+2
+2
+clarinoid2
+Pad_Plain
+for test points etc with NO markings, NOthing special.
+
+0
+1
+1
+clarinoid2
+SOFNG TF-15x15 (LCSC C111196)
+edited version of mouser's GCT (GLOBAL CONNECTOR TECHNOLOGY) MEM2075-00-140-01-A
+Connector
+0
+13
+13
+clarinoid2
+SOIC127P599X155-9N (IP5306)
+MSOP-8
+Integrated Circuit
+0
+9
+9
+clarinoid2
+SON160P500X500X140-6N
+
+
+0
+6
+6
+clarinoid2
+SOP8-P (IP5306)
+
+
+0
+9
+9
+clarinoid2
+SSD1306_128x64_approximate
+
+
+0
+0
+0
+clarinoid2
+SWITCHCRAFT_35RAPC4BV4
+
+
+0
+5
+5
+clarinoid2
+SWITCHCRAFT_35RAPC4BV4_OvalHoles
+
+
+0
+5
+5
+clarinoid2
+Sinhoo SMTSO2530CTJ
+Sinhoo SMTSO2530CTJ
+mounting hole 2.7mm m2.5
+0
+1
+1
+clarinoid2
+SolderWire-0.25sqmm_1x07_P4.2mm_D0.65mm_OD1.7mm
+Soldered wire connection, for 7 times 0.25 mm² wires, basic insulation, conductor diameter 0.65mm, outer diameter 1.7mm, size source Multi-Contact FLEXI-E_0.25 (https://ec.staubli.com/AcroFiles/Catalogues/TM_Cab-Main-11014119_(en)_hi.pdf), bend radius 3 times outer diameter, generated with kicad-footprint-generator
+connector wire 0.25sqmm
+0
+7
+7
+clarinoid2
+Switchcraft_35RAPC4BH3_3.5mm_female_jack_downfacing
+
+
+0
+5
+5
+clarinoid2
+Switchcraft_35RAPC4BH3_3.5mm_female_jack_nosw_downfacing
+
+
+0
+3
+3
+clarinoid2
+Teensy 4.0 Side pins only
+
+
+0
+28
+28
+clarinoid2
+Teensy41_graphic
+
+
+0
+0
+0
+clarinoid2
+Teensy_4.0_MicroMod outline fab
+
+
+0
+0
+0
+clarinoid2
+Teensy_4.0_MicroMod_nospacer
+
+
+0
+69
+69
+clarinoid2
+Teensy_LC
+
+
+0
+28
+28
+clarinoid2
+USB_C_Receptacle_XKB_U262-16XN-4BVC11
+USB Type C, right-angle, SMT, https://datasheet.lcsc.com/szlcsc/1811141824_XKB-Enterprise-U262-161N-4BVC11_C319148.pdf
+USB C Type-C Receptacle SMD
+0
+20
+17
+clarinoid2
+USB_Micro-B_Amphenol_10103594-0001LF_Horizontal
+Micro USB Type B 10103594-0001LF, http://cdn.amphenol-icc.com/media/wysiwyg/files/drawing/10103594.pdf
+USB USB_B USB_micro USB_OTG
+0
+17
+6
+clarinoid2
+Wurth Elektronik Reverse SMD Spacer M3
+Wurth Elektronik WA-SMSR Reverse SMD Spacer M3 9775031360R
+
+0
+0
+0
+clarinoid2
+Wurth_9774025151_M2.5_spacer_for_micromod
+Wurth_9774025151_M2.5_spacer_for_micromod
+mounting hole 2.7mm m2.5
+0
+1
+1
+clarinoid2
+XKB switch jlcpcb SW_TS-1187A-B-A-B
+
+
+0
+4
+4
+clarinoid2
+bourns PTR902-2020K-A103
+PTR902-2020K-A103
+Resistor
+0
+8
+8
+clarinoid2
+clarinoid 3 main sd interconnect SM interconnect 17p
+fork of PinSocket_1x14_P2.54mm_Vertical
+
+0
+17
+17
+clarinoid2
+clarinoid 3 main sd interconnect castellated interconnect 17p
+fork of PinSocket_1x14_P2.54mm_Vertical
+
+0
+17
+17
+clarinoid2
+clarinoid3-sd subboard castellated
+
+
+0
+23
+23
+clarinoid2
+clarinoid3-sd subboard smd
+
+
+0
+27
+23
+clarinoid2
+dev board captouch board template
+
+
+0
+0
+0
+clarinoid2
+dev board power board template
+
+
+0
+0
+0
+clarinoid2
+dev board processor subboard template
+
+
+0
+0
+0
+clarinoid2
+dip switch XKB DS-02
+
+Switch
+0
+4
+4
+clarinoid2
+dip switch XKB DS-04
+fork of wurth 418117270904-1
+Switch
+0
+8
+8
+clarinoid2
+dip switch XKB DS-06RP
+fork of wurth 418117270906-2
+Switch
+0
+12
+12
+clarinoid2
+mouse-bite-2mm-slot
+
+
+0
+0
+0
+clarinoid2
+solder point DIP 1x2
+
+
+0
+2
+2
+clarinoid2
+solder point DIP 1x3
+
+
+0
+3
+3
+clarinoid2
+solder point DIP 1x4
+
+
+0
+4
+4
+clarinoid2
+solder point DIP 1x5
+
+
+0
+5
+5
+clarinoid2
+solder point DIP 1x6
+
+
+0
+6
+6
+clarinoid2
+solder point DIP 1x7
+
+
+0
+7
+7
+clarinoid2
+solder point DIP 1x8
+
+
+0
+8
+8
+clarinoid2
+solder point DIP 1x12
+
+
+0
+12
+12

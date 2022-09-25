@@ -7,7 +7,9 @@ bommanoid01 = fork of clarinoid test device 05; bringing in all bommanoid compon
               schematic, pcb sketches, and footprints added. not everything 100% double-checked.
               beginning to build pcbs out and do final checks, lets fork before i
               ruin my sketches.
-bommanoid02 = 
+bommanoid02 = continuing design & first attempts at routing
+bommanoid03 = continuing routing; it's basically done before panelization & jlcpcb BOM
+bommanoid04 = very close, including peripheral breakouts. but still bottom assembly issues.
 
 speakercab2.FCStd = some changes to design:
   - celestion 10"
