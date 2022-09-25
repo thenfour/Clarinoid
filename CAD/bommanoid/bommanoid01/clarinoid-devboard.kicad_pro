@@ -398,10 +398,7 @@
         "microvia_diameter": 0.3,
         "microvia_drill": 0.1,
         "name": "power3v3",
-        "nets": [
-          "A3v3",
-          "D3v3"
-        ],
+        "nets": [],
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.3,

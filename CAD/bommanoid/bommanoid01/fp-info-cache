@@ -1,4 +1,4 @@
-20523773096829966
+20525436752769439
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -78959,6 +78959,13 @@ Connector
 0
 6
 6
+SamacSys_Parts
+DIP794W53P254L1930H508Q14N
+N (R-PDIP-T)
+Integrated Circuit
+0
+14
+14
 SamacSys_Parts
 DIPS1524W75P254L2520H805Q18N
 PDC54-11GWA
