@@ -196,7 +196,7 @@
   )
 
   (symbol (lib_id "Mechanical:MountingHole") (at 151.13 86.36 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (in_bom no) (on_board yes) (fields_autoplaced)
     (uuid 2a7b3dac-0904-4123-a297-9e5c60f59f09)
     (property "Reference" "H20" (id 0) (at 153.67 83.8199 0)
       (effects (font (size 1.27 1.27)) (justify left))
@@ -213,7 +213,7 @@
   )
 
   (symbol (lib_id "Connector_Generic:Conn_01x08") (at 138.43 110.49 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (in_bom no) (on_board yes) (fields_autoplaced)
     (uuid 38d73c21-a1b1-4f5b-b984-746b49a95e33)
     (property "Reference" "J64" (id 0) (at 140.97 109.2199 0)
       (effects (font (size 1.27 1.27)) (justify left))
@@ -238,7 +238,7 @@
   )
 
   (symbol (lib_id "Connector_Generic:Conn_01x08") (at 168.91 110.49 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (in_bom no) (on_board yes) (fields_autoplaced)
     (uuid e406899b-b17d-4524-a955-0fe9a163ac22)
     (property "Reference" "U10" (id 0) (at 171.45 110.4899 0)
       (effects (font (size 1.27 1.27)) (justify left))

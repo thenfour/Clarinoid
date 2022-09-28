@@ -10,7 +10,10 @@ bommanoid01 = fork of clarinoid test device 05; bringing in all bommanoid compon
 bommanoid02 = continuing design & first attempts at routing
 bommanoid03 = continuing routing; it's basically done before panelization & jlcpcb BOM
 bommanoid04 = very close, including peripheral breakouts. but still bottom assembly issues.
+bommanoid05 = RC1. fx loop, suspended castellated subboard for bottom assembly, part selection
+              panelization and ERC / DRC are clean (well there are 99 expected errors due to silkscreen & castellated holes bugs)
+              separating into separate orders for jlcpcb.
 
 speakercab2.FCStd = some changes to design:
-  - celestion 10"
+  - 10"
   - downfacing with no baffle (weight!)

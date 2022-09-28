@@ -1,0 +1,13 @@
+Designator,Footprint,Quantity,Value,LCSC Part #
+C34,C_1206_3216Metric,1,0.33uF,C274377
+C35,C_1206_3216Metric,1,0.1uF,C24497
+"D27, D28, D31, D33, D35, D36, D37, D38",LED_WS2812B-B Worldsemi,8,WS2812B,C2761795
+"J29, J30, J31, J84",RJ45_Amphenol_RJHSE538X,4,RJ45_LED_Shielded,C464587
+J69,PinSocket_1x02_P2.54mm_Vertical,1,Conn_01x02,C49661
+J71,PinSocket_1x03_P2.54mm_Vertical,1,Conn_01x03,C146243
+J73,PinSocket_1x04_P2.54mm_Vertical,1,Conn_01x04,C2718488
+J78,PinSocket_1x05_P2.54mm_Vertical,1,Conn_01x05,C50950
+J80,PinSocket_1x06_P2.54mm_Vertical,1,Conn_01x06,C40877
+J82,PinSocket_1x08_P2.54mm_Vertical,1,Conn_01x08,C27438
+J86,USB_C_Receptacle_XKB_U262-16XN-4BVC11,1,XKB_U262-16XN-4BVC11 USB-C recept,C319148
+"R26, R46",R_1206_3216Metric,2,5.1k,C26033
