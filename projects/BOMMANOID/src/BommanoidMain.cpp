@@ -28,7 +28,13 @@
 #include <Adafruit_SPIDevice.h>
 #include <Adafruit_SSD1306.h>
 
+#include <vector> // note tracker uses vector
+#include <algorithm>
+
 #pragma GCC diagnostic pop
+
+USBHost gUsbHost;
+MIDIDevice gUsbMidi(gUsbHost);
 
 #include "bmApp.hpp"
 
@@ -42,6 +48,9 @@ void setup()
     Serial.begin(9600);
     Wire.begin();
     Wire.setClock(400000);
+
+    gUsbHost.begin();
+
     // while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
 
     auto *app = new clarinoid::BommanoidApp;

@@ -22,7 +22,6 @@ struct MusicalStateTask : ITask
     USBMidiMusicalState mMusicalState;
     CCSynth mSynth;
     ScaleFollower mScaleFollower;
-    // MIDI here too eventually.
 
     // for timing subtasks
     SimpleMovingAverage<15> mInputTiming;
