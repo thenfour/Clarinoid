@@ -6,6 +6,7 @@
 
 namespace clarinoid
 {
+    float gThrowawayFloatValue = 0; // use when you need a reference
 
 // ---------------------------------------------------------------------------------------
 struct GuiPerformanceApp : GuiApp
@@ -171,8 +172,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gBreathMin, // range
         "Breath min",                   // tooltip
         {[](void *cap) -> float & {
-             CCASSERT(!!((GuiPerformanceApp *)cap)->mBreathCalibration);
-             return ((GuiPerformanceApp *)cap)->mBreathCalibration->mSrcMin;
+            auto* bc = ((GuiPerformanceApp *)cap)->mBreathCalibration;
+            if(!bc) {
+                return gThrowawayFloatValue;
+            }
+            return ((GuiPerformanceApp *)cap)->mBreathCalibration->mSrcMin;
          },
          this},
         AlwaysEnabled // always en

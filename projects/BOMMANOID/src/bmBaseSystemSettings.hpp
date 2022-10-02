@@ -3,21 +3,26 @@
 
 #define THREE_BUTTON_OCTAVES
 
-#define CLARINOID_MIDI_INTERFACE Serial8
+#define CLARINOID_MIDI_INTERFACE Serial1
 
 namespace clarinoid
 {
+    // for breath controllers, this is true to enable a specialized filter controlled by breath.
+    // that filter is a temporary thing in the design and should be replaced by a proper modulation in the graph,
+    // but for the moment it's a hard-coded graph element with logic in synthvoice. So for non-breath controllers,
+    // this is a way to disable it.
+static const bool USE_BREATH_FILTER = false;
 
-const char gClarinoidVersion[] = "BASSOONOID v0.02";
+const char gClarinoidVersion[] = "Bommanoid v0.00";
 
 static const int8_t DEFAULT_TRANSPOSE = 0;
-static const int8_t PERFORMANCE_PATCH_COUNT = 16;
+static const int8_t PERFORMANCE_PATCH_COUNT = 24;
 
-static const size_t MAX_SYNTH_VOICES = 4;
-#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, // {4},
+static const size_t MAX_SYNTH_VOICES = 8;
+#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 32000;
-static const size_t LOOPER_TEMP_BUFFER_BYTES = 1024;   // a smaller buffer that's just used for intermediate copy ops
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 16300;
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 512;   // a smaller buffer that's just used for intermediate copy ops
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
@@ -52,8 +57,9 @@ static const size_t MAX_CONTROL_MAPPINGS = 48;
 
 enum class PhysicalControl : uint8_t
 {
-    // CPBack,
-    // CPOk,
+    Back,
+    Ok,
+    Enc,
     // CPToggleUp,
     // CPEncButton,
     // LHx1,
@@ -93,7 +99,6 @@ enum class PhysicalControl : uint8_t
     // JoyY,
     // Volume,
 
-    Enc,
     // LHEnc,
     // RHEnc,
 

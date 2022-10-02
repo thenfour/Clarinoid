@@ -118,6 +118,9 @@ struct ControlReader
         {
             // first time seeing this control.
             mC = c;
+            if (!mC) {
+                CCASSERT(!"Is there a control not hooked up?");                
+            }
             mCurrentValue = mC->GetControlValue();
             mPreviousValue = mCurrentValue;
             mDirty = false;

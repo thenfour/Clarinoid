@@ -3,8 +3,8 @@
 
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/synth/Synth.hpp>
-#include "bsLed.hpp"
-#include "bsControlMapper.hpp"
+#include "bmLed.hpp"
+#include "bmControlMapper.hpp"
 
 namespace clarinoid
 {
@@ -19,7 +19,7 @@ struct MusicalStateTask : ITask
     InputDelegator *mpInput;
 
     Metronome mMetronome;
-    CCEWIMusicalState mMusicalState;
+    USBMidiMusicalState mMusicalState;
     CCSynth mSynth;
     ScaleFollower mScaleFollower;
     // MIDI here too eventually.

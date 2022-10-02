@@ -2,8 +2,8 @@
 
 #include <clarinoid/menu/MenuSettings.hpp>
 #include <clarinoid/menu/Plotter.hpp>
-#include "bsControlMapper.hpp"
-#include "MusicalStateTask.hpp"
+#include "bmControlMapper.hpp"
+#include "bmMusicalStateTask.hpp"
 
 namespace clarinoid
 {

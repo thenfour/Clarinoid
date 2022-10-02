@@ -70,10 +70,6 @@ struct BommanoidControlMapper : IInputSource, ITask
         // mControlInfo[(size_t)PhysicalControl::RHEnc] = ControlInfo{"RHENC", &mRHEncoder};
 
         // mControlInfo[(size_t)PhysicalControl::Breath] = ControlInfo{"Breath", &mBreath};
-        // mControlInfo[(size_t)PhysicalControl::Volume] = ControlInfo{"VolPot", &mVolumePot};
-        // mControlInfo[(size_t)PhysicalControl::Pitch] = ControlInfo{"Pitch", &mPitchStrip};
-        // mControlInfo[(size_t)PhysicalControl::JoyX] = ControlInfo{"JoyX", &mJoyX};
-        // mControlInfo[(size_t)PhysicalControl::JoyY] = ControlInfo{"JoyY", &mJoyY};
 
         // mControlInfo[(size_t)PhysicalControl::CPBack] = ControlInfo{"CPBack", &mRHMCP.mButtons[0]};
         // mControlInfo[(size_t)PhysicalControl::CPOk] = ControlInfo{"CPOk", &mRHMCP.mButtons[1]};
@@ -130,19 +126,10 @@ struct BommanoidControlMapper : IInputSource, ITask
         mDisplay->ShowToast(s);
     }
 
-    CCEncoder<1, 2, 3> mEncoder;
+    CCEncoder<4, 9, 26> mEncoder;
     // TODO: 9554
-
-    //CCEncoder<1, 5, 4> mLHEncoder;
-    //CCEncoder<1, 31, 32> mCPEncoder;
     // CCMCP23017 mRHMCP = CCMCP23017{&Wire1};
     // CCMCP23017 mLHMCP = CCMCP23017{&Wire2};
-    //CCHoneywellAPB mBreath = CCHoneywellAPB{Wire};
-    //AnalogPinControl mVolumePot = AnalogPinControl{23};
-    //AnalogPinControl mPitchStrip = AnalogPinControl{40};
-    // AnalogPinControl mJoyX = AnalogPinControl{38};
-    // AnalogPinControl mJoyY = AnalogPinControl{39};
-    //DigitalPinSwitch mToggleUp = DigitalPinSwitch{30};
 
     ControlInfo mControlInfo[(size_t)PhysicalControl::COUNT];
 };

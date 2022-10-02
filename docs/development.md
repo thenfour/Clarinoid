@@ -1,6 +1,27 @@
 # Random development notes
 
 
+## Crash handling
+
+Teensy's relatively new crash handling mechanism will output the address of failure. To use it,
+
+1. make sure you build with `-g` to output symbols
+```
+build_flags =
+  -I../../src
+  -std=c++17
+  -Wall
+  -g
+```
+
+2. with the address, run:
+
+```
+"C:\Users\carl\.platformio\packages\toolchain-gccarmnoneeabi\bin\arm-none-eabi-addr2line.exe" -e "C:\root\git\thenfour\Clarinoid\projects\BOMMANOID\.pio\build\teensy41\firmware.elf" 0x117bc
+```
+
+
+
 ## Bloaty & memory use
 Teensy will crash mysteriously when running out of memory. Before 1.54, it was pretty hard to get quick insight about mem usage. But now we can see memory.
 

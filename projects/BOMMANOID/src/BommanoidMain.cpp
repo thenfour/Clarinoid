@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 
+#include <USBHost_t36.h>
 #include <Wire.h>
 #include <EasyTransfer.h>
 #include <FastCRC.h>
@@ -29,7 +30,7 @@
 
 #pragma GCC diagnostic pop
 
-#include "bsApp.hpp"
+#include "bmApp.hpp"
 
 void setup()
 {

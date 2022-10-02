@@ -4,7 +4,7 @@
 #define CLARINOID_PLATFORM_TEENSY
 #define CLARINOID_MODULE_MAIN // as opposed to some submodules like LH / RH
 
-#include "bsBaseSystemSettings.hpp"
+#include "bmBaseSystemSettings.hpp"
 
 #include <clarinoid/basic/Basic.hpp>
 
@@ -14,7 +14,6 @@
 #include <clarinoid/components/Encoder.hpp>
 #include <clarinoid/components/Potentiometer.hpp>
 #include <clarinoid/components/HoneywellABPI2C.hpp>
-//#include <clarinoid/components/MCP23017.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 #include <clarinoid/application/Display.hpp>
 #include <clarinoid/application/ControlMapper.hpp>
@@ -23,7 +22,7 @@
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
 #include <clarinoid/midi/midi.hpp>
-#include <clarinoid/application/MusicalState.hpp>
+#include <clarinoid/application/USBMidiMusicalState.hpp>
 #include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 #include <clarinoid/Gui/GuiPerformanceApp.hpp>
 #include <clarinoid/application/DefaultHud.hpp>
@@ -31,26 +30,26 @@
 #include <clarinoid/synth/polyBlepOscillator.hpp> // https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
 #include <clarinoid/synth/Synth.hpp>
 
-#include "bsLed.hpp"
-#include "bsControlMapper.hpp"
-#include "DebugDisplayApp.hpp"
+#include "bmLed.hpp"
+#include "bmControlMapper.hpp"
+#include "bmDebugDisplayApp.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
-#include "MusicalStateTask.hpp"
+#include "bmMusicalStateTask.hpp"
 
 namespace clarinoid
 {
 
-CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/};
+CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 41 /*DC*/, 40 /*RST*/, 10 /*CS*/};
 
 struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 {
     static constexpr size_t breathMappingIndex = 13;
     static constexpr size_t joyPitchMappingIndex = 21;
 
-    Leds1 mLed1;
-    Leds2 mLed2;
-    BreathLED mBreathLED;
+    //Leds1 mLed1;
+    //Leds2 mLed2;
+    //BreathLED mBreathLED;
     InputDelegator mInputDelegator;
     BommanoidControlMapper mControlMapper;
     _CCDisplay mDisplay;
@@ -73,7 +72,8 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     static constexpr auto xaoeu = sizeof(mAppSettings);
 
     BommanoidApp()
-        : mLed1(this), mLed2(this), mBreathLED(this), mDisplay(gDisplay),
+        : 
+        mDisplay(gDisplay),
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
@@ -107,7 +107,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     {
         return &mInputDelegator;
     }
-    virtual CCEWIMusicalState *ILEDDataProvider_GetMusicalState() override
+    virtual USBMidiMusicalState *ILEDDataProvider_GetMusicalState() override
     {
         return &mMusicalStateTask.mMusicalState;
     }
@@ -149,11 +149,13 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     }
     virtual float ISysInfoProvider_GetPitchBendN11() override
     {
-        return mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
+        return 0;
+        //return mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
     }
     virtual float ISysInfoProvider_GetBreath01() override
     {
-        return mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
+        return 0;
+        //return mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
     }
     virtual AppSettings *ISysInfoProvider_GetSettings() override
     {
@@ -184,9 +186,12 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
         // mAppSettings.mControlMappings[0] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHOk, ControlMapping::Function::MenuOK);
+        //     ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
         // mAppSettings.mControlMappings[1] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHBack, ControlMapping::Function::MenuBack);
+        //     ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
+
+        mAppSettings.mControlMappings[14] =
+            ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
         // mAppSettings.mControlMappings[2] =
         //     ControlMapping::MomentaryMapping(PhysicalControl::LHOct1, ControlMapping::Function::Oct1);
@@ -217,9 +222,6 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         //     ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
         // mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
         // mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0; //-0.15f;
-
-        mAppSettings.mControlMappings[14] =
-            ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
         // mAppSettings.mControlMappings[17] = ControlMapping::ButtonIncrementMapping(
         //     PhysicalControl::LHThx1, ControlMapping::Function::SynthPresetA, 1.0f);
@@ -271,17 +273,17 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         TaskPlanner::TaskDeadline plan[] = {
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 0), &mMusicalStateTask, "MusS0"},
 
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "MusS1"},
+            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "MusS1"},
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mDisplayTask1, "Display1"},
 
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 2), &mMusicalStateTask, "MusS2"},
+            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 2), &mMusicalStateTask, "MusS2"},
 
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mMusicalStateTask, "MusS3"},
+            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mMusicalStateTask, "MusS3"},
 
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 4), &mDisplayTask2, "Display2"},
 
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "MusS4"},
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mLed1, "mLed1"},
+            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "MusS4"},
+            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mLed1, "mLed1"},
 
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &nopTask, "Nop"},
         };

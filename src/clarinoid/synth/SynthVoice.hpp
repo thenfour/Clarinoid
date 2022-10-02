@@ -260,7 +260,9 @@ struct Voice : IModulationKRateProvider
         filterKS = map(keyTrackingAmt, 0, 1.0f, 1.0,
                        filterKS); // map ks amt 0-1 to 1-fulleffect
 
-        float filterP = filterKS * breath01;
+        float filterP = filterKS;
+        if (USE_BREATH_FILTER)
+            filterP *= breath01;
         filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
 
         float filterFreq = map(filterP, 0.0f, 1.0f, freqMin, freqMax);
