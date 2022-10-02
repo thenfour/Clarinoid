@@ -4,6 +4,7 @@
 #include "clarinoid/basic/Basic.hpp"
 #include "clarinoid/application/ControlMapper.hpp"
 
+#include "clarinoid/components/PCA9554.hpp"
 #include "clarinoid/components/Encoder.hpp"
 #include "clarinoid/components/Switch.hpp"
 #include "clarinoid/components/HoneywellABPI2C.hpp"
@@ -32,6 +33,7 @@ struct BommanoidControlMapper : IInputSource, ITask
     {
         NoInterrupts _ni;
         mEncoder.Update();
+        mPca.Update();
         // Stopwatch sw;
         // mCPEncoder.Update();
         // mRHEncoder.Update();
@@ -65,7 +67,12 @@ struct BommanoidControlMapper : IInputSource, ITask
     // set up the mControlInfo, mapping enum to structured control interface
     virtual void InputSource_Init(struct InputDelegator *p) override
     {
-        mControlInfo[(size_t)PhysicalControl::Enc] = ControlInfo{"ENC", &mEncoder};
+        mControlInfo[(size_t)PhysicalControl::Enc] = ControlInfo{"Enc", &mEncoder};
+        mControlInfo[(size_t)PhysicalControl::Back] = ControlInfo{"Back", &mPca.mButtons[0]};
+        mControlInfo[(size_t)PhysicalControl::Ok] = ControlInfo{"Ok", &mPca.mButtons[1]};
+         mControlInfo[(size_t)PhysicalControl::x1] = ControlInfo{"x1", &mPca.mButtons[2]}; // fine
+         mControlInfo[(size_t)PhysicalControl::x2] = ControlInfo{"x2", &mPca.mButtons[3]}; // course
+
         // mControlInfo[(size_t)PhysicalControl::LHEnc] = ControlInfo{"LHENC", &mLHEncoder};
         // mControlInfo[(size_t)PhysicalControl::RHEnc] = ControlInfo{"RHENC", &mRHEncoder};
 
@@ -101,8 +108,6 @@ struct BommanoidControlMapper : IInputSource, ITask
         // mControlInfo[(size_t)PhysicalControl::RHTh3] =
         //     ControlInfo{"RHTh3", &mRHMCP.mButtons[7]}; // synth preset +   -> base note hold
         // mControlInfo[(size_t)PhysicalControl::RHx1] = ControlInfo{"RHx1", &mRHMCP.mButtons[4]};
-        // mControlInfo[(size_t)PhysicalControl::RHx2] = ControlInfo{"RHx2", &mRHMCP.mButtons[12]}; // fine
-        // mControlInfo[(size_t)PhysicalControl::RHx3] = ControlInfo{"RHx3", &mRHMCP.mButtons[13]}; // course
         // mControlInfo[(size_t)PhysicalControl::RHx4] = ControlInfo{"RHx4", &mRHMCP.mButtons[14]}; // loop stop
         // mControlInfo[(size_t)PhysicalControl::RHx5] = ControlInfo{"RHx5", &mRHMCP.mButtons[15]}; // loop go
         // mControlInfo[(size_t)PhysicalControl::RHKey1] = ControlInfo{"RHKey1", &mRHMCP.mButtons[8]};
@@ -126,10 +131,8 @@ struct BommanoidControlMapper : IInputSource, ITask
         mDisplay->ShowToast(s);
     }
 
-    CCEncoder<4, 9, 26> mEncoder;
-    // TODO: 9554
-    // CCMCP23017 mRHMCP = CCMCP23017{&Wire1};
-    // CCMCP23017 mLHMCP = CCMCP23017{&Wire2};
+    CCEncoder<4, 26, 9> mEncoder;
+    PCA9554 mPca = PCA9554 { Wire, 0x38 };
 
     ControlInfo mControlInfo[(size_t)PhysicalControl::COUNT];
 };

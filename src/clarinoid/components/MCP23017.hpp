@@ -6,42 +6,6 @@
 namespace clarinoid
 {
 
-// attach to a value to represent a single switch
-struct InvertedBitButton : ISwitch
-{
-    uint16_t &mMcpCurrentValue;
-    int mKeyMask;
-
-    explicit InvertedBitButton(uint16_t &mcpCurrentValue, int keyIndex)
-        : mMcpCurrentValue(mcpCurrentValue), mKeyMask(1 << keyIndex)
-    {
-        CCASSERT(keyIndex >= 0 && keyIndex < 16);
-    }
-
-    virtual bool CurrentValue() const override
-    {
-        return !(mMcpCurrentValue & mKeyMask);
-    }
-};
-
-// attach to a value to represent a single switch
-struct BitButton : ISwitch
-{
-    uint16_t &mMcpCurrentValue;
-    int mKeyMask;
-
-    explicit BitButton(uint16_t &mcpCurrentValue, int keyIndex /* 0-15 */)
-        : mMcpCurrentValue(mcpCurrentValue), mKeyMask(1 << keyIndex)
-    {
-        CCASSERT(keyIndex >= 0 && keyIndex < 16);
-    }
-
-    virtual bool CurrentValue() const override
-    {
-        return (mMcpCurrentValue & mKeyMask);
-    }
-};
-
 struct CCMCP23017
 {
     Adafruit_MCP23017 mMcp;

@@ -83,11 +83,11 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
               joyPitchMappingIndex,
               joyPitchMappingIndex,
               [](void *cap) FLASHMEM { // raw breath value getter
-                  BommanoidApp *pThis = (BommanoidApp *)cap;
+                  //BommanoidApp *pThis = (BommanoidApp *)cap;
                   return 0.0f;// pThis->mControlMapper.mBreath.CurrentValue01();
               },
               [](void *cap) FLASHMEM { // raw joy pitchbend value getter
-                  BommanoidApp *pThis = (BommanoidApp *)cap;
+                  //BommanoidApp *pThis = (BommanoidApp *)cap;
                   return 0.0f;// pThis->mControlMapper.mJoyY.CurrentValue01();
               },
               this,
@@ -185,61 +185,18 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
-        // mAppSettings.mControlMappings[0] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
-        // mAppSettings.mControlMappings[1] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
+        mAppSettings.mControlMappings[0] =
+            ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
+        mAppSettings.mControlMappings[1] =
+            ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
 
         mAppSettings.mControlMappings[14] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
-        // mAppSettings.mControlMappings[2] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHOct1, ControlMapping::Function::Oct1);
-        // mAppSettings.mControlMappings[3] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHOct2, ControlMapping::Function::Oct2);
-        // mAppSettings.mControlMappings[4] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHOct3, ControlMapping::Function::Oct3);
-
-        // mAppSettings.mControlMappings[5] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHKey1, ControlMapping::Function::LH1);
-        // mAppSettings.mControlMappings[6] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHKey2, ControlMapping::Function::LH2);
-        // mAppSettings.mControlMappings[7] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHKey3, ControlMapping::Function::LH3);
-        // mAppSettings.mControlMappings[8] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::LHKey4, ControlMapping::Function::LH4);
-
-        // mAppSettings.mControlMappings[9] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHKey1, ControlMapping::Function::RH1);
-        // mAppSettings.mControlMappings[10] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHKey2, ControlMapping::Function::RH2);
-        // mAppSettings.mControlMappings[11] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHKey3, ControlMapping::Function::RH3);
-        // mAppSettings.mControlMappings[12] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHKey4, ControlMapping::Function::RH4);
-
-        // mAppSettings.mControlMappings[breathMappingIndex] =
-        //     ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.11f, 0.5f);
-        // mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
-        // mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0; //-0.15f;
-
-        // mAppSettings.mControlMappings[17] = ControlMapping::ButtonIncrementMapping(
-        //     PhysicalControl::LHThx1, ControlMapping::Function::SynthPresetA, 1.0f);
-        // mAppSettings.mControlMappings[18] = ControlMapping::ButtonIncrementMapping(
-        //     PhysicalControl::LHThx2, ControlMapping::Function::SynthPresetA, -1.0f);
-
-        // mAppSettings.mControlMappings[19] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx2, ControlMapping::Function::ModifierFine);
-        // mAppSettings.mControlMappings[20] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHx3, ControlMapping::Function::ModifierCourse);
-
-        // mAppSettings.mControlMappings[joyPitchMappingIndex] = ControlMapping::MakeUnipolarMapping(
-        //     PhysicalControl::JoyY, ControlMapping::Function::PitchBend, 1.0f, 0.01f, -1.0f, 1.0f);
-        // mAppSettings.mControlMappings[joyPitchMappingIndex].mUnipolarMapping.mCurveP = 0.50f;
-        // mAppSettings.mControlMappings[joyPitchMappingIndex].mUnipolarMapping.mCurveS = 0; //-0.50f;
-
-        // mAppSettings.mControlMappings[25] =
-        //     ControlMapping::MomentaryMapping(PhysicalControl::RHTh2, ControlMapping::Function::MetronomeLEDToggle);
+        mAppSettings.mControlMappings[19] =
+            ControlMapping::MomentaryMapping(PhysicalControl::x1, ControlMapping::Function::ModifierFine);
+        mAppSettings.mControlMappings[20] =
+            ControlMapping::MomentaryMapping(PhysicalControl::x2, ControlMapping::Function::ModifierCourse);
 
         mAppSettings.GetCurrentPerformancePatch().mSynthPresetA = SynthPresetID_Bassoonoid;
         mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
@@ -273,16 +230,16 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         TaskPlanner::TaskDeadline plan[] = {
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 0), &mMusicalStateTask, "MusS0"},
 
-            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "MusS1"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "MusS1"},
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mDisplayTask1, "Display1"},
 
-            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 2), &mMusicalStateTask, "MusS2"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 2), &mMusicalStateTask, "MusS2"},
 
-            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mMusicalStateTask, "MusS3"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mMusicalStateTask, "MusS3"},
 
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 4), &mDisplayTask2, "Display2"},
 
-            //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "MusS4"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "MusS4"},
             //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mLed1, "mLed1"},
 
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &nopTask, "Nop"},

@@ -18,8 +18,8 @@ const char gClarinoidVersion[] = "Bommanoid v0.00";
 static const int8_t DEFAULT_TRANSPOSE = 0;
 static const int8_t PERFORMANCE_PATCH_COUNT = 24;
 
-static const size_t MAX_SYNTH_VOICES = 8;
-#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
+static const size_t MAX_SYNTH_VOICES = 3;
+#define VOICE_INITIALIZER {0}, {1}, {2}//, {3}, {4}, {5}, {6}, {7}
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 16300;
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 512;   // a smaller buffer that's just used for intermediate copy ops
@@ -29,7 +29,7 @@ static const size_t LOOPER_TEMP_BUFFER_BYTES = 512;   // a smaller buffer that's
 static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
 static constexpr float MAX_DELAY_MS = 300;
 
-static constexpr size_t MUSICALSTATE_TIMESLICE_PERIOD_MICROS = 2800;
+static constexpr size_t MUSICALSTATE_TIMESLICE_PERIOD_MICROS = 1400;
 static constexpr size_t BREATH_SIGNAL_SMOOTHING_PERIOD_MICROS = 18000;
 static constexpr size_t BREATH_SIGNAL_SMOOTHING_FRAMES =
     (BREATH_SIGNAL_SMOOTHING_PERIOD_MICROS / MUSICALSTATE_TIMESLICE_PERIOD_MICROS);
@@ -57,9 +57,11 @@ static const size_t MAX_CONTROL_MAPPINGS = 48;
 
 enum class PhysicalControl : uint8_t
 {
+    Enc,
     Back,
     Ok,
-    Enc,
+    x1,
+    x2,
     // CPToggleUp,
     // CPEncButton,
     // LHx1,

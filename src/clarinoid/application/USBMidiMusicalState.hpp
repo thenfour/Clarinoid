@@ -81,7 +81,7 @@ struct USBMidiMusicalState
 
     void Update()
     {
-        mMidiDevice.Update();
+        //mMidiDevice.Update();
         MusicalVoice mNewState(mLiveVoice);
 
         mNewState.mBreath01 = mMidiDevice.mCurrentMod01;

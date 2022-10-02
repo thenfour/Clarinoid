@@ -40,6 +40,8 @@ void setup()
 
     AudioNoInterrupts();
     Serial.begin(9600);
+    Wire.begin();
+    Wire.setClock(400000);
     // while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
 
     auto *app = new clarinoid::BommanoidApp;
