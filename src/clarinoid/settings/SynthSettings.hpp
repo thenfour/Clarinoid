@@ -259,6 +259,7 @@ enum class AnyModulationSource : uint8_t
     Osc3FB,     // a-rate
     Breath,     // K-rate
     PitchStrip, // K-rate
+    // velocity
     // random trigger
     // keytracking
     // macro1, 2, 3, 4
@@ -1026,6 +1027,29 @@ struct SynthSettings
         p.mFilterKeytracking = filterKeyScaling;
     };
 
+    static void InitBommanoidPreset(SynthPreset &p,
+                                     const char *name)
+    {
+        p.mName = name;
+        p.mSync = false;
+        p.mDetune = 0.0f;
+        p.mStereoSpread = 0;
+        p.mVerbSend = 0;
+        p.mDelaySend = 0;
+        p.mOsc[1].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
+
+        p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[0].mGain = 1.0f;
+
+        p.mModulations[0].mDest = AnyModulationDestination::VoiceFilterCutoff;
+        p.mModulations[0].mSource = AnyModulationSource::ENV1;
+        p.mModulations[0].mAuxEnabled = false;
+        p.mModulations[0].mScaleN11 = 1.0f;
+        p.mFilterMaxFreq = 2000;
+    };
+
+
     static void InitCloudsStars(SynthPreset &p)
     {
         p.mName = "Clouds+Stars";
@@ -1329,6 +1353,9 @@ struct SynthSettings
 
         InitBassoonoidPreset(
             mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
+
+        InitBommanoidPreset(
+            mPresets[SynthPresetID_Bommanoid], "Bommanoid");
 
         InitPWMLead2(mPresets[SynthPresetID_PWMMono]);
         InitCrystalSyncLead(mPresets[SynthPresetID_CrystalSync]);

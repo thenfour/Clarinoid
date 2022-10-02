@@ -260,13 +260,16 @@ struct Voice : IModulationKRateProvider
         filterKS = map(keyTrackingAmt, 0, 1.0f, 1.0,
                        filterKS); // map ks amt 0-1 to 1-fulleffect
 
-        float filterP = filterKS;
-        if (USE_BREATH_FILTER)
-            filterP *= breath01;
-        filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
+        if (USE_BREATH_FILTER) {
+            float filterP = filterKS * breath01;
+            filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
 
-        float filterFreq = map(filterP, 0.0f, 1.0f, freqMin, freqMax);
-        return filterFreq;
+            float filterFreq = map(filterP, 0.0f, 1.0f, freqMin, freqMax);
+            return filterFreq;
+        }
+
+        float freq = ClampInclusive(mKRateVoiceFilterCutoffN11, 0.0f, 1.0f) * freqMax;
+        return freq;
     }
 
     float mLatestBreathVal = 0.0f;
@@ -425,7 +428,7 @@ struct Voice : IModulationKRateProvider
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
         bool voiceOrPatchChanged =
             (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatchA != mv.mSynthPatchA);
-        if (voiceOrPatchChanged || transition.mNeedsNoteOff)
+        if (voiceOrPatchChanged)
         {
             // reset saved krate mod values, so modulations don't leak across patch changes
             mKRateVoiceFilterCutoffN11 = 0;
@@ -617,6 +620,10 @@ struct Voice : IModulationKRateProvider
                                                 mPreset->mFilterKeytracking,
                                                 mPreset->mFilterMinFreq,
                                                 mPreset->mFilterMaxFreq);
+
+                                                // if (mv.IsPlaying()) {
+                                                //     Serial.println(String("filter cutoff: ") + filterFreq);
+                                                // }
 
         mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
         mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);

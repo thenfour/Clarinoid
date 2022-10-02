@@ -6,6 +6,7 @@
 namespace clarinoid
 {
 
+static constexpr size_t SynthPresetID_Bommanoid = SYNTH_PRESET_COUNT - 18;
 static constexpr size_t SynthPresetID_FunkyCave = SYNTH_PRESET_COUNT - 17;
 static constexpr size_t SynthPresetID_CrystalSync = SYNTH_PRESET_COUNT - 16;
 static constexpr size_t SynthPresetID_CinematicTagAlt = SYNTH_PRESET_COUNT - 15;

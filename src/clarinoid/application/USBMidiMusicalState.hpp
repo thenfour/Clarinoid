@@ -41,28 +41,38 @@ struct HeldNoteTracker
         mPedalDown = false;
         // remove all notes that are not physically held
         std::remove_if(mHeldNotes.begin(), mHeldNotes.end(), [](const HeldNoteInfo &n) { return !n.isPhysicallyHeld; });
+        //Serial.println(String("held note tracker PedalUp; count= ") + mHeldNotes.size());
     }
 
     void PedalDown()
     {
+        //Serial.println(String("held note tracker PedalDown"));
         mPedalDown = true;
     }
 
     void NoteOff(uint8_t note)
     {
-        auto existingItem = mHeldNotes.end();
+        auto existingItem = mHeldNotes.begin();
         for (; existingItem != mHeldNotes.end(); ++existingItem)
         {
             if (existingItem->note == note)
                 break;
         }
         if (existingItem == mHeldNotes.end())
+        {
+            // Serial.println(String("held note tracker NoteOff, but is unknown. note=") + note +
+            //                "; count=" + mHeldNotes.size());
             return;
+        }
         if (this->mPedalDown)
         {
             existingItem->isPhysicallyHeld = false;
+            // Serial.println(String("held note tracker NoteOff, marking not held. note=") + note +
+            //                "; count=" + mHeldNotes.size());
             return;
         }
+        // Serial.println(String("held note tracker NoteOff, erasing known note=") + note +
+        //                "; count=" + mHeldNotes.size());
         this->mHeldNotes.erase(existingItem);
     }
 
@@ -84,6 +94,7 @@ struct HeldNoteTracker
             n.velocity = velocity;
             n.note = note;
             mHeldNotes.push_back(n);
+            // Serial.println(String("held note tracker NoteOn, adding note=") + note + "; count=" + mHeldNotes.size());
             return;
         }
 
@@ -94,6 +105,7 @@ struct HeldNoteTracker
         n.timestamp = micros();
         n.isPhysicallyHeld = true;
         this->mHeldNotes.push_back(n); // add back where it belongs: as newest note.
+        // Serial.println(String("held note tracker NoteOn, updating note=") + note + "; count=" + mHeldNotes.size());
     }
 
     // returns whether the held note is populated (false if no notes playing)
@@ -139,7 +151,7 @@ struct USBMidiReader
     }
     static void HandleControlChange(uint8_t channel, uint8_t control, uint8_t value)
     {
-        // Serial.println(String("midi device HandleControlChange : ") + control + " -> " + value);
+        //Serial.println(String("midi device HandleControlChange : ") + control + " -> " + value);
         //   https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
         //   64	Damper Pedal on/off	≤63 off, ≥64 on	On/off switch that controls sustain pedal. Nearly every synth
         //   will react to CC 64. (See also Sostenuto CC 66)
@@ -258,6 +270,10 @@ struct USBMidiMusicalState
         if (transitionEvents.mNeedsNoteOn)
         {
             //Serial.println(String("MS note on: ") + mNewState.mMidiNote);
+        }
+        else if (mNewState.IsPlaying())
+        {
+            // Serial.println(String("is playing, but transition says no. oldstate.note=") + mLiveVoice.mMidiNote);
         }
 
         mLiveVoice = mNewState;
