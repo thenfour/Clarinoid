@@ -11,7 +11,7 @@ struct ControlInfo
     IControl *p;
 };
 
-// base class for accessing raw hardware input sources. inherited by BassoonoidControlMapper for example.
+// base class for accessing raw hardware input sources. inherited by BommanoidControlMapper for example.
 struct IInputSource
 {
     virtual void InputSource_Init(struct InputDelegator *) = 0;
