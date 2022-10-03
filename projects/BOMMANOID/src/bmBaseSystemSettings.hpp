@@ -1,7 +1,7 @@
 
 #pragma once
 
-#define THREE_BUTTON_OCTAVES
+#define POLYPHONIC
 
 #define CLARINOID_MIDI_INTERFACE Serial1
 
@@ -21,8 +21,8 @@ static const int8_t PERFORMANCE_PATCH_COUNT = 24;
 static const size_t MAX_SYNTH_VOICES = 3;
 #define VOICE_INITIALIZER {0}, {1}, {2}//, {3}, {4}, {5}, {6}, {7}
 
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 16300;
-static const size_t LOOPER_TEMP_BUFFER_BYTES = 512;   // a smaller buffer that's just used for intermediate copy ops
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 1024;
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 128;   // a smaller buffer that's just used for intermediate copy ops
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
@@ -38,7 +38,7 @@ static const size_t HARM_PRESET_COUNT = 16;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;
 
-static const size_t LOOP_LAYERS = 4;
+static const size_t LOOP_LAYERS = 2;
 static constexpr size_t MAX_MUSICAL_VOICES =
     LOOP_LAYERS *
     (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);

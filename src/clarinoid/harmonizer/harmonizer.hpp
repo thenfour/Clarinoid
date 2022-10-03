@@ -8,6 +8,7 @@
 
 namespace clarinoid
 {
+#ifndef POLYPHONIC // polyphonic device just doesn't support this yet.
 
 struct Harmonizer
 {
@@ -140,7 +141,7 @@ struct Harmonizer
             *pout = *liveVoice; // copy from live voice to get started.
             pout->mIsNoteCurrentlyMuted = !perf.mHarmEnabled;
             pout->mVoiceId =
-                MakeMusicalVoiceID(loopLayerID, HarmLayerToVoiceID((uint8_t)nVoice)); // +1 because live voice is id 0.
+                MakeMusicalVoiceID(loopLayerID, HarmLayerToVoiceID((uint8_t)nVoice));
             pout->mGain *= perf.mHarmGain;
 
             pout->mPan += preset.mStereoSeparation * ((((int)nVoice & 1) * 2) - 1); // turns bit 0 to -1 or 1
@@ -223,5 +224,5 @@ struct Harmonizer
         return ret;
     }
 };
-
+#endif
 } // namespace clarinoid

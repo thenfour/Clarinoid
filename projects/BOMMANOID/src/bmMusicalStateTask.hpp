@@ -32,8 +32,7 @@ struct MusicalStateTask : ITask
                      AppSettings *appSettings,
                      InputDelegator *input,
                      BommanoidControlMapper *controlMapper)
-        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings),
-          mMusicalState(display, appSettings, mpInput, &mMetronome, &mScaleFollower, controlMapper)
+        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings), mMusicalState(appSettings)
     {
     }
 
@@ -63,7 +62,7 @@ struct MusicalStateTask : ITask
         {
             NoInterrupts ni;
             int m1 = micros();
-            mSynth.Update(mMusicalState.mMusicalVoices, mMusicalState.mMusicalVoices + mMusicalState.mVoiceCount);
+            mSynth.Update(mMusicalState);
             int m2 = micros();
             mSynthStateTiming.Update((float)(m2 - m1));
         }

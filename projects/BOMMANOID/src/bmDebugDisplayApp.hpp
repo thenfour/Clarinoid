@@ -179,15 +179,15 @@ struct DebugDisplayApp : SettingsMenuApp
     {
     }
 
-    LabelSettingItem mMidiNote = {Property<String>{[](void *cap) FLASHMEM {
-                                                       DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-                                                       String ret =
-                                                           String("MidiNote: ") +
-                                                           pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote;
-                                                       return ret;
-                                                   },
-                                                   this},
-                                  AlwaysEnabled};
+    // LabelSettingItem mMidiNote = {Property<String>{[](void *cap) FLASHMEM {
+    //                                                    DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+    //                                                    String ret =
+    //                                                        String("MidiNote: ") +
+    //                                                        pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote;
+    //                                                    return ret;
+    //                                                },
+    //                                                this},
+    //                               AlwaysEnabled};
 
     LabelSettingItem mEnc = {Property<String>{[](void *cap) FLASHMEM {
                                                     DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
@@ -242,8 +242,8 @@ struct DebugDisplayApp : SettingsMenuApp
                                                               this},
                                              AlwaysEnabled};
 
-    ISettingItem *mArray[7] = {
-        &mMidiNote,
+    ISettingItem *mArray[6] = {
+        //&mMidiNote,
         //&mFilterFreq,
         &mEnc,
         &mSynthPoly,
@@ -266,6 +266,7 @@ struct DebugDisplayApp : SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.println(String("Debug info ->"));
+        mDisplay.println(String("held notes: ") + this->mMusicalStateTask.mMusicalState.mHeldNotes.mHeldNotes.size());
         SettingsMenuApp::RenderFrontPage();
     }
 };

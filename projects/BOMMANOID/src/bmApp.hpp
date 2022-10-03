@@ -137,7 +137,8 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     }
     virtual MidiNote ISysInfoProvider_GetNote() override
     {
-        return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
+        return MidiNote(0);
+        //return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
     }
     virtual float ISysInfoProvider_GetTempo() override
     {

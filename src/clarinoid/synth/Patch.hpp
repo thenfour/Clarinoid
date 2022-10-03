@@ -2,7 +2,7 @@
 #pragma once
 
 #include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/application/MusicalState.hpp>
+//#include <clarinoid/application/MusicalState.hpp>
 
 namespace clarinoid
 {

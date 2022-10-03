@@ -6,7 +6,7 @@
 
 namespace clarinoid
 {
-
+#ifndef POLYPHONIC
 using MusicalVoiceID_t = uint16_t;
 
 static constexpr MusicalVoiceID_t MAGIC_VOICE_ID_UNASSIGNED =
@@ -25,6 +25,13 @@ static inline MusicalVoiceID_t MakeMusicalVoiceID(uint8_t loopLayerID, uint8_t h
     static_assert(HARM_VOICES < 256, "harmonizer voice ids must fit into a byte");
     static_assert(LOOP_LAYERS < 256, "loop layer ids must fit into a byte");
     return loopLayerID << 8 | harmVoice;
+}
+#endif // POLYPHONIC
+
+static uint16_t gNextLiveNoteSequenceID = 1;
+static inline uint16_t GetNextLiveNoteSequenceID()
+{
+    return ++ gNextLiveNoteSequenceID;
 }
 
 struct MusicalVoice
@@ -47,9 +54,44 @@ struct MusicalVoice
         return !!mMidiNote && !!mVelocity;
     }
 
+    uint16_t mLiveNoteSequenceID; // the sequence
+    uint8_t mHarmVoiceID = 0;
+    uint8_t mLoopLayerID = 0;
+
+    // |loopLayerID----|harmVoice----|noteID-----------------------|
+    // 31             24            16               8             0
+    uint32_t GetAttackID() const
+    {
+        uint32_t ret = mLoopLayerID;
+        ret <<= 8;
+        ret |= mHarmVoiceID;
+        ret <<= 8;
+        ret |= mLiveNoteSequenceID;
+        return ret;
+    }
+
+#ifdef POLYPHONIC
+    // used by synth to know if this & rhs are of the same note. if true, then the new note will reset its state.
+    bool IsSameSynthContext(const MusicalVoice &rhs) const
+    {
+        return (GetAttackID() == rhs.GetAttackID()) && (mSynthPatchA == rhs.mSynthPatchA);
+    }
+#else
+
+    // used by synth to know if this & rhs are of the same note. if true, then the new note will reset its state.
+    bool IsSameSynthContext(const MusicalVoice &rhs) const
+    {
+        return mVoiceId == rhs.mVoiceId;
+    }
+
     MusicalVoiceID_t mVoiceId =
         MAGIC_VOICE_ID_UNASSIGNED; // this is really an outlier member; it's NOT musical state but useful to keep here
                                    // anyway even if it makes thinsg confusing.
+#endif                           // POLYPHONIC
+    uint32_t mAttackTimestampMS = 0; // millis.
+    uint32_t mReleaseTimestampMS = 0;
+    bool mIsPhysicallyHeld = false;
+
     bool mIsNoteCurrentlyMuted = false; // this is needed when this is the "live" voice that has been physically played,
                                         // but the harmonizer demands we not output it.
     uint8_t mMidiNote = 0;

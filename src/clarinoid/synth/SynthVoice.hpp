@@ -426,8 +426,8 @@ struct Voice : IModulationKRateProvider
         mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatchA);
         auto &perf = mAppSettings->GetCurrentPerformancePatch();
         auto transition = CalculateTransitionEvents(mRunningVoice, mv);
-        bool voiceOrPatchChanged =
-            (mRunningVoice.mVoiceId != mv.mVoiceId) || (mRunningVoice.mSynthPatchA != mv.mSynthPatchA);
+
+        bool voiceOrPatchChanged = !mRunningVoice.IsSameSynthContext(mv);
         if (voiceOrPatchChanged)
         {
             // reset saved krate mod values, so modulations don't leak across patch changes
@@ -658,10 +658,17 @@ struct Voice : IModulationKRateProvider
         return mRunningVoice.IsPlaying();
     }
 
+    void Release()
+    {
+        mRunningVoice.mReleaseTimestampMS = millis();
+    }
+
+#ifndef POLYPHONIC
     void Unassign()
     {
         mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
     }
+#endif // POLYPHONIC
 
     Voice(int16_t vid)
         : mPatchOutDryLeft(mSplitter, 0, gpSynthGraph->voiceMixerDryLeft, vid),

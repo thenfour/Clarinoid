@@ -5,6 +5,18 @@
 #include <clarinoid/loopstation/LooperHarmonizer.hpp>
 #include <clarinoid/application/ControlMapper.hpp>
 
+/*
+
+I'm going to remove looper & harmonizer for the moment for simplicity in dealing with polyphony.
+there are 2 lists to maintain:
+1) the list of notes the player is physically playing (musical voices)
+2) the list of notes which the synth should be playing. (synth voices)
+
+this class is responsible just for generating the list of musical voices playing.
+synth then distributes them among synth voices.
+
+*/
+
 namespace clarinoid
 {
 
@@ -15,16 +27,8 @@ namespace clarinoid
 // https://github.com/thenfour/digifujam/blob/ca285536909cee8c3282beb4a1f90a8cd3dc86dd/source/DFcommon/DFMusic.js#L310
 struct HeldNoteTracker
 {
-    struct HeldNoteInfo
-    {
-        uint8_t note;
-        uint8_t velocity;
-        bool isPhysicallyHeld;
-        uint32_t timestamp; // micros
-    };
-
     bool mPedalDown = false;
-    std::vector<HeldNoteInfo> mHeldNotes; // NEW NOTES get placed at the BACK.
+    std::vector<MusicalVoice> mHeldNotes; // NEW NOTES get placed at the BACK.
 
     HeldNoteTracker()
     {
@@ -40,7 +44,7 @@ struct HeldNoteTracker
     {
         mPedalDown = false;
         // remove all notes that are not physically held
-        std::remove_if(mHeldNotes.begin(), mHeldNotes.end(), [](const HeldNoteInfo &n) { return !n.isPhysicallyHeld; });
+        std::remove_if(mHeldNotes.begin(), mHeldNotes.end(), [](const MusicalVoice &n) { return !n.mIsPhysicallyHeld; });
         //Serial.println(String("held note tracker PedalUp; count= ") + mHeldNotes.size());
     }
 
@@ -55,7 +59,7 @@ struct HeldNoteTracker
         auto existingItem = mHeldNotes.begin();
         for (; existingItem != mHeldNotes.end(); ++existingItem)
         {
-            if (existingItem->note == note)
+            if (existingItem->mMidiNote == note)
                 break;
         }
         if (existingItem == mHeldNotes.end())
@@ -66,7 +70,7 @@ struct HeldNoteTracker
         }
         if (this->mPedalDown)
         {
-            existingItem->isPhysicallyHeld = false;
+            existingItem->mIsPhysicallyHeld = false;
             // Serial.println(String("held note tracker NoteOff, marking not held. note=") + note +
             //                "; count=" + mHeldNotes.size());
             return;
@@ -81,44 +85,48 @@ struct HeldNoteTracker
         auto existingItem = mHeldNotes.begin();
         for (; existingItem != mHeldNotes.end(); ++existingItem)
         {
-            if (existingItem->note == note)
+            if (existingItem->mMidiNote == note)
                 break;
         }
 
         if (existingItem == mHeldNotes.end())
         {
             // add new note.
-            HeldNoteInfo n;
-            n.isPhysicallyHeld = true;
-            n.timestamp = micros();
-            n.velocity = velocity;
-            n.note = note;
+            MusicalVoice n;
+            n.mIsPhysicallyHeld = true;
+            n.mAttackTimestampMS = millis();
+            n.mVelocity = velocity;
+            n.mMidiNote = note;
+            n.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
             mHeldNotes.push_back(n);
             // Serial.println(String("held note tracker NoteOn, adding note=") + note + "; count=" + mHeldNotes.size());
             return;
         }
 
-        // there's an existing item to deal with.
-        HeldNoteInfo n = *existingItem;       // take a copy.
+        // there's an existing item to deal with. IOW, user is playing a note that's already
+        // held for some reason. either a weird MIDI scenario, maybe glitched out. Or more likely,
+        // user is holding pedal, and retriggering a key.
+        MusicalVoice n = *existingItem;       // take a copy.
         this->mHeldNotes.erase(existingItem); // remove original
-        n.velocity = velocity;
-        n.timestamp = micros();
-        n.isPhysicallyHeld = true;
+        n.mVelocity = velocity;
+        n.mAttackTimestampMS = millis();
+        n.mIsPhysicallyHeld = true;
+        n.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
         this->mHeldNotes.push_back(n); // add back where it belongs: as newest note.
         // Serial.println(String("held note tracker NoteOn, updating note=") + note + "; count=" + mHeldNotes.size());
     }
 
-    // returns whether the held note is populated (false if no notes playing)
-    bool GetLastNoteOn(HeldNoteInfo &outp)
-    {
-        if (mHeldNotes.empty())
-            return false;
-        outp = *(mHeldNotes.end() - 1);
-        return true;
-    }
+    // // returns whether the held note is populated (false if no notes playing)
+    // bool GetLastNoteOn(MusicalVoice &outp)
+    // {
+    //     if (mHeldNotes.empty())
+    //         return false;
+    //     outp = *(mHeldNotes.end() - 1);
+    //     return true;
+    // }
 };
 
-struct USBMidiReader
+struct USBMidiMusicalState
 {
     HeldNoteTracker mHeldNotes;
     uint8_t mCurrentCCValue[256] = {0};
@@ -126,11 +134,12 @@ struct USBMidiReader
     float mCurrentPitchBendN11 = 0;
     float mCurrentMod01 = 0;
 
-    static USBMidiReader *gInstance;
+    static USBMidiMusicalState *gInstance;
+    AppSettings *mAppSettings;
 
-    USBMidiReader() // : mUsb(), mMidiDevice(mUsb)
+    USBMidiMusicalState(AppSettings *appSettings) : mAppSettings(appSettings)
     {
-        Serial.println(String("USBMidiReader init"));
+        //Serial.println(String("USBMidiMusicalState init"));
         CCASSERT(!gInstance);
         gInstance = this;
         gUsbMidi.setHandleNoteOff(HandleNoteOff);
@@ -192,100 +201,96 @@ struct USBMidiReader
         // auto m1 = micros();
         gUsbHost.Task();
         gUsbMidi.read();
+
+        auto &perf = mAppSettings->GetCurrentPerformancePatch();
+
+        // update pitchbend, patch info, etc.
+        for (auto it = mHeldNotes.mHeldNotes.begin(); it != mHeldNotes.mHeldNotes.end(); ++ it)
+        {
+            it->mHarmPatch = perf.mHarmPreset;
+            it->mSynthPatchA = perf.mSynthPresetA;
+            it->mSynthPatchB = perf.mSynthPresetB;
+        }
+
         // auto m2 = micros();
         // Serial.println(String("updating usb midi; ") + int(m2 - m1));
     }
 };
 
-USBMidiReader *USBMidiReader::gInstance = nullptr;
+USBMidiMusicalState *USBMidiMusicalState::gInstance = nullptr;
 
-// this serves the same function as CCEWIMusicalState, but instead of
-// musical state coming from breath control, pitch device, and touch keys,
-// the musical state comes from a USB MIDI device.
-struct USBMidiMusicalState
-{
-    IDisplay *mpDisplay;
-    AppSettings *mAppSettings;
-    InputDelegator *mInput;
-    Metronome *mMetronome;
-    ScaleFollower *mScaleFollower;
-    IInputSource *mInputSrc;
-    USBMidiReader mMidiDevice;
+// // this serves the same function as CCEWIMusicalState, but instead of
+// // musical state coming from breath control, pitch device, and touch keys,
+// // the musical state comes from a USB MIDI device.
+// struct USBMidiMusicalState
+// {
+//     IDisplay *mpDisplay;
+//     AppSettings *mAppSettings;
+//     InputDelegator *mInput;
+//     IInputSource *mInputSrc;
+//     USBMidiReader mMidiDevice;
 
-    MusicalVoice mLiveVoice; // the voice that's actually playing that represents what the player is playing
-                             // (not a harmonized voice or looped voice)
-    MusicalVoice
-        mMusicalVoices[MAX_MUSICAL_VOICES]; // these are all the voices that WANT to be played (after transpose,
-                                            // harmonize, looping, etc). May be more than synth polyphony.
-    size_t mVoiceCount = 0;
+//     USBMidiMusicalState(IDisplay *pDisplay,
+//                         AppSettings *appSettings,
+//                         InputDelegator *inputDelegator,
+//                         //Metronome *metronome,
+//                         //ScaleFollower *scaleFollower,
+//                         IInputSource *inputSrc)
+//         : mpDisplay(pDisplay), mAppSettings(appSettings), mInput(inputDelegator), mInputSrc(inputSrc)
+//     {
+//     }
 
-    LooperAndHarmonizer mLooper;
+//     void Update()
+//     {
+//         mMidiDevice.Update();
+//         //MusicalVoice mNewState(mLiveVoice);
 
-    int nUpdates = 0;
-    int noteOns = 0;
+//         // mNewState.mBreath01 = mMidiDevice.mCurrentMod01;
+//         // mNewState.mPitchBendN11 = mMidiDevice.mCurrentPitchBendN11;
 
-    int mLastPlayedNote = 0; // valid even when mLiveVoice is not.
+//         // HeldNoteTracker::HeldNoteInfo heldNote;
+//         // bool isPlaying = mMidiDevice.mHeldNotes.GetLastNoteOn(heldNote);
+//         // mNewState.mVelocity = isPlaying ? heldNote.velocity : 0;
+//         // mNewState.mMidiNote = isPlaying ? heldNote.note : 0;
+//         // mNewState.mAttackTimestampMS = heldNote.timestampMS;
 
-    USBMidiMusicalState(IDisplay *pDisplay,
-                        AppSettings *appSettings,
-                        InputDelegator *inputDelegator,
-                        Metronome *metronome,
-                        ScaleFollower *scaleFollower,
-                        IInputSource *inputSrc)
-        : mpDisplay(pDisplay), mAppSettings(appSettings), mInput(inputDelegator), mMetronome(metronome),
-          mScaleFollower(scaleFollower), mInputSrc(inputSrc), mLooper(appSettings, metronome, scaleFollower)
-    {
-    }
+//         // auto &perf = mAppSettings->GetCurrentPerformancePatch();
+//         // mNewState.mHarmPatch = perf.mHarmPreset;
+//         // mNewState.mSynthPatchA = perf.mSynthPresetA;
+//         // mNewState.mSynthPatchB = perf.mSynthPresetB;
+//         // mNewState.mPan = 0; // panning is part of musical state because harmonizer needs it per voice, but it's
+//         //                     // actually calculated by the synth based on synth preset.
 
-    void Update()
-    {
-        mMidiDevice.Update();
-        MusicalVoice mNewState(mLiveVoice);
+//         // mNewState.mMidiNote =
+//         //     ClampInclusive(mNewState.mMidiNote + mAppSettings->GetCurrentPerformancePatch().mTranspose, 0, 127);
 
-        mNewState.mBreath01 = mMidiDevice.mCurrentMod01;
-        mNewState.mPitchBendN11 = mMidiDevice.mCurrentPitchBendN11;
+//         // //auto transitionEvents = CalculateTransitionEvents(mLiveVoice, mNewState);
 
-        HeldNoteTracker::HeldNoteInfo heldNote;
-        bool isPlaying = mMidiDevice.mHeldNotes.GetLastNoteOn(heldNote);
-        mNewState.mVelocity = isPlaying ? heldNote.velocity : 0;
-        mNewState.mMidiNote = isPlaying ? heldNote.note : 0;
+//         // // calculate mLiveNoteSequenceID. if it's a note on, generate a new ID
 
-        auto &perf = mAppSettings->GetCurrentPerformancePatch();
-        mNewState.mHarmPatch = perf.mHarmPreset;
-        mNewState.mSynthPatchA = perf.mSynthPresetA;
-        mNewState.mSynthPatchB = perf.mSynthPresetB;
-        mNewState.mPan = 0; // panning is part of musical state because harmonizer needs it per voice, but it's
-                            // actually calculated by the synth based on synth preset.
+//         // if (isPlaying)
+//         // {
+//         //     mLastPlayedNote = mNewState.mMidiNote;
+//         // }
 
-        mNewState.mMidiNote =
-            ClampInclusive(mNewState.mMidiNote + mAppSettings->GetCurrentPerformancePatch().mTranspose, 0, 127);
+//         // if (transitionEvents.mNeedsNoteOn)
+//         // {
+//         //     //Serial.println(String("MS note on: ") + mNewState.mMidiNote);
+//         // }
+//         // else if (mNewState.IsPlaying())
+//         // {
+//         //     // Serial.println(String("is playing, but transition says no. oldstate.note=") + mLiveVoice.mMidiNote);
+//         // }
 
-        if (isPlaying)
-        {
-            mLastPlayedNote = mNewState.mMidiNote;
-        }
+//         // mLiveVoice = mNewState;
 
-        auto transitionEvents = CalculateTransitionEvents(mLiveVoice, mNewState);
-
-        if (transitionEvents.mNeedsNoteOn)
-        {
-            //Serial.println(String("MS note on: ") + mNewState.mMidiNote);
-        }
-        else if (mNewState.IsPlaying())
-        {
-            // Serial.println(String("is playing, but transition says no. oldstate.note=") + mLiveVoice.mMidiNote);
-        }
-
-        mLiveVoice = mNewState;
-
-        // we have calculated mLiveVoice, converting physical to live musical state.
-        // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.
-        size_t newVoiceCount = mLooper.Update(mLiveVoice, transitionEvents, mMusicalVoices, EndPtr(mMusicalVoices));
-        mVoiceCount = newVoiceCount;
-    }
-};
+//         // // we have calculated mLiveVoice, converting physical to live musical state.
+//         // // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.
+//         // size_t newVoiceCount = mLooper.Update(mLiveVoice, transitionEvents, mMusicalVoices, EndPtr(mMusicalVoices));
+//         // mVoiceCount = newVoiceCount;
+//     }
+// };
 
 static constexpr auto aoeusnthcphic = sizeof(USBMidiMusicalState);
-static constexpr auto aoeucc444 = sizeof(USBMidiReader);
 
 } // namespace clarinoid
