@@ -526,6 +526,7 @@ struct EnvelopeSpec
     float mSustainLevel = 0.0f;
     float mReleaseMS = 100.0f;
     float mReleaseNoteOnMS = 0.0f;
+    bool mLegatoRestart = true;
 };
 
 struct SynthOscillatorSettings
@@ -1042,11 +1043,16 @@ struct SynthSettings
         p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
         p.mOsc[0].mGain = 1.0f;
 
+        p.mEnv1.mSustainLevel = 0.33f;
+        p.mEnv1.mDecayMS = 300;
+        p.mEnv1.mReleaseMS = 1000;
+        p.mEnv1.mReleaseNoteOnMS = 1000;
+
         p.mModulations[0].mDest = AnyModulationDestination::VoiceFilterCutoff;
         p.mModulations[0].mSource = AnyModulationSource::ENV1;
         p.mModulations[0].mAuxEnabled = false;
         p.mModulations[0].mScaleN11 = 1.0f;
-        p.mFilterMaxFreq = 2000;
+        p.mFilterMaxFreq = 3000;
     };
 
 

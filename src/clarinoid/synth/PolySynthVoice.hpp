@@ -21,6 +21,16 @@ namespace clarinoid
 {
 static constexpr float KRateFrequencyModulationMultiplier = 12.0f;
 
+struct SynthVoiceState
+{
+    MusicalEventSource mSource;
+    HeldNoteInfo mNoteInfo;
+    SynthPreset *mSynthPatch;
+    uint32_t mReleaseTimestampMS = 0; // 0 means the note is still active.
+    float mExtraGain; // for performance, harmonizer voice, etc, additional gain can be applied.
+    float mExtraPan; // same.
+};
+
 struct SynthGraph
 {
     /*
@@ -201,12 +211,12 @@ struct Voice : IModulationKRateProvider
     CCPatch mPatchOutVerbLeft;
     CCPatch mPatchOutVerbRight;
 
-    MusicalVoice mRunningVoice;
-    SynthPreset *mPreset = nullptr;
+    SynthVoiceState mRunningVoice;
     AppSettings *mAppSettings;
+    ISynthParamProvider *mParamProvider;
     bool mTouched = false;
 
-    void EnsurePatchConnections(AppSettings *appSettings)
+    void EnsurePatchConnections(AppSettings *appSettings, ISynthParamProvider *mParamProvider)
     {
         mAppSettings = appSettings;
 
@@ -248,7 +258,7 @@ struct Voice : IModulationKRateProvider
         mPatchDCToEnv2.connect();
     }
 
-    float CalcFilterCutoffFreq(float breath01, float midiNote, float keyTrackingAmt, float freqMin, float freqMax)
+    float CalcFilterCutoffFreq()
     {
         // perform breath & key tracking for filter. we will basically multiply the
         // effects. velocity we will only track between notes from 7jam code: const
@@ -256,38 +266,38 @@ struct Voice : IModulationKRateProvider
         // DF.remap(this.midiNote, 60.0 /* middle C */ -
         // halfKeyScaleRangeSemis, 60.0 + halfKeyScaleRangeSemis, ksAmt, -ksAmt); //
         // when vsAmt is 0, the range of vsAmt,-vsAmt is 0. hence making this 1.0-x
-        float filterKS = map(midiNote, 20, 120, 0.0f, 1.0f); // map midi note to full ks effect
-        filterKS = map(keyTrackingAmt, 0, 1.0f, 1.0,
+        float filterKS = map(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), 20, 120, 0.0f, 1.0f); // map midi note to full ks effect
+        filterKS = map(mRunningVoice.mSynthPatch->mFilterKeytracking, 0, 1.0f, 1.0,
                        filterKS); // map ks amt 0-1 to 1-fulleffect
 
         if (USE_BREATH_FILTER)
         {
-            float filterP = filterKS * breath01;
+            float filterP = filterKS * mParamProvider->SynthParamProvider_GetBreath01();
             filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
 
-            float filterFreq = map(filterP, 0.0f, 1.0f, freqMin, freqMax);
+            float filterFreq = map(filterP, 0.0f, 1.0f, mRunningVoice.mSynthPatch->mFilterMinFreq, mRunningVoice.mSynthPatch->mFilterMaxFreq);
             return filterFreq;
         }
 
-        float freq = ClampInclusive(mKRateVoiceFilterCutoffN11, 0.0f, 1.0f) * freqMax;
+        float freq = ClampInclusive(mKRateVoiceFilterCutoffN11, 0.0f, 1.0f) * mRunningVoice.mSynthPatch->mFilterMaxFreq;
         return freq;
     }
 
-    float mLatestBreathVal = 0.0f;
-    float mLatestPitchbendVal = 0.0f;
+    // float mLatestBreathVal = 0.0f;
+    // float mLatestPitchbendVal = 0.0f;
 
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) override
     {
         switch (src)
         {
         case KRateModulationSource::Breath:
-            return mLatestBreathVal;
+            return mParamProvider->SynthParamProvider_GetBreath01();
 
         default:
         case KRateModulationSource::PitchStrip:
             break;
         }
-        return mLatestPitchbendVal;
+        return mParamProvider->SynthParamProvider_GetPitchBendN11();
     }
 
     virtual float IModulationProvider_GetKRateModulationDestinationValueN11(KRateModulationDestination dest) override
@@ -448,45 +458,48 @@ struct Voice : IModulationKRateProvider
         mKRateFMStrength1To3 = 0;
         mKRateFMStrength2To3 = 0;
 
-        mModMatrix.SetSynthPatch(mPreset, this);
+        mModMatrix.SetSynthPatch(mRunningVoice.mSynthPatch, this);
     }
 
-    void ApplyPatchToGraph(const MusicalVoice &mv, const PerformancePatch &perf)
+    short convertWaveType(OscWaveformShape s)
     {
+        switch (s)
+        {
+        case OscWaveformShape::Pulse:
+            return WAVEFORM_PULSE;
+        case OscWaveformShape::SawSync:
+            return WAVEFORM_SAWTOOTH;
+        case OscWaveformShape::VarTriangle:
+            return WAVEFORM_TRIANGLE;
+        case OscWaveformShape::Sine:
+            break;
+        }
+        return WAVEFORM_SINE;
+    };
+
+    void ApplyPatchToGraph()
+    {
+        const auto &patch = *mRunningVoice.mSynthPatch;
+        const auto &perf = mAppSettings->GetCurrentPerformancePatch();
         // configure envelopes (DADSR x 3)
-        mEnv1.delay(mPreset->mEnv1.mDelayMS);
-        mEnv1.attack(mPreset->mEnv1.mAttackMS);
-        mEnv1.hold(mPreset->mEnv1.mHoldMS);
-        mEnv1.decay(mPreset->mEnv1.mDecayMS);
-        mEnv1.sustain(mPreset->mEnv1.mSustainLevel);
-        mEnv1.release(mPreset->mEnv1.mReleaseMS);
-        mEnv1.releaseNoteOn(mPreset->mEnv1.mReleaseNoteOnMS);
+        mEnv1.delay(patch.mEnv1.mDelayMS);
+        mEnv1.attack(patch.mEnv1.mAttackMS);
+        mEnv1.hold(patch.mEnv1.mHoldMS);
+        mEnv1.decay(patch.mEnv1.mDecayMS);
+        mEnv1.sustain(patch.mEnv1.mSustainLevel);
+        mEnv1.release(patch.mEnv1.mReleaseMS);
+        mEnv1.releaseNoteOn(patch.mEnv1.mReleaseNoteOnMS);
 
-        mEnv2.delay(mPreset->mEnv2.mDelayMS);
-        mEnv2.attack(mPreset->mEnv2.mAttackMS);
-        mEnv2.hold(mPreset->mEnv2.mHoldMS);
-        mEnv2.decay(mPreset->mEnv2.mDecayMS);
-        mEnv2.sustain(mPreset->mEnv2.mSustainLevel);
-        mEnv2.release(mPreset->mEnv2.mReleaseMS);
-        mEnv2.releaseNoteOn(mPreset->mEnv2.mReleaseNoteOnMS);
+        mEnv2.delay(patch.mEnv2.mDelayMS);
+        mEnv2.attack(patch.mEnv2.mAttackMS);
+        mEnv2.hold(patch.mEnv2.mHoldMS);
+        mEnv2.decay(patch.mEnv2.mDecayMS);
+        mEnv2.sustain(patch.mEnv2.mSustainLevel);
+        mEnv2.release(patch.mEnv2.mReleaseMS);
+        mEnv2.releaseNoteOn(patch.mEnv2.mReleaseNoteOnMS);
 
-        auto convertWaveType = [](OscWaveformShape s) {
-            switch (s)
-            {
-            case OscWaveformShape::Pulse:
-                return WAVEFORM_PULSE;
-            case OscWaveformShape::SawSync:
-                return WAVEFORM_SAWTOOTH;
-            case OscWaveformShape::VarTriangle:
-                return WAVEFORM_TRIANGLE;
-            case OscWaveformShape::Sine:
-                break;
-            }
-            return WAVEFORM_SINE;
-        };
-
-        short wantsWaveType1 = convertWaveType(mPreset->mLFO1.mWaveShape);
-        short wantsWaveType2 = convertWaveType(mPreset->mLFO2.mWaveShape);
+        short wantsWaveType1 = convertWaveType(patch.mLFO1.mWaveShape);
+        short wantsWaveType2 = convertWaveType(patch.mLFO2.mWaveShape);
         if (mLfo1Waveshape != wantsWaveType1)
         {
             mLfo1.begin(wantsWaveType1);
@@ -498,34 +511,27 @@ struct Voice : IModulationKRateProvider
             mLfo2.amplitude(1.0f);
         }
 
-        mLfo1.frequency(mPreset->mLFO1.mTime.ToHertz(perf.mBPM));
-        mLfo2.frequency(mPreset->mLFO2.mTime.ToHertz(perf.mBPM));
-
-        mLatestBreathVal = mv.mBreath01.GetFloatVal();
-        mLatestPitchbendVal = mv.mPitchBendN11.GetFloatVal();
+        mLfo1.frequency(patch.mLFO1.mTime.ToHertz(perf.mBPM));
+        mLfo2.frequency(patch.mLFO2.mTime.ToHertz(perf.mBPM));
 
         mOsc.mIsPlaying = true;
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
-            mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
-            mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
-            mOsc.mOsc[i].mPMMultiplier = mPreset->mOverallFMStrength + mKRateOverallFMStrength;
-            mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain + mKRateOscFMFeedback[i];
-            // mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
+            mOsc.mOsc[i].waveform(patch.mOsc[i].mWaveform);
+            mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
+            mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mKRateOverallFMStrength;
+            mOsc.mOsc[i].mPMFeedbackAmt = patch.mOsc[i].mFMFeedbackGain + mKRateOscFMFeedback[i];
         }
     }
 
-    float CalcFreq(const MusicalVoice &mv,
-                   const MusicalVoiceTransitionEvents &transition,
-                   const SynthOscillatorSettings &osc,
-                   float midiNote,
+    float CalcFreq(const SynthOscillatorSettings &osc,
                    float detune,
                    float krateFreqModN11,
                    float krateFreqMul,
                    float krateFreqOff,
                    PortamentoCalc &portamento)
     {
-        float userPB = mv.mPitchBendN11.GetFloatVal();
+        float userPB = mParamProvider->SynthParamProvider_GetPitchBendN11();// mv.mPitchBendN11.GetFloatVal();
         float pbSemis = 0;
         if (userPB > 0)
         {
@@ -535,166 +541,136 @@ struct Voice : IModulationKRateProvider
         {
             pbSemis = userPB * (-osc.mPitchBendRangeNegative);
         }
-        float ret = portamento.KStep(midiNote, osc.mPortamentoTimeMS, transition.mNeedsNoteOn) + osc.mPitchFine +
+        float ret = portamento.KStep(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), osc.mPortamentoTimeMS) + osc.mPitchFine +
                     osc.mPitchSemis + detune + pbSemis + (KRateFrequencyModulationMultiplier * krateFreqModN11);
         ret = (MIDINoteToFreq(ret) * (osc.mFreqMultiplier + krateFreqMul)) + osc.mFreqOffset + krateFreqOff;
         return Clamp(ret, 0.0f, 22050.0f);
     };
 
-    void Update(const MusicalVoice &mv)
+    void Update()
     {
         // basically the only time this will become -1 is at startup
-        if (mv.mSynthPatchIndex < 0) {
+        if (mRunningVoice.mSynthPatch == nullptr)
+        {
             mOsc.mIsPlaying = false;
-            mRunningVoice = mv;
             return;
         }
-        mPreset = &mAppSettings->FindSynthPreset(mv.mSynthPatchIndex);
-        auto &perf = mAppSettings->GetCurrentPerformancePatch();
-        auto transition = CalculateTransitionEvents(mRunningVoice, mv);
 
-        if (transition.mSynthContextChanged)
-        {
-            ResetKRateModulations();
-        }
+        const auto &patch = *mRunningVoice.mSynthPatch;
+        //const auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
         // apply ongoing params
-        ApplyPatchToGraph(mv, perf);
-
-        // apply note-offs
-        if (transition.mNeedsNoteOff && !transition.mNeedsNoteOn)
-        {
-            mEnv1.noteOff();
-            mEnv2.noteOff();
-        }
+        ApplyPatchToGraph();
 
         // apply frequency params
-        float midiNote = (float)mv.mMidiNote;
-        float freq0 = CalcFreq(mv,
-                               transition,
-                               mPreset->mOsc[0],
-                               midiNote,
-                               -mPreset->mDetune,
+        float freq0 = CalcFreq(patch.mOsc[0],
+                               -patch.mDetune,
                                mKRateFrequencyN11[0],
                                mKRateOscFreqMul[0],
                                mKRateOscFreqOffset[0],
                                mPortamentoCalc[0]);
-        float freq1 = CalcFreq(mv,
-                               transition,
-                               mPreset->mOsc[1],
-                               midiNote,
+        float freq1 = CalcFreq(patch.mOsc[1],
                                0,
                                mKRateFrequencyN11[1],
                                mKRateOscFreqMul[1],
                                mKRateOscFreqOffset[1],
                                mPortamentoCalc[1]);
-        float freq2 = CalcFreq(mv,
-                               transition,
-                               mPreset->mOsc[2],
-                               midiNote,
-                               -mPreset->mDetune,
+        float freq2 = CalcFreq(patch.mOsc[2],
+                               -patch.mDetune,
                                mKRateFrequencyN11[2],
                                mKRateOscFreqMul[2],
                                mKRateOscFreqOffset[2],
                                mPortamentoCalc[2]);
 
-        if (mPreset->mSync)
-        {
-            // sync only supported in osc1 for the moment.
-            float freqSync = map(
-                mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq1 * mPreset->mSyncMultMin, freq1 * mPreset->mSyncMultMax);
+        // if (patch.mSync)
+        // {
+        //     // sync only supported in osc1 for the moment.
+        //     float freqSync = map(
+        //         mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq1 * mPreset->mSyncMultMin, freq1 * mPreset->mSyncMultMax);
 
-            mOsc.mOsc[0].SetBasicParams(freq0, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTimeMS, false, 0);
-            mOsc.mOsc[1].SetBasicParams(
-                freq0, mPreset->mOsc[1].mPhase01, mPreset->mOsc[1].mPortamentoTimeMS, true, freqSync);
-            mOsc.mOsc[2].SetBasicParams(freq2, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTimeMS, false, 0);
-        }
-        else
-        {
-            mOsc.mOsc[0].SetBasicParams(freq0, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTimeMS, false, 0);
-            mOsc.mOsc[1].SetBasicParams(freq1, mPreset->mOsc[1].mPhase01, mPreset->mOsc[1].mPortamentoTimeMS, false, 0);
-            mOsc.mOsc[2].SetBasicParams(freq2, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTimeMS, false, 0);
-        }
-
-        // trigger note-ons
-        if (transition.mNeedsNoteOn)
-        {
-            for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
-            {
-                if (mPreset->mOsc[i].mPhaseRestart)
-                {
-                    mOsc.mOsc[i].ResetPhase();
-                }
-            }
-
-            if (mPreset->mEnv1.mLegatoRestart && transition.mIsLegatoNoteOn)
-            {
-                mEnv1.noteOn();
-            }
-            if (mPreset->mEnv2.mLegatoRestart && transition.mIsLegatoNoteOn)
-            {
-                mEnv2.noteOn();
-            }
-            if (transition.mNeedsNoteOn && !transition.mIsLegatoNoteOn)
-            {
-                mEnv1.noteOn();
-                mEnv1.noteOff();
-            }
-
-            // todo: LFO restarts
-        }
+        //     mOsc.mOsc[0].SetBasicParams(freq0, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTimeMS, false, 0);
+        //     mOsc.mOsc[1].SetBasicParams(
+        //         freq0, mPreset->mOsc[1].mPhase01, mPreset->mOsc[1].mPortamentoTimeMS, true, freqSync);
+        //     mOsc.mOsc[2].SetBasicParams(freq2, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTimeMS, false, 0);
+        // }
+        // else
+        // {
+            mOsc.mOsc[0].SetBasicParams(freq0, patch.mOsc[0].mPhase01, patch.mOsc[0].mPortamentoTimeMS, false, 0);
+            mOsc.mOsc[1].SetBasicParams(freq1, patch.mOsc[1].mPhase01, patch.mOsc[1].mPortamentoTimeMS, false, 0);
+            mOsc.mOsc[2].SetBasicParams(freq2, patch.mOsc[2].mPhase01, patch.mOsc[2].mPortamentoTimeMS, false, 0);
+        // }
 
         // perform breath & key tracking for filter. we will basically multiply the
         // effects.
-        float filterFreq = CalcFilterCutoffFreq(mv.mBreath01.GetFloatVal(),
-                                                midiNote,
-                                                mPreset->mFilterKeytracking,
-                                                mPreset->mFilterMinFreq,
-                                                mPreset->mFilterMaxFreq);
+        float filterFreq = CalcFilterCutoffFreq();
+        mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
+        mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
 
-        mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
-        mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);
-
-        mSplitter.SetOutputGain(0, mv.mGain);
-        mSplitter.SetOutputGain(1, mv.mGain * mPreset->mDelaySend);
-        mSplitter.SetOutputGain(2, mv.mGain * mPreset->mVerbSend);
+        mSplitter.SetOutputGain(0, mRunningVoice.mExtraGain);
+        mSplitter.SetOutputGain(1, mRunningVoice.mExtraGain * patch.mDelaySend);
+        mSplitter.SetOutputGain(2, mRunningVoice.mExtraGain * patch.mVerbSend);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(0,
-                                                  mv.mPan + mPreset->mPan + mPreset->mOsc[0].mPan +
-                                                      mPreset->mStereoSpread,
-                                                  mPreset->mOsc[0].mGain * mKRateAmplitudeN11[0],
+                                                  mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[0].mPan +
+                                                      patch.mStereoSpread,
+                                                  patch.mOsc[0].mGain * mKRateAmplitudeN11[0],
                                                   true);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(
-            1, mv.mPan + mPreset->mPan + mPreset->mOsc[1].mPan, mPreset->mOsc[1].mGain * mKRateAmplitudeN11[1], true);
+            1, mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[1].mPan, patch.mOsc[1].mGain * mKRateAmplitudeN11[1], true);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(2,
-                                                  mv.mPan + mPreset->mPan + mPreset->mOsc[2].mPan -
-                                                      mPreset->mStereoSpread,
-                                                  mPreset->mOsc[2].mGain * mKRateAmplitudeN11[2],
+                                                  mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[2].mPan -
+                                                      patch.mStereoSpread,
+                                                  patch.mOsc[2].mGain * mKRateAmplitudeN11[2],
                                                   true);
-
-        mRunningVoice = mv;
     }
 
-    bool IsPlaying() const
+        // if there's already a note playing, it gets cut off
+    void IncomingMusicalEvents_OnNoteOn(const MusicalEventSource& source, const HeldNoteInfo& noteInfo, uint16_t synthPatchIndex, float extraGain, float extraPan)
     {
-        // this function lets us delay for example, if there's a release stage
-        // (theoretically)
-        return mRunningVoice.IsPlaying();
+        auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
+        if (mRunningVoice.mSynthPatch != newSynthPatch) {
+            ResetKRateModulations();
+        }
+
+        // adjust running voice.
+        mRunningVoice.mSource = source;
+        mRunningVoice.mNoteInfo = noteInfo;
+        mRunningVoice.mSynthPatch = newSynthPatch;
+        mRunningVoice.mReleaseTimestampMS = 0;
+
+        for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
+        {
+            if (mRunningVoice.mSynthPatch->mOsc[i].mPhaseRestart)
+            {
+                mOsc.mOsc[i].ResetPhase();
+            }
+        }
+
+        mEnv1.noteOn();
+        mEnv2.noteOn();
+
+        if (mRunningVoice.mSynthPatch->mLFO1.mPhaseRestart)
+        {
+            mLfo1.begin(convertWaveType(mRunningVoice.mSynthPatch->mLFO1.mWaveShape));
+            mLfo1.amplitude(1.0f);
+        }
+
+        if (mRunningVoice.mSynthPatch->mLFO2.mPhaseRestart)
+        {
+            mLfo2.begin(convertWaveType(mRunningVoice.mSynthPatch->mLFO2.mWaveShape));
+            mLfo2.amplitude(1.0f);
+        }
     }
 
-    void Release()
+    void IncomingMusicalEvents_OnNoteOff()
     {
         mRunningVoice.mReleaseTimestampMS = millis();
+        // even after a note off, the note continues to play through the envelope release stage. so don't really change much here.
+        mEnv1.noteOff();
+        mEnv2.noteOff();
     }
-
-#ifndef POLYPHONIC
-    void Unassign()
-    {
-        mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-    }
-#endif // POLYPHONIC
 
     Voice(int16_t vid)
         : mPatchOutDryLeft(mSplitter, 0, gpSynthGraph->voiceMixerDryLeft, vid),
@@ -714,20 +690,22 @@ struct SynthGraphControl
     float mPrevMetronomeBeatFrac = 0;
     AppSettings *mAppSettings;
     Metronome *mMetronome;
+    ISynthParamProvider* mParamProvider;
 
-    void Setup(AppSettings *appSettings, Metronome *metronome /*, IModulationSourceSource *modulationSourceSource*/)
+    void Setup(AppSettings *appSettings, Metronome *metronome, ISynthParamProvider* paramProvider)
     {
         AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
 
         mAppSettings = appSettings;
         mMetronome = metronome;
+        mParamProvider = paramProvider;
 
         // for some reason patches really don't like to connect unless they are
         // last in the initialization order. Here's a workaround to force them to
         // connect.
         for (auto &v : gVoices)
         {
-            v.EnsurePatchConnections(appSettings /*, modulationSourceSource*/);
+            v.EnsurePatchConnections(appSettings, paramProvider);
         }
 
         gpSynthGraph->ampLeft.gain(1);

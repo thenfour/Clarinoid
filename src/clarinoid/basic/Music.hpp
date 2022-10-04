@@ -91,6 +91,13 @@ class MidiNote
         DivRem<uint8_t, 12>(val, mOctave, mNoteIndex);
     }
 
+    bool operator ==(const MidiNote& rhs) const {
+        return this->mValue == rhs.mValue;
+    }
+    bool operator !=(const MidiNote& rhs) const {
+        return !(*this == rhs);
+    }
+
     MidiNote(uint8_t oct, uint8_t note) : mValue(oct * 12 + note), mNoteIndex(note), mOctave(oct)
     {
     }

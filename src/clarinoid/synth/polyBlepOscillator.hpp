@@ -44,14 +44,16 @@ struct PortamentoCalc
     int mDurationBlocks = 0;
     float mDeltaPerBlock = 0;
     int mCursorBlocks = 0; // cursor
+    float mCurrentTarget = 0;
 
     // call this every audio buffer interval; returns a smoothed frequency signal.
-    float KStep(float targetValue, int durationMS, bool restart)
+    float KStep(float targetValue, int durationMS)
     {
         // calculate params
         if (durationMS > 0)
         {
-            if (restart)
+            // used to be a manual "reset" argument, but this is more simple.
+            if (!FloatEquals(mCurrentTarget, targetValue))
             {
                 mCursorBlocks = 0;
                 float durationSamples = float(durationMS) / 1000 * AUDIO_SAMPLE_RATE_EXACT;
@@ -67,6 +69,8 @@ struct PortamentoCalc
             mDeltaPerBlock = 0;
             mValue = targetValue;
         }
+
+        mCurrentTarget = targetValue;
 
         // and evaluate this block.
         if (mCursorBlocks >= mDurationBlocks)

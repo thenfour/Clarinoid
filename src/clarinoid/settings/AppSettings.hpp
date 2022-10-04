@@ -120,6 +120,13 @@ struct AppSettings
         return mPerformancePatches[mCurrentPerformancePatch];
     }
 
+    bool IsValidSynthPatchId(int16_t id)
+    {
+        if (id < 0 || (size_t)id >= SYNTH_PRESET_COUNT)
+            return false;
+        return true;
+    }
+
     String GetSynthPatchName(int16_t id)
     {
         if (id < 0 || (size_t)id >= SYNTH_PRESET_COUNT)
@@ -241,9 +248,6 @@ struct AppSettings
     //     p.mSynthBGain = DecibelsToLinear(-3);
     // }
 
-
-
-
     static void InitClarinoidSoloPerf(PerformancePatch &p)
     {
         p.mName = "ClarinoidSolo";
@@ -333,18 +337,18 @@ struct AppSettings
 
     AppSettings()
     {
-        size_t i = 1;                                // 0 = default, no performance
+        size_t i = 1; // 0 = default, no performance
 
         InitSoaringGuitarPerf(mPerformancePatches[i++]);
         InitRoadPerf(mPerformancePatches[i++]);
         InitSyncyPerf(mPerformancePatches[i++]);
         InitSynthwavePerf(mPerformancePatches[i++]);
         InitSilkSuspendersPerf(mPerformancePatches[i++]);
-        InitCrystalPerf(mPerformancePatches[i++]);   // crystal
+        InitCrystalPerf(mPerformancePatches[i++]); // crystal
         InitCaveBouncer(mPerformancePatches[i++]);
 
         InitChameleon(mPerformancePatches[i++]);
-        InitClarinoidSoloPerf(mPerformancePatches[i++]); // 
+        InitClarinoidSoloPerf(mPerformancePatches[i++]); //
     }
 };
 

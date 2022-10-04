@@ -13,22 +13,22 @@
 
 #include <clarinoid/components/Encoder.hpp>
 #include <clarinoid/components/Potentiometer.hpp>
-#include <clarinoid/components/HoneywellABPI2C.hpp>
+//#include <clarinoid/components/HoneywellABPI2C.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 #include <clarinoid/application/Display.hpp>
 #include <clarinoid/application/ControlMapper.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
-#include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
-#include <clarinoid/midi/midi.hpp>
+//#include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
+//#include <clarinoid/midi/midi.hpp>
 #include <clarinoid/application/USBMidiMusicalState.hpp>
 #include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 #include <clarinoid/Gui/GuiPerformanceApp.hpp>
 #include <clarinoid/application/DefaultHud.hpp>
 
 #include <clarinoid/synth/polyBlepOscillator.hpp> // https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
-#include <clarinoid/synth/Synth.hpp>
+#include <clarinoid/synth/PolySynth.hpp>
 
 #include "bmLed.hpp"
 #include "bmControlMapper.hpp"
@@ -167,10 +167,11 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     {
         mControlMapper.Init(&mDisplay);
 
-        HarmSettingsApp mHarmVoiceSettingsApp(mDisplay);
+        //HarmSettingsApp mHarmVoiceSettingsApp(mDisplay);
         SynthPatchMenuApp mSynthPatchApp(mDisplay);
 
         IDisplayApp *allApps[] = {
+            &mDebugDisplayApp,
             &mGuiPerformanceApp,
 
             &mPerformanceApp,
@@ -178,10 +179,9 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
             &mSynthPatchApp,
 
             &mAudioMonitorApp,
-            &mDebugDisplayApp,
             &mSystemSettingsApp,
             &mMetronomeSettingsApp,
-            &mHarmVoiceSettingsApp,
+            //&mHarmVoiceSettingsApp,
         };
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
@@ -243,7 +243,14 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "MusS4"},
             //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mLed1, "mLed1"},
 
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &nopTask, "Nop"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &mMusicalStateTask, "MusS5"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 7), &mMusicalStateTask, "MusS6"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 8), &mMusicalStateTask, "MusS7"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 9), &mMusicalStateTask, "MusS8"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 10), &mMusicalStateTask, "MusS9"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 11), &mMusicalStateTask, "MusSa"},
+
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 12), &nopTask, "Nop"},
         };
 
         TaskPlanner tp{plan};
@@ -255,7 +262,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     }
 };
 
-static constexpr auto a3oeu = sizeof(HarmSettingsApp);
+//static constexpr auto a3oeu = sizeof(HarmSettingsApp);
 static constexpr auto ao4eu = sizeof(SynthPatchMenuApp);
 static constexpr auto aoe5u = sizeof(TaskPlanner::TaskDeadline);
 

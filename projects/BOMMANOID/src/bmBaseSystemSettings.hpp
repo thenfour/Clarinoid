@@ -18,8 +18,8 @@ const char gClarinoidVersion[] = "Bommanoid v0.00";
 static const int8_t DEFAULT_TRANSPOSE = 0;
 static const int8_t PERFORMANCE_PATCH_COUNT = 24;
 
-static const size_t MAX_SYNTH_VOICES = 3;
-#define VOICE_INITIALIZER {0}, {1}, {2}//, {3}, {4}, {5}, {6}, {7}
+static const size_t MAX_SYNTH_VOICES = 8;
+#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 1024;
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 128;   // a smaller buffer that's just used for intermediate copy ops

@@ -4,7 +4,7 @@
 #include <cfloat>
 
 #include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/loopstation/LoopstationMemory.hpp>
+//#include <clarinoid/loopstation/LoopstationMemory.hpp>
 #include <clarinoid/synth/filters/filters.hpp>
 
 namespace clarinoid

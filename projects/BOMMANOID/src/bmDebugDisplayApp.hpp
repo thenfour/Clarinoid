@@ -40,6 +40,16 @@ struct PerformanceApp : SettingsMenuApp
                          this},
         AlwaysEnabled};
 
+    LabelSettingItem mNoteSequenceID = {
+        Property<String>{[](void *cap) FLASHMEM {
+                             //PerformanceApp *pThis = (PerformanceApp *)cap;
+                             String ret = "Note seq: ";
+                             ret += (int)gNextLiveNoteSequenceID;
+                             return ret;
+                         },
+                         this},
+        AlwaysEnabled};
+
     LabelSettingItem mTimesliceLen = {
         Property<String>{[](void *cap) FLASHMEM {
                              PerformanceApp *pThis = (PerformanceApp *)cap;
@@ -66,34 +76,34 @@ struct PerformanceApp : SettingsMenuApp
                          this},
         AlwaysEnabled};
 
-    LabelSettingItem mInput = {Property<String>{[](void *cap) FLASHMEM {
-                                                    PerformanceApp *pThis = (PerformanceApp *)cap;
-                                                    String ret = "M->Input:";
-                                                    ret += (int)pThis->mpMusicalStateTask->mInputTiming.GetValue();
-                                                    return ret;
-                                                },
-                                                this},
-                               AlwaysEnabled};
+    // LabelSettingItem mInput = {Property<String>{[](void *cap) FLASHMEM {
+    //                                                 PerformanceApp *pThis = (PerformanceApp *)cap;
+    //                                                 String ret = "M->Input:";
+    //                                                 ret += (int)pThis->mpMusicalStateTask->mInputTiming.GetValue();
+    //                                                 return ret;
+    //                                             },
+    //                                             this},
+    //                            AlwaysEnabled};
 
-    LabelSettingItem mMusicalState = {
-        Property<String>{[](void *cap) FLASHMEM {
-                             PerformanceApp *pThis = (PerformanceApp *)cap;
-                             String ret = "M->Music:";
-                             ret += (int)pThis->mpMusicalStateTask->mMusicalStateTiming.GetValue();
-                             return ret;
-                         },
-                         this},
-        AlwaysEnabled};
+    // LabelSettingItem mMusicalState = {
+    //     Property<String>{[](void *cap) FLASHMEM {
+    //                          PerformanceApp *pThis = (PerformanceApp *)cap;
+    //                          String ret = "M->Music:";
+    //                          ret += (int)pThis->mpMusicalStateTask->mMusicalStateTiming.GetValue();
+    //                          return ret;
+    //                      },
+    //                      this},
+    //     AlwaysEnabled};
 
-    LabelSettingItem mSynthState = {
-        Property<String>{[](void *cap) FLASHMEM {
-                             PerformanceApp *pThis = (PerformanceApp *)cap;
-                             String ret = "M->Synth:";
-                             ret += (int)pThis->mpMusicalStateTask->mSynthStateTiming.GetValue();
-                             return ret;
-                         },
-                         this},
-        AlwaysEnabled};
+    // LabelSettingItem mSynthState = {
+    //     Property<String>{[](void *cap) FLASHMEM {
+    //                          PerformanceApp *pThis = (PerformanceApp *)cap;
+    //                          String ret = "M->Synth:";
+    //                          ret += (int)pThis->mpMusicalStateTask->mSynthStateTiming.GetValue();
+    //                          return ret;
+    //                      },
+    //                      this},
+    //     AlwaysEnabled};
 
     void Init(TaskPlanner *tm)
     {
@@ -134,14 +144,15 @@ struct PerformanceApp : SettingsMenuApp
     };
     SettingsList mSubitemList = {mSubitemArray};
 
-    ISettingItem *mArray[7] = {
+    ISettingItem *mArray[5] = {
+        &mNoteSequenceID,
         &mDelay,        // ok
         &mTimesliceLen, // ok
         &mCPU,          // definitely bugged
         &mTiming,       // ok
-        &mInput,        // bugged
-        &mMusicalState, // bugged
-        &mSynthState,   // bugged
+        //&mInput,        // bugged
+        //&mMusicalState, // bugged
+        //&mSynthState,   // bugged
     };
     SettingsList mRootList = {mArray};
     virtual SettingsList *GetRootSettingsList()
@@ -305,7 +316,7 @@ struct AudioMonitorApp : DisplayApp
     virtual void RenderFrontPage() override
     {
         mDisplay.println(String("Peak"));
-        float peak = CCSynth::GetPeakLevel();
+        float peak = PolySynth::GetPeakLevel();
         mPlotter.Plot(peak);
         RectI rcDisplay = {0, 0, this->mDisplay.width(), this->mDisplay.height()};
         mPlotter.Render(this->mDisplay, rcDisplay);

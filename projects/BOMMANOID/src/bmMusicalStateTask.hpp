@@ -2,7 +2,7 @@
 #pragma once
 
 #include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/synth/Synth.hpp>
+//#include <clarinoid/synth/PolySynth.hpp>
 #include "bmLed.hpp"
 #include "bmControlMapper.hpp"
 
@@ -19,9 +19,9 @@ struct MusicalStateTask : ITask
     InputDelegator *mpInput;
 
     Metronome mMetronome;
+    PolySynth mSynth;
     USBMidiMusicalState mMusicalState;
-    CCSynth mSynth;
-    ScaleFollower mScaleFollower;
+    //ScaleFollower mScaleFollower;
 
     // for timing subtasks
     SimpleMovingAverage<15> mInputTiming;
@@ -32,13 +32,13 @@ struct MusicalStateTask : ITask
                      AppSettings *appSettings,
                      InputDelegator *input,
                      BommanoidControlMapper *controlMapper)
-        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings), mMusicalState(appSettings)
+        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings), mMusicalState(appSettings, &mSynth)
     {
     }
 
     void Init()
     {
-        mSynth.Init(mAppSettings, &mMetronome);
+        mSynth.Init(mAppSettings, &mMetronome, &mMusicalState);
     }
 
     virtual void TaskRun() override
