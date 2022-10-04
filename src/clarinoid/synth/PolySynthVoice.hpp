@@ -27,8 +27,8 @@ struct SynthVoiceState
     HeldNoteInfo mNoteInfo;
     SynthPreset *mSynthPatch;
     uint32_t mReleaseTimestampMS = 0; // 0 means the note is still active.
-    float mExtraGain; // for performance, harmonizer voice, etc, additional gain can be applied.
-    float mExtraPan; // same.
+    float mExtraGain;                 // for performance, harmonizer voice, etc, additional gain can be applied.
+    float mExtraPan;                  // same.
 };
 
 struct SynthGraph
@@ -211,6 +211,7 @@ struct Voice : IModulationKRateProvider
     CCPatch mPatchOutVerbLeft;
     CCPatch mPatchOutVerbRight;
 
+    int mVoiceIndex;
     SynthVoiceState mRunningVoice;
     AppSettings *mAppSettings;
     ISynthParamProvider *mParamProvider;
@@ -266,8 +267,12 @@ struct Voice : IModulationKRateProvider
         // DF.remap(this.midiNote, 60.0 /* middle C */ -
         // halfKeyScaleRangeSemis, 60.0 + halfKeyScaleRangeSemis, ksAmt, -ksAmt); //
         // when vsAmt is 0, the range of vsAmt,-vsAmt is 0. hence making this 1.0-x
-        float filterKS = map(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), 20, 120, 0.0f, 1.0f); // map midi note to full ks effect
-        filterKS = map(mRunningVoice.mSynthPatch->mFilterKeytracking, 0, 1.0f, 1.0,
+        float filterKS = map(
+            mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), 20, 120, 0.0f, 1.0f); // map midi note to full ks effect
+        filterKS = map(mRunningVoice.mSynthPatch->mFilterKeytracking,
+                       0,
+                       1.0f,
+                       1.0,
                        filterKS); // map ks amt 0-1 to 1-fulleffect
 
         if (USE_BREATH_FILTER)
@@ -275,7 +280,11 @@ struct Voice : IModulationKRateProvider
             float filterP = filterKS * mParamProvider->SynthParamProvider_GetBreath01();
             filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
 
-            float filterFreq = map(filterP, 0.0f, 1.0f, mRunningVoice.mSynthPatch->mFilterMinFreq, mRunningVoice.mSynthPatch->mFilterMaxFreq);
+            float filterFreq = map(filterP,
+                                   0.0f,
+                                   1.0f,
+                                   mRunningVoice.mSynthPatch->mFilterMinFreq,
+                                   mRunningVoice.mSynthPatch->mFilterMaxFreq);
             return filterFreq;
         }
 
@@ -531,7 +540,7 @@ struct Voice : IModulationKRateProvider
                    float krateFreqOff,
                    PortamentoCalc &portamento)
     {
-        float userPB = mParamProvider->SynthParamProvider_GetPitchBendN11();// mv.mPitchBendN11.GetFloatVal();
+        float userPB = mParamProvider->SynthParamProvider_GetPitchBendN11(); // mv.mPitchBendN11.GetFloatVal();
         float pbSemis = 0;
         if (userPB > 0)
         {
@@ -541,8 +550,9 @@ struct Voice : IModulationKRateProvider
         {
             pbSemis = userPB * (-osc.mPitchBendRangeNegative);
         }
-        float ret = portamento.KStep(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), osc.mPortamentoTimeMS) + osc.mPitchFine +
-                    osc.mPitchSemis + detune + pbSemis + (KRateFrequencyModulationMultiplier * krateFreqModN11);
+        float ret = portamento.KStep(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), osc.mPortamentoTimeMS) +
+                    osc.mPitchFine + osc.mPitchSemis + detune + pbSemis +
+                    (KRateFrequencyModulationMultiplier * krateFreqModN11);
         ret = (MIDINoteToFreq(ret) * (osc.mFreqMultiplier + krateFreqMul)) + osc.mFreqOffset + krateFreqOff;
         return Clamp(ret, 0.0f, 22050.0f);
     };
@@ -557,7 +567,7 @@ struct Voice : IModulationKRateProvider
         }
 
         const auto &patch = *mRunningVoice.mSynthPatch;
-        //const auto &perf = mAppSettings->GetCurrentPerformancePatch();
+        // const auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
         // apply ongoing params
         ApplyPatchToGraph();
@@ -569,12 +579,8 @@ struct Voice : IModulationKRateProvider
                                mKRateOscFreqMul[0],
                                mKRateOscFreqOffset[0],
                                mPortamentoCalc[0]);
-        float freq1 = CalcFreq(patch.mOsc[1],
-                               0,
-                               mKRateFrequencyN11[1],
-                               mKRateOscFreqMul[1],
-                               mKRateOscFreqOffset[1],
-                               mPortamentoCalc[1]);
+        float freq1 = CalcFreq(
+            patch.mOsc[1], 0, mKRateFrequencyN11[1], mKRateOscFreqMul[1], mKRateOscFreqOffset[1], mPortamentoCalc[1]);
         float freq2 = CalcFreq(patch.mOsc[2],
                                -patch.mDetune,
                                mKRateFrequencyN11[2],
@@ -586,18 +592,20 @@ struct Voice : IModulationKRateProvider
         // {
         //     // sync only supported in osc1 for the moment.
         //     float freqSync = map(
-        //         mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq1 * mPreset->mSyncMultMin, freq1 * mPreset->mSyncMultMax);
+        //         mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq1 * mPreset->mSyncMultMin, freq1 *
+        //         mPreset->mSyncMultMax);
 
-        //     mOsc.mOsc[0].SetBasicParams(freq0, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTimeMS, false, 0);
-        //     mOsc.mOsc[1].SetBasicParams(
+        //     mOsc.mOsc[0].SetBasicParams(freq0, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTimeMS, false,
+        //     0); mOsc.mOsc[1].SetBasicParams(
         //         freq0, mPreset->mOsc[1].mPhase01, mPreset->mOsc[1].mPortamentoTimeMS, true, freqSync);
-        //     mOsc.mOsc[2].SetBasicParams(freq2, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTimeMS, false, 0);
+        //     mOsc.mOsc[2].SetBasicParams(freq2, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTimeMS, false,
+        //     0);
         // }
         // else
         // {
-            mOsc.mOsc[0].SetBasicParams(freq0, patch.mOsc[0].mPhase01, patch.mOsc[0].mPortamentoTimeMS, false, 0);
-            mOsc.mOsc[1].SetBasicParams(freq1, patch.mOsc[1].mPhase01, patch.mOsc[1].mPortamentoTimeMS, false, 0);
-            mOsc.mOsc[2].SetBasicParams(freq2, patch.mOsc[2].mPhase01, patch.mOsc[2].mPortamentoTimeMS, false, 0);
+        mOsc.mOsc[0].SetBasicParams(freq0, patch.mOsc[0].mPhase01, patch.mOsc[0].mPortamentoTimeMS, false, 0);
+        mOsc.mOsc[1].SetBasicParams(freq1, patch.mOsc[1].mPhase01, patch.mOsc[1].mPortamentoTimeMS, false, 0);
+        mOsc.mOsc[2].SetBasicParams(freq2, patch.mOsc[2].mPhase01, patch.mOsc[2].mPortamentoTimeMS, false, 0);
         // }
 
         // perform breath & key tracking for filter. we will basically multiply the
@@ -616,8 +624,10 @@ struct Voice : IModulationKRateProvider
                                                   patch.mOsc[0].mGain * mKRateAmplitudeN11[0],
                                                   true);
 
-        mOscMixerPanner.SetInputPanGainAndEnabled(
-            1, mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[1].mPan, patch.mOsc[1].mGain * mKRateAmplitudeN11[1], true);
+        mOscMixerPanner.SetInputPanGainAndEnabled(1,
+                                                  mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[1].mPan,
+                                                  patch.mOsc[1].mGain * mKRateAmplitudeN11[1],
+                                                  true);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(2,
                                                   mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[2].mPan -
@@ -626,11 +636,16 @@ struct Voice : IModulationKRateProvider
                                                   true);
     }
 
-        // if there's already a note playing, it gets cut off
-    void IncomingMusicalEvents_OnNoteOn(const MusicalEventSource& source, const HeldNoteInfo& noteInfo, uint16_t synthPatchIndex, float extraGain, float extraPan)
+    // if there's already a note playing, it gets cut off
+    void IncomingMusicalEvents_OnNoteOn(const MusicalEventSource &source,
+                                        const HeldNoteInfo &noteInfo,
+                                        uint16_t synthPatchIndex,
+                                        float extraGain,
+                                        float extraPan)
     {
         auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
-        if (mRunningVoice.mSynthPatch != newSynthPatch) {
+        if (mRunningVoice.mSynthPatch != newSynthPatch)
+        {
             ResetKRateModulations();
         }
 
@@ -638,7 +653,11 @@ struct Voice : IModulationKRateProvider
         mRunningVoice.mSource = source;
         mRunningVoice.mNoteInfo = noteInfo;
         mRunningVoice.mSynthPatch = newSynthPatch;
-        mRunningVoice.mReleaseTimestampMS = 0;
+        mRunningVoice.mReleaseTimestampMS =
+            0; // important so we know the note is playing
+               // if (this->mVoiceIndex == 0) {
+               //     Serial.println(String("voice note on; mReleaseTimestampMS=") + mRunningVoice.mReleaseTimestampMS);
+               // }
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
@@ -650,6 +669,7 @@ struct Voice : IModulationKRateProvider
 
         mEnv1.noteOn();
         mEnv2.noteOn();
+        // Serial.println("voice note on");
 
         if (mRunningVoice.mSynthPatch->mLFO1.mPhaseRestart)
         {
@@ -667,9 +687,84 @@ struct Voice : IModulationKRateProvider
     void IncomingMusicalEvents_OnNoteOff()
     {
         mRunningVoice.mReleaseTimestampMS = millis();
-        // even after a note off, the note continues to play through the envelope release stage. so don't really change much here.
+        // if (this->mVoiceIndex == 0) {
+        //     Serial.println(String("voice note off; mReleaseTimestampMS=") + mRunningVoice.mReleaseTimestampMS);
+        // }
+        // even after a note off, the note continues to play through the envelope release stage. so don't really change
+        // much here.
         mEnv1.noteOff();
         mEnv2.noteOff();
+    }
+
+    // v is positive, and will output 0-1.
+    // we want the return to always be in the same order as the input, but scaled to 0-1. yet we don't know the scale.
+    // i mean, incoming time could be 1 millisecond, 2 milliseconds, or 1 year, and 1 year + 1 millisecond.
+    // we want the output to scale all that to 0-1 and still be comparable.
+    // the Hill Function is good for this, just (x/(x+h)). i found h=1000 to be pretty good so we get
+    // usable values from 0, 1 and 1 day of milliseconds (86400000)
+    float TimeTo01(float v) const
+    {
+        if (v <= 0)
+            return 0;
+        return v / (v + 1000);
+    }
+
+    // a number explaining how happy this voice is to be released / note-off'd.
+    float GetReleaseability() const
+    {
+        // if never played, then 4
+        if (mRunningVoice.mSource.mType == MusicalEventSourceType::Null)
+        {
+            return 4;
+        }
+
+        // if playing, before any release, then 0-1
+        if (mRunningVoice.mReleaseTimestampMS == 0)
+        {
+            return TimeTo01(millis() - mRunningVoice.mNoteInfo.mAttackTimestampMS);
+        }
+
+        auto timeSinceReleaseMS = millis() - mRunningVoice.mReleaseTimestampMS;
+        float releaseTimeMS =
+            std::max(mRunningVoice.mSynthPatch->mEnv1.mReleaseMS, mRunningVoice.mSynthPatch->mEnv2.mReleaseMS);
+        if (timeSinceReleaseMS < releaseTimeMS)
+        {
+            // if playing during release phase of envelope, 1-2.
+            return 1 + TimeTo01(timeSinceReleaseMS);
+        }
+
+        // if idle, then 2-3 based on time since release.
+        return 2 + TimeTo01(timeSinceReleaseMS - releaseTimeMS);
+    }
+
+    // only for display purposes
+    bool IsConsideredPlaying_ForDisplay() const
+    {
+        if (mRunningVoice.mSource.mType == MusicalEventSourceType::Null)
+        {
+            return false;
+        }
+
+        if (mRunningVoice.mReleaseTimestampMS == 0)
+        {
+            // if (this->mVoiceIndex == 0) {
+            //     Serial.println(String("isconsideredplaying? mRunningVoice.mReleaseTimestampMS = 0"));
+            // }
+            return true;
+        }
+
+        auto timeSinceReleaseMS = millis() - mRunningVoice.mReleaseTimestampMS;
+        float releaseTimeMS =
+            std::max(mRunningVoice.mSynthPatch->mEnv1.mReleaseMS, mRunningVoice.mSynthPatch->mEnv2.mReleaseMS);
+        // TODO: if there are NO modulations that use env as source, then don't consider release time.
+
+        // if (this->mVoiceIndex == 0)
+        // {
+        //     Serial.println(String("isconsideredplaying? timeSinceRelease:") + timeSinceReleaseMS +
+        //                    "; releaseTime=" + releaseTimeMS);
+        // }
+
+        return timeSinceReleaseMS < releaseTimeMS;
     }
 
     Voice(int16_t vid)
@@ -678,7 +773,7 @@ struct Voice : IModulationKRateProvider
           mPatchOutDelayLeft(mSplitter, 2, gpSynthGraph->delayInputMixerLeft, vid),
           mPatchOutDelayRight(mSplitter, 3, gpSynthGraph->delayInputMixerRight, vid),
           mPatchOutVerbLeft(mSplitter, 4, gpSynthGraph->verbInputMixerLeft, vid),
-          mPatchOutVerbRight(mSplitter, 5, gpSynthGraph->verbInputMixerLeft, vid)
+          mPatchOutVerbRight(mSplitter, 5, gpSynthGraph->verbInputMixerLeft, vid), mVoiceIndex(vid)
     {
     }
 };
@@ -690,9 +785,9 @@ struct SynthGraphControl
     float mPrevMetronomeBeatFrac = 0;
     AppSettings *mAppSettings;
     Metronome *mMetronome;
-    ISynthParamProvider* mParamProvider;
+    ISynthParamProvider *mParamProvider;
 
-    void Setup(AppSettings *appSettings, Metronome *metronome, ISynthParamProvider* paramProvider)
+    void Setup(AppSettings *appSettings, Metronome *metronome, ISynthParamProvider *paramProvider)
     {
         AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
 

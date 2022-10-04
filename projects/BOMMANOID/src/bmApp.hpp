@@ -114,7 +114,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 
     virtual uint8_t ISysInfoProvider_GetPolyphony() override
     {
-        return mMusicalStateTask.mSynth.mCurrentPolyphony;
+        return mMusicalStateTask.mSynth.GetCurrentPolyphony_ForDisplay();
     }
     virtual float ISysInfoProvider_GetAudioCPUUsage() override
     {

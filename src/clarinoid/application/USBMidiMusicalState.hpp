@@ -52,6 +52,23 @@ struct MusicalEventSource
     MusicalEventSource(MusicalEventSourceType type) : mType(type)
     {
     }
+    bool Equals(const MusicalEventSource &rhs) const
+    {
+        if (mType != rhs.mType)
+            return false;
+        switch (mType)
+        {
+        default:
+        case MusicalEventSourceType::Null:
+        case MusicalEventSourceType::LivePlayA:
+        case MusicalEventSourceType::LivePlayB:
+            return true;
+        case MusicalEventSourceType::Harmonizer:
+            return mHarmonizerVoiceIndex == rhs.mHarmonizerVoiceIndex;
+        case MusicalEventSourceType::Loopstation:
+            return mLoopstationLayerIndex == rhs.mLoopstationLayerIndex;
+        }
+    }
 };
 
 struct ISynthParamProvider
@@ -70,7 +87,7 @@ static inline uint16_t GetNextLiveNoteSequenceID()
 struct IHeldNoteTrackerEvents
 {
     virtual void IHeldNoteTrackerEvents_OnNoteOn(const HeldNoteInfo &noteInfo) = 0;
-    virtual void IHeldNoteTrackerEvents_OnNoteOff(MidiNote n) = 0;
+    virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo& noteInfo) = 0;
     virtual void IHeldNoteTrackerEvents_OnAllNotesOff() = 0;
 };
 
@@ -81,7 +98,7 @@ struct IIncomingMusicalEvents
                                                 uint16_t synthPatchIndex,
                                                 float extraGain,
                                                 float extraPan) = 0;
-    virtual void IncomingMusicalEvents_OnNoteOff(MusicalEventSource source, MidiNote note) = 0;
+    virtual void IncomingMusicalEvents_OnNoteOff(MusicalEventSource source, const HeldNoteInfo &noteInfo) = 0;
     virtual void IncomingMusicalEvents_OnAllNoteOff() = 0;
 };
 
@@ -118,7 +135,7 @@ struct HeldNoteTracker
 
             Serial.println(String("held note tracker PedalUp; calling events::NoteOff on ") +
                            noteInfo.mMidiNote.GetNoteDesc().mName);
-            mEventHandler->IHeldNoteTrackerEvents_OnNoteOff(noteInfo.mMidiNote);
+            mEventHandler->IHeldNoteTrackerEvents_OnNoteOff(noteInfo);
         }
 
         auto newEnd = std::remove_if(mHeldNotes.begin(), mHeldNotes.end(), [](const HeldNoteInfo &n) {
@@ -161,7 +178,7 @@ struct HeldNoteTracker
         }
         // Serial.println(String("held note tracker NoteOff, erasing known note=") + note +
         //                "; count=" + mHeldNotes.size());
-        this->mEventHandler->IHeldNoteTrackerEvents_OnNoteOff(existingItem->mMidiNote);
+        this->mEventHandler->IHeldNoteTrackerEvents_OnNoteOff(*existingItem);
         this->mHeldNotes.erase(existingItem);
     }
 
@@ -251,23 +268,11 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
                 perf.mSynthAGain,
                 0.0f);
         }
-
-        // if (perf.mSynthBEnabled)
-        // {
-        //     gInstance->mEventHandler->IncomingMusicalEvents_OnNoteOn(
-        //         MusicalEventSource{MusicalEventSourceType::LivePlayB},
-        //         noteInfo,
-        //         perf.mSynthPresetB,
-        //         perf.mSynthBGain,
-        //         0.0f);
-        // }
     }
-    virtual void IHeldNoteTrackerEvents_OnNoteOff(MidiNote note) override
+    virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo) override
     {
         gInstance->mEventHandler->IncomingMusicalEvents_OnNoteOff(MusicalEventSource{MusicalEventSourceType::LivePlayA},
-                                                                  note);
-        // gInstance->mEventHandler->IncomingMusicalEvents_OnNoteOff(MusicalEventSource{MusicalEventSourceType::LivePlayB},
-        //                                                           note);
+                                                                  noteInfo);
     }
 
     virtual void IHeldNoteTrackerEvents_OnAllNotesOff() override

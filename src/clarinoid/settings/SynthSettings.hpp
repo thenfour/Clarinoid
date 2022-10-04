@@ -567,6 +567,20 @@ struct LFOSpec
     float mWaveformMorph01 = 0.0f;
 };
 
+enum class VoicingMode : uint8_t
+{
+    Monophonic,
+    Polyphonic,
+};
+
+EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
+    {VoicingMode::Monophonic, "Mono"},
+    {VoicingMode::Polyphonic, "Poly"},
+};
+
+EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
+
+
 struct SynthPreset
 {
     SynthOscillatorSettings mOsc[POLYBLEP_OSC_COUNT];
@@ -579,6 +593,8 @@ struct SynthPreset
 
     EnvelopeSpec mEnv1;
     EnvelopeSpec mEnv2;
+
+    VoicingMode mVoicingMode = VoicingMode::Polyphonic;
 
     LFOSpec mLFO1;
     LFOSpec mLFO2;

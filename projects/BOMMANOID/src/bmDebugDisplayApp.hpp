@@ -212,7 +212,7 @@ struct DebugDisplayApp : SettingsMenuApp
     LabelSettingItem mSynthPoly = {
         Property<String>{[](void *cap) FLASHMEM {
                              DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-                             String ret = String("Synth poly:") + (pThis->mMusicalStateTask.mSynth.mCurrentPolyphony);
+                             String ret = String("Synth poly:") + (pThis->mMusicalStateTask.mSynth.GetCurrentPolyphony_ForDisplay());
                              return ret;
                          },
                          this},
