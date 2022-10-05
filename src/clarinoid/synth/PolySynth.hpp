@@ -51,17 +51,15 @@ struct PolySynth : IIncomingMusicalEvents
                 bestReleaseabilityScore = r;
             }
         }
-                Serial.println(String("best voice found: ") + bestVoiceIndex + "; rel:" + bestReleaseabilityScore);
+                //Serial.println(String("best voice found: ") + bestVoiceIndex + "; rel:" + bestReleaseabilityScore);
         return bestVoice;
     }
 
     virtual void IncomingMusicalEvents_OnNoteOn(MusicalEventSource source,
                                                 const HeldNoteInfo &noteInfo,
-                                                uint16_t synthPatchIndex,
-                                                float extraGain,
-                                                float extraPan) override
+                                                uint16_t synthPatchIndex) override
     {
-        Serial.println(String("synth note on: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
+        //Serial.println(String("synth note on: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
 
         auto &patch = mAppSettings->FindSynthPreset(synthPatchIndex);
 
@@ -74,7 +72,7 @@ struct PolySynth : IIncomingMusicalEvents
                 auto &v = gVoices[i];
                 if (v.mRunningVoice.mSource.Equals(source))
                 {
-                    v.IncomingMusicalEvents_OnNoteOn(source, noteInfo, synthPatchIndex, extraGain, extraPan);
+                    v.IncomingMusicalEvents_OnNoteOn(source, noteInfo, synthPatchIndex);
                     return;
                 }
             }
@@ -82,12 +80,12 @@ struct PolySynth : IIncomingMusicalEvents
         }
 
         auto bestVoice = FindBestFreeVoice();
-        bestVoice->IncomingMusicalEvents_OnNoteOn(source, noteInfo, synthPatchIndex, extraGain, extraPan);
+        bestVoice->IncomingMusicalEvents_OnNoteOn(source, noteInfo, synthPatchIndex);
         return;
     }
     virtual void IncomingMusicalEvents_OnNoteOff(MusicalEventSource source, const HeldNoteInfo &noteInfo) override
     {
-        Serial.println(String("synth note off: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
+        //Serial.println(String("synth note off: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
         // find this note
         for (auto& v : gVoices) {
             if (v.mRunningVoice.mNoteInfo.mLiveNoteSequenceID == noteInfo.mLiveNoteSequenceID) {
@@ -99,7 +97,7 @@ struct PolySynth : IIncomingMusicalEvents
     }
     virtual void IncomingMusicalEvents_OnAllNoteOff() override
     {
-        Serial.println(String("synth all notes off"));
+        //Serial.println(String("synth all notes off"));
     }
 
     // // returns a voice that's either already assigned to this voice, or the best one to free up for it.
@@ -157,15 +155,11 @@ struct PolySynth : IIncomingMusicalEvents
         //     pv->mTouched = true;
         // }
 
-        // // any voice that wasn't assigned (touched) should be "released".
-        // for (auto &v : gVoices)
-        // {
-        //     if (v.IsPlaying())
-        //         mCurrentPolyphony++; // also count polyphony here
-        //     if (v.mTouched)
-        //         continue;
-        //     v.Release();
-        // }
+        // any voice that wasn't assigned (touched) should be "released".
+        for (auto &v : gVoices)
+        {
+            v.Update();
+        }
 
         gSynthGraphControl.UpdatePostFx();
     }

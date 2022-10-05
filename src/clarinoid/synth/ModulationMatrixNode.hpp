@@ -554,8 +554,9 @@ struct VoiceModulationMatrixNode : public AudioStream
 
     virtual void update() override
     {
-        if (!mSynthPatch)
+        if (!mSynthPatch)  {
             return;
+        }
 
         Buffers buffers;
 

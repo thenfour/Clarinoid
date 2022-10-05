@@ -25,10 +25,10 @@ struct SynthVoiceState
 {
     MusicalEventSource mSource;
     HeldNoteInfo mNoteInfo;
-    SynthPreset *mSynthPatch;
+    SynthPreset *mSynthPatch = nullptr;
     uint32_t mReleaseTimestampMS = 0; // 0 means the note is still active.
-    float mExtraGain;                 // for performance, harmonizer voice, etc, additional gain can be applied.
-    float mExtraPan;                  // same.
+    // float mExtraGain;                 // for performance, harmonizer voice, etc, additional gain can be applied.
+    // float mExtraPan;                  // same.
 };
 
 struct SynthGraph
@@ -217,9 +217,10 @@ struct Voice : IModulationKRateProvider
     ISynthParamProvider *mParamProvider;
     bool mTouched = false;
 
-    void EnsurePatchConnections(AppSettings *appSettings, ISynthParamProvider *mParamProvider)
+    void EnsurePatchConnections(AppSettings *appSettings, ISynthParamProvider *paramProvider)
     {
         mAppSettings = appSettings;
+        mParamProvider = paramProvider;
 
         mEnv1PeakDC.amplitude(1.0f);
         mEnv2PeakDC.amplitude(1.0f);
@@ -313,6 +314,9 @@ struct Voice : IModulationKRateProvider
     {
         switch (dest)
         {
+        case KRateModulationDestination::VoiceFilterCutoff:
+            //Serial.println(String("Getting krate filter cutoff, val=") + mKRateVoiceFilterCutoffN11);
+            return mKRateVoiceFilterCutoffN11;
         case KRateModulationDestination::Osc1FMFeedback:
             return mKRateOscFMFeedback[0];
         case KRateModulationDestination::Osc2FMFeedback:
@@ -360,6 +364,7 @@ struct Voice : IModulationKRateProvider
     virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
                                                                            float val) override
     {
+        //Serial.println(String("Setting krate. d=") + (int)d + ", val=" + val);
         switch (d)
         {
         case KRateModulationDestination::VoiceFilterCutoff:
@@ -562,9 +567,17 @@ struct Voice : IModulationKRateProvider
         // basically the only time this will become -1 is at startup
         if (mRunningVoice.mSynthPatch == nullptr)
         {
+
+            if (IsConsideredPlaying_ForDisplay())
+            {
+                Serial.println(String("synth patch is null; no sound focr you"));
+            }
+
             mOsc.mIsPlaying = false;
             return;
         }
+
+        mOsc.mIsPlaying = true;
 
         const auto &patch = *mRunningVoice.mSynthPatch;
         // const auto &perf = mAppSettings->GetCurrentPerformancePatch();
@@ -611,27 +624,36 @@ struct Voice : IModulationKRateProvider
         // perform breath & key tracking for filter. we will basically multiply the
         // effects.
         float filterFreq = CalcFilterCutoffFreq();
+        // filterFreq = 3000;
         mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
         mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
 
-        mSplitter.SetOutputGain(0, mRunningVoice.mExtraGain);
-        mSplitter.SetOutputGain(1, mRunningVoice.mExtraGain * patch.mDelaySend);
-        mSplitter.SetOutputGain(2, mRunningVoice.mExtraGain * patch.mVerbSend);
+        // TODO: consider patch, perf, harm, loop gain & panning
+        float mExtraPan = 0;
+        float mExtraGain = 1.0f;
+
+        mSplitter.SetOutputGain(0, mExtraGain);
+        mSplitter.SetOutputGain(1, mExtraGain * patch.mDelaySend);
+        mSplitter.SetOutputGain(2, mExtraGain * patch.mVerbSend);
+
+        if (IsConsideredPlaying_ForDisplay())
+        {
+            float g = patch.mOsc[0].mGain * mKRateAmplitudeN11[0];
+            // Serial.println(String("playing @ gain: ") + g + " and runningvoice.extragain:" + mExtraGain +
+            //                ", freq=" + freq0 + ", filterfreq=" + filterFreq + ", krateamp=" + mKRateAmplitudeN11[0] +
+            //                ", kratefilt=" + mKRateVoiceFilterCutoffN11);
+        }
 
         mOscMixerPanner.SetInputPanGainAndEnabled(0,
-                                                  mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[0].mPan +
-                                                      patch.mStereoSpread,
+                                                  mExtraPan + patch.mPan + patch.mOsc[0].mPan + patch.mStereoSpread,
                                                   patch.mOsc[0].mGain * mKRateAmplitudeN11[0],
                                                   true);
 
-        mOscMixerPanner.SetInputPanGainAndEnabled(1,
-                                                  mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[1].mPan,
-                                                  patch.mOsc[1].mGain * mKRateAmplitudeN11[1],
-                                                  true);
+        mOscMixerPanner.SetInputPanGainAndEnabled(
+            1, mExtraPan + patch.mPan + patch.mOsc[1].mPan, patch.mOsc[1].mGain * mKRateAmplitudeN11[1], true);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(2,
-                                                  mRunningVoice.mExtraPan + patch.mPan + patch.mOsc[2].mPan -
-                                                      patch.mStereoSpread,
+                                                  mExtraPan + patch.mPan + patch.mOsc[2].mPan - patch.mStereoSpread,
                                                   patch.mOsc[2].mGain * mKRateAmplitudeN11[2],
                                                   true);
     }
@@ -639,25 +661,29 @@ struct Voice : IModulationKRateProvider
     // if there's already a note playing, it gets cut off
     void IncomingMusicalEvents_OnNoteOn(const MusicalEventSource &source,
                                         const HeldNoteInfo &noteInfo,
-                                        uint16_t synthPatchIndex,
-                                        float extraGain,
-                                        float extraPan)
+                                        uint16_t synthPatchIndex)
     {
-        auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
-        if (mRunningVoice.mSynthPatch != newSynthPatch)
+        if (mRunningVoice.mReleaseTimestampMS)
         {
-            ResetKRateModulations();
+            IncomingMusicalEvents_OnNoteOff();
         }
 
         // adjust running voice.
+        auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
         mRunningVoice.mSource = source;
         mRunningVoice.mNoteInfo = noteInfo;
-        mRunningVoice.mSynthPatch = newSynthPatch;
-        mRunningVoice.mReleaseTimestampMS =
-            0; // important so we know the note is playing
-               // if (this->mVoiceIndex == 0) {
-               //     Serial.println(String("voice note on; mReleaseTimestampMS=") + mRunningVoice.mReleaseTimestampMS);
-               // }
+        mRunningVoice.mReleaseTimestampMS = 0; // important so we know the note is playing
+
+        if (mRunningVoice.mSynthPatch != newSynthPatch)
+        {
+            mRunningVoice.mSynthPatch = newSynthPatch;
+            ResetKRateModulations();
+        }
+
+        // if (this->mVoiceIndex == 0) {
+        Serial.println(String("[") + mVoiceIndex + String("] env.NoteOn. voice note on; mReleaseTimestampMS=") +
+                       mRunningVoice.mReleaseTimestampMS);
+        //}
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
@@ -688,25 +714,13 @@ struct Voice : IModulationKRateProvider
     {
         mRunningVoice.mReleaseTimestampMS = millis();
         // if (this->mVoiceIndex == 0) {
-        //     Serial.println(String("voice note off; mReleaseTimestampMS=") + mRunningVoice.mReleaseTimestampMS);
-        // }
+        Serial.println(String("[") + mVoiceIndex + String("] env.NoteOff. voice note off; mReleaseTimestampMS=") +
+                       mRunningVoice.mReleaseTimestampMS);
+        //}
         // even after a note off, the note continues to play through the envelope release stage. so don't really change
         // much here.
         mEnv1.noteOff();
         mEnv2.noteOff();
-    }
-
-    // v is positive, and will output 0-1.
-    // we want the return to always be in the same order as the input, but scaled to 0-1. yet we don't know the scale.
-    // i mean, incoming time could be 1 millisecond, 2 milliseconds, or 1 year, and 1 year + 1 millisecond.
-    // we want the output to scale all that to 0-1 and still be comparable.
-    // the Hill Function is good for this, just (x/(x+h)). i found h=1000 to be pretty good so we get
-    // usable values from 0, 1 and 1 day of milliseconds (86400000)
-    float TimeTo01(float v) const
-    {
-        if (v <= 0)
-            return 0;
-        return v / (v + 1000);
     }
 
     // a number explaining how happy this voice is to be released / note-off'd.

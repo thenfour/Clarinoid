@@ -252,16 +252,17 @@ inline void FillBufferWithConstant(int16_t val, int16_t *out)
 // multiply 2 buffers: arm_mult_q15 <-- this is actually a very interesting function, scaling everything, multiplying as
 // a vector, and saturating, with possibility of scaling to allow >1 scales
 
-
 // multiply(scale) buffer by constant
 // https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicScale.html#ga5e769c8e22da173674c6abca7291e713
-inline void BufferScaleInPlace(float* buf, float scale) {
+inline void BufferScaleInPlace(float *buf, float scale)
+{
     arm_scale_f32(buf, scale, buf, AUDIO_BLOCK_SAMPLES);
 }
 
 // add(offset) buffer by constant
 // https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicScale.html#ga5e769c8e22da173674c6abca7291e713
-inline void BufferOffsetInPlace(float* buf, float offset) {
+inline void BufferOffsetInPlace(float *buf, float offset)
+{
     arm_offset_f32(buf, offset, buf, AUDIO_BLOCK_SAMPLES);
 }
 
@@ -414,6 +415,19 @@ inline float blep1(float x)
 {
     x = 1 - x;
     return -x * x;
+}
+
+// v is positive, and will output 0-1.
+// we want the return to always be in the same order as the input, but scaled to 0-1. yet we don't know the scale.
+// i mean, incoming time could be 1 millisecond, 2 milliseconds, or 1 year, and 1 year + 1 millisecond.
+// we want the output to scale all that to 0-1 and still be comparable.
+// the Hill Function is good for this, just (x/(x+h)). i found h=1000 to be pretty good so we get
+// usable values from 0, 1 and 1 day of milliseconds (86400000)
+float TimeTo01(float v)
+{
+    if (v <= 0)
+        return 0;
+    return v / (v + 1000);
 }
 
 // 1 hz = 1000 ms

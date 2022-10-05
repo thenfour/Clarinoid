@@ -87,7 +87,7 @@ static inline uint16_t GetNextLiveNoteSequenceID()
 struct IHeldNoteTrackerEvents
 {
     virtual void IHeldNoteTrackerEvents_OnNoteOn(const HeldNoteInfo &noteInfo) = 0;
-    virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo& noteInfo) = 0;
+    virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo) = 0;
     virtual void IHeldNoteTrackerEvents_OnAllNotesOff() = 0;
 };
 
@@ -95,9 +95,7 @@ struct IIncomingMusicalEvents
 {
     virtual void IncomingMusicalEvents_OnNoteOn(MusicalEventSource source,
                                                 const HeldNoteInfo &noteInfo,
-                                                uint16_t synthPatchIndex,
-                                                float extraGain,
-                                                float extraPan) = 0;
+                                                uint16_t synthPatchIndex) = 0;
     virtual void IncomingMusicalEvents_OnNoteOff(MusicalEventSource source, const HeldNoteInfo &noteInfo) = 0;
     virtual void IncomingMusicalEvents_OnAllNoteOff() = 0;
 };
@@ -264,9 +262,7 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
             gInstance->mEventHandler->IncomingMusicalEvents_OnNoteOn(
                 MusicalEventSource{MusicalEventSourceType::LivePlayA},
                 noteInfo,
-                perf.mSynthPresetA,
-                perf.mSynthAGain,
-                0.0f);
+                perf.mSynthPresetA);
         }
     }
     virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo) override
@@ -308,10 +304,10 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
 
     static void HandleControlChange(uint8_t channel, uint8_t control, uint8_t value)
     {
-        Serial.println(String("midi device HandleControlChange : ") + control + " -> " + value);
-        //    https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
-        //    64	Damper Pedal on/off	≤63 off, ≥64 on	On/off switch that controls sustain pedal. Nearly every synth
-        //    will react to CC 64. (See also Sostenuto CC 66)
+        // Serial.println(String("midi device HandleControlChange : ") + control + " -> " + value);
+        //     https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
+        //     64	Damper Pedal on/off	≤63 off, ≥64 on	On/off switch that controls sustain pedal. Nearly every synth
+        //     will react to CC 64. (See also Sostenuto CC 66)
         if (control == 64)
         {
             if (value < 64)

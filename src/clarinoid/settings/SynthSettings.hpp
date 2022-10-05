@@ -1057,7 +1057,7 @@ struct SynthSettings
         p.mOsc[2].mGain = 0.0f;
 
         p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[0].mGain = 1.0f;
+        p.mOsc[0].mGain = DecibelsToLinear(-16);
 
         p.mEnv1.mSustainLevel = 0.33f;
         p.mEnv1.mDecayMS = 300;
