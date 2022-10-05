@@ -90,27 +90,27 @@ struct EnvelopeMenuApp
                                                    this},
                                    AlwaysEnabled};
 
-    FloatSettingItem mReleaseNoteOnMS = {"ReleaseNoteOn",
-                                         StandardRangeSpecs::gEnvReleaseMS,
-                                         Property<float>{[](void *cap) FLASHMEM {
-                                                             auto *pThis = (EnvelopeMenuApp *)cap;
-                                                             return pThis->mBinding->mReleaseNoteOnMS;
-                                                         },
-                                                         [](void *cap, const float &v) FLASHMEM {
-                                                             auto *pThis = (EnvelopeMenuApp *)cap;
-                                                             pThis->mBinding->mReleaseNoteOnMS = v;
-                                                         },
-                                                         this},
-                                         AlwaysEnabled};
+    // FloatSettingItem mReleaseNoteOnMS = {"ReleaseNoteOn",
+    //                                      StandardRangeSpecs::gEnvReleaseMS,
+    //                                      Property<float>{[](void *cap) FLASHMEM {
+    //                                                          auto *pThis = (EnvelopeMenuApp *)cap;
+    //                                                          return pThis->mBinding->mReleaseNoteOnMS;
+    //                                                      },
+    //                                                      [](void *cap, const float &v) FLASHMEM {
+    //                                                          auto *pThis = (EnvelopeMenuApp *)cap;
+    //                                                          pThis->mBinding->mReleaseNoteOnMS = v;
+    //                                                      },
+    //                                                      this},
+    //                                      AlwaysEnabled};
 
-    ISettingItem *mArray[7] = {
+    ISettingItem *mArray[6] = {
         &mDelayMS,
         &mAttackMS,
         &mHoldMS,
         &mDecayMS,
         &mSustainLevel,
         &mReleaseMS,
-        &mReleaseNoteOnMS,
+        //&mReleaseNoteOnMS,
     };
 
     SettingsList mRootList = {mArray};

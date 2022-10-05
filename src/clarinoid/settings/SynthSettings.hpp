@@ -525,7 +525,7 @@ struct EnvelopeSpec
     float mDecayMS = 500.0f;
     float mSustainLevel = 0.0f;
     float mReleaseMS = 100.0f;
-    float mReleaseNoteOnMS = 0.0f;
+    //float mReleaseNoteOnMS = 0.0f;
     bool mLegatoRestart = true;
 };
 
@@ -1062,7 +1062,7 @@ struct SynthSettings
         p.mEnv1.mSustainLevel = 0.33f;
         p.mEnv1.mDecayMS = 300;
         p.mEnv1.mReleaseMS = 1000;
-        p.mEnv1.mReleaseNoteOnMS = 1000;
+        //p.mEnv1.mReleaseNoteOnMS = 1000;
 
         p.mModulations[0].mDest = AnyModulationDestination::VoiceFilterCutoff;
         p.mModulations[0].mSource = AnyModulationSource::ENV1;
@@ -1250,13 +1250,13 @@ struct SynthSettings
         p.mEnv1.mAttackMS = 0;
         p.mEnv1.mDecayMS = 100;
         p.mEnv1.mSustainLevel = 0;
-        p.mEnv1.mReleaseMS = p.mEnv1.mReleaseNoteOnMS = 0;
+        p.mEnv1.mReleaseMS = 0;//p.mEnv1.mReleaseNoteOnMS = 0;
 
         p.mEnv2.mDelayMS = 0;
         p.mEnv2.mAttackMS = 0;
         p.mEnv2.mDecayMS = 500;
         p.mEnv2.mSustainLevel = 0;
-        p.mEnv2.mReleaseMS = p.mEnv2.mReleaseNoteOnMS = 0;
+        p.mEnv2.mReleaseMS = 0;//p.mEnv2.mReleaseNoteOnMS = 0;
     }
 
     static void InitBraker(SynthPreset &p)

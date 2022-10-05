@@ -9,6 +9,7 @@
 
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/loopstation/LoopstationMemory.hpp>
+#include <clarinoid/synth/EnvelopeNode.hpp>
 
 #include "FilterNode.hpp"
 #include "PannerNode.hpp"
@@ -137,8 +138,8 @@ struct Voice : IModulationKRateProvider
 
     // Modulation sources
     VoiceModulationMatrixNode mModMatrix;
-    AudioEffectEnvelope mEnv1;
-    AudioEffectEnvelope mEnv2;
+    EnvelopeNode mEnv1;
+    EnvelopeNode mEnv2;
     AudioSynthWaveformDc mEnv1PeakDC;
     AudioSynthWaveformDc mEnv2PeakDC;
     CCPatch mPatchDCToEnv1 = {mEnv1PeakDC, 0, mEnv1, 0};
@@ -502,7 +503,7 @@ struct Voice : IModulationKRateProvider
         mEnv1.decay(patch.mEnv1.mDecayMS);
         mEnv1.sustain(patch.mEnv1.mSustainLevel);
         mEnv1.release(patch.mEnv1.mReleaseMS);
-        mEnv1.releaseNoteOn(patch.mEnv1.mReleaseNoteOnMS);
+        //mEnv1.releaseNoteOn(patch.mEnv1.mReleaseNoteOnMS);
 
         mEnv2.delay(patch.mEnv2.mDelayMS);
         mEnv2.attack(patch.mEnv2.mAttackMS);
@@ -510,7 +511,7 @@ struct Voice : IModulationKRateProvider
         mEnv2.decay(patch.mEnv2.mDecayMS);
         mEnv2.sustain(patch.mEnv2.mSustainLevel);
         mEnv2.release(patch.mEnv2.mReleaseMS);
-        mEnv2.releaseNoteOn(patch.mEnv2.mReleaseNoteOnMS);
+        //mEnv2.releaseNoteOn(patch.mEnv2.mReleaseNoteOnMS);
 
         short wantsWaveType1 = convertWaveType(patch.mLFO1.mWaveShape);
         short wantsWaveType2 = convertWaveType(patch.mLFO2.mWaveShape);
@@ -567,11 +568,10 @@ struct Voice : IModulationKRateProvider
         // basically the only time this will become -1 is at startup
         if (mRunningVoice.mSynthPatch == nullptr)
         {
-
-            if (IsConsideredPlaying_ForDisplay())
-            {
-                Serial.println(String("synth patch is null; no sound focr you"));
-            }
+            // if (IsConsideredPlaying_ForDisplay())
+            // {
+            //     Serial.println(String("synth patch is null; no sound focr you"));
+            // }
 
             mOsc.mIsPlaying = false;
             return;
@@ -636,13 +636,12 @@ struct Voice : IModulationKRateProvider
         mSplitter.SetOutputGain(1, mExtraGain * patch.mDelaySend);
         mSplitter.SetOutputGain(2, mExtraGain * patch.mVerbSend);
 
-        if (IsConsideredPlaying_ForDisplay())
-        {
-            float g = patch.mOsc[0].mGain * mKRateAmplitudeN11[0];
-            // Serial.println(String("playing @ gain: ") + g + " and runningvoice.extragain:" + mExtraGain +
-            //                ", freq=" + freq0 + ", filterfreq=" + filterFreq + ", krateamp=" + mKRateAmplitudeN11[0] +
-            //                ", kratefilt=" + mKRateVoiceFilterCutoffN11);
-        }
+        //if (IsConsideredPlaying_ForDisplay())
+        // {
+        //     //float g = patch.mOsc[0].mGain * mKRateAmplitudeN11[0];
+        //     Serial.println(String("[") + mVoiceIndex + "] frame @ freq=" + freq0 + ", filterfreq=" + filterFreq + ", krateamp=" + mKRateAmplitudeN11[0] +
+        //                    ", kratefilt=" + mKRateVoiceFilterCutoffN11 + ", env1.isactive=" + (mEnv1.isActive() ? "yes" : "no") + ", env1.issustain=" + (mEnv1.isSustain() ? "yes" : "no"));
+        // }
 
         mOscMixerPanner.SetInputPanGainAndEnabled(0,
                                                   mExtraPan + patch.mPan + patch.mOsc[0].mPan + patch.mStereoSpread,
@@ -663,10 +662,7 @@ struct Voice : IModulationKRateProvider
                                         const HeldNoteInfo &noteInfo,
                                         uint16_t synthPatchIndex)
     {
-        if (mRunningVoice.mReleaseTimestampMS)
-        {
-            IncomingMusicalEvents_OnNoteOff();
-        }
+        IncomingMusicalEvents_OnNoteOff();
 
         // adjust running voice.
         auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
@@ -681,8 +677,7 @@ struct Voice : IModulationKRateProvider
         }
 
         // if (this->mVoiceIndex == 0) {
-        Serial.println(String("[") + mVoiceIndex + String("] env.NoteOn. voice note on; mReleaseTimestampMS=") +
-                       mRunningVoice.mReleaseTimestampMS);
+        //Serial.println(String("[") + mVoiceIndex + "] voice env.NoteOn. " + noteInfo.mMidiNote.GetNoteDesc().mName);
         //}
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
@@ -714,8 +709,7 @@ struct Voice : IModulationKRateProvider
     {
         mRunningVoice.mReleaseTimestampMS = millis();
         // if (this->mVoiceIndex == 0) {
-        Serial.println(String("[") + mVoiceIndex + String("] env.NoteOff. voice note off; mReleaseTimestampMS=") +
-                       mRunningVoice.mReleaseTimestampMS);
+        //Serial.println(String("[") + mVoiceIndex + "] voice env.NoteOff. " + mRunningVoice.mNoteInfo.mMidiNote.GetNoteDesc().mName);
         //}
         // even after a note off, the note continues to play through the envelope release stage. so don't really change
         // much here.

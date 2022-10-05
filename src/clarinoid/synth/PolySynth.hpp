@@ -38,7 +38,7 @@ struct PolySynth : IIncomingMusicalEvents
     {
         // find the voice with best releaseability.
         Voice *bestVoice = nullptr;
-        size_t bestVoiceIndex = 99;
+        //size_t bestVoiceIndex = 99;
         float bestReleaseabilityScore = 0;
         for (size_t i = 0; i < SizeofStaticArray(gVoices); ++i)
         {
@@ -46,7 +46,7 @@ struct PolySynth : IIncomingMusicalEvents
             float r = v.GetReleaseability();
             if (r > bestReleaseabilityScore)
             {
-                bestVoiceIndex = i;
+                //bestVoiceIndex = i;
                 bestVoice = &v;
                 bestReleaseabilityScore = r;
             }
