@@ -280,7 +280,7 @@ struct Voice : IModulationKRateProvider
         float ktFreq = noteHz * 4; // to copy massive, 1:1 is at paramvalue 0.3. 0.5 is 2 octaves above playing freq.
         centerFreq = Lerp(centerFreq, ktFreq, ktAmountN11);
 
-        freqParam -= 0.5f; // signed distance from 0.5 -.2 (0.3 = -.2, 0.8 = .3)
+        freqParam -= 0.5f;  // signed distance from 0.5 -.2 (0.3 = -.2, 0.8 = .3)
         freqParam *= 10.0f; // (.3 = -2, .8 = 3)
         float fact = fast::pow(2, freqParam);
         return Clamp(centerFreq * fact, 0.0f, 22050.0f);
@@ -576,21 +576,37 @@ struct Voice : IModulationKRateProvider
                    float krateFreqOff,
                    PortamentoCalc &portamento)
     {
+        // we're in semis land... let's figure out the semitone.
+        float midiNote = mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue();
+
+        // pitch bend semis
         float userPB = mParamProvider->SynthParamProvider_GetPitchBendN11(); // mv.mPitchBendN11.GetFloatVal();
-        float pbSemis = 0;
-        if (userPB > 0)
-        {
-            pbSemis = userPB * osc.mPitchBendRangePositive;
-        }
-        else
-        {
-            pbSemis = userPB * (-osc.mPitchBendRangeNegative);
-        }
-        float ret = portamento.KStep(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), osc.mPortamentoTimeMS) +
-                    osc.mPitchFine + osc.mPitchSemis + detune + pbSemis +
-                    (KRateFrequencyModulationMultiplier * krateFreqModN11);
-        ret = (MIDINoteToFreq(ret) * (osc.mFreqMultiplier + krateFreqMul)) + osc.mFreqOffset + krateFreqOff;
-        return Clamp(ret, 0.0f, 22050.0f);
+        float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive : (-osc.mPitchBendRangeNegative));
+
+        // param semis
+        constexpr float oneKhzMidiNote =
+            83.213094853f; // 1000hz, in midi notes. this replicates behavior of filter modulation.
+        float ktNote = midiNote + 24; // center represents playing note + 2 octaves.
+        float centerNote = Lerp(oneKhzMidiNote, ktNote, osc.mFreqParamKT);
+        float param = (osc.mFreqParam - 0.5f) * 10;
+        float paramSemis = centerNote + param * 12; // each 1 param = 1 octave. because we're in semis land, it's just a mul.
+
+        float idealSemis = paramSemis + osc.mPitchFine + osc.mPitchSemis + detune;
+
+        float retSemis = portamento.KStep(idealSemis, osc.mPortamentoTimeMS);
+        retSemis += pbSemis; // Pitchbend needs to be after portamento.
+
+        float retHz = MIDINoteToFreq(retSemis);
+        retHz *= osc.mFreqMultiplier;
+        retHz += osc.mFreqOffsetHz + krateFreqOff;
+
+        // todo:
+        // use krateFreqModN11 (KRateModulationDestination::Osc1Frequency)
+        // use krateFreqMul
+        // use Osc3FreqOffset
+        // create krateFreqParam
+        // create krateFreqParamKT
+        return Clamp(retHz, 0.0f, 22050.0f);
     };
 
     void Update()
@@ -631,31 +647,12 @@ struct Voice : IModulationKRateProvider
                                mKRateOscFreqOffset[2],
                                mPortamentoCalc[2]);
 
-        // if (patch.mSync)
-        // {
-        //     // sync only supported in osc1 for the moment.
-        //     float freqSync = map(
-        //         mv.mBreath01.GetFloatVal(), 0.0f, 1.0f, freq1 * mPreset->mSyncMultMin, freq1 *
-        //         mPreset->mSyncMultMax);
-
-        //     mOsc.mOsc[0].SetBasicParams(freq0, mPreset->mOsc[0].mPhase01, mPreset->mOsc[0].mPortamentoTimeMS, false,
-        //     0); mOsc.mOsc[1].SetBasicParams(
-        //         freq0, mPreset->mOsc[1].mPhase01, mPreset->mOsc[1].mPortamentoTimeMS, true, freqSync);
-        //     mOsc.mOsc[2].SetBasicParams(freq2, mPreset->mOsc[2].mPhase01, mPreset->mOsc[2].mPortamentoTimeMS, false,
-        //     0);
-        // }
-        // else
-        // {
         mOsc.mOsc[0].SetBasicParams(freq0, patch.mOsc[0].mPhase01, patch.mOsc[0].mPortamentoTimeMS, false, 0);
         mOsc.mOsc[1].SetBasicParams(freq1, patch.mOsc[1].mPhase01, patch.mOsc[1].mPortamentoTimeMS, false, 0);
         mOsc.mOsc[2].SetBasicParams(freq2, patch.mOsc[2].mPhase01, patch.mOsc[2].mPortamentoTimeMS, false, 0);
-        // }
 
-        // perform breath & key tracking for filter. we will basically multiply the
-        // effects.
-        // TODO: portamento vs. frequency.
+        // TODO: if portamento is enabled for an oscillator, it should be accounted for here.
         float filterFreq = CalcFilterCutoffFreq(MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()));
-        // filterFreq = 3000;
         mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
         mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
 

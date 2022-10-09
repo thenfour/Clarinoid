@@ -200,7 +200,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
             ControlMapping::MomentaryMapping(PhysicalControl::x2, ControlMapping::Function::ModifierCourse);
 
         mAppSettings.GetCurrentPerformancePatch().mSynthPresetA = SynthPresetID_Bommanoid;
-        mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
+        //mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
 
         DefaultHud hud = {mDisplay, this};
 

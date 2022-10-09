@@ -316,10 +316,13 @@ enum class KRateModulationDestination : uint8_t
     VoiceFilterCutoff = 0, // k-rate
     Osc1Frequency,         // k-rate
     Osc1Amplitude,         // k-rate
+
     Osc2Frequency,         // k-rate
     Osc2Amplitude,         // k-rate
+
     Osc3Frequency,         // k-rate
     Osc3Amplitude,         // k-rate
+
     Osc1FMFeedback,        // k-rate
     Osc2FMFeedback,        // k-rate
     Osc3FMFeedback,        // k-rate
@@ -330,12 +333,12 @@ enum class KRateModulationDestination : uint8_t
     FMStrength3To2,        // k-rate
     FMStrength1To3,        // k-rate
     FMStrength2To3,        // k-rate
-    Osc1FreqMul,  // k-rate
-Osc1FreqOffset,  // k-rate
-Osc2FreqMul,  // k-rate
-Osc2FreqOffset,  // k-rate
-Osc3FreqMul,  // k-rate
-Osc3FreqOffset,  // k-rate
+    Osc1FreqMul,           // k-rate
+    Osc1FreqOffset,        // k-rate
+    Osc2FreqMul,           // k-rate
+    Osc2FreqOffset,        // k-rate
+    Osc3FreqMul,           // k-rate
+    Osc3FreqOffset,        // k-rate
 };
 
 EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[23] = {
@@ -382,8 +385,10 @@ enum class AnyModulationDestination : uint8_t
     VoiceFilterCutoff, // k-rate
     Osc1Frequency,     // k-rate
     Osc1Amplitude,     // k-rate  // OUTPUT amplitude
+
     Osc2Frequency,     // k-rate
     Osc2Amplitude,     // k-rate  // OUTPUT amplitude
+
     Osc3Frequency,     // k-rate
     Osc3Amplitude,     // k-rate  // OUTPUT amplitude
 
@@ -398,12 +403,15 @@ enum class AnyModulationDestination : uint8_t
     FMStrength1To3,    // k-rate
     FMStrength2To3,    // k-rate
 
-    Osc1FreqMul,     // k-rate
-    Osc1FreqOffset,     // k-rate
-    Osc2FreqMul,     // k-rate
-    Osc2FreqOffset,     // k-rate
-    Osc3FreqMul,     // k-rate
-    Osc3FreqOffset,     // k-rate
+    Osc1FreqMul,    // k-rate
+    Osc1FreqOffset, // k-rate
+    Osc2FreqMul,    // k-rate
+    Osc2FreqOffset, // k-rate
+    Osc3FreqMul,    // k-rate
+    Osc3FreqOffset, // k-rate
+
+    // freq param
+    // freq kt
 
     // osc waveform morph (now replaces SYNC freq)
     // osc pan
@@ -527,7 +535,7 @@ struct EnvelopeSpec
     float mDecayMS = 500.0f;
     float mSustainLevel = 0.0f;
     float mReleaseMS = 100.0f;
-    //float mReleaseNoteOnMS = 0.0f;
+    // float mReleaseNoteOnMS = 0.0f;
     bool mLegatoRestart = true;
 };
 
@@ -536,8 +544,22 @@ struct SynthOscillatorSettings
     float mGain = 0;
     int mPortamentoTimeMS = 0;
 
+    // for pitch, it's even hard to know which kind of params are needed.
+    // 1. for FM, ratio & offset(hz) are absolutely necessary.
+    // 2. for sync, param + KT amt are ideal, to behave like filter.
+    // 3. for transposition & detune, semis & fine.
+
+    // these are good for FM
     float mFreqMultiplier = 1.0f; // midinotefreq * this
-    float mFreqOffset = 0.0f;
+    float mFreqOffsetHz = 0.0f;
+
+    // these are good for modulation, and for sync frequency.
+    float mFreqParam =
+        0.3f; // same as filter frequency calc. 0.3 = unity, and each 0.1 param value = 1 octave transposition, when KT
+              // = 1. when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
+    float mFreqParamKT = 1.0f; // keytracking
+
+    // these are good for musical stuff like transposition.
     int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
                           // not so great at being very precise.
     float mPitchFine = 0; // in semitones, just for detuning
@@ -582,7 +604,6 @@ EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
 
 EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
 
-
 struct SynthPreset
 {
     SynthOscillatorSettings mOsc[POLYBLEP_OSC_COUNT];
@@ -603,9 +624,12 @@ struct SynthPreset
 
     float mDetune = 0;
 
-    float mSyncMultMin = 1.4f;
-    float mSyncMultMax = 4.0f;
+    // float mSyncMultMin = 1.4f;
+    // float mSyncMultMax = 4.0f;
     bool mSync = true;
+    // float mSyncFreq = 0.3f; // this is an abstract frequency value; see CalcSyncFreq for details.
+    // float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
+    //                                  // applied (low notes get higher freq cutoff)
 
     bool mDCFilterEnabled = true;
     float mDCFilterCutoff = 10.0f;
@@ -935,7 +959,7 @@ struct SynthSettings
     {
         p.mName = "Funky";
         p.mSync = true;
-        p.mSyncMultMax = 4.0f;
+        //p.mSyncMultMax = 4.0f;
         p.mDetune = 0;
         p.mFilterQ = 0.40f;
 
@@ -1021,32 +1045,33 @@ struct SynthSettings
         p.mFilterKeytracking = filterKeyScaling;
     };
 
-    static void InitBommanoidPreset(SynthPreset &p,
-                                     const char *name)
+    static void InitBommanoidPreset(SynthPreset &p, const char *name)
     {
         p.mName = name;
         p.mSync = false;
         p.mDetune = 0.0f;
         p.mStereoSpread = 0;
-        p.mVerbSend = 0;
-        p.mDelaySend = 0;
+        p.mVerbSend = DecibelsToLinear(-8);
+        p.mDelaySend = DecibelsToLinear(-8);
         p.mOsc[1].mGain = 0.0f;
         p.mOsc[2].mGain = 0.0f;
 
         p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
         p.mOsc[0].mGain = DecibelsToLinear(-16);
 
-        p.mEnv1.mSustainLevel = 0.33f;
-        p.mEnv1.mDecayMS = 300;
-        p.mEnv1.mReleaseMS = 1000;
-        //p.mEnv1.mReleaseNoteOnMS = 1000;
+        p.mFilterKeytracking = 1.0f;
+        p.mFilterFreq = 0.0f;
+
+        p.mEnv1.mSustainLevel = 0.2f;
+        p.mEnv1.mDecayMS = 1200;
+        p.mEnv1.mReleaseMS = 300;
+        // p.mEnv1.mReleaseNoteOnMS = 1000;
 
         p.mModulations[0].mDest = AnyModulationDestination::VoiceFilterCutoff;
         p.mModulations[0].mSource = AnyModulationSource::ENV1;
         p.mModulations[0].mAuxEnabled = false;
         p.mModulations[0].mScaleN11 = 1.0f;
     };
-
 
     static void InitCloudsStars(SynthPreset &p)
     {
@@ -1112,8 +1137,8 @@ struct SynthSettings
         p.mName = "Fluvial";
         p.mOsc[0].mGain = 0.0f;
         p.mSync = true;
-        p.mSyncMultMin = 0.15f;
-        p.mSyncMultMax = 1.95f;
+        //p.mSyncMultMin = 0.15f;
+        //p.mSyncMultMax = 1.95f;
         p.mDetune = 0.0f;
         p.mVerbSend = 0.1f;
         p.mDelaySend = 0.1f;
@@ -1149,8 +1174,8 @@ struct SynthSettings
         p.mModulations[1].mSource = AnyModulationSource::LFO2;
         p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
 
-        p.mSyncMultMin = 2.5f;
-        p.mSyncMultMax = 0.7f;
+        // p.mSyncMultMin = 2.5f;
+        // p.mSyncMultMax = 0.7f;
     }
 
     static void InitPWMLead2(SynthPreset &p)
@@ -1219,21 +1244,21 @@ struct SynthSettings
         p.mEnv1.mAttackMS = 0;
         p.mEnv1.mDecayMS = 100;
         p.mEnv1.mSustainLevel = 0;
-        p.mEnv1.mReleaseMS = 0;//p.mEnv1.mReleaseNoteOnMS = 0;
+        p.mEnv1.mReleaseMS = 0; // p.mEnv1.mReleaseNoteOnMS = 0;
 
         p.mEnv2.mDelayMS = 0;
         p.mEnv2.mAttackMS = 0;
         p.mEnv2.mDecayMS = 500;
         p.mEnv2.mSustainLevel = 0;
-        p.mEnv2.mReleaseMS = 0;//p.mEnv2.mReleaseNoteOnMS = 0;
+        p.mEnv2.mReleaseMS = 0; // p.mEnv2.mReleaseNoteOnMS = 0;
     }
 
     static void InitBraker(SynthPreset &p)
     {
         p.mName = "Braker Solo";
         p.mSync = true;
-        p.mSyncMultMax = 0.70f;
-        p.mSyncMultMin = 0.17f;
+        // p.mSyncMultMax = 0.70f;
+        // p.mSyncMultMin = 0.17f;
         p.mDetune = 0;
         p.mFilterQ = 0.35f;
         p.mFilterSaturation = 0.2f;
@@ -1279,7 +1304,7 @@ struct SynthSettings
         p.mOverallFMStrength = 0.1f;
         p.mOsc[0].mWaveform = OscWaveformShape::Sine;
         p.mOsc[0].mFreqMultiplier = .5;
-        p.mOsc[0].mFreqOffset = 1;
+        // p.mOsc[0].mFreqOffset = 1;
         p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
 
         p.mOsc[1].mWaveform = OscWaveformShape::Sine;
@@ -1343,8 +1368,7 @@ struct SynthSettings
         InitBassoonoidPreset(
             mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
-        InitBommanoidPreset(
-            mPresets[SynthPresetID_Bommanoid], "Bommanoid");
+        InitBommanoidPreset(mPresets[SynthPresetID_Bommanoid], "Bommanoid");
 
         InitPWMLead2(mPresets[SynthPresetID_PWMMono]);
         InitCrystalSyncLead(mPresets[SynthPresetID_CrystalSync]);

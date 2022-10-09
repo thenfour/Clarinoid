@@ -11,8 +11,22 @@ namespace clarinoid
 // asinine.
 inline float MIDINoteToFreq(float x)
 {
-    float a = 440;
-    return (a / 32.0f) * fast::pow(2.0f, (((float)x - 9.0f) / 12.0f));
+    // float a = 440;
+    // return (a / 32.0f) * fast::pow(2.0f, (((float)x - 9.0f) / 12.0f));
+    return 440 * fast::pow(2.0f, ((x - 69) / 12));
+}
+
+// let MidiNoteToFrequency = function(midiNote) {
+//   return 440 * Math.pow(2, (midiNote - 69) / 12);
+// };
+// let FrequencyToMidiNote = (hz) => {
+//   return 12.0 * Math.log2(Math.max(8, hz) / 440) + 69;
+// };
+
+inline float FrequencyToMIDINote(float hz)
+{
+    float ret = 12.0f * fast::log2(std::max(8.0f, hz) / 440) + 69;
+    return ret;
 }
 
 ////////////////////////////////////////////////////
@@ -91,10 +105,12 @@ class MidiNote
         DivRem<uint8_t, 12>(val, mOctave, mNoteIndex);
     }
 
-    bool operator ==(const MidiNote& rhs) const {
+    bool operator==(const MidiNote &rhs) const
+    {
         return this->mValue == rhs.mValue;
     }
-    bool operator !=(const MidiNote& rhs) const {
+    bool operator!=(const MidiNote &rhs) const
+    {
         return !(*this == rhs);
     }
 
