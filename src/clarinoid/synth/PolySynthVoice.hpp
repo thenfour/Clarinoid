@@ -218,6 +218,7 @@ struct Voice : IModulationKRateProvider
     AppSettings *mAppSettings;
     ISynthParamProvider *mParamProvider;
     bool mTouched = false;
+    //bool mPhysicallyPressed = false;
 
     void EnsurePatchConnections(AppSettings *appSettings, ISynthParamProvider *paramProvider)
     {
@@ -292,40 +293,7 @@ struct Voice : IModulationKRateProvider
                                   noteHz,
                                   mRunningVoice.mSynthPatch->mFilterKeytracking,
                                   mKRateVoiceFilterCutoffN11);
-        // // perform breath & key tracking for filter. we will basically multiply the
-        // // effects. velocity we will only track between notes from 7jam code: const
-        // // halfKeyScaleRangeSemis = 12 * 4; from 7jam code: let ks = 1.0 -
-        // // DF.remap(this.midiNote, 60.0 /* middle C */ -
-        // // halfKeyScaleRangeSemis, 60.0 + halfKeyScaleRangeSemis, ksAmt, -ksAmt); //
-        // // when vsAmt is 0, the range of vsAmt,-vsAmt is 0. hence making this 1.0-x
-        // float filterKS = map(
-        //     mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), 20, 120, 0.0f, 1.0f); // map midi note to full ks
-        //     effect
-        // filterKS = map(mRunningVoice.mSynthPatch->mFilterKeytracking,
-        //                0,
-        //                1.0f,
-        //                1.0,
-        //                filterKS); // map ks amt 0-1 to 1-fulleffect
-
-        // if (USE_BREATH_FILTER)
-        // {
-        //     float filterP = filterKS * mParamProvider->SynthParamProvider_GetBreath01();
-        //     filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
-
-        //     float filterFreq = map(filterP,
-        //                            0.0f,
-        //                            1.0f,
-        //                            mRunningVoice.mSynthPatch->mFilterMinFreq,
-        //                            mRunningVoice.mSynthPatch->mFilterMaxFreq);
-        //     return filterFreq;
-        // }
-
-        // float freq = ClampInclusive(mKRateVoiceFilterCutoffN11, 0.0f, 1.0f) *
-        // mRunningVoice.mSynthPatch->mFilterMaxFreq; return freq;
     }
-
-    // float mLatestBreathVal = 0.0f;
-    // float mLatestPitchbendVal = 0.0f;
 
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) override
     {
@@ -609,8 +577,10 @@ struct Voice : IModulationKRateProvider
         return Clamp(retHz, 0.0f, 22050.0f);
     };
 
-    void Update()
+    void Update(USBMidiMusicalState &ms)
     {
+        // make sure this gets updated; it doesn't get automatically syncd
+        this->mRunningVoice.mNoteInfo.mIsPhysicallyHeld = ms.isPhysicallyPressed(mRunningVoice.mNoteInfo.mLiveNoteSequenceID);
         // basically the only time this will become -1 is at startup
         if (mRunningVoice.mSynthPatch == nullptr)
         {
@@ -749,33 +719,51 @@ struct Voice : IModulationKRateProvider
         mEnv2.noteOff();
     }
 
-    // a number explaining how happy this voice is to be released / note-off'd.
-    float GetReleaseability() const
+    // - 0.x: playing before release
+    // - 1.x: after release
+    // - 2.x: after idle
+    float CalcReleaseabilityForEnvelope(const EnvelopeNode& env, const EnvelopeSpec& envSpec) const
     {
-        // TODO: consider physically held or not.
-        // if never played, then 4
-        if (mRunningVoice.mSource.mType == MusicalEventSourceType::Null)
-        {
-            return 4;
-        }
-
         // if playing, before any release, then 0-1
         if (mRunningVoice.mReleaseTimestampMS == 0)
         {
             return TimeTo01(millis() - mRunningVoice.mNoteInfo.mAttackTimestampMS);
         }
 
+        // ok we're at least at release stage.
         auto timeSinceReleaseMS = millis() - mRunningVoice.mReleaseTimestampMS;
-        float releaseTimeMS =
-            std::max(mRunningVoice.mSynthPatch->mEnv1.mReleaseMS, mRunningVoice.mSynthPatch->mEnv2.mReleaseMS);
+        float releaseTimeMS = envSpec.mReleaseMS;
         if (timeSinceReleaseMS < releaseTimeMS)
         {
-            // if playing during release phase of envelope, 1-2.
             return 1 + TimeTo01(timeSinceReleaseMS);
         }
 
-        // if idle, then 2-3 based on time since release.
         return 2 + TimeTo01(timeSinceReleaseMS - releaseTimeMS);
+    }
+
+    // a number explaining how happy this voice is to be released / note-off'd.
+    // in order of prio, factors:
+    // - 20 never played
+    // - 10+x playing physically
+    // - 00+x playing non-physically (sustain pedal)
+    //
+    // below that, calculate value based on envelope position, and add them together:
+    // - 0.x: playing before release
+    // - 1.x: after release
+    // - 2.x: after idle
+    // that means each envelope gives 0-3; use the min.
+    float GetReleaseability() const
+    {
+        if (mRunningVoice.mSource.mType == MusicalEventSourceType::Null)
+        {
+            return 20;
+        }
+
+        float r1 = CalcReleaseabilityForEnvelope(mEnv1, mRunningVoice.mSynthPatch->mEnv1);
+        float r2 = CalcReleaseabilityForEnvelope(mEnv2, mRunningVoice.mSynthPatch->mEnv2);
+        float r = std::min(r1, r2);
+
+        return r + ((mRunningVoice.mNoteInfo.mIsPhysicallyHeld) ? 0 : 10);
     }
 
     // only for display purposes

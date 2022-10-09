@@ -136,29 +136,10 @@ struct PolySynth : IIncomingMusicalEvents
             gPeak = std::max(gpSynthGraph->peakR.readPeakToPeak(), gPeak);
         }
 
-        // // there are potentially 127 notes playing in the incoming musical state.
-        // // sort in priority, and take them one by one, feeding into our voices.
-        // for (auto &v : gVoices)
-        // {
-        //     v.mTouched = false;
-        // }
-
-        // // todo: synth patch B.
-
-        // //for (const MusicalVoice *pvoice = pVoicesBegin; pvoice != pVoicesEnd; ++pvoice)
-        // for (auto it = ms.mHeldNotes.mHeldNotes.begin(); it != ms.mHeldNotes.mHeldNotes.end(); ++ it)
-        // {
-        //     const auto &mv = *it;//*pvoice;
-        //     Voice *pv = FindAssignedOrAvailable(mv);
-        //     CCASSERT(!!pv);
-        //     pv->Update(mv);
-        //     pv->mTouched = true;
-        // }
-
         // any voice that wasn't assigned (touched) should be "released".
         for (auto &v : gVoices)
         {
-            v.Update();
+            v.Update(ms);
         }
 
         gSynthGraphControl.UpdatePostFx();

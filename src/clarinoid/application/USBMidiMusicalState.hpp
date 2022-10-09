@@ -116,12 +116,23 @@ struct HeldNoteTracker
         mHeldNotes.reserve(128);
     }
 
+    bool isPhysicallyPressed(uint32_t liveNoteSequenceID) const{
+        for (auto &noteInfo : mHeldNotes)
+        {
+            if (noteInfo.mLiveNoteSequenceID == liveNoteSequenceID) {
+                return noteInfo.mIsPhysicallyHeld;
+            }
+        }
+        return false;
+    }
+
     void AllNotesOff()
     {
         mHeldNotes.clear();
         mPedalDown = false;
         mEventHandler->IHeldNoteTrackerEvents_OnAllNotesOff();
     }
+
     void PedalUp()
     {
         mPedalDown = false;
@@ -218,15 +229,6 @@ struct HeldNoteTracker
         // Serial.println(String("held note tracker NoteOn, updating note=") + note + "; count=" + mHeldNotes.size());
         return n;
     }
-
-    // // returns whether the held note is populated (false if no notes playing)
-    // bool GetLastNoteOn(MusicalVoice &outp)
-    // {
-    //     if (mHeldNotes.empty())
-    //         return false;
-    //     outp = *(mHeldNotes.end() - 1);
-    //     return true;
-    // }
 };
 
 struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
@@ -240,6 +242,11 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
     static USBMidiMusicalState *gInstance;
     AppSettings *mAppSettings;
     IIncomingMusicalEvents *mEventHandler;
+
+    bool isPhysicallyPressed(uint32_t liveNoteSequenceID) const
+    {
+        return mHeldNotes.isPhysicallyPressed(liveNoteSequenceID);
+    }
 
     USBMidiMusicalState(AppSettings *appSettings, IIncomingMusicalEvents *eventHandler)
         : mHeldNotes(this), mAppSettings(appSettings), mEventHandler(eventHandler)
@@ -260,9 +267,7 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
         if (perf.mSynthAEnabled && mAppSettings->IsValidSynthPatchId(perf.mSynthPresetA))
         {
             gInstance->mEventHandler->IncomingMusicalEvents_OnNoteOn(
-                MusicalEventSource{MusicalEventSourceType::LivePlayA},
-                noteInfo,
-                perf.mSynthPresetA);
+                MusicalEventSource{MusicalEventSourceType::LivePlayA}, noteInfo, perf.mSynthPresetA);
         }
     }
     virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo) override

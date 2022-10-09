@@ -129,10 +129,11 @@ class EnvelopeNode : public AudioStream
     //     if (release_count == 0)
     //         release_count = 1;
     // }
-    EnvelopeStage GetStage() const {
+    EnvelopeStage GetStage() const { // used by debug displays
         return this->state;
     }
-    bool isActive() const
+
+    bool isPlaying() const
     {
         return this->state != EnvelopeStage::Idle;
     }
