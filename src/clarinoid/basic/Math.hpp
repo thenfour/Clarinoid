@@ -336,10 +336,11 @@ static T ClampInclusive(T x, T minInclusive, T maxInclusive)
     return x;
 }
 
-// static float Lerp(float a, float b, float t)
-// {
-//   return a * (1.0f - t) + b * t;
-// }
+// beware, this works with t<0 and t>1
+static float Lerp(float a, float b, float t)
+{
+  return a * (1.0f - t) + b * t;
+}
 
 // remap so src min to max become [0-1]. results are NOT clamped.
 // if min-max == 0, just return x to avoid bad behaviors

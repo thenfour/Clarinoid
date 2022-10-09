@@ -623,33 +623,20 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                               this},
                                               AlwaysEnabled};
 
-    FloatSettingItem mBreathFiltMin = {" - filt min",
-                                       NumericEditRangeSpec<float>{0.0f, 3000.0f},
+    FloatSettingItem mBreathFiltMax = {" - filt freq",
+                                       StandardRangeSpecs::gFloat_0_1_Fine,
                                        Property<float>{[](void *cap) FLASHMEM {
                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           return pThis->GetBinding().mFilterMinFreq;
+                                                           return pThis->GetBinding().mFilterFreq;
                                                        },
                                                        [](void *cap, const float &v) {
                                                            auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           pThis->GetBinding().mFilterMinFreq = v;
+                                                           pThis->GetBinding().mFilterFreq = v;
                                                        },
                                                        this},
                                        AlwaysEnabled};
 
-    FloatSettingItem mBreathFiltMax = {" - filt max",
-                                       NumericEditRangeSpec<float>{0.0f, 25000.0f},
-                                       Property<float>{[](void *cap) FLASHMEM {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           return pThis->GetBinding().mFilterMaxFreq;
-                                                       },
-                                                       [](void *cap, const float &v) {
-                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                           pThis->GetBinding().mFilterMaxFreq = v;
-                                                       },
-                                                       this},
-                                       AlwaysEnabled};
-
-    FloatSettingItem mBreathFiltKS = {" - filt KS",
+    FloatSettingItem mBreathFiltKS = {" - filt KT",
                                       NumericEditRangeSpec<float>{0.0f, 2.0f, .2f, .1f, 0.01f},
                                       Property<float>{[](void *cap) FLASHMEM {
                                                           auto *pThis = (SynthPatchMenuApp *)cap;
@@ -997,9 +984,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                            AlwaysEnabled,
                                            this};
 
-    ISettingItem *mBreathFilterSubmenuArray[6] = {
+    ISettingItem *mBreathFilterSubmenuArray[5] = {
         &mBreathFiltType,
-        &mBreathFiltMin,
         &mBreathFiltMax,
         &mBreathFiltKS,
         &mBreathFiltQ,

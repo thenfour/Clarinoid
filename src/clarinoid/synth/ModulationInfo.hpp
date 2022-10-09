@@ -304,7 +304,7 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
      KRateModulationDestination::VoiceFilterCutoff,
      (ARateModulationDestination)0,
      0,     // range min
-     22050, // range max
+     1, // range max
      ModulationPoleType::Positive01},
 
     {true,

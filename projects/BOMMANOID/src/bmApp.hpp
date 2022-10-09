@@ -44,8 +44,8 @@ CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 41 /*DC*/, 40 /*RST*/, 10 /*CS*/};
 
 struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 {
-    static constexpr size_t breathMappingIndex = 13;
-    static constexpr size_t joyPitchMappingIndex = 21;
+    //static constexpr size_t breathMappingIndex = 13;
+    //static constexpr size_t joyPitchMappingIndex = 21;
 
     //Leds1 mLed1;
     //Leds2 mLed2;
@@ -79,9 +79,9 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
           mSystemSettingsApp(
               mDisplay,
-              breathMappingIndex,
-              joyPitchMappingIndex,
-              joyPitchMappingIndex,
+              -1,
+              -1,
+              -1,
               [](void *cap) FLASHMEM { // raw breath value getter
                   //BommanoidApp *pThis = (BommanoidApp *)cap;
                   return 0.0f;// pThis->mControlMapper.mBreath.CurrentValue01();

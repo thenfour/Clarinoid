@@ -27,6 +27,7 @@ struct SynthVoiceState
     MusicalEventSource mSource;
     HeldNoteInfo mNoteInfo;
     SynthPreset *mSynthPatch = nullptr;
+    int mSynthPatchIndex = -1;
     uint32_t mReleaseTimestampMS = 0; // 0 means the note is still active.
     // float mExtraGain;                 // for performance, harmonizer voice, etc, additional gain can be applied.
     // float mExtraPan;                  // same.
@@ -261,37 +262,66 @@ struct Voice : IModulationKRateProvider
         mPatchDCToEnv2.connect();
     }
 
-    float CalcFilterCutoffFreq()
+    float CalcParamFrequency(float freqParam, float noteHz, float ktAmountN11, float krateModulationN11)
     {
-        // perform breath & key tracking for filter. we will basically multiply the
-        // effects. velocity we will only track between notes from 7jam code: const
-        // halfKeyScaleRangeSemis = 12 * 4; from 7jam code: let ks = 1.0 -
-        // DF.remap(this.midiNote, 60.0 /* middle C */ -
-        // halfKeyScaleRangeSemis, 60.0 + halfKeyScaleRangeSemis, ksAmt, -ksAmt); //
-        // when vsAmt is 0, the range of vsAmt,-vsAmt is 0. hence making this 1.0-x
-        float filterKS = map(
-            mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), 20, 120, 0.0f, 1.0f); // map midi note to full ks effect
-        filterKS = map(mRunningVoice.mSynthPatch->mFilterKeytracking,
-                       0,
-                       1.0f,
-                       1.0,
-                       filterKS); // map ks amt 0-1 to 1-fulleffect
+        freqParam += krateModulationN11; // apply current modulation value.
+        // at 0.5, we use 1khz.
+        // for each 0.1 param value, it's +/- one octave
 
-        if (USE_BREATH_FILTER)
-        {
-            float filterP = filterKS * mParamProvider->SynthParamProvider_GetBreath01();
-            filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
+        float centerFreq = 1000; // the cutoff frequency at 0.5 param value.
 
-            float filterFreq = map(filterP,
-                                   0.0f,
-                                   1.0f,
-                                   mRunningVoice.mSynthPatch->mFilterMinFreq,
-                                   mRunningVoice.mSynthPatch->mFilterMaxFreq);
-            return filterFreq;
-        }
+        // with no KT,
+        // so if param is 0.8, we want to multiply by 8 (2^3)
+        // if param is 0.3, multiply by 1/4 (2^(1/4))
 
-        float freq = ClampInclusive(mKRateVoiceFilterCutoffN11, 0.0f, 1.0f) * mRunningVoice.mSynthPatch->mFilterMaxFreq;
-        return freq;
+        // with full KT,
+        // at 0.3, we use playFrequency.
+        // for each 0.1 param value, it's +/- one octave.
+        float ktFreq = noteHz * 4; // to copy massive, 1:1 is at paramvalue 0.3. 0.5 is 2 octaves above playing freq.
+        centerFreq = Lerp(centerFreq, ktFreq, ktAmountN11);
+
+        freqParam -= 0.5f; // signed distance from 0.5 -.2 (0.3 = -.2, 0.8 = .3)
+        freqParam *= 10.0f; // (.3 = -2, .8 = 3)
+        float fact = fast::pow(2, freqParam);
+        return Clamp(centerFreq * fact, 0.0f, 22050.0f);
+    }
+
+    float CalcFilterCutoffFreq(float noteHz)
+    {
+        return CalcParamFrequency(mRunningVoice.mSynthPatch->mFilterFreq,
+                                  noteHz,
+                                  mRunningVoice.mSynthPatch->mFilterKeytracking,
+                                  mKRateVoiceFilterCutoffN11);
+        // // perform breath & key tracking for filter. we will basically multiply the
+        // // effects. velocity we will only track between notes from 7jam code: const
+        // // halfKeyScaleRangeSemis = 12 * 4; from 7jam code: let ks = 1.0 -
+        // // DF.remap(this.midiNote, 60.0 /* middle C */ -
+        // // halfKeyScaleRangeSemis, 60.0 + halfKeyScaleRangeSemis, ksAmt, -ksAmt); //
+        // // when vsAmt is 0, the range of vsAmt,-vsAmt is 0. hence making this 1.0-x
+        // float filterKS = map(
+        //     mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), 20, 120, 0.0f, 1.0f); // map midi note to full ks
+        //     effect
+        // filterKS = map(mRunningVoice.mSynthPatch->mFilterKeytracking,
+        //                0,
+        //                1.0f,
+        //                1.0,
+        //                filterKS); // map ks amt 0-1 to 1-fulleffect
+
+        // if (USE_BREATH_FILTER)
+        // {
+        //     float filterP = filterKS * mParamProvider->SynthParamProvider_GetBreath01();
+        //     filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
+
+        //     float filterFreq = map(filterP,
+        //                            0.0f,
+        //                            1.0f,
+        //                            mRunningVoice.mSynthPatch->mFilterMinFreq,
+        //                            mRunningVoice.mSynthPatch->mFilterMaxFreq);
+        //     return filterFreq;
+        // }
+
+        // float freq = ClampInclusive(mKRateVoiceFilterCutoffN11, 0.0f, 1.0f) *
+        // mRunningVoice.mSynthPatch->mFilterMaxFreq; return freq;
     }
 
     // float mLatestBreathVal = 0.0f;
@@ -316,7 +346,7 @@ struct Voice : IModulationKRateProvider
         switch (dest)
         {
         case KRateModulationDestination::VoiceFilterCutoff:
-            //Serial.println(String("Getting krate filter cutoff, val=") + mKRateVoiceFilterCutoffN11);
+            // Serial.println(String("Getting krate filter cutoff, val=") + mKRateVoiceFilterCutoffN11);
             return mKRateVoiceFilterCutoffN11;
         case KRateModulationDestination::Osc1FMFeedback:
             return mKRateOscFMFeedback[0];
@@ -365,7 +395,7 @@ struct Voice : IModulationKRateProvider
     virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
                                                                            float val) override
     {
-        //Serial.println(String("Setting krate. d=") + (int)d + ", val=" + val);
+        // Serial.println(String("Setting krate. d=") + (int)d + ", val=" + val);
         switch (d)
         {
         case KRateModulationDestination::VoiceFilterCutoff:
@@ -503,7 +533,7 @@ struct Voice : IModulationKRateProvider
         mEnv1.decay(patch.mEnv1.mDecayMS);
         mEnv1.sustain(patch.mEnv1.mSustainLevel);
         mEnv1.release(patch.mEnv1.mReleaseMS);
-        //mEnv1.releaseNoteOn(patch.mEnv1.mReleaseNoteOnMS);
+        // mEnv1.releaseNoteOn(patch.mEnv1.mReleaseNoteOnMS);
 
         mEnv2.delay(patch.mEnv2.mDelayMS);
         mEnv2.attack(patch.mEnv2.mAttackMS);
@@ -511,7 +541,7 @@ struct Voice : IModulationKRateProvider
         mEnv2.decay(patch.mEnv2.mDecayMS);
         mEnv2.sustain(patch.mEnv2.mSustainLevel);
         mEnv2.release(patch.mEnv2.mReleaseMS);
-        //mEnv2.releaseNoteOn(patch.mEnv2.mReleaseNoteOnMS);
+        // mEnv2.releaseNoteOn(patch.mEnv2.mReleaseNoteOnMS);
 
         short wantsWaveType1 = convertWaveType(patch.mLFO1.mWaveShape);
         short wantsWaveType2 = convertWaveType(patch.mLFO2.mWaveShape);
@@ -623,7 +653,8 @@ struct Voice : IModulationKRateProvider
 
         // perform breath & key tracking for filter. we will basically multiply the
         // effects.
-        float filterFreq = CalcFilterCutoffFreq();
+        // TODO: portamento vs. frequency.
+        float filterFreq = CalcFilterCutoffFreq(MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()));
         // filterFreq = 3000;
         mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
         mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
@@ -636,12 +667,14 @@ struct Voice : IModulationKRateProvider
         mSplitter.SetOutputGain(1, mExtraGain * patch.mDelaySend);
         mSplitter.SetOutputGain(2, mExtraGain * patch.mVerbSend);
 
-        //if (IsConsideredPlaying_ForDisplay())
-        // {
-        //     //float g = patch.mOsc[0].mGain * mKRateAmplitudeN11[0];
-        //     Serial.println(String("[") + mVoiceIndex + "] frame @ freq=" + freq0 + ", filterfreq=" + filterFreq + ", krateamp=" + mKRateAmplitudeN11[0] +
-        //                    ", kratefilt=" + mKRateVoiceFilterCutoffN11 + ", env1.isactive=" + (mEnv1.isActive() ? "yes" : "no") + ", env1.issustain=" + (mEnv1.isSustain() ? "yes" : "no"));
-        // }
+        // if (IsConsideredPlaying_ForDisplay())
+        //  {
+        //      //float g = patch.mOsc[0].mGain * mKRateAmplitudeN11[0];
+        //      Serial.println(String("[") + mVoiceIndex + "] frame @ freq=" + freq0 + ", filterfreq=" + filterFreq + ",
+        //      krateamp=" + mKRateAmplitudeN11[0] +
+        //                     ", kratefilt=" + mKRateVoiceFilterCutoffN11 + ", env1.isactive=" + (mEnv1.isActive() ?
+        //                     "yes" : "no") + ", env1.issustain=" + (mEnv1.isSustain() ? "yes" : "no"));
+        //  }
 
         mOscMixerPanner.SetInputPanGainAndEnabled(0,
                                                   mExtraPan + patch.mPan + patch.mOsc[0].mPan + patch.mStereoSpread,
@@ -672,12 +705,13 @@ struct Voice : IModulationKRateProvider
 
         if (mRunningVoice.mSynthPatch != newSynthPatch)
         {
+            mRunningVoice.mSynthPatchIndex = synthPatchIndex;
             mRunningVoice.mSynthPatch = newSynthPatch;
             ResetKRateModulations();
         }
 
         // if (this->mVoiceIndex == 0) {
-        //Serial.println(String("[") + mVoiceIndex + "] voice env.NoteOn. " + noteInfo.mMidiNote.GetNoteDesc().mName);
+        // Serial.println(String("[") + mVoiceIndex + "] voice env.NoteOn. " + noteInfo.mMidiNote.GetNoteDesc().mName);
         //}
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
@@ -709,7 +743,8 @@ struct Voice : IModulationKRateProvider
     {
         mRunningVoice.mReleaseTimestampMS = millis();
         // if (this->mVoiceIndex == 0) {
-        //Serial.println(String("[") + mVoiceIndex + "] voice env.NoteOff. " + mRunningVoice.mNoteInfo.mMidiNote.GetNoteDesc().mName);
+        // Serial.println(String("[") + mVoiceIndex + "] voice env.NoteOff. " +
+        // mRunningVoice.mNoteInfo.mMidiNote.GetNoteDesc().mName);
         //}
         // even after a note off, the note continues to play through the envelope release stage. so don't really change
         // much here.
@@ -720,6 +755,7 @@ struct Voice : IModulationKRateProvider
     // a number explaining how happy this voice is to be released / note-off'd.
     float GetReleaseability() const
     {
+        // TODO: consider physically held or not.
         // if never played, then 4
         if (mRunningVoice.mSource.mType == MusicalEventSourceType::Null)
         {
@@ -773,6 +809,23 @@ struct Voice : IModulationKRateProvider
         // }
 
         return timeSinceReleaseMS < releaseTimeMS;
+    }
+
+    String ToString() const
+    {
+        // idle
+        // p1 C#9 idle
+        auto ret = String("v") + mVoiceIndex + " r" + GetReleaseability() + "> ";
+        if (!mRunningVoice.mSynthPatch)
+        {
+            ret += "<idle>";
+            return ret;
+        }
+        // synth patch exists.
+        ret += String() // + String("p") + mRunningVoice.mSynthPatchIndex + " "
+               + mRunningVoice.mNoteInfo.mMidiNote.ToString() + " " +
+               gEnvelopeStageInfo.GetValueString(mEnv1.GetStage());
+        return ret;
     }
 
     Voice(int16_t vid)

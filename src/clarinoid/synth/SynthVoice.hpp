@@ -263,13 +263,13 @@ struct Voice : IModulationKRateProvider
         if (USE_BREATH_FILTER)
         {
             float filterP = filterKS * breath01;
-            filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoffN11, 0.0f, 1.0f);
+            filterP = ClampInclusive(filterP + mKRateVoiceFilterCutoff01, 0.0f, 1.0f);
 
             float filterFreq = map(filterP, 0.0f, 1.0f, freqMin, freqMax);
             return filterFreq;
         }
 
-        float freq = ClampInclusive(mKRateVoiceFilterCutoffN11, 0.0f, 1.0f) * freqMax;
+        float freq = ClampInclusive(mKRateVoiceFilterCutoff01, 0.0f, 1.0f) * freqMax;
         return freq;
     }
 
@@ -344,7 +344,7 @@ struct Voice : IModulationKRateProvider
         switch (d)
         {
         case KRateModulationDestination::VoiceFilterCutoff:
-            mKRateVoiceFilterCutoffN11 = val;
+            mKRateVoiceFilterCutoff01 = val;
             return;
         case KRateModulationDestination::Osc1Frequency:
             mKRateFrequencyN11[0] = val;
@@ -424,7 +424,7 @@ struct Voice : IModulationKRateProvider
     void ResetKRateModulations()
     {
         // reset saved krate mod values, so modulations don't leak across patch changes
-        mKRateVoiceFilterCutoffN11 = 0;
+        mKRateVoiceFilterCutoff01 = 0;
         for (auto &v : mKRateFrequencyN11)
         {
             v = 0;
@@ -649,8 +649,7 @@ struct Voice : IModulationKRateProvider
         float filterFreq = CalcFilterCutoffFreq(mv.mBreath01.GetFloatVal(),
                                                 midiNote,
                                                 mPreset->mFilterKeytracking,
-                                                mPreset->mFilterMinFreq,
-                                                mPreset->mFilterMaxFreq);
+                                                mPreset->mFilterFreq);
 
         mFilter.SetParams(mPreset->mFilterType, filterFreq, mPreset->mFilterQ, mPreset->mFilterSaturation);
         mFilter.EnableDCFilter(mPreset->mDCFilterEnabled, mPreset->mDCFilterCutoff);

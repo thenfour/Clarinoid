@@ -162,7 +162,7 @@ struct PerformanceApp : SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        mDisplay.println(String("PERFormance >"));
+        mDisplay.println(String("Sys perf >"));
         // mDisplay.println(String(" McpL: ") + (int)mpControls->mTimingMcpL.ElapsedMicros());
         // mDisplay.println(String(" McpR: ") + (int)mpControls->mTimingMcpR.ElapsedMicros());
         // mDisplay.println(String(" Breath: ") + (int)mpControls->mTimingBreath.ElapsedMicros());
@@ -189,16 +189,6 @@ struct DebugDisplayApp : SettingsMenuApp
         : SettingsMenuApp(d), mControls(c), mMusicalStateTask(mst)
     {
     }
-
-    // LabelSettingItem mMidiNote = {Property<String>{[](void *cap) FLASHMEM {
-    //                                                    DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-    //                                                    String ret =
-    //                                                        String("MidiNote: ") +
-    //                                                        pThis->mMusicalStateTask.mMusicalState.mLiveVoice.mMidiNote;
-    //                                                    return ret;
-    //                                                },
-    //                                                this},
-    //                               AlwaysEnabled};
 
     LabelSettingItem mEnc = {Property<String>{[](void *cap) FLASHMEM {
                                                     DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
@@ -253,9 +243,23 @@ struct DebugDisplayApp : SettingsMenuApp
                                                               this},
                                              AlwaysEnabled};
 
-    ISettingItem *mArray[6] = {
+    MultiLabelSettingItem mVoiceState = {
+        [](void* pThis) FLASHMEM -> size_t { // get item count
+            return SizeofStaticArray(gVoices);
+        },
+        [](void* pThis, size_t i) FLASHMEM -> String { // get item text
+            return gVoices[i].ToString();
+        },
+        [](void* pThis, size_t i) FLASHMEM -> bool { // is enabled
+            return true;
+        },
+        this
+    };
+
+    ISettingItem *mArray[7] = {
         //&mMidiNote,
         //&mFilterFreq,
+        &mVoiceState,
         &mEnc,
         &mSynthPoly,
         &mAudioProcessorUsage,

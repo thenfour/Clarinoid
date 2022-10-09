@@ -4,17 +4,41 @@
 
 namespace clarinoid
 {
+    enum class EnvelopeStage : uint8_t
+    {
+        Idle,
+        Delay,
+        Attack,
+        Hold,
+        Decay,
+        Sustain,
+        Release,
+    };
+
+EnumItemInfo<EnvelopeStage> gEnvelopeStageItems[7] = {
+    {EnvelopeStage::Idle, "Idle"},
+    {EnvelopeStage::Delay, "Delay"},
+    {EnvelopeStage::Attack, "Attack"},
+    {EnvelopeStage::Hold, "Hold"},
+    {EnvelopeStage::Decay, "Decay"},
+    {EnvelopeStage::Sustain, "Sustain"},
+    {EnvelopeStage::Release, "Release"},
+};
+
+EnumInfo<EnvelopeStage> gEnvelopeStageInfo("EnvelopeStage", gEnvelopeStageItems);
+
+
+
 
 class EnvelopeNode : public AudioStream
 {
-
-    static constexpr uint8_t STATE_IDLE = 0;
-    static constexpr uint8_t STATE_DELAY = 1;
-    static constexpr uint8_t STATE_ATTACK = 2;
-    static constexpr uint8_t STATE_HOLD = 3;
-    static constexpr uint8_t STATE_DECAY = 4;
-    static constexpr uint8_t STATE_SUSTAIN = 5;
-    static constexpr uint8_t STATE_RELEASE = 6;
+    // static constexpr uint8_t STATE_IDLE = 0;
+    // static constexpr uint8_t STATE_DELAY = 1;
+    // static constexpr uint8_t STATE_ATTACK = 2;
+    // static constexpr uint8_t STATE_HOLD = 3;
+    // static constexpr uint8_t STATE_DECAY = 4;
+    // static constexpr uint8_t STATE_SUSTAIN = 5;
+    // static constexpr uint8_t STATE_RELEASE = 6;
     //static constexpr uint8_t STATE_FORCED = 7;
 
     static constexpr float SAMPLES_PER_MSEC = (AUDIO_SAMPLE_RATE_EXACT / 1000.0f);
@@ -22,7 +46,7 @@ class EnvelopeNode : public AudioStream
   public:
     EnvelopeNode() : AudioStream(1, inputQueueArray)
     {
-        state = 0;
+        state = EnvelopeStage::Idle;
         delay(0.0f); // default values...
         attack(10.5f);
         hold(2.5f);
@@ -39,12 +63,12 @@ class EnvelopeNode : public AudioStream
             count = delay_count;
             if (count > 0)
             {
-                state = STATE_DELAY;
+                state = EnvelopeStage::Delay;
                 inc_hires = 0;
             }
             else
             {
-                state = STATE_ATTACK;
+                state = EnvelopeStage::Attack;
                 count = attack_count;
                 inc_hires = 0x40000000 / (int32_t)count;
             }
@@ -58,9 +82,9 @@ class EnvelopeNode : public AudioStream
     }
     void noteOff()
     {
-        if (state != STATE_IDLE)// && state != STATE_FORCED)
+        if (state != EnvelopeStage::Idle)// && state != STATE_FORCED)
         {
-            state = STATE_RELEASE;
+            state = EnvelopeStage::Release;
             count = release_count;
             inc_hires = (-mult_hires) / (int32_t)count;
         }
@@ -105,20 +129,20 @@ class EnvelopeNode : public AudioStream
     //     if (release_count == 0)
     //         release_count = 1;
     // }
-    bool isActive()
-    {
-        uint8_t current_state = *(volatile uint8_t *)&state;
-        if (current_state == STATE_IDLE)
-            return false;
-        return true;
+    EnvelopeStage GetStage() const {
+        return this->state;
     }
-    bool isSustain()
+    bool isActive() const
     {
-        uint8_t current_state = *(volatile uint8_t *)&state;
-        if (current_state == STATE_SUSTAIN)
-            return true;
-        return false;
+        return this->state != EnvelopeStage::Idle;
     }
+    // bool isSustain() const
+    // {
+    //     //uint8_t current_state = *(volatile uint8_t *)&state;
+    //     if (state == EnvelopeStage::Sustain)
+    //         return true;
+    //     return false;
+    // }
     using AudioStream::release;
     virtual void update(void)
     {
@@ -129,7 +153,7 @@ class EnvelopeNode : public AudioStream
         block = receiveWritable();
         if (!block)
             return;
-        if (state == STATE_IDLE)
+        if (state == EnvelopeStage::Idle)
         {
             release(block);
             return;
@@ -142,44 +166,44 @@ class EnvelopeNode : public AudioStream
             // we only care about the state when completing a region
             if (count == 0)
             {
-                if (state == STATE_ATTACK)
+                if (state == EnvelopeStage::Attack)
                 {
                     count = hold_count;
                     if (count > 0)
                     {
-                        state = STATE_HOLD;
+                        state = EnvelopeStage::Hold;
                         mult_hires = 0x40000000;
                         inc_hires = 0;
                     }
                     else
                     {
-                        state = STATE_DECAY;
+                        state = EnvelopeStage::Decay;
                         count = decay_count;
                         inc_hires = (sustain_mult - 0x40000000) / (int32_t)count;
                     }
                     continue;
                 }
-                else if (state == STATE_HOLD)
+                else if (state == EnvelopeStage::Hold)
                 {
-                    state = STATE_DECAY;
+                    state = EnvelopeStage::Decay;
                     count = decay_count;
                     inc_hires = (sustain_mult - 0x40000000) / (int32_t)count;
                     continue;
                 }
-                else if (state == STATE_DECAY)
+                else if (state == EnvelopeStage::Decay)
                 {
-                    state = STATE_SUSTAIN;
+                    state = EnvelopeStage::Sustain;
                     count = 0xFFFF;
                     mult_hires = sustain_mult;
                     inc_hires = 0;
                 }
-                else if (state == STATE_SUSTAIN)
+                else if (state == EnvelopeStage::Sustain)
                 {
                     count = 0xFFFF;
                 }
-                else if (state == STATE_RELEASE)
+                else if (state == EnvelopeStage::Release)
                 {
-                    state = STATE_IDLE;
+                    state = EnvelopeStage::Idle;
                     while (p < end)
                     {
                         *p++ = 0;
@@ -205,9 +229,9 @@ class EnvelopeNode : public AudioStream
                 //         inc_hires = 0x40000000 / (int32_t)count;
                 //     }
                 // }
-                else if (state == STATE_DELAY)
+                else if (state == EnvelopeStage::Delay)
                 {
-                    state = STATE_ATTACK;
+                    state = EnvelopeStage::Attack;
                     count = attack_count;
                     inc_hires = 0x40000000 / count;
                     continue;
@@ -266,8 +290,9 @@ class EnvelopeNode : public AudioStream
         return c;
     }
     audio_block_t *inputQueueArray[1];
+
     // state
-    uint8_t state;      // idle, delay, attack, hold, decay, sustain, release, forced
+    EnvelopeStage state;
     uint16_t count;     // how much time remains in this state, in 8 sample units
     int32_t mult_hires; // attenuation, 0=off, 0x40000000=unity gain
     int32_t inc_hires;  // amount to change mult_hires every 8 samples

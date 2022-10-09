@@ -201,6 +201,8 @@ EnumItemInfo<ClarinoidFilterType> gClarinoidFilterTypeItems[12] = {
     {ClarinoidFilterType::HP_K35, "HP_K35"},
     {ClarinoidFilterType::HP_Moog2, "HP_Moog2"},
     {ClarinoidFilterType::HP_Moog4, "HP_Moog4"},
+    // butterworth 4
+    // butterworth 8
 };
 
 EnumInfo<ClarinoidFilterType> gClarinoidFilterTypeInfo("FilterType", gClarinoidFilterTypeItems);
@@ -610,8 +612,7 @@ struct SynthPreset
 
     ClarinoidFilterType mFilterType = ClarinoidFilterType::LP_Moog4;
     float mFilterQ = 0.02f;
-    float mFilterMaxFreq = 16000.0f;
-    float mFilterMinFreq = 0.0f;
+    float mFilterFreq = 0.3f; // this is an abstract frequency value; see CalcFilterCutoffFreq for details.
     float mFilterSaturation = 0.2f;
     float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
                                      // applied (low notes get higher freq cutoff)
@@ -674,8 +675,6 @@ struct SynthSettings
         p.mDetune = 0.0f;
 
         p.mFilterType = filt;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = filterMaxFreq;
         p.mFilterSaturation = 0;
         p.mFilterQ = q;
         p.mFilterKeytracking = filterKeyScaling;
@@ -694,8 +693,6 @@ struct SynthSettings
         p.mOsc[1].mPulseWidth = pulseWidth;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 16000;
         p.mFilterSaturation = 0.30f;
         p.mFilterQ = 0.25f;
         p.mFilterKeytracking = 0.0f;
@@ -720,8 +717,6 @@ struct SynthSettings
         p.mOsc[1].mPulseWidth = pulseWidth;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 16000;
         p.mFilterSaturation = 0.30f;
         p.mFilterQ = 0.25f;
         p.mFilterKeytracking = 0.0f;
@@ -746,8 +741,6 @@ struct SynthSettings
         p.mOsc[1].mPitchSemis = -12;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 18000;
         p.mFilterSaturation = 0.0f;
         p.mFilterQ = 0.1f;
         p.mFilterKeytracking = 0.0f;
@@ -771,8 +764,6 @@ struct SynthSettings
         p.mOsc[1].mPitchSemis = -12;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 16000;
         p.mFilterSaturation = 0.0f;
         p.mFilterQ = 0.0f;
         p.mFilterKeytracking = 0.0f;
@@ -788,8 +779,6 @@ struct SynthSettings
         p.mOsc[2].mGain = ReasonableOscillatorGainForHarm;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 15000.0f;
         p.mFilterSaturation = 0;
         p.mFilterQ = 0.25f;
         p.mFilterKeytracking = 0.0f;
@@ -808,8 +797,6 @@ struct SynthSettings
         p.mDetune = 0.0f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 15000.0f;
         p.mFilterSaturation = 0;
         p.mFilterQ = 0.1f;
         p.mFilterKeytracking = 0.0f;
@@ -832,8 +819,6 @@ struct SynthSettings
         p.mDetune = 0.0f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 15000.0f;
         p.mFilterSaturation = 0;
         p.mFilterQ = 0.1f;
         p.mFilterKeytracking = 0.0f;
@@ -851,8 +836,6 @@ struct SynthSettings
         p.mDetune = 0.0f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 15000.0f;
         p.mFilterSaturation = 0;
         p.mFilterQ = 0.0f;
         p.mFilterKeytracking = 0.0f;
@@ -872,7 +855,6 @@ struct SynthSettings
         p.mLFO2.mTime.SetFrequency(0.7f);
 
         p.mFilterKeytracking = 0;
-        p.mFilterMaxFreq = 12000;
         p.mFilterQ = 0.2f;
         p.mFilterType = ClarinoidFilterType::LP_SEM12;
 
@@ -897,7 +879,6 @@ struct SynthSettings
         p.mFilterKeytracking = 0.8f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog2;
-        p.mFilterMaxFreq = 22050;
         p.mFilterSaturation = 0.0f;
         p.mFilterQ = 0.0f;
 
@@ -940,7 +921,6 @@ struct SynthSettings
 
         p.mFilterType = ClarinoidFilterType::BP_Moog4;
         p.mFilterKeytracking = 0.8f;
-        p.mFilterMaxFreq = 5000;
         p.mFilterQ = 0.0f;
         p.mFilterSaturation = 0.2f;
 
@@ -958,7 +938,6 @@ struct SynthSettings
         p.mSyncMultMax = 4.0f;
         p.mDetune = 0;
         p.mFilterQ = 0.40f;
-        p.mFilterMaxFreq = 11500;
 
         // p.mOsc[0].mFreqMultiplier = 0.9995f;
         // p.mOsc[2].mFreqMultiplier = 1.003f;
@@ -1037,8 +1016,6 @@ struct SynthSettings
         p.mOsc[2].mGain = 1.0f;
 
         p.mFilterType = filt;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = filterMaxFreq;
         p.mFilterSaturation = 0;
         p.mFilterQ = q;
         p.mFilterKeytracking = filterKeyScaling;
@@ -1068,7 +1045,6 @@ struct SynthSettings
         p.mModulations[0].mSource = AnyModulationSource::ENV1;
         p.mModulations[0].mAuxEnabled = false;
         p.mModulations[0].mScaleN11 = 1.0f;
-        p.mFilterMaxFreq = 3000;
     };
 
 
@@ -1122,7 +1098,6 @@ struct SynthSettings
     {
         p.mName = "Synccy Lead"; // default.
         p.mFilterKeytracking = 0.8f;
-        p.mFilterMaxFreq = 22000;
         p.mModulations[0].SetScaleN11_Legacy(0.9f);
         p.mModulations[0].mSource = AnyModulationSource::LFO1;
         p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
@@ -1151,8 +1126,6 @@ struct SynthSettings
         p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
 
         p.mFilterType = ClarinoidFilterType::LP_K35;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 22000;
         p.mFilterSaturation = 0.60f;
         p.mFilterQ = 0.25f;
         p.mFilterKeytracking = 0.8f;
@@ -1183,7 +1156,6 @@ struct SynthSettings
     static void InitPWMLead2(SynthPreset &p)
     {
         InitBasicLeadPreset("PWM Mono Lead", OscWaveformShape::Pulse, 0.50f, p);
-        p.mFilterMaxFreq = 12000;
         p.mFilterType = ClarinoidFilterType::LP_SEM12;
         p.mModulations[0].mSource = AnyModulationSource::LFO1;
         p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
@@ -1196,7 +1168,6 @@ struct SynthSettings
     static void InitPWMLeadStack(SynthPreset &p)
     {
         InitBasicLeadPreset("PWM Lead Stack", OscWaveformShape::Pulse, 0.50f, p);
-        p.mFilterMaxFreq = 12000;
         p.mFilterType = ClarinoidFilterType::LP_SEM12;
         p.mLFO2.mTime.SetFrequency(2.0f);
         p.mOsc[2].mFreqMultiplier = 4.0f;
@@ -1227,8 +1198,6 @@ struct SynthSettings
         p.mDelaySend = 0.07f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog2;
-        p.mFilterMinFreq = 0.0f;
-        p.mFilterMaxFreq = 15000;
         p.mFilterSaturation = 0.80f;
         p.mFilterQ = 0.15f;
         p.mFilterKeytracking = 0;
@@ -1268,7 +1237,6 @@ struct SynthSettings
         p.mDetune = 0;
         p.mFilterQ = 0.35f;
         p.mFilterSaturation = 0.2f;
-        p.mFilterMaxFreq = 11000;
         p.mFilterType = ClarinoidFilterType::LP_Diode;
 
         p.mOsc[0].mFreqMultiplier = 0.998f;
@@ -1371,7 +1339,6 @@ struct SynthSettings
         mPresets[SynthPresetID_HarmDetunedSaws].mOsc[2].mGain = ReasonableOscillatorGainForHarm;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterQ = 0;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterType = ClarinoidFilterType::BP_Moog4;
-        mPresets[SynthPresetID_HarmDetunedSaws].mFilterMaxFreq = 1800;
 
         InitBassoonoidPreset(
             mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
