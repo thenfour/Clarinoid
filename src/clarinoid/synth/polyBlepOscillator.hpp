@@ -354,6 +354,7 @@ struct Oscillator
     PhaseAccumulator mSyncPhase; // when sync is enabled, this is the phase of the "main" frequency. it resets the phase
                                  // of mMainPhase.
     bool mSyncEnabled = false;
+    bool mEnabled = true;
     // float mAmplitude = 0;
     // float mWaveformMorph01 = 0.5f; // curve: gModCurveLUT.LinearYIndex;
 
@@ -411,6 +412,11 @@ struct Oscillator
     template <typename TWaveformProvider>
     inline void Step(size_t i, bool doPWM, float *pwm32, bool doPM, float *pm32, float *out)
     {
+        if (!mEnabled) {
+            out[i] = 0;
+            return;
+        }
+
         float phaseShift = 0;
         if (doPM)
         {

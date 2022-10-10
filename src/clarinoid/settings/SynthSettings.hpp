@@ -317,28 +317,28 @@ enum class KRateModulationDestination : uint8_t
     Osc1Frequency,         // k-rate
     Osc1Amplitude,         // k-rate
 
-    Osc2Frequency,         // k-rate
-    Osc2Amplitude,         // k-rate
+    Osc2Frequency, // k-rate
+    Osc2Amplitude, // k-rate
 
-    Osc3Frequency,         // k-rate
-    Osc3Amplitude,         // k-rate
+    Osc3Frequency, // k-rate
+    Osc3Amplitude, // k-rate
 
-    Osc1FMFeedback,        // k-rate
-    Osc2FMFeedback,        // k-rate
-    Osc3FMFeedback,        // k-rate
-    OverallFMStrength,     // k-rate
-    FMStrength2To1,        // k-rate
-    FMStrength3To1,        // k-rate
-    FMStrength1To2,        // k-rate
-    FMStrength3To2,        // k-rate
-    FMStrength1To3,        // k-rate
-    FMStrength2To3,        // k-rate
-    Osc1FreqMul,           // k-rate
-    Osc1FreqOffset,        // k-rate
-    Osc2FreqMul,           // k-rate
-    Osc2FreqOffset,        // k-rate
-    Osc3FreqMul,           // k-rate
-    Osc3FreqOffset,        // k-rate
+    Osc1FMFeedback,    // k-rate
+    Osc2FMFeedback,    // k-rate
+    Osc3FMFeedback,    // k-rate
+    OverallFMStrength, // k-rate
+    FMStrength2To1,    // k-rate
+    FMStrength3To1,    // k-rate
+    FMStrength1To2,    // k-rate
+    FMStrength3To2,    // k-rate
+    FMStrength1To3,    // k-rate
+    FMStrength2To3,    // k-rate
+    Osc1FreqMul,       // k-rate
+    Osc1FreqOffset,    // k-rate
+    Osc2FreqMul,       // k-rate
+    Osc2FreqOffset,    // k-rate
+    Osc3FreqMul,       // k-rate
+    Osc3FreqOffset,    // k-rate
 };
 
 EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[23] = {
@@ -386,11 +386,11 @@ enum class AnyModulationDestination : uint8_t
     Osc1Frequency,     // k-rate
     Osc1Amplitude,     // k-rate  // OUTPUT amplitude
 
-    Osc2Frequency,     // k-rate
-    Osc2Amplitude,     // k-rate  // OUTPUT amplitude
+    Osc2Frequency, // k-rate
+    Osc2Amplitude, // k-rate  // OUTPUT amplitude
 
-    Osc3Frequency,     // k-rate
-    Osc3Amplitude,     // k-rate  // OUTPUT amplitude
+    Osc3Frequency, // k-rate
+    Osc3Amplitude, // k-rate  // OUTPUT amplitude
 
     Osc1FMFeedback,    // k-rate
     Osc2FMFeedback,    // k-rate
@@ -542,6 +542,7 @@ struct EnvelopeSpec
 struct SynthOscillatorSettings
 {
     float mGain = 0;
+    bool mEnabled = true;
     int mPortamentoTimeMS = 0;
 
     // for pitch, it's even hard to know which kind of params are needed.
@@ -671,6 +672,31 @@ struct SynthPreset
     {
         return String("") + index + ":" + mName;
     }
+    
+    String OscillatorToString(size_t i) const
+    {
+        if (IsSilentGain(mOsc[i].mGain))
+        {
+            // any modulations on gain?
+            static constexpr AnyModulationDestination oscGainMods[] = {
+                AnyModulationDestination::Osc1Amplitude,
+                AnyModulationDestination::Osc2Amplitude,
+                AnyModulationDestination::Osc3Amplitude,
+            };
+            auto dest =oscGainMods[i];
+            if (!Any(this->mModulations, [&](const SynthModulationSpec& m){ return m.mDest == dest; })) {
+                return "<off>";
+            }
+        }
+        // not silent / disabled / whatever. show some info.
+        // TRI <mute>
+        String ret = gOscWaveformShapeInfo.GetValueString(mOsc[i].mWaveform);
+        if (!mOsc[i].mEnabled) {
+            ret += " <mute>";
+        }
+        return ret;
+    }
+
 };
 
 static constexpr auto synthpatchsize = sizeof(SynthPreset);
@@ -959,7 +985,7 @@ struct SynthSettings
     {
         p.mName = "Funky";
         p.mSync = true;
-        //p.mSyncMultMax = 4.0f;
+        // p.mSyncMultMax = 4.0f;
         p.mDetune = 0;
         p.mFilterQ = 0.40f;
 
@@ -1137,8 +1163,8 @@ struct SynthSettings
         p.mName = "Fluvial";
         p.mOsc[0].mGain = 0.0f;
         p.mSync = true;
-        //p.mSyncMultMin = 0.15f;
-        //p.mSyncMultMax = 1.95f;
+        // p.mSyncMultMin = 0.15f;
+        // p.mSyncMultMax = 1.95f;
         p.mDetune = 0.0f;
         p.mVerbSend = 0.1f;
         p.mDelaySend = 0.1f;

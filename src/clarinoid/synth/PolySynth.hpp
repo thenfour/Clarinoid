@@ -100,26 +100,6 @@ struct PolySynth : IIncomingMusicalEvents
         //Serial.println(String("synth all notes off"));
     }
 
-    // // returns a voice that's either already assigned to this voice, or the best one to free up for it.
-    // Voice *FindAssignedOrAvailable(const MusicalVoice& mv)
-    // {
-    //     //static int i = 0;
-
-    //     // decltype(mv.mReleaseTimestampMS) oldestReleaseTimeMS;
-    //     // Voice* oldestReleaseVoice = nullptr;
-    //     for (auto &v : gVoices)
-    //     {
-    //         if (v.mRunningVoice.IsSameSynthContext(mv))
-    //         {
-    //             return &v; // already assigned to this voice.
-    //         }
-    //     }
-    //     //i = (i + 1) % SizeofStaticArray(gVoices);
-    //     //return &gVoices[i];
-    //     // // TODO. find the oldest non-playing voice.
-    //     return &gVoices[0];
-    // }
-
     // After musical state has been updated, call this to apply those changes to the synth state.
     void Update(USBMidiMusicalState &ms)
     {

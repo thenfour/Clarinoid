@@ -1,19 +1,19 @@
-// fork of AudioEffectEnvelope; the whole "Forced" state was causing glitching and unneeded behavior-babysitting for no benefit.
-// so it's gone.
+// fork of AudioEffectEnvelope; the whole "Forced" state was causing glitching and unneeded behavior-babysitting for no
+// benefit. so it's gone.
 #pragma once
 
 namespace clarinoid
 {
-    enum class EnvelopeStage : uint8_t
-    {
-        Idle,
-        Delay,
-        Attack,
-        Hold,
-        Decay,
-        Sustain,
-        Release,
-    };
+enum class EnvelopeStage : uint8_t
+{
+    Idle,
+    Delay,
+    Attack,
+    Hold,
+    Decay,
+    Sustain,
+    Release,
+};
 
 EnumItemInfo<EnvelopeStage> gEnvelopeStageItems[7] = {
     {EnvelopeStage::Idle, "Idle"},
@@ -27,20 +27,8 @@ EnumItemInfo<EnvelopeStage> gEnvelopeStageItems[7] = {
 
 EnumInfo<EnvelopeStage> gEnvelopeStageInfo("EnvelopeStage", gEnvelopeStageItems);
 
-
-
-
 class EnvelopeNode : public AudioStream
 {
-    // static constexpr uint8_t STATE_IDLE = 0;
-    // static constexpr uint8_t STATE_DELAY = 1;
-    // static constexpr uint8_t STATE_ATTACK = 2;
-    // static constexpr uint8_t STATE_HOLD = 3;
-    // static constexpr uint8_t STATE_DECAY = 4;
-    // static constexpr uint8_t STATE_SUSTAIN = 5;
-    // static constexpr uint8_t STATE_RELEASE = 6;
-    //static constexpr uint8_t STATE_FORCED = 7;
-
     static constexpr float SAMPLES_PER_MSEC = (AUDIO_SAMPLE_RATE_EXACT / 1000.0f);
 
   public:
@@ -53,36 +41,26 @@ class EnvelopeNode : public AudioStream
         decay(35.0f);
         sustain(0.5f);
         release(300.0f);
-        //releaseNoteOn(5.0f);
     }
     void noteOn()
     {
-        //if (state == STATE_IDLE || state == STATE_DELAY)// || release_forced_count == 0)
-        //{
-            mult_hires = 0;
-            count = delay_count;
-            if (count > 0)
-            {
-                state = EnvelopeStage::Delay;
-                inc_hires = 0;
-            }
-            else
-            {
-                state = EnvelopeStage::Attack;
-                count = attack_count;
-                inc_hires = 0x40000000 / (int32_t)count;
-            }
-        //}
-        // else if (state != STATE_FORCED)
-        // {
-        //     state = STATE_FORCED;
-        //     count = release_forced_count;
-        //     inc_hires = (-mult_hires) / (int32_t)count;
-        // }
+        mult_hires = 0;
+        count = delay_count;
+        if (count > 0)
+        {
+            state = EnvelopeStage::Delay;
+            inc_hires = 0;
+        }
+        else
+        {
+            state = EnvelopeStage::Attack;
+            count = attack_count;
+            inc_hires = 0x40000000 / (int32_t)count;
+        }
     }
     void noteOff()
     {
-        if (state != EnvelopeStage::Idle)// && state != STATE_FORCED)
+        if (state != EnvelopeStage::Idle) // && state != STATE_FORCED)
         {
             state = EnvelopeStage::Release;
             count = release_count;
@@ -123,13 +101,8 @@ class EnvelopeNode : public AudioStream
         if (release_count == 0)
             release_count = 1;
     }
-    // void releaseNoteOn(float milliseconds)
-    // {
-    //     release_forced_count = milliseconds2count(milliseconds);
-    //     if (release_count == 0)
-    //         release_count = 1;
-    // }
-    EnvelopeStage GetStage() const { // used by debug displays
+    EnvelopeStage GetStage() const
+    { // used by debug displays
         return this->state;
     }
 
@@ -137,13 +110,6 @@ class EnvelopeNode : public AudioStream
     {
         return this->state != EnvelopeStage::Idle;
     }
-    // bool isSustain() const
-    // {
-    //     //uint8_t current_state = *(volatile uint8_t *)&state;
-    //     if (state == EnvelopeStage::Sustain)
-    //         return true;
-    //     return false;
-    // }
     using AudioStream::release;
     virtual void update(void)
     {
@@ -214,22 +180,6 @@ class EnvelopeNode : public AudioStream
                     }
                     break;
                 }
-                // else if (state == STATE_FORCED)
-                // {
-                //     mult_hires = 0;
-                //     count = delay_count;
-                //     if (count > 0)
-                //     {
-                //         state = STATE_DELAY;
-                //         inc_hires = 0;
-                //     }
-                //     else
-                //     {
-                //         state = STATE_ATTACK;
-                //         count = attack_count;
-                //         inc_hires = 0x40000000 / (int32_t)count;
-                //     }
-                // }
                 else if (state == EnvelopeStage::Delay)
                 {
                     state = EnvelopeStage::Attack;
@@ -305,7 +255,7 @@ class EnvelopeNode : public AudioStream
     uint16_t decay_count;
     int32_t sustain_mult;
     uint16_t release_count;
-    //uint16_t release_forced_count;
+    // uint16_t release_forced_count;
 };
 
 } // namespace clarinoid

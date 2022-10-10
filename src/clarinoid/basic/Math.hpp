@@ -471,6 +471,8 @@ inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIB
     return lin;
 }
 
+static const float gMinGainLinear = DecibelsToLinear(MIN_DECIBEL_GAIN);
+
 template <typename T>
 inline const char *GetSignStr(T f)
 {
@@ -501,6 +503,10 @@ inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_D
     ret.append(abs(iDecibels));
     ret.append(CHARSTR_DB);
     return ret;
+}
+
+inline bool IsSilentGain(float gain) {
+    return gain <= gMinGainLinear;
 }
 
 inline String GainToIntString(float gain)

@@ -530,6 +530,7 @@ struct Voice : IModulationKRateProvider
         mOsc.mIsPlaying = true;
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
+            mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled;
             mOsc.mOsc[i].waveform(patch.mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
             mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mKRateOverallFMStrength;

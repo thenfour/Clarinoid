@@ -161,6 +161,7 @@ struct TriggerSettingItem : public ISettingItem
 struct SubmenuSettingItem : public ISettingItem
 {
     String mName;
+    typename cc::function<String(void *)>::ptr_t mNameGetter = nullptr;
     SettingsList *mSubmenu = nullptr;
     typename cc::function<SettingsList *(void *)>::ptr_t mGetSubmenu = nullptr; // SettingsList* mSubmenu;
     Property<bool> mIsEnabled;
@@ -179,8 +180,19 @@ struct SubmenuSettingItem : public ISettingItem
     {
     }
 
+    SubmenuSettingItem(typename cc::function<String(void *)>::ptr_t nameGetter,
+                       typename cc::function<SettingsList *(void *)>::ptr_t pGetSubmenu,
+                       const Property<bool> &isEnabled,
+                       void *capture)
+        : mNameGetter(nameGetter), mGetSubmenu(pGetSubmenu), mIsEnabled(isEnabled), mpCapture(capture)
+    {
+    }
+
     virtual String GetName(size_t multiIndex)
     {
+        if (mNameGetter) {
+            return mNameGetter(this->mpCapture);
+        }
         return mName;
     }
     virtual SettingItemType GetType(size_t multiIndex)

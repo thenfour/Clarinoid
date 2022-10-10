@@ -50,9 +50,29 @@ array_view<T> make_array_view(T (&a)[N])
 
 // https://stackoverflow.com/questions/26351587/how-to-create-stdarray-with-initialization-list-without-providing-size-directl
 template <typename V, typename... T>
-constexpr auto array_of(T &&... t) -> std::array<V, sizeof...(T)>
+constexpr auto array_of(T &&...t) -> std::array<V, sizeof...(T)>
 {
     return {{std::forward<T>(t)...}};
+}
+
+// Tfn is callable bool(const Item&)
+template <typename Tit, typename Tfn>
+bool Any(const Tit& begin, const Tit& end, Tfn pred)
+{
+    for (Tit it = begin; it != end; ++ it) {
+        if (pred(*it)) return true;
+    }
+    return false;
+}
+
+// Tfn is callable bool(const Item&)
+template <typename Tcontainer, typename Tfn>
+bool Any(const Tcontainer& container, Tfn pred)
+{
+    for (auto x : container) {
+        if (pred(x)) return true;
+    }
+    return false;
 }
 
 struct NoInterrupts
