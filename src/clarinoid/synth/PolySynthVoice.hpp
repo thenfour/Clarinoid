@@ -314,7 +314,6 @@ struct Voice : IModulationKRateProvider
         switch (dest)
         {
         case KRateModulationDestination::VoiceFilterCutoff:
-            // Serial.println(String("Getting krate filter cutoff, val=") + mKRateVoiceFilterCutoffN11);
             return mKRateVoiceFilterCutoffN11;
         case KRateModulationDestination::Osc1FMFeedback:
             return mKRateOscFMFeedback[0];
@@ -363,84 +362,86 @@ struct Voice : IModulationKRateProvider
     virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
                                                                            float val) override
     {
-        // Serial.println(String("Setting krate. d=") + (int)d + ", val=" + val);
+        // if (mVoiceIndex == 0) {
+        //     Serial.println(String("Getting krate param '") + gKRateModulationDestinationInfo.GetValueString(d) + "' = " + val);
+        // }
         switch (d)
         {
         case KRateModulationDestination::VoiceFilterCutoff:
             mKRateVoiceFilterCutoffN11 = val;
             return;
-        case KRateModulationDestination::Osc1Frequency:
-            mKRateFrequencyN11[0] = val;
-            return;
-        case KRateModulationDestination::Osc1Amplitude:
-            mKRateAmplitudeN11[0] = val;
-            return;
-        case KRateModulationDestination::Osc2Frequency:
-            mKRateFrequencyN11[1] = val;
-            return;
-        case KRateModulationDestination::Osc2Amplitude:
-            mKRateAmplitudeN11[1] = val;
-            return;
-        case KRateModulationDestination::Osc3Frequency:
-            mKRateFrequencyN11[2] = val;
-            return;
-        case KRateModulationDestination::Osc3Amplitude:
-            mKRateAmplitudeN11[2] = val;
-            return;
-        case KRateModulationDestination::Osc1FMFeedback:
-            mKRateOscFMFeedback[0] = val;
-            return;
-        case KRateModulationDestination::Osc2FMFeedback:
-            mKRateOscFMFeedback[1] = val;
-            return;
-        case KRateModulationDestination::Osc3FMFeedback:
-            mKRateOscFMFeedback[2] = val;
-            return;
-        case KRateModulationDestination::OverallFMStrength:
-            mKRateOverallFMStrength = val;
-            return;
-        case KRateModulationDestination::FMStrength2To1:
-            mKRateFMStrength2To1 = val;
-            return;
-        case KRateModulationDestination::FMStrength3To1:
-            mKRateFMStrength3To1 = val;
-            return;
-        case KRateModulationDestination::FMStrength1To2:
-            mKRateFMStrength1To2 = val;
-            return;
-        case KRateModulationDestination::FMStrength3To2:
-            mKRateFMStrength3To2 = val;
-            return;
-        case KRateModulationDestination::FMStrength1To3:
-            mKRateFMStrength1To3 = val;
-            return;
-        case KRateModulationDestination::FMStrength2To3:
-            mKRateFMStrength2To3 = val;
-            return;
+        // case KRateModulationDestination::Osc1Frequency:
+        //     mKRateFrequencyN11[0] = val;
+        //     return;
+        // case KRateModulationDestination::Osc1Amplitude:
+        //     mKRateAmplitudeN11[0] = val;
+        //     return;
+        // case KRateModulationDestination::Osc2Frequency:
+        //     mKRateFrequencyN11[1] = val;
+        //     return;
+        // case KRateModulationDestination::Osc2Amplitude:
+        //     mKRateAmplitudeN11[1] = val;
+        //     return;
+        // case KRateModulationDestination::Osc3Frequency:
+        //     mKRateFrequencyN11[2] = val;
+        //     return;
+        // case KRateModulationDestination::Osc3Amplitude:
+        //     mKRateAmplitudeN11[2] = val;
+        //     return;
+        // case KRateModulationDestination::Osc1FMFeedback:
+        //     mKRateOscFMFeedback[0] = val;
+        //     return;
+        // case KRateModulationDestination::Osc2FMFeedback:
+        //     mKRateOscFMFeedback[1] = val;
+        //     return;
+        // case KRateModulationDestination::Osc3FMFeedback:
+        //     mKRateOscFMFeedback[2] = val;
+        //     return;
+        // case KRateModulationDestination::OverallFMStrength:
+        //     mKRateOverallFMStrength = val;
+        //     return;
+        // case KRateModulationDestination::FMStrength2To1:
+        //     mKRateFMStrength2To1 = val;
+        //     return;
+        // case KRateModulationDestination::FMStrength3To1:
+        //     mKRateFMStrength3To1 = val;
+        //     return;
+        // case KRateModulationDestination::FMStrength1To2:
+        //     mKRateFMStrength1To2 = val;
+        //     return;
+        // case KRateModulationDestination::FMStrength3To2:
+        //     mKRateFMStrength3To2 = val;
+        //     return;
+        // case KRateModulationDestination::FMStrength1To3:
+        //     mKRateFMStrength1To3 = val;
+        //     return;
+        // case KRateModulationDestination::FMStrength2To3:
+        //     mKRateFMStrength2To3 = val;
+        //     return;
 
-        case KRateModulationDestination::Osc1FreqMul:
-            mKRateOscFreqMul[0] = val;
-            return;
+        // case KRateModulationDestination::Osc1FreqMul:
+        //     mKRateOscFreqMul[0] = val;
+        //     return;
 
-        case KRateModulationDestination::Osc2FreqMul:
-            mKRateOscFreqMul[1] = val;
-            return;
+        // case KRateModulationDestination::Osc2FreqMul:
+        //     mKRateOscFreqMul[1] = val;
+        //     return;
 
-        case KRateModulationDestination::Osc3FreqMul:
-            mKRateOscFreqMul[2] = val;
-            return;
+        // case KRateModulationDestination::Osc3FreqMul:
+        //     mKRateOscFreqMul[2] = val;
+        //     return;
 
-        case KRateModulationDestination::Osc1FreqOffset:
-            mKRateOscFreqOffset[0] = val;
-            return;
+        // case KRateModulationDestination::Osc1FreqOffset:
+        //     mKRateOscFreqOffset[0] = val;
+        //     return;
 
-        case KRateModulationDestination::Osc2FreqOffset:
-            mKRateOscFreqOffset[1] = val;
-            return;
+        // case KRateModulationDestination::Osc2FreqOffset:
+        //     mKRateOscFreqOffset[1] = val;
+        //     return;
 
-        case KRateModulationDestination::Osc3FreqOffset:
-            mKRateOscFreqOffset[2] = val;
-            return;
+        // case KRateModulationDestination::Osc3FreqOffset:
+        //     mKRateOscFreqOffset[2] = val;
+        //     return;
         }
     }
 

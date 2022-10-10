@@ -554,7 +554,8 @@ struct VoiceModulationMatrixNode : public AudioStream
 
     virtual void update() override
     {
-        if (!mSynthPatch)  {
+        if (!mSynthPatch)
+        {
             return;
         }
 
@@ -636,10 +637,14 @@ struct VoiceModulationMatrixNode : public AudioStream
 
         for (size_t i = 0; i < SizeofStaticArray(buffers.kRateDestinationValuesN11); ++i)
         {
-            if (!buffers.kRateDestinationsFilled[i])
-                continue;
-            mpkRateProvider->IModulationProvider_SetKRateModulationDestinationValueN11(
-                (KRateModulationDestination)i, buffers.kRateDestinationValuesN11[i]);
+            //if (buffers.kRateDestinationsFilled[i])
+            //{
+                mpkRateProvider->IModulationProvider_SetKRateModulationDestinationValueN11(
+                    (KRateModulationDestination)i, buffers.kRateDestinationValuesN11[i]);
+            //     continue;
+            //}
+            // mpkRateProvider->IModulationProvider_SetKRateModulationDestinationValueN11((KRateModulationDestination)i,
+                                                                                    //    0);
         }
 
         for (size_t i = 0; i < SizeofStaticArray(buffers.aRateDestinations); ++i)
