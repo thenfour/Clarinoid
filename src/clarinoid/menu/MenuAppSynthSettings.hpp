@@ -424,6 +424,19 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                 this},
                                 AlwaysEnabled};
 
+    FloatSettingItem mMasterVolume = {"MasterVol",
+                             StandardRangeSpecs::gFloat_0_1,
+                             Property<float>{[](void *cap) FLASHMEM {
+                                                 auto *pThis = (SynthPatchMenuApp *)cap;
+                                                 return pThis->GetBinding().mMasterVolume.GetParamValue();
+                                             },
+                                             [](void *cap, const float &v) FLASHMEM {
+                                                 auto *pThis = (SynthPatchMenuApp *)cap;
+                                                 pThis->GetBinding().mMasterVolume.SetValue(v);
+                                             },
+                                             this},
+                             AlwaysEnabled};
+
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
                              Property<float>{[](void *cap) FLASHMEM {
@@ -1075,7 +1088,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[19] = {
+    ISettingItem *mArray[20] = {
+        &mMasterVolume,
         &mVoicingMode,
         &mBreathFilterSubmenuItem,
         &mDetune,

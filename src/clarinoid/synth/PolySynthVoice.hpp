@@ -639,9 +639,11 @@ struct Voice : IModulationKRateProvider
         auto verbGains = CalculatePanGain(patch.mDelayMix * 2 - 1);
         auto delayGains = CalculatePanGain(patch.mVerbMix * 2 - 1);
 
-        mSplitter.SetOutputGain(0, std::get<0>(verbGains) * std::get<0>(delayGains));
-        mSplitter.SetOutputGain(1, std::get<1>(delayGains));
-        mSplitter.SetOutputGain(2, std::get<1>(verbGains));
+        float masterGain = patch.mMasterVolume.ToLinearGain();
+
+        mSplitter.SetOutputGain(0, masterGain * std::get<0>(verbGains) * std::get<0>(delayGains));
+        mSplitter.SetOutputGain(1, masterGain * std::get<1>(delayGains));
+        mSplitter.SetOutputGain(2, masterGain * std::get<1>(verbGains));
 
         // if (IsConsideredPlaying_ForDisplay())
         //  {

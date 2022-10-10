@@ -571,6 +571,22 @@ struct VolumeParamValue
     { // expensive
         mParamValue = DecibelsToParam(db);
     }
+
+    static VolumeParamValue FromLinear(float f) { 
+        VolumeParamValue ret;
+        ret.SetLinearValue(f);
+        return ret;
+    }
+    static VolumeParamValue FromParamValue(float f) { 
+        VolumeParamValue ret;
+        ret.mParamValue = f;
+        return ret;
+    }
+    static VolumeParamValue FromDecibels(float f) { 
+        VolumeParamValue ret;
+        ret.SetDecibels(f);
+        return ret;
+    }
 };
 
 inline std::pair<float, float> CalculatePanGain(float panN11)

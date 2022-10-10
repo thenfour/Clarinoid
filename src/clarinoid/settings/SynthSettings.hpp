@@ -606,7 +606,7 @@ struct SynthPreset
     SynthOscillatorSettings mOsc[POLYBLEP_OSC_COUNT];
 
     String mName = "--";
-    VolumeParamValue mMasterVolume;// = 0.5f;
+    VolumeParamValue mMasterVolume = VolumeParamValue::FromDecibels(-3);// = 0.5f;
     float mPan = 0;
     float mDelayMix = 0.08f;
     float mVerbMix = 0.08f;
