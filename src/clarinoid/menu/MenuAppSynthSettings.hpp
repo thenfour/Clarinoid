@@ -13,19 +13,18 @@ namespace clarinoid
 struct EnvelopeMenuApp
 {
     BoolSettingItem mLegatoRetrig = {"Legato Retrig",
-                                "On",
-                                "Off",
-                                Property<bool>{[](void *cap) FLASHMEM {
-                                                     auto *pThis = (EnvelopeMenuApp *)cap;
-                                                     return pThis->mBinding->mLegatoRestart;
-                                               },
-                                               [](void *cap, const bool &v) FLASHMEM {
-                                                     auto *pThis = (EnvelopeMenuApp *)cap;
-                                                     pThis->mBinding->mLegatoRestart = v;
-                                               },
-                                               this},
-                                AlwaysEnabled};
-
+                                     "On",
+                                     "Off",
+                                     Property<bool>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (EnvelopeMenuApp *)cap;
+                                                        return pThis->mBinding->mLegatoRestart;
+                                                    },
+                                                    [](void *cap, const bool &v) FLASHMEM {
+                                                        auto *pThis = (EnvelopeMenuApp *)cap;
+                                                        pThis->mBinding->mLegatoRestart = v;
+                                                    },
+                                                    this},
+                                     AlwaysEnabled};
 
     FloatSettingItem mDelayMS = {"Delay",
                                  StandardRangeSpecs::gEnvDelayMS,
@@ -142,7 +141,20 @@ struct EnvelopeMenuApp
 
 struct SynthPatchOscillatorMenuStuff
 {
+  private:
     SynthOscillatorSettings *mpBinding = nullptr;
+    SynthPreset *mpPresetBinding = nullptr;
+    int mOscillatorIndex = -1;
+    IDisplay *mpDisplay;
+
+  public:
+    void SetBindings(SynthPreset *patch, int oscIndex, IDisplay *pdisplay)
+    {
+        mOscillatorIndex = oscIndex;
+        mpPresetBinding = patch;
+        mpBinding = &patch->mOsc[oscIndex];
+        mpDisplay = pdisplay;
+    }
     SynthOscillatorSettings &GetBinding()
     {
         return *mpBinding;
@@ -179,17 +191,17 @@ struct SynthPatchOscillatorMenuStuff
         AlwaysEnabled};
 
     FloatSettingItem mGain = {"Volume",
-                             StandardRangeSpecs::gFloat_0_1,
-                             Property<float>{[](void *cap) FLASHMEM {
-                                                 auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                 return pThis->GetBinding().mVolume.GetParamValue();
-                                             },
-                                             [](void *cap, const float &v) FLASHMEM {
-                                                 auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                 pThis->GetBinding().mVolume.SetValue(v);
-                                             },
-                                             this},
-                             AlwaysEnabled};
+                              StandardRangeSpecs::gFloat_0_1,
+                              Property<float>{[](void *cap) FLASHMEM {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  return pThis->GetBinding().mVolume.GetParamValue();
+                                              },
+                                              [](void *cap, const float &v) FLASHMEM {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  pThis->GetBinding().mVolume.SetValue(v);
+                                              },
+                                              this},
+                              AlwaysEnabled};
 
     FloatSettingItem mFMFeedback = {"FM Feedback",
                                     StandardRangeSpecs::gFloat_0_1,
@@ -361,7 +373,39 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                      AlwaysEnabled};
 
-    ISettingItem *mArray[15] = {
+    // returns info about any OTHER oscillator than the one in focus. iosc is 0-(POLYBLEP_OSC_COUNT - 2).
+    int GetOtherOscillatorIndex(int iosc)
+    {
+        // if i am oscillator 2, and you demand #2, then add 1.
+        if (iosc < mOscillatorIndex)
+            return iosc;
+        return iosc + 1;
+    }
+
+    FunctionListSettingItem mCopyToOsc = {
+        "Copy to osc...",
+        POLYBLEP_OSC_COUNT - 1,                      // minus one because you can't copy to self.
+        [](void *cap, size_t i) FLASHMEM -> String { // itemNameGetter,
+            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+            int iOtherOsc = pThis->GetOtherOscillatorIndex(i);
+            return String("OSC") + (iOtherOsc + 1) + " " + pThis->mpPresetBinding->OscillatorToString(iOtherOsc);
+        },
+        [](void *cap, size_t i) FLASHMEM -> void { // cc::function<void(void*,size_t)>::ptr_t onClick,
+            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+            int iOtherOsc = pThis->GetOtherOscillatorIndex(i);
+
+            pThis->mpPresetBinding->mOsc[iOtherOsc] = pThis->GetBinding();
+
+            auto fromName = String("OSC") + (pThis->mOscillatorIndex + 1) + " " +
+                            pThis->mpPresetBinding->OscillatorToString(pThis->mOscillatorIndex);
+            auto toName = String("OSC") + (iOtherOsc + 1) + " " + pThis->mpPresetBinding->OscillatorToString(iOtherOsc);
+
+            pThis->mpDisplay->ShowToast(String("Copied ") + fromName + "\nto\n" + toName);
+        },
+        AlwaysEnabled,
+        this};
+
+    ISettingItem *mArray[16] = {
         &mEnabled,
         &mWaveform,
         &mGain,
@@ -379,6 +423,7 @@ struct SynthPatchOscillatorMenuStuff
         &mPulseWidth,
         &mPhaseRestart,
         &mPhaseOffset,
+        &mCopyToOsc,
     };
 
     SettingsList mSubmenuList = {mArray};
@@ -425,17 +470,17 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                 AlwaysEnabled};
 
     FloatSettingItem mMasterVolume = {"MasterVol",
-                             StandardRangeSpecs::gFloat_0_1,
-                             Property<float>{[](void *cap) FLASHMEM {
-                                                 auto *pThis = (SynthPatchMenuApp *)cap;
-                                                 return pThis->GetBinding().mMasterVolume.GetParamValue();
-                                             },
-                                             [](void *cap, const float &v) FLASHMEM {
-                                                 auto *pThis = (SynthPatchMenuApp *)cap;
-                                                 pThis->GetBinding().mMasterVolume.SetValue(v);
-                                             },
-                                             this},
-                             AlwaysEnabled};
+                                      StandardRangeSpecs::gFloat_0_1,
+                                      Property<float>{[](void *cap) FLASHMEM {
+                                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                                          return pThis->GetBinding().mMasterVolume.GetParamValue();
+                                                      },
+                                                      [](void *cap, const float &v) FLASHMEM {
+                                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                                          pThis->GetBinding().mMasterVolume.SetValue(v);
+                                                      },
+                                                      this},
+                                      AlwaysEnabled};
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
@@ -654,22 +699,20 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     //                                                 },
     //                                                 this}};
 
-
     // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
     // cc::function<bool()>::ptr_t isEnabled) :
-    EnumSettingItem<VoicingMode> mVoicingMode = {
-        "Voicing",
-        gVoicingModeInfo,
-        Property<VoicingMode>{[](void *cap) FLASHMEM {
-                                          auto *pThis = (SynthPatchMenuApp *)cap;
-                                          return pThis->GetBinding().mVoicingMode;
-                                      },
-                                      [](void *cap, const VoicingMode &v) {
-                                          auto *pThis = (SynthPatchMenuApp *)cap;
-                                          pThis->GetBinding().mVoicingMode = v;
-                                      },
-                                      this},
-        AlwaysEnabled};
+    EnumSettingItem<VoicingMode> mVoicingMode = {"Voicing",
+                                                 gVoicingModeInfo,
+                                                 Property<VoicingMode>{[](void *cap) FLASHMEM {
+                                                                           auto *pThis = (SynthPatchMenuApp *)cap;
+                                                                           return pThis->GetBinding().mVoicingMode;
+                                                                       },
+                                                                       [](void *cap, const VoicingMode &v) {
+                                                                           auto *pThis = (SynthPatchMenuApp *)cap;
+                                                                           pThis->GetBinding().mVoicingMode = v;
+                                                                       },
+                                                                       this},
+                                                 AlwaysEnabled};
 
     // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
     // cc::function<bool()>::ptr_t isEnabled) :
@@ -1053,25 +1096,37 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                            },
                                            [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[0];
+                                               pThis->mOscSubmenuStuff.SetBindings(&pThis->GetBinding(), 0, &pThis->mDisplay);
+                                               // pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[0];
+                                               // pThis->mOscSubmenuStuff.mOscillatorIndex = 0;
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
                                            },
                                            AlwaysEnabled,
                                            this};
 
-    SubmenuSettingItem mOsc2SubmenuItem = {String("OSC2"),
+    SubmenuSettingItem mOsc2SubmenuItem = {[](void *cap) FLASHMEM -> String {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               return String("OSC2 ") + pThis->GetBinding().OscillatorToString(1);
+                                           },
                                            [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[1];
+                                               pThis->mOscSubmenuStuff.SetBindings(&pThis->GetBinding(), 1, &pThis->mDisplay);
+                                               //    pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[1];
+                                               //    pThis->mOscSubmenuStuff.mOscillatorIndex = 1;
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
                                            },
                                            AlwaysEnabled,
                                            this};
 
-    SubmenuSettingItem mOsc3SubmenuItem = {String("OSC3"),
+    SubmenuSettingItem mOsc3SubmenuItem = {[](void *cap) FLASHMEM -> String {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               return String("OSC3 ") + pThis->GetBinding().OscillatorToString(2);
+                                           },
                                            [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[2];
+                                               pThis->mOscSubmenuStuff.SetBindings(&pThis->GetBinding(), 2, &pThis->mDisplay);
+                                               //    pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[2];
+                                               //    pThis->mOscSubmenuStuff.mOscillatorIndex = 2;
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
                                            },
                                            AlwaysEnabled,
