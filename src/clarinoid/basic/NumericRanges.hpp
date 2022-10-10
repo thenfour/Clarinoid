@@ -181,10 +181,11 @@ static const NumericEditRangeSpec<float> gFloat_0_2 = NumericEditRangeSpec<float
 
 static const NumericEditRangeSpecWithBottom gMasterGainDb =
     NumericEditRangeSpecWithBottom{-30.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
+
 static const NumericEditRangeSpecWithBottom gGeneralGain =
     NumericEditRangeSpecWithBottom{-30.0f, 12.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
-static const NumericEditRangeSpecWithBottom gSendGain =
-    NumericEditRangeSpecWithBottom{-30.0f, 0.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
+// static const NumericEditRangeSpecWithBottom gSendGain =
+//     NumericEditRangeSpecWithBottom{-30.0f, 0.0f, 3.0f /*course*/, 1.0f /*normal*/, 0.25f /*fine*/};
 
 static const NumericEditRangeSpec<int> gPortamentoRange = NumericEditRangeSpec<int>{0, 1000};
 

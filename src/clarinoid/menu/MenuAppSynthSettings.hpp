@@ -178,15 +178,15 @@ struct SynthPatchOscillatorMenuStuff
                                    this},
         AlwaysEnabled};
 
-    GainSettingItem mGain = {"Gain",
-                             StandardRangeSpecs::gGeneralGain,
+    FloatSettingItem mGain = {"Volume",
+                             StandardRangeSpecs::gFloat_0_1,
                              Property<float>{[](void *cap) FLASHMEM {
                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                 return pThis->GetBinding().mGain;
+                                                 return pThis->GetBinding().mVolume.GetParamValue();
                                              },
                                              [](void *cap, const float &v) FLASHMEM {
                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                 pThis->GetBinding().mGain = v;
+                                                 pThis->GetBinding().mVolume.SetValue(v);
                                              },
                                              this},
                              AlwaysEnabled};
@@ -437,45 +437,45 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                              this},
                              AlwaysEnabled};
 
-    GainSettingItem mVerbSend = {"Verb Send",
-                                 StandardRangeSpecs::gSendGain,
+    FloatSettingItem mVerbMix = {"Verb Mix",
+                                 StandardRangeSpecs::gFloat_0_1,
                                  Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                     return pThis->GetBinding().mVerbSend;
+                                                     return pThis->GetBinding().mVerbMix;
                                                  },
                                                  [](void *cap, const float &v) {
                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                     pThis->GetBinding().mVerbSend = v;
+                                                     pThis->GetBinding().mVerbMix = v;
                                                  },
                                                  this},
                                  AlwaysEnabled};
 
-    GainSettingItem mDelaySend = {"Dly Send",
-                                  StandardRangeSpecs::gSendGain,
+    FloatSettingItem mDelayMix = {"Dly Mix",
+                                  StandardRangeSpecs::gFloat_0_1,
                                   Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      return pThis->GetBinding().mDelaySend;
+                                                      return pThis->GetBinding().mDelayMix;
                                                   },
                                                   [](void *cap, const float &v) {
                                                       auto *pThis = (SynthPatchMenuApp *)cap;
-                                                      pThis->GetBinding().mDelaySend = v;
+                                                      pThis->GetBinding().mDelayMix = v;
                                                   },
                                                   this},
                                   AlwaysEnabled};
 
-    BoolSettingItem mSync = {"Sync",
-                             "On",
-                             "Off",
-                             Property<bool>{[](void *cap) FLASHMEM {
-                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                                return pThis->GetBinding().mSync;
-                                            },
-                                            [](void *cap, const bool &v) {
-                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                                pThis->GetBinding().mSync = v;
-                                            },
-                                            this},
-                             AlwaysEnabled};
+    // BoolSettingItem mSync = {"Sync",
+    //                          "On",
+    //                          "Off",
+    //                          Property<bool>{[](void *cap) FLASHMEM {
+    //                                             auto *pThis = (SynthPatchMenuApp *)cap;
+    //                                             return pThis->GetBinding().mSync;
+    //                                         },
+    //                                         [](void *cap, const bool &v) {
+    //                                             auto *pThis = (SynthPatchMenuApp *)cap;
+    //                                             pThis->GetBinding().mSync = v;
+    //                                         },
+    //                                         this},
+    //                          AlwaysEnabled};
 
     FloatSettingItem mStereoSpread = {"Stereo Spread",
                                       StandardRangeSpecs::gFloat_0_1,
@@ -1075,7 +1075,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[20] = {
+    ISettingItem *mArray[19] = {
         &mVoicingMode,
         &mBreathFilterSubmenuItem,
         &mDetune,
@@ -1086,8 +1086,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         &mOsc2SubmenuItem,
         &mOsc3SubmenuItem,
 
-        &mDelaySend,
-        &mVerbSend,
+        &mDelayMix,
+        &mVerbMix,
 
         &mFMStrength,
         &mFMStrength1To2,
@@ -1097,7 +1097,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         &mFMStrength2To3,
         &mFMStrength3To2,
 
-        &mSync,
+        //&mSync,
         //&mSyncMultMin,
         //&mSyncMultMax,
 

@@ -339,7 +339,7 @@ static T ClampInclusive(T x, T minInclusive, T maxInclusive)
 // beware, this works with t<0 and t>1
 static float Lerp(float a, float b, float t)
 {
-  return a * (1.0f - t) + b * t;
+    return a * (1.0f - t) + b * t;
 }
 
 // remap so src min to max become [0-1]. results are NOT clamped.
@@ -505,13 +505,82 @@ inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_D
     return ret;
 }
 
-inline bool IsSilentGain(float gain) {
+inline bool IsSilentGain(float gain)
+{
     return gain <= gMinGainLinear;
 }
 
 inline String GainToIntString(float gain)
 {
     return DecibelsToIntString(LinearToDecibels(gain));
+}
+
+// "volume" parameters use a custom scale, so they feel more usable.
+// linear (0% to 100%) feels too extreme; massive uses a square curve, and a -inf db to +1 db range.
+struct VolumeParamValue
+{
+  private:
+    static constexpr float gMaxVolumeLinearGain = 1.122f; // +1 db.
+    float mParamValue = 0.0f;
+
+    inline static float ParamToLinear(float x)
+    {
+        return x * x * gMaxVolumeLinearGain;
+    }
+    inline static float LinearToParam(float x)
+    { // expensive
+        return sqrtf(x / gMaxVolumeLinearGain);
+    }
+
+    inline static float ParamToDecibels(float x)
+    {
+        return LinearToDecibels(ParamToLinear(x));
+    }
+    inline static float DecibelsToParam(float db)
+    { // pretty expensive
+        return LinearToParam(DecibelsToLinear(db));
+    }
+
+  public:
+    float ToLinearGain() const
+    {
+        return ParamToLinear(mParamValue);
+    }
+    float ToDecibels() const // expensive (ish)
+    {
+        return ParamToDecibels(mParamValue);
+    }
+
+    float IsSilent() const
+    {
+        return IsSilentGain(ToLinearGain());
+    }
+    float GetParamValue() const
+    {
+        return mParamValue;
+    }
+    void SetValue(float f)
+    {
+        mParamValue = f;
+    }
+    void SetLinearValue(float f)
+    { // expensive
+        mParamValue = LinearToParam(f);
+    }
+    void SetDecibels(float db)
+    { // expensive
+        mParamValue = DecibelsToParam(db);
+    }
+};
+
+inline std::pair<float, float> CalculatePanGain(float panN11)
+{
+    // SQRT pan law
+    // -1..+1  -> 1..0
+    float normPan = (-panN11 + 1) / 2;
+    float leftChannel = sqrtf(normPan);
+    float rightChannel = sqrtf(1.0f - normPan);
+    return std::make_pair(leftChannel, rightChannel);
 }
 
 // // takes a linear X value and snaps it to integral values.

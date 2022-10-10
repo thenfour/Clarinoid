@@ -633,11 +633,15 @@ struct Voice : IModulationKRateProvider
 
         // TODO: consider patch, perf, harm, loop gain & panning
         float mExtraPan = 0;
-        float mExtraGain = 1.0f;
 
-        mSplitter.SetOutputGain(0, mExtraGain);
-        mSplitter.SetOutputGain(1, mExtraGain * patch.mDelaySend);
-        mSplitter.SetOutputGain(2, mExtraGain * patch.mVerbSend);
+        // for "mix" behavior, we can look to panning. the pan law applies here; you're effectively panning between the
+        // dry signal and the various effects. But instead of a -1 to +1 range, it's going to be 0-1.
+        auto verbGains = CalculatePanGain(patch.mDelayMix * 2 - 1);
+        auto delayGains = CalculatePanGain(patch.mVerbMix * 2 - 1);
+
+        mSplitter.SetOutputGain(0, std::get<0>(verbGains) * std::get<0>(delayGains));
+        mSplitter.SetOutputGain(1, std::get<1>(delayGains));
+        mSplitter.SetOutputGain(2, std::get<1>(verbGains));
 
         // if (IsConsideredPlaying_ForDisplay())
         //  {
@@ -650,15 +654,15 @@ struct Voice : IModulationKRateProvider
 
         mOscMixerPanner.SetInputPanGainAndEnabled(0,
                                                   mExtraPan + patch.mPan + patch.mOsc[0].mPan + patch.mStereoSpread,
-                                                  patch.mOsc[0].mGain * mKRateAmplitudeN11[0],
+                                                  patch.mOsc[0].mVolume.ToLinearGain() * mKRateAmplitudeN11[0],
                                                   true);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(
-            1, mExtraPan + patch.mPan + patch.mOsc[1].mPan, patch.mOsc[1].mGain * mKRateAmplitudeN11[1], true);
+            1, mExtraPan + patch.mPan + patch.mOsc[1].mPan, patch.mOsc[1].mVolume.ToLinearGain() * mKRateAmplitudeN11[1], true);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(2,
                                                   mExtraPan + patch.mPan + patch.mOsc[2].mPan - patch.mStereoSpread,
-                                                  patch.mOsc[2].mGain * mKRateAmplitudeN11[2],
+                                                  patch.mOsc[2].mVolume.ToLinearGain() * mKRateAmplitudeN11[2],
                                                   true);
     }
 

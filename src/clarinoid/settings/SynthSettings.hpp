@@ -7,9 +7,6 @@ namespace clarinoid
 {
 static constexpr size_t POLYBLEP_OSC_COUNT = 3;
 
-static constexpr float ReasonableOscillatorGain = 0.25f;
-static constexpr float ReasonableOscillatorGainForHarm = 0.19f;
-
 enum class TimeBasis : uint8_t
 {
     Milliseconds,
@@ -540,7 +537,7 @@ struct EnvelopeSpec
 
 struct SynthOscillatorSettings
 {
-    float mGain = 0;
+    VolumeParamValue mVolume;
     bool mEnabled = true;
     int mPortamentoTimeMS = 0;
 
@@ -609,9 +606,10 @@ struct SynthPreset
     SynthOscillatorSettings mOsc[POLYBLEP_OSC_COUNT];
 
     String mName = "--";
+    VolumeParamValue mMasterVolume;// = 0.5f;
     float mPan = 0;
-    float mDelaySend = 0.08f;
-    float mVerbSend = 0.08f;
+    float mDelayMix = 0.08f;
+    float mVerbMix = 0.08f;
     float mStereoSpread = 0.15f;
 
     EnvelopeSpec mEnv1;
@@ -624,12 +622,7 @@ struct SynthPreset
 
     float mDetune = 0;
 
-    // float mSyncMultMin = 1.4f;
-    // float mSyncMultMax = 4.0f;
-    bool mSync = true;
-    // float mSyncFreq = 0.3f; // this is an abstract frequency value; see CalcSyncFreq for details.
-    // float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
-    //                                  // applied (low notes get higher freq cutoff)
+    //bool mSync = true;
 
     bool mDCFilterEnabled = true;
     float mDCFilterCutoff = 10.0f;
@@ -658,9 +651,9 @@ struct SynthPreset
         mLFO1.mTime.SetFrequency(0.8f);
         mLFO2.mTime.SetFrequency(3.5f);
 
-        mOsc[0].mGain = 0;
-        mOsc[1].mGain = ReasonableOscillatorGain;
-        mOsc[2].mGain = ReasonableOscillatorGain;
+        mOsc[0].mVolume.SetDecibels(0);
+        mOsc[1].mVolume.SetValue(0);
+        mOsc[2].mVolume.SetValue(0);
 
         mOsc[0].mWaveform = OscWaveformShape::VarTriangle; //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
         mOsc[1].mWaveform = OscWaveformShape::SawSync;     //  // 0 = sine, 1 = var tria, 2 = pwm, 3 = saw sync
@@ -674,7 +667,7 @@ struct SynthPreset
     
     String OscillatorToString(size_t i) const
     {
-        if (IsSilentGain(mOsc[i].mGain))
+        if (mOsc[i].mVolume.IsSilent())
         {
             // any modulations on gain?
             static constexpr AnyModulationDestination oscGainMods[] = {
@@ -704,385 +697,13 @@ struct SynthSettings
 {
     SynthPreset mPresets[SYNTH_PRESET_COUNT];
 
-    static void InitClarinoid2Preset(SynthPreset &p,
-                                     const char *name,
-                                     ClarinoidFilterType filt,
-                                     float filterKeyScaling,
-                                     float q,
-                                     float filterMaxFreq)
-    {
-        // detuned saw.
-        p.mName = name;
-        p.mOsc[0].mGain = 0.0f;
-        p.mOsc[2].mGain = 0.0f;
-
-        p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[1].mGain = ReasonableOscillatorGain;
-        p.mSync = false;
-        p.mDetune = 0.0f;
-
-        p.mFilterType = filt;
-        p.mFilterSaturation = 0;
-        p.mFilterQ = q;
-        p.mFilterKeytracking = filterKeyScaling;
-    }
-
-    static void InitBasicLeadPreset(const char *name, OscWaveformShape shape, float pulseWidth, SynthPreset &p)
-    {
-        p.mName = name;
-        p.mOsc[0].mGain = 0.0f;
-        p.mOsc[2].mGain = 0.0f;
-        p.mSync = false;
-        p.mDetune = 0.0f;
-
-        p.mOsc[1].mGain = ReasonableOscillatorGain;
-        p.mOsc[1].mWaveform = shape;
-        p.mOsc[1].mPulseWidth = pulseWidth;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0.30f;
-        p.mFilterQ = 0.25f;
-        p.mFilterKeytracking = 0.0f;
-    }
-
-    static void InitDetunedLeadPreset(const char *name, OscWaveformShape shape, float pulseWidth, SynthPreset &p)
-    {
-        p.mName = name;
-        p.mDetune = 0.1f;
-        p.mSync = false;
-
-        p.mOsc[0].mGain = ReasonableOscillatorGain;
-        p.mOsc[0].mWaveform = shape;
-        p.mOsc[0].mPulseWidth = pulseWidth;
-
-        p.mOsc[1].mGain = ReasonableOscillatorGain;
-        p.mOsc[1].mWaveform = shape;
-        p.mOsc[1].mPulseWidth = 1.0f - pulseWidth;
-
-        p.mOsc[2].mGain = ReasonableOscillatorGain;
-        p.mOsc[2].mWaveform = shape;
-        p.mOsc[1].mPulseWidth = pulseWidth;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0.30f;
-        p.mFilterQ = 0.25f;
-        p.mFilterKeytracking = 0.0f;
-    }
-
-    static void InitFifthLeadPresetA(SynthPreset &p)
-    {
-        p.mName = "5th lead A";
-        p.mSync = false;
-        p.mDetune = 0.0f;
-
-        p.mOsc[0].mGain = ReasonableOscillatorGain;
-        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[0].mPulseWidth = 0.08f;
-        p.mOsc[0].mPitchSemis = -5;
-
-        p.mOsc[2].mGain = 0.0f;
-
-        p.mOsc[1].mGain = ReasonableOscillatorGain;
-        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[1].mPulseWidth = 0.92f;
-        p.mOsc[1].mPitchSemis = -12;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0.0f;
-        p.mFilterQ = 0.1f;
-        p.mFilterKeytracking = 0.0f;
-    }
-
-    static void InitFifthLeadPresetB(SynthPreset &p)
-    {
-        p.mName = "5th lead B";
-        p.mSync = false;
-        p.mDetune = 0.0f;
-
-        p.mOsc[0].mGain = ReasonableOscillatorGain;
-        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[0].mPulseWidth = 0.4f;
-        p.mOsc[0].mPitchSemis = -5;
-
-        p.mOsc[2].mGain = 0.0f;
-
-        p.mOsc[1].mGain = ReasonableOscillatorGain;
-        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[1].mPitchSemis = -12;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0.0f;
-        p.mFilterQ = 0.0f;
-        p.mFilterKeytracking = 0.0f;
-    }
-
-    static void InitHarmSyncLead(SynthPreset &p)
-    {
-        p.mName = "Sync for Harm";
-        p.mOsc[0].mGain = 0.0f;
-        p.mOsc[2].mGain = 0.0f;
-
-        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
-        p.mOsc[2].mGain = ReasonableOscillatorGainForHarm;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0;
-        p.mFilterQ = 0.25f;
-        p.mFilterKeytracking = 0.0f;
-    }
-
-    static void InitHarmTriLead(SynthPreset &p)
-    {
-        p.mName = "Tri for Harm";
-        p.mOsc[0].mGain = 0.0f;
-        p.mOsc[2].mGain = 0.0f;
-
-        p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
-        p.mOsc[1].mPulseWidth = 0.5f;
-        p.mSync = false;
-        p.mDetune = 0.0f;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0;
-        p.mFilterQ = 0.1f;
-        p.mFilterKeytracking = 0.0f;
-
-        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
-        p.mModulations[0].mSource = AnyModulationSource::LFO2;
-        p.mModulations[0].SetScaleN11_Legacy(0.02f);
-    }
-
-    static void InitHarmPulseLead(SynthPreset &p)
-    {
-        p.mName = "Pulse for Harm";
-        p.mOsc[0].mGain = 0.0f;
-        p.mOsc[2].mGain = 0.0f;
-
-        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
-        p.mOsc[1].mPulseWidth = 0.07f;
-        p.mSync = false;
-        p.mDetune = 0.0f;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0;
-        p.mFilterQ = 0.1f;
-        p.mFilterKeytracking = 0.0f;
-    }
-
-    static void InitHarmSawLead(SynthPreset &p)
-    {
-        p.mName = "Saw for Harm";
-        p.mOsc[0].mGain = 0.0f;
-        p.mOsc[2].mGain = 0.0f;
-
-        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
-        p.mSync = false;
-        p.mDetune = 0.0f;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterSaturation = 0;
-        p.mFilterQ = 0.0f;
-        p.mFilterKeytracking = 0.0f;
-    }
-
-    static void InitCrystalFieldsPatch(SynthPreset &p)
-    {
-        InitBasicLeadPreset("CrystalFields", OscWaveformShape::Pulse, 0.40f, p);
-        p.mOsc[0].mGain = p.mOsc[1].mGain;
-        p.mOsc[0].mGain *= DecibelsToLinear(-9);
-        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[0].mPulseWidth = 0.5f;
-        p.mOsc[0].mPitchSemis = -5;
-
-        p.mOsc[1].mPitchSemis = -12;
-
-        p.mLFO2.mTime.SetFrequency(0.7f);
-
-        p.mFilterKeytracking = 0;
-        p.mFilterQ = 0.2f;
-        p.mFilterType = ClarinoidFilterType::LP_SEM12;
-
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
-        p.mModulations[0].SetScaleN11_Legacy(0.14f);
-
-        p.mModulations[1].mSource = AnyModulationSource::LFO2;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
-        p.mModulations[1].SetScaleN11_Legacy(0.20f);
-
-        p.mModulations[2].mSource = AnyModulationSource::LFO1; // helps perturb for overdrive
-        p.mModulations[2].mDest = AnyModulationDestination::Osc1Frequency;
-        p.mModulations[2].SetScaleN11_Legacy(0.01f);
-    }
-
-    static void InitCinematicTagPatch(SynthPreset &p, const char *name, float detuneAmt, float pitchA, float pitchB)
-    {
-        p.mName = name; //"Cinematic Tag";
-        p.mSync = false;
-        p.mDetune = detuneAmt;
-        p.mFilterKeytracking = 0.8f;
-
-        p.mFilterType = ClarinoidFilterType::LP_Moog2;
-        p.mFilterSaturation = 0.0f;
-        p.mFilterQ = 0.0f;
-
-        p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[0].mPulseWidth = 0;
-        p.mOsc[0].mPitchFine = pitchA;
-        p.mOsc[0].mGain = ReasonableOscillatorGain;
-
-        p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[1].mPulseWidth = 0;
-        p.mOsc[1].mPitchFine = pitchA;
-        p.mOsc[1].mGain = ReasonableOscillatorGain;
-
-        p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[2].mPulseWidth = 0;
-        p.mOsc[2].mPitchFine = pitchB;
-        p.mOsc[2].mGain = ReasonableOscillatorGain;
-    }
-
-    static void InitBellycrawlPreset(SynthPreset &p)
-    {
-        // start with defaults
-        p.mName = "Bellycrawl";
-        p.mModulations[0].SetScaleN11_Legacy(0.9f);
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
-
-        p.mModulations[1].SetScaleN11_Legacy(0.015f);
-        p.mModulations[1].mSource = AnyModulationSource::LFO2;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
-    }
-
-    static void InitPanFlutePreset(SynthPreset &p)
-    {
-        InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, p);
-        // make osc1 and osc2 equal
-        p.mOsc[1].mGain = p.mOsc[0].mGain = ReasonableOscillatorGain * 0.75f;
-        p.mOsc[1].mWaveform = p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
-        p.mDetune = 0.04f;
-
-        p.mFilterType = ClarinoidFilterType::BP_Moog4;
-        p.mFilterKeytracking = 0.8f;
-        p.mFilterQ = 0.0f;
-        p.mFilterSaturation = 0.2f;
-
-        p.mEnv1.mDecayMS = 115;
-
-        p.mModulations[1].mSource = AnyModulationSource::ENV1;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc2Frequency;
-        p.mModulations[1].SetScaleN11_Legacy(0.05f);
-    }
-
-    static void InitFunkyLeadPreset(SynthPreset &p)
-    {
-        p.mName = "Funky";
-        p.mSync = true;
-        // p.mSyncMultMax = 4.0f;
-        p.mDetune = 0;
-        p.mFilterQ = 0.40f;
-
-        // p.mOsc[0].mFreqMultiplier = 0.9995f;
-        // p.mOsc[2].mFreqMultiplier = 1.003f;
-
-        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[2].mPulseWidth = 0.1f;
-        p.mOsc[2].mGain = ReasonableOscillatorGain;
-    }
-
-    static void InitDetunePWMLead(SynthPreset &p)
-    {
-        p.mName = "Detune PWM";
-        p.mDetune = 0.09f;
-        p.mStereoSpread = 0.5f;
-        p.mSync = false;
-
-        p.mFilterSaturation = 0.1f;
-        p.mFilterQ = 0.12f;
-        // lp moog 4 16k
-
-        p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[0].mPulseWidth = 0.3f;
-        p.mOsc[0].mGain = ReasonableOscillatorGain / 1.5f;
-
-        p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[1].mPulseWidth = 0.3f;
-        p.mOsc[1].mGain = ReasonableOscillatorGain / 1.5f;
-
-        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[2].mPulseWidth = 0.3f;
-        p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
-
-        p.mLFO2.mTime = p.mLFO1.mTime;
-
-        p.mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].SetScaleN11_Legacy(0.2f);
-        p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
-        p.mModulations[1].mSource = AnyModulationSource::LFO2;
-        p.mModulations[1].SetScaleN11_Legacy(0.2f);
-        p.mModulations[2].mDest = AnyModulationDestination::Osc1PulseWidth;
-        p.mModulations[2].mSource = AnyModulationSource::LFO1;
-        p.mModulations[2].SetScaleN11_Legacy(0.2f);
-
-        p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
-        p.mModulations[3].mSource = AnyModulationSource::Breath;
-        p.mModulations[3].SetScaleN11_Legacy(-0.03f);
-
-        p.mModulations[4].mDest = AnyModulationDestination::Osc1Frequency;
-        p.mModulations[4].mSource = AnyModulationSource::ENV1;
-        p.mModulations[4].SetScaleN11_Legacy(0.03f);
-    }
-
-    static void InitBassoonoidPreset(SynthPreset &p,
-                                     const char *name,
-                                     ClarinoidFilterType filt,
-                                     float filterKeyScaling,
-                                     float q,
-                                     float filterMaxFreq)
-    {
-        p.mName = name;
-        p.mSync = false;
-        p.mDetune = 0.0f;
-        p.mStereoSpread = 0;
-        p.mVerbSend = 0;
-        p.mDelaySend = 0;
-
-        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[0].mPulseWidth = 0.0f;
-        p.mOsc[1].mPulseWidth = 0.0f;
-        p.mOsc[2].mPulseWidth = 0.0f;
-        p.mOsc[0].mGain = 1.0f;
-        p.mOsc[1].mGain = 1.0f;
-        p.mOsc[2].mGain = 1.0f;
-
-        p.mFilterType = filt;
-        p.mFilterSaturation = 0;
-        p.mFilterQ = q;
-        p.mFilterKeytracking = filterKeyScaling;
-    };
-
     static void InitBommanoidPreset(SynthPreset &p, const char *name)
     {
         p.mName = name;
-        p.mSync = false;
         p.mDetune = 0.0f;
         p.mStereoSpread = 0;
-        p.mVerbSend = DecibelsToLinear(-8);
-        p.mDelaySend = DecibelsToLinear(-8);
-        p.mOsc[1].mGain = 0.0f;
-        p.mOsc[2].mGain = 0.0f;
 
         p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
-        p.mOsc[0].mGain = DecibelsToLinear(-12);
         p.mOsc[0].mPortamentoTimeMS = 100;
 
         p.mVoicingMode = VoicingMode::Monophonic;
@@ -1100,246 +721,613 @@ struct SynthSettings
         p.mModulations[0].mScaleN11 = 1.0f;
     };
 
-    static void InitCloudsStars(SynthPreset &p)
-    {
-        p.mName = "Clouds+Stars";
-        p.mDetune = 0.09f;
-        p.mVerbSend = .50f;
-        p.mDelaySend = .50f;
-        p.mSync = false;
 
-        p.mLFO2.mTime.SetFrequency(2.0f);
+    // static void InitClarinoid2Preset(SynthPreset &p,
+    //                                  const char *name,
+    //                                  ClarinoidFilterType filt,
+    //                                  float filterKeyScaling,
+    //                                  float q,
+    //                                  float filterMaxFreq)
+    // {
+    //     // detuned saw.
+    //     p.mName = name;
+    //     p.mOsc[0].mGain = 0.0f;
+    //     p.mOsc[2].mGain = 0.0f;
 
-        p.mFilterType = ClarinoidFilterType::LP_Moog2;
-        p.mFilterSaturation = 0.16f;
-        p.mFilterQ = 0.12f;
+    //     p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
+    //     p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+    //     p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain;
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
 
-        p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[0].mPulseWidth = 0.0f;
-        p.mOsc[0].mGain = ReasonableOscillatorGain / 1.5f;
+    //     p.mFilterType = filt;
+    //     p.mFilterSaturation = 0;
+    //     p.mFilterQ = q;
+    //     p.mFilterKeytracking = filterKeyScaling;
+    // }
 
-        p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[1].mPulseWidth = 0.0f;
-        p.mOsc[1].mFreqMultiplier = 0.501f;
-        p.mOsc[1].mGain = ReasonableOscillatorGain / 1.5f;
+    // static void InitBasicLeadPreset(const char *name, OscWaveformShape shape, float pulseWidth, SynthPreset &p)
+    // {
+    //     p.mName = name;
+    //     p.mOsc[0].mGain = 0.0f;
+    //     p.mOsc[2].mGain = 0.0f;
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
 
-        p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[2].mPulseWidth = 0.0f;
-        p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[1].mWaveform = shape;
+    //     p.mOsc[1].mPulseWidth = pulseWidth;
 
-        p.mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].SetScaleN11_Legacy(0.2f);
-        p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
-        p.mModulations[1].mSource = AnyModulationSource::LFO2;
-        p.mModulations[1].SetScaleN11_Legacy(0.2f);
-        p.mModulations[2].mDest = AnyModulationDestination::Osc1PulseWidth;
-        p.mModulations[2].mSource = AnyModulationSource::LFO1;
-        p.mModulations[2].SetScaleN11_Legacy(0.2f);
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0.30f;
+    //     p.mFilterQ = 0.25f;
+    //     p.mFilterKeytracking = 0.0f;
+    // }
 
-        p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
-        p.mModulations[3].mSource = AnyModulationSource::Breath;
-        p.mModulations[3].SetScaleN11_Legacy(-0.03f);
+    // static void InitDetunedLeadPreset(const char *name, OscWaveformShape shape, float pulseWidth, SynthPreset &p)
+    // {
+    //     p.mName = name;
+    //     p.mDetune = 0.1f;
+    //     p.mSync = false;
 
-        p.mModulations[4].mDest = AnyModulationDestination::Osc1Frequency;
-        p.mModulations[4].mSource = AnyModulationSource::ENV1;
-        p.mModulations[4].SetScaleN11_Legacy(0.03f);
-    }
+    //     p.mOsc[0].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[0].mWaveform = shape;
+    //     p.mOsc[0].mPulseWidth = pulseWidth;
 
-    static void InitSynccyLead(SynthPreset &p)
-    {
-        p.mName = "Synccy Lead"; // default.
-        p.mFilterKeytracking = 0.8f;
-        p.mModulations[0].SetScaleN11_Legacy(0.9f);
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[1].mWaveform = shape;
+    //     p.mOsc[1].mPulseWidth = 1.0f - pulseWidth;
 
-        p.mModulations[1].SetScaleN11_Legacy(0.015f);
-        p.mModulations[1].mSource = AnyModulationSource::LFO2;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
-    }
+    //     p.mOsc[2].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[2].mWaveform = shape;
+    //     p.mOsc[1].mPulseWidth = pulseWidth;
 
-    static void InitFluvial(SynthPreset &p)
-    {
-        p.mName = "Fluvial";
-        p.mOsc[0].mGain = 0.0f;
-        p.mSync = true;
-        // p.mSyncMultMin = 0.15f;
-        // p.mSyncMultMax = 1.95f;
-        p.mDetune = 0.0f;
-        p.mVerbSend = 0.1f;
-        p.mDelaySend = 0.1f;
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0.30f;
+    //     p.mFilterQ = 0.25f;
+    //     p.mFilterKeytracking = 0.0f;
+    // }
 
-        p.mOsc[1].mGain = 0.15f; // * gain;
-        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+    // static void InitFifthLeadPresetA(SynthPreset &p)
+    // {
+    //     p.mName = "5th lead A";
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
 
-        p.mOsc[2].mGain = 0.15f; // * gain;
-        p.mOsc[2].mPulseWidth = 0.5f;
-        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[0].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[0].mPulseWidth = 0.08f;
+    //     p.mOsc[0].mPitchSemis = -5;
 
-        p.mFilterType = ClarinoidFilterType::LP_K35;
-        p.mFilterSaturation = 0.60f;
-        p.mFilterQ = 0.25f;
-        p.mFilterKeytracking = 0.8f;
+    //     p.mOsc[2].mGain = 0.0f;
 
-        p.mModulations[0].mSource = AnyModulationSource::Breath;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc3Frequency;
-        p.mModulations[0].SetScaleN11_Legacy(-0.02f);
-        p.mModulations[1].mSource = AnyModulationSource::Breath;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc3PulseWidth;
-        p.mModulations[1].SetScaleN11_Legacy(-0.3f);
-    }
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[1].mPulseWidth = 0.92f;
+    //     p.mOsc[1].mPitchSemis = -12;
 
-    static void InitCrystalSyncLead(SynthPreset &p)
-    {
-        p.mName = "CrystalSync"; // default.
-        p.mModulations[0].SetScaleN11_Legacy(0.9f);
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0.0f;
+    //     p.mFilterQ = 0.1f;
+    //     p.mFilterKeytracking = 0.0f;
+    // }
 
-        p.mModulations[1].SetScaleN11_Legacy(0.015f);
-        p.mModulations[1].mSource = AnyModulationSource::LFO2;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
+    // static void InitFifthLeadPresetB(SynthPreset &p)
+    // {
+    //     p.mName = "5th lead B";
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
 
-        // p.mSyncMultMin = 2.5f;
-        // p.mSyncMultMax = 0.7f;
-    }
+    //     p.mOsc[0].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[0].mPulseWidth = 0.4f;
+    //     p.mOsc[0].mPitchSemis = -5;
 
-    static void InitPWMLead2(SynthPreset &p)
-    {
-        InitBasicLeadPreset("PWM Mono Lead", OscWaveformShape::Pulse, 0.50f, p);
-        p.mFilterType = ClarinoidFilterType::LP_SEM12;
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
-        p.mModulations[0].SetScaleN11_Legacy(0.20f);
-        p.mModulations[1].mSource = AnyModulationSource::Breath;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc2PulseWidth;
-        p.mModulations[1].SetScaleN11_Legacy(0.20f);
-    }
+    //     p.mOsc[2].mGain = 0.0f;
 
-    static void InitPWMLeadStack(SynthPreset &p)
-    {
-        InitBasicLeadPreset("PWM Lead Stack", OscWaveformShape::Pulse, 0.50f, p);
-        p.mFilterType = ClarinoidFilterType::LP_SEM12;
-        p.mLFO2.mTime.SetFrequency(2.0f);
-        p.mOsc[2].mFreqMultiplier = 4.0f;
-        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[2].mPulseWidth = 0.5f;
-        p.mOsc[2].mGain = .15f;
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
-        p.mModulations[0].SetScaleN11_Legacy(0.20f);
-        p.mModulations[1].mSource = AnyModulationSource::Breath;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc2PulseWidth;
-        p.mModulations[1].SetScaleN11_Legacy(0.20f);
-        p.mModulations[2].mSource = AnyModulationSource::LFO2;
-        p.mModulations[2].mDest = AnyModulationDestination::Osc3PulseWidth;
-        p.mModulations[2].SetScaleN11_Legacy(-0.08f);
-        p.mModulations[3].mSource = AnyModulationSource::Breath;
-        p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
-        p.mModulations[3].SetScaleN11_Legacy(0.04f);
-    }
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain;
+    //     p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[1].mPitchSemis = -12;
 
-    static void InitSynthTrumpetPreset(SynthPreset &p)
-    {
-        p.mName = "Trumpet";
-        p.mSync = false;
-        p.mStereoSpread = 0.15f;
-        p.mDetune = 0.04f;
-        p.mVerbSend = 0.07f;
-        p.mDelaySend = 0.07f;
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0.0f;
+    //     p.mFilterQ = 0.0f;
+    //     p.mFilterKeytracking = 0.0f;
+    // }
 
-        p.mFilterType = ClarinoidFilterType::LP_Moog2;
-        p.mFilterSaturation = 0.80f;
-        p.mFilterQ = 0.15f;
-        p.mFilterKeytracking = 0;
+    // static void InitHarmSyncLead(SynthPreset &p)
+    // {
+    //     p.mName = "Sync for Harm";
+    //     p.mOsc[0].mGain = 0.0f;
+    //     p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain =
-            (ReasonableOscillatorGain / 2.5f); // * DecibelsToLinear(gain);
-        p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+    //     p.mOsc[2].mGain = ReasonableOscillatorGainForHarm;
 
-        p.mModulations[0].mSource = AnyModulationSource::ENV1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc1Frequency;
-        p.mModulations[0].SetScaleN11_Legacy(0.05f);
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0;
+    //     p.mFilterQ = 0.25f;
+    //     p.mFilterKeytracking = 0.0f;
+    // }
 
-        p.mModulations[1].mSource = AnyModulationSource::ENV2;
-        p.mModulations[1].mDest = AnyModulationDestination::Osc3Frequency;
-        p.mModulations[1].SetScaleN11_Legacy(-0.02f);
+    // static void InitHarmTriLead(SynthPreset &p)
+    // {
+    //     p.mName = "Tri for Harm";
+    //     p.mOsc[0].mGain = 0.0f;
+    //     p.mOsc[2].mGain = 0.0f;
 
-        p.mEnv1.mDelayMS = 0;
-        p.mEnv1.mAttackMS = 0;
-        p.mEnv1.mDecayMS = 100;
-        p.mEnv1.mSustainLevel = 0;
-        p.mEnv1.mReleaseMS = 0; // p.mEnv1.mReleaseNoteOnMS = 0;
+    //     p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+    //     p.mOsc[1].mPulseWidth = 0.5f;
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
 
-        p.mEnv2.mDelayMS = 0;
-        p.mEnv2.mAttackMS = 0;
-        p.mEnv2.mDecayMS = 500;
-        p.mEnv2.mSustainLevel = 0;
-        p.mEnv2.mReleaseMS = 0; // p.mEnv2.mReleaseNoteOnMS = 0;
-    }
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0;
+    //     p.mFilterQ = 0.1f;
+    //     p.mFilterKeytracking = 0.0f;
 
-    static void InitBraker(SynthPreset &p)
-    {
-        p.mName = "Braker Solo";
-        p.mSync = true;
-        // p.mSyncMultMax = 0.70f;
-        // p.mSyncMultMin = 0.17f;
-        p.mDetune = 0;
-        p.mFilterQ = 0.35f;
-        p.mFilterSaturation = 0.2f;
-        p.mFilterType = ClarinoidFilterType::LP_Diode;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.02f);
+    // }
 
-        p.mOsc[0].mFreqMultiplier = 0.998f;
+    // static void InitHarmPulseLead(SynthPreset &p)
+    // {
+    //     p.mName = "Pulse for Harm";
+    //     p.mOsc[0].mGain = 0.0f;
+    //     p.mOsc[2].mGain = 0.0f;
 
-        p.mOsc[2].mFreqMultiplier = 1.003f;
+    //     p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+    //     p.mOsc[1].mPulseWidth = 0.07f;
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
 
-        p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
-        p.mOsc[2].mPulseWidth = 0.47f;
-        p.mOsc[2].mGain = ReasonableOscillatorGain;
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0;
+    //     p.mFilterQ = 0.1f;
+    //     p.mFilterKeytracking = 0.0f;
+    // }
 
-        p.mModulations[0].mSource = AnyModulationSource::LFO1;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc1Frequency;
-        p.mModulations[0].SetScaleN11_Legacy(0.017f);
-    }
+    // static void InitHarmSawLead(SynthPreset &p)
+    // {
+    //     p.mName = "Saw for Harm";
+    //     p.mOsc[0].mGain = 0.0f;
+    //     p.mOsc[2].mGain = 0.0f;
 
-    static void InitBasicSine(SynthPreset &p)
-    {
-        p.mName = "INIT SINE";
-        p.mSync = false;
-        p.mDetune = 0;
-        p.mStereoSpread = 0;
-        p.mFilterQ = 0;
-        p.mFilterSaturation = 0;
-        p.mFilterKeytracking = 0;
-        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
-        p.mOsc[1].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[2].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[1].mGain = 0;
-        p.mOsc[2].mGain = 0;
-    }
+    //     p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGainForHarm;
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
 
-    static void InitFMTest(SynthPreset &p)
-    {
-        p.mName = "Braker Solo";
-        p.mSync = false;
-        p.mDetune = 0;
-        p.mStereoSpread = 0;
-        p.mFMStrength1To2 = 0.50f;
-        p.mOverallFMStrength = 0.1f;
-        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[0].mFreqMultiplier = .5;
-        // p.mOsc[0].mFreqOffset = 1;
-        p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog4;
+    //     p.mFilterSaturation = 0;
+    //     p.mFilterQ = 0.0f;
+    //     p.mFilterKeytracking = 0.0f;
+    // }
 
-        p.mOsc[1].mWaveform = OscWaveformShape::Sine;
-    }
+    // static void InitCrystalFieldsPatch(SynthPreset &p)
+    // {
+    //     InitBasicLeadPreset("CrystalFields", OscWaveformShape::Pulse, 0.40f, p);
+    //     p.mOsc[0].mGain = p.mOsc[1].mGain;
+    //     p.mOsc[0].mGain *= DecibelsToLinear(-9);
+    //     p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[0].mPulseWidth = 0.5f;
+    //     p.mOsc[0].mPitchSemis = -5;
+
+    //     p.mOsc[1].mPitchSemis = -12;
+
+    //     p.mLFO2.mTime.SetFrequency(0.7f);
+
+    //     p.mFilterKeytracking = 0;
+    //     p.mFilterQ = 0.2f;
+    //     p.mFilterType = ClarinoidFilterType::LP_SEM12;
+
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.14f);
+
+    //     p.mModulations[1].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
+    //     p.mModulations[1].SetScaleN11_Legacy(0.20f);
+
+    //     p.mModulations[2].mSource = AnyModulationSource::LFO1; // helps perturb for overdrive
+    //     p.mModulations[2].mDest = AnyModulationDestination::Osc1Frequency;
+    //     p.mModulations[2].SetScaleN11_Legacy(0.01f);
+    // }
+
+    // static void InitCinematicTagPatch(SynthPreset &p, const char *name, float detuneAmt, float pitchA, float pitchB)
+    // {
+    //     p.mName = name; //"Cinematic Tag";
+    //     p.mSync = false;
+    //     p.mDetune = detuneAmt;
+    //     p.mFilterKeytracking = 0.8f;
+
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog2;
+    //     p.mFilterSaturation = 0.0f;
+    //     p.mFilterQ = 0.0f;
+
+    //     p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[0].mPulseWidth = 0;
+    //     p.mOsc[0].mPitchFine = pitchA;
+    //     p.mOsc[0].mGain = ReasonableOscillatorGain;
+
+    //     p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[1].mPulseWidth = 0;
+    //     p.mOsc[1].mPitchFine = pitchA;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain;
+
+    //     p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[2].mPulseWidth = 0;
+    //     p.mOsc[2].mPitchFine = pitchB;
+    //     p.mOsc[2].mGain = ReasonableOscillatorGain;
+    // }
+
+    // static void InitBellycrawlPreset(SynthPreset &p)
+    // {
+    //     // start with defaults
+    //     p.mName = "Bellycrawl";
+    //     p.mModulations[0].SetScaleN11_Legacy(0.9f);
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+
+    //     p.mModulations[1].SetScaleN11_Legacy(0.015f);
+    //     p.mModulations[1].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
+    // }
+
+    // static void InitPanFlutePreset(SynthPreset &p)
+    // {
+    //     InitBasicLeadPreset("Pan Flute", OscWaveformShape::Pulse, 0.50f, p);
+    //     // make osc1 and osc2 equal
+    //     p.mOsc[1].mGain = p.mOsc[0].mGain = ReasonableOscillatorGain * 0.75f;
+    //     p.mOsc[1].mWaveform = p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+    //     p.mDetune = 0.04f;
+
+    //     p.mFilterType = ClarinoidFilterType::BP_Moog4;
+    //     p.mFilterKeytracking = 0.8f;
+    //     p.mFilterQ = 0.0f;
+    //     p.mFilterSaturation = 0.2f;
+
+    //     p.mEnv1.mDecayMS = 115;
+
+    //     p.mModulations[1].mSource = AnyModulationSource::ENV1;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc2Frequency;
+    //     p.mModulations[1].SetScaleN11_Legacy(0.05f);
+    // }
+
+    // static void InitFunkyLeadPreset(SynthPreset &p)
+    // {
+    //     p.mName = "Funky";
+    //     p.mSync = true;
+    //     // p.mSyncMultMax = 4.0f;
+    //     p.mDetune = 0;
+    //     p.mFilterQ = 0.40f;
+
+    //     // p.mOsc[0].mFreqMultiplier = 0.9995f;
+    //     // p.mOsc[2].mFreqMultiplier = 1.003f;
+
+    //     p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[2].mPulseWidth = 0.1f;
+    //     p.mOsc[2].mGain = ReasonableOscillatorGain;
+    // }
+
+    // static void InitDetunePWMLead(SynthPreset &p)
+    // {
+    //     p.mName = "Detune PWM";
+    //     p.mDetune = 0.09f;
+    //     p.mStereoSpread = 0.5f;
+    //     p.mSync = false;
+
+    //     p.mFilterSaturation = 0.1f;
+    //     p.mFilterQ = 0.12f;
+    //     // lp moog 4 16k
+
+    //     p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[0].mPulseWidth = 0.3f;
+    //     p.mOsc[0].mGain = ReasonableOscillatorGain / 1.5f;
+
+    //     p.mOsc[1].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[1].mPulseWidth = 0.3f;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain / 1.5f;
+
+    //     p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[2].mPulseWidth = 0.3f;
+    //     p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
+
+    //     p.mLFO2.mTime = p.mLFO1.mTime;
+
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.2f);
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
+    //     p.mModulations[1].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[1].SetScaleN11_Legacy(0.2f);
+    //     p.mModulations[2].mDest = AnyModulationDestination::Osc1PulseWidth;
+    //     p.mModulations[2].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[2].SetScaleN11_Legacy(0.2f);
+
+    //     p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
+    //     p.mModulations[3].mSource = AnyModulationSource::Breath;
+    //     p.mModulations[3].SetScaleN11_Legacy(-0.03f);
+
+    //     p.mModulations[4].mDest = AnyModulationDestination::Osc1Frequency;
+    //     p.mModulations[4].mSource = AnyModulationSource::ENV1;
+    //     p.mModulations[4].SetScaleN11_Legacy(0.03f);
+    // }
+
+    // static void InitBassoonoidPreset(SynthPreset &p,
+    //                                  const char *name,
+    //                                  ClarinoidFilterType filt,
+    //                                  float filterKeyScaling,
+    //                                  float q,
+    //                                  float filterMaxFreq)
+    // {
+    //     p.mName = name;
+    //     p.mSync = false;
+    //     p.mDetune = 0.0f;
+    //     p.mStereoSpread = 0;
+    //     p.mVerbSend = 0;
+    //     p.mDelaySend = 0;
+
+    //     p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+    //     p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+    //     p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
+    //     p.mOsc[0].mPulseWidth = 0.0f;
+    //     p.mOsc[1].mPulseWidth = 0.0f;
+    //     p.mOsc[2].mPulseWidth = 0.0f;
+    //     p.mOsc[0].mGain = 1.0f;
+    //     p.mOsc[1].mGain = 1.0f;
+    //     p.mOsc[2].mGain = 1.0f;
+
+    //     p.mFilterType = filt;
+    //     p.mFilterSaturation = 0;
+    //     p.mFilterQ = q;
+    //     p.mFilterKeytracking = filterKeyScaling;
+    // };
+
+    // static void InitCloudsStars(SynthPreset &p)
+    // {
+    //     p.mName = "Clouds+Stars";
+    //     p.mDetune = 0.09f;
+    //     p.mVerbSend = .50f;
+    //     p.mDelaySend = .50f;
+    //     p.mSync = false;
+
+    //     p.mLFO2.mTime.SetFrequency(2.0f);
+
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog2;
+    //     p.mFilterSaturation = 0.16f;
+    //     p.mFilterQ = 0.12f;
+
+    //     p.mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[0].mPulseWidth = 0.0f;
+    //     p.mOsc[0].mGain = ReasonableOscillatorGain / 1.5f;
+
+    //     p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[1].mPulseWidth = 0.0f;
+    //     p.mOsc[1].mFreqMultiplier = 0.501f;
+    //     p.mOsc[1].mGain = ReasonableOscillatorGain / 1.5f;
+
+    //     p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[2].mPulseWidth = 0.0f;
+    //     p.mOsc[2].mGain = ReasonableOscillatorGain / 1.5f;
+
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.2f);
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc1PulseWidth;
+    //     p.mModulations[1].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[1].SetScaleN11_Legacy(0.2f);
+    //     p.mModulations[2].mDest = AnyModulationDestination::Osc1PulseWidth;
+    //     p.mModulations[2].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[2].SetScaleN11_Legacy(0.2f);
+
+    //     p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
+    //     p.mModulations[3].mSource = AnyModulationSource::Breath;
+    //     p.mModulations[3].SetScaleN11_Legacy(-0.03f);
+
+    //     p.mModulations[4].mDest = AnyModulationDestination::Osc1Frequency;
+    //     p.mModulations[4].mSource = AnyModulationSource::ENV1;
+    //     p.mModulations[4].SetScaleN11_Legacy(0.03f);
+    // }
+
+    // static void InitSynccyLead(SynthPreset &p)
+    // {
+    //     p.mName = "Synccy Lead"; // default.
+    //     p.mFilterKeytracking = 0.8f;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.9f);
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+
+    //     p.mModulations[1].SetScaleN11_Legacy(0.015f);
+    //     p.mModulations[1].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
+    // }
+
+    // static void InitFluvial(SynthPreset &p)
+    // {
+    //     p.mName = "Fluvial";
+    //     p.mOsc[0].mGain = 0.0f;
+    //     p.mSync = true;
+    //     // p.mSyncMultMin = 0.15f;
+    //     // p.mSyncMultMax = 1.95f;
+    //     p.mDetune = 0.0f;
+    //     p.mVerbSend = 0.1f;
+    //     p.mDelaySend = 0.1f;
+
+    //     p.mOsc[1].mGain = 0.15f; // * gain;
+    //     p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+
+    //     p.mOsc[2].mGain = 0.15f; // * gain;
+    //     p.mOsc[2].mPulseWidth = 0.5f;
+    //     p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+
+    //     p.mFilterType = ClarinoidFilterType::LP_K35;
+    //     p.mFilterSaturation = 0.60f;
+    //     p.mFilterQ = 0.25f;
+    //     p.mFilterKeytracking = 0.8f;
+
+    //     p.mModulations[0].mSource = AnyModulationSource::Breath;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc3Frequency;
+    //     p.mModulations[0].SetScaleN11_Legacy(-0.02f);
+    //     p.mModulations[1].mSource = AnyModulationSource::Breath;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc3PulseWidth;
+    //     p.mModulations[1].SetScaleN11_Legacy(-0.3f);
+    // }
+
+    // static void InitCrystalSyncLead(SynthPreset &p)
+    // {
+    //     p.mName = "CrystalSync"; // default.
+    //     p.mModulations[0].SetScaleN11_Legacy(0.9f);
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
+
+    //     p.mModulations[1].SetScaleN11_Legacy(0.015f);
+    //     p.mModulations[1].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
+
+    //     // p.mSyncMultMin = 2.5f;
+    //     // p.mSyncMultMax = 0.7f;
+    // }
+
+    // static void InitPWMLead2(SynthPreset &p)
+    // {
+    //     InitBasicLeadPreset("PWM Mono Lead", OscWaveformShape::Pulse, 0.50f, p);
+    //     p.mFilterType = ClarinoidFilterType::LP_SEM12;
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.20f);
+    //     p.mModulations[1].mSource = AnyModulationSource::Breath;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc2PulseWidth;
+    //     p.mModulations[1].SetScaleN11_Legacy(0.20f);
+    // }
+
+    // static void InitPWMLeadStack(SynthPreset &p)
+    // {
+    //     InitBasicLeadPreset("PWM Lead Stack", OscWaveformShape::Pulse, 0.50f, p);
+    //     p.mFilterType = ClarinoidFilterType::LP_SEM12;
+    //     p.mLFO2.mTime.SetFrequency(2.0f);
+    //     p.mOsc[2].mFreqMultiplier = 4.0f;
+    //     p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[2].mPulseWidth = 0.5f;
+    //     p.mOsc[2].mGain = .15f;
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc2PulseWidth;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.20f);
+    //     p.mModulations[1].mSource = AnyModulationSource::Breath;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc2PulseWidth;
+    //     p.mModulations[1].SetScaleN11_Legacy(0.20f);
+    //     p.mModulations[2].mSource = AnyModulationSource::LFO2;
+    //     p.mModulations[2].mDest = AnyModulationDestination::Osc3PulseWidth;
+    //     p.mModulations[2].SetScaleN11_Legacy(-0.08f);
+    //     p.mModulations[3].mSource = AnyModulationSource::Breath;
+    //     p.mModulations[3].mDest = AnyModulationDestination::Osc3Frequency;
+    //     p.mModulations[3].SetScaleN11_Legacy(0.04f);
+    // }
+
+    // static void InitSynthTrumpetPreset(SynthPreset &p)
+    // {
+    //     p.mName = "Trumpet";
+    //     p.mSync = false;
+    //     p.mStereoSpread = 0.15f;
+    //     p.mDetune = 0.04f;
+    //     p.mVerbSend = 0.07f;
+    //     p.mDelaySend = 0.07f;
+
+    //     p.mFilterType = ClarinoidFilterType::LP_Moog2;
+    //     p.mFilterSaturation = 0.80f;
+    //     p.mFilterQ = 0.15f;
+    //     p.mFilterKeytracking = 0;
+
+    //     p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain =
+    //         (ReasonableOscillatorGain / 2.5f); // * DecibelsToLinear(gain);
+    //     p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
+    //     p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
+
+    //     p.mModulations[0].mSource = AnyModulationSource::ENV1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc1Frequency;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.05f);
+
+    //     p.mModulations[1].mSource = AnyModulationSource::ENV2;
+    //     p.mModulations[1].mDest = AnyModulationDestination::Osc3Frequency;
+    //     p.mModulations[1].SetScaleN11_Legacy(-0.02f);
+
+    //     p.mEnv1.mDelayMS = 0;
+    //     p.mEnv1.mAttackMS = 0;
+    //     p.mEnv1.mDecayMS = 100;
+    //     p.mEnv1.mSustainLevel = 0;
+    //     p.mEnv1.mReleaseMS = 0; // p.mEnv1.mReleaseNoteOnMS = 0;
+
+    //     p.mEnv2.mDelayMS = 0;
+    //     p.mEnv2.mAttackMS = 0;
+    //     p.mEnv2.mDecayMS = 500;
+    //     p.mEnv2.mSustainLevel = 0;
+    //     p.mEnv2.mReleaseMS = 0; // p.mEnv2.mReleaseNoteOnMS = 0;
+    // }
+
+    // static void InitBraker(SynthPreset &p)
+    // {
+    //     p.mName = "Braker Solo";
+    //     p.mSync = true;
+    //     // p.mSyncMultMax = 0.70f;
+    //     // p.mSyncMultMin = 0.17f;
+    //     p.mDetune = 0;
+    //     p.mFilterQ = 0.35f;
+    //     p.mFilterSaturation = 0.2f;
+    //     p.mFilterType = ClarinoidFilterType::LP_Diode;
+
+    //     p.mOsc[0].mFreqMultiplier = 0.998f;
+
+    //     p.mOsc[2].mFreqMultiplier = 1.003f;
+
+    //     p.mOsc[2].mWaveform = OscWaveformShape::Pulse;
+    //     p.mOsc[2].mPulseWidth = 0.47f;
+    //     p.mOsc[2].mGain = ReasonableOscillatorGain;
+
+    //     p.mModulations[0].mSource = AnyModulationSource::LFO1;
+    //     p.mModulations[0].mDest = AnyModulationDestination::Osc1Frequency;
+    //     p.mModulations[0].SetScaleN11_Legacy(0.017f);
+    // }
+
+    // static void InitBasicSine(SynthPreset &p)
+    // {
+    //     p.mName = "INIT SINE";
+    //     p.mSync = false;
+    //     p.mDetune = 0;
+    //     p.mStereoSpread = 0;
+    //     p.mFilterQ = 0;
+    //     p.mFilterSaturation = 0;
+    //     p.mFilterKeytracking = 0;
+    //     p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+    //     p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
+    //     p.mOsc[1].mWaveform = OscWaveformShape::Sine;
+    //     p.mOsc[2].mWaveform = OscWaveformShape::Sine;
+    //     p.mOsc[1].mGain = 0;
+    //     p.mOsc[2].mGain = 0;
+    // }
+
+    // static void InitFMTest(SynthPreset &p)
+    // {
+    //     p.mName = "Braker Solo";
+    //     p.mSync = false;
+    //     p.mDetune = 0;
+    //     p.mStereoSpread = 0;
+    //     p.mFMStrength1To2 = 0.50f;
+    //     p.mOverallFMStrength = 0.1f;
+    //     p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+    //     p.mOsc[0].mFreqMultiplier = .5;
+    //     // p.mOsc[0].mFreqOffset = 1;
+    //     p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
+
+    //     p.mOsc[1].mWaveform = OscWaveformShape::Sine;
+    // }
 
     SynthSettings()
     {
-        size_t i = 0;
+        //size_t i = 0;
 
         // InitFluvial(mPresets[i++]);
 
