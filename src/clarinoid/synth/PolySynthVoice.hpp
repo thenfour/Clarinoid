@@ -218,7 +218,7 @@ struct Voice : IModulationKRateProvider
     AppSettings *mAppSettings;
     ISynthParamProvider *mParamProvider;
     bool mTouched = false;
-    //bool mPhysicallyPressed = false;
+    // bool mPhysicallyPressed = false;
 
     void EnsurePatchConnections(AppSettings *appSettings, ISynthParamProvider *paramProvider)
     {
@@ -363,85 +363,86 @@ struct Voice : IModulationKRateProvider
                                                                            float val) override
     {
         // if (mVoiceIndex == 0) {
-        //     Serial.println(String("Getting krate param '") + gKRateModulationDestinationInfo.GetValueString(d) + "' = " + val);
+        //     Serial.println(String("Getting krate param '") + gKRateModulationDestinationInfo.GetValueString(d) + "' =
+        //     " + val);
         // }
         switch (d)
         {
         case KRateModulationDestination::VoiceFilterCutoff:
             mKRateVoiceFilterCutoffN11 = val;
             return;
-        // case KRateModulationDestination::Osc1Frequency:
-        //     mKRateFrequencyN11[0] = val;
-        //     return;
-        // case KRateModulationDestination::Osc1Amplitude:
-        //     mKRateAmplitudeN11[0] = val;
-        //     return;
-        // case KRateModulationDestination::Osc2Frequency:
-        //     mKRateFrequencyN11[1] = val;
-        //     return;
-        // case KRateModulationDestination::Osc2Amplitude:
-        //     mKRateAmplitudeN11[1] = val;
-        //     return;
-        // case KRateModulationDestination::Osc3Frequency:
-        //     mKRateFrequencyN11[2] = val;
-        //     return;
-        // case KRateModulationDestination::Osc3Amplitude:
-        //     mKRateAmplitudeN11[2] = val;
-        //     return;
-        // case KRateModulationDestination::Osc1FMFeedback:
-        //     mKRateOscFMFeedback[0] = val;
-        //     return;
-        // case KRateModulationDestination::Osc2FMFeedback:
-        //     mKRateOscFMFeedback[1] = val;
-        //     return;
-        // case KRateModulationDestination::Osc3FMFeedback:
-        //     mKRateOscFMFeedback[2] = val;
-        //     return;
-        // case KRateModulationDestination::OverallFMStrength:
-        //     mKRateOverallFMStrength = val;
-        //     return;
-        // case KRateModulationDestination::FMStrength2To1:
-        //     mKRateFMStrength2To1 = val;
-        //     return;
-        // case KRateModulationDestination::FMStrength3To1:
-        //     mKRateFMStrength3To1 = val;
-        //     return;
-        // case KRateModulationDestination::FMStrength1To2:
-        //     mKRateFMStrength1To2 = val;
-        //     return;
-        // case KRateModulationDestination::FMStrength3To2:
-        //     mKRateFMStrength3To2 = val;
-        //     return;
-        // case KRateModulationDestination::FMStrength1To3:
-        //     mKRateFMStrength1To3 = val;
-        //     return;
-        // case KRateModulationDestination::FMStrength2To3:
-        //     mKRateFMStrength2To3 = val;
-        //     return;
+            // case KRateModulationDestination::Osc1Frequency:
+            //     mKRateFrequencyN11[0] = val;
+            //     return;
+            // case KRateModulationDestination::Osc1Amplitude:
+            //     mKRateAmplitudeN11[0] = val;
+            //     return;
+            // case KRateModulationDestination::Osc2Frequency:
+            //     mKRateFrequencyN11[1] = val;
+            //     return;
+            // case KRateModulationDestination::Osc2Amplitude:
+            //     mKRateAmplitudeN11[1] = val;
+            //     return;
+            // case KRateModulationDestination::Osc3Frequency:
+            //     mKRateFrequencyN11[2] = val;
+            //     return;
+            // case KRateModulationDestination::Osc3Amplitude:
+            //     mKRateAmplitudeN11[2] = val;
+            //     return;
+            // case KRateModulationDestination::Osc1FMFeedback:
+            //     mKRateOscFMFeedback[0] = val;
+            //     return;
+            // case KRateModulationDestination::Osc2FMFeedback:
+            //     mKRateOscFMFeedback[1] = val;
+            //     return;
+            // case KRateModulationDestination::Osc3FMFeedback:
+            //     mKRateOscFMFeedback[2] = val;
+            //     return;
+            // case KRateModulationDestination::OverallFMStrength:
+            //     mKRateOverallFMStrength = val;
+            //     return;
+            // case KRateModulationDestination::FMStrength2To1:
+            //     mKRateFMStrength2To1 = val;
+            //     return;
+            // case KRateModulationDestination::FMStrength3To1:
+            //     mKRateFMStrength3To1 = val;
+            //     return;
+            // case KRateModulationDestination::FMStrength1To2:
+            //     mKRateFMStrength1To2 = val;
+            //     return;
+            // case KRateModulationDestination::FMStrength3To2:
+            //     mKRateFMStrength3To2 = val;
+            //     return;
+            // case KRateModulationDestination::FMStrength1To3:
+            //     mKRateFMStrength1To3 = val;
+            //     return;
+            // case KRateModulationDestination::FMStrength2To3:
+            //     mKRateFMStrength2To3 = val;
+            //     return;
 
-        // case KRateModulationDestination::Osc1FreqMul:
-        //     mKRateOscFreqMul[0] = val;
-        //     return;
+            // case KRateModulationDestination::Osc1FreqMul:
+            //     mKRateOscFreqMul[0] = val;
+            //     return;
 
-        // case KRateModulationDestination::Osc2FreqMul:
-        //     mKRateOscFreqMul[1] = val;
-        //     return;
+            // case KRateModulationDestination::Osc2FreqMul:
+            //     mKRateOscFreqMul[1] = val;
+            //     return;
 
-        // case KRateModulationDestination::Osc3FreqMul:
-        //     mKRateOscFreqMul[2] = val;
-        //     return;
+            // case KRateModulationDestination::Osc3FreqMul:
+            //     mKRateOscFreqMul[2] = val;
+            //     return;
 
-        // case KRateModulationDestination::Osc1FreqOffset:
-        //     mKRateOscFreqOffset[0] = val;
-        //     return;
+            // case KRateModulationDestination::Osc1FreqOffset:
+            //     mKRateOscFreqOffset[0] = val;
+            //     return;
 
-        // case KRateModulationDestination::Osc2FreqOffset:
-        //     mKRateOscFreqOffset[1] = val;
-        //     return;
+            // case KRateModulationDestination::Osc2FreqOffset:
+            //     mKRateOscFreqOffset[1] = val;
+            //     return;
 
-        // case KRateModulationDestination::Osc3FreqOffset:
-        //     mKRateOscFreqOffset[2] = val;
-        //     return;
+            // case KRateModulationDestination::Osc3FreqOffset:
+            //     mKRateOscFreqOffset[2] = val;
+            //     return;
         }
     }
 
@@ -555,11 +556,12 @@ struct Voice : IModulationKRateProvider
 
         // param semis
         constexpr float oneKhzMidiNote =
-            83.213094853f; // 1000hz, in midi notes. this replicates behavior of filter modulation.
+            83.213094853f;            // 1000hz, in midi notes. this replicates behavior of filter modulation.
         float ktNote = midiNote + 24; // center represents playing note + 2 octaves.
         float centerNote = Lerp(oneKhzMidiNote, ktNote, osc.mFreqParamKT);
         float param = (osc.mFreqParam - 0.5f) * 10;
-        float paramSemis = centerNote + param * 12; // each 1 param = 1 octave. because we're in semis land, it's just a mul.
+        float paramSemis =
+            centerNote + param * 12; // each 1 param = 1 octave. because we're in semis land, it's just a mul.
 
         float idealSemis = paramSemis + osc.mPitchFine + osc.mPitchSemis + detune;
 
@@ -582,7 +584,8 @@ struct Voice : IModulationKRateProvider
     void Update(USBMidiMusicalState &ms)
     {
         // make sure this gets updated; it doesn't get automatically syncd
-        this->mRunningVoice.mNoteInfo.mIsPhysicallyHeld = ms.isPhysicallyPressed(mRunningVoice.mNoteInfo.mLiveNoteSequenceID);
+        this->mRunningVoice.mNoteInfo.mIsPhysicallyHeld =
+            ms.isPhysicallyPressed(mRunningVoice.mNoteInfo.mLiveNoteSequenceID);
         // basically the only time this will become -1 is at startup
         if (mRunningVoice.mSynthPatch == nullptr)
         {
@@ -664,7 +667,18 @@ struct Voice : IModulationKRateProvider
                                         const HeldNoteInfo &noteInfo,
                                         uint16_t synthPatchIndex)
     {
-        IncomingMusicalEvents_OnNoteOff();
+        //
+        bool isLegato = (mRunningVoice.mSource.Equals(source)) && (mRunningVoice.mReleaseTimestampMS == 0);
+
+        // Serial.println(String("NoteOn ") + noteInfo.mMidiNote.GetNoteDesc().mName + " Legato?" +
+        //                (isLegato ? "YES" : "NO") + " RunningSrc=" + (int)mRunningVoice.mSource.mType +
+        //                " Source=" + (int)source.mType + " ReleaseTimestamp=" + mRunningVoice.mReleaseTimestampMS);
+
+        // i don't actually think this is necessary. to be confirmed.
+        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv1.mLegatoRestart))
+            mEnv1.noteOff();
+        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv2.mLegatoRestart))
+            mEnv2.noteOff();
 
         // adjust running voice.
         auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
@@ -690,9 +704,11 @@ struct Voice : IModulationKRateProvider
                 mOsc.mOsc[i].ResetPhase();
             }
         }
+        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv1.mLegatoRestart))
+            mEnv1.noteOn();
+        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv2.mLegatoRestart))
+            mEnv2.noteOn();
 
-        mEnv1.noteOn();
-        mEnv2.noteOn();
         // Serial.println("voice note on");
 
         if (mRunningVoice.mSynthPatch->mLFO1.mPhaseRestart)
@@ -724,7 +740,7 @@ struct Voice : IModulationKRateProvider
     // - 0.x: playing before release
     // - 1.x: after release
     // - 2.x: after idle
-    float CalcReleaseabilityForEnvelope(const EnvelopeNode& env, const EnvelopeSpec& envSpec) const
+    float CalcReleaseabilityForEnvelope(const EnvelopeNode &env, const EnvelopeSpec &envSpec) const
     {
         // if playing, before any release, then 0-1
         if (mRunningVoice.mReleaseTimestampMS == 0)

@@ -12,6 +12,21 @@ namespace clarinoid
 
 struct EnvelopeMenuApp
 {
+    BoolSettingItem mLegatoRetrig = {"Legato Retrig",
+                                "On",
+                                "Off",
+                                Property<bool>{[](void *cap) FLASHMEM {
+                                                     auto *pThis = (EnvelopeMenuApp *)cap;
+                                                     return pThis->mBinding->mLegatoRestart;
+                                               },
+                                               [](void *cap, const bool &v) FLASHMEM {
+                                                     auto *pThis = (EnvelopeMenuApp *)cap;
+                                                     pThis->mBinding->mLegatoRestart = v;
+                                               },
+                                               this},
+                                AlwaysEnabled};
+
+
     FloatSettingItem mDelayMS = {"Delay",
                                  StandardRangeSpecs::gEnvDelayMS,
                                  Property<float>{[](void *cap) FLASHMEM {
@@ -103,7 +118,8 @@ struct EnvelopeMenuApp
     //                                                      this},
     //                                      AlwaysEnabled};
 
-    ISettingItem *mArray[6] = {
+    ISettingItem *mArray[7] = {
+        &mLegatoRetrig,
         &mDelayMS,
         &mAttackMS,
         &mHoldMS,
@@ -625,6 +641,23 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     //                                                 },
     //                                                 this}};
 
+
+    // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
+    // cc::function<bool()>::ptr_t isEnabled) :
+    EnumSettingItem<VoicingMode> mVoicingMode = {
+        "Voicing",
+        gVoicingModeInfo,
+        Property<VoicingMode>{[](void *cap) FLASHMEM {
+                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                          return pThis->GetBinding().mVoicingMode;
+                                      },
+                                      [](void *cap, const VoicingMode &v) {
+                                          auto *pThis = (SynthPatchMenuApp *)cap;
+                                          pThis->GetBinding().mVoicingMode = v;
+                                      },
+                                      this},
+        AlwaysEnabled};
+
     // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
     // cc::function<bool()>::ptr_t isEnabled) :
     EnumSettingItem<ClarinoidFilterType> mBreathFiltType = {
@@ -1042,7 +1075,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
-    ISettingItem *mArray[19] = {
+    ISettingItem *mArray[20] = {
+        &mVoicingMode,
         &mBreathFilterSubmenuItem,
         &mDetune,
         &mPan,
