@@ -572,6 +572,11 @@ struct VolumeParamValue
         mParamValue = DecibelsToParam(db);
     }
 
+    // useful for adding a modulation signal to a volume.
+    VolumeParamValue AddParam(float rhs) const {
+        return FromParamValue(mParamValue + rhs);
+    }
+
     static VolumeParamValue FromLinear(float f) { 
         VolumeParamValue ret;
         ret.SetLinearValue(f);

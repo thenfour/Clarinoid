@@ -11,8 +11,9 @@ struct IModulationKRateProvider
     // getting a dest value seem unintuitive?
     // the idea is that the synthvoice stores the running values for these k-rate modulations, and this is a way to
     // access the values because they're used for FM modulations.
-    virtual float IModulationProvider_GetKRateModulationDestinationValueN11(KRateModulationDestination src) = 0;
-    virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d, float val) = 0;
+    // virtual float IModulationProvider_GetKRateModulationDestinationValueN11(KRateModulationDestination src) = 0;
+    // virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d, float val) =
+    // 0;
 };
 
 enum class ModulationRate : uint8_t
@@ -297,81 +298,59 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
      ModulationPoleType::N11},
 
     {true,
-     (size_t)AnyModulationDestination::VoiceFilterCutoff, // index overall
-     AnyModulationDestination::VoiceFilterCutoff,
-     (size_t)KRateModulationDestination::VoiceFilterCutoff, // index for rate
+     (size_t)AnyModulationDestination::FilterCutoff, // index overall
+     AnyModulationDestination::FilterCutoff,
+     (size_t)KRateModulationDestination::FilterCutoff, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::VoiceFilterCutoff,
+     KRateModulationDestination::FilterCutoff,
      (ARateModulationDestination)0,
-     0,     // range min
+     0, // range min
      1, // range max
      ModulationPoleType::Positive01},
 
     {true,
-     (size_t)AnyModulationDestination::Osc1Frequency, // index overall
-     AnyModulationDestination::Osc1Frequency,
-     (size_t)KRateModulationDestination::Osc1Frequency, // index for rate
+     (size_t)AnyModulationDestination::MasterVolume, // index overall
+     AnyModulationDestination::MasterVolume,
+     (size_t)KRateModulationDestination::MasterVolume, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::Osc1Frequency,
+     KRateModulationDestination::MasterVolume,
      (ARateModulationDestination)0,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
 
     {true,
-     (size_t)AnyModulationDestination::Osc1Amplitude, // index overall
-     AnyModulationDestination::Osc1Amplitude,
-     (size_t)KRateModulationDestination::Osc1Amplitude, // index for rate
+     (size_t)AnyModulationDestination::Osc1Volume, // index overall
+     AnyModulationDestination::Osc1Volume,
+     (size_t)KRateModulationDestination::Osc1Volume, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::Osc1Amplitude,
+     KRateModulationDestination::Osc1Volume,
      (ARateModulationDestination)0,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
 
     {true,
-     (size_t)AnyModulationDestination::Osc2Frequency, // index overall
-     AnyModulationDestination::Osc2Frequency,
-     (size_t)KRateModulationDestination::Osc2Frequency, // index for rate
+     (size_t)AnyModulationDestination::Osc2Volume, // index overall
+     AnyModulationDestination::Osc2Volume,
+     (size_t)KRateModulationDestination::Osc2Volume, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::Osc2Frequency,
+     KRateModulationDestination::Osc2Volume,
      (ARateModulationDestination)0,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
 
     {true,
-     (size_t)AnyModulationDestination::Osc2Amplitude, // index overall
-     AnyModulationDestination::Osc2Amplitude,
-     (size_t)KRateModulationDestination::Osc2Amplitude, // index for rate
+     (size_t)AnyModulationDestination::Osc3Volume, // index overall
+     AnyModulationDestination::Osc3Volume,
+     (size_t)KRateModulationDestination::Osc3Volume, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::Osc2Amplitude,
+     KRateModulationDestination::Osc3Volume,
      (ARateModulationDestination)0,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
-
-    {true,
-     (size_t)AnyModulationDestination::Osc3Frequency, // index overall
-     AnyModulationDestination::Osc3Frequency,
-     (size_t)KRateModulationDestination::Osc3Frequency, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc3Frequency,
-     (ARateModulationDestination)0,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
-
-    {true,
-     (size_t)AnyModulationDestination::Osc3Amplitude, // index overall
-     AnyModulationDestination::Osc3Amplitude,
-     (size_t)KRateModulationDestination::Osc3Amplitude, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc3Amplitude,
-     (ARateModulationDestination)0,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
 
     {true,                                             // is a modulation
      (size_t)AnyModulationDestination::Osc1FMFeedback, // index overall
@@ -483,70 +462,37 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
      1, // range max
      ModulationPoleType::Positive01},
 
-    {true,                                          // is a modulation
-     (size_t)AnyModulationDestination::Osc1FreqMul, // index overall
-     AnyModulationDestination::Osc1FreqMul,
-     (size_t)KRateModulationDestination::Osc1FreqMul, // index for rate
+    {true,                                                 // is a modulation
+     (size_t)AnyModulationDestination::Osc1FrequencyParam, // index overall
+     AnyModulationDestination::Osc1FrequencyParam,
+     (size_t)KRateModulationDestination::Osc1FrequencyParam, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::Osc1FreqMul,
+     KRateModulationDestination::Osc1FrequencyParam,
      (ARateModulationDestination)0,
-     0,  // range min
-     20, // range max
+     0, // range min
+     1, // range max
      ModulationPoleType::Positive01},
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::Osc1FreqOffset, // index overall
-     AnyModulationDestination::Osc1FreqOffset,
-     (size_t)KRateModulationDestination::Osc1FreqOffset, // index for rate
+    {true,                                                 // is a modulation
+     (size_t)AnyModulationDestination::Osc2FrequencyParam, // index overall
+     AnyModulationDestination::Osc2FrequencyParam,
+     (size_t)KRateModulationDestination::Osc2FrequencyParam, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::Osc1FreqOffset,
+     KRateModulationDestination::Osc2FrequencyParam,
      (ARateModulationDestination)0,
-     0,     // range min
-     10000, // range max
+     0, // range min
+     1, // range max
      ModulationPoleType::Positive01},
 
-    {true,                                          // is a modulation
-     (size_t)AnyModulationDestination::Osc2FreqMul, // index overall
-     AnyModulationDestination::Osc2FreqMul,
-     (size_t)KRateModulationDestination::Osc2FreqMul, // index for rate
+    {true,                                                 // is a modulation
+     (size_t)AnyModulationDestination::Osc3FrequencyParam, // index overall
+     AnyModulationDestination::Osc3FrequencyParam,
+     (size_t)KRateModulationDestination::Osc3FrequencyParam, // index for rate
      ModulationRate::KRate,
-     KRateModulationDestination::Osc2FreqMul,
+     KRateModulationDestination::Osc3FrequencyParam,
      (ARateModulationDestination)0,
-     0,  // range min
-     20, // range max
-     ModulationPoleType::Positive01},
-
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::Osc2FreqOffset, // index overall
-     AnyModulationDestination::Osc2FreqOffset,
-     (size_t)KRateModulationDestination::Osc2FreqOffset, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc2FreqOffset,
-     (ARateModulationDestination)0,
-     0,     // range min
-     10000, // range max
-     ModulationPoleType::Positive01},
-
-    {true,                                          // is a modulation
-     (size_t)AnyModulationDestination::Osc3FreqMul, // index overall
-     AnyModulationDestination::Osc3FreqMul,
-     (size_t)KRateModulationDestination::Osc3FreqMul, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc3FreqMul,
-     (ARateModulationDestination)0,
-     0,  // range min
-     20, // range max
-     ModulationPoleType::Positive01},
-
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::Osc3FreqOffset, // index overall
-     AnyModulationDestination::Osc3FreqOffset,
-     (size_t)KRateModulationDestination::Osc3FreqOffset, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc3FreqOffset,
-     (ARateModulationDestination)0,
-     0,     // range min
-     10000, // range max
+     0, // range min
+     1, // range max
      ModulationPoleType::Positive01},
 
 };

@@ -34,7 +34,8 @@
 #pragma GCC diagnostic pop
 
 USBHost gUsbHost;
-MIDIDevice gUsbMidi(gUsbHost);
+MIDIDevice_BigBuffer gUsbMidi(gUsbHost);
+static constexpr size_t aosnetuhpch = sizeof(gUsbMidi);
 
 #include "bmApp.hpp"
 

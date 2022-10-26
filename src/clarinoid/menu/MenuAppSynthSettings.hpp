@@ -756,7 +756,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                               this},
                                               AlwaysEnabled};
 
-    FloatSettingItem mBreathFiltMax = {" - filt freq",
+    FloatSettingItem mBreathFiltMax = {" - freq",
                                        StandardRangeSpecs::gFloat_0_1_Fine,
                                        Property<float>{[](void *cap) FLASHMEM {
                                                            auto *pThis = (SynthPatchMenuApp *)cap;
@@ -767,7 +767,12 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                            pThis->GetBinding().mFilterFreq = v;
                                                        },
                                                        this},
-                                       AlwaysEnabled};
+                                       Property<bool>{[](void *cap) FLASHMEM -> bool {
+                                                          //auto *pThis = (SynthPatchMenuApp *)cap;
+                                                          // TODO: check filter capabilities.
+                                                          return true;
+                                                      },
+                                                      this}};
 
     FloatSettingItem mBreathFiltKS = {" - filt KT",
                                       NumericEditRangeSpec<float>{0.0f, 2.0f, .2f, .1f, 0.01f},
@@ -1096,7 +1101,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                            },
                                            [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->mOscSubmenuStuff.SetBindings(&pThis->GetBinding(), 0, &pThis->mDisplay);
+                                               pThis->mOscSubmenuStuff.SetBindings(
+                                                   &pThis->GetBinding(), 0, &pThis->mDisplay);
                                                // pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[0];
                                                // pThis->mOscSubmenuStuff.mOscillatorIndex = 0;
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
@@ -1110,7 +1116,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                            },
                                            [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->mOscSubmenuStuff.SetBindings(&pThis->GetBinding(), 1, &pThis->mDisplay);
+                                               pThis->mOscSubmenuStuff.SetBindings(
+                                                   &pThis->GetBinding(), 1, &pThis->mDisplay);
                                                //    pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[1];
                                                //    pThis->mOscSubmenuStuff.mOscillatorIndex = 1;
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
@@ -1124,7 +1131,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                            },
                                            [](void *cap) FLASHMEM {
                                                auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->mOscSubmenuStuff.SetBindings(&pThis->GetBinding(), 2, &pThis->mDisplay);
+                                               pThis->mOscSubmenuStuff.SetBindings(
+                                                   &pThis->GetBinding(), 2, &pThis->mDisplay);
                                                //    pThis->mOscSubmenuStuff.mpBinding = &pThis->GetBinding().mOsc[2];
                                                //    pThis->mOscSubmenuStuff.mOscillatorIndex = 2;
                                                return &pThis->mOscSubmenuStuff.mSubmenuList;
@@ -1141,7 +1149,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     };
     SettingsList mBreathFilterSubmenuList = {mBreathFilterSubmenuArray};
 
-    SubmenuSettingItem mBreathFilterSubmenuItem = {String("Breath Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
+    SubmenuSettingItem mBreathFilterSubmenuItem = {String("Filter"), &mBreathFilterSubmenuList, AlwaysEnabled};
 
     ISettingItem *mArray[20] = {
         &mMasterVolume,

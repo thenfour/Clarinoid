@@ -131,6 +131,16 @@ struct VoiceModulationMatrixNode : public AudioStream
             0}; // default-initialize to false. https://stackoverflow.com/a/1920481/402169
     };
 
+    // since k-rate are not in the audio graph, just hold their values here. synthvoice can get the values from here.
+    float mKRateDestinationValuesN11[SizeofStaticArray(gKRateModulationDestinationItems)] = {0};
+
+    float GetKRateDestinationValue(KRateModulationDestination dest) const
+    {
+        return mKRateDestinationValuesN11[(int)dest];
+    }
+    void ResetKRateModulations() {
+        for (float& f : mKRateDestinationValuesN11) { f = 0; }
+    }
     float EnsureKRateSource(Buffers &buffers, const ModulationSourceInfo &sourceInfo)
     {
         // ensure we have a source
@@ -566,18 +576,12 @@ struct VoiceModulationMatrixNode : public AudioStream
             ProcessModulation(buffers, modulation);
         }
 
-        float krateFMStrength2To1 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength2To1);
-        float krateFMStrength3To1 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength3To1);
-        float krateFMStrength1To2 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength1To2);
-        float krateFMStrength3To2 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength3To2);
-        float krateFMStrength1To3 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength1To3);
-        float krateFMStrength2To3 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength2To3);
+        float krateFMStrength2To1 = GetKRateDestinationValue(KRateModulationDestination::FMStrength2To1);
+        float krateFMStrength3To1 = GetKRateDestinationValue(KRateModulationDestination::FMStrength3To1);
+        float krateFMStrength1To2 = GetKRateDestinationValue(KRateModulationDestination::FMStrength1To2);
+        float krateFMStrength3To2 = GetKRateDestinationValue(KRateModulationDestination::FMStrength3To2);
+        float krateFMStrength1To3 = GetKRateDestinationValue(KRateModulationDestination::FMStrength1To3);
+        float krateFMStrength2To3 = GetKRateDestinationValue(KRateModulationDestination::FMStrength2To3);
 
         if (!FloatEquals(mSynthPatch->mFMStrength2To1, 0) || !FloatEquals(krateFMStrength2To1, 0))
         {
@@ -635,16 +639,10 @@ struct VoiceModulationMatrixNode : public AudioStream
             release(src);
         }
 
+        // store k-rate dest values for use by synthvoice; this object is the best place to keep the values.
         for (size_t i = 0; i < SizeofStaticArray(buffers.kRateDestinationValuesN11); ++i)
         {
-            //if (buffers.kRateDestinationsFilled[i])
-            //{
-                mpkRateProvider->IModulationProvider_SetKRateModulationDestinationValueN11(
-                    (KRateModulationDestination)i, buffers.kRateDestinationValuesN11[i]);
-            //     continue;
-            //}
-            // mpkRateProvider->IModulationProvider_SetKRateModulationDestinationValueN11((KRateModulationDestination)i,
-                                                                                    //    0);
+            mKRateDestinationValuesN11[i] = buffers.kRateDestinationValuesN11[i];
         }
 
         for (size_t i = 0; i < SizeofStaticArray(buffers.aRateDestinations); ++i)

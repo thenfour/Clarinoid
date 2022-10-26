@@ -75,12 +75,13 @@ enum class FilterType
     HP4,
 };
 
-// flags
+// BINARY FLAGS
 enum class FilterCapabilities
 {
     None = 0,
-    Resonance = 1,
-    Saturation = 2,
+    Cutoff = 1,
+    Resonance = 2,
+    Saturation = 4,
 };
 
 struct IFilter
@@ -101,6 +102,39 @@ struct IFilter
     virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) = 0;
     virtual void ProcessSample(real &l, real &r) = 0;
     virtual void Reset() = 0; // honestly not even sure what reset really does
+};
+
+struct NullFilter : IFilter
+{
+    virtual void SetType(FilterType type) override
+    {
+    }
+    virtual FilterCapabilities GetCapabilities() override
+    {
+        return FilterCapabilities::None;
+    }
+    virtual void SetCutoffFrequency(real hz) override
+    {
+    }
+    virtual void SetParams(FilterType type, real cutoffHz, real reso, real saturation) override
+    {
+    }
+    virtual void ProcessInPlace(real *samples, size_t sampleCount) override
+    {
+    }
+    virtual real ProcessSample(real x) override
+    {
+        return x;
+    }
+    virtual void ProcessInPlace(real *samplesL, real *samplesR, size_t sampleCount) override
+    {
+    }
+    virtual void ProcessSample(real &l, real &r) override
+    {
+    }
+    virtual void Reset() override
+    {
+    }
 };
 
 } // namespace filters

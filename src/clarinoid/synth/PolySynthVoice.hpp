@@ -292,7 +292,7 @@ struct Voice : IModulationKRateProvider
         return CalcParamFrequency(mRunningVoice.mSynthPatch->mFilterFreq,
                                   noteHz,
                                   mRunningVoice.mSynthPatch->mFilterKeytracking,
-                                  mKRateVoiceFilterCutoffN11);
+                                  mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
     }
 
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) override
@@ -309,172 +309,173 @@ struct Voice : IModulationKRateProvider
         return mParamProvider->SynthParamProvider_GetPitchBendN11();
     }
 
-    virtual float IModulationProvider_GetKRateModulationDestinationValueN11(KRateModulationDestination dest) override
-    {
-        switch (dest)
-        {
-        case KRateModulationDestination::VoiceFilterCutoff:
-            return mKRateVoiceFilterCutoffN11;
-        case KRateModulationDestination::Osc1FMFeedback:
-            return mKRateOscFMFeedback[0];
-        case KRateModulationDestination::Osc2FMFeedback:
-            return mKRateOscFMFeedback[1];
-        case KRateModulationDestination::Osc3FMFeedback:
-            return mKRateOscFMFeedback[2];
-        case KRateModulationDestination::OverallFMStrength:
-            return mKRateOverallFMStrength;
-        case KRateModulationDestination::FMStrength2To1:
-            return mKRateFMStrength2To1;
-        case KRateModulationDestination::FMStrength3To1:
-            return mKRateFMStrength3To1;
-        case KRateModulationDestination::FMStrength1To2:
-            return mKRateFMStrength1To2;
-        case KRateModulationDestination::FMStrength3To2:
-            return mKRateFMStrength3To2;
-        case KRateModulationDestination::FMStrength1To3:
-            return mKRateFMStrength1To3;
-        case KRateModulationDestination::FMStrength2To3:
-            return mKRateFMStrength2To3;
-        default:
-            return 0;
-        }
-    }
+    // virtual float IModulationProvider_GetKRateModulationDestinationValueN11(KRateModulationDestination dest) override
+    // {
+    //     switch (dest)
+    //     {
+    //     case KRateModulationDestination::VoiceFilterCutoff:
+    //         return mKRateVoiceFilterCutoffN11;
+    //     case KRateModulationDestination::Osc1FMFeedback:
+    //         return mKRateOscFMFeedback[0];
+    //     case KRateModulationDestination::Osc2FMFeedback:
+    //         return mKRateOscFMFeedback[1];
+    //     case KRateModulationDestination::Osc3FMFeedback:
+    //         return mKRateOscFMFeedback[2];
+    //     case KRateModulationDestination::OverallFMStrength:
+    //         return mKRateOverallFMStrength;
+    //     case KRateModulationDestination::FMStrength2To1:
+    //         return mKRateFMStrength2To1;
+    //     case KRateModulationDestination::FMStrength3To1:
+    //         return mKRateFMStrength3To1;
+    //     case KRateModulationDestination::FMStrength1To2:
+    //         return mKRateFMStrength1To2;
+    //     case KRateModulationDestination::FMStrength3To2:
+    //         return mKRateFMStrength3To2;
+    //     case KRateModulationDestination::FMStrength1To3:
+    //         return mKRateFMStrength1To3;
+    //     case KRateModulationDestination::FMStrength2To3:
+    //         return mKRateFMStrength2To3;
+    //     default:
+    //         return 0;
+    //     }
+    // }
 
     // store k-rate running values here
-    float mKRateVoiceFilterCutoffN11 = 0;
-    float mKRateFrequencyN11[3] = {0};
-    float mKRateAmplitudeN11[3] = {0};
-    float mKRateOscFMFeedback[3] = {0};
-    float mKRateOscFreqMul[3] = {0};
-    float mKRateOscFreqOffset[3] = {0};
-    float mKRateOverallFMStrength = 0;
-    float mKRateFMStrength2To1 = 0;
-    float mKRateFMStrength3To1 = 0;
-    float mKRateFMStrength1To2 = 0;
-    float mKRateFMStrength3To2 = 0;
-    float mKRateFMStrength1To3 = 0;
-    float mKRateFMStrength2To3 = 0;
+    // float mKRateVoiceFilterCutoffN11 = 0;
+    // float mKRateFrequencyN11[3] = {0};
+    // float mKRateAmplitudeN11[3] = {0};
+    // float mKRateOscFMFeedback[3] = {0};
+    // float mKRateOscFreqMul[3] = {0};
+    // float mKRateOscFreqOffset[3] = {0};
+    // float mKRateOverallFMStrength = 0;
+    // float mKRateFMStrength2To1 = 0;
+    // float mKRateFMStrength3To1 = 0;
+    // float mKRateFMStrength1To2 = 0;
+    // float mKRateFMStrength3To2 = 0;
+    // float mKRateFMStrength1To3 = 0;
+    // float mKRateFMStrength2To3 = 0;
 
     // these will not track FREQUENCY, but rather MIDI NOTE. this lets us apply portamento to certain parameters but not
     // others. it also may have the benefit of feeling more linear.
     PortamentoCalc mPortamentoCalc[3];
 
-    virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
-                                                                           float val) override
-    {
-        // if (mVoiceIndex == 0) {
-        //     Serial.println(String("Getting krate param '") + gKRateModulationDestinationInfo.GetValueString(d) + "' =
-        //     " + val);
-        // }
-        switch (d)
-        {
-        case KRateModulationDestination::VoiceFilterCutoff:
-            mKRateVoiceFilterCutoffN11 = val;
-            return;
-            // case KRateModulationDestination::Osc1Frequency:
-            //     mKRateFrequencyN11[0] = val;
-            //     return;
-            // case KRateModulationDestination::Osc1Amplitude:
-            //     mKRateAmplitudeN11[0] = val;
-            //     return;
-            // case KRateModulationDestination::Osc2Frequency:
-            //     mKRateFrequencyN11[1] = val;
-            //     return;
-            // case KRateModulationDestination::Osc2Amplitude:
-            //     mKRateAmplitudeN11[1] = val;
-            //     return;
-            // case KRateModulationDestination::Osc3Frequency:
-            //     mKRateFrequencyN11[2] = val;
-            //     return;
-            // case KRateModulationDestination::Osc3Amplitude:
-            //     mKRateAmplitudeN11[2] = val;
-            //     return;
-            // case KRateModulationDestination::Osc1FMFeedback:
-            //     mKRateOscFMFeedback[0] = val;
-            //     return;
-            // case KRateModulationDestination::Osc2FMFeedback:
-            //     mKRateOscFMFeedback[1] = val;
-            //     return;
-            // case KRateModulationDestination::Osc3FMFeedback:
-            //     mKRateOscFMFeedback[2] = val;
-            //     return;
-            // case KRateModulationDestination::OverallFMStrength:
-            //     mKRateOverallFMStrength = val;
-            //     return;
-            // case KRateModulationDestination::FMStrength2To1:
-            //     mKRateFMStrength2To1 = val;
-            //     return;
-            // case KRateModulationDestination::FMStrength3To1:
-            //     mKRateFMStrength3To1 = val;
-            //     return;
-            // case KRateModulationDestination::FMStrength1To2:
-            //     mKRateFMStrength1To2 = val;
-            //     return;
-            // case KRateModulationDestination::FMStrength3To2:
-            //     mKRateFMStrength3To2 = val;
-            //     return;
-            // case KRateModulationDestination::FMStrength1To3:
-            //     mKRateFMStrength1To3 = val;
-            //     return;
-            // case KRateModulationDestination::FMStrength2To3:
-            //     mKRateFMStrength2To3 = val;
-            //     return;
+    // virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
+    //                                                                        float val) override
+    // {
+    //     // if (mVoiceIndex == 0) {
+    //     //     Serial.println(String("Getting krate param '") + gKRateModulationDestinationInfo.GetValueString(d) +
+    //     "' =
+    //     //     " + val);
+    //     // }
+    //     switch (d)
+    //     {
+    //     case KRateModulationDestination::VoiceFilterCutoff:
+    //         mKRateVoiceFilterCutoffN11 = val;
+    //         return;
+    //         // case KRateModulationDestination::Osc1Frequency:
+    //         //     mKRateFrequencyN11[0] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc1Amplitude:
+    //         //     mKRateAmplitudeN11[0] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc2Frequency:
+    //         //     mKRateFrequencyN11[1] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc2Amplitude:
+    //         //     mKRateAmplitudeN11[1] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc3Frequency:
+    //         //     mKRateFrequencyN11[2] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc3Amplitude:
+    //         //     mKRateAmplitudeN11[2] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc1FMFeedback:
+    //         //     mKRateOscFMFeedback[0] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc2FMFeedback:
+    //         //     mKRateOscFMFeedback[1] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::Osc3FMFeedback:
+    //         //     mKRateOscFMFeedback[2] = val;
+    //         //     return;
+    //         // case KRateModulationDestination::OverallFMStrength:
+    //         //     mKRateOverallFMStrength = val;
+    //         //     return;
+    //         // case KRateModulationDestination::FMStrength2To1:
+    //         //     mKRateFMStrength2To1 = val;
+    //         //     return;
+    //         // case KRateModulationDestination::FMStrength3To1:
+    //         //     mKRateFMStrength3To1 = val;
+    //         //     return;
+    //         // case KRateModulationDestination::FMStrength1To2:
+    //         //     mKRateFMStrength1To2 = val;
+    //         //     return;
+    //         // case KRateModulationDestination::FMStrength3To2:
+    //         //     mKRateFMStrength3To2 = val;
+    //         //     return;
+    //         // case KRateModulationDestination::FMStrength1To3:
+    //         //     mKRateFMStrength1To3 = val;
+    //         //     return;
+    //         // case KRateModulationDestination::FMStrength2To3:
+    //         //     mKRateFMStrength2To3 = val;
+    //         //     return;
 
-            // case KRateModulationDestination::Osc1FreqMul:
-            //     mKRateOscFreqMul[0] = val;
-            //     return;
+    //         // case KRateModulationDestination::Osc1FreqMul:
+    //         //     mKRateOscFreqMul[0] = val;
+    //         //     return;
 
-            // case KRateModulationDestination::Osc2FreqMul:
-            //     mKRateOscFreqMul[1] = val;
-            //     return;
+    //         // case KRateModulationDestination::Osc2FreqMul:
+    //         //     mKRateOscFreqMul[1] = val;
+    //         //     return;
 
-            // case KRateModulationDestination::Osc3FreqMul:
-            //     mKRateOscFreqMul[2] = val;
-            //     return;
+    //         // case KRateModulationDestination::Osc3FreqMul:
+    //         //     mKRateOscFreqMul[2] = val;
+    //         //     return;
 
-            // case KRateModulationDestination::Osc1FreqOffset:
-            //     mKRateOscFreqOffset[0] = val;
-            //     return;
+    //         // case KRateModulationDestination::Osc1FreqOffset:
+    //         //     mKRateOscFreqOffset[0] = val;
+    //         //     return;
 
-            // case KRateModulationDestination::Osc2FreqOffset:
-            //     mKRateOscFreqOffset[1] = val;
-            //     return;
+    //         // case KRateModulationDestination::Osc2FreqOffset:
+    //         //     mKRateOscFreqOffset[1] = val;
+    //         //     return;
 
-            // case KRateModulationDestination::Osc3FreqOffset:
-            //     mKRateOscFreqOffset[2] = val;
-            //     return;
-        }
-    }
+    //         // case KRateModulationDestination::Osc3FreqOffset:
+    //         //     mKRateOscFreqOffset[2] = val;
+    //         //     return;
+    //     }
+    // }
 
-    void ResetKRateModulations()
-    {
-        // reset saved krate mod values, so modulations don't leak across patch changes
-        mKRateVoiceFilterCutoffN11 = 0;
-        for (auto &v : mKRateFrequencyN11)
-        {
-            v = 0;
-        }
+    // void ResetKRateModulations()
+    // {
+    //     // reset saved krate mod values, so modulations don't leak across patch changes
+    //     mKRateVoiceFilterCutoffN11 = 0;
+    //     for (auto &v : mKRateFrequencyN11)
+    //     {
+    //         v = 0;
+    //     }
 
-        for (auto &v : mKRateAmplitudeN11)
-        {
-            v = 1;
-        }
+    //     for (auto &v : mKRateAmplitudeN11)
+    //     {
+    //         v = 1;
+    //     }
 
-        for (auto &v : mKRateOscFMFeedback)
-        {
-            v = 0;
-        }
+    //     for (auto &v : mKRateOscFMFeedback)
+    //     {
+    //         v = 0;
+    //     }
 
-        mKRateOverallFMStrength = 0;
-        mKRateFMStrength2To1 = 0;
-        mKRateFMStrength3To1 = 0;
-        mKRateFMStrength1To2 = 0;
-        mKRateFMStrength3To2 = 0;
-        mKRateFMStrength1To3 = 0;
-        mKRateFMStrength2To3 = 0;
+    //     mKRateOverallFMStrength = 0;
+    //     mKRateFMStrength2To1 = 0;
+    //     mKRateFMStrength3To1 = 0;
+    //     mKRateFMStrength1To2 = 0;
+    //     mKRateFMStrength3To2 = 0;
+    //     mKRateFMStrength1To3 = 0;
+    //     mKRateFMStrength2To3 = 0;
 
-        mModMatrix.SetSynthPatch(mRunningVoice.mSynthPatch, this);
-    }
+    //     mModMatrix.SetSynthPatch(mRunningVoice.mSynthPatch, this);
+    // }
 
     short convertWaveType(OscWaveformShape s)
     {
@@ -535,16 +536,23 @@ struct Voice : IModulationKRateProvider
             mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled;
             mOsc.mOsc[i].waveform(patch.mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
-            mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mKRateOverallFMStrength;
-            mOsc.mOsc[i].mPMFeedbackAmt = patch.mOsc[i].mFMFeedbackGain + mKRateOscFMFeedback[i];
+            mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mModMatrix.GetKRateDestinationValue(
+                                                                        KRateModulationDestination::OverallFMStrength);
         }
+
+        mOsc.mOsc[0].mPMFeedbackAmt = patch.mOsc[0].mFMFeedbackGain +
+                                      mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc1FMFeedback);
+        mOsc.mOsc[1].mPMFeedbackAmt = patch.mOsc[1].mFMFeedbackGain +
+                                      mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc2FMFeedback);
+        mOsc.mOsc[2].mPMFeedbackAmt = patch.mOsc[2].mFMFeedbackGain +
+                                      mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc3FMFeedback);
     }
 
     float CalcFreq(const SynthOscillatorSettings &osc,
                    float detune,
                    float krateFreqModN11,
-                   float krateFreqMul,
-                   float krateFreqOff,
+                   //float krateFreqMul,
+                   //float krateFreqOff,
                    PortamentoCalc &portamento)
     {
         // we're in semis land... let's figure out the semitone.
@@ -559,7 +567,10 @@ struct Voice : IModulationKRateProvider
             83.213094853f;            // 1000hz, in midi notes. this replicates behavior of filter modulation.
         float ktNote = midiNote + 24; // center represents playing note + 2 octaves.
         float centerNote = Lerp(oneKhzMidiNote, ktNote, osc.mFreqParamKT);
-        float param = (osc.mFreqParam - 0.5f) * 10;
+
+        float param = osc.mFreqParam + krateFreqModN11;
+
+        param = (param - 0.5f) * 10; // rescale from 0-1 to -5 to +5 (octaves)
         float paramSemis =
             centerNote + param * 12; // each 1 param = 1 octave. because we're in semis land, it's just a mul.
 
@@ -570,14 +581,8 @@ struct Voice : IModulationKRateProvider
 
         float retHz = MIDINoteToFreq(retSemis);
         retHz *= osc.mFreqMultiplier;
-        retHz += osc.mFreqOffsetHz + krateFreqOff;
+        retHz += osc.mFreqOffsetHz;// + krateFreqOff;
 
-        // todo:
-        // use krateFreqModN11 (KRateModulationDestination::Osc1Frequency)
-        // use krateFreqMul
-        // use Osc3FreqOffset
-        // create krateFreqParam
-        // create krateFreqParamKT
         return Clamp(retHz, 0.0f, 22050.0f);
     };
 
@@ -608,18 +613,16 @@ struct Voice : IModulationKRateProvider
 
         // apply frequency params
         float freq0 = CalcFreq(patch.mOsc[0],
-                               -patch.mDetune,
-                               mKRateFrequencyN11[0],
-                               mKRateOscFreqMul[0],
-                               mKRateOscFreqOffset[0],
+                               0,
+                               mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc1FrequencyParam),
                                mPortamentoCalc[0]);
-        float freq1 = CalcFreq(
-            patch.mOsc[1], 0, mKRateFrequencyN11[1], mKRateOscFreqMul[1], mKRateOscFreqOffset[1], mPortamentoCalc[1]);
+        float freq1 = CalcFreq(patch.mOsc[1],
+                               -patch.mDetune,
+                               mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc2FrequencyParam),
+                               mPortamentoCalc[1]);
         float freq2 = CalcFreq(patch.mOsc[2],
                                -patch.mDetune,
-                               mKRateFrequencyN11[2],
-                               mKRateOscFreqMul[2],
-                               mKRateOscFreqOffset[2],
+                               mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc3FrequencyParam),
                                mPortamentoCalc[2]);
 
         mOsc.mOsc[0].SetBasicParams(freq0, patch.mOsc[0].mPhase01, patch.mOsc[0].mPortamentoTimeMS, false, 0);
@@ -639,7 +642,7 @@ struct Voice : IModulationKRateProvider
         auto verbGains = CalculatePanGain(patch.mDelayMix * 2 - 1);
         auto delayGains = CalculatePanGain(patch.mVerbMix * 2 - 1);
 
-        float masterGain = patch.mMasterVolume.ToLinearGain();
+        float masterGain = patch.mMasterVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::MasterVolume)).ToLinearGain();
 
         mSplitter.SetOutputGain(0, masterGain * std::get<0>(verbGains) * std::get<0>(delayGains));
         mSplitter.SetOutputGain(1, masterGain * std::get<1>(delayGains));
@@ -654,18 +657,29 @@ struct Voice : IModulationKRateProvider
         //                     "yes" : "no") + ", env1.issustain=" + (mEnv1.isSustain() ? "yes" : "no"));
         //  }
 
-        mOscMixerPanner.SetInputPanGainAndEnabled(0,
-                                                  mExtraPan + patch.mPan + patch.mOsc[0].mPan + patch.mStereoSpread,
-                                                  patch.mOsc[0].mVolume.ToLinearGain() * mKRateAmplitudeN11[0],
-                                                  true);
+        mOscMixerPanner.SetInputPanGainAndEnabled(
+            0,
+            mExtraPan + patch.mPan + patch.mOsc[0].mPan + patch.mStereoSpread,
+            patch.mOsc[0]
+                .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc1Volume))
+                .ToLinearGain(),
+            true);
 
         mOscMixerPanner.SetInputPanGainAndEnabled(
-            1, mExtraPan + patch.mPan + patch.mOsc[1].mPan, patch.mOsc[1].mVolume.ToLinearGain() * mKRateAmplitudeN11[1], true);
+            1,
+            mExtraPan + patch.mPan + patch.mOsc[1].mPan,
+            patch.mOsc[1]
+                .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc2Volume))
+                .ToLinearGain(),
+            true);
 
-        mOscMixerPanner.SetInputPanGainAndEnabled(2,
-                                                  mExtraPan + patch.mPan + patch.mOsc[2].mPan - patch.mStereoSpread,
-                                                  patch.mOsc[2].mVolume.ToLinearGain() * mKRateAmplitudeN11[2],
-                                                  true);
+        mOscMixerPanner.SetInputPanGainAndEnabled(
+            2,
+            mExtraPan + patch.mPan + patch.mOsc[2].mPan - patch.mStereoSpread,
+            patch.mOsc[2]
+                .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc3Volume))
+                .ToLinearGain(),
+            true);
     }
 
     // if there's already a note playing, it gets cut off
@@ -673,8 +687,10 @@ struct Voice : IModulationKRateProvider
                                         const HeldNoteInfo &noteInfo,
                                         uint16_t synthPatchIndex)
     {
-        //
-        bool isLegato = (mRunningVoice.mSource.Equals(source)) && (mRunningVoice.mReleaseTimestampMS == 0);
+        auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
+
+        bool isLegato = (mRunningVoice.mSource.Equals(source)) && (mRunningVoice.mReleaseTimestampMS == 0) &&
+                        (newSynthPatch->mVoicingMode == VoicingMode::Monophonic);
 
         // Serial.println(String("NoteOn ") + noteInfo.mMidiNote.GetNoteDesc().mName + " Legato?" +
         //                (isLegato ? "YES" : "NO") + " RunningSrc=" + (int)mRunningVoice.mSource.mType +
@@ -687,7 +703,6 @@ struct Voice : IModulationKRateProvider
             mEnv2.noteOff();
 
         // adjust running voice.
-        auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
         mRunningVoice.mSource = source;
         mRunningVoice.mNoteInfo = noteInfo;
         mRunningVoice.mReleaseTimestampMS = 0; // important so we know the note is playing
@@ -696,7 +711,7 @@ struct Voice : IModulationKRateProvider
         {
             mRunningVoice.mSynthPatchIndex = synthPatchIndex;
             mRunningVoice.mSynthPatch = newSynthPatch;
-            ResetKRateModulations();
+            mModMatrix.SetSynthPatch(newSynthPatch, this);
         }
 
         // if (this->mVoiceIndex == 0) {

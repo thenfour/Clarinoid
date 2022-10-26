@@ -17,6 +17,7 @@ class FilterNode : public AudioStream
     filters::DiodeFilter mDiode;
     filters::K35Filter mK35;
     filters::MoogLadderFilter mMoog;
+    filters::NullFilter mNullFilter;
 
     filters::IFilter *mSelectedFilter = &mK35;
 
@@ -69,6 +70,9 @@ class FilterNode : public AudioStream
         filters::FilterType ft = filters::FilterType::LP;
         switch (ctype)
         {
+        case ClarinoidFilterType::Disabled:
+            mSelectedFilter = &mNullFilter;
+            break;
         case ClarinoidFilterType::LP_OnePole:
             ft = filters::FilterType::LP;
             mSelectedFilter = &mOnePole;
@@ -132,6 +136,7 @@ class StereoFilterNode : public AudioStream
     filters::DiodeFilter mDiode;
     filters::K35Filter mK35;
     filters::MoogLadderFilter mMoog;
+    filters::NullFilter mNullFilter;
 
     filters::IFilter *mSelectedFilter = &mK35;
     ClarinoidFilterType mSelectedFilterType = ClarinoidFilterType::LP_K35;
@@ -241,6 +246,9 @@ class StereoFilterNode : public AudioStream
         }
         switch (ctype)
         {
+        case ClarinoidFilterType::Disabled:
+            mSelectedFilter = &mNullFilter;
+            break;
         case ClarinoidFilterType::LP_OnePole:
             ft = filters::FilterType::LP;
             mSelectedFilter = &mOnePole;

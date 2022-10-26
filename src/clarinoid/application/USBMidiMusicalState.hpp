@@ -344,14 +344,40 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
         return mCurrentPitchBendN11;
     }
 
+    struct DupeEventChecker
+    {
+        static constexpr uint32_t dupeEventBoundaryMS = 2;
+        int lastA = -1; // hope these are acceptable initial values
+        int lastB = -1;
+        Stopwatch lastTime;
+        bool RegisterEventAndCheckDupe(int A, int B) {
+            if ((lastA == A) && (lastB == B) && (lastTime.ElapsedTime().ElapsedMillisI() < dupeEventBoundaryMS))
+            {
+                return true;
+            }
+            lastA = A;
+            lastB = B;
+            lastTime.Restart();
+            return false;
+        }
+    };
+
     static void HandleNoteOff(uint8_t channel, uint8_t note, uint8_t velocity)
     {
+        static DupeEventChecker gDupeChecker;
+        if (gDupeChecker.RegisterEventAndCheckDupe(note, velocity)) {
+            return;
+        }
         // Serial.println(String("midi device HandleNoteOff: ") + note);
         gInstance->mHeldNotes.NoteOff(MidiNote(note));
     }
 
     static void HandleNoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
     {
+        static DupeEventChecker gDupeChecker;
+        if (gDupeChecker.RegisterEventAndCheckDupe(note, velocity)) {
+            return;
+        }
         // Serial.println(String("midi device note on: ") + note);
         float velocity01 = float(velocity) / 127.0f;
         gInstance->mHeldNotes.NoteOn(MidiNote(note), velocity01);
@@ -359,6 +385,10 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
 
     static void HandleControlChange(uint8_t channel, uint8_t control, uint8_t value)
     {
+        static DupeEventChecker gDupeChecker;
+        if (gDupeChecker.RegisterEventAndCheckDupe(control, value)) {
+            return;
+        }
         // Serial.println(String("midi device HandleControlChange : ") + control + " -> " + value);
         //     https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
         //     64	Damper Pedal on/off	≤63 off, ≥64 on	On/off switch that controls sustain pedal. Nearly every synth
@@ -384,6 +414,10 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
 
     static void HandlePitchChange(uint8_t channel, int pitch /* -8192 to 8191 inclusive */)
     {
+        static DupeEventChecker gDupeChecker;
+        if (gDupeChecker.RegisterEventAndCheckDupe(pitch, 0)) {
+            return;
+        }
         // Serial.println(String("pb: ") + pitch);
         if (pitch == 8191)
         {
