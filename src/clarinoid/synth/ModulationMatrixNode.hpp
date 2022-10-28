@@ -491,6 +491,7 @@ struct VoiceModulationMatrixNode : public AudioStream
         if (!source)
             return;
         float mappedVal = MapKRateValue(sourceAsKRate, buffers, modulation, sourceInfo, destInfo);
+        //Serial.println(String("arate mod value: ") + sourceAsKRate + " -> " + mappedVal);
         ApplyKRateValueToKRateDest(mappedVal, buffers, destInfo.mIndexForRate);
     }
 

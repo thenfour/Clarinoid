@@ -525,6 +525,7 @@ struct VolumeParamValue
 
     inline static float ParamToLinear(float x)
     {
+        if (x <= 0) return 0;
         return x * x * gMaxVolumeLinearGain;
     }
     inline static float LinearToParam(float x)

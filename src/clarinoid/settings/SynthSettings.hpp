@@ -482,19 +482,22 @@ static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyM
 
 EnumInfo<AnyModulationDestination> gAnyModulationDestinationInfo("AnyModDest", gAnyModulationDestinationItems);
 
+// TODO: "inverted" should be a separate param i think, instead of making 2 versions of each here.
 enum class ModulationPolarityTreatment : uint8_t
 {
+    Default,              // do not change the source signal at all.
     AsPositive01,         // force it to 0-1 positive polarity
     AsBipolar,            // force it to -1,1 bi-polarity
     AsPositive01Inverted, // same as Positive01, but signal is inverted so 0,1 translates 1,0. (1-x)
     AsBipolarInverted,    // same as AsBipolar, but signal is inverted so -1,1 translates 1,-1 (-x)
 };
 
-EnumItemInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentItems[4] = {
-    {ModulationPolarityTreatment::AsPositive01, "AsPositive01"},
-    {ModulationPolarityTreatment::AsBipolar, "AsBipolar"},
-    {ModulationPolarityTreatment::AsPositive01Inverted, "AsPositive01Inverted"},
-    {ModulationPolarityTreatment::AsBipolarInverted, "AsBipolarInverted"},
+EnumItemInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentItems[5] = {
+    {ModulationPolarityTreatment::Default, "Default"},
+    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]"},
+    {ModulationPolarityTreatment::AsBipolar, "Map to [-1,1]"},
+    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]"},
+    {ModulationPolarityTreatment::AsBipolarInverted, "Map to [1,-1]"},
 };
 
 static constexpr size_t gModulationPolarityTreatmentCount = SizeofStaticArray(gAnyModulationDestinationItems);
@@ -506,13 +509,13 @@ struct SynthModulationSpec
 {
     AnyModulationSource mSource = AnyModulationSource::None;
     AnyModulationDestination mDest = AnyModulationDestination::None;
-    ModulationPolarityTreatment mSourcePolarity = ModulationPolarityTreatment::AsPositive01;
+    ModulationPolarityTreatment mSourcePolarity = ModulationPolarityTreatment::Default;
     int16_t mCurveShape = gModCurveLUT.LinearYIndex; // integral, because we don't interpolate; mod curves are actually
                                                      // discrete. it also simplifies the "0" case where it's linear.
     float mScaleN11 = 0.5f;
 
     AnyModulationSource mAuxSource = AnyModulationSource::None;
-    ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::AsPositive01;
+    ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::Default;
     bool mAuxEnabled = true; // just allows bypassing without removing the aux source
     int16_t mAuxCurveShape = gModCurveLUT.LinearYIndex;
     float mAuxAmount01 = 0.0f; // amount of attenuation

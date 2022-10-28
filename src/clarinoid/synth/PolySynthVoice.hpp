@@ -551,8 +551,8 @@ struct Voice : IModulationKRateProvider
     float CalcFreq(const SynthOscillatorSettings &osc,
                    float detune,
                    float krateFreqModN11,
-                   //float krateFreqMul,
-                   //float krateFreqOff,
+                   // float krateFreqMul,
+                   // float krateFreqOff,
                    PortamentoCalc &portamento)
     {
         // we're in semis land... let's figure out the semitone.
@@ -581,7 +581,7 @@ struct Voice : IModulationKRateProvider
 
         float retHz = MIDINoteToFreq(retSemis);
         retHz *= osc.mFreqMultiplier;
-        retHz += osc.mFreqOffsetHz;// + krateFreqOff;
+        retHz += osc.mFreqOffsetHz; // + krateFreqOff;
 
         return Clamp(retHz, 0.0f, 22050.0f);
     };
@@ -606,7 +606,7 @@ struct Voice : IModulationKRateProvider
         mOsc.mIsPlaying = true;
 
         const auto &patch = *mRunningVoice.mSynthPatch;
-        // const auto &perf = mAppSettings->GetCurrentPerformancePatch();
+        const auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
         // apply ongoing params
         ApplyPatchToGraph();
@@ -642,20 +642,14 @@ struct Voice : IModulationKRateProvider
         auto verbGains = CalculatePanGain(patch.mDelayMix * 2 - 1);
         auto delayGains = CalculatePanGain(patch.mVerbMix * 2 - 1);
 
-        float masterGain = patch.mMasterVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::MasterVolume)).ToLinearGain();
+        float masterGain =
+            patch.mMasterVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::MasterVolume))
+                .ToLinearGain();
+        masterGain = std::max(0.0f, masterGain);
 
         mSplitter.SetOutputGain(0, masterGain * std::get<0>(verbGains) * std::get<0>(delayGains));
         mSplitter.SetOutputGain(1, masterGain * std::get<1>(delayGains));
         mSplitter.SetOutputGain(2, masterGain * std::get<1>(verbGains));
-
-        // if (IsConsideredPlaying_ForDisplay())
-        //  {
-        //      //float g = patch.mOsc[0].mGain * mKRateAmplitudeN11[0];
-        //      Serial.println(String("[") + mVoiceIndex + "] frame @ freq=" + freq0 + ", filterfreq=" + filterFreq + ",
-        //      krateamp=" + mKRateAmplitudeN11[0] +
-        //                     ", kratefilt=" + mKRateVoiceFilterCutoffN11 + ", env1.isactive=" + (mEnv1.isActive() ?
-        //                     "yes" : "no") + ", env1.issustain=" + (mEnv1.isSustain() ? "yes" : "no"));
-        //  }
 
         mOscMixerPanner.SetInputPanGainAndEnabled(
             0,

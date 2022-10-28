@@ -10,17 +10,19 @@ namespace clarinoid
 namespace filters
 {
 using real = float;
+//using real = fp::fp_t<int32_t, 12>;
 
 template <typename T>
 constexpr real Real(const T x)
 {
-    return (real)x;
+    return static_cast<real>(x);
+    //return {x};
 };
-constexpr real RealPI = Real(3.14159265358979323846264338327950288);
-constexpr real PITimes2 = Real(2.0 * RealPI);
-constexpr real Real0 = 0;
-constexpr real Real1 = 1;
-constexpr real Real2 = 2;
+constexpr real RealPI = {3.14159265358979323846264338327950288};
+constexpr real PITimes2 = {real{2.0} * RealPI};
+constexpr real Real0 = {0};
+constexpr real Real1 = {1};
+constexpr real Real2 = {2};
 inline real fasttanh(real p_input, real p_tanh_factor)
 {
     return ::clarinoid::fast::tanh(p_tanh_factor * p_input);
