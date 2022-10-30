@@ -496,55 +496,48 @@ struct Voice : IModulationProvider
 
         size_t ienabledOsc = 0;
 
-        struct OscModValuesSpec
-        {
-            KRateModulationDestination fmFeedback;
-            KRateModulationDestination frequency;
-            KRateModulationDestination volume;
-        };
-
-        static OscModValuesSpec gOscModValues[POLYBLEP_OSC_COUNT] = {
-            {KRateModulationDestination::Osc1FMFeedback,
-             KRateModulationDestination::Osc1FrequencyParam,
-             KRateModulationDestination::Osc1Volume},
-            {KRateModulationDestination::Osc2FMFeedback,
-             KRateModulationDestination::Osc2FrequencyParam,
-             KRateModulationDestination::Osc2Volume},
-            {KRateModulationDestination::Osc3FMFeedback,
-             KRateModulationDestination::Osc3FrequencyParam,
-             KRateModulationDestination::Osc3Volume},
-        };
+        //String sd = String("v") + mVoiceIndex + ": ";
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
             mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled;
+
+            mOscMixerPanner.SetInputPanGainAndEnabled(
+                i,
+                patch.mPan + patch.mOsc[i].mPan + spreads[ienabledOsc],
+                patch.mOsc[i]
+                    .mVolume
+                    .AddParam(mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_Volume))
+                    .ToLinearGain(),
+                true);
+
+            if (!patch.mOsc[i].mEnabled)
+                continue;
+
             mOsc.mOsc[i].waveform(patch.mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
             mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mModMatrix.GetKRateDestinationValue(
                                                                         KRateModulationDestination::OverallFMStrength);
 
             mOsc.mOsc[i].mPMFeedbackAmt =
-                patch.mOsc[i].mFMFeedbackGain + mModMatrix.GetKRateDestinationValue(gOscModValues[i].fmFeedback);
-            float freq = CalcFreq(patch.mOsc[i],
-                                  detunes[ienabledOsc],
-                                  mModMatrix.GetKRateDestinationValue(gOscModValues[i].frequency),
-                                  mPortamentoCalc[i]);
+                patch.mOsc[i].mFMFeedbackGain +
+                mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_FMFeedback);
 
-            mOsc.mOsc[0].SetBasicParams(freq, patch.mOsc[i].mPhase01, patch.mOsc[i].mPortamentoTimeMS, false, 0);
+            float freq =
+                CalcFreq(patch.mOsc[i],
+                         detunes[ienabledOsc],
+                         mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_Frequency),
+                         mPortamentoCalc[i]);
 
-            mOscMixerPanner.SetInputPanGainAndEnabled(
-                i,
-                patch.mPan + patch.mOsc[i].mPan + spreads[ienabledOsc],
-                patch.mOsc[i]
-                    .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(gOscModValues[i].volume))
-                    .ToLinearGain(),
-                true);
+            //sd += String("[o") + i + " det:" + detunes[ienabledOsc] + " freq:" + freq + "]  ";
 
-            if (patch.mOsc[i].mEnabled)
-            {
-                ienabledOsc++;
-            }
+            mOsc.mOsc[i].SetBasicParams(freq, patch.mOsc[i].mPhase01, patch.mOsc[i].mPortamentoTimeMS, false, 0);
+
+            ienabledOsc++;
         }
+
+        // if (mVoiceIndex == 0)
+        //     Serial.println(sd);
 
         // TODO: if portamento is enabled for an oscillator, it should be accounted for here.
         float filterFreq = CalcFilterCutoffFreq(MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()));

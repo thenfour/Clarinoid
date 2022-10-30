@@ -239,7 +239,7 @@ enum class KRateModulationSource : uint8_t
     // these are INDICES used by synthvoice / modulationmatrix. MUST be 0-based, sequential, index-like.
     Breath = 0, // K-rate
     PitchStrip, // K-rate
-    Velocity, // K-rate
+    Velocity,   // K-rate
 
     // notevalue
     // random trigger
@@ -265,17 +265,17 @@ EnumInfo<KRateModulationSource> gKRateModulationSourceInfo("KRateModSource", gKR
 enum class AnyModulationSource : uint8_t
 {
     None = 0,
-    LFO1,       // a-rate
-    LFO2,       // a-rate
-    ENV1,       // a-rate
-    ENV2,       // a-rate
-    Osc1FB,     // a-rate
-    Osc2FB,     // a-rate
-    Osc3FB,     // a-rate
+    LFO1,   // a-rate
+    LFO2,   // a-rate
+    ENV1,   // a-rate
+    ENV2,   // a-rate
+    Osc1FB, // a-rate
+    Osc2FB, // a-rate
+    Osc3FB, // a-rate
 
     Breath,     // K-rate
     PitchStrip, // K-rate
-    Velocity, // K-rate
+    Velocity,   // K-rate
 };
 
 EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[11] = {
@@ -381,6 +381,28 @@ static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKR
 
 EnumInfo<KRateModulationDestination> gKRateModulationDestinationInfo("KRateModDest", gKRateModulationDestinationItems);
 
+// Lets create a way to get modulation enum values by oscillator index
+struct OscillatorModulationInfo
+{
+    KRateModulationDestination KRateDestination_FMFeedback;
+    KRateModulationDestination KRateDestination_Frequency;
+    KRateModulationDestination KRateDestination_Volume;
+};
+
+static OscillatorModulationInfo gModValuesByOscillator[POLYBLEP_OSC_COUNT] = {
+    {KRateModulationDestination::Osc1FMFeedback,
+     KRateModulationDestination::Osc1FrequencyParam,
+     KRateModulationDestination::Osc1Volume},
+
+    {KRateModulationDestination::Osc2FMFeedback,
+     KRateModulationDestination::Osc2FrequencyParam,
+     KRateModulationDestination::Osc2Volume},
+
+    {KRateModulationDestination::Osc3FMFeedback,
+     KRateModulationDestination::Osc3FrequencyParam,
+     KRateModulationDestination::Osc3Volume},
+};
+
 enum class AnyModulationDestination : uint8_t
 {
     None = 0,
@@ -456,7 +478,8 @@ enum class AnyModulationDestination : uint8_t
     // env release
 };
 
-EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none */ + gARateModulationDestinationCount + gKRateModulationDestinationCount] = {
+EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none */ + gARateModulationDestinationCount +
+                                                                      gKRateModulationDestinationCount] = {
     {AnyModulationDestination::None, "None"},
     {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
     {AnyModulationDestination::Osc1Phase, "Osc1Phase"},
@@ -564,7 +587,7 @@ struct SynthOscillatorSettings
     // - it enables quick muting
     // - it helps know how to display things
     // - it helps know how detune / stereo sep will operate.
-    bool mEnabled = true; 
+    bool mEnabled = true;
     int mPortamentoTimeMS = 0;
 
     // for pitch, it's even hard to know which kind of params are needed.
@@ -627,9 +650,16 @@ EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
 
 EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
 
+enum class SynthOscillatorLinkage : uint8_t
+{
+    // 1, 2, 3
+    //
+};
+
 struct SynthPreset
 {
     SynthOscillatorSettings mOsc[POLYBLEP_OSC_COUNT];
+    // SynthOscillatorLinkage mOscLinkage = ;
 
     String mName = "--";
     VolumeParamValue mMasterVolume;
@@ -705,7 +735,7 @@ struct SynthPreset
             auto dest = oscGainMods[i];
             if (!Any(this->mModulations, [&](const SynthModulationSpec &m) { return m.mDest == dest; }))
             {
-                return "<off>";
+                return "<silent>";
             }
         }
         // not silent / disabled / whatever. show some info.
