@@ -4,6 +4,7 @@
 #include <utility>
 #include "AudioBufferUtils.hpp"
 #include "ModulationInfo.hpp"
+#include "Patch.hpp"
 
 namespace clarinoid
 {
@@ -103,13 +104,13 @@ struct VoiceModulationMatrixNode : public AudioStream
     audio_block_t *inputQueueArray[gARateModulationSourceCount];
 
     SynthPreset *mSynthPatch = nullptr;
-    IModulationKRateProvider *mpkRateProvider;
+    IModulationProvider *mpkRateProvider;
 
     VoiceModulationMatrixNode() : AudioStream(gARateModulationSourceCount, inputQueueArray)
     {
     }
 
-    void SetSynthPatch(SynthPreset *patch, IModulationKRateProvider *pkRateProvider)
+    void SetSynthPatch(SynthPreset *patch, IModulationProvider *pkRateProvider)
     {
         mSynthPatch = patch;
         mpkRateProvider = pkRateProvider;
@@ -138,8 +139,12 @@ struct VoiceModulationMatrixNode : public AudioStream
     {
         return mKRateDestinationValuesN11[(int)dest];
     }
-    void ResetKRateModulations() {
-        for (float& f : mKRateDestinationValuesN11) { f = 0; }
+    void ResetKRateModulations()
+    {
+        for (float &f : mKRateDestinationValuesN11)
+        {
+            f = 0;
+        }
     }
     float EnsureKRateSource(Buffers &buffers, const ModulationSourceInfo &sourceInfo)
     {
@@ -491,7 +496,7 @@ struct VoiceModulationMatrixNode : public AudioStream
         if (!source)
             return;
         float mappedVal = MapKRateValue(sourceAsKRate, buffers, modulation, sourceInfo, destInfo);
-        //Serial.println(String("arate mod value: ") + sourceAsKRate + " -> " + mappedVal);
+        // Serial.println(String("arate mod value: ") + sourceAsKRate + " -> " + mappedVal);
         ApplyKRateValueToKRateDest(mappedVal, buffers, destInfo.mIndexForRate);
     }
 
@@ -561,6 +566,23 @@ struct VoiceModulationMatrixNode : public AudioStream
         m.mSourcePolarity = ModulationPolarityTreatment::AsBipolar;
         m.SetScaleN11_Legacy(amount);
         ProcessModulation(buffers, m);
+    }
+
+    std::array<CCPatch, gARateModulationSourceCount> mARateSourcePatches;
+    std::array<CCPatch, gARateModulationDestinationCount> mARateDestinationPatches;
+
+    void Init(IModulationProvider *pmod)
+    {
+        for (auto &x : gARateModulationSourceItems) // like LFOs, ENV, and osc FB
+        {
+            auto srcPort = pmod->IModulationProvider_GetARateSourcePort(x.mValue);
+            mARateSourcePatches[x.mIntValue].connect(*srcPort.first, srcPort.second, *this, x.mIntValue);
+        }
+        for (auto &x : gARateModulationDestinationItems)
+        {
+            auto destPort = pmod->IModulationProvider_GetARateDestinationPort(x.mValue);
+            mARateDestinationPatches[x.mIntValue].connect(*this, x.mIntValue, *destPort.first, destPort.second);
+        }
     }
 
     virtual void update() override

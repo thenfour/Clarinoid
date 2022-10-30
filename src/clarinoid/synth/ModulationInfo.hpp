@@ -5,15 +5,11 @@
 namespace clarinoid
 {
 
-struct IModulationKRateProvider
+struct IModulationProvider
 {
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) = 0;
-    // getting a dest value seem unintuitive?
-    // the idea is that the synthvoice stores the running values for these k-rate modulations, and this is a way to
-    // access the values because they're used for FM modulations.
-    // virtual float IModulationProvider_GetKRateModulationDestinationValueN11(KRateModulationDestination src) = 0;
-    // virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d, float val) =
-    // 0;
+    virtual std::pair<AudioStream*, size_t> IModulationProvider_GetARateSourcePort(ARateModulationSource src) = 0;
+    virtual std::pair<AudioStream*, size_t> IModulationProvider_GetARateDestinationPort(ARateModulationDestination dest) = 0;
 };
 
 enum class ModulationRate : uint8_t

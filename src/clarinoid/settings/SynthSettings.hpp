@@ -49,6 +49,7 @@ EnumItemInfo<TimeBasis> gTimeBasisItems[15] = {
 
 EnumInfo<TimeBasis> gTimeBasisInfo("TimeBasis", gTimeBasisItems);
 
+// this is necessary to allow "rich" beat/frequency settings to beat-sync LFO for example
 struct TimeWithBasis
 {
     TimeBasis mBasis = TimeBasis::Milliseconds;
@@ -209,7 +210,7 @@ EnumInfo<ClarinoidFilterType> gClarinoidFilterTypeInfo("FilterType", gClarinoidF
 enum class ARateModulationSource : uint8_t
 {
     // NB: IF you change something here, keep ModulationMatrixNode in sync. (ModulationSourceInfo)
-    // these are INDICES used by synthvoice / modulationmatrix
+    // these are INDICES used by synthvoice / modulationmatrix. MUST be 0-based, sequential, index-like.
     LFO1 = 0, // a-rate
     LFO2,     // a-rate
     ENV1,     // a-rate
@@ -235,7 +236,7 @@ EnumInfo<ARateModulationSource> gARateModulationSourceInfo("ARateModSource", gAR
 enum class KRateModulationSource : uint8_t
 {
     // NB: IF you change something here, keep ModulationMatrixNode in sync. (ModulationSourceInfo)
-    // these are INDICES used by synthvoice / modulationmatrix
+    // these are INDICES used by synthvoice / modulationmatrix. MUST be 0-based, sequential, index-like.
     Breath = 0, // K-rate
     PitchStrip, // K-rate
     // Knob1,

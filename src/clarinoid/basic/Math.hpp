@@ -525,7 +525,8 @@ struct VolumeParamValue
 
     inline static float ParamToLinear(float x)
     {
-        if (x <= 0) return 0;
+        if (x <= 0)
+            return 0;
         return x * x * gMaxVolumeLinearGain;
     }
     inline static float LinearToParam(float x)
@@ -574,21 +575,25 @@ struct VolumeParamValue
     }
 
     // useful for adding a modulation signal to a volume.
-    VolumeParamValue AddParam(float rhs) const {
+    VolumeParamValue AddParam(float rhs) const
+    {
         return FromParamValue(mParamValue + rhs);
     }
 
-    static VolumeParamValue FromLinear(float f) { 
+    static VolumeParamValue FromLinear(float f)
+    {
         VolumeParamValue ret;
         ret.SetLinearValue(f);
         return ret;
     }
-    static VolumeParamValue FromParamValue(float f) { 
+    static VolumeParamValue FromParamValue(float f)
+    {
         VolumeParamValue ret;
         ret.mParamValue = f;
         return ret;
     }
-    static VolumeParamValue FromDecibels(float f) { 
+    static VolumeParamValue FromDecibels(float f)
+    {
         VolumeParamValue ret;
         ret.SetDecibels(f);
         return ret;
@@ -605,22 +610,6 @@ inline std::pair<float, float> CalculatePanGain(float panN11)
     return std::make_pair(leftChannel, rightChannel);
 }
 
-// // takes a linear X value and snaps it to integral values.
-// // when snapStrength is 0, no snapping occurs and the output is the same linear as input.
-// // when snapStrength is 1, this is effecitvely a floor() function.
-// inline float SnapPitchBend(float x, float snapStrength)
-// {
-//     if (snapStrength < 0.000001f)
-//         return x;
-//     float z = std::floor(x);
-//     if (snapStrength > 0.99999f)
-//         return z;
-//     float p = x - z;
-//     float q = snapStrength * 3;
-//     q = q * q * q * q * q;
-//     q += 1;
-//     return z + fast::pow(p, q);
-// }
 
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd

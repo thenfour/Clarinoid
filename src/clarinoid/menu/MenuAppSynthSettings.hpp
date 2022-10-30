@@ -10,6 +10,81 @@
 namespace clarinoid
 {
 
+struct LFOMenuApp
+{
+    EnumSettingItem<OscWaveformShape> mWaveform = {"Waveform",
+                                                   gOscWaveformShapeInfo,
+                                                   Property<OscWaveformShape>{[](void *cap) FLASHMEM {
+                                                                                  auto *pThis = (LFOMenuApp *)cap;
+                                                                                  return pThis->mBinding->mWaveShape;
+                                                                              },
+                                                                              [](void *cap, const OscWaveformShape &v)
+                                                                                  FLASHMEM {
+                                                                                      auto *pThis = (LFOMenuApp *)cap;
+                                                                                      pThis->mBinding->mWaveShape = v;
+                                                                                  },
+                                                                              this},
+                                                   AlwaysEnabled};
+
+    FloatSettingItem mFrequency = {"Freq Hz",
+                                   StandardRangeSpecs::gLFOFrequency,
+                                   Property<float>{[](void *cap) FLASHMEM {
+                                                       auto *pThis = (LFOMenuApp *)cap;
+                                                       return pThis->mBinding->mTime.mHz;
+                                                   },
+                                                   [](void *cap, const float &v) FLASHMEM {
+                                                       auto *pThis = (LFOMenuApp *)cap;
+                                                       pThis->mBinding->mTime.SetFrequency(v);
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
+
+    BoolSettingItem mRetrig = {"Retrig",
+                                     "On",
+                                     "Off",
+                                     Property<bool>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        return pThis->mBinding->mPhaseRestart;
+                                                    },
+                                                    [](void *cap, const bool &v) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        pThis->mBinding->mPhaseRestart = v;
+                                                    },
+                                                    this},
+                                     AlwaysEnabled};
+
+    FloatSettingItem mPulseWidth = {"Pulse Width",
+                                StandardRangeSpecs::gFloat_N1_1,
+                                Property<float>{[](void *cap) FLASHMEM {
+                                                    auto *pThis = (LFOMenuApp *)cap;
+                                                    return pThis->mBinding->mPulseWidth;
+                                                },
+                                                [](void *cap, const float &v) FLASHMEM {
+                                                    auto *pThis = (LFOMenuApp *)cap;
+                                                    pThis->mBinding->mPulseWidth = v;
+                                                },
+                                                this},
+                                AlwaysEnabled};
+
+    ISettingItem *mArray[4] = {
+        &mWaveform,
+        &mFrequency,
+        &mRetrig,
+        &mPulseWidth,
+    };
+
+
+    SettingsList mRootList = {mArray};
+
+    LFOSpec *mBinding = nullptr;
+
+    SettingsList *GetSubmenuList(LFOSpec &binding)
+    {
+        mBinding = &binding;
+        return &mRootList;
+    }
+};
+
 struct EnvelopeMenuApp
 {
     BoolSettingItem mLegatoRetrig = {"Legato Retrig",
@@ -768,8 +843,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                        },
                                                        this},
                                        Property<bool>{[](void *cap) FLASHMEM -> bool {
-                                                          //auto *pThis = (SynthPatchMenuApp *)cap;
-                                                          // TODO: check filter capabilities.
+                                                          // auto *pThis = (SynthPatchMenuApp *)cap;
+                                                          //  TODO: check filter capabilities.
                                                           return true;
                                                       },
                                                       this}};
@@ -836,60 +911,6 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         },
         AlwaysEnabled,
         this};
-
-    // FloatSettingItem mLfo1Frequency = {"LFO1 Freq",
-    //                                    StandardRangeSpecs::gLFOFrequency,
-    //                                    Property<float>{[](void *cap) FLASHMEM {
-    //                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                                        return pThis->GetBinding().mLfo1Rate;
-    //                                                    },
-    //                                                    [](void *cap, const float &v) {
-    //                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                                        pThis->GetBinding().mLfo1Rate = v;
-    //                                                    },
-    //                                                    this},
-    //                                    AlwaysEnabled};
-
-    // EnumSettingItem<OscWaveformShape> mLfo1Waveform = {
-    //     " >Wave",
-    //     gOscWaveformShapeInfo,
-    //     Property<OscWaveformShape>{[](void *cap) FLASHMEM {
-    //                                    auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                    return pThis->GetBinding().mLfo1Shape;
-    //                                },
-    //                                [](void *cap, const OscWaveformShape &v) {
-    //                                    auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                    pThis->GetBinding().mLfo1Shape = v;
-    //                                },
-    //                                this},
-    //     AlwaysEnabled};
-
-    // FloatSettingItem mLfo2Frequency = {"LFO2 Freq",
-    //                                    StandardRangeSpecs::gLFOFrequency,
-    //                                    Property<float>{[](void *cap) FLASHMEM {
-    //                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                                        return pThis->GetBinding().mLfo2Rate;
-    //                                                    },
-    //                                                    [](void *cap, const float &v) {
-    //                                                        auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                                        pThis->GetBinding().mLfo2Rate = v;
-    //                                                    },
-    //                                                    this},
-    //                                    AlwaysEnabled};
-
-    // EnumSettingItem<OscWaveformShape> mLfo2Waveform = {
-    //     " >Wave",
-    //     gOscWaveformShapeInfo,
-    //     Property<OscWaveformShape>{[](void *cap) FLASHMEM {
-    //                                    auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                    return pThis->GetBinding().mLfo2Shape;
-    //                                },
-    //                                [](void *cap, const OscWaveformShape &v) {
-    //                                    auto *pThis = (SynthPatchMenuApp *)cap;
-    //                                    pThis->GetBinding().mLfo2Shape = v;
-    //                                },
-    //                                this},
-    //     AlwaysEnabled};
 
     size_t mEditingModulationIndex = 0;
     SynthModulationSpec &GetModulationBinding()
@@ -1080,11 +1101,27 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               AlwaysEnabled,
                                               this};
 
-    ISettingItem *mModulationsSubmenuArray[3] = {
-        //&mLfo1Frequency,
-        //&mLfo1Waveform,
-        //&mLfo2Frequency,
-        //&mLfo2Waveform,
+    LFOMenuApp mLFOEditor;
+
+    SubmenuSettingItem mModLFO1SubmenuItem = {String("LFO1"),
+                                              [](void *cap) FLASHMEM {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  return pThis->mLFOEditor.GetSubmenuList(pThis->GetBinding().mLFO1);
+                                              },
+                                              AlwaysEnabled,
+                                              this};
+
+    SubmenuSettingItem mModLFO2SubmenuItem = {String("LFO2"),
+                                              [](void *cap) FLASHMEM {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  return pThis->mLFOEditor.GetSubmenuList(pThis->GetBinding().mLFO2);
+                                              },
+                                              AlwaysEnabled,
+                                              this};
+
+    ISettingItem *mModulationsSubmenuArray[5] = {
+        &mModLFO1SubmenuItem,
+        &mModLFO2SubmenuItem,
         &mModEnv1SubmenuItem,
         &mModEnv2SubmenuItem,
         &mModulationsList,
