@@ -336,6 +336,12 @@ static T ClampInclusive(T x, T minInclusive, T maxInclusive)
     return x;
 }
 
+template<typename T>
+static bool IsEven(const T& x)
+{
+    return !(x & 1);
+}
+
 // beware, this works with t<0 and t>1
 static float Lerp(float a, float b, float t)
 {

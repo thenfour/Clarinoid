@@ -286,12 +286,13 @@ struct Voice : IModulationProvider
         {
         case KRateModulationSource::Breath:
             return mParamProvider->SynthParamProvider_GetBreath01();
-
-        default:
         case KRateModulationSource::PitchStrip:
-            break;
+            return mParamProvider->SynthParamProvider_GetPitchBendN11();
+        case KRateModulationSource::Velocity:
+            return mRunningVoice.mNoteInfo.mVelocity01;
         }
-        return mParamProvider->SynthParamProvider_GetPitchBendN11();
+        CCASSERT(!"requesting an unsupported krate source");
+        return 0;
     }
 
     // these will not track FREQUENCY, but rather MIDI NOTE. this lets us apply portamento to certain parameters but not
@@ -350,23 +351,6 @@ struct Voice : IModulationProvider
 
         mLfo1.frequency(patch.mLFO1.mTime.ToHertz(perf.mBPM));
         mLfo2.frequency(patch.mLFO2.mTime.ToHertz(perf.mBPM));
-
-        mOsc.mIsPlaying = true;
-        for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
-        {
-            mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled;
-            mOsc.mOsc[i].waveform(patch.mOsc[i].mWaveform);
-            mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
-            mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mModMatrix.GetKRateDestinationValue(
-                                                                        KRateModulationDestination::OverallFMStrength);
-        }
-
-        mOsc.mOsc[0].mPMFeedbackAmt = patch.mOsc[0].mFMFeedbackGain +
-                                      mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc1FMFeedback);
-        mOsc.mOsc[1].mPMFeedbackAmt = patch.mOsc[1].mFMFeedbackGain +
-                                      mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc2FMFeedback);
-        mOsc.mOsc[2].mPMFeedbackAmt = patch.mOsc[2].mFMFeedbackGain +
-                                      mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc3FMFeedback);
     }
 
     float CalcFreq(const SynthOscillatorSettings &osc,
@@ -442,7 +426,6 @@ struct Voice : IModulationProvider
             break;
         case MusicalEventSourceType::LivePlayA:
             // TODO: stereo sep of perf patches
-            // TODO: volume of perf patch
             if (!perf.mSynthAEnabled)
             {
                 mOsc.mIsPlaying = false;
@@ -452,7 +435,6 @@ struct Voice : IModulationProvider
             break;
         case MusicalEventSourceType::LivePlayB:
             // TODO: stereo sep of perf patches
-            // TODO: volume of perf patch
             if (!perf.mSynthBEnabled)
             {
                 mOsc.mIsPlaying = false;
@@ -470,31 +452,104 @@ struct Voice : IModulationProvider
         // apply ongoing params
         ApplyPatchToGraph();
 
-        // apply frequency params
-        float freq0 = CalcFreq(patch.mOsc[0],
-                               0,
-                               mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc1FrequencyParam),
-                               mPortamentoCalc[0]);
-        float freq1 = CalcFreq(patch.mOsc[1],
-                               -patch.mDetune,
-                               mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc2FrequencyParam),
-                               mPortamentoCalc[1]);
-        float freq2 = CalcFreq(patch.mOsc[2],
-                               -patch.mDetune,
-                               mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc3FrequencyParam),
-                               mPortamentoCalc[2]);
+        // figure out which oscillators are enabled. Get a count and grab enabled indices.
+        int oscEnabledCount = 0;
+        size_t enabledOscIndices[POLYBLEP_OSC_COUNT];
+        for (size_t iosc = 0; iosc < POLYBLEP_OSC_COUNT; ++iosc)
+        {
+            if (!patch.mOsc[iosc].mEnabled)
+                break;
+            enabledOscIndices[oscEnabledCount] = iosc;
+            oscEnabledCount++;
+        }
 
-        mOsc.mOsc[0].SetBasicParams(freq0, patch.mOsc[0].mPhase01, patch.mOsc[0].mPortamentoTimeMS, false, 0);
-        mOsc.mOsc[1].SetBasicParams(freq1, patch.mOsc[1].mPhase01, patch.mOsc[1].mPortamentoTimeMS, false, 0);
-        mOsc.mOsc[2].SetBasicParams(freq2, patch.mOsc[2].mPhase01, patch.mOsc[2].mPortamentoTimeMS, false, 0);
+        float detune = patch.mDetune + mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Detune);
+        float spread = patch.mStereoSpread;
+
+        float detunes[POLYBLEP_OSC_COUNT] = {0};
+        float spreads[POLYBLEP_OSC_COUNT] = {0};
+        switch (oscEnabledCount)
+        {
+        case 0:
+        case 1:
+            break;
+        case 2:
+            detunes[0] = detune;
+            detunes[1] = -detune;
+            spreads[0] = spread;
+            spreads[1] = -spread;
+            break;
+        case 3:
+            detunes[0] = 0;
+            detunes[1] = detune;
+            detunes[2] = -detune;
+            spreads[0] = 0;
+            spreads[1] = spread;
+            spreads[2] = -spread;
+            break;
+        default:
+            CCASSERT(!"hardcoded osc count alert");
+        }
+
+        // apply oscillator params
+        mOsc.mIsPlaying = oscEnabledCount > 0;
+
+        size_t ienabledOsc = 0;
+
+        struct OscModValuesSpec
+        {
+            KRateModulationDestination fmFeedback;
+            KRateModulationDestination frequency;
+            KRateModulationDestination volume;
+        };
+
+        static OscModValuesSpec gOscModValues[POLYBLEP_OSC_COUNT] = {
+            {KRateModulationDestination::Osc1FMFeedback,
+             KRateModulationDestination::Osc1FrequencyParam,
+             KRateModulationDestination::Osc1Volume},
+            {KRateModulationDestination::Osc2FMFeedback,
+             KRateModulationDestination::Osc2FrequencyParam,
+             KRateModulationDestination::Osc2Volume},
+            {KRateModulationDestination::Osc3FMFeedback,
+             KRateModulationDestination::Osc3FrequencyParam,
+             KRateModulationDestination::Osc3Volume},
+        };
+
+        for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
+        {
+            mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled;
+            mOsc.mOsc[i].waveform(patch.mOsc[i].mWaveform);
+            mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
+            mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mModMatrix.GetKRateDestinationValue(
+                                                                        KRateModulationDestination::OverallFMStrength);
+
+            mOsc.mOsc[i].mPMFeedbackAmt =
+                patch.mOsc[i].mFMFeedbackGain + mModMatrix.GetKRateDestinationValue(gOscModValues[i].fmFeedback);
+            float freq = CalcFreq(patch.mOsc[i],
+                                  detunes[ienabledOsc],
+                                  mModMatrix.GetKRateDestinationValue(gOscModValues[i].frequency),
+                                  mPortamentoCalc[i]);
+
+            mOsc.mOsc[0].SetBasicParams(freq, patch.mOsc[i].mPhase01, patch.mOsc[i].mPortamentoTimeMS, false, 0);
+
+            mOscMixerPanner.SetInputPanGainAndEnabled(
+                i,
+                patch.mPan + patch.mOsc[i].mPan + spreads[ienabledOsc],
+                patch.mOsc[i]
+                    .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(gOscModValues[i].volume))
+                    .ToLinearGain(),
+                true);
+
+            if (patch.mOsc[i].mEnabled)
+            {
+                ienabledOsc++;
+            }
+        }
 
         // TODO: if portamento is enabled for an oscillator, it should be accounted for here.
         float filterFreq = CalcFilterCutoffFreq(MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()));
         mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
         mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
-
-        // TODO: consider patch, perf, harm, loop gain & panning
-        float mExtraPan = 0;
 
         // for "mix" behavior, we can look to panning. the pan law applies here; you're effectively panning between the
         // dry signal and the various effects. But instead of a -1 to +1 range, it's going to be 0-1.
@@ -509,30 +564,6 @@ struct Voice : IModulationProvider
         mSplitter.SetOutputGain(0, masterGain * std::get<0>(verbGains) * std::get<0>(delayGains));
         mSplitter.SetOutputGain(1, masterGain * std::get<1>(delayGains));
         mSplitter.SetOutputGain(2, masterGain * std::get<1>(verbGains));
-
-        mOscMixerPanner.SetInputPanGainAndEnabled(
-            0,
-            mExtraPan + patch.mPan + patch.mOsc[0].mPan + patch.mStereoSpread,
-            patch.mOsc[0]
-                .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc1Volume))
-                .ToLinearGain(),
-            true);
-
-        mOscMixerPanner.SetInputPanGainAndEnabled(
-            1,
-            mExtraPan + patch.mPan + patch.mOsc[1].mPan,
-            patch.mOsc[1]
-                .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc2Volume))
-                .ToLinearGain(),
-            true);
-
-        mOscMixerPanner.SetInputPanGainAndEnabled(
-            2,
-            mExtraPan + patch.mPan + patch.mOsc[2].mPan - patch.mStereoSpread,
-            patch.mOsc[2]
-                .mVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Osc3Volume))
-                .ToLinearGain(),
-            true);
     }
 
     // if there's already a note playing, it gets cut off

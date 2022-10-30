@@ -239,18 +239,24 @@ enum class KRateModulationSource : uint8_t
     // these are INDICES used by synthvoice / modulationmatrix. MUST be 0-based, sequential, index-like.
     Breath = 0, // K-rate
     PitchStrip, // K-rate
-    // Knob1,
-    // Knob2,
-    // Knob3,
-    // Knob4,
-    // velocity
+    Velocity, // K-rate
+
     // notevalue
     // random trigger
+    // mod wheel
+    // Macro1,
+    // Macro2,
+    // Macro3,
+    // Macro4,
+    // Pedal
+
+    // various Midi CCs
 };
 
-EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[2] = {
+EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[3] = {
     {KRateModulationSource::Breath, "Breath"},
     {KRateModulationSource::PitchStrip, "PitchBend"},
+    {KRateModulationSource::Velocity, "Velocity"},
 };
 static constexpr size_t gKRateModulationSourceCount = SizeofStaticArray(gKRateModulationSourceItems);
 
@@ -266,16 +272,13 @@ enum class AnyModulationSource : uint8_t
     Osc1FB,     // a-rate
     Osc2FB,     // a-rate
     Osc3FB,     // a-rate
+
     Breath,     // K-rate
     PitchStrip, // K-rate
-    // velocity
-    // random trigger
-    // keytracking
-    // macro1, 2, 3, 4
-    // midi CC
+    Velocity, // K-rate
 };
 
-EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[10] = {
+EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[11] = {
     {AnyModulationSource::None, "None"},
     {AnyModulationSource::LFO1, "LFO1"},
     {AnyModulationSource::LFO2, "LFO2"},
@@ -286,6 +289,7 @@ EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[10] = {
     {AnyModulationSource::Osc3FB, "Osc3FB"},
     {AnyModulationSource::Breath, "Breath"},
     {AnyModulationSource::PitchStrip, "PitchBend"},
+    {AnyModulationSource::Velocity, "Velocity"},
 };
 
 static constexpr size_t gAnyModulationSourceCount = SizeofStaticArray(gAnyModulationSourceItems);
@@ -323,6 +327,7 @@ enum class KRateModulationDestination : uint8_t
     // these are INDICES used by synthvoice / modulationmatrix
     FilterCutoff = 0, // k-rate
     MasterVolume,
+    Detune,
 
     Osc1Volume, // k-rate
     Osc2Volume, // k-rate
@@ -350,9 +355,10 @@ enum class KRateModulationDestination : uint8_t
     // lfo speed
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[18] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[19] = {
     {KRateModulationDestination::FilterCutoff, "FilterCutoff"},
     {KRateModulationDestination::MasterVolume, "MasterVolume"},
+    {KRateModulationDestination::Detune, "Detune"},
     {KRateModulationDestination::Osc1Volume, "Osc1Volume"},
     {KRateModulationDestination::Osc2Volume, "Osc2Volume"},
     {KRateModulationDestination::Osc3Volume, "Osc3Volume"},
@@ -387,6 +393,7 @@ enum class AnyModulationDestination : uint8_t
 
     FilterCutoff,
     MasterVolume,
+    Detune,
     Osc1Volume,
     Osc2Volume,
     Osc3Volume,
@@ -461,6 +468,7 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none 
     // K-rates:
     {AnyModulationDestination::FilterCutoff, "FilterCutoff"},
     {AnyModulationDestination::MasterVolume, "MasterVolume"},
+    {AnyModulationDestination::Detune, "Detune"},
     {AnyModulationDestination::Osc1Volume, "Osc1Volume"},
     {AnyModulationDestination::Osc2Volume, "Osc2Volume"},
     {AnyModulationDestination::Osc3Volume, "Osc3Volume"},
@@ -552,7 +560,11 @@ struct EnvelopeSpec
 struct SynthOscillatorSettings
 {
     VolumeParamValue mVolume = VolumeParamValue::FromParamValue(0.4f);
-    bool mEnabled = true;
+    // this is not redundant with volume, because
+    // - it enables quick muting
+    // - it helps know how to display things
+    // - it helps know how detune / stereo sep will operate.
+    bool mEnabled = true; 
     int mPortamentoTimeMS = 0;
 
     // for pitch, it's even hard to know which kind of params are needed.

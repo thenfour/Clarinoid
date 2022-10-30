@@ -8,8 +8,9 @@ namespace clarinoid
 struct IModulationProvider
 {
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) = 0;
-    virtual std::pair<AudioStream*, size_t> IModulationProvider_GetARateSourcePort(ARateModulationSource src) = 0;
-    virtual std::pair<AudioStream*, size_t> IModulationProvider_GetARateDestinationPort(ARateModulationDestination dest) = 0;
+    virtual std::pair<AudioStream *, size_t> IModulationProvider_GetARateSourcePort(ARateModulationSource src) = 0;
+    virtual std::pair<AudioStream *, size_t> IModulationProvider_GetARateDestinationPort(
+        ARateModulationDestination dest) = 0;
 };
 
 enum class ModulationRate : uint8_t
@@ -148,6 +149,17 @@ ModulationSourceInfo gModulationSourceInfo[gAnyModulationSourceCount] = {
      -1, // range min
      1,  // range max
      ModulationPoleType::N11},
+
+    {true,
+     (size_t)AnyModulationSource::Velocity, // index overall
+     AnyModulationSource::Velocity,
+     (size_t)KRateModulationSource::Velocity, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::Velocity,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
 };
 
 ModulationSourceInfo *gKRateModulationSourceInfoPtrs[gKRateModulationSourceCount] = {nullptr};
@@ -216,300 +228,335 @@ struct ModulationDestinationInfo
 };
 
 ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCount] = {
-    {false,                                  // valid
-     (size_t)AnyModulationDestination::None, // index overall
-     AnyModulationDestination::None,
-     0, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationDestination)0,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  0, // range max
-    //  ModulationPoleType::N11},
-     },
+    {
+        false,                                  // valid
+        (size_t)AnyModulationDestination::None, // index overall
+        AnyModulationDestination::None,
+        0, // index for rate
+        ModulationRate::ARate,
+        (KRateModulationDestination)0,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  0, // range max
+        //  ModulationPoleType::N11},
+    },
 
-    {true,
-     (size_t)AnyModulationDestination::Osc1PulseWidth, // index overall
-     AnyModulationDestination::Osc1PulseWidth,
-     (size_t)ARateModulationDestination::Osc1PulseWidth, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationDestination)0,
-     ARateModulationDestination::Osc1PulseWidth,
-    //  -1, // range min
-    //  1,  // range max
-    //  ModulationPoleType::N11},
-},
-    {true,
-     (size_t)AnyModulationDestination::Osc1Phase, // index overall
-     AnyModulationDestination::Osc1Phase,
-     (size_t)ARateModulationDestination::Osc1Phase, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationDestination)0,
-     ARateModulationDestination::Osc1Phase,
-    //  -1, // range min
-    //  1,  // range max
-    //  ModulationPoleType::N11},
-},
-    {true,
-     (size_t)AnyModulationDestination::Osc2PulseWidth, // index overall
-     AnyModulationDestination::Osc2PulseWidth,
-     (size_t)ARateModulationDestination::Osc2PulseWidth, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationDestination)0,
-     ARateModulationDestination::Osc2PulseWidth,
-    //  -1, // range min
-    //  1,  // range max
-    //  ModulationPoleType::N11},
-},
-    {true,
-     (size_t)AnyModulationDestination::Osc2Phase, // index overall
-     AnyModulationDestination::Osc2Phase,
-     (size_t)ARateModulationDestination::Osc2Phase, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationDestination)0,
-     ARateModulationDestination::Osc2Phase,
-    //  -1, // range min
-    //  1,  // range max
-    //  ModulationPoleType::N11},
-},
-    {true,
-     (size_t)AnyModulationDestination::Osc3PulseWidth, // index overall
-     AnyModulationDestination::Osc3PulseWidth,
-     (size_t)ARateModulationDestination::Osc3PulseWidth, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationDestination)0,
-     ARateModulationDestination::Osc3PulseWidth,
-    //  -1, // range min
-    //  1,  // range max
-    //  ModulationPoleType::N11},
-},
-    {true,
-     (size_t)AnyModulationDestination::Osc3Phase, // index overall
-     AnyModulationDestination::Osc3Phase,
-     (size_t)ARateModulationDestination::Osc3Phase, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationDestination)0,
-     ARateModulationDestination::Osc3Phase,
-    //  -1, // range min
-    //  1,  // range max
-    //  ModulationPoleType::N11},
-},
- 
-    {true,
-     (size_t)AnyModulationDestination::FilterCutoff, // index overall
-     AnyModulationDestination::FilterCutoff,
-     (size_t)KRateModulationDestination::FilterCutoff, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::FilterCutoff,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc1PulseWidth, // index overall
+        AnyModulationDestination::Osc1PulseWidth,
+        (size_t)ARateModulationDestination::Osc1PulseWidth, // index for rate
+        ModulationRate::ARate,
+        (KRateModulationDestination)0,
+        ARateModulationDestination::Osc1PulseWidth,
+        //  -1, // range min
+        //  1,  // range max
+        //  ModulationPoleType::N11},
+    },
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc1Phase, // index overall
+        AnyModulationDestination::Osc1Phase,
+        (size_t)ARateModulationDestination::Osc1Phase, // index for rate
+        ModulationRate::ARate,
+        (KRateModulationDestination)0,
+        ARateModulationDestination::Osc1Phase,
+        //  -1, // range min
+        //  1,  // range max
+        //  ModulationPoleType::N11},
+    },
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc2PulseWidth, // index overall
+        AnyModulationDestination::Osc2PulseWidth,
+        (size_t)ARateModulationDestination::Osc2PulseWidth, // index for rate
+        ModulationRate::ARate,
+        (KRateModulationDestination)0,
+        ARateModulationDestination::Osc2PulseWidth,
+        //  -1, // range min
+        //  1,  // range max
+        //  ModulationPoleType::N11},
+    },
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc2Phase, // index overall
+        AnyModulationDestination::Osc2Phase,
+        (size_t)ARateModulationDestination::Osc2Phase, // index for rate
+        ModulationRate::ARate,
+        (KRateModulationDestination)0,
+        ARateModulationDestination::Osc2Phase,
+        //  -1, // range min
+        //  1,  // range max
+        //  ModulationPoleType::N11},
+    },
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc3PulseWidth, // index overall
+        AnyModulationDestination::Osc3PulseWidth,
+        (size_t)ARateModulationDestination::Osc3PulseWidth, // index for rate
+        ModulationRate::ARate,
+        (KRateModulationDestination)0,
+        ARateModulationDestination::Osc3PulseWidth,
+        //  -1, // range min
+        //  1,  // range max
+        //  ModulationPoleType::N11},
+    },
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc3Phase, // index overall
+        AnyModulationDestination::Osc3Phase,
+        (size_t)ARateModulationDestination::Osc3Phase, // index for rate
+        ModulationRate::ARate,
+        (KRateModulationDestination)0,
+        ARateModulationDestination::Osc3Phase,
+        //  -1, // range min
+        //  1,  // range max
+        //  ModulationPoleType::N11},
+    },
 
-    {true,
-     (size_t)AnyModulationDestination::MasterVolume, // index overall
-     AnyModulationDestination::MasterVolume,
-     (size_t)KRateModulationDestination::MasterVolume, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::MasterVolume,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,
+        (size_t)AnyModulationDestination::FilterCutoff, // index overall
+        AnyModulationDestination::FilterCutoff,
+        (size_t)KRateModulationDestination::FilterCutoff, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FilterCutoff,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,
-     (size_t)AnyModulationDestination::Osc1Volume, // index overall
-     AnyModulationDestination::Osc1Volume,
-     (size_t)KRateModulationDestination::Osc1Volume, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc1Volume,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,
+        (size_t)AnyModulationDestination::MasterVolume, // index overall
+        AnyModulationDestination::MasterVolume,
+        (size_t)KRateModulationDestination::MasterVolume, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::MasterVolume,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,
-     (size_t)AnyModulationDestination::Osc2Volume, // index overall
-     AnyModulationDestination::Osc2Volume,
-     (size_t)KRateModulationDestination::Osc2Volume, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc2Volume,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,
+        (size_t)AnyModulationDestination::Detune, // index overall
+        AnyModulationDestination::Detune,
+        (size_t)KRateModulationDestination::Detune, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Detune,
+        (ARateModulationDestination)0,
+    },
 
-    {true,
-     (size_t)AnyModulationDestination::Osc3Volume, // index overall
-     AnyModulationDestination::Osc3Volume,
-     (size_t)KRateModulationDestination::Osc3Volume, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc3Volume,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc1Volume, // index overall
+        AnyModulationDestination::Osc1Volume,
+        (size_t)KRateModulationDestination::Osc1Volume, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc1Volume,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::Osc1FMFeedback, // index overall
-     AnyModulationDestination::Osc1FMFeedback,
-     (size_t)KRateModulationDestination::Osc1FMFeedback, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc1FMFeedback,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc2Volume, // index overall
+        AnyModulationDestination::Osc2Volume,
+        (size_t)KRateModulationDestination::Osc2Volume, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc2Volume,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::Osc2FMFeedback, // index overall
-     AnyModulationDestination::Osc2FMFeedback,
-     (size_t)KRateModulationDestination::Osc2FMFeedback, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc2FMFeedback,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc3Volume, // index overall
+        AnyModulationDestination::Osc3Volume,
+        (size_t)KRateModulationDestination::Osc3Volume, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc3Volume,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::Osc3FMFeedback, // index overall
-     AnyModulationDestination::Osc3FMFeedback,
-     (size_t)KRateModulationDestination::Osc3FMFeedback, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc3FMFeedback,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::Osc1FMFeedback, // index overall
+        AnyModulationDestination::Osc1FMFeedback,
+        (size_t)KRateModulationDestination::Osc1FMFeedback, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc1FMFeedback,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                                // is a modulation
-     (size_t)AnyModulationDestination::OverallFMStrength, // index overall
-     AnyModulationDestination::OverallFMStrength,
-     (size_t)KRateModulationDestination::OverallFMStrength, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::OverallFMStrength,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::Osc2FMFeedback, // index overall
+        AnyModulationDestination::Osc2FMFeedback,
+        (size_t)KRateModulationDestination::Osc2FMFeedback, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc2FMFeedback,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::FMStrength2To1, // index overall
-     AnyModulationDestination::FMStrength2To1,
-     (size_t)KRateModulationDestination::FMStrength2To1, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::FMStrength2To1,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::Osc3FMFeedback, // index overall
+        AnyModulationDestination::Osc3FMFeedback,
+        (size_t)KRateModulationDestination::Osc3FMFeedback, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc3FMFeedback,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::FMStrength3To1, // index overall
-     AnyModulationDestination::FMStrength3To1,
-     (size_t)KRateModulationDestination::FMStrength3To1, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::FMStrength3To1,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                                // is a modulation
+        (size_t)AnyModulationDestination::OverallFMStrength, // index overall
+        AnyModulationDestination::OverallFMStrength,
+        (size_t)KRateModulationDestination::OverallFMStrength, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::OverallFMStrength,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::FMStrength1To2, // index overall
-     AnyModulationDestination::FMStrength1To2,
-     (size_t)KRateModulationDestination::FMStrength1To2, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::FMStrength1To2,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength2To1, // index overall
+        AnyModulationDestination::FMStrength2To1,
+        (size_t)KRateModulationDestination::FMStrength2To1, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength2To1,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::FMStrength3To2, // index overall
-     AnyModulationDestination::FMStrength3To2,
-     (size_t)KRateModulationDestination::FMStrength3To2, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::FMStrength3To2,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength3To1, // index overall
+        AnyModulationDestination::FMStrength3To1,
+        (size_t)KRateModulationDestination::FMStrength3To1, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength3To1,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::FMStrength1To3, // index overall
-     AnyModulationDestination::FMStrength1To3,
-     (size_t)KRateModulationDestination::FMStrength1To3, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::FMStrength1To3,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength1To2, // index overall
+        AnyModulationDestination::FMStrength1To2,
+        (size_t)KRateModulationDestination::FMStrength1To2, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength1To2,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                             // is a modulation
-     (size_t)AnyModulationDestination::FMStrength2To3, // index overall
-     AnyModulationDestination::FMStrength2To3,
-     (size_t)KRateModulationDestination::FMStrength2To3, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::FMStrength2To3,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength3To2, // index overall
+        AnyModulationDestination::FMStrength3To2,
+        (size_t)KRateModulationDestination::FMStrength3To2, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength3To2,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                                 // is a modulation
-     (size_t)AnyModulationDestination::Osc1FrequencyParam, // index overall
-     AnyModulationDestination::Osc1FrequencyParam,
-     (size_t)KRateModulationDestination::Osc1FrequencyParam, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc1FrequencyParam,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength1To3, // index overall
+        AnyModulationDestination::FMStrength1To3,
+        (size_t)KRateModulationDestination::FMStrength1To3, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength1To3,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                                 // is a modulation
-     (size_t)AnyModulationDestination::Osc2FrequencyParam, // index overall
-     AnyModulationDestination::Osc2FrequencyParam,
-     (size_t)KRateModulationDestination::Osc2FrequencyParam, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc2FrequencyParam,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength2To3, // index overall
+        AnyModulationDestination::FMStrength2To3,
+        (size_t)KRateModulationDestination::FMStrength2To3, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength2To3,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
-    {true,                                                 // is a modulation
-     (size_t)AnyModulationDestination::Osc3FrequencyParam, // index overall
-     AnyModulationDestination::Osc3FrequencyParam,
-     (size_t)KRateModulationDestination::Osc3FrequencyParam, // index for rate
-     ModulationRate::KRate,
-     KRateModulationDestination::Osc3FrequencyParam,
-     (ARateModulationDestination)0,
-    //  0, // range min
-    //  1, // range max
-    //  ModulationPoleType::Positive01},
-},
+    {
+        true,                                                 // is a modulation
+        (size_t)AnyModulationDestination::Osc1FrequencyParam, // index overall
+        AnyModulationDestination::Osc1FrequencyParam,
+        (size_t)KRateModulationDestination::Osc1FrequencyParam, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc1FrequencyParam,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
+
+    {
+        true,                                                 // is a modulation
+        (size_t)AnyModulationDestination::Osc2FrequencyParam, // index overall
+        AnyModulationDestination::Osc2FrequencyParam,
+        (size_t)KRateModulationDestination::Osc2FrequencyParam, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc2FrequencyParam,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
+
+    {
+        true,                                                 // is a modulation
+        (size_t)AnyModulationDestination::Osc3FrequencyParam, // index overall
+        AnyModulationDestination::Osc3FrequencyParam,
+        (size_t)KRateModulationDestination::Osc3FrequencyParam, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc3FrequencyParam,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
 
 };
 
