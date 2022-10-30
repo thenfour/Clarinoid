@@ -514,28 +514,37 @@ static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyM
 
 EnumInfo<AnyModulationDestination> gAnyModulationDestinationInfo("AnyModDest", gAnyModulationDestinationItems);
 
-// TODO: "inverted" should be a separate param i think, instead of making 2 versions of each here.
 enum class ModulationPolarityTreatment : uint8_t
 {
-    Default,              // do not change the source signal at all.
     AsPositive01,         // force it to 0-1 positive polarity
-    AsBipolar,            // force it to -1,1 bi-polarity
     AsPositive01Inverted, // same as Positive01, but signal is inverted so 0,1 translates 1,0. (1-x)
+    AsBipolar,            // force it to -1,1 bi-polarity
     AsBipolarInverted,    // same as AsBipolar, but signal is inverted so -1,1 translates 1,-1 (-x)
+    Default,              // do not change the source signal at all.
 };
 
 EnumItemInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentItems[5] = {
-    {ModulationPolarityTreatment::Default, "Default"},
     {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]"},
-    {ModulationPolarityTreatment::AsBipolar, "Map to [-1,1]"},
     {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]"},
+    {ModulationPolarityTreatment::AsBipolar, "Map to [-1,1]"},
     {ModulationPolarityTreatment::AsBipolarInverted, "Map to [1,-1]"},
+    {ModulationPolarityTreatment::Default, "Default"},
 };
-
 static constexpr size_t gModulationPolarityTreatmentCount = SizeofStaticArray(gAnyModulationDestinationItems);
 
 EnumInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentInfo("ModulationPolarity",
                                                                        gModulationPolarityTreatmentItems);
+
+EnumItemInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentItems[2] = {
+    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]"},
+    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]"},
+};
+
+static constexpr size_t gModulationAuxPolarityTreatmentCount = SizeofStaticArray(gModulationAuxPolarityTreatmentItems);
+
+EnumInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentInfo("ModulationAuxPolarity",
+                                                                       gModulationAuxPolarityTreatmentItems);
+
 
 struct SynthModulationSpec
 {
@@ -547,10 +556,10 @@ struct SynthModulationSpec
     float mScaleN11 = 0.5f;
 
     AnyModulationSource mAuxSource = AnyModulationSource::None;
-    ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::Default;
+    ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::AsPositive01;
     bool mAuxEnabled = true; // just allows bypassing without removing the aux source
     int16_t mAuxCurveShape = gModCurveLUT.LinearYIndex;
-    float mAuxAmount01 = 0.0f; // amount of attenuation
+    float mAuxAmount = 0.0f; // amount of attenuation
 
     // to mimic old behavior with 0 offset and just a scale.
     void SetScaleN11_Legacy(float scaleN11)
@@ -735,6 +744,10 @@ struct SynthPreset
             auto dest = oscGainMods[i];
             if (!Any(this->mModulations, [&](const SynthModulationSpec &m) { return m.mDest == dest; }))
             {
+                if (!mOsc[i].mEnabled) // hm kinda ugly logic; maybe one day this whole fn will be improved?
+                {
+                    return "<mute>";
+                }
                 return "<silent>";
             }
         }

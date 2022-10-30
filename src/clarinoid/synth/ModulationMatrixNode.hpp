@@ -220,7 +220,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     }
 
     // converts a single krate source value to a destination +/- value to apply
-    inline float MapKRateValue(float x,
+    inline float MapKRateValue(float kRateSourceValue,
                                Buffers &buffers,
                                const SynthModulationSpec &modSpec,
                                const ModulationSourceInfo &sourceInfo,
@@ -228,13 +228,13 @@ struct VoiceModulationMatrixNode : public AudioStream
     {
         auto polarityMapping =
             GetPolarityConversion<PolarityConversionKernelFloat>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
-        float ret = polarityMapping.Transfer(x);
+        float ret = polarityMapping.Transfer(kRateSourceValue);
         auto curveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
         ret = gModCurveLUT.Transfer32(ret, curveState);
         ret *= modSpec.mScaleN11;
 
         const auto &auxInfo = GetModulationSourceInfo(modSpec.mAuxSource);
-        if (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount01)
+        if (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount)
         {
             // we need to apply aux source.
             auto optAuxVal = GetKRateSourceValueFromAnySource(buffers, auxInfo);
@@ -245,9 +245,11 @@ struct VoiceModulationMatrixNode : public AudioStream
                 float auxVal = auxPolarityMapping.Transfer(optAuxVal.second);
                 auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
                 auxVal = gModCurveLUT.Transfer32(auxVal, auxCurveState);
-                auxVal *= modSpec.mAuxAmount01;
 
-                ret *= auxVal;
+                float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
+                float auxMul = auxBase + auxVal * modSpec.mAuxAmount;
+
+                ret *= auxMul;
             }
         }
         return ret;
@@ -303,13 +305,14 @@ struct VoiceModulationMatrixNode : public AudioStream
         uint32_t *bufDest32 = (uint32_t *)(dest->data);
 
         float auxVal = EnsureKRateSource(buffers, auxInfo);
+        float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
         auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
         auto auxPolarityConv =
             GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity);
 
         auxVal = auxPolarityConv.Transfer(auxVal);
         auxVal = gModCurveLUT.Transfer32(auxVal, auxCurveState);
-        auxVal = auxVal * modSpec.mAuxAmount01;
+        auxVal = auxBase + auxVal * modSpec.mAuxAmount;
         int32_t auxVal16 = int32_t(auxVal * 65536);
 
         for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
@@ -335,6 +338,7 @@ struct VoiceModulationMatrixNode : public AudioStream
         }
     }
 
+    // example: lfo to pulse width, modulated by envelope
     void MapARateToARateAndApply_ARateAux(Buffers &buffers,
                                           audio_block_t *src,
                                           audio_block_t *dest,
@@ -348,10 +352,13 @@ struct VoiceModulationMatrixNode : public AudioStream
         if (!auxBuf)
             return;
 
+        float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
+        uint32_t auxBase32 = (uint32_t)(auxBase * 65536);
+
         auto srcCurveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
         auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
         int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
-        int32_t auxScale16p16 = int32_t(modSpec.mAuxAmount01 * 65536);
+        int32_t auxScale16p16 = int32_t(modSpec.mAuxAmount * 65536);
 
         auto srcPolarityConv =
             GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
@@ -383,8 +390,10 @@ struct VoiceModulationMatrixNode : public AudioStream
             aux2 += auxPolarityConv.add;
             aux1 = gModCurveLUT.Transfer16(saturate16(aux1), auxCurveState);
             aux2 = gModCurveLUT.Transfer16(saturate16(aux2), auxCurveState);
-            aux1 = signed_multiply_32x16b(auxScale16p16, aux1);
-            aux2 = signed_multiply_32x16b(auxScale16p16, aux2);
+            //aux1 = signed_multiply_32x16b(auxScale16p16, aux1);
+            // aux2 = signed_multiply_32x16b(auxScale16p16, aux2);
+            aux1 = signed_multiply_accumulate_32x16b(auxBase32, auxScale16p16, aux1);
+            aux2 = signed_multiply_accumulate_32x16b(auxBase32, auxScale16p16, aux2);
             x1 = signed_multiply_32x16b(aux1 << 1,
                                         x1); // <<1 because it's a sample value (15bits), but this wants 16bits.
             x2 = signed_multiply_32x16b(aux2 << 1, x2);
@@ -407,7 +416,7 @@ struct VoiceModulationMatrixNode : public AudioStream
                                  const ModulationDestinationInfo &destInfo,
                                  const ModulationSourceInfo &auxInfo)
     {
-        bool auxEnabled = (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount01);
+        bool auxEnabled = (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount);
         if (!auxEnabled)
         {
             MapARateToARateAndApply_NoAux(src, dest, modSpec, sourceInfo, destInfo);

@@ -454,12 +454,12 @@ struct Voice : IModulationProvider
 
         // figure out which oscillators are enabled. Get a count and grab enabled indices.
         int oscEnabledCount = 0;
-        size_t enabledOscIndices[POLYBLEP_OSC_COUNT];
+        //size_t enabledOscIndices[POLYBLEP_OSC_COUNT];
         for (size_t iosc = 0; iosc < POLYBLEP_OSC_COUNT; ++iosc)
         {
             if (!patch.mOsc[iosc].mEnabled)
                 break;
-            enabledOscIndices[oscEnabledCount] = iosc;
+            //enabledOscIndices[oscEnabledCount] = iosc;
             oscEnabledCount++;
         }
 

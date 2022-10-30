@@ -1018,18 +1018,18 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                       StandardRangeSpecs::gFloat_0_1,
                                       Property<float>{[](void *cap) FLASHMEM {
                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                          return pThis->GetModulationBinding().mAuxAmount01;
+                                                          return pThis->GetModulationBinding().mAuxAmount;
                                                       },
                                                       [](void *cap, const float &v) {
                                                           auto *pThis = (SynthPatchMenuApp *)cap;
-                                                          pThis->GetModulationBinding().mAuxAmount01 = v;
+                                                          pThis->GetModulationBinding().mAuxAmount = v;
                                                       },
                                                       this},
                                       AlwaysEnabled};
 
     EnumSettingItem<ModulationPolarityTreatment> mModAuxPolarity = {
         " - Aux polarity",
-        gModulationPolarityTreatmentInfo,
+        gModulationAuxPolarityTreatmentInfo,
         Property<ModulationPolarityTreatment>{[](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
                                                   return pThis->GetModulationBinding().mAuxPolarity;
