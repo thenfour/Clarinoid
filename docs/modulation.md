@@ -116,20 +116,30 @@ Then some `1-x` style transforms to mirror it around negative `k` and `x` values
 
 ## Auxiliary signals
 
-Serum has a system of "auxilliary" modulation sources, which allows basically modulating modulations. I do find it useful to think of it this way, instead of having to create a new modulation to modulate this one. So, better workflow.
+Serum has a system of "auxilliary" modulation sources, which allows basically modulating modulations. I do find it useful to think of it this way, instead of having to create a new modulation to modulate this one. So, better workflow, more optimal code, and it replaces certain kinds of hidden details like envelope velocity tracking.
 
-Also it adds a multiplicative operation to modulations, while the base modulation is added.
+Serum works in this way:
 
-It works like this:
+    y = x + (modSrcVal * scale * auxVal * auxScale)
 
-    y = base + (m * scale * aux)
+I don't really like this though; I don't find it that useful. An aux source to me is an attenuation of the main modulation. It's not just another multiplication.
 
-So it's basically a way of modulating the modulation scale param.
+The example which illustrates this is: Envelope -> Volume, with velocity aux. This is probably the most common type of modulation imagineable. In this scenario, the mod scale sets the envelope peak, and aux amount would be the amount of attenuation caused by velocity.
 
-Aux sources get curves and polarity conversion as well.
+The Serum way means this is not a very useful interaction. With a "small amount of velocity-based attenuation", i.e. a small aux scale, multiplying like above causes the env peak to be very quiet.
 
-You can also specify the `auxScale` to reduce the strength of the modulation. It's a `[0,1]` value because negative would require an extra branch, and it's already possible to do this via polarity.
+What we really want is that the aux value does a `lerp` between an `(attenuated modscale)` and `modscale`.
 
-    y = base + (m * scale * aux * auxScale)
+    scale = lerp(modScale - auxScale, modScale, auxVal)
+    y = x + (modSrcVal * scale)
 
+Now e.g. when `modScale=0.5`, `velocity=0.1`, and `auxScale=0.333`,
+
+    scale = lerp(0.5 - 0.333, 0.5, 0.1)
+    y = x + (modSrcVal * scale)
+
+There's a pretty optimal way of doing this, by precalculating an `auxBase` (the left edge of the `lerp`).
+
+    auxBase = 1 - auxScale // precalculated
+    auxMul = auxBase + auxVal * auxScale
 

@@ -19,6 +19,18 @@ synth then distributes them among synth voices.
 
 namespace clarinoid
 {
+
+// https://www.paulcecchettimusic.com/full-list-of-midi-cc-numbers/
+enum class MidiCCValue
+{
+    BankSelect = 0,
+    ModWheel = 1,
+    Breath = 2,
+    Expression = 11,
+    DamperPedal = 64,
+    AllNotesOff = 123,
+};
+
 struct HeldNoteInfo
 {
     uint32_t mAttackTimestampMS;
@@ -26,6 +38,7 @@ struct HeldNoteInfo
     float mVelocity01;
     bool mIsPhysicallyHeld;
     MidiNote mMidiNote;
+    float mRandomTrigger01;
 };
 
 enum class MusicalEventSourceType : uint8_t
@@ -73,9 +86,10 @@ struct MusicalEventSource
 
 struct ISynthParamProvider
 {
-    virtual uint8_t SynthParamProvider_GetMidiCC(uint8_t cc) = 0;
+    virtual uint8_t SynthParamProvider_GetMidiCC(MidiCCValue cc) = 0;
     virtual float SynthParamProvider_GetBreath01() = 0;
     virtual float SynthParamProvider_GetPitchBendN11() = 0;
+    virtual float SynthParamProvider_GetMacroValue01(size_t i) = 0;
 };
 
 static uint16_t gNextLiveNoteSequenceID = 1;
@@ -87,7 +101,7 @@ static inline uint16_t GetNextLiveNoteSequenceID()
 struct IHeldNoteTrackerEvents
 {
     virtual void IHeldNoteTrackerEvents_OnNoteOn(const HeldNoteInfo &noteInfo) = 0;
-    virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo* trillNote) = 0;
+    virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote) = 0;
     virtual void IHeldNoteTrackerEvents_OnAllNotesOff() = 0;
 };
 
@@ -139,10 +153,11 @@ struct HeldNoteTracker
     {
         mPedalDown = false;
         // figure out the last physically-held note, in order to do trilling monophonic behavior
-        HeldNoteInfo* pTrill = nullptr;
-        for (auto it = mHeldNotes.rbegin(); it != mHeldNotes.rend(); ++ it)
+        HeldNoteInfo *pTrill = nullptr;
+        for (auto it = mHeldNotes.rbegin(); it != mHeldNotes.rend(); ++it)
         {
-            if (it ->mIsPhysicallyHeld) {
+            if (it->mIsPhysicallyHeld)
+            {
                 pTrill = &(*it);
                 break;
             }
@@ -202,7 +217,8 @@ struct HeldNoteTracker
         this->mHeldNotes.erase(existingItem);
 
         HeldNoteInfo *pTrill = nullptr;
-        if (!mHeldNotes.empty()) {
+        if (!mHeldNotes.empty())
+        {
             pTrill = &(*mHeldNotes.rbegin());
         }
 
@@ -225,6 +241,7 @@ struct HeldNoteTracker
             n.mIsPhysicallyHeld = true;
             n.mAttackTimestampMS = millis();
             n.mVelocity01 = velocity01;
+            n.mRandomTrigger01 = prng_f01();
             n.mMidiNote = note;
             n.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
             mHeldNotes.push_back(n);
@@ -242,6 +259,7 @@ struct HeldNoteTracker
         n.mAttackTimestampMS = millis();
         n.mIsPhysicallyHeld = true;
         n.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
+        n.mRandomTrigger01 = prng_f01();
         this->mHeldNotes.push_back(n); // add back where it belongs: as newest note.
         this->mEventHandler->IHeldNoteTrackerEvents_OnNoteOn(n);
         // Serial.println(String("held note tracker NoteOn, updating note=") + note + "; count=" + mHeldNotes.size());
@@ -262,6 +280,7 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
 {
     HeldNoteTracker mHeldNotes;
     uint8_t mCurrentCCValue[128] = {0};
+    float mMacroValues[4] = {0};
 
     float mCurrentPitchBendN11 = 0;
     float mCurrentMod01 = 0;
@@ -308,8 +327,8 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
             auto &patch = mAppSettings->FindSynthPreset(perf.mSynthPresetA);
             if (patch.mVoicingMode == VoicingMode::Monophonic)
             {
-                //HeldNoteInfo noteInfo2;
-                if (trillNote) //mHeldNotes.GetLastPlayingNote(noteInfo2))
+                // HeldNoteInfo noteInfo2;
+                if (trillNote) // mHeldNotes.GetLastPlayingNote(noteInfo2))
                 {
                     // so, there's a valid patch, and it's mono, and there's a previous note held. use it.
                     gInstance->mEventHandler->IncomingMusicalEvents_OnNoteOn(
@@ -331,9 +350,9 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
         mEventHandler->IncomingMusicalEvents_OnAllNoteOff();
     }
 
-    virtual uint8_t SynthParamProvider_GetMidiCC(uint8_t cc) override
+    virtual uint8_t SynthParamProvider_GetMidiCC(MidiCCValue cc) override
     {
-        return mCurrentCCValue[cc];
+        return mCurrentCCValue[(int)cc];
     }
     virtual float SynthParamProvider_GetBreath01() override
     {
@@ -343,6 +362,11 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
     {
         return mCurrentPitchBendN11;
     }
+    virtual float SynthParamProvider_GetMacroValue01(size_t i) override
+    {
+        CCASSERT(i < SizeofStaticArray(mMacroValues));
+        return mMacroValues[i];
+    }
 
     struct DupeEventChecker
     {
@@ -350,7 +374,8 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
         int lastA = -1; // hope these are acceptable initial values
         int lastB = -1;
         Stopwatch lastTime;
-        bool RegisterEventAndCheckDupe(int A, int B) {
+        bool RegisterEventAndCheckDupe(int A, int B)
+        {
             if ((lastA == A) && (lastB == B) && (lastTime.ElapsedTime().ElapsedMillisI() < dupeEventBoundaryMS))
             {
                 return true;
@@ -365,7 +390,8 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
     static void HandleNoteOff(uint8_t channel, uint8_t note, uint8_t velocity)
     {
         static DupeEventChecker gDupeChecker;
-        if (gDupeChecker.RegisterEventAndCheckDupe(note, velocity)) {
+        if (gDupeChecker.RegisterEventAndCheckDupe(note, velocity))
+        {
             return;
         }
         // Serial.println(String("midi device HandleNoteOff: ") + note);
@@ -375,7 +401,8 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
     static void HandleNoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
     {
         static DupeEventChecker gDupeChecker;
-        if (gDupeChecker.RegisterEventAndCheckDupe(note, velocity)) {
+        if (gDupeChecker.RegisterEventAndCheckDupe(note, velocity))
+        {
             return;
         }
         // Serial.println(String("midi device note on: ") + note);
@@ -386,14 +413,15 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
     static void HandleControlChange(uint8_t channel, uint8_t control, uint8_t value)
     {
         static DupeEventChecker gDupeChecker;
-        if (gDupeChecker.RegisterEventAndCheckDupe(control, value)) {
+        if (gDupeChecker.RegisterEventAndCheckDupe(control, value))
+        {
             return;
         }
         // Serial.println(String("midi device HandleControlChange : ") + control + " -> " + value);
-        //     https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
-        //     64	Damper Pedal on/off	≤63 off, ≥64 on	On/off switch that controls sustain pedal. Nearly every synth
-        //     will react to CC 64. (See also Sostenuto CC 66)
-        if (control == 64)
+        //      https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
+        //      64	Damper Pedal on/off	≤63 off, ≥64 on	On/off switch that controls sustain pedal. Nearly every synth
+        //      will react to CC 64. (See also Sostenuto CC 66)
+        if (control == (int)MidiCCValue::DamperPedal)
         {
             if (value < 64)
             {
@@ -404,7 +432,7 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
                 gInstance->mHeldNotes.PedalDown();
             }
         }
-        else if (control == 123)
+        else if (control == (int)MidiCCValue::AllNotesOff)
         {
             // all notes off
             gInstance->mHeldNotes.AllNotesOff();
@@ -415,7 +443,8 @@ struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
     static void HandlePitchChange(uint8_t channel, int pitch /* -8192 to 8191 inclusive */)
     {
         static DupeEventChecker gDupeChecker;
-        if (gDupeChecker.RegisterEventAndCheckDupe(pitch, 0)) {
+        if (gDupeChecker.RegisterEventAndCheckDupe(pitch, 0))
+        {
             return;
         }
         // Serial.println(String("pb: ") + pitch);

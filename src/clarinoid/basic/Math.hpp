@@ -809,6 +809,25 @@ int ModularDistance(int period, int a, int b)
     return std::min(b - a, a + period - b);
 }
 
+
+// a nice practical couple snippets for prng: https://forum.pjrc.com/threads/61125-Teensy-4-1-Random-Number-Generator?p=243895&viewfull=1#post243895
+static volatile uint64_t  prng_state = RNG_SEED;  /* Any nonzero state is valid! */
+
+uint32_t prng_u32(void)
+{
+    uint64_t  x = prng_state;
+    x ^= x >> 12;
+    x ^= x << 25;
+    x ^= x >> 27;
+    prng_state = x;
+    return (x * UINT64_C(2685821657736338717)) >> 32;
+}
+
+float prng_f01()
+{
+    return float(double(prng_u32()) / std::numeric_limits<uint32_t>::max());
+}
+
 struct SawWave
 {
     uint32_t mFrequencyMicros = 1000000; // just 1 hz frequency default

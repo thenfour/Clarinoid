@@ -7,6 +7,9 @@
 
 namespace clarinoid
 {
+
+static const int RNG_SEED = 8;
+
     // for breath controllers, this is true to enable a specialized filter controlled by breath.
     // that filter is a temporary thing in the design and should be replaced by a proper modulation in the graph,
     // but for the moment it's a hard-coded graph element with logic in synthvoice. So for non-breath controllers,

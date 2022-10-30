@@ -160,6 +160,95 @@ ModulationSourceInfo gModulationSourceInfo[gAnyModulationSourceCount] = {
      0, // range min
      1, // range max
      ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::NoteValue, // index overall
+     AnyModulationSource::NoteValue,
+     (size_t)KRateModulationSource::NoteValue, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::NoteValue,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::RandomTrigger, // index overall
+     AnyModulationSource::RandomTrigger,
+     (size_t)KRateModulationSource::RandomTrigger, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::RandomTrigger,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::ModWheel, // index overall
+     AnyModulationSource::ModWheel,
+     (size_t)KRateModulationSource::ModWheel, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::ModWheel,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::Macro1, // index overall
+     AnyModulationSource::Macro1,
+     (size_t)KRateModulationSource::Macro1, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::Macro1,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::Macro2, // index overall
+     AnyModulationSource::Macro2,
+     (size_t)KRateModulationSource::Macro2, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::Macro2,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::Macro3, // index overall
+     AnyModulationSource::Macro3,
+     (size_t)KRateModulationSource::Macro3, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::Macro3,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::Macro4, // index overall
+     AnyModulationSource::Macro4,
+     (size_t)KRateModulationSource::Macro4, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::Macro4,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::Pedal, // index overall
+     AnyModulationSource::Pedal,
+     (size_t)KRateModulationSource::Pedal, // index for rate
+     ModulationRate::KRate,
+     KRateModulationSource::Pedal,
+     (ARateModulationSource)0,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
 };
 
 ModulationSourceInfo *gKRateModulationSourceInfoPtrs[gKRateModulationSourceCount] = {nullptr};

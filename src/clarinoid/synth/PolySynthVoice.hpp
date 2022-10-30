@@ -290,6 +290,22 @@ struct Voice : IModulationProvider
             return mParamProvider->SynthParamProvider_GetPitchBendN11();
         case KRateModulationSource::Velocity:
             return mRunningVoice.mNoteInfo.mVelocity01;
+        case KRateModulationSource::NoteValue:
+            return float(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()) / 127;
+        case KRateModulationSource::RandomTrigger:
+            return mRunningVoice.mNoteInfo.mRandomTrigger01;
+        case KRateModulationSource::ModWheel:
+            return float(mParamProvider->SynthParamProvider_GetMidiCC(MidiCCValue::ModWheel)) / 127;
+        case KRateModulationSource::Macro1:
+            return mParamProvider->SynthParamProvider_GetMacroValue01(0);
+        case KRateModulationSource::Macro2:
+            return mParamProvider->SynthParamProvider_GetMacroValue01(1);
+        case KRateModulationSource::Macro3:
+            return mParamProvider->SynthParamProvider_GetMacroValue01(2);
+        case KRateModulationSource::Macro4:
+            return mParamProvider->SynthParamProvider_GetMacroValue01(3);
+        case KRateModulationSource::Pedal:
+            return float(mParamProvider->SynthParamProvider_GetMidiCC(MidiCCValue::DamperPedal)) / 127;
         }
         CCASSERT(!"requesting an unsupported krate source");
         return 0;
@@ -454,12 +470,12 @@ struct Voice : IModulationProvider
 
         // figure out which oscillators are enabled. Get a count and grab enabled indices.
         int oscEnabledCount = 0;
-        //size_t enabledOscIndices[POLYBLEP_OSC_COUNT];
+        // size_t enabledOscIndices[POLYBLEP_OSC_COUNT];
         for (size_t iosc = 0; iosc < POLYBLEP_OSC_COUNT; ++iosc)
         {
             if (!patch.mOsc[iosc].mEnabled)
                 break;
-            //enabledOscIndices[oscEnabledCount] = iosc;
+            // enabledOscIndices[oscEnabledCount] = iosc;
             oscEnabledCount++;
         }
 
@@ -496,7 +512,7 @@ struct Voice : IModulationProvider
 
         size_t ienabledOsc = 0;
 
-        //String sd = String("v") + mVoiceIndex + ": ";
+        // String sd = String("v") + mVoiceIndex + ": ";
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
@@ -529,7 +545,7 @@ struct Voice : IModulationProvider
                          mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_Frequency),
                          mPortamentoCalc[i]);
 
-            //sd += String("[o") + i + " det:" + detunes[ienabledOsc] + " freq:" + freq + "]  ";
+            // sd += String("[o") + i + " det:" + detunes[ienabledOsc] + " freq:" + freq + "]  ";
 
             mOsc.mOsc[i].SetBasicParams(freq, patch.mOsc[i].mPhase01, patch.mOsc[i].mPortamentoTimeMS, false, 0);
 

@@ -237,26 +237,31 @@ enum class KRateModulationSource : uint8_t
 {
     // NB: IF you change something here, keep ModulationMatrixNode in sync. (ModulationSourceInfo)
     // these are INDICES used by synthvoice / modulationmatrix. MUST be 0-based, sequential, index-like.
-    Breath = 0, // K-rate
-    PitchStrip, // K-rate
-    Velocity,   // K-rate
-
-    // notevalue
-    // random trigger
-    // mod wheel
-    // Macro1,
-    // Macro2,
-    // Macro3,
-    // Macro4,
-    // Pedal
-
-    // various Midi CCs
+    Breath = 0,    // K-rate
+    PitchStrip,    // K-rate
+    Velocity,      // K-rate
+    NoteValue,     // K-rate
+    RandomTrigger, // K-rate
+    ModWheel,      // K-rate
+    Macro1,        // K-rate
+    Macro2,        // K-rate
+    Macro3,        // K-rate
+    Macro4,        // K-rate
+    Pedal,         // K-rate
 };
 
-EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[3] = {
+EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[11] = {
     {KRateModulationSource::Breath, "Breath"},
     {KRateModulationSource::PitchStrip, "PitchBend"},
     {KRateModulationSource::Velocity, "Velocity"},
+    {KRateModulationSource::NoteValue, "NoteValue"},
+    {KRateModulationSource::RandomTrigger, "RandomTrigger"},
+    {KRateModulationSource::ModWheel, "ModWheel"},
+    {KRateModulationSource::Macro1, "Macro1"},
+    {KRateModulationSource::Macro2, "Macro2"},
+    {KRateModulationSource::Macro3, "Macro3"},
+    {KRateModulationSource::Macro4, "Macro4"},
+    {KRateModulationSource::Pedal, "Pedal"},
 };
 static constexpr size_t gKRateModulationSourceCount = SizeofStaticArray(gKRateModulationSourceItems);
 
@@ -273,12 +278,20 @@ enum class AnyModulationSource : uint8_t
     Osc2FB, // a-rate
     Osc3FB, // a-rate
 
-    Breath,     // K-rate
-    PitchStrip, // K-rate
-    Velocity,   // K-rate
+    Breath,        // K-rate
+    PitchStrip,    // K-rate
+    Velocity,      // K-rate
+    NoteValue,     // K-rate
+    RandomTrigger, // K-rate
+    ModWheel,      // K-rate
+    Macro1,        // K-rate
+    Macro2,        // K-rate
+    Macro3,        // K-rate
+    Macro4,        // K-rate
+    Pedal,         // K-rate
 };
 
-EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[11] = {
+EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[19] = {
     {AnyModulationSource::None, "None"},
     {AnyModulationSource::LFO1, "LFO1"},
     {AnyModulationSource::LFO2, "LFO2"},
@@ -290,6 +303,14 @@ EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[11] = {
     {AnyModulationSource::Breath, "Breath"},
     {AnyModulationSource::PitchStrip, "PitchBend"},
     {AnyModulationSource::Velocity, "Velocity"},
+    {AnyModulationSource::NoteValue, "NoteValue"},
+    {AnyModulationSource::RandomTrigger, "RandomTrigger"},
+    {AnyModulationSource::ModWheel, "ModWheel"},
+    {AnyModulationSource::Macro1, "Macro1"},
+    {AnyModulationSource::Macro2, "Macro2"},
+    {AnyModulationSource::Macro3, "Macro3"},
+    {AnyModulationSource::Macro4, "Macro4"},
+    {AnyModulationSource::Pedal, "Pedal"},
 };
 
 static constexpr size_t gAnyModulationSourceCount = SizeofStaticArray(gAnyModulationSourceItems);
@@ -543,8 +564,7 @@ EnumItemInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentItems[2
 static constexpr size_t gModulationAuxPolarityTreatmentCount = SizeofStaticArray(gModulationAuxPolarityTreatmentItems);
 
 EnumInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentInfo("ModulationAuxPolarity",
-                                                                       gModulationAuxPolarityTreatmentItems);
-
+                                                                          gModulationAuxPolarityTreatmentItems);
 
 struct SynthModulationSpec
 {
@@ -659,16 +679,9 @@ EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
 
 EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
 
-enum class SynthOscillatorLinkage : uint8_t
-{
-    // 1, 2, 3
-    //
-};
-
 struct SynthPreset
 {
     SynthOscillatorSettings mOsc[POLYBLEP_OSC_COUNT];
-    // SynthOscillatorLinkage mOscLinkage = ;
 
     String mName = "--";
     VolumeParamValue mMasterVolume;
