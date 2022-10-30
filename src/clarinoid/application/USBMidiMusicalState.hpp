@@ -149,8 +149,21 @@ struct HeldNoteTracker
         mEventHandler->IHeldNoteTrackerEvents_OnAllNotesOff();
     }
 
+    // void DumpHeldNotes(const char *src)
+    // {
+    //     Serial.println(String(src) + "; held notes: ");
+    //     for (size_t i = 0; i < mHeldNotes.size(); ++i)
+    //     {
+    //         auto &noteInfo = mHeldNotes[i];
+    //         Serial.println(String(" #") + i + " id:" + noteInfo.mLiveNoteSequenceID +
+    //                        (noteInfo.mIsPhysicallyHeld ? "Fingered " : "pedaled ") +
+    //                        noteInfo.mMidiNote.GetNoteDesc().mName);
+    //     }
+    // }
+
     void PedalUp()
     {
+        // DumpHeldNotes("pedal up");
         mPedalDown = false;
         // figure out the last physically-held note, in order to do trilling monophonic behavior
         HeldNoteInfo *pTrill = nullptr;
@@ -195,26 +208,30 @@ struct HeldNoteTracker
         auto existingItem = mHeldNotes.begin();
         for (; existingItem != mHeldNotes.end(); ++existingItem)
         {
-            if (existingItem->mMidiNote == note)
+            if (existingItem->mMidiNote == note && existingItem->mIsPhysicallyHeld)
                 break;
         }
         if (existingItem == mHeldNotes.end())
         {
-            // Serial.println(String("held note tracker NoteOff, but is unknown. note=") + note +
+            // Serial.println(String("held note tracker NoteOff, but is unknown. note=") + note.GetNoteDesc().mName +
             //                "; count=" + mHeldNotes.size());
+            // DumpHeldNotes("NoteOff");
             return;
         }
         if (this->mPedalDown)
         {
             existingItem->mIsPhysicallyHeld = false;
-            // Serial.println(String("held note tracker NoteOff, marking not held. note=") + note +
+            // Serial.println(String("held note tracker NoteOff, marking not held. note=") + note.GetNoteDesc().mName +
             //                "; count=" + mHeldNotes.size());
+            // DumpHeldNotes("NoteOff");
             return;
         }
-        // Serial.println(String("held note tracker NoteOff, erasing known note=") + note +
+        // Serial.println(String("held note tracker NoteOff, erasing known note=") + note.GetNoteDesc().mName +
         //                "; count=" + mHeldNotes.size());
         auto ni = *existingItem;
         this->mHeldNotes.erase(existingItem);
+
+        // DumpHeldNotes("NoteOff");
 
         HeldNoteInfo *pTrill = nullptr;
         if (!mHeldNotes.empty())
@@ -227,53 +244,21 @@ struct HeldNoteTracker
 
     HeldNoteInfo NoteOn(MidiNote note, float velocity01)
     {
-        auto existingItem = mHeldNotes.begin();
-        for (; existingItem != mHeldNotes.end(); ++existingItem)
-        {
-            if (existingItem->mMidiNote == note)
-                break;
-        }
-
-        if (existingItem == mHeldNotes.end())
-        {
-            // add new note.
-            HeldNoteInfo n;
-            n.mIsPhysicallyHeld = true;
-            n.mAttackTimestampMS = millis();
-            n.mVelocity01 = velocity01;
-            n.mRandomTrigger01 = prng_f01();
-            n.mMidiNote = note;
-            n.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
-            mHeldNotes.push_back(n);
-            this->mEventHandler->IHeldNoteTrackerEvents_OnNoteOn(n);
-            // Serial.println(String("held note tracker NoteOn, adding note=") + note + "; count=" + mHeldNotes.size());
-            return n;
-        }
-
-        // there's an existing item to deal with. IOW, user is playing a note that's already
-        // held for some reason. either a weird MIDI scenario, maybe glitched out. Or more likely,
-        // user is holding pedal, and retriggering a key.
-        HeldNoteInfo n = *existingItem;       // take a copy.
-        this->mHeldNotes.erase(existingItem); // remove original
-        n.mVelocity01 = velocity01;
-        n.mAttackTimestampMS = millis();
+        HeldNoteInfo n;
         n.mIsPhysicallyHeld = true;
-        n.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
+        n.mAttackTimestampMS = millis();
+        n.mVelocity01 = velocity01;
         n.mRandomTrigger01 = prng_f01();
-        this->mHeldNotes.push_back(n); // add back where it belongs: as newest note.
+        n.mMidiNote = note;
+        n.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
+        mHeldNotes.push_back(n);
+
+        // DumpHeldNotes("note on");
+
         this->mEventHandler->IHeldNoteTrackerEvents_OnNoteOn(n);
-        // Serial.println(String("held note tracker NoteOn, updating note=") + note + "; count=" + mHeldNotes.size());
+        // Serial.println(String("held note tracker NoteOn, adding note=") + note + "; count=" + mHeldNotes.size());
         return n;
     }
-
-    // // returns true if noteInfo is filled.
-    // bool GetLastPlayingNote(HeldNoteInfo &noteInfo) const
-    // {
-    //     if (mHeldNotes.empty())
-    //         return false;
-    //     noteInfo = mHeldNotes.back();
-    //     return true;
-    // }
 };
 
 struct USBMidiMusicalState : ISynthParamProvider, IHeldNoteTrackerEvents
