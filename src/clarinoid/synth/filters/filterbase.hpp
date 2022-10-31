@@ -10,7 +10,7 @@ namespace clarinoid
 namespace filters
 {
 using real = float;
-//using real = fp::fp_t<int32_t, 12>;
+//using real = FP15p16;
 
 template <typename T>
 constexpr real Real(const T x)
@@ -18,30 +18,30 @@ constexpr real Real(const T x)
     return static_cast<real>(x);
     //return {x};
 };
-constexpr real RealPI = {3.14159265358979323846264338327950288};
-constexpr real PITimes2 = {real{2.0} * RealPI};
-constexpr real Real0 = {0};
-constexpr real Real1 = {1};
-constexpr real Real2 = {2};
+constexpr real RealPI = real{3.14159265358979323846264338327950288f};
+constexpr real PITimes2 = real{2.0f} * RealPI;
+constexpr real Real0 = real{0.0f};
+constexpr real Real1 = real{1.0f};
+constexpr real Real2 = real{2.0f};
 inline real fasttanh(real p_input, real p_tanh_factor)
 {
     return ::clarinoid::fast::tanh(p_tanh_factor * p_input);
 }
 
-constexpr real SampleRate = 44100;
-constexpr real OneOverSampleRate = Real1 / Real(44100);
+constexpr real SampleRate = real(44100.0f);
+constexpr real OneOverSampleRate = Real1 / Real(44100.0f);
 
 // overdrive amt can be between 0 and up, but practical range 0-1.5 or so.
 inline void applyOverdrive(real &pio_input, real m_overdrive, real p_tanh_factor)
 {
     real overdrive_modded = m_overdrive;
-    overdrive_modded = overdrive_modded < 0 ? 0 : overdrive_modded;
-    if (overdrive_modded > Real(0.01) && overdrive_modded < 1)
+    overdrive_modded = overdrive_modded < Real0 ? Real0 : overdrive_modded;
+    if (overdrive_modded > Real(0.01) && overdrive_modded < Real1)
     {
         // interpolate here so we have possibility of pure linear Processing
         pio_input = pio_input * (Real1 - overdrive_modded) + overdrive_modded * fasttanh(pio_input, p_tanh_factor);
     }
-    else if (overdrive_modded >= 1)
+    else if (overdrive_modded >= Real1)
     {
         pio_input = fasttanh(overdrive_modded * pio_input, p_tanh_factor);
     }
@@ -50,14 +50,14 @@ inline void applyOverdrive(real &pio_input, real m_overdrive, real p_tanh_factor
 inline void applyOverdrive(real &L, real &R, real m_overdrive, real p_tanh_factor)
 {
     real overdrive_modded = m_overdrive;
-    overdrive_modded = overdrive_modded < 0 ? 0 : overdrive_modded;
-    if (overdrive_modded > Real(0.01) && overdrive_modded < 1)
+    overdrive_modded = overdrive_modded < Real0 ? Real0 : overdrive_modded;
+    if (overdrive_modded > Real(0.01) && overdrive_modded < Real1)
     {
         // interpolate here so we have possibility of pure linear Processing
         L = L * (Real1 - overdrive_modded) + overdrive_modded * fasttanh(L, p_tanh_factor);
         R = R * (Real1 - overdrive_modded) + overdrive_modded * fasttanh(R, p_tanh_factor);
     }
-    else if (overdrive_modded >= 1)
+    else if (overdrive_modded >= Real1)
     {
         L = fasttanh(overdrive_modded * L, p_tanh_factor);
         R = fasttanh(overdrive_modded * R, p_tanh_factor);

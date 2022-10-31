@@ -164,7 +164,7 @@ EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[4] = {
     {OscWaveformShape::Sine, "Sine"},
     {OscWaveformShape::VarTriangle, "Tri-Saw"},
     {OscWaveformShape::Pulse, "Pulse"},
-    {OscWaveformShape::SawSync, "HQ Saw"},
+    {OscWaveformShape::SawSync, "Sync Saw"},
 };
 
 EnumInfo<OscWaveformShape> gOscWaveformShapeInfo("OscWaveformShape", gOscWaveformShapeItems);
@@ -370,13 +370,12 @@ enum class KRateModulationDestination : uint8_t
     Osc2FrequencyParam, // k-rate
     Osc3FrequencyParam, // k-rate
 
-    // env delay
-    // ...
-
-    // lfo speed
+    Osc1SyncFrequencyParam, // k-rate
+    Osc2SyncFrequencyParam, // k-rate
+    Osc3SyncFrequencyParam, // k-rate
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[19] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[22] = {
     {KRateModulationDestination::FilterCutoff, "FilterCutoff"},
     {KRateModulationDestination::MasterVolume, "MasterVolume"},
     {KRateModulationDestination::Detune, "Detune"},
@@ -393,9 +392,12 @@ EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[19] = 
     {KRateModulationDestination::FMStrength3To2, "FMStrength3To2"},
     {KRateModulationDestination::FMStrength1To3, "FMStrength1To3"},
     {KRateModulationDestination::FMStrength2To3, "FMStrength2To3"},
-    {KRateModulationDestination::Osc1FrequencyParam, "Osc1FrequencyParam"},
-    {KRateModulationDestination::Osc2FrequencyParam, "Osc2FrequencyParam"},
-    {KRateModulationDestination::Osc3FrequencyParam, "Osc3FrequencyParam"},
+    {KRateModulationDestination::Osc1FrequencyParam, "Osc1FrequencyP"},
+    {KRateModulationDestination::Osc2FrequencyParam, "Osc2FrequencyP"},
+    {KRateModulationDestination::Osc3FrequencyParam, "Osc3FrequencyP"},
+    {KRateModulationDestination::Osc1SyncFrequencyParam, "Osc1SyncFrequency"},
+    {KRateModulationDestination::Osc2SyncFrequencyParam, "Osc2SyncFrequency"},
+    {KRateModulationDestination::Osc3SyncFrequencyParam, "Osc3SyncFrequency"},
 };
 
 static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKRateModulationDestinationItems);
@@ -407,20 +409,24 @@ struct OscillatorModulationInfo
 {
     KRateModulationDestination KRateDestination_FMFeedback;
     KRateModulationDestination KRateDestination_Frequency;
+    KRateModulationDestination KRateDestination_SyncFrequency;
     KRateModulationDestination KRateDestination_Volume;
 };
 
 static OscillatorModulationInfo gModValuesByOscillator[POLYBLEP_OSC_COUNT] = {
     {KRateModulationDestination::Osc1FMFeedback,
      KRateModulationDestination::Osc1FrequencyParam,
+     KRateModulationDestination::Osc1SyncFrequencyParam,
      KRateModulationDestination::Osc1Volume},
 
     {KRateModulationDestination::Osc2FMFeedback,
      KRateModulationDestination::Osc2FrequencyParam,
+     KRateModulationDestination::Osc1SyncFrequencyParam,
      KRateModulationDestination::Osc2Volume},
 
     {KRateModulationDestination::Osc3FMFeedback,
      KRateModulationDestination::Osc3FrequencyParam,
+     KRateModulationDestination::Osc1SyncFrequencyParam,
      KRateModulationDestination::Osc3Volume},
 };
 
@@ -434,56 +440,29 @@ enum class AnyModulationDestination : uint8_t
     Osc3PulseWidth, // a-rate
     Osc3Phase,      // a-rate
 
-    FilterCutoff,
-    MasterVolume,
-    Detune,
-    Osc1Volume,
-    Osc2Volume,
-    Osc3Volume,
-    Osc1FMFeedback,
-    Osc2FMFeedback,
-    Osc3FMFeedback,
-    OverallFMStrength,
-    FMStrength2To1,
-    FMStrength3To1,
-    FMStrength1To2,
-    FMStrength3To2,
-    FMStrength1To3,
-    FMStrength2To3,
-    Osc1FrequencyParam,
-    Osc2FrequencyParam,
-    Osc3FrequencyParam,
+    FilterCutoff,       // k-rate
+    MasterVolume,       // k-rate
+    Detune,             // k-rate
+    Osc1Volume,         // k-rate
+    Osc2Volume,         // k-rate
+    Osc3Volume,         // k-rate
+    Osc1FMFeedback,     // k-rate
+    Osc2FMFeedback,     // k-rate
+    Osc3FMFeedback,     // k-rate
+    OverallFMStrength,  // k-rate
+    FMStrength2To1,     // k-rate
+    FMStrength3To1,     // k-rate
+    FMStrength1To2,     // k-rate
+    FMStrength3To2,     // k-rate
+    FMStrength1To3,     // k-rate
+    FMStrength2To3,     // k-rate
+    Osc1FrequencyParam, // k-rate
+    Osc2FrequencyParam, // k-rate
+    Osc3FrequencyParam, // k-rate
 
-    // VoiceFilterCutoff, // k-rate
-    // Osc1Frequency,     // k-rate
-    // Osc1Amplitude,     // k-rate  // OUTPUT amplitude
-
-    // Osc2Frequency, // k-rate
-    // Osc2Amplitude, // k-rate  // OUTPUT amplitude
-
-    // Osc3Frequency, // k-rate
-    // Osc3Amplitude, // k-rate  // OUTPUT amplitude
-
-    // Osc1FMFeedback,    // k-rate
-    // Osc2FMFeedback,    // k-rate
-    // Osc3FMFeedback,    // k-rate
-    // OverallFMStrength, // k-rate
-    // FMStrength2To1,    // k-rate
-    // FMStrength3To1,    // k-rate
-    // FMStrength1To2,    // k-rate
-    // FMStrength3To2,    // k-rate
-    // FMStrength1To3,    // k-rate
-    // FMStrength2To3,    // k-rate
-
-    // Osc1FreqMul,    // k-rate
-    // Osc1FreqOffset, // k-rate
-    // Osc2FreqMul,    // k-rate
-    // Osc2FreqOffset, // k-rate
-    // Osc3FreqMul,    // k-rate
-    // Osc3FreqOffset, // k-rate
-
-    // freq param
-    // freq kt
+    Osc1SyncFrequencyParam, // k-rate
+    Osc2SyncFrequencyParam, // k-rate
+    Osc3SyncFrequencyParam, // k-rate
 
     // patch detune
     // patch spread
@@ -526,9 +505,12 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none 
     {AnyModulationDestination::FMStrength3To2, "FMStrength3To2"},
     {AnyModulationDestination::FMStrength1To3, "FMStrength1To3"},
     {AnyModulationDestination::FMStrength2To3, "FMStrength2To3"},
-    {AnyModulationDestination::Osc1FrequencyParam, "Osc1FrequencyParam"},
-    {AnyModulationDestination::Osc2FrequencyParam, "Osc2FrequencyParam"},
-    {AnyModulationDestination::Osc3FrequencyParam, "Osc3FrequencyParam"},
+    {AnyModulationDestination::Osc1FrequencyParam, "Osc1Frequency"},
+    {AnyModulationDestination::Osc2FrequencyParam, "Osc2Frequency"},
+    {AnyModulationDestination::Osc3FrequencyParam, "Osc3Frequency"},
+    {AnyModulationDestination::Osc1SyncFrequencyParam, "Osc1SyncFrequency"},
+    {AnyModulationDestination::Osc2SyncFrequencyParam, "Osc2SyncFrequency"},
+    {AnyModulationDestination::Osc3SyncFrequencyParam, "Osc3SyncFrequency"},
 };
 
 static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyModulationDestinationItems);
@@ -629,10 +611,19 @@ struct SynthOscillatorSettings
     float mFreqOffsetHz = 0.0f;
 
     // these are good for modulation, and for sync frequency.
-    float mFreqParam =
-        0.3f; // same as filter frequency calc. 0.3 = unity, and each 0.1 param value = 1 octave transposition, when KT
-              // = 1. when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
-    float mFreqParamKT = 1.0f; // keytracking
+    FrequencyParamValue mFreqParam = {0.3f, 1.0f}; // param, kt amt
+
+    FrequencyParamValue mSyncFreqParam = {0.4f, 1.0f}; // param, kt amt
+
+    // float mFreqParam =
+    //     0.3f; // same as filter frequency calc. 0.3 = unity, and each 0.1 param value = 1 octave transposition, when
+    //     KT
+    //           // = 1. when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
+    // float mFreqParamKT = 1.0f; // keytracking
+
+    // // these are good for modulation, and for sync frequency.
+    // float mSyncFreqParam = 0.3f;
+    // float mSyncFreqParamKT = 1.0f; // keytracking
 
     // these are good for musical stuff like transposition.
     int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
@@ -707,10 +698,8 @@ struct SynthPreset
 
     ClarinoidFilterType mFilterType = ClarinoidFilterType::LP_Moog4;
     float mFilterQ = 0.02f;
-    float mFilterFreq = 0.3f; // this is an abstract frequency value; see CalcFilterCutoffFreq for details.
     float mFilterSaturation = 0.2f;
-    float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
-                                     // applied (low notes get higher freq cutoff)
+    FrequencyParamValue mFilterFreqParam = {0.3f, 0.0f}; // param, kt amt
 
     // for FM modulation matrix.
     float mFMStrength2To1 = 0;
@@ -792,8 +781,7 @@ struct SynthSettings
         // p.mOsc[0].mPortamentoTimeMS = 100;
 
         // p.mVoicingMode = VoicingMode::Monophonic;
-        p.mFilterKeytracking = 1.0f;
-        p.mFilterFreq = 0.0f;
+        p.mFilterFreqParam = { 0.0f, 1.0f };
 
         p.mEnv1.mSustainLevel = 0.2f;
         p.mEnv1.mDecayMS = 1200;

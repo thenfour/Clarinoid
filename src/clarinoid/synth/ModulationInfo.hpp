@@ -647,6 +647,36 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         //  ModulationPoleType::Positive01},
     },
 
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Osc1SyncFrequencyParam, // index overall
+        AnyModulationDestination::Osc1SyncFrequencyParam,
+        (size_t)KRateModulationDestination::Osc1SyncFrequencyParam, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc1SyncFrequencyParam,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Osc2SyncFrequencyParam, // index overall
+        AnyModulationDestination::Osc2SyncFrequencyParam,
+        (size_t)KRateModulationDestination::Osc2SyncFrequencyParam, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc2SyncFrequencyParam,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Osc3SyncFrequencyParam, // index overall
+        AnyModulationDestination::Osc3SyncFrequencyParam,
+        (size_t)KRateModulationDestination::Osc3SyncFrequencyParam, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc3SyncFrequencyParam,
+        (ARateModulationDestination)0,
+    },
+
 };
 
 ModulationDestinationInfo *gKRateModulationDestinationInfoPtrs[gKRateModulationDestinationCount] = {nullptr};

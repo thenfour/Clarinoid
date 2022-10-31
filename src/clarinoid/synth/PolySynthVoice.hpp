@@ -248,37 +248,38 @@ struct Voice : IModulationProvider
         mPatchDCToEnv2.connect();
     }
 
-    float CalcParamFrequency(float freqParam, float noteHz, float ktAmountN11, float krateModulationN11)
-    {
-        freqParam += krateModulationN11; // apply current modulation value.
-        // at 0.5, we use 1khz.
-        // for each 0.1 param value, it's +/- one octave
+    // float CalcParamFrequency(float freqParam, float noteHz, float ktAmountN11, float krateModulationN11)
+    // {
+    //     freqParam += krateModulationN11; // apply current modulation value.
+    //     // at 0.5, we use 1khz.
+    //     // for each 0.1 param value, it's +/- one octave
 
-        float centerFreq = 1000; // the cutoff frequency at 0.5 param value.
+    //     float centerFreq = 1000; // the cutoff frequency at 0.5 param value.
 
-        // with no KT,
-        // so if param is 0.8, we want to multiply by 8 (2^3)
-        // if param is 0.3, multiply by 1/4 (2^(1/4))
+    //     // with no KT,
+    //     // so if param is 0.8, we want to multiply by 8 (2^3)
+    //     // if param is 0.3, multiply by 1/4 (2^(1/4))
 
-        // with full KT,
-        // at 0.3, we use playFrequency.
-        // for each 0.1 param value, it's +/- one octave.
-        float ktFreq = noteHz * 4; // to copy massive, 1:1 is at paramvalue 0.3. 0.5 is 2 octaves above playing freq.
-        centerFreq = Lerp(centerFreq, ktFreq, ktAmountN11);
+    //     // with full KT,
+    //     // at 0.3, we use playFrequency.
+    //     // for each 0.1 param value, it's +/- one octave.
+    //     float ktFreq = noteHz * 4; // to copy massive, 1:1 is at paramvalue 0.3. 0.5 is 2 octaves above playing freq.
+    //     centerFreq = Lerp(centerFreq, ktFreq, ktAmountN11);
 
-        freqParam -= 0.5f;  // signed distance from 0.5 -.2 (0.3 = -.2, 0.8 = .3)
-        freqParam *= 10.0f; // (.3 = -2, .8 = 3)
-        float fact = fast::pow(2, freqParam);
-        return Clamp(centerFreq * fact, 0.0f, 22050.0f);
-    }
+    //     freqParam -= 0.5f;  // signed distance from 0.5 -.2 (0.3 = -.2, 0.8 = .3)
+    //     freqParam *= 10.0f; // (.3 = -2, .8 = 3)
+    //     float fact = fast::pow(2, freqParam);
+    //     return Clamp(centerFreq * fact, 0.0f, 22050.0f);
+    // }
 
-    float CalcFilterCutoffFreq(float noteHz)
-    {
-        return CalcParamFrequency(mRunningVoice.mSynthPatch->mFilterFreq,
-                                  noteHz,
-                                  mRunningVoice.mSynthPatch->mFilterKeytracking,
-                                  mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
-    }
+    // float CalcFilterCutoffFreq(float noteHz)
+    // {
+    //     return mRunningVoice.mSynthPatch->mFilterFreqParam.GetFrequency(noteHz, mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
+    //     // return CalcParamFrequency(mRunningVoice.mSynthPatch->mFilterFreq,
+    //     //                           noteHz,
+    //     //                           mRunningVoice.mSynthPatch->mFilterKeytracking,
+    //     //                           mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
+    // }
 
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) override
     {
@@ -372,28 +373,15 @@ struct Voice : IModulationProvider
     float CalcFreq(const SynthOscillatorSettings &osc,
                    float detune,
                    float krateFreqModN11,
-                   // float krateFreqMul,
-                   // float krateFreqOff,
                    PortamentoCalc &portamento)
     {
         // we're in semis land... let's figure out the semitone.
         float midiNote = mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue();
 
-        // pitch bend semis
-        float userPB = mParamProvider->SynthParamProvider_GetPitchBendN11(); // mv.mPitchBendN11.GetFloatVal();
+        float userPB = mParamProvider->SynthParamProvider_GetPitchBendN11();
         float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive : (-osc.mPitchBendRangeNegative));
 
-        // param semis
-        constexpr float oneKhzMidiNote =
-            83.213094853f;            // 1000hz, in midi notes. this replicates behavior of filter modulation.
-        float ktNote = midiNote + 24; // center represents playing note + 2 octaves.
-        float centerNote = Lerp(oneKhzMidiNote, ktNote, osc.mFreqParamKT);
-
-        float param = osc.mFreqParam + krateFreqModN11;
-
-        param = (param - 0.5f) * 10; // rescale from 0-1 to -5 to +5 (octaves)
-        float paramSemis =
-            centerNote + param * 12; // each 1 param = 1 octave. because we're in semis land, it's just a mul.
+        float paramSemis = osc.mFreqParam.GetMidiNote(midiNote, krateFreqModN11);
 
         float idealSemis = paramSemis + osc.mPitchFine + osc.mPitchSemis + detune;
 
@@ -402,7 +390,7 @@ struct Voice : IModulationProvider
 
         float retHz = MIDINoteToFreq(retSemis);
         retHz *= osc.mFreqMultiplier;
-        retHz += osc.mFreqOffsetHz; // + krateFreqOff;
+        retHz += osc.mFreqOffsetHz;
 
         return Clamp(retHz, 0.0f, 22050.0f);
     };
@@ -530,7 +518,6 @@ struct Voice : IModulationProvider
             if (!patch.mOsc[i].mEnabled)
                 continue;
 
-            mOsc.mOsc[i].waveform(patch.mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
             mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mModMatrix.GetKRateDestinationValue(
                                                                         KRateModulationDestination::OverallFMStrength);
@@ -547,7 +534,12 @@ struct Voice : IModulationProvider
 
             // sd += String("[o") + i + " det:" + detunes[ienabledOsc] + " freq:" + freq + "]  ";
 
-            mOsc.mOsc[i].SetBasicParams(freq, patch.mOsc[i].mPhase01, patch.mOsc[i].mPortamentoTimeMS, false, 0);
+            mOsc.mOsc[i].SetBasicParams(patch.mOsc[i].mWaveform,
+            freq,
+            patch.mOsc[i].mPhase01,
+            patch.mOsc[i].mPortamentoTimeMS, 
+            patch.mOsc[i].mSyncFreqParam.GetFrequency(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency))
+                );
 
             ienabledOsc++;
         }
@@ -556,7 +548,7 @@ struct Voice : IModulationProvider
         //     Serial.println(sd);
 
         // TODO: if portamento is enabled for an oscillator, it should be accounted for here.
-        float filterFreq = CalcFilterCutoffFreq(MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()));
+        float filterFreq = mRunningVoice.mSynthPatch->mFilterFreqParam.GetFrequency(MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()), mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
         mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
         mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
 

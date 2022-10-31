@@ -336,8 +336,8 @@ static T ClampInclusive(T x, T minInclusive, T maxInclusive)
     return x;
 }
 
-template<typename T>
-static bool IsEven(const T& x)
+template <typename T>
+static bool IsEven(const T &x)
 {
     return !(x & 1);
 }
@@ -616,6 +616,80 @@ inline std::pair<float, float> CalculatePanGain(float panN11)
     return std::make_pair(leftChannel, rightChannel);
 }
 
+// value 0.3 = unity, and each 0.1 param value = 1 octave transposition, when KT = 1.
+// when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
+struct FrequencyParamValue
+{
+  private:
+    float mValue;
+    float mKTValue;
+
+  public:
+    FrequencyParamValue(float initialValue, float initialKTValue) : mValue(initialValue), mKTValue(initialKTValue)
+    {
+        //
+    }
+
+    float GetParamValue() const
+    {
+        return mValue;
+    }
+    float GetKTParamValue() const
+    {
+        return mKTValue;
+    }
+
+    void SetParamValue(float v)
+    {
+        mValue = v;
+    }
+    void SetKTParamValue(float kt)
+    {
+        mKTValue = kt;
+    }
+
+    float GetFrequency(float noteHz, float paramModulation) const
+    {
+        float param = mValue + paramModulation; // apply current modulation value.
+        // at 0.5, we use 1khz.
+        // for each 0.1 param value, it's +/- one octave
+
+        float centerFreq = 1000; // the cutoff frequency at 0.5 param value.
+
+        // with no KT,
+        // so if param is 0.8, we want to multiply by 8 (2^3)
+        // if param is 0.3, multiply by 1/4 (2^(1/4))
+
+        // with full KT,
+        // at 0.3, we use playFrequency.
+        // for each 0.1 param value, it's +/- one octave.
+        float ktFreq = noteHz * 4; // to copy massive, 1:1 is at paramvalue 0.3. 0.5 is 2 octaves above playing freq.
+        centerFreq = Lerp(centerFreq, ktFreq, mKTValue);
+
+        param -= 0.5f;  // signed distance from 0.5 -.2 (0.3 = -.2, 0.8 = .3)
+        param *= 10.0f; // (.3 = -2, .8 = 3)
+        float fact = fast::pow(2, param);
+        return Clamp(centerFreq * fact, 0.0f, 22050.0f);
+    }
+
+    // param modulation is normal krate param mod
+    // noteModulation includes osc.mPitchFine + osc.mPitchSemis + detune;
+    float GetMidiNote(float playingMidiNote, float paramModulation) const
+    {
+        constexpr float oneKhzMidiNote =
+            83.213094853f;                   // 1000hz, in midi notes. this replicates behavior of filter modulation.
+        float ktNote = playingMidiNote + 24; // center represents playing note + 2 octaves.
+
+        float centerNote = Lerp(oneKhzMidiNote, ktNote, mKTValue);
+
+        float param = mValue + paramModulation;
+
+        param = (param - 0.5f) * 10; // rescale from 0-1 to -5 to +5 (octaves)
+        float paramSemis =
+            centerNote + param * 12; // each 1 param = 1 octave. because we're in semis land, it's just a mul.
+        return paramSemis;
+    }
+};
 
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd
@@ -809,13 +883,13 @@ int ModularDistance(int period, int a, int b)
     return std::min(b - a, a + period - b);
 }
 
-
-// a nice practical couple snippets for prng: https://forum.pjrc.com/threads/61125-Teensy-4-1-Random-Number-Generator?p=243895&viewfull=1#post243895
-static volatile uint64_t  prng_state = RNG_SEED;  /* Any nonzero state is valid! */
+// a nice practical couple snippets for prng:
+// https://forum.pjrc.com/threads/61125-Teensy-4-1-Random-Number-Generator?p=243895&viewfull=1#post243895
+static volatile uint64_t prng_state = RNG_SEED; /* Any nonzero state is valid! */
 
 uint32_t prng_u32(void)
 {
-    uint64_t  x = prng_state;
+    uint64_t x = prng_state;
     x ^= x >> 12;
     x ^= x << 25;
     x ^= x >> 27;

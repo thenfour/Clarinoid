@@ -353,7 +353,11 @@ struct Oscillator
 
     PhaseAccumulator mSyncPhase; // when sync is enabled, this is the phase of the "main" frequency. it resets the phase
                                  // of mMainPhase.
-    bool mSyncEnabled = false;
+
+    bool IsHardSync() const
+    {
+        return mWaveformShape == OscWaveformShape::SawSync;
+    }
     bool mEnabled = true;
     // float mAmplitude = 0;
     // float mWaveformMorph01 = 0.5f; // curve: gModCurveLUT.LinearYIndex;
@@ -379,20 +383,20 @@ struct Oscillator
         mMainPhase.ResetPhase();
     }
 
-    void waveform(OscWaveformShape wform)
-    {
-        mWaveformShape = wform;
-    }
+    // void waveform(OscWaveformShape wform)
+    // {
+    //     mWaveformShape = wform;
+    // }
 
     // void SetAmplitude(float amplitude01)
     // {
     //     mAmplitude = amplitude01;
     // }
 
-    void SetBasicParams(float freq, float phaseOffset01, int portamentoMS, bool syncEnabled, float syncFreq)
+    void SetBasicParams(OscWaveformShape wform, float freq, float phaseOffset01, int portamentoMS, float syncFreq)
     {
-        mSyncEnabled = syncEnabled;
-        if (syncEnabled)
+        mWaveformShape = wform;
+        if (wform == OscWaveformShape::SawSync)
         {
             mSyncPhase.SetParams(freq, phaseOffset01);
             mMainPhase.SetParams(syncFreq, 0);
@@ -412,7 +416,8 @@ struct Oscillator
     template <typename TWaveformProvider>
     inline void Step(size_t i, bool doPWM, float *pwm32, bool doPM, float *pm32, float *out)
     {
-        if (!mEnabled) {
+        if (!mEnabled)
+        {
             out[i] = 0;
             return;
         }
@@ -421,7 +426,7 @@ struct Oscillator
         if (doPM)
         {
             phaseShift += pm32[i];
-            //mMainPhase.mT += pm32[i];
+            // mMainPhase.mT += pm32[i];
         }
 
         if (doPWM)
@@ -439,7 +444,7 @@ struct Oscillator
         TWaveformProvider::Step(*this, fboutput, phaseShift);
 
         float x;
-        if (mSyncEnabled && mSyncPhase.StepWithFrac(x))
+        if (IsHardSync() && mSyncPhase.StepWithFrac(x))
         {
             TWaveformProvider::ResetPhaseDueToSync(*this, x);
         }
