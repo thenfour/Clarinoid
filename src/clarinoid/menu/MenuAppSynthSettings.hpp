@@ -1084,7 +1084,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     EnvelopeMenuApp mEnvEditor;
 
     // TODO: use a multi submenu
-    SubmenuSettingItem mModEnv1SubmenuItem = {String("ENV1"),
+    SubmenuSettingItem mModEnv1SubmenuItem = {String("ENV1 (voice)"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
                                                   return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnvelopes[0]);
@@ -1100,12 +1100,21 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               AlwaysEnabled,
                                               this};
 
+    SubmenuSettingItem mModEnv3SubmenuItem = {String("ENV3"),
+                                              [](void *cap) FLASHMEM {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnvelopes[2]);
+                                              },
+                                              AlwaysEnabled,
+                                              this};
+
     LFOMenuApp mLFOEditor;
 
+    // TODO: use a multi submenu
     SubmenuSettingItem mModLFO1SubmenuItem = {String("LFO1"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->mLFOEditor.GetSubmenuList(pThis->GetBinding().mLFO1);
+                                                  return pThis->mLFOEditor.GetSubmenuList(pThis->GetBinding().mLFOs[0]);
                                               },
                                               AlwaysEnabled,
                                               this};
@@ -1113,16 +1122,26 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     SubmenuSettingItem mModLFO2SubmenuItem = {String("LFO2"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->mLFOEditor.GetSubmenuList(pThis->GetBinding().mLFO2);
+                                                  return pThis->mLFOEditor.GetSubmenuList(pThis->GetBinding().mLFOs[1]);
                                               },
                                               AlwaysEnabled,
                                               this};
 
-    ISettingItem *mModulationsSubmenuArray[5] = {
+    SubmenuSettingItem mModLFO3SubmenuItem = {String("LFO3"),
+                                              [](void *cap) FLASHMEM {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  return pThis->mLFOEditor.GetSubmenuList(pThis->GetBinding().mLFOs[2]);
+                                              },
+                                              AlwaysEnabled,
+                                              this};
+
+    ISettingItem *mModulationsSubmenuArray[7] = {
         &mModLFO1SubmenuItem,
         &mModLFO2SubmenuItem,
+        &mModLFO3SubmenuItem,
         &mModEnv1SubmenuItem,
         &mModEnv2SubmenuItem,
+        &mModEnv3SubmenuItem,
         &mModulationsList,
     };
     SettingsList mModulationsSubmenuList = {mModulationsSubmenuArray};

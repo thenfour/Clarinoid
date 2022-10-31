@@ -133,12 +133,10 @@ struct Voice : IModulationProvider
     // Modulation sources
     VoiceModulationMatrixNode mModMatrix;
     EnvelopeNode mEnvelopes[ENVELOPE_COUNT];
-    AudioSynthWaveform mLfo1;
-    AudioSynthWaveform mLfo2;
+    AudioSynthWaveform mLfos[LFO_COUNT];
 
     // have to track these because they're private members of AudioWaveform.
-    short mLfo1Waveshape = 0xff; // invalid so 1st run will always set the shape.
-    short mLfo2Waveshape = 0xff; // invalid so 1st run will always set the shape.
+    short mLfoWaveshapes[LFO_COUNT] = {0xff, 0xff, 0xff}; // invalid so 1st run will always set the shape.
 
     virtual std::pair<AudioStream *, size_t> IModulationProvider_GetARateSourcePort(ARateModulationSource src) override
     {
@@ -148,10 +146,14 @@ struct Voice : IModulationProvider
             return {&mEnvelopes[0], 0};
         case ARateModulationSource::ENV2:
             return {&mEnvelopes[1], 0};
+        case ARateModulationSource::ENV3:
+            return {&mEnvelopes[2], 0};
         case ARateModulationSource::LFO1:
-            return {&mLfo1, 0};
+            return {&mLfos[0], 0};
         case ARateModulationSource::LFO2:
-            return {&mLfo2, 0};
+            return {&mLfos[1], 0};
+        case ARateModulationSource::LFO3:
+            return {&mLfos[2], 0};
         case ARateModulationSource::Osc1FB:
             return {&mOsc, 0};
         case ARateModulationSource::Osc2FB:
@@ -310,21 +312,17 @@ struct Voice : IModulationProvider
             mEnvelopes[i].SetSpec(patch.mEnvelopes[i], modValues);
         }
 
-        short wantsWaveType1 = convertWaveType(patch.mLFO1.mWaveShape);
-        short wantsWaveType2 = convertWaveType(patch.mLFO2.mWaveShape);
-        if (mLfo1Waveshape != wantsWaveType1)
+        for (size_t i = 0; i < LFO_COUNT; ++i)
         {
-            mLfo1.begin(wantsWaveType1);
-            mLfo1.amplitude(1.0f);
-        }
-        if (mLfo2Waveshape != wantsWaveType2)
-        {
-            mLfo2.begin(wantsWaveType2);
-            mLfo2.amplitude(1.0f);
-        }
+            short wantsWaveType = convertWaveType(patch.mLFOs[i].mWaveShape);
+            if (mLfoWaveshapes[i] != wantsWaveType)
+            {
+                mLfos[i].begin(wantsWaveType);
+                mLfos[i].amplitude(1.0f);
+            }
 
-        mLfo1.frequency(patch.mLFO1.mTime.ToHertz(perf.mBPM));
-        mLfo2.frequency(patch.mLFO2.mTime.ToHertz(perf.mBPM));
+            mLfos[i].frequency(patch.mLFOs[i].mTime.ToHertz(perf.mBPM));
+        }
     }
 
     float CalcFreq(const SynthOscillatorSettings &osc, float detune, float krateFreqModN11, PortamentoCalc &portamento)
@@ -568,16 +566,13 @@ struct Voice : IModulationProvider
                 mEnvelopes[i].noteOn();
         }
 
-        if (mRunningVoice.mSynthPatch->mLFO1.mPhaseRestart)
+        for (size_t i = 0; i < LFO_COUNT; ++i)
         {
-            mLfo1.begin(convertWaveType(mRunningVoice.mSynthPatch->mLFO1.mWaveShape));
-            mLfo1.amplitude(1.0f);
-        }
-
-        if (mRunningVoice.mSynthPatch->mLFO2.mPhaseRestart)
-        {
-            mLfo2.begin(convertWaveType(mRunningVoice.mSynthPatch->mLFO2.mWaveShape));
-            mLfo2.amplitude(1.0f);
+            if (mRunningVoice.mSynthPatch->mLFOs[i].mPhaseRestart)
+            {
+                mLfos[i].begin(convertWaveType(mRunningVoice.mSynthPatch->mLFOs[i].mWaveShape));
+                mLfos[i].amplitude(1.0f);
+            }
         }
     }
 

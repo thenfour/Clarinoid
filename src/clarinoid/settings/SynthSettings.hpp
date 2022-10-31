@@ -6,7 +6,8 @@
 namespace clarinoid
 {
 static constexpr size_t POLYBLEP_OSC_COUNT = 3;
-static constexpr size_t ENVELOPE_COUNT = 2;
+static constexpr size_t ENVELOPE_COUNT = 3;
+static constexpr size_t LFO_COUNT = 3;
 
 enum class TimeBasis : uint8_t
 {
@@ -222,18 +223,22 @@ enum class ARateModulationSource : uint8_t
     // these are INDICES used by synthvoice / modulationmatrix. MUST be 0-based, sequential, index-like.
     LFO1 = 0, // a-rate
     LFO2,     // a-rate
+    LFO3,    // a-rate
     ENV1,     // a-rate
     ENV2,     // a-rate
+    ENV3, // a-rate
     Osc1FB,   // a-rate
     Osc2FB,   // a-rate
     Osc3FB,   // a-rate
 };
 
-EnumItemInfo<ARateModulationSource> gARateModulationSourceItems[7] = {
+EnumItemInfo<ARateModulationSource> gARateModulationSourceItems[9] = {
     {ARateModulationSource::LFO1, "LFO1"},
     {ARateModulationSource::LFO2, "LFO2"},
+    {ARateModulationSource::LFO3, "LFO3"},
     {ARateModulationSource::ENV1, "ENV1"},
     {ARateModulationSource::ENV2, "ENV2"},
+    {ARateModulationSource::ENV3, "ENV3"},
     {ARateModulationSource::Osc1FB, "Osc1FB"},
     {ARateModulationSource::Osc2FB, "Osc2FB"},
     {ARateModulationSource::Osc3FB, "Osc3FB"},
@@ -281,8 +286,10 @@ enum class AnyModulationSource : uint8_t
     None = 0,
     LFO1,   // a-rate
     LFO2,   // a-rate
+    LFO3,   // a-rate
     ENV1,   // a-rate
     ENV2,   // a-rate
+    ENV3,   // a-rate
     Osc1FB, // a-rate
     Osc2FB, // a-rate
     Osc3FB, // a-rate
@@ -300,12 +307,14 @@ enum class AnyModulationSource : uint8_t
     Pedal,         // K-rate
 };
 
-EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[19] = {
+EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[21] = {
     {AnyModulationSource::None, "None"},
     {AnyModulationSource::LFO1, "LFO1"},
     {AnyModulationSource::LFO2, "LFO2"},
+    {AnyModulationSource::LFO3, "LFO3"},
     {AnyModulationSource::ENV1, "ENV1"},
     {AnyModulationSource::ENV2, "ENV2"},
+    {AnyModulationSource::ENV3, "ENV3"},
     {AnyModulationSource::Osc1FB, "Osc1FB"},
     {AnyModulationSource::Osc2FB, "Osc2FB"},
     {AnyModulationSource::Osc3FB, "Osc3FB"},
@@ -402,9 +411,19 @@ enum class KRateModulationDestination : uint8_t
     Env2SustainLevel, // k-rate
     Env2ReleaseTime,  // k-rate
     Env2ReleaseCurve, // k-rate
+
+    Env3DelayTime,    // k-rate
+    Env3AttackTime,   // k-rate
+    Env3AttackCurve,  // k-rate
+    Env3HoldTime,     // k-rate
+    Env3DecayTime,    // k-rate
+    Env3DecayCurve,   // k-rate
+    Env3SustainLevel, // k-rate
+    Env3ReleaseTime,  // k-rate
+    Env3ReleaseCurve, // k-rate
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[40] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[49] = {
     {KRateModulationDestination::FilterCutoff, "FilterCutoff"},
     {KRateModulationDestination::MasterVolume, "MasterVolume"},
     {KRateModulationDestination::Detune, "Detune"},
@@ -447,6 +466,16 @@ EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[40] = 
     {KRateModulationDestination::Env2SustainLevel, "Env2SustainLevel"},
     {KRateModulationDestination::Env2ReleaseTime, "Env2ReleaseTime"},
     {KRateModulationDestination::Env2ReleaseCurve, "Env2ReleaseCurve"},
+
+    {KRateModulationDestination::Env3DelayTime, "Env3DelayTime"},
+    {KRateModulationDestination::Env3AttackTime, "Env3AttackTime"},
+    {KRateModulationDestination::Env3AttackCurve, "Env3AttackCurve"},
+    {KRateModulationDestination::Env3HoldTime, "Env3HoldTime"},
+    {KRateModulationDestination::Env3DecayTime, "Env3DecayTime"},
+    {KRateModulationDestination::Env3DecayCurve, "Env3DecayCurve"},
+    {KRateModulationDestination::Env3SustainLevel, "Env3SustainLevel"},
+    {KRateModulationDestination::Env3ReleaseTime, "Env3ReleaseTime"},
+    {KRateModulationDestination::Env3ReleaseCurve, "Env3ReleaseCurve"},
 };
 
 static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKRateModulationDestinationItems);
@@ -492,7 +521,7 @@ struct EnvelopeModulationInfo
     KRateModulationDestination KRateDestination_ReleaseCurve;
 };
 
-static EnvelopeModulationInfo gModValuesByEnvelope[2] = {
+static EnvelopeModulationInfo gModValuesByEnvelope[ENVELOPE_COUNT] = {
     {KRateModulationDestination::Env1DelayTime,
      KRateModulationDestination::Env1AttackTime,
      KRateModulationDestination::Env1AttackCurve,
@@ -512,6 +541,16 @@ static EnvelopeModulationInfo gModValuesByEnvelope[2] = {
      KRateModulationDestination::Env2SustainLevel,
      KRateModulationDestination::Env2ReleaseTime,
      KRateModulationDestination::Env2ReleaseCurve},
+
+    {KRateModulationDestination::Env3DelayTime,
+     KRateModulationDestination::Env3AttackTime,
+     KRateModulationDestination::Env3AttackCurve,
+     KRateModulationDestination::Env3HoldTime,
+     KRateModulationDestination::Env3DecayTime,
+     KRateModulationDestination::Env3DecayCurve,
+     KRateModulationDestination::Env3SustainLevel,
+     KRateModulationDestination::Env3ReleaseTime,
+     KRateModulationDestination::Env3ReleaseCurve},
 };
 
 enum class AnyModulationDestination : uint8_t
@@ -568,11 +607,20 @@ enum class AnyModulationDestination : uint8_t
     Env2ReleaseTime,  // k-rate
     Env2ReleaseCurve, // k-rate
 
+    Env3DelayTime,    // k-rate
+    Env3AttackTime,   // k-rate
+    Env3AttackCurve,  // k-rate
+    Env3HoldTime,     // k-rate
+    Env3DecayTime,    // k-rate
+    Env3DecayCurve,   // k-rate
+    Env3SustainLevel, // k-rate
+    Env3ReleaseTime,  // k-rate
+    Env3ReleaseCurve, // k-rate
+
     // patch spread
     // filter saturation
     // filter Q
-    // lfo rate
-    // lfo phase
+    // lfo
 };
 
 EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none */ + gARateModulationDestinationCount +
@@ -628,6 +676,16 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none 
     {AnyModulationDestination::Env2SustainLevel, "Env2SustainLevel"},
     {AnyModulationDestination::Env2ReleaseTime, "Env2ReleaseTime"},
     {AnyModulationDestination::Env2ReleaseCurve, "Env2ReleaseCurve"},
+
+    {AnyModulationDestination::Env3DelayTime, "Env3DelayTime"},
+    {AnyModulationDestination::Env3AttackTime, "Env3AttackTime"},
+    {AnyModulationDestination::Env3AttackCurve, "Env3AttackCurve"},
+    {AnyModulationDestination::Env3HoldTime, "Env3HoldTime"},
+    {AnyModulationDestination::Env3DecayTime, "Env3DecayTime"},
+    {AnyModulationDestination::Env3DecayCurve, "Env3DecayCurve"},
+    {AnyModulationDestination::Env3SustainLevel, "Env3SustainLevel"},
+    {AnyModulationDestination::Env3ReleaseTime, "Env3ReleaseTime"},
+    {AnyModulationDestination::Env3ReleaseCurve, "Env3ReleaseCurve"},
 };
 
 static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyModulationDestinationItems);
@@ -804,8 +862,7 @@ struct SynthPreset
 
     VoicingMode mVoicingMode = VoicingMode::Polyphonic;
 
-    LFOSpec mLFO1;
-    LFOSpec mLFO2;
+    LFOSpec mLFOs[LFO_COUNT];
 
     float mDetune = 0;
 
@@ -833,8 +890,8 @@ struct SynthPreset
 
     SynthPreset()
     {
-        mLFO1.mTime.SetFrequency(0.8f);
-        mLFO2.mTime.SetFrequency(3.5f);
+        mLFOs[0].mTime.SetFrequency(1.1f);
+        mLFOs[1].mTime.SetFrequency(3.5f);
 
         mOsc[0].mVolume.SetValue(0.4f);
         mOsc[1].mVolume.SetValue(0);

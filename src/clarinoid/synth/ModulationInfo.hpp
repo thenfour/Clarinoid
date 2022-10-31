@@ -75,6 +75,17 @@ ModulationSourceInfo gModulationSourceInfo[gAnyModulationSourceCount] = {
      ModulationPoleType::N11},
 
     {true,
+     (size_t)AnyModulationSource::LFO3, // index overall
+     AnyModulationSource::LFO3,
+     (size_t)ARateModulationSource::LFO3, // index for rate
+     ModulationRate::ARate,
+     (KRateModulationSource)0,
+     ARateModulationSource::LFO3,
+     -1, // range min
+     1,  // range max
+     ModulationPoleType::N11},
+
+    {true,
      (size_t)AnyModulationSource::ENV1, // index overall
      AnyModulationSource::ENV1,
      (size_t)ARateModulationSource::ENV1, // index for rate
@@ -92,6 +103,17 @@ ModulationSourceInfo gModulationSourceInfo[gAnyModulationSourceCount] = {
      ModulationRate::ARate,
      (KRateModulationSource)0,
      ARateModulationSource::ENV2,
+     0, // range min
+     1, // range max
+     ModulationPoleType::Positive01},
+
+    {true,
+     (size_t)AnyModulationSource::ENV3, // index overall
+     AnyModulationSource::ENV3,
+     (size_t)ARateModulationSource::ENV3, // index for rate
+     ModulationRate::ARate,
+     (KRateModulationSource)0,
+     ARateModulationSource::ENV3,
      0, // range min
      1, // range max
      ModulationPoleType::Positive01},
@@ -858,6 +880,98 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         (size_t)KRateModulationDestination::Env2ReleaseCurve, // index for rate
         ModulationRate::KRate,
         KRateModulationDestination::Env2ReleaseCurve,
+        (ARateModulationDestination)0,
+    },
+
+
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3DelayTime, // index overall
+        AnyModulationDestination::Env3DelayTime,
+        (size_t)KRateModulationDestination::Env3DelayTime, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3DelayTime,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3AttackTime, // index overall
+        AnyModulationDestination::Env3AttackTime,
+        (size_t)KRateModulationDestination::Env3AttackTime, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3AttackTime,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3AttackCurve, // index overall
+        AnyModulationDestination::Env3AttackCurve,
+        (size_t)KRateModulationDestination::Env3AttackCurve, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3AttackCurve,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3HoldTime, // index overall
+        AnyModulationDestination::Env3HoldTime,
+        (size_t)KRateModulationDestination::Env3HoldTime, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3HoldTime,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3DecayTime, // index overall
+        AnyModulationDestination::Env3DecayTime,
+        (size_t)KRateModulationDestination::Env3DecayTime, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3DecayTime,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3DecayCurve, // index overall
+        AnyModulationDestination::Env3DecayCurve,
+        (size_t)KRateModulationDestination::Env3DecayCurve, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3DecayCurve,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3SustainLevel, // index overall
+        AnyModulationDestination::Env3SustainLevel,
+        (size_t)KRateModulationDestination::Env3SustainLevel, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3SustainLevel,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3ReleaseTime, // index overall
+        AnyModulationDestination::Env3ReleaseTime,
+        (size_t)KRateModulationDestination::Env3ReleaseTime, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3ReleaseTime,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                                     // is a modulation
+        (size_t)AnyModulationDestination::Env3ReleaseCurve, // index overall
+        AnyModulationDestination::Env3ReleaseCurve,
+        (size_t)KRateModulationDestination::Env3ReleaseCurve, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Env3ReleaseCurve,
         (ARateModulationDestination)0,
     },
 
