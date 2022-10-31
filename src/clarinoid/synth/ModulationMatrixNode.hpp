@@ -230,7 +230,7 @@ struct VoiceModulationMatrixNode : public AudioStream
         auto polarityMapping =
             GetPolarityConversion<PolarityConversionKernelFloat>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
         float ret = polarityMapping.Transfer(kRateSourceValue);
-        auto curveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
+        auto curveState = modSpec.mCurveShape.BeginLookup();
         ret = gModCurveLUT.Transfer32(ret, curveState);
         ret *= modSpec.mScaleN11;
 
@@ -244,7 +244,7 @@ struct VoiceModulationMatrixNode : public AudioStream
                 auto auxPolarityMapping =
                     GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity);
                 float auxVal = auxPolarityMapping.Transfer(optAuxVal.second);
-                auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
+                auto auxCurveState = modSpec.mAuxCurveShape.BeginLookup();
                 auxVal = gModCurveLUT.Transfer32(auxVal, auxCurveState);
 
                 float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
@@ -262,7 +262,7 @@ struct VoiceModulationMatrixNode : public AudioStream
                                        const ModulationSourceInfo &sourceInfo,
                                        const ModulationDestinationInfo &destInfo)
     {
-        auto srcCurveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
+        auto srcCurveState = modSpec.mCurveShape.BeginLookup();
         int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
         auto srcPolarityConv =
             GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
@@ -296,7 +296,7 @@ struct VoiceModulationMatrixNode : public AudioStream
                                           const ModulationDestinationInfo &destInfo,
                                           const ModulationSourceInfo &auxInfo)
     {
-        auto srcCurveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
+        auto srcCurveState = modSpec.mCurveShape.BeginLookup();
         int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
 
         auto srcPolarityConv =
@@ -307,7 +307,7 @@ struct VoiceModulationMatrixNode : public AudioStream
 
         float auxVal = EnsureKRateSource(buffers, auxInfo);
         float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
-        auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
+        auto auxCurveState = modSpec.mAuxCurveShape.BeginLookup();
         auto auxPolarityConv =
             GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity);
 
@@ -356,8 +356,8 @@ struct VoiceModulationMatrixNode : public AudioStream
         float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
         uint32_t auxBase32 = (uint32_t)(auxBase * 65536);
 
-        auto srcCurveState = gModCurveLUT.BeginLookupI(modSpec.mCurveShape);
-        auto auxCurveState = gModCurveLUT.BeginLookupI(modSpec.mAuxCurveShape);
+        auto srcCurveState = modSpec.mCurveShape.BeginLookup();
+        auto auxCurveState = modSpec.mAuxCurveShape.BeginLookup();
         int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
         int32_t auxScale16p16 = int32_t(modSpec.mAuxAmount * 65536);
 

@@ -127,15 +127,15 @@ struct EnvelopeMenuApp
                                                   this},
                                   AlwaysEnabled};
 
-    IntSettingItem mAttackCurve = {" - Curve",
-                                StandardRangeSpecs::gCurveIndexRange,
-                                Property<int>{[](void *cap) FLASHMEM {
+    FloatSettingItem mAttackCurve = {" - Curve",
+                                StandardRangeSpecs::gFloat_N1_1,
+                                Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return (int)pThis->mBinding->mAttackCurve;
+                                                      return pThis->mBinding->mAttackCurve.GetParamValue();
                                               },
-                                              [](void *cap, const int &v) FLASHMEM {
+                                              [](void *cap, const float &v) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mAttackCurve = v;
+                                                      pThis->mBinding->mAttackCurve.SetParamValue(v);
                                               },
                                               this},
                                 AlwaysEnabled};
@@ -166,15 +166,15 @@ struct EnvelopeMenuApp
                                                  this},
                                  AlwaysEnabled};
 
-    IntSettingItem mDecayCurve = {" - Curve",
-                                StandardRangeSpecs::gCurveIndexRange,
-                                Property<int>{[](void *cap) FLASHMEM {
+    FloatSettingItem mDecayCurve = {" - Curve",
+                                StandardRangeSpecs::gFloat_N1_1,
+                                Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return (int)pThis->mBinding->mDecayCurve;
+                                                      return pThis->mBinding->mDecayCurve.GetParamValue();
                                               },
-                                              [](void *cap, const int &v) FLASHMEM {
+                                              [](void *cap, const float &v) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mDecayCurve = v;
+                                                      pThis->mBinding->mDecayCurve.SetParamValue(v);
                                               },
                                               this},
                                 AlwaysEnabled};
@@ -205,15 +205,15 @@ struct EnvelopeMenuApp
                                                    this},
                                    AlwaysEnabled};
 
-    IntSettingItem mReleaseCurve = {" - Curve",
-                                StandardRangeSpecs::gCurveIndexRange,
-                                Property<int>{[](void *cap) FLASHMEM {
+    FloatSettingItem mReleaseCurve = {" - Curve",
+                                StandardRangeSpecs::gFloat_N1_1,
+                                Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return (int)pThis->mBinding->mReleaseCurve;
+                                                      return pThis->mBinding->mReleaseCurve.GetParamValue();
                                               },
-                                              [](void *cap, const int &v) FLASHMEM {
+                                              [](void *cap, const float &v) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mReleaseCurve = v;
+                                                      pThis->mBinding->mReleaseCurve.SetParamValue(v);
                                               },
                                               this},
                                 AlwaysEnabled};
@@ -968,15 +968,15 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               this},
         AlwaysEnabled};
 
-    IntSettingItem mModCurve = {"Curve",
-                                StandardRangeSpecs::gCurveIndexRange,
-                                Property<int>{[](void *cap) FLASHMEM {
+    FloatSettingItem mModCurve = {"Curve",
+                                StandardRangeSpecs::gFloat_N1_1,
+                                Property<float>{[](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return (int)pThis->GetModulationBinding().mCurveShape;
+                                                  return pThis->GetModulationBinding().mCurveShape.GetParamValue();
                                               },
-                                              [](void *cap, const int &v) FLASHMEM {
+                                              [](void *cap, const float &v) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  pThis->GetModulationBinding().mCurveShape = v;
+                                                  pThis->GetModulationBinding().mCurveShape.SetParamValue(v);
                                               },
                                               this},
                                 AlwaysEnabled};
@@ -1036,15 +1036,15 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               this},
         AlwaysEnabled};
 
-    IntSettingItem mModAuxCurve = {" - Aux Curve",
-                                   StandardRangeSpecs::gCurveIndexRange,
-                                   Property<int>{[](void *cap) FLASHMEM {
+    FloatSettingItem mModAuxCurve = {" - Aux Curve",
+                                   StandardRangeSpecs::gFloat_N1_1,
+                                   Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                     return (int)pThis->GetModulationBinding().mAuxCurveShape;
+                                                     return pThis->GetModulationBinding().mAuxCurveShape.GetParamValue();
                                                  },
-                                                 [](void *cap, const int &v) FLASHMEM {
+                                                 [](void *cap, const float &v) FLASHMEM {
                                                      auto *pThis = (SynthPatchMenuApp *)cap;
-                                                     pThis->GetModulationBinding().mAuxCurveShape = v;
+                                                     pThis->GetModulationBinding().mAuxCurveShape.SetParamValue(v);
                                                  },
                                                  this},
                                    AlwaysEnabled};

@@ -224,7 +224,7 @@ struct EnvelopeNode : public AudioStream
             // Serial.println(String("attack param:") + mSpec.mAttackTime.GetValue() + ", mod:" + mModValues.attackTime +
             //                " = " + ms + " ms");
             mStagePosIncPerSample = CalculateInc01PerSampleForMS(ms);
-            mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mAttackCurve);
+            mpLutRow = mSpec.mAttackCurve.BeginLookup(mModValues.attackCurve);
             return;
         }
         case EnvelopeStage::Hold: {
@@ -234,7 +234,7 @@ struct EnvelopeNode : public AudioStream
         case EnvelopeStage::Decay: {
             mStagePosIncPerSample =
                 CalculateInc01PerSampleForMS(mSpec.mDecayTime.GetMilliseconds(mModValues.decayTime));
-            mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mDecayCurve);
+            mpLutRow = mSpec.mDecayCurve.BeginLookup(mModValues.decayCurve);
             return;
         }
         case EnvelopeStage::Sustain: {
@@ -243,7 +243,7 @@ struct EnvelopeNode : public AudioStream
         case EnvelopeStage::Release: {
             mStagePosIncPerSample =
                 CalculateInc01PerSampleForMS(mSpec.mReleaseTime.GetMilliseconds(mModValues.releaseTime));
-            mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mReleaseCurve);
+            mpLutRow = mSpec.mReleaseCurve.BeginLookup(mModValues.releaseCurve);
             return;
         }
         }

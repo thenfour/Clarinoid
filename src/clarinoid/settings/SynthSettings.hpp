@@ -662,14 +662,13 @@ struct SynthModulationSpec
     AnyModulationSource mSource = AnyModulationSource::None;
     AnyModulationDestination mDest = AnyModulationDestination::None;
     ModulationPolarityTreatment mSourcePolarity = ModulationPolarityTreatment::Default;
-    int16_t mCurveShape = gModCurveLUT.LinearYIndex; // integral, because we don't interpolate; mod curves are actually
-                                                     // discrete. it also simplifies the "0" case where it's linear.
+    CurveLUTParamValue mCurveShape = 0;
     float mScaleN11 = 0.5f;
 
     AnyModulationSource mAuxSource = AnyModulationSource::None;
     ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::AsPositive01;
     bool mAuxEnabled = true; // just allows bypassing without removing the aux source
-    int16_t mAuxCurveShape = gModCurveLUT.LinearYIndex;
+    CurveLUTParamValue mAuxCurveShape = 0;
     float mAuxAmount = 0.0f; // amount of attenuation
 
     // to mimic old behavior with 0 offset and just a scale.
@@ -693,13 +692,13 @@ struct EnvelopeSpec
 {
     EnvTimeParamValue mDelayTime = 0.0f;
     EnvTimeParamValue mAttackTime = 0.0f;
-    int16_t mAttackCurve = gModCurveLUT.LinearYIndex;
+    CurveLUTParamValue mAttackCurve = 0.0f;
     EnvTimeParamValue mHoldTime = 0.0f;
     EnvTimeParamValue mDecayTime = 0.5f;
-    int16_t mDecayCurve = gModCurveLUT.LinearYIndex;
+    CurveLUTParamValue mDecayCurve = 0;
     float mSustainLevel = 0.5f;
     EnvTimeParamValue mReleaseTime = 0.6f;
-    int16_t mReleaseCurve = gModCurveLUT.LinearYIndex;
+    CurveLUTParamValue mReleaseCurve = 0;
     bool mLegatoRestart = false;
 };
 
