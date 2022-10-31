@@ -691,6 +691,11 @@ struct FrequencyParamValue
     }
 };
 
+static float CalculateInc01PerSampleForMS(float ms)
+{
+    return Clamp(1000.0f / (std::max(0.01f, ms) * AUDIO_SAMPLE_RATE), 0.0f, 1.0f);
+}
+
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd
 

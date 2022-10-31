@@ -127,6 +127,19 @@ struct EnvelopeMenuApp
                                                   this},
                                   AlwaysEnabled};
 
+    IntSettingItem mAttackCurve = {" - Curve",
+                                StandardRangeSpecs::gCurveIndexRange,
+                                Property<int>{[](void *cap) FLASHMEM {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      return (int)pThis->mBinding->mAttackCurve;
+                                              },
+                                              [](void *cap, const int &v) FLASHMEM {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      pThis->mBinding->mAttackCurve = v;
+                                              },
+                                              this},
+                                AlwaysEnabled};
+
     FloatSettingItem mHoldMS = {"Hold",
                                 StandardRangeSpecs::gEnvHoldMS,
                                 Property<float>{[](void *cap) FLASHMEM {
@@ -152,6 +165,19 @@ struct EnvelopeMenuApp
                                                  },
                                                  this},
                                  AlwaysEnabled};
+
+    IntSettingItem mDecayCurve = {" - Curve",
+                                StandardRangeSpecs::gCurveIndexRange,
+                                Property<int>{[](void *cap) FLASHMEM {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      return (int)pThis->mBinding->mDecayCurve;
+                                              },
+                                              [](void *cap, const int &v) FLASHMEM {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      pThis->mBinding->mDecayCurve = v;
+                                              },
+                                              this},
+                                AlwaysEnabled};
 
     FloatSettingItem mSustainLevel = {"Sustain",
                                       StandardRangeSpecs::gEnvSustainLevel,
@@ -179,28 +205,30 @@ struct EnvelopeMenuApp
                                                    this},
                                    AlwaysEnabled};
 
-    // FloatSettingItem mReleaseNoteOnMS = {"ReleaseNoteOn",
-    //                                      StandardRangeSpecs::gEnvReleaseMS,
-    //                                      Property<float>{[](void *cap) FLASHMEM {
-    //                                                          auto *pThis = (EnvelopeMenuApp *)cap;
-    //                                                          return pThis->mBinding->mReleaseNoteOnMS;
-    //                                                      },
-    //                                                      [](void *cap, const float &v) FLASHMEM {
-    //                                                          auto *pThis = (EnvelopeMenuApp *)cap;
-    //                                                          pThis->mBinding->mReleaseNoteOnMS = v;
-    //                                                      },
-    //                                                      this},
-    //                                      AlwaysEnabled};
+    IntSettingItem mReleaseCurve = {" - Curve",
+                                StandardRangeSpecs::gCurveIndexRange,
+                                Property<int>{[](void *cap) FLASHMEM {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      return (int)pThis->mBinding->mReleaseCurve;
+                                              },
+                                              [](void *cap, const int &v) FLASHMEM {
+                                                      auto *pThis = (EnvelopeMenuApp *)cap;
+                                                      pThis->mBinding->mReleaseCurve = v;
+                                              },
+                                              this},
+                                AlwaysEnabled};
 
-    ISettingItem *mArray[7] = {
+    ISettingItem *mArray[10] = {
         &mLegatoRetrig,
         &mDelayMS,
         &mAttackMS,
+        &mAttackCurve,
         &mHoldMS,
         &mDecayMS,
+        &mDecayCurve,
         &mSustainLevel,
         &mReleaseMS,
-        //&mReleaseNoteOnMS,
+        &mReleaseCurve,
     };
 
     SettingsList mRootList = {mArray};

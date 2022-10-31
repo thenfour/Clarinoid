@@ -584,10 +584,13 @@ struct EnvelopeSpec
 {
     float mDelayMS = 0.0f;
     float mAttackMS = 4.0f;
+    int16_t mAttackCurve = gModCurveLUT.LinearYIndex;
     float mHoldMS = 0.0f;
     float mDecayMS = 500.0f;
+    int16_t mDecayCurve = gModCurveLUT.LinearYIndex;
     float mSustainLevel = 0.0f;
     float mReleaseMS = 100.0f;
+    int16_t mReleaseCurve = gModCurveLUT.LinearYIndex;
     bool mLegatoRestart = false;
 };
 

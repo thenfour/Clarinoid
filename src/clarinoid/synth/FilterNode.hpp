@@ -146,7 +146,13 @@ class StereoFilterNode : public AudioStream
     filters::DCFilter mDC;
 
     float mRampGain = 1.0f;
-    static constexpr int mRampLengthSamples = AUDIO_SAMPLE_RATE_EXACT * 250 / 1000; // 250 ms ramp
+
+    // https://github.com/thenfour/Clarinoid/issues/165
+    // Ramping is necessary any time filter type changes; otherwise you hear a lot of clicks & booms.
+    // Originally this was 250ms which was OK maybe for clarinoid, but for keyboard and polyphonic instruments where
+    // voices are changing patches more often, this has been brought down to something less impactful.
+    static constexpr int mRameLengthMS = 25;
+    static constexpr int mRampLengthSamples = AUDIO_SAMPLE_RATE_EXACT * mRameLengthMS / 1000;
     static constexpr float mRampGainIncreasePerFrame = 1.0f / mRampLengthSamples * AUDIO_BLOCK_SAMPLES;
 
     audio_block_t *inputQueueArray[2];

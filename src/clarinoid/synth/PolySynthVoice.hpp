@@ -134,10 +134,6 @@ struct Voice : IModulationProvider
     VoiceModulationMatrixNode mModMatrix;
     EnvelopeNode mEnv1;
     EnvelopeNode mEnv2;
-    AudioSynthWaveformDc mEnv1PeakDC; // DC value simply sets the env peak to 1.
-    AudioSynthWaveformDc mEnv2PeakDC; // DC value simply sets the env peak to 1.
-    CCPatch mPatchDCToEnv1 = {mEnv1PeakDC, 0, mEnv1, 0};
-    CCPatch mPatchDCToEnv2 = {mEnv2PeakDC, 0, mEnv2, 0};
     AudioSynthWaveform mLfo1;
     AudioSynthWaveform mLfo2;
 
@@ -225,9 +221,6 @@ struct Voice : IModulationProvider
         mAppSettings = appSettings;
         mParamProvider = paramProvider;
 
-        mEnv1PeakDC.amplitude(1.0f);
-        mEnv2PeakDC.amplitude(1.0f);
-
         mPatchOsc1ToMixer.connect();
         mPatchOsc2ToMixer.connect();
         mPatchOsc3ToMixer.connect();
@@ -243,43 +236,7 @@ struct Voice : IModulationProvider
         mPatchOutVerbRight.connect();
 
         mModMatrix.Init(this);
-
-        mPatchDCToEnv1.connect();
-        mPatchDCToEnv2.connect();
     }
-
-    // float CalcParamFrequency(float freqParam, float noteHz, float ktAmountN11, float krateModulationN11)
-    // {
-    //     freqParam += krateModulationN11; // apply current modulation value.
-    //     // at 0.5, we use 1khz.
-    //     // for each 0.1 param value, it's +/- one octave
-
-    //     float centerFreq = 1000; // the cutoff frequency at 0.5 param value.
-
-    //     // with no KT,
-    //     // so if param is 0.8, we want to multiply by 8 (2^3)
-    //     // if param is 0.3, multiply by 1/4 (2^(1/4))
-
-    //     // with full KT,
-    //     // at 0.3, we use playFrequency.
-    //     // for each 0.1 param value, it's +/- one octave.
-    //     float ktFreq = noteHz * 4; // to copy massive, 1:1 is at paramvalue 0.3. 0.5 is 2 octaves above playing freq.
-    //     centerFreq = Lerp(centerFreq, ktFreq, ktAmountN11);
-
-    //     freqParam -= 0.5f;  // signed distance from 0.5 -.2 (0.3 = -.2, 0.8 = .3)
-    //     freqParam *= 10.0f; // (.3 = -2, .8 = 3)
-    //     float fact = fast::pow(2, freqParam);
-    //     return Clamp(centerFreq * fact, 0.0f, 22050.0f);
-    // }
-
-    // float CalcFilterCutoffFreq(float noteHz)
-    // {
-    //     return mRunningVoice.mSynthPatch->mFilterFreqParam.GetFrequency(noteHz, mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
-    //     // return CalcParamFrequency(mRunningVoice.mSynthPatch->mFilterFreq,
-    //     //                           noteHz,
-    //     //                           mRunningVoice.mSynthPatch->mFilterKeytracking,
-    //     //                           mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
-    // }
 
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) override
     {
@@ -336,22 +293,9 @@ struct Voice : IModulationProvider
     {
         const auto &patch = *mRunningVoice.mSynthPatch;
         const auto &perf = mAppSettings->GetCurrentPerformancePatch();
-        // configure envelopes (DADSR x 3)
-        mEnv1.delay(patch.mEnv1.mDelayMS);
-        mEnv1.attack(patch.mEnv1.mAttackMS);
-        mEnv1.hold(patch.mEnv1.mHoldMS);
-        mEnv1.decay(patch.mEnv1.mDecayMS);
-        mEnv1.sustain(patch.mEnv1.mSustainLevel);
-        mEnv1.release(patch.mEnv1.mReleaseMS);
-        // mEnv1.releaseNoteOn(patch.mEnv1.mReleaseNoteOnMS);
 
-        mEnv2.delay(patch.mEnv2.mDelayMS);
-        mEnv2.attack(patch.mEnv2.mAttackMS);
-        mEnv2.hold(patch.mEnv2.mHoldMS);
-        mEnv2.decay(patch.mEnv2.mDecayMS);
-        mEnv2.sustain(patch.mEnv2.mSustainLevel);
-        mEnv2.release(patch.mEnv2.mReleaseMS);
-        // mEnv2.releaseNoteOn(patch.mEnv2.mReleaseNoteOnMS);
+        mEnv1.SetSpec(patch.mEnv1);
+        mEnv2.SetSpec(patch.mEnv2);
 
         short wantsWaveType1 = convertWaveType(patch.mLFO1.mWaveShape);
         short wantsWaveType2 = convertWaveType(patch.mLFO2.mWaveShape);

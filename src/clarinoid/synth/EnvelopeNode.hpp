@@ -1,18 +1,17 @@
-// fork of AudioEffectEnvelope; the whole "Forced" state was causing glitching and unneeded behavior-babysitting for no
-// benefit. so it's gone.
+
 #pragma once
 
 namespace clarinoid
 {
 enum class EnvelopeStage : uint8_t
 {
-    Idle,
-    Delay,
-    Attack,
-    Hold,
-    Decay,
-    Sustain,
-    Release,
+    Idle,    // output = 0
+    Delay,   // output = 0
+    Attack,  // output = curve from 0 to 1
+    Hold,    // output = 1
+    Decay,   // output = curve from 1 to 0
+    Sustain, // output = SustainLevel
+    Release, // output = curve from Y to 0, based on when release occurred
 };
 
 EnumItemInfo<EnvelopeStage> gEnvelopeStageItems[7] = {
@@ -27,235 +26,208 @@ EnumItemInfo<EnvelopeStage> gEnvelopeStageItems[7] = {
 
 EnumInfo<EnvelopeStage> gEnvelopeStageInfo("EnvelopeStage", gEnvelopeStageItems);
 
-class EnvelopeNode : public AudioStream
+struct EnvelopeNode : public AudioStream
 {
-    static constexpr float SAMPLES_PER_MSEC = (AUDIO_SAMPLE_RATE_EXACT / 1000.0f);
-
-  public:
-    EnvelopeNode() : AudioStream(1, inputQueueArray)
+    EnvelopeNode() : AudioStream(0, nullptr)
     {
-        state = EnvelopeStage::Idle;
-        delay(0.0f); // default values...
-        attack(10.5f);
-        hold(2.5f);
-        decay(35.0f);
-        sustain(0.5f);
-        release(300.0f);
     }
+
+    // advances to a specified stage. The point of this is to advance through 0-length stages so we don't end up with
+    // >=1sample per stage.
+    void AdvanceToStage(EnvelopeStage stage)
+    {
+        switch (stage)
+        {
+        case EnvelopeStage::Idle:
+            break;
+        case EnvelopeStage::Delay:
+            if (FloatLessThanOrEquals(mSpec.mDelayMS, 0.0f))
+            {
+                AdvanceToStage(EnvelopeStage::Attack);
+                return;
+            }
+            break;
+        case EnvelopeStage::Attack:
+            if (FloatLessThanOrEquals(mSpec.mAttackMS, 0.0f))
+            {
+                AdvanceToStage(EnvelopeStage::Hold);
+                return;
+            }
+            break;
+        case EnvelopeStage::Hold:
+            if (FloatLessThanOrEquals(mSpec.mHoldMS, 0.0f))
+            {
+                AdvanceToStage(EnvelopeStage::Decay);
+                return;
+            }
+            break;
+        case EnvelopeStage::Decay:
+            if (FloatLessThanOrEquals(mSpec.mDecayMS, 0.0f))
+            {
+                AdvanceToStage(EnvelopeStage::Decay);
+                return;
+            }
+            break;
+        case EnvelopeStage::Sustain:
+            break;
+        case EnvelopeStage::Release:
+            if (FloatLessThanOrEquals(mSpec.mReleaseMS, 0.0f))
+            {
+                AdvanceToStage(EnvelopeStage::Idle);
+                return;
+            }
+            // here we must determine the value to release from, based on existing stage.
+            mReleaseFromValue01 = mLastOutputLevel;
+            break;
+        }
+        mStagePos01 = 0.0f;
+        mStage = stage;
+        RecalcState();
+    }
+
     void noteOn()
     {
-        mult_hires = 0;
-        count = delay_count;
-        if (count > 0)
-        {
-            state = EnvelopeStage::Delay;
-            inc_hires = 0;
-        }
-        else
-        {
-            state = EnvelopeStage::Attack;
-            count = attack_count;
-            inc_hires = 0x40000000 / (int32_t)count;
-        }
+        AdvanceToStage(EnvelopeStage::Delay);
     }
+
     void noteOff()
     {
-        if (state != EnvelopeStage::Idle) // && state != STATE_FORCED)
-        {
-            state = EnvelopeStage::Release;
-            count = release_count;
-            inc_hires = (-mult_hires) / (int32_t)count;
-        }
+        AdvanceToStage(EnvelopeStage::Release);
     }
-    void delay(float milliseconds)
-    {
-        delay_count = milliseconds2count(milliseconds);
-    }
-    void attack(float milliseconds)
-    {
-        attack_count = milliseconds2count(milliseconds);
-        if (attack_count == 0)
-            attack_count = 1;
-    }
-    void hold(float milliseconds)
-    {
-        hold_count = milliseconds2count(milliseconds);
-    }
-    void decay(float milliseconds)
-    {
-        decay_count = milliseconds2count(milliseconds);
-        if (decay_count == 0)
-            decay_count = 1;
-    }
-    void sustain(float level)
-    {
-        if (level < 0.0f)
-            level = 0;
-        else if (level > 1.0f)
-            level = 1.0f;
-        sustain_mult = level * 1073741824.0f;
-    }
-    void release(float milliseconds)
-    {
-        release_count = milliseconds2count(milliseconds);
-        if (release_count == 0)
-            release_count = 1;
-    }
+
+    // used by debug displays
     EnvelopeStage GetStage() const
-    { // used by debug displays
-        return this->state;
+    {
+        return this->mStage;
     }
 
     bool isPlaying() const
     {
-        return this->state != EnvelopeStage::Idle;
+        if (this->mStage == EnvelopeStage::Delay)
+            return false;
+        return (this->mStage != EnvelopeStage::Idle);
     }
-    using AudioStream::release;
+
+    void SetSpec(const EnvelopeSpec &spec)
+    {
+        mSpec = spec;
+        // bug: if you set the spec and the current stage becomes 0-length, 1 sample will be processed for it. nobody
+        // cares.
+        RecalcState();
+    }
+
+    float ProcessSample()
+    {
+        float ret = 0;
+        EnvelopeStage nextStage = EnvelopeStage::Idle;
+
+        switch (mStage)
+        {
+        default:
+        case EnvelopeStage::Idle: {
+            return 0;
+        }
+        case EnvelopeStage::Delay: {
+            ret = 0;
+            nextStage = EnvelopeStage::Attack;
+            break;
+        }
+        case EnvelopeStage::Attack: {
+            ret = gModCurveLUT.Transfer32(mStagePos01, mpLutRow); // 0-1
+            nextStage = EnvelopeStage::Hold;
+            break;
+        }
+        case EnvelopeStage::Hold: {
+            ret = 1;
+            nextStage = EnvelopeStage::Decay;
+            break;
+        }
+        case EnvelopeStage::Decay: {
+            // 0-1 => 1 - sustainlevel
+            // curve contained within the stage, not the output 0-1 range.
+            float range = 1.0f - mSpec.mSustainLevel; // could be precalculated
+            ret = 1.0f - gModCurveLUT.Transfer32(1.0f - mStagePos01, mpLutRow); // 0-1
+            ret = 1.0f - range * ret;
+            nextStage = EnvelopeStage::Sustain;
+            break;
+        }
+        case EnvelopeStage::Sustain: {
+            return mSpec.mSustainLevel;
+        }
+        case EnvelopeStage::Release: {
+            // 0-1 => mReleaseFromValue01 - 0
+            // curve contained within the stage, not the output 0-1 range.
+            ret = gModCurveLUT.Transfer32(1.0f - mStagePos01, mpLutRow); // 1-0
+            ret = ret * mReleaseFromValue01;
+            nextStage = EnvelopeStage::Idle;
+            break;
+        }
+        }
+
+        mStagePos01 += mStagePosIncPerSample;
+        if (mStagePos01 >= 1.0f)
+        {
+            AdvanceToStage(nextStage);
+        }
+        return ret;
+    }
+
     virtual void update(void)
     {
-        audio_block_t *block;
-        uint32_t *p, *end;
-        uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
+        audio_block_t *block = this->allocate();
 
-        block = receiveWritable();
-        if (!block)
-            return;
-        if (state == EnvelopeStage::Idle)
+        for (size_t i = 0; i < SizeofStaticArray(block->data); ++i)
         {
-            release(block);
-            return;
+            mLastOutputLevel = ProcessSample();
+            block->data[i] = fast::Sample32To16(mLastOutputLevel);
         }
-        p = (uint32_t *)(block->data);
-        end = p + AUDIO_BLOCK_SAMPLES / 2;
 
-        while (p < end)
-        {
-            // we only care about the state when completing a region
-            if (count == 0)
-            {
-                if (state == EnvelopeStage::Attack)
-                {
-                    count = hold_count;
-                    if (count > 0)
-                    {
-                        state = EnvelopeStage::Hold;
-                        mult_hires = 0x40000000;
-                        inc_hires = 0;
-                    }
-                    else
-                    {
-                        state = EnvelopeStage::Decay;
-                        count = decay_count;
-                        inc_hires = (sustain_mult - 0x40000000) / (int32_t)count;
-                    }
-                    continue;
-                }
-                else if (state == EnvelopeStage::Hold)
-                {
-                    state = EnvelopeStage::Decay;
-                    count = decay_count;
-                    inc_hires = (sustain_mult - 0x40000000) / (int32_t)count;
-                    continue;
-                }
-                else if (state == EnvelopeStage::Decay)
-                {
-                    state = EnvelopeStage::Sustain;
-                    count = 0xFFFF;
-                    mult_hires = sustain_mult;
-                    inc_hires = 0;
-                }
-                else if (state == EnvelopeStage::Sustain)
-                {
-                    count = 0xFFFF;
-                }
-                else if (state == EnvelopeStage::Release)
-                {
-                    state = EnvelopeStage::Idle;
-                    while (p < end)
-                    {
-                        *p++ = 0;
-                        *p++ = 0;
-                        *p++ = 0;
-                        *p++ = 0;
-                    }
-                    break;
-                }
-                else if (state == EnvelopeStage::Delay)
-                {
-                    state = EnvelopeStage::Attack;
-                    count = attack_count;
-                    inc_hires = 0x40000000 / count;
-                    continue;
-                }
-            }
-
-            int32_t mult = mult_hires >> 14;
-            int32_t inc = inc_hires >> 17;
-            // process 8 samples, using only mult and inc (16 bit resolution)
-            sample12 = *p++;
-            sample34 = *p++;
-            sample56 = *p++;
-            sample78 = *p++;
-            p -= 4;
-            mult += inc;
-            tmp1 = signed_multiply_32x16b(mult, sample12);
-            mult += inc;
-            tmp2 = signed_multiply_32x16t(mult, sample12);
-            sample12 = pack_16b_16b(tmp2, tmp1);
-            mult += inc;
-            tmp1 = signed_multiply_32x16b(mult, sample34);
-            mult += inc;
-            tmp2 = signed_multiply_32x16t(mult, sample34);
-            sample34 = pack_16b_16b(tmp2, tmp1);
-            mult += inc;
-            tmp1 = signed_multiply_32x16b(mult, sample56);
-            mult += inc;
-            tmp2 = signed_multiply_32x16t(mult, sample56);
-            sample56 = pack_16b_16b(tmp2, tmp1);
-            mult += inc;
-            tmp1 = signed_multiply_32x16b(mult, sample78);
-            mult += inc;
-            tmp2 = signed_multiply_32x16t(mult, sample78);
-            sample78 = pack_16b_16b(tmp2, tmp1);
-            *p++ = sample12;
-            *p++ = sample34;
-            *p++ = sample56;
-            *p++ = sample78;
-            // adjust the long-term gain using 30 bit resolution (fix #102)
-            // https://github.com/PaulStoffregen/Audio/issues/102
-            mult_hires += inc_hires;
-            count--;
-        }
         transmit(block);
         release(block);
     }
 
   private:
-    uint16_t milliseconds2count(float milliseconds)
+    void RecalcState()
     {
-        if (milliseconds < 0.0f)
-            milliseconds = 0.0f;
-        uint32_t c = ((uint32_t)(milliseconds * SAMPLES_PER_MSEC) + 7) >> 3;
-        if (c > 65535)
-            c = 65535; // allow up to 11.88 seconds
-        return c;
+        switch (mStage)
+        {
+        default:
+        case EnvelopeStage::Idle:
+            return;
+        case EnvelopeStage::Delay:
+            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mDelayMS);
+            return;
+        case EnvelopeStage::Attack:
+            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mAttackMS);
+            mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mAttackCurve);
+            return;
+        case EnvelopeStage::Hold:
+            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mHoldMS);
+            return;
+        case EnvelopeStage::Decay:
+            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mDecayMS);
+            mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mDecayCurve);
+            return;
+        case EnvelopeStage::Sustain:
+            return;
+        case EnvelopeStage::Release:
+            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mReleaseMS);
+            mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mReleaseCurve);
+            return;
+        }
     }
-    audio_block_t *inputQueueArray[1];
 
-    // state
-    EnvelopeStage state;
-    uint16_t count;     // how much time remains in this state, in 8 sample units
-    int32_t mult_hires; // attenuation, 0=off, 0x40000000=unity gain
-    int32_t inc_hires;  // amount to change mult_hires every 8 samples
+    EnvelopeStage mStage = EnvelopeStage::Idle;
+    float mStagePos01 = 0.0f; // where in the current stage are we?
+    float mLastOutputLevel = 0.0f; // used to calculated release from value.
+    float mStagePosIncPerSample =
+        0.0f; // how much mStagePos01 changes per sample (recalculated when mStage changes, or when spec changes)
 
-    // settings
-    uint16_t delay_count;
-    uint16_t attack_count;
-    uint16_t hold_count;
-    uint16_t decay_count;
-    int32_t sustain_mult;
-    uint16_t release_count;
-    // uint16_t release_forced_count;
+    q15_t *mpLutRow = nullptr; // for curved operations, this is the current transfer kernel
+
+    float mReleaseFromValue01 = 0.0f; // when release stage begins, what value is it releasing from?
+
+    EnvelopeSpec mSpec;
 };
 
 } // namespace clarinoid
