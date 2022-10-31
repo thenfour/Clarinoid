@@ -139,6 +139,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     {
         return mKRateDestinationValuesN11[(int)dest];
     }
+
     void ResetKRateModulations()
     {
         for (float &f : mKRateDestinationValuesN11)
@@ -390,8 +391,8 @@ struct VoiceModulationMatrixNode : public AudioStream
             aux2 += auxPolarityConv.add;
             aux1 = gModCurveLUT.Transfer16(saturate16(aux1), auxCurveState);
             aux2 = gModCurveLUT.Transfer16(saturate16(aux2), auxCurveState);
-            //aux1 = signed_multiply_32x16b(auxScale16p16, aux1);
-            // aux2 = signed_multiply_32x16b(auxScale16p16, aux2);
+            // aux1 = signed_multiply_32x16b(auxScale16p16, aux1);
+            //  aux2 = signed_multiply_32x16b(auxScale16p16, aux2);
             aux1 = signed_multiply_accumulate_32x16b(auxBase32, auxScale16p16, aux1);
             aux2 = signed_multiply_accumulate_32x16b(auxBase32, auxScale16p16, aux2);
             x1 = signed_multiply_32x16b(aux1 << 1,

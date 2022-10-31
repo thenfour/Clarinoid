@@ -132,8 +132,7 @@ struct Voice : IModulationProvider
 
     // Modulation sources
     VoiceModulationMatrixNode mModMatrix;
-    EnvelopeNode mEnv1;
-    EnvelopeNode mEnv2;
+    EnvelopeNode mEnvelopes[ENVELOPE_COUNT];
     AudioSynthWaveform mLfo1;
     AudioSynthWaveform mLfo2;
 
@@ -146,9 +145,9 @@ struct Voice : IModulationProvider
         switch (src)
         {
         case ARateModulationSource::ENV1:
-            return {&mEnv1, 0};
+            return {&mEnvelopes[0], 0};
         case ARateModulationSource::ENV2:
-            return {&mEnv2, 0};
+            return {&mEnvelopes[1], 0};
         case ARateModulationSource::LFO1:
             return {&mLfo1, 0};
         case ARateModulationSource::LFO2:
@@ -294,8 +293,21 @@ struct Voice : IModulationProvider
         const auto &patch = *mRunningVoice.mSynthPatch;
         const auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
-        mEnv1.SetSpec(patch.mEnv1);
-        mEnv2.SetSpec(patch.mEnv2);
+        for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
+        {
+            EnvelopeModulationValues modValues;
+            auto &e = gModValuesByEnvelope[i];
+            modValues.delayTime = mModMatrix.GetKRateDestinationValue(e.KRateDestination_DelayTime);
+            modValues.attackTime = mModMatrix.GetKRateDestinationValue(e.KRateDestination_AttackTime);
+            modValues.attackCurve = mModMatrix.GetKRateDestinationValue(e.KRateDestination_AttackCurve);
+            modValues.holdTime = mModMatrix.GetKRateDestinationValue(e.KRateDestination_HoldTime);
+            modValues.decayTime = mModMatrix.GetKRateDestinationValue(e.KRateDestination_DecayTime);
+            modValues.decayCurve = mModMatrix.GetKRateDestinationValue(e.KRateDestination_DecayCurve);
+            modValues.sustainLevel = mModMatrix.GetKRateDestinationValue(e.KRateDestination_SustainLevel);
+            modValues.releaseTime = mModMatrix.GetKRateDestinationValue(e.KRateDestination_ReleaseTime);
+            modValues.releaseCurve = mModMatrix.GetKRateDestinationValue(e.KRateDestination_ReleaseCurve);
+            mEnvelopes[i].SetSpec(patch.mEnvelopes[i], modValues);
+        }
 
         short wantsWaveType1 = convertWaveType(patch.mLFO1.mWaveShape);
         short wantsWaveType2 = convertWaveType(patch.mLFO2.mWaveShape);
@@ -314,10 +326,7 @@ struct Voice : IModulationProvider
         mLfo2.frequency(patch.mLFO2.mTime.ToHertz(perf.mBPM));
     }
 
-    float CalcFreq(const SynthOscillatorSettings &osc,
-                   float detune,
-                   float krateFreqModN11,
-                   PortamentoCalc &portamento)
+    float CalcFreq(const SynthOscillatorSettings &osc, float detune, float krateFreqModN11, PortamentoCalc &portamento)
     {
         // we're in semis land... let's figure out the semitone.
         float midiNote = mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue();
@@ -478,12 +487,14 @@ struct Voice : IModulationProvider
 
             // sd += String("[o") + i + " det:" + detunes[ienabledOsc] + " freq:" + freq + "]  ";
 
-            mOsc.mOsc[i].SetBasicParams(patch.mOsc[i].mWaveform,
-            freq,
-            patch.mOsc[i].mPhase01,
-            patch.mOsc[i].mPortamentoTimeMS, 
-            patch.mOsc[i].mSyncFreqParam.GetFrequency(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(), mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency))
-                );
+            mOsc.mOsc[i].SetBasicParams(
+                patch.mOsc[i].mWaveform,
+                freq,
+                patch.mOsc[i].mPhase01,
+                patch.mOsc[i].mPortamentoTimeMS,
+                patch.mOsc[i].mSyncFreqParam.GetFrequency(
+                    mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(),
+                    mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency)));
 
             ienabledOsc++;
         }
@@ -492,7 +503,9 @@ struct Voice : IModulationProvider
         //     Serial.println(sd);
 
         // TODO: if portamento is enabled for an oscillator, it should be accounted for here.
-        float filterFreq = mRunningVoice.mSynthPatch->mFilterFreqParam.GetFrequency(MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()), mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
+        float filterFreq = mRunningVoice.mSynthPatch->mFilterFreqParam.GetFrequency(
+            MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()),
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
         mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
         mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
 
@@ -522,10 +535,11 @@ struct Voice : IModulationProvider
                         (newSynthPatch->mVoicingMode == VoicingMode::Monophonic);
 
         // i don't actually think this is necessary. to be confirmed.
-        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv1.mLegatoRestart))
-            mEnv1.noteOff();
-        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv2.mLegatoRestart))
-            mEnv2.noteOff();
+        for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
+        {
+            if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnvelopes[i].mLegatoRestart))
+                mEnvelopes[i].noteOff();
+        }
 
         // adjust running voice.
         mRunningVoice.mSource = source;
@@ -546,10 +560,12 @@ struct Voice : IModulationProvider
                 mOsc.mOsc[i].ResetPhase();
             }
         }
-        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv1.mLegatoRestart))
-            mEnv1.noteOn();
-        if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnv2.mLegatoRestart))
-            mEnv2.noteOn();
+
+        for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
+        {
+            if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnvelopes[i].mLegatoRestart))
+                mEnvelopes[i].noteOn();
+        }
 
         if (mRunningVoice.mSynthPatch->mLFO1.mPhaseRestart)
         {
@@ -573,16 +589,24 @@ struct Voice : IModulationProvider
         //}
         // even after a note off, the note continues to play through the envelope release stage. so don't really change
         // much here.
-        mEnv1.noteOff();
-        mEnv2.noteOff();
+        for (auto &e : mEnvelopes)
+        {
+            e.noteOff();
+        }
     }
 
     // TODO: 3.x: note hasn't quite gotten off the ground
     // - 0.x: playing before release
     // - 1.x: after release
-    // - 2.x: after idle
-    float CalcReleaseabilityForEnvelope(const EnvelopeNode &env, const EnvelopeSpec &envSpec) const
+    // - 2.x: env is silent
+    float CalcReleaseabilityForEnvelope(const EnvelopeNode &env) const
     {
+        // silent envelope
+        if (IsSilentGain(env.GetLastOutputLevel()))
+        {
+            return 2.0f + TimeTo01(millis() - mRunningVoice.mNoteInfo.mAttackTimestampMS);
+        }
+
         // if playing, before any release, then 0-1
         if (mRunningVoice.mReleaseTimestampMS == 0)
         {
@@ -591,13 +615,7 @@ struct Voice : IModulationProvider
 
         // ok we're at least at release stage.
         auto timeSinceReleaseMS = millis() - mRunningVoice.mReleaseTimestampMS;
-        float releaseTimeMS = envSpec.mReleaseMS;
-        if (timeSinceReleaseMS < releaseTimeMS)
-        {
-            return 1 + TimeTo01(timeSinceReleaseMS);
-        }
-
-        return 2 + TimeTo01(timeSinceReleaseMS - releaseTimeMS);
+        return 1.0f + TimeTo01(timeSinceReleaseMS);
     }
 
     // a number explaining how happy this voice is to be released / note-off'd.
@@ -618,9 +636,7 @@ struct Voice : IModulationProvider
             return 20;
         }
 
-        float r1 = CalcReleaseabilityForEnvelope(mEnv1, mRunningVoice.mSynthPatch->mEnv1);
-        float r2 = CalcReleaseabilityForEnvelope(mEnv2, mRunningVoice.mSynthPatch->mEnv2);
-        float r = std::min(r1, r2);
+        float r = CalcReleaseabilityForEnvelope(mEnvelopes[0]);
 
         return r + ((mRunningVoice.mNoteInfo.mIsPhysicallyHeld) ? 0 : 10);
     }
@@ -638,12 +654,7 @@ struct Voice : IModulationProvider
             return true;
         }
 
-        auto timeSinceReleaseMS = millis() - mRunningVoice.mReleaseTimestampMS;
-        float releaseTimeMS =
-            std::max(mRunningVoice.mSynthPatch->mEnv1.mReleaseMS, mRunningVoice.mSynthPatch->mEnv2.mReleaseMS);
-        // TODO: if there are NO modulations that use env as source, then don't consider release time.
-
-        return timeSinceReleaseMS < releaseTimeMS;
+        return mEnvelopes[0].IsPlaying();
     }
 
     String ToString() const
@@ -659,7 +670,7 @@ struct Voice : IModulationProvider
         // synth patch exists.
         ret += String() // + String("p") + mRunningVoice.mSynthPatchIndex + " "
                + mRunningVoice.mNoteInfo.mMidiNote.ToString() + " " +
-               gEnvelopeStageInfo.GetValueString(mEnv1.GetStage());
+               gEnvelopeStageInfo.GetValueString(mEnvelopes[0].GetStage());
         return ret;
     }
 

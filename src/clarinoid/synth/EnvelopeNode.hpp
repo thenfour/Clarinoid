@@ -26,6 +26,19 @@ EnumItemInfo<EnvelopeStage> gEnvelopeStageItems[7] = {
 
 EnumInfo<EnvelopeStage> gEnvelopeStageInfo("EnvelopeStage", gEnvelopeStageItems);
 
+struct EnvelopeModulationValues
+{
+    float delayTime;
+    float attackTime;
+    float attackCurve;
+    float holdTime;
+    float decayTime;
+    float decayCurve;
+    float sustainLevel;
+    float releaseTime;
+    float releaseCurve;
+};
+
 struct EnvelopeNode : public AudioStream
 {
     EnvelopeNode() : AudioStream(0, nullptr)
@@ -41,28 +54,28 @@ struct EnvelopeNode : public AudioStream
         case EnvelopeStage::Idle:
             break;
         case EnvelopeStage::Delay:
-            if (FloatLessThanOrEquals(mSpec.mDelayMS, 0.0f))
+            if (FloatLessThanOrEquals(mSpec.mDelayTime.GetValue() + mModValues.delayTime, 0.0f))
             {
                 AdvanceToStage(EnvelopeStage::Attack);
                 return;
             }
             break;
         case EnvelopeStage::Attack:
-            if (FloatLessThanOrEquals(mSpec.mAttackMS, 0.0f))
+            if (FloatLessThanOrEquals(mSpec.mAttackTime.GetValue() + mModValues.attackTime, 0.0f))
             {
                 AdvanceToStage(EnvelopeStage::Hold);
                 return;
             }
             break;
         case EnvelopeStage::Hold:
-            if (FloatLessThanOrEquals(mSpec.mHoldMS, 0.0f))
+            if (FloatLessThanOrEquals(mSpec.mHoldTime.GetValue() + mModValues.holdTime, 0.0f))
             {
                 AdvanceToStage(EnvelopeStage::Decay);
                 return;
             }
             break;
         case EnvelopeStage::Decay:
-            if (FloatLessThanOrEquals(mSpec.mDecayMS, 0.0f))
+            if (FloatLessThanOrEquals(mSpec.mDecayTime.GetValue() + mModValues.decayTime, 0.0f))
             {
                 AdvanceToStage(EnvelopeStage::Decay);
                 return;
@@ -71,7 +84,7 @@ struct EnvelopeNode : public AudioStream
         case EnvelopeStage::Sustain:
             break;
         case EnvelopeStage::Release:
-            if (FloatLessThanOrEquals(mSpec.mReleaseMS, 0.0f))
+            if (FloatLessThanOrEquals(mSpec.mReleaseTime.GetValue() + mModValues.releaseTime, 0.0f))
             {
                 AdvanceToStage(EnvelopeStage::Idle);
                 return;
@@ -101,16 +114,23 @@ struct EnvelopeNode : public AudioStream
         return this->mStage;
     }
 
-    bool isPlaying() const
+    bool IsPlaying() const
     {
         if (this->mStage == EnvelopeStage::Delay)
             return false;
         return (this->mStage != EnvelopeStage::Idle);
     }
 
-    void SetSpec(const EnvelopeSpec &spec)
+    // helps calculate releaseability
+    float GetLastOutputLevel() const
+    {
+        return mLastOutputLevel;
+    }
+
+    void SetSpec(const EnvelopeSpec &spec, const EnvelopeModulationValues &modValues)
     {
         mSpec = spec;
+        mModValues = modValues;
         // bug: if you set the spec and the current stage becomes 0-length, 1 sample will be processed for it. nobody
         // cares.
         RecalcState();
@@ -145,14 +165,14 @@ struct EnvelopeNode : public AudioStream
         case EnvelopeStage::Decay: {
             // 0-1 => 1 - sustainlevel
             // curve contained within the stage, not the output 0-1 range.
-            float range = 1.0f - mSpec.mSustainLevel; // could be precalculated
-            ret = 1.0f - gModCurveLUT.Transfer32(1.0f - mStagePos01, mpLutRow); // 0-1
+            float range = 1.0f - (mSpec.mSustainLevel + mModValues.sustainLevel); // could be precalculated
+            ret = 1.0f - gModCurveLUT.Transfer32(1.0f - mStagePos01, mpLutRow);   // 0-1
             ret = 1.0f - range * ret;
             nextStage = EnvelopeStage::Sustain;
             break;
         }
         case EnvelopeStage::Sustain: {
-            return mSpec.mSustainLevel;
+            return (mSpec.mSustainLevel + mModValues.sustainLevel);
         }
         case EnvelopeStage::Release: {
             // 0-1 => mReleaseFromValue01 - 0
@@ -194,31 +214,43 @@ struct EnvelopeNode : public AudioStream
         default:
         case EnvelopeStage::Idle:
             return;
-        case EnvelopeStage::Delay:
-            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mDelayMS);
+        case EnvelopeStage::Delay: {
+            mStagePosIncPerSample =
+                CalculateInc01PerSampleForMS(mSpec.mDelayTime.GetMilliseconds(mModValues.delayTime));
             return;
-        case EnvelopeStage::Attack:
-            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mAttackMS);
+        }
+        case EnvelopeStage::Attack: {
+            auto ms = mSpec.mAttackTime.GetMilliseconds(mModValues.attackTime);
+            // Serial.println(String("attack param:") + mSpec.mAttackTime.GetValue() + ", mod:" + mModValues.attackTime +
+            //                " = " + ms + " ms");
+            mStagePosIncPerSample = CalculateInc01PerSampleForMS(ms);
             mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mAttackCurve);
             return;
-        case EnvelopeStage::Hold:
-            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mHoldMS);
+        }
+        case EnvelopeStage::Hold: {
+            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mHoldTime.GetMilliseconds(mModValues.holdTime));
             return;
-        case EnvelopeStage::Decay:
-            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mDecayMS);
+        }
+        case EnvelopeStage::Decay: {
+            mStagePosIncPerSample =
+                CalculateInc01PerSampleForMS(mSpec.mDecayTime.GetMilliseconds(mModValues.decayTime));
             mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mDecayCurve);
             return;
-        case EnvelopeStage::Sustain:
+        }
+        case EnvelopeStage::Sustain: {
             return;
-        case EnvelopeStage::Release:
-            mStagePosIncPerSample = CalculateInc01PerSampleForMS(mSpec.mReleaseMS);
+        }
+        case EnvelopeStage::Release: {
+            mStagePosIncPerSample =
+                CalculateInc01PerSampleForMS(mSpec.mReleaseTime.GetMilliseconds(mModValues.releaseTime));
             mpLutRow = gModCurveLUT.BeginLookupI(mSpec.mReleaseCurve);
             return;
+        }
         }
     }
 
     EnvelopeStage mStage = EnvelopeStage::Idle;
-    float mStagePos01 = 0.0f; // where in the current stage are we?
+    float mStagePos01 = 0.0f;      // where in the current stage are we?
     float mLastOutputLevel = 0.0f; // used to calculated release from value.
     float mStagePosIncPerSample =
         0.0f; // how much mStagePos01 changes per sample (recalculated when mStage changes, or when spec changes)
@@ -228,6 +260,7 @@ struct EnvelopeNode : public AudioStream
     float mReleaseFromValue01 = 0.0f; // when release stage begins, what value is it releasing from?
 
     EnvelopeSpec mSpec;
+    EnvelopeModulationValues mModValues;
 };
 
 } // namespace clarinoid

@@ -102,27 +102,27 @@ struct EnvelopeMenuApp
                                      AlwaysEnabled};
 
     FloatSettingItem mDelayMS = {"Delay",
-                                 StandardRangeSpecs::gEnvDelayMS,
+                                 StandardRangeSpecs::gFloat_0_1,
                                  Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                     return pThis->mBinding->mDelayMS;
+                                                     return pThis->mBinding->mDelayTime.GetValue();
                                                  },
                                                  [](void *cap, const float &v) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                     pThis->mBinding->mDelayMS = v;
+                                                     pThis->mBinding->mDelayTime.SetValue(v);
                                                  },
                                                  this},
                                  AlwaysEnabled};
 
     FloatSettingItem mAttackMS = {"Attack",
-                                  StandardRangeSpecs::gEnvAttackMS,
+                                  StandardRangeSpecs::gFloat_0_1,
                                   Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return pThis->mBinding->mAttackMS;
+                                                      return pThis->mBinding->mAttackTime.GetValue();
                                                   },
                                                   [](void *cap, const float &v) FLASHMEM {
                                                       auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mAttackMS = v;
+                                                      pThis->mBinding->mAttackTime.SetValue(v);
                                                   },
                                                   this},
                                   AlwaysEnabled};
@@ -141,27 +141,27 @@ struct EnvelopeMenuApp
                                 AlwaysEnabled};
 
     FloatSettingItem mHoldMS = {"Hold",
-                                StandardRangeSpecs::gEnvHoldMS,
+                                StandardRangeSpecs::gFloat_0_1,
                                 Property<float>{[](void *cap) FLASHMEM {
                                                     auto *pThis = (EnvelopeMenuApp *)cap;
-                                                    return pThis->mBinding->mHoldMS;
+                                                    return pThis->mBinding->mHoldTime.GetValue();
                                                 },
                                                 [](void *cap, const float &v) FLASHMEM {
                                                     auto *pThis = (EnvelopeMenuApp *)cap;
-                                                    pThis->mBinding->mHoldMS = v;
+                                                    pThis->mBinding->mHoldTime.SetValue(v);
                                                 },
                                                 this},
                                 AlwaysEnabled};
 
     FloatSettingItem mDecayMS = {"Decay",
-                                 StandardRangeSpecs::gEnvDecayMS,
+                                 StandardRangeSpecs::gFloat_0_1,
                                  Property<float>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                     return pThis->mBinding->mDecayMS;
+                                                     return pThis->mBinding->mDecayTime.GetValue();
                                                  },
                                                  [](void *cap, const float &v) FLASHMEM {
                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                     pThis->mBinding->mDecayMS = v;
+                                                     pThis->mBinding->mDecayTime.SetValue(v);
                                                  },
                                                  this},
                                  AlwaysEnabled};
@@ -193,14 +193,14 @@ struct EnvelopeMenuApp
                                       AlwaysEnabled};
 
     FloatSettingItem mReleaseMS = {"Release",
-                                   StandardRangeSpecs::gEnvReleaseMS,
+                                   StandardRangeSpecs::gFloat_0_1,
                                    Property<float>{[](void *cap) FLASHMEM {
                                                        auto *pThis = (EnvelopeMenuApp *)cap;
-                                                       return pThis->mBinding->mReleaseMS;
+                                                       return pThis->mBinding->mReleaseTime.GetValue();
                                                    },
                                                    [](void *cap, const float &v) FLASHMEM {
                                                        auto *pThis = (EnvelopeMenuApp *)cap;
-                                                       pThis->mBinding->mReleaseMS = v;
+                                                       pThis->mBinding->mReleaseTime.SetValue(v);
                                                    },
                                                    this},
                                    AlwaysEnabled};
@@ -1080,10 +1080,11 @@ struct SynthPatchMenuApp : public SettingsMenuApp
 
     EnvelopeMenuApp mEnvEditor;
 
+    // TODO: use a multi submenu
     SubmenuSettingItem mModEnv1SubmenuItem = {String("ENV1"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnv1);
+                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnvelopes[0]);
                                               },
                                               AlwaysEnabled,
                                               this};
@@ -1091,7 +1092,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     SubmenuSettingItem mModEnv2SubmenuItem = {String("ENV2"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnv2);
+                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnvelopes[1]);
                                               },
                                               AlwaysEnabled,
                                               this};

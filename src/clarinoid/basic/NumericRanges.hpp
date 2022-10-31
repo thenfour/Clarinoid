@@ -203,13 +203,7 @@ static const NumericEditRangeSpec<float> gOverallFMStrengthRange = NumericEditRa
 
 static const NumericEditRangeSpec<float> gLFOFrequency = NumericEditRangeSpec<float>{0.01f, 15.0f};
 
-// envelope
-static const NumericEditRangeSpec<float> gEnvDelayMS = NumericEditRangeSpec<float>{0.0f, 2000.0f, 100, 25, 5};
-static const NumericEditRangeSpec<float> gEnvAttackMS = NumericEditRangeSpec<float>{0.0f, 2000.0f, 100, 25, 5};
-static const NumericEditRangeSpec<float> gEnvHoldMS = NumericEditRangeSpec<float>{0.0f, 2000.0f, 100, 25, 5};
-static const NumericEditRangeSpec<float> gEnvDecayMS = NumericEditRangeSpec<float>{0.0f, 10000.0f, 300, 50, 10};
 static const NumericEditRangeSpec<float> gEnvSustainLevel = gFloat_0_1;
-static const NumericEditRangeSpec<float> gEnvReleaseMS = NumericEditRangeSpec<float>{0.0f, 10000.0f, 300, 50, 10};
 
 static const NumericEditRangeSpec<float> gBPMRange = NumericEditRangeSpec<float>{20, 300, 10, 2, 1};
 static const NumericEditRangeSpec<int> gMetronomeNoteRange = NumericEditRangeSpec<int>{20, 120, 10, 1, 1};

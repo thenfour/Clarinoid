@@ -616,6 +616,12 @@ inline std::pair<float, float> CalculatePanGain(float panN11)
     return std::make_pair(leftChannel, rightChannel);
 }
 
+
+static float CalculateInc01PerSampleForMS(float ms)
+{
+    return Clamp(1000.0f / (std::max(0.01f, ms) * AUDIO_SAMPLE_RATE), 0.0f, 1.0f);
+}
+
 // value 0.3 = unity, and each 0.1 param value = 1 octave transposition, when KT = 1.
 // when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
 struct FrequencyParamValue
@@ -627,7 +633,6 @@ struct FrequencyParamValue
   public:
     FrequencyParamValue(float initialValue, float initialKTValue) : mValue(initialValue), mKTValue(initialKTValue)
     {
-        //
     }
 
     float GetParamValue() const
@@ -691,10 +696,48 @@ struct FrequencyParamValue
     }
 };
 
-static float CalculateInc01PerSampleForMS(float ms)
+// value 0.5 = 1khz, and each 0.1 param value = +/- octave.
+struct EnvTimeParamValue
 {
-    return Clamp(1000.0f / (std::max(0.01f, ms) * AUDIO_SAMPLE_RATE), 0.0f, 1.0f);
-}
+  private:
+    float mValue;
+
+  public:
+    EnvTimeParamValue(float initialValue) : mValue(initialValue)
+    {
+    }
+
+    float GetValue() const
+    {
+        return mValue;
+    }
+
+    void SetValue(float v)
+    {
+        mValue = v;
+    }
+
+    static constexpr float gCenterValue = 375; // the MS at 0.5 param value.
+    static constexpr int gRangeLog2 = 10; // must be even for below calculations to work
+    static constexpr float gMinRawVal = (1.0f / (1<<(gRangeLog2/2))) * gCenterValue; // minimum value as described by log calc (before subtracting min).
+    static constexpr float gMaxRawVal = (1<<(gRangeLog2/2)) * gCenterValue;
+    static constexpr float gMinRealVal = 0;
+    static constexpr float gMaxRealVal = gMaxRawVal - gMinRawVal;
+
+    float GetMilliseconds(float paramModulation) const
+    {
+        float param = mValue + paramModulation; // apply current modulation value.
+        param = Clamp(param, 0, 1);
+        param -= 0.5f;  // -.5 to .5
+        param *= gRangeLog2; // -5 to +5 (2^-5 = .0312; 2^5 = 32), with 375ms center val means [12ms, 12sec]
+        float fact = fast::pow(2, param);
+        param = gCenterValue * fact;
+        param -= gMinRawVal; // pow(2,x) doesn't ever reach 0 value. subtracting the min allows 0 to exist.
+        return Clamp(param, gMinRealVal, gMaxRealVal);
+    }
+};
+
+
 
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd
