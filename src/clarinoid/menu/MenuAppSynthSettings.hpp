@@ -450,7 +450,7 @@ struct SynthPatchOscillatorMenuStuff
                                                    this},
                                        Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return pThis->GetBinding().mWaveform == OscWaveformShape::SawSync;
+                                                         return IsSyncWaveform(pThis->GetBinding().mWaveform);
                                                       },
                                                       this}};
 
@@ -467,7 +467,7 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                        Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return pThis->GetBinding().mWaveform == OscWaveformShape::SawSync;
+                                                         return IsSyncWaveform(pThis->GetBinding().mWaveform);
                                                       },
                                                       this}};
 
@@ -485,7 +485,10 @@ struct SynthPatchOscillatorMenuStuff
                                                     this},
                                        Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return (pThis->GetBinding().mWaveform == OscWaveformShape::Pulse) || (pThis->GetBinding().mWaveform == OscWaveformShape::VarTriangle);
+                                                         return (pThis->GetBinding().mWaveform == OscWaveformShape::Pulse)
+                                                         || (pThis->GetBinding().mWaveform == OscWaveformShape::SyncPulse)
+                                                         || (pThis->GetBinding().mWaveform == OscWaveformShape::VarTriangle)
+                                                         ;
                                                       },
                                                       this}};
 

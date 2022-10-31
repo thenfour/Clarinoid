@@ -356,11 +356,9 @@ struct Oscillator
 
     bool IsHardSync() const
     {
-        return mWaveformShape == OscWaveformShape::SawSync;
+        return IsSyncWaveform(mWaveformShape);
     }
     bool mEnabled = true;
-    // float mAmplitude = 0;
-    // float mWaveformMorph01 = 0.5f; // curve: gModCurveLUT.LinearYIndex;
 
     OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
 
@@ -396,7 +394,7 @@ struct Oscillator
     void SetBasicParams(OscWaveformShape wform, float freq, float phaseOffset01, int portamentoMS, float syncFreq)
     {
         mWaveformShape = wform;
-        if (wform == OscWaveformShape::SawSync)
+        if (IsSyncWaveform(wform))
         {
             mSyncPhase.SetParams(freq, phaseOffset01);
             mMainPhase.SetParams(syncFreq, 0);
@@ -481,6 +479,12 @@ struct Oscillator
                 this->Step<PulseWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
             }
             break;
+        case OscWaveformShape::SyncPulse:
+            for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+            {
+                this->Step<PulseWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+            }
+            break;
         case OscWaveformShape::SawSync:
             for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
             {
@@ -488,11 +492,13 @@ struct Oscillator
             }
             break;
         case OscWaveformShape::Sine:
-        default:
             for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
             {
                 this->Step<SineWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
             }
+            break;
+        default:
+            CCASSERT(!"unsupported waveform in processblock");
             break;
         }
         fast::Sample32To16Buffer(out32, pOut->data);

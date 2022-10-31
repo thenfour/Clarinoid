@@ -159,16 +159,24 @@ enum class OscWaveformShape : uint8_t
     VarTriangle = 1, // [aka Saw-Tri]   shape
     Pulse = 2,       //                 pulsewidth
     SawSync = 3,     //                 ??           curve
+    SyncPulse = 4,   //                 pulsewidth   syncfreq
 };
 
-EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[4] = {
+EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[5] = {
     {OscWaveformShape::Sine, "Sine"},
     {OscWaveformShape::VarTriangle, "Tri-Saw"},
-    {OscWaveformShape::Pulse, "Pulse"},
+    {OscWaveformShape::Pulse, "Square"},
     {OscWaveformShape::SawSync, "Sync Saw"},
+    {OscWaveformShape::SyncPulse, "Sync Square"},
 };
 
 EnumInfo<OscWaveformShape> gOscWaveformShapeInfo("OscWaveformShape", gOscWaveformShapeItems);
+
+static bool IsSyncWaveform(OscWaveformShape x) {
+    if (x == OscWaveformShape::SyncPulse) return true;
+    if (x == OscWaveformShape::SawSync) return true;
+    return false;
+}
 
 enum class ClarinoidFilterType : uint8_t
 {

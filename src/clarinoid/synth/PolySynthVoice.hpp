@@ -277,6 +277,7 @@ struct Voice : IModulationProvider
         switch (s)
         {
         case OscWaveformShape::Pulse:
+        case OscWaveformShape::SyncPulse:
             return WAVEFORM_PULSE;
         case OscWaveformShape::SawSync:
             return WAVEFORM_SAWTOOTH;
