@@ -25,7 +25,7 @@ struct GuiApp : public DisplayApp
     GuiNavigationLogic mNavigator;
     bool mIsEditing = false;
 
-    GuiApp(IDisplay &d) : DisplayApp(d)
+    GuiApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : DisplayApp(d, appSettings, input)
     {
     }
 
@@ -175,7 +175,7 @@ struct GuiTestApp : GuiApp
         return "GuiTestApp";
     }
 
-    GuiTestApp(IDisplay &display) : GuiApp(display)
+    GuiTestApp(IDisplay &display, AppSettings& appSettings, InputDelegator& input) : GuiApp(display, appSettings, input)
     {
     }
 

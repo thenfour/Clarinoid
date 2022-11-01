@@ -19,8 +19,8 @@ struct GuiPerformanceApp : GuiApp
         return "GuiPerformanceApp";
     }
 
-    GuiPerformanceApp(IDisplay &display, Metronome &m /* PROMISE ME YOU WILL SET mBreathCalibration */)
-        : GuiApp(display), mMetronome(m)
+    GuiPerformanceApp(IDisplay &display, Metronome &m /* PROMISE ME YOU WILL SET mBreathCalibration */, AppSettings& appSettings, InputDelegator& input)
+        : GuiApp(display, appSettings, input), mMetronome(m)
     {
     }
 

@@ -1,8 +1,8 @@
 
-// physical device -> heldnotetracker ->(IHeldNoteTrackerEvents)
+// physical device -> heldnotetracker ->(IHeldNoteTrackerEvents)  ........ MusicalState also accepts "physical events" (i.e. NoteInfo, not MusicalVoice) via this interface.
+// musical state -> voicing mode interpreter ->(IVoicingModeResultEvents)
 // physical device ->(IMusicalDeviceEvents)
-// musical state -> voicing mode interpreter ->(IMusicalDeviceEvents)
-// musical state -> apply musical state ->(IMusicalEvents)
+// musical state -> apply musical state ->(IMusicalEventsForSynth)
 // synth
 
 #pragma once
@@ -10,14 +10,27 @@
 namespace clarinoid
 {
 
+// this is the mostly the same as IMusicalDeviceEvents, but different names, so 1 musical device can do both jobs.
+struct IVoicingModeResultEvents
+{
+    virtual void IVoicingModeResultEvents_OnNoteOn(const HeldNoteInfo &noteInfo) = 0;
+    virtual void IVoicingModeResultEvents_OnNoteOff(const HeldNoteInfo &noteInfo) = 0;
+    virtual void IVoicingModeResultEvents_OnAllNotesOff() = 0;
+};
+
 // musicalstate implements this.
 // when notes have been processed by a device, they get sent to the synth engine via this interface.
 // it's effectively forwarded directly from musical devices, but with a capture and good naming.
 struct IMusicalDeviceEvents
 {
-    virtual void IMusicalDeviceEvents_OnNoteOn(const HeldNoteInfo& noteInfo, void* cap) = 0;
-    virtual void IMusicalDeviceEvents_OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote, void* cap) = 0;
+    virtual void IMusicalDeviceEvents_OnNoteOn(const MusicalVoice& noteInfo, void* cap) = 0;
+    virtual void IMusicalDeviceEvents_OnNoteOff(const MusicalVoice &noteInfo, void* cap) = 0;
     virtual void IMusicalDeviceEvents_OnAllNotesOff(void* cap) = 0;
+
+    // basically a copy-paste of IHeldNoteTrackerEvents
+    virtual void IMusicalDeviceEvents_OnPhysicalNoteOn(const HeldNoteInfo &noteInfo, void* cap) = 0;
+    virtual void IMusicalDeviceEvents_OnPhysicalNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote, void* cap) = 0;
+    virtual void IMusicalDeviceEvents_OnPhysicalAllNotesOff(void* cap) = 0;
 };
 
 // adapts heldnotetracker events for polyphony / monophony.
@@ -26,10 +39,10 @@ struct IMusicalDeviceEvents
 struct VoicingModeInterpreter : IHeldNoteTrackerEvents
 {
     VoicingMode mVoicingMode = VoicingMode::Polyphonic;
-    IMusicalDeviceEvents *mpEventHandler = nullptr;
-    void* mpCapture = nullptr;
+    IVoicingModeResultEvents *mpEventHandler = nullptr;
+    //void* mpCapture = nullptr;
 
-    VoicingModeInterpreter(IMusicalDeviceEvents *pEventHandler, void* cap) : mpEventHandler(pEventHandler), mpCapture(cap)
+    VoicingModeInterpreter(IVoicingModeResultEvents *pEventHandler/*, void* cap*/) : mpEventHandler(pEventHandler)//, mpCapture(cap)
     {
     }
 
@@ -43,7 +56,7 @@ struct VoicingModeInterpreter : IHeldNoteTrackerEvents
     {
         // note ons are always translated to note ons.
         // in monophonic mode, should a note off be sent? i guess the synth knows how to do this.
-        mpEventHandler->IMusicalDeviceEvents_OnNoteOn(noteInfo, mpCapture);
+        mpEventHandler->IVoicingModeResultEvents_OnNoteOn(noteInfo);
     }
 
     virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote) override
@@ -52,16 +65,16 @@ struct VoicingModeInterpreter : IHeldNoteTrackerEvents
         // behavior)
         if ((mVoicingMode == VoicingMode::Monophonic) && trillNote)
         {
-            mpEventHandler->IMusicalDeviceEvents_OnNoteOn(*trillNote, mpCapture);
+            mpEventHandler->IVoicingModeResultEvents_OnNoteOn(*trillNote);
             return;
         }
 
-        mpEventHandler->IMusicalDeviceEvents_OnNoteOff(noteInfo, nullptr, mpCapture);
+        mpEventHandler->IVoicingModeResultEvents_OnNoteOff(noteInfo);
     }
 
     virtual void IHeldNoteTrackerEvents_OnAllNotesOff() override
     {
-        mpEventHandler->IMusicalDeviceEvents_OnAllNotesOff(mpCapture);
+        mpEventHandler->IVoicingModeResultEvents_OnAllNotesOff();
     }
 };
 

@@ -33,10 +33,17 @@ struct SystemSettingsApp : SettingsMenuApp
                       cc::function<float(void *)>::ptr_t rawBreathGetter,
                       cc::function<float(void *)>::ptr_t rawPitchBendGetter,
                       void *capture,
-                      Metronome *pm)
-        : SettingsMenuApp(d), mBreathMappingIndex(breathMappingIndex), mPitchUpMappingIndex(pitchUpMappingIndex),
-          mPitchDownMappingIndex(pitchDownMappingIndex), mRawBreathGetter(rawBreathGetter),
-          mRawPitchBendGetter(rawPitchBendGetter), mpCapture(capture), mpMetronome(pm)
+                      Metronome *pm,
+                      AppSettings &appSettings,
+                      InputDelegator &input)
+        : SettingsMenuApp(d, appSettings, input),        //
+          mBreathMappingIndex(breathMappingIndex),       //
+          mPitchUpMappingIndex(pitchUpMappingIndex),     //
+          mPitchDownMappingIndex(pitchDownMappingIndex), //
+          mRawBreathGetter(rawBreathGetter),             //
+          mRawPitchBendGetter(rawPitchBendGetter),       //
+          mpCapture(capture),                            //
+          mpMetronome(pm)
     {
     }
 
@@ -60,7 +67,8 @@ struct SystemSettingsApp : SettingsMenuApp
         Property<UnipolarMapping>{
             [](void *cap) FLASHMEM {
                 auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mBreathMappingIndex < 0) {
+                if (pThis->mBreathMappingIndex < 0)
+                {
                     return UnipolarMapping{};
                 }
                 UnipolarMapping ret =
@@ -69,7 +77,8 @@ struct SystemSettingsApp : SettingsMenuApp
             }, // getter
             [](void *cap, const UnipolarMapping &x) {
                 auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mBreathMappingIndex < 0) {
+                if (pThis->mBreathMappingIndex < 0)
+                {
                     return;
                 }
                 pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping = x;
@@ -86,7 +95,8 @@ struct SystemSettingsApp : SettingsMenuApp
         Property<UnipolarMapping>{
             [](void *cap) FLASHMEM {
                 auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchUpMappingIndex < 0) {
+                if (pThis->mPitchUpMappingIndex < 0)
+                {
                     return UnipolarMapping{};
                 }
                 UnipolarMapping ret =
@@ -95,7 +105,8 @@ struct SystemSettingsApp : SettingsMenuApp
             }, // getter
             [](void *cap, const UnipolarMapping &x) {
                 auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchUpMappingIndex < 0) {
+                if (pThis->mPitchUpMappingIndex < 0)
+                {
                     return;
                 }
                 pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping = x;
@@ -112,7 +123,8 @@ struct SystemSettingsApp : SettingsMenuApp
         Property<UnipolarMapping>{
             [](void *cap) FLASHMEM {
                 auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchDownMappingIndex < 0) {
+                if (pThis->mPitchDownMappingIndex < 0)
+                {
                     return UnipolarMapping{};
                 }
                 UnipolarMapping ret =
@@ -121,7 +133,8 @@ struct SystemSettingsApp : SettingsMenuApp
             }, // getter
             [](void *cap, const UnipolarMapping &x) {
                 auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchDownMappingIndex < 0) {
+                if (pThis->mPitchDownMappingIndex < 0)
+                {
                     return;
                 }
                 pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping = x;

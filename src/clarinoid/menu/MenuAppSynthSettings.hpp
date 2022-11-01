@@ -584,7 +584,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         return "SynthPatchMenuApp";
     }
 
-    SynthPatchMenuApp(IDisplay &d) : SettingsMenuApp(d) //, mDisplay(d)
+    SynthPatchMenuApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input)
     {
     }
 
@@ -1229,21 +1229,10 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         &mFMStrength2To3,
         &mFMStrength3To2,
 
-        //&mSync,
-        //&mSyncMultMin,
-        //&mSyncMultMax,
-
         &mModulationsSubmenuItem,
         &mCopyPreset,
     };
     SettingsList mRootList = {mArray};
-
-    // SettingsList *Start(size_t iPatch)
-    // {
-    //     this->DisplayAppInit(); // required to initialize stuff
-    //     mBindingID = iPatch;
-    //     return &mRootList;
-    // }
 
     virtual SettingsList *GetRootSettingsList()
     {

@@ -14,121 +14,96 @@
 
 #pragma once
 
-//#include <clarinoid/harmonizer/harmonizer.hpp>
-//#include <clarinoid/loopstation/LooperHarmonizer.hpp>
-//#include <clarinoid/application/ControlMapper.hpp>
 #include <clarinoid/synth/MusicalVoice.hpp>
 #include <clarinoid/synth/MusicalDevice.hpp>
+#include "USBKeyboardMusicalDevice.hpp"
+#include "HarmonizerMusicalDevice.hpp"
 
 namespace clarinoid
 {
 
 // orchestrates propagation of musical events from physical device to synthesizer
-struct MusicalState : IMusicalDeviceEvents
+struct MusicalState : IMusicalDeviceEvents // for receiving musical event data from various devices
 {
     AppSettings &mAppSettings;
 
     USBKeyboardMusicalDevice mUsbKeyboard;
-    VoicingModeInterpreter mUsbKeyboardVoicing;
+    HarmonizerMusicalDevice mLiveHarmonizer;
 
     IMusicalEventsForSynth *mpSynth = nullptr;
 
     MusicalState(AppSettings &appSettings, IMusicalEventsForSynth *pSynth)
-        : mAppSettings(appSettings), mUsbKeyboard(&appSettings, this, &mUsbKeyboard),
-          mUsbKeyboardVoicing(this, &mUsbKeyboardVoicing), mpSynth(pSynth)
+        : mAppSettings(appSettings),                                           //
+          mUsbKeyboard(&appSettings, this, &mUsbKeyboard),                     //
+          mLiveHarmonizer(appSettings, &mUsbKeyboard, this, &mLiveHarmonizer), //
+          mpSynth(pSynth)
     {
     }
 
-    virtual void IMusicalDeviceEvents_OnNoteOn(const HeldNoteInfo &noteInfo, void *cap) override
+    virtual void IMusicalDeviceEvents_OnNoteOn(const MusicalVoice &mv, void *cap) override
     {
-        // handles note on for many things. delegate based on cap
-        if (cap == &mUsbKeyboard)
-        {
-            mUsbKeyboardVoicing.IHeldNoteTrackerEvents_OnNoteOn(noteInfo);
-        }
-        else if (cap == &mUsbKeyboardVoicing)
-        {
-            UsbKeyboardVoicing_OnNoteOn(noteInfo);
-        }
-        else
-        {
-            CCASSERT(!"note on from unknown source");
-        }
+        mpSynth->IMusicalEventsForSynth_OnNoteOn(mv);
     }
 
-    virtual void IMusicalDeviceEvents_OnNoteOff(const HeldNoteInfo &noteInfo,
-                                                const HeldNoteInfo *trillNote,
-                                                void *cap) override
+    virtual void IMusicalDeviceEvents_OnNoteOff(const MusicalVoice &mv, void *cap) override
     {
-        if (cap == &mUsbKeyboard)
-        {
-            mUsbKeyboardVoicing.IHeldNoteTrackerEvents_OnNoteOff(noteInfo, trillNote);
-        }
-        else if (cap == &mUsbKeyboardVoicing)
-        {
-            UsbKeyboardVoicing_OnNoteOff(noteInfo);
-        }
-        else
-        {
-            CCASSERT(!"note on from unknown source");
-        }
+        mpSynth->IMusicalEventsForSynth_OnNoteOff(mv);
     }
 
     virtual void IMusicalDeviceEvents_OnAllNotesOff(void *cap) override
     {
-        // TODO
+        // TODO: well this isn't really used, but i think if loopstation gives a "all notes off" event,
+        // then probably means we should only cut loopstation notes. not sure.
+        mpSynth->IMusicalEventsForSynth_OnAllNoteOff();
     }
 
-    void UsbKeyboardVoicing_OnNoteOn(const HeldNoteInfo &noteInfo)
+    virtual void IMusicalDeviceEvents_OnPhysicalNoteOn(const HeldNoteInfo &noteInfo, void *cap) override
     {
-        // EMIT live notes to synth.
-        MusicalVoice mv;
-        mv.mNoteInfo = noteInfo;
-        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
-        mv.mpParamProvider = &mUsbKeyboard;
-        mv.mpPerf = &mAppSettings.GetCurrentPerformancePatch();
-        mv.mpSynthPatch = &mAppSettings.FindSynthPreset(mv.mpPerf->mSynthPresetA);
-        mv.mIsActive = mv.mpPerf->mSynthAEnabled;
-        // TODO: collect other things like harmonize emit live note etc.
-        if (mv.mIsActive)
-        {
-            mpSynth->IMusicalEventsForSynth_OnNoteOn(mv);
-        }
+        CCASSERT(cap == &mUsbKeyboard);
+        // forward to things that care about physical musical events
+        mLiveHarmonizer.OnSourceNoteOn(
+            noteInfo, mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset));
     }
-
-    void UsbKeyboardVoicing_OnNoteOff(const HeldNoteInfo &noteInfo)
+    virtual void IMusicalDeviceEvents_OnPhysicalNoteOff(const HeldNoteInfo &noteInfo,
+                                                        const HeldNoteInfo *trillNote,
+                                                        void *cap) override
     {
-        MusicalVoice mv;
-        mv.mNoteInfo = noteInfo;
-        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
-        mv.mpParamProvider = &mUsbKeyboard;
-        mv.mpPerf = &mAppSettings.GetCurrentPerformancePatch();
-        mv.mpSynthPatch = &mAppSettings.FindSynthPreset(mv.mpPerf->mSynthPresetA);
-        mv.mIsActive = mv.mpPerf->mSynthAEnabled;
-        // TODO: collect other things like harmonize emit live note etc.
-        if (mv.mIsActive)
-        {
-            mpSynth->IMusicalEventsForSynth_OnNoteOff(mv);
-        }
+        CCASSERT(cap == &mUsbKeyboard);
+        // forward to things that care about physical musical events
+        mLiveHarmonizer.OnSourceNoteOff(
+            noteInfo, trillNote, mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset));
+    }
+    virtual void IMusicalDeviceEvents_OnPhysicalAllNotesOff(void *cap) override
+    {
+        CCASSERT(cap == &mUsbKeyboard);
+        // forward to things that care about physical musical events
+        mLiveHarmonizer.OnSourceAllNotesOff(
+            mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset));
     }
 
     // synth voices need to be able to get any updates to the notes they're playing.
     // replace their existing copy with a live version.
-    MusicalVoice GetLiveMusicalVoice(const MusicalVoice &existing) // non-const because we assign the non-const param provider lel
+    MusicalVoice GetLiveMusicalVoice(
+        const MusicalVoice &existing) // non-const because we assign the non-const param provider lel
     {
-        MusicalVoice mv;
-        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
-        mv.mpParamProvider = &mUsbKeyboard;
-        mv.mpPerf = &mAppSettings.GetCurrentPerformancePatch();
-        mv.mpSynthPatch = &mAppSettings.FindSynthPreset(mv.mpPerf->mSynthPresetA);
-        const HeldNoteInfo *pCurrentNoteInfo = mUsbKeyboard.GetLiveNoteInfo(existing.mNoteInfo);
-        if (!pCurrentNoteInfo) {
-            mv.mIsActive= false;
-            return mv;
+        switch (existing.mSource.mType)
+        {
+        case MusicalEventSourceType::Null: {
+            return {};
         }
-        mv.mNoteInfo = *pCurrentNoteInfo;
-        mv.mIsActive = mv.mpPerf->mSynthAEnabled;
-        return mv;
+        case MusicalEventSourceType::LivePlayA:
+        case MusicalEventSourceType::LivePlayB:
+            return mUsbKeyboard.GetLiveMusicalVoice(existing);
+        case MusicalEventSourceType::Harmonizer:
+            return mLiveHarmonizer.GetLiveMusicalVoice(existing);
+        case MusicalEventSourceType::Loopstation:
+            // TODO
+            break;
+        default:
+            CCASSERT(!"unknown musical voice source");
+            break;
+        }
+        return {};
     }
 
     void Update()

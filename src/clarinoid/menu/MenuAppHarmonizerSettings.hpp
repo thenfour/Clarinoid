@@ -14,19 +14,20 @@ namespace clarinoid
 struct HarmVoiceSettingsApp
 {
 
-    HarmVoiceSettingsApp(IDisplay &d) : mDisplay(d)
+    HarmVoiceSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : mDisplay(d), mAppSettings(appSettings)
     {
     }
 
     IDisplay &mDisplay;
+    AppSettings& mAppSettings;
 
     int mEditingHarmVoice = -1;
 
     HarmVoiceSettings &EditingVoice()
     {
         CCASSERT(mEditingHarmVoice >= 0 && mEditingHarmVoice < (int)clarinoid::HARM_VOICES);
-        auto &perf = mDisplay.GetAppSettings()->GetCurrentPerformancePatch();
-        auto &h = mDisplay.GetAppSettings()->FindHarmPreset(perf.mHarmPreset);
+        auto &perf = mAppSettings.GetCurrentPerformancePatch();
+        auto &h = mAppSettings.FindHarmPreset(perf.mHarmPreset);
         return h.mVoiceSettings[mEditingHarmVoice];
     }
 
@@ -61,7 +62,7 @@ struct HarmVoiceSettingsApp
         },
         [](void *cap, int n) { // formatter
             auto *pThis = (HarmVoiceSettingsApp *)cap;
-            return pThis->mDisplay.GetAppSettings()->mSynthSettings.mPresets[n].ToString(n);
+            return pThis->mAppSettings.mSynthSettings.mPresets[n].ToString(n);
         },
         Property<bool>{// enabled only if ref type = voice.
                        [](void *cap) FLASHMEM {
@@ -272,7 +273,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         return "HarmPatchSettingsApp";
     }
 
-    HarmPatchSettingsApp(IDisplay &d) : SettingsMenuApp(d), mDisplay(d), mHarmVoiceSettingsApp(d)
+    HarmPatchSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input), mDisplay(d), mHarmVoiceSettingsApp(d, appSettings, input)
     {
     }
 
@@ -282,7 +283,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
     HarmPreset &EditingPreset()
     {
         auto &perf = this->mAppSettings->GetCurrentPerformancePatch();
-        return this->mAppSettings->mHarmSettings.mPresets[perf.mHarmPreset];
+        return mAppSettings->FindHarmPreset(perf.mHarmPreset);
     }
 
     BoolSettingItem mEmitLiveNote = {"Emit live note?",
@@ -519,7 +520,7 @@ struct HarmSettingsApp : public SettingsMenuApp
 
     HarmPatchSettingsApp mHarmPatchSettings;
 
-    HarmSettingsApp(IDisplay &d) : SettingsMenuApp(d), mHarmPatchSettings(d)
+    HarmSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input), mHarmPatchSettings(d, appSettings, input)
     {
     }
 

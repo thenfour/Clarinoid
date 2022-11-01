@@ -20,7 +20,7 @@
 #include <clarinoid/menu/MenuAppBase.hpp>
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
-//#include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
+#include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
 #include <clarinoid/application/USBKeyboardMusicalDevice.hpp>
 #include <clarinoid/application/MusicalState.hpp>
 #include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
@@ -75,8 +75,8 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         : 
         mDisplay(gDisplay),
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
-          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper),
-          mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),
+          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, mAppSettings, mInputDelegator), // 
+          mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask, mAppSettings, mInputDelegator),
           mSystemSettingsApp(
               mDisplay,
               -1,
@@ -91,11 +91,12 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
                   return 0.0f;// pThis->mControlMapper.mJoyY.CurrentValue01();
               },
               this,
-              &mMusicalStateTask.mMetronome),
-          mAudioMonitorApp(mDisplay),                                                    //
-          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay), //
-          mPerfPatchApp(mDisplay),                                                       //
-          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome)                     //
+              &mMusicalStateTask.mMetronome,
+              mAppSettings, mInputDelegator),
+          mAudioMonitorApp(mDisplay, mAppSettings, mInputDelegator),                                                    //
+          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay, mInputDelegator), //
+          mPerfPatchApp(mDisplay, mAppSettings, mInputDelegator),                                                       //
+          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome, mAppSettings, mInputDelegator)                     //
     {
     }
 
@@ -167,21 +168,21 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     {
         mControlMapper.Init(&mDisplay);
 
-        //HarmSettingsApp mHarmVoiceSettingsApp(mDisplay);
-        SynthPatchMenuApp mSynthPatchApp(mDisplay);
+        HarmSettingsApp mHarmVoiceSettingsApp(mDisplay, mAppSettings, mInputDelegator);
+        SynthPatchMenuApp mSynthPatchApp(mDisplay, mAppSettings, mInputDelegator);
 
         IDisplayApp *allApps[] = {
             &mDebugDisplayApp,
             &mGuiPerformanceApp,
 
             &mPerformanceApp,
-            &mPerfPatchApp,
             &mSynthPatchApp,
+            &mHarmVoiceSettingsApp,
+            &mPerfPatchApp,
 
             &mAudioMonitorApp,
             &mSystemSettingsApp,
             &mMetronomeSettingsApp,
-            //&mHarmVoiceSettingsApp,
         };
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper);

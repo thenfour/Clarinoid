@@ -1632,6 +1632,7 @@ struct SynthSettings
         // InitBassoonoidPreset(
         //     mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
+        InitBommanoidPreset(mPresets[0], "default");
         InitBommanoidPreset(mPresets[SynthPresetID_Bommanoid], "Bommanoid");
 
         // InitPWMLead2(mPresets[SynthPresetID_PWMMono]);

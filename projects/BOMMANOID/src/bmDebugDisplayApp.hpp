@@ -22,8 +22,14 @@ struct PerformanceApp : SettingsMenuApp
 
     SimpleMovingAverage<30> mCPUUsage;
 
-    PerformanceApp(IDisplay &d, MusicalStateTask *pMusicalStateTask, BommanoidControlMapper *controls)
-        : SettingsMenuApp(d), mpMusicalStateTask(pMusicalStateTask), mpControls(controls)
+    PerformanceApp(IDisplay &d,
+                   MusicalStateTask *pMusicalStateTask,
+                   BommanoidControlMapper *controls,
+                   AppSettings &appSettings,
+                   InputDelegator &input)
+        : SettingsMenuApp(d, appSettings, input), //
+          mpMusicalStateTask(pMusicalStateTask),  //
+          mpControls(controls)
     {
     }
 
@@ -40,15 +46,14 @@ struct PerformanceApp : SettingsMenuApp
                          this},
         AlwaysEnabled};
 
-    LabelSettingItem mNoteSequenceID = {
-        Property<String>{[](void *cap) FLASHMEM {
-                             //PerformanceApp *pThis = (PerformanceApp *)cap;
-                             String ret = "Note seq: ";
-                             ret += (int)gNextLiveNoteSequenceID;
-                             return ret;
-                         },
-                         this},
-        AlwaysEnabled};
+    LabelSettingItem mNoteSequenceID = {Property<String>{[](void *cap) FLASHMEM {
+                                                             // PerformanceApp *pThis = (PerformanceApp *)cap;
+                                                             String ret = "Note seq: ";
+                                                             ret += (int)gNextLiveNoteSequenceID;
+                                                             return ret;
+                                                         },
+                                                         this},
+                                        AlwaysEnabled};
 
     LabelSettingItem mTimesliceLen = {
         Property<String>{[](void *cap) FLASHMEM {
@@ -185,24 +190,25 @@ struct DebugDisplayApp : SettingsMenuApp
     BommanoidControlMapper &mControls;
     MusicalStateTask &mMusicalStateTask;
 
-    DebugDisplayApp(IDisplay &d, BommanoidControlMapper &c, MusicalStateTask &mst)
-        : SettingsMenuApp(d), mControls(c), mMusicalStateTask(mst)
+    DebugDisplayApp(IDisplay &d, BommanoidControlMapper &c, MusicalStateTask &mst, AppSettings& appSettings, InputDelegator& input)
+        : SettingsMenuApp(d, appSettings, input), mControls(c), mMusicalStateTask(mst)
     {
     }
 
     LabelSettingItem mEnc = {Property<String>{[](void *cap) FLASHMEM {
-                                                    DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-                                                    String ret = String("RH Encoder raw:") +
-                                                                 pThis->mControls.mEncoder.RawValue();
-                                                    return ret;
-                                                },
-                                                this},
-                               AlwaysEnabled};
+                                                  DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+                                                  String ret =
+                                                      String("RH Encoder raw:") + pThis->mControls.mEncoder.RawValue();
+                                                  return ret;
+                                              },
+                                              this},
+                             AlwaysEnabled};
 
     LabelSettingItem mSynthPoly = {
         Property<String>{[](void *cap) FLASHMEM {
                              DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-                             String ret = String("Synth poly:") + (pThis->mMusicalStateTask.mSynth.GetCurrentPolyphony_ForDisplay());
+                             String ret = String("Synth poly:") +
+                                          (pThis->mMusicalStateTask.mSynth.GetCurrentPolyphony_ForDisplay());
                              return ret;
                          },
                          this},
@@ -243,18 +249,16 @@ struct DebugDisplayApp : SettingsMenuApp
                                                               this},
                                              AlwaysEnabled};
 
-    MultiLabelSettingItem mVoiceState = {
-        [](void* pThis) FLASHMEM -> size_t { // get item count
-            return SizeofStaticArray(gVoices);
-        },
-        [](void* pThis, size_t i) FLASHMEM -> String { // get item text
-            return gVoices[i].ToString();
-        },
-        [](void* pThis, size_t i) FLASHMEM -> bool { // is enabled
-            return true;
-        },
-        this
-    };
+    MultiLabelSettingItem mVoiceState = {[](void *pThis) FLASHMEM -> size_t { // get item count
+                                             return SizeofStaticArray(gVoices);
+                                         },
+                                         [](void *pThis, size_t i) FLASHMEM -> String { // get item text
+                                             return gVoices[i].ToString();
+                                         },
+                                         [](void *pThis, size_t i) FLASHMEM -> bool { // is enabled
+                                             return true;
+                                         },
+                                         this};
 
     ISettingItem *mArray[7] = {
         //&mMidiNote,
@@ -281,7 +285,8 @@ struct DebugDisplayApp : SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.println(String("Debug info ->"));
-        //mDisplay.println(String("held notes: ") + this->mMusicalStateTask.mMusicalState.mHeldNotes.mHeldNotes.size());
+        // mDisplay.println(String("held notes: ") +
+        // this->mMusicalStateTask.mMusicalState.mHeldNotes.mHeldNotes.size());
         SettingsMenuApp::RenderFrontPage();
     }
 };
@@ -291,7 +296,7 @@ struct AudioMonitorApp : DisplayApp
 {
     Plotter<MAX_DISPLAY_WIDTH> mPlotter;
 
-    AudioMonitorApp(IDisplay &d) : DisplayApp(d)
+    AudioMonitorApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : DisplayApp(d, appSettings, input)
     {
         mPlotter.Plot(0);
     }

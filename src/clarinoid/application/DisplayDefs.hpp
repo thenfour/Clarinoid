@@ -12,9 +12,6 @@ struct IHudProvider
 //////////////////////////////////////////////////////////////////////
 struct IDisplayApp
 {
-    virtual void DisplayAppInit()
-    {
-    }
     virtual void DisplayAppOnSelected()
     {
     }
@@ -34,8 +31,8 @@ struct IDisplay
                       IHudProvider *hud,
                       const array_view<IDisplayApp *> &apps) = 0;
 
-    virtual AppSettings *GetAppSettings() = 0;
-    virtual InputDelegator *GetInput() = 0;
+    //virtual AppSettings *GetAppSettings() = 0;
+    //virtual InputDelegator *GetInput() = 0;
 
     virtual uint16_t GetLineHeight() const = 0;
     virtual RectI SetupModal() = 0;

@@ -68,8 +68,6 @@ struct PolySynth : IMusicalEventsForSynth
 
         // Serial.println(String("synth note on: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
 
-        //auto &patch = mAppSettings->FindSynthPreset(synthPatchIndex);
-
         // monophonic wants to reuse the same voice for everything.
         // so find a voice already playing from this source
         if (mv.mpSynthPatch->mVoicingMode == VoicingMode::Monophonic)
@@ -92,18 +90,24 @@ struct PolySynth : IMusicalEventsForSynth
     }
     virtual void IMusicalEventsForSynth_OnNoteOff(const MusicalVoice &mv) override
     {
-        // Serial.println(String("synth note off: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
+        //Serial.println(String("synth note off: ") + mv.mSource.ToString() + ", note:" + mv.mNoteInfo.ToString());
         //  find this note
         for (auto &v : gVoices)
         {
-            if (v.mRunningVoice.mNoteInfo.mLiveNoteSequenceID == mv.mNoteInfo.mLiveNoteSequenceID)
+            if (mv.mSource.Equals(v.mRunningVoice.mSource) && (v.mRunningVoice.mNoteInfo.mLiveNoteSequenceID == mv.mNoteInfo.mLiveNoteSequenceID))
             {
                 v.IncomingMusicalEvents_OnNoteOff();
+                //Serial.println(" -> success");
                 return;
             }
         }
-        // Serial.println("Note off sent to synth, but i didn't find any voices playing that note. i guess we culled it
-        // due to max voice polyphony.");
+        // Serial.println(" -> Note off sent to synth, but i didn't find any voices playing that note. i guess we culled it due to max voice polyphony.");
+        // Serial.println("{");
+        // for (auto &v : gVoices)
+        // {
+        //     Serial.println(String("  ") + v.mRunningVoice.mSource.ToString() + ", note:" + v.mRunningVoice.mNoteInfo.ToString());
+        // }
+        // Serial.println("}");
     }
     virtual void IMusicalEventsForSynth_OnAllNoteOff() override
     {

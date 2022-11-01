@@ -23,14 +23,8 @@ struct DisplayApp : IDisplayApp
     SwitchControlReader mBack;
     EncoderReader mEnc;
 
-    DisplayApp(IDisplay &d) : mDisplay(d)
+    DisplayApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : mDisplay(d), mAppSettings(&appSettings), mInput(&input)
     {
-    }
-
-    virtual void DisplayAppInit() override
-    {
-        mAppSettings = mDisplay.GetAppSettings();
-        mInput = mDisplay.GetInput();
     }
 
     virtual void UpdateApp() = 0;

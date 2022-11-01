@@ -18,14 +18,34 @@ enum class MusicalEventSourceType : uint8_t
     LivePlayA,
     LivePlayB,
     Harmonizer,
-    Loopstation,
+    Loopstation, // TODO: loopstation is not enough; loopstation notes can be harmonized too. something needs to be
+                 // adapted.
 };
+
+EnumItemInfo<MusicalEventSourceType> gMusicalEventSourceTypeItems[5] = {
+    {MusicalEventSourceType::Null, "Null"},
+    {MusicalEventSourceType::LivePlayA, "LivePlayA"},
+    {MusicalEventSourceType::LivePlayB, "LivePlayB"},
+    {MusicalEventSourceType::Harmonizer, "Harmonizer"},
+    {MusicalEventSourceType::Loopstation, "Loopstation"},
+};
+
+EnumInfo<MusicalEventSourceType> gMusicalEventSourceTypeInfo("MusicalEventSourceType", gMusicalEventSourceTypeItems);
 
 struct MusicalEventSource
 {
     MusicalEventSourceType mType = MusicalEventSourceType::Null;
     uint8_t mHarmonizerVoiceIndex = 0xff;
     uint8_t mLoopstationLayerIndex = 0xff;
+
+    String ToString() const
+    {
+        String ret = String("SourceType:");
+        ret += gMusicalEventSourceTypeInfo.GetValueString(mType);
+        ret += String(", h:") + mHarmonizerVoiceIndex + ", l:" + mLoopstationLayerIndex;
+        return ret;
+    }
+
     MusicalEventSource()
     {
     }
@@ -57,32 +77,36 @@ struct MusicalEventSource
 
 struct MusicalVoice
 {
+    bool mIsActive =
+        false; // if false, process no further. nothing else here would be valid. if true, mpPreset is guaranteed valid.
     MusicalEventSource mSource;
     HeldNoteInfo mNoteInfo;
+    uint32_t mHarmonizerSourceNoteID = 0; // for harmonized notes, which is the source ID?
     ISynthParamProvider *mpParamProvider = nullptr;
-    bool mIsActive = false; // if false, process no further. nothing else here would be valid. if true, mpPreset is guaranteed valid.
     SynthPreset *mpSynthPatch = nullptr;
     PerformancePatch *mpPerf = nullptr;
 };
 
-static constexpr auto akspp = sizeof(MusicalVoice);
+static constexpr auto aks5pp = sizeof(MusicalEventSource);
+static constexpr auto ak4pp = sizeof(HeldNoteInfo);
+static constexpr auto aksp6p = sizeof(MusicalVoice);
 
 // synthesizer implements this.
 // when notes have been processed by musical state, they get sent to the synth engine via this interface.
 struct IMusicalEventsForSynth
 {
-    virtual void IMusicalEventsForSynth_OnNoteOn(const MusicalVoice& mv) = 0;
-    virtual void IMusicalEventsForSynth_OnNoteOff(const MusicalVoice &mv) = 0; // mv won't be the same instance as the noteon; it's newly constructed.
+    virtual void IMusicalEventsForSynth_OnNoteOn(const MusicalVoice &mv) = 0;
+    virtual void IMusicalEventsForSynth_OnNoteOff(
+        const MusicalVoice &mv) = 0; // mv won't be the same instance as the noteon; it's newly constructed.
     virtual void IMusicalEventsForSynth_OnAllNoteOff() = 0;
 };
-
-
 
 // #ifndef POLYPHONIC
 // using MusicalVoiceID_t = uint16_t;
 
 // static constexpr MusicalVoiceID_t MAGIC_VOICE_ID_UNASSIGNED =
-//     std::numeric_limits<MusicalVoiceID_t>::max(); // used as a voice ID for voices that aren't assigned to any musical
+//     std::numeric_limits<MusicalVoiceID_t>::max(); // used as a voice ID for voices that aren't assigned to any
+//     musical
 //                                                   // voice.
 
 // static constexpr uint8_t MAGIC_VOICE_ID_LIVE_A = 0; // when we had 1 live voice, this is 0.
@@ -100,7 +124,6 @@ struct IMusicalEventsForSynth
 // }
 // #endif // POLYPHONIC
 
-
 // struct MusicalVoice
 // {
 //     MusicalVoice() = default;
@@ -116,7 +139,8 @@ struct IMusicalEventsForSynth
 //     }
 
 //     bool IsPlaying() const
-//     { // does not consider mIsNoteCurrentlyMuted, because that means the note should go to the synth but it will be at 0
+//     { // does not consider mIsNoteCurrentlyMuted, because that means the note should go to the synth but it will be
+//     at 0
 //       // volume.
 //         return !!mMidiNote && !!mVelocity;
 //     }
@@ -153,14 +177,16 @@ struct IMusicalEventsForSynth
 //     }
 
 //     MusicalVoiceID_t mVoiceId =
-//         MAGIC_VOICE_ID_UNASSIGNED; // this is really an outlier member; it's NOT musical state but useful to keep here
+//         MAGIC_VOICE_ID_UNASSIGNED; // this is really an outlier member; it's NOT musical state but useful to keep
+//         here
 //                                    // anyway even if it makes thinsg confusing.
 // #endif                           // POLYPHONIC
 //     uint32_t mAttackTimestampMS = 0; // millis.
 //     uint32_t mReleaseTimestampMS = 0;
 //     bool mIsPhysicallyHeld = false;
 
-//     bool mIsNoteCurrentlyMuted = false; // this is needed when this is the "live" voice that has been physically played,
+//     bool mIsNoteCurrentlyMuted = false; // this is needed when this is the "live" voice that has been physically
+//     played,
 //                                         // but the harmonizer demands we not output it.
 //     uint8_t mMidiNote = 0;
 //     uint8_t mVelocity = 0;
@@ -187,11 +213,12 @@ struct IMusicalEventsForSynth
 // {
 //     MusicalVoiceTransitionEvents ret;
 //     if (!a.IsSameSynthContext(b)) {
-//         // different synth patch / harm 
+//         // different synth patch / harm
 //         ret.mSynthContextChanged = true;
 //     }
-//     ret.mIsLegatoNoteOn = a.IsPlaying() && b.IsPlaying() && (a.mMidiNote != b.mMidiNote) && !ret.mSynthContextChanged;
-//     ret.mNeedsNoteOn = (b.IsPlaying() && !a.IsPlaying()) || ret.mIsLegatoNoteOn || ret.mSynthContextChanged;
+//     ret.mIsLegatoNoteOn = a.IsPlaying() && b.IsPlaying() && (a.mMidiNote != b.mMidiNote) &&
+//     !ret.mSynthContextChanged; ret.mNeedsNoteOn = (b.IsPlaying() && !a.IsPlaying()) || ret.mIsLegatoNoteOn ||
+//     ret.mSynthContextChanged;
 //     // send note off in these cases:
 //     // - you are not playing but were
 //     // - or, you are playing, but a different note than before.

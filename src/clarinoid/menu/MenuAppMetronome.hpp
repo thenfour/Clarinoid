@@ -20,8 +20,8 @@ struct MetronomeSettingsApp : public SettingsMenuApp
     Metronome *mpMetronome;
     AppSettings *mpAppSettings;
 
-    MetronomeSettingsApp(Metronome *pm, AppSettings *pas, IDisplay &d)
-        : SettingsMenuApp(d), mpMetronome(pm), mpAppSettings(pas)
+    MetronomeSettingsApp(Metronome *pm, AppSettings *pas, IDisplay &d, InputDelegator& input)
+        : SettingsMenuApp(d, *pas, input), mpMetronome(pm), mpAppSettings(pas)
     {
     }
 

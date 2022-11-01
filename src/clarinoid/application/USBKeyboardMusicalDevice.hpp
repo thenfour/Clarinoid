@@ -7,9 +7,13 @@
 namespace clarinoid
 {
 
-struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents
+// this represents a physical device, plus handles translating physical musical events to events based on synth patch
+// voicing modes.
+struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents, IVoicingModeResultEvents
 {
     HeldNoteTracker mHeldNotes;
+    VoicingModeInterpreter mVoicingHelper;
+
     uint8_t mCurrentCCValue[128] = {0};
     float mMacroValues[4] = {0};
 
@@ -19,15 +23,11 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents
     static USBKeyboardMusicalDevice *gInstance;
     AppSettings *mAppSettings;
     IMusicalDeviceEvents *mpEventHandler;
-    void* mpCapture = nullptr;
+    void *mpCapture = nullptr;
 
-    // bool isPhysicallyPressed(uint32_t liveNoteSequenceID) const
-    // {
-    //     return mHeldNotes.isPhysicallyPressed(liveNoteSequenceID);
-    // }
-
-    USBKeyboardMusicalDevice(AppSettings *appSettings, IMusicalDeviceEvents *eventHandler, void* cap)
-        : mHeldNotes(this), mAppSettings(appSettings), mpEventHandler(eventHandler), mpCapture(cap)
+    USBKeyboardMusicalDevice(AppSettings *appSettings, IMusicalDeviceEvents *eventHandler, void *cap)
+        : mHeldNotes(&mVoicingHelper), mVoicingHelper(this), mAppSettings(appSettings), mpEventHandler(eventHandler),
+          mpCapture(cap)
     {
         // singleton bacause handling events in static methods
         CCASSERT(!gInstance);
@@ -38,15 +38,98 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents
         gUsbMidi.setHandlePitchChange(HandlePitchChange);
     }
 
+    // events coming from held note tracker
     virtual void IHeldNoteTrackerEvents_OnNoteOn(const HeldNoteInfo &noteInfo) override
     {
-        mpEventHandler->IMusicalDeviceEvents_OnNoteOn(noteInfo, mpCapture);
+        mVoicingHelper.IHeldNoteTrackerEvents_OnNoteOn(noteInfo);
+        mpEventHandler->IMusicalDeviceEvents_OnPhysicalNoteOn(noteInfo, mpCapture);
     }
     virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote) override
     {
-        mpEventHandler->IMusicalDeviceEvents_OnNoteOff(noteInfo, trillNote, mpCapture);
+        mVoicingHelper.IHeldNoteTrackerEvents_OnNoteOff(noteInfo, trillNote);
+        mpEventHandler->IMusicalDeviceEvents_OnPhysicalNoteOff(noteInfo, trillNote, mpCapture);
     }
     virtual void IHeldNoteTrackerEvents_OnAllNotesOff() override
+    {
+        mVoicingHelper.IHeldNoteTrackerEvents_OnAllNotesOff();
+        mpEventHandler->IMusicalDeviceEvents_OnPhysicalAllNotesOff(mpCapture);
+    }
+
+    // events coming from voice mode interpreter
+    virtual void IVoicingModeResultEvents_OnNoteOn(const HeldNoteInfo &noteInfo) override
+    {
+        // EMIT live notes to synth.
+        MusicalVoice mv;
+        mv.mNoteInfo = noteInfo;
+        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
+        mv.mpParamProvider = this;
+        mv.mpPerf = &mAppSettings->GetCurrentPerformancePatch();
+        if (mv.mpPerf->mSynthPresetA != -1)
+        {
+            mv.mpSynthPatch = &mAppSettings->FindSynthPreset(mv.mpPerf->mSynthPresetA);
+        }
+        mv.mIsActive = mv.mpPerf->mSynthAEnabled && (mv.mpPerf->mSynthPresetA != -1);
+        // TODO: collect other things like harmonize emit live note etc.
+        if (mv.mIsActive)
+        {
+            // Serial.println(String("emitting A. enabled:") + mv.mpPerf->mSynthAEnabled +
+            //                ", patchID: " + mv.mpPerf->mSynthPresetA + ", pPatch:" + (uintptr_t)mv.mpSynthPatch);
+            mpEventHandler->IMusicalDeviceEvents_OnNoteOn(mv, mpCapture);
+        }
+
+        // now do live patch B
+
+        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayB};
+        if (mv.mpPerf->mSynthPresetB != -1)
+        {
+            mv.mpSynthPatch = &mAppSettings->FindSynthPreset(mv.mpPerf->mSynthPresetB);
+        }
+        mv.mIsActive = mv.mpPerf->mSynthBEnabled && (mv.mpPerf->mSynthPresetB != -1);
+        // TODO: collect other things like harmonize emit live note etc.
+        if (mv.mIsActive)
+        {
+            // Serial.println(String("emitting B. enabled:") + mv.mpPerf->mSynthBEnabled +
+            //                ", patchID: " + mv.mpPerf->mSynthPresetB + ", pPatch:" + (uintptr_t)mv.mpSynthPatch);
+            mpEventHandler->IMusicalDeviceEvents_OnNoteOn(mv, mpCapture);
+        }
+    }
+
+    virtual void IVoicingModeResultEvents_OnNoteOff(const HeldNoteInfo &noteInfo) override
+    {
+        MusicalVoice mv;
+        mv.mNoteInfo = noteInfo;
+        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
+        mv.mpParamProvider = this;
+        mv.mpPerf = &mAppSettings->GetCurrentPerformancePatch();
+        if (mv.mpPerf->mSynthPresetA != -1)
+        {
+            mv.mpSynthPatch = &mAppSettings->FindSynthPreset(mv.mpPerf->mSynthPresetA);
+        }
+        mv.mIsActive = mv.mpPerf->mSynthAEnabled && (mv.mpPerf->mSynthPresetA != -1);
+        // TODO: collect other things like harmonize emit live note etc.
+        if (mv.mIsActive)
+        {
+            // Serial.println(String("note off A. enabled:") + mv.mpPerf->mSynthAEnabled +
+            //                ", patchID: " + mv.mpPerf->mSynthPresetA + ", pPatch:" + (uintptr_t)mv.mpSynthPatch);
+            mpEventHandler->IMusicalDeviceEvents_OnNoteOff(mv, mpCapture);
+        }
+
+        // now do live patch B
+        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayB};
+        if (mv.mpPerf->mSynthPresetB != -1)
+        {
+            mv.mpSynthPatch = &mAppSettings->FindSynthPreset(mv.mpPerf->mSynthPresetB);
+        }
+        mv.mIsActive = mv.mpPerf->mSynthBEnabled && (mv.mpPerf->mSynthPresetB != -1);
+        // TODO: collect other things like harmonize emit live note etc.
+        if (mv.mIsActive)
+        {
+            // Serial.println(String("note off B. enabled:") + mv.mpPerf->mSynthBEnabled +
+            //                ", patchID: " + mv.mpPerf->mSynthPresetB + ", pPatch:" + (uintptr_t)mv.mpSynthPatch);
+            mpEventHandler->IMusicalDeviceEvents_OnNoteOff(mv, mpCapture);
+        }
+    }
+    virtual void IVoicingModeResultEvents_OnAllNotesOff() override
     {
         mpEventHandler->IMusicalDeviceEvents_OnAllNotesOff(mpCapture);
     }
@@ -69,9 +152,54 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents
         return mMacroValues[i];
     }
 
-    // similar function to MusicalState::GetLiveMusicalVoice(const MusicalVoice &existing) const
-    const HeldNoteInfo* GetLiveNoteInfo(const HeldNoteInfo& noteInfo) const {
-        return mHeldNotes.FindExisting(noteInfo.mLiveNoteSequenceID);
+    // // similar function to MusicalState::GetLiveMusicalVoice(const MusicalVoice &existing) const
+    // const HeldNoteInfo *GetLiveNoteInfo(const HeldNoteInfo &noteInfo) const
+    // {
+    //     return mHeldNotes.FindExisting(noteInfo.mLiveNoteSequenceID);
+    // }
+
+    const MusicalVoice GetLiveMusicalVoice(const MusicalVoice &existing) const
+    {
+        MusicalVoice mv = existing;
+        mv.mpPerf = &mAppSettings->GetCurrentPerformancePatch();
+        switch (existing.mSource.mType)
+        {
+        case MusicalEventSourceType::LivePlayA:
+            if (mv.mpPerf->mSynthPresetA != -1)
+            {
+                mv.mpSynthPatch = &mAppSettings->FindSynthPreset(mv.mpPerf->mSynthPresetA);
+            }
+            mv.mIsActive = mv.mpPerf->mSynthAEnabled && (mv.mpPerf->mSynthPresetA != -1);
+            // TODO: collect other things like harmonize emit live note etc.
+            break;
+        case MusicalEventSourceType::LivePlayB:
+            if (mv.mpPerf->mSynthPresetB != -1)
+            {
+                mv.mpSynthPatch = &mAppSettings->FindSynthPreset(mv.mpPerf->mSynthPresetB);
+            }
+            mv.mIsActive = mv.mpPerf->mSynthBEnabled && (mv.mpPerf->mSynthPresetB != -1);
+            // TODO: collect other things like harmonize emit live note etc.
+            break;
+        default:
+            CCASSERT(!"didn't expect that source type");
+        }
+
+        if (!mv.mIsActive)
+        {
+            return mv;
+        }
+
+        // mv.mpSynthPatch = &mAppSettings->FindSynthPreset(mv.mpPerf->mSynthPresetA);
+        const HeldNoteInfo *pCurrentNoteInfo = mHeldNotes.FindExisting(existing.mNoteInfo.mLiveNoteSequenceID);
+        mv.mIsActive = !!pCurrentNoteInfo;
+
+        if (!mv.mIsActive)
+        {
+            return mv;
+        }
+
+        mv.mNoteInfo = *pCurrentNoteInfo;
+        return mv;
     }
 
     struct DupeEventChecker

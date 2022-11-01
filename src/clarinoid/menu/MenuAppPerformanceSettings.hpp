@@ -22,7 +22,7 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
         return mAppSettings->GetCurrentPerformancePatch();
     }
 
-    PerformancePatchSettingsApp(IDisplay &d) : SettingsMenuApp(d)
+    PerformancePatchSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input)
     {
     }
 

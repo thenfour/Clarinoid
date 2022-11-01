@@ -7,7 +7,7 @@
 namespace clarinoid
 {
 
-static const int SETTINGS_STACK_MAX_DEPTH = 10;
+static constexpr int SETTINGS_STACK_MAX_DEPTH = 10;
 
 static bool AlwaysEnabled(void *)
 {
@@ -382,7 +382,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
 {
     ISettingItemEditor *mpCurrentEditor = nullptr;
 
-    SettingsMenuApp(IDisplay &d) : DisplayApp(d)
+    SettingsMenuApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : DisplayApp(d, appSettings, input)
     {
     }
 

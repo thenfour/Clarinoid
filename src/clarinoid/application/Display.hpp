@@ -82,21 +82,16 @@ struct _CCDisplay : IDisplay
         mDisplay.clearDisplay();
         mDisplay.println(gClarinoidVersion);
         mDisplay.display();
-
-        for (size_t i = 0; i < mApps.mSize; ++i)
-        {
-            mApps.mData[i]->DisplayAppInit();
-        }
     }
 
-    virtual AppSettings *GetAppSettings() override
-    {
-        return mAppSettings;
-    }
-    virtual InputDelegator *GetInput() override
-    {
-        return mInput;
-    }
+    // virtual AppSettings *GetAppSettings() override
+    // {
+    //     return mAppSettings;
+    // }
+    // virtual InputDelegator *GetInput() override
+    // {
+    //     return mInput;
+    // }
 
     virtual void SelectApp(int n) override
     {

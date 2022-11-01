@@ -18,6 +18,11 @@ struct HeldNoteInfo
     bool mIsPhysicallyHeld;
     MidiNote mMidiNote;
     float mRandomTrigger01;
+
+    String ToString() const
+    {
+        return String("[note:") + mMidiNote.GetNoteDesc().mName + ", id:" + mLiveNoteSequenceID + "]";
+    }
 };
 
 // the held note tracker emits note events (think releasing a pedal etc); this is where to send em.
@@ -46,9 +51,9 @@ struct HeldNoteTracker
         mHeldNotes.reserve(MAX_HELD_NOTES);
     }
 
-
     // similar function to MusicalState::GetLiveMusicalVoice(const MusicalVoice &existing) const
-    const HeldNoteInfo *FindExisting(uint32_t noteID) const {
+    const HeldNoteInfo *FindExisting(uint32_t noteID) const
+    {
         for (auto &noteInfo : mHeldNotes)
         {
             if (noteInfo.mLiveNoteSequenceID == noteID)
@@ -58,18 +63,6 @@ struct HeldNoteTracker
         }
         return nullptr;
     }
-
-    // bool isPhysicallyPressed(uint32_t liveNoteSequenceID) const
-    // {
-    //     for (auto &noteInfo : mHeldNotes)
-    //     {
-    //         if (noteInfo.mLiveNoteSequenceID == liveNoteSequenceID)
-    //         {
-    //             return noteInfo.mIsPhysicallyHeld;
-    //         }
-    //     }
-    //     return false;
-    // }
 
     void AllNotesOff()
     {
