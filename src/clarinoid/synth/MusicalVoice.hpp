@@ -1,11 +1,83 @@
 
 #pragma once
 
-#include <clarinoid/basic/Basic.hpp>
-#include "AnalogValue.hpp"
-
 namespace clarinoid
 {
+
+struct ISynthParamProvider
+{
+    virtual uint8_t SynthParamProvider_GetMidiCC(MidiCCValue cc) = 0;
+    virtual float SynthParamProvider_GetBreath01() = 0;
+    virtual float SynthParamProvider_GetPitchBendN11() = 0;
+    virtual float SynthParamProvider_GetMacroValue01(size_t i) = 0;
+};
+
+enum class MusicalEventSourceType : uint8_t
+{
+    Null,
+    LivePlayA,
+    LivePlayB,
+    Harmonizer,
+    Loopstation,
+};
+
+struct MusicalEventSource
+{
+    MusicalEventSourceType mType = MusicalEventSourceType::Null;
+    uint8_t mHarmonizerVoiceIndex = 0xff;
+    uint8_t mLoopstationLayerIndex = 0xff;
+    MusicalEventSource()
+    {
+    }
+    MusicalEventSource(MusicalEventSourceType type, uint8_t harmonizerVoiceIndex, uint8_t loopstationLayerIndex)
+        : mType(type), mHarmonizerVoiceIndex(harmonizerVoiceIndex), mLoopstationLayerIndex(loopstationLayerIndex)
+    {
+    }
+    explicit MusicalEventSource(MusicalEventSourceType type) : mType(type)
+    {
+    }
+    bool Equals(const MusicalEventSource &rhs) const
+    {
+        if (mType != rhs.mType)
+            return false;
+        switch (mType)
+        {
+        default:
+        case MusicalEventSourceType::Null:
+        case MusicalEventSourceType::LivePlayA:
+        case MusicalEventSourceType::LivePlayB:
+            return true;
+        case MusicalEventSourceType::Harmonizer:
+            return mHarmonizerVoiceIndex == rhs.mHarmonizerVoiceIndex;
+        case MusicalEventSourceType::Loopstation:
+            return mLoopstationLayerIndex == rhs.mLoopstationLayerIndex;
+        }
+    }
+};
+
+struct MusicalVoice
+{
+    MusicalEventSource mSource;
+    HeldNoteInfo mNoteInfo;
+    ISynthParamProvider *mpParamProvider = nullptr;
+    bool mIsActive = false; // if false, process no further. nothing else here would be valid. if true, mpPreset is guaranteed valid.
+    SynthPreset *mpSynthPatch = nullptr;
+    PerformancePatch *mpPerf = nullptr;
+};
+
+static constexpr auto akspp = sizeof(MusicalVoice);
+
+// synthesizer implements this.
+// when notes have been processed by musical state, they get sent to the synth engine via this interface.
+struct IMusicalEventsForSynth
+{
+    virtual void IMusicalEventsForSynth_OnNoteOn(const MusicalVoice& mv) = 0;
+    virtual void IMusicalEventsForSynth_OnNoteOff(const MusicalVoice &mv) = 0; // mv won't be the same instance as the noteon; it's newly constructed.
+    virtual void IMusicalEventsForSynth_OnAllNoteOff() = 0;
+};
+
+
+
 // #ifndef POLYPHONIC
 // using MusicalVoiceID_t = uint16_t;
 

@@ -20,8 +20,7 @@ struct MusicalStateTask : ITask
 
     Metronome mMetronome;
     PolySynth mSynth;
-    USBMidiMusicalState mMusicalState;
-    //ScaleFollower mScaleFollower;
+    MusicalState mMusicalState;
 
     // for timing subtasks
     SimpleMovingAverage<15> mInputTiming;
@@ -32,7 +31,7 @@ struct MusicalStateTask : ITask
                      AppSettings *appSettings,
                      InputDelegator *input,
                      BommanoidControlMapper *controlMapper)
-        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings), mMusicalState(appSettings, &mSynth)
+        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings), mMusicalState(*appSettings, &mSynth)
     {
     }
 

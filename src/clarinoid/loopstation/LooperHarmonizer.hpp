@@ -9,8 +9,6 @@
 namespace clarinoid
 {
 
-#ifndef POLYPHONIC // polyphonic device just doesn't support this yet.
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct LooperAndHarmonizer
 {
@@ -20,7 +18,6 @@ struct LooperAndHarmonizer
 
     explicit LooperAndHarmonizer(AppSettings *appSettings, Metronome *metronome, ScaleFollower *scaleFollower)
         : mAppSettings(appSettings), mMetronome(metronome), mScaleFollower(scaleFollower),
-
           mHarmonizer(appSettings)
     {
     }
@@ -314,7 +311,5 @@ struct LooperAndHarmonizer
         return pout - outp;
     }
 };
-
-#endif
 
 } // namespace clarinoid

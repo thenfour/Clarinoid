@@ -3,34 +3,40 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
-namespace clarinoid
-{
-static constexpr float pitchBendRange = 2.0f;
-} // namespace clarinoid
-
+#include "SynthGraph.hpp"
 #include "PolySynthVoice.hpp"
 
 namespace clarinoid
 {
 static float gPeak = 0;
 
-struct PolySynth : IIncomingMusicalEvents
+struct PolySynth : IMusicalEventsForSynth
 {
-    size_t GetCurrentPolyphony_ForDisplay() const {
+    size_t GetCurrentPolyphony_ForDisplay() const
+    {
         size_t ret = 0;
-        for (const auto& v : gVoices) {
+        for (const auto &v : gVoices)
+        {
             ret += v.IsConsideredPlaying_ForDisplay() ? 1 : 0;
         }
         return ret;
     }
-    AppSettings *mAppSettings;
-    ISynthParamProvider *mParamProvider;
+    AppSettings *mAppSettings = nullptr;
+    MusicalState *mpMusicalState = nullptr;
 
-    void Init(AppSettings *appSettings, Metronome *metronome, ISynthParamProvider *paramProvider)
+    void Init(AppSettings *appSettings, Metronome *metronome, MusicalState *pMusicalState)
     {
         mAppSettings = appSettings;
-        mParamProvider = paramProvider;
-        gSynthGraphControl.Setup(appSettings, metronome, paramProvider);
+        mpMusicalState = pMusicalState;
+        gSynthGraphControl.Setup(appSettings, metronome);
+
+        // for some reason patches really don't like to connect unless they are
+        // last in the initialization order. Here's a workaround to force them to
+        // connect.
+        for (auto &v : gVoices)
+        {
+            v.EnsurePatchConnections(appSettings, pMusicalState);
+        }
     }
 
     // always returns something.
@@ -38,7 +44,7 @@ struct PolySynth : IIncomingMusicalEvents
     {
         // find the voice with best releaseability.
         Voice *bestVoice = nullptr;
-        //size_t bestVoiceIndex = 99;
+        // size_t bestVoiceIndex = 99;
         float bestReleaseabilityScore = 0;
         for (size_t i = 0; i < SizeofStaticArray(gVoices); ++i)
         {
@@ -46,33 +52,34 @@ struct PolySynth : IIncomingMusicalEvents
             float r = v.GetReleaseability();
             if (r > bestReleaseabilityScore)
             {
-                //bestVoiceIndex = i;
+                // bestVoiceIndex = i;
                 bestVoice = &v;
                 bestReleaseabilityScore = r;
             }
         }
-                //Serial.println(String("best voice found: ") + bestVoiceIndex + "; rel:" + bestReleaseabilityScore);
+        // Serial.println(String("best voice found: ") + bestVoiceIndex + "; rel:" + bestReleaseabilityScore);
         return bestVoice;
     }
 
-    virtual void IncomingMusicalEvents_OnNoteOn(MusicalEventSource source,
-                                                const HeldNoteInfo &noteInfo,
-                                                uint16_t synthPatchIndex) override
+    virtual void IMusicalEventsForSynth_OnNoteOn(const MusicalVoice &mv) override
     {
-        //Serial.println(String("synth note on: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
+        // if it's not active, why is this being called? handle that outside of the synth please.
+        CCASSERT(mv.mIsActive); 
 
-        auto &patch = mAppSettings->FindSynthPreset(synthPatchIndex);
+        // Serial.println(String("synth note on: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
+
+        //auto &patch = mAppSettings->FindSynthPreset(synthPatchIndex);
 
         // monophonic wants to reuse the same voice for everything.
         // so find a voice already playing from this source
-        if (patch.mVoicingMode == VoicingMode::Monophonic)
+        if (mv.mpSynthPatch->mVoicingMode == VoicingMode::Monophonic)
         {
             for (size_t i = 0; i < SizeofStaticArray(gVoices); ++i)
             {
                 auto &v = gVoices[i];
-                if (v.mRunningVoice.mSource.Equals(source))
+                if (v.mRunningVoice.mSource.Equals(mv.mSource))
                 {
-                    v.IncomingMusicalEvents_OnNoteOn(source, noteInfo, synthPatchIndex);
+                    v.IncomingMusicalEvents_OnNoteOn(mv);
                     return;
                 }
             }
@@ -80,28 +87,31 @@ struct PolySynth : IIncomingMusicalEvents
         }
 
         auto bestVoice = FindBestFreeVoice();
-        bestVoice->IncomingMusicalEvents_OnNoteOn(source, noteInfo, synthPatchIndex);
+        bestVoice->IncomingMusicalEvents_OnNoteOn(mv);
         return;
     }
-    virtual void IncomingMusicalEvents_OnNoteOff(MusicalEventSource source, const HeldNoteInfo &noteInfo) override
+    virtual void IMusicalEventsForSynth_OnNoteOff(const MusicalVoice &mv) override
     {
-        //Serial.println(String("synth note off: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
-        // find this note
-        for (auto& v : gVoices) {
-            if (v.mRunningVoice.mNoteInfo.mLiveNoteSequenceID == noteInfo.mLiveNoteSequenceID) {
+        // Serial.println(String("synth note off: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
+        //  find this note
+        for (auto &v : gVoices)
+        {
+            if (v.mRunningVoice.mNoteInfo.mLiveNoteSequenceID == mv.mNoteInfo.mLiveNoteSequenceID)
+            {
                 v.IncomingMusicalEvents_OnNoteOff();
                 return;
             }
         }
-        //Serial.println("Note off sent to synth, but i didn't find any voices playing that note. i guess we culled it due to max voice polyphony.");
+        // Serial.println("Note off sent to synth, but i didn't find any voices playing that note. i guess we culled it
+        // due to max voice polyphony.");
     }
-    virtual void IncomingMusicalEvents_OnAllNoteOff() override
+    virtual void IMusicalEventsForSynth_OnAllNoteOff() override
     {
-        //Serial.println(String("synth all notes off"));
+        // Serial.println(String("synth all notes off"));
     }
 
     // After musical state has been updated, call this to apply those changes to the synth state.
-    void Update(USBMidiMusicalState &ms)
+    void Update(MusicalState &ms)
     {
         if (gpSynthGraph->peakL.available() && gpSynthGraph->peakR.available())
         {
@@ -116,10 +126,9 @@ struct PolySynth : IIncomingMusicalEvents
             gPeak = std::max(gpSynthGraph->peakR.readPeakToPeak(), gPeak);
         }
 
-        // any voice that wasn't assigned (touched) should be "released".
         for (auto &v : gVoices)
         {
-            v.Update(ms);
+            v.Update();
         }
 
         gSynthGraphControl.UpdatePostFx();

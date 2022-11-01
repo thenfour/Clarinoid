@@ -21,8 +21,8 @@
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 //#include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
-//#include <clarinoid/midi/midi.hpp>
-#include <clarinoid/application/USBMidiMusicalState.hpp>
+#include <clarinoid/application/USBKeyboardMusicalDevice.hpp>
+#include <clarinoid/application/MusicalState.hpp>
 #include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 #include <clarinoid/Gui/GuiPerformanceApp.hpp>
 #include <clarinoid/application/DefaultHud.hpp>
@@ -107,7 +107,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     {
         return &mInputDelegator;
     }
-    virtual USBMidiMusicalState *ILEDDataProvider_GetMusicalState() override
+    virtual MusicalState *ILEDDataProvider_GetMusicalState() override
     {
         return &mMusicalStateTask.mMusicalState;
     }

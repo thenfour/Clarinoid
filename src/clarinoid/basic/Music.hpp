@@ -29,6 +29,19 @@ inline float FrequencyToMIDINote(float hz)
     return ret;
 }
 
+
+// https://www.paulcecchettimusic.com/full-list-of-midi-cc-numbers/
+enum class MidiCCValue
+{
+    BankSelect = 0,
+    ModWheel = 1,
+    Breath = 2,
+    Expression = 11,
+    DamperPedal = 64,
+    AllNotesOff = 123,
+};
+
+
 ////////////////////////////////////////////////////
 struct NoteDesc
 {

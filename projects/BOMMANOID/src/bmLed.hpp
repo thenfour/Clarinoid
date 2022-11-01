@@ -27,7 +27,7 @@ struct ILEDDataProvider
 {
     virtual Metronome *ILEDDataProvider_GetMetronomeBeat() = 0;
     virtual InputDelegator *ILEDDataProvider_GetInput() = 0;
-    virtual USBMidiMusicalState *ILEDDataProvider_GetMusicalState() = 0;
+    virtual MusicalState *ILEDDataProvider_GetMusicalState() = 0;
 };
 
 // template <int ledsPerBank, uint32_t holdTimeMS, uint32_t falloffTimeMS>

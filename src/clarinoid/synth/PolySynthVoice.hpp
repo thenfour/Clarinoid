@@ -20,111 +20,6 @@
 
 namespace clarinoid
 {
-static constexpr float KRateFrequencyModulationMultiplier = 12.0f;
-
-struct SynthVoiceState
-{
-    MusicalEventSource mSource;
-    HeldNoteInfo mNoteInfo;
-    SynthPreset *mSynthPatch = nullptr;
-    int mSynthPatchIndex = -1;
-    uint32_t mReleaseTimestampMS = 0; // 0 means the note is still active.
-};
-
-struct SynthGraph
-{
-    /*
-    https://www.pjrc.com/teensy/gui/index.html
-    // this is the after-oscillator processing.
-
-    */
-    // GUItool: begin automatically generated code
-    AudioAmplifier delayFeedbackAmpLeft;  // xy=535,170
-    AudioEffectDelay delayRight;          // xy=536,478
-    AudioEffectDelay delayLeft;           // xy=537,261
-    AudioAmplifier delayFeedbackAmpRight; // xy=537,390
-    AudioAmplifier delayWetAmpLeft;       // xy=781,234
-    AudioAmplifier delayWetAmpRight;      // xy=802,469
-    AudioMixer4 verbInputMixer;           // xy=920,561
-    AudioSynthWaveformSine metronomeOsc;  // xy=956,990
-    AudioEffectFreeverbStereo verb;       // xy=1070,567
-    AudioEffectEnvelope metronomeEnv;     // xy=1157,992
-    AudioAmplifier verbWetAmpLeft;        // xy=1229,548
-    AudioAmplifier verbWetAmpRight;       // xy=1236,586
-    AudioMixer4 postMixerLeft;            // xy=1411,775
-    AudioMixer4 postMixerRight;           // xy=1413,858
-    AudioAmplifier ampLeft;               // xy=1573,776
-    AudioAmplifier ampRight;              // xy=1576,857
-    AudioOutputI2S i2s1;                  // xy=1758,809
-    AudioAnalyzePeak peakL;               // xy=1801,588
-    AudioAnalyzePeak peakR;               // xy=1851,598
-    AudioConnection patchCord1 = {delayWetAmpLeft, 0, postMixerLeft, 1};
-    AudioConnection patchCord2 = {delayWetAmpRight, 0, postMixerRight, 1};
-    AudioConnection patchCord3 = {verbInputMixer, verb};
-    AudioConnection patchCord4 = {metronomeOsc, metronomeEnv};
-    AudioConnection patchCord5 = {verb, 0, verbWetAmpLeft, 0};
-    AudioConnection patchCord6 = {verb, 1, verbWetAmpRight, 0};
-    AudioConnection patchCord7 = {metronomeEnv, 0, postMixerRight, 3};
-    AudioConnection patchCord8 = {metronomeEnv, 0, postMixerLeft, 3};
-    AudioConnection patchCord9 = {verbWetAmpLeft, 0, postMixerLeft, 2};
-    AudioConnection patchCord10 = {verbWetAmpRight, 0, postMixerRight, 2};
-    AudioConnection patchCord11 = {postMixerLeft, ampLeft};
-    AudioConnection patchCord12 = {postMixerRight, ampRight};
-    AudioConnection patchCord13 = {ampLeft, peakL};
-    AudioConnection patchCord14 = {ampRight, peakR};
-    AudioConnection patchCord15 = {ampLeft, 0, i2s1, 1};
-    AudioConnection patchCord16 = {ampRight, 0, i2s1, 0};
-    // GUItool: end automatically generated code
-
-    // insert the delay filters.
-    // ...[delayLeft]---->[delayFilterLeft]--------------->[delayFeedbackAmpLeft]...
-    //                                     \-------------->[delayWetAmpLeft]...
-    ::clarinoid::FilterNode delayFilterLeft;
-    AudioConnection mPatchDelayToFilterLeft = {delayLeft, 0, delayFilterLeft, 0};
-    AudioConnection mPatchDelayFilterToFeedbackAmpLeft = {delayFilterLeft, 0, delayFeedbackAmpLeft, 0};
-
-    ::clarinoid::FilterNode delayFilterRight;
-    AudioConnection mPatchDelayToFilterRight = {delayRight, 0, delayFilterRight, 0};
-    AudioConnection mPatchDelayFilterToFeedbackAmpRight = {delayFilterRight, 0, delayFeedbackAmpRight, 0};
-
-    // delay output connection
-    AudioConnection mPatchDelayFilterToAmpLeft = {delayFilterLeft, 0, delayWetAmpLeft, 0};
-    AudioConnection mPatchDelayFilterToAmpRight = {delayFilterRight, 0, delayWetAmpRight, 0};
-
-    // voice mixer & dry output connection
-    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryLeft;  // all voices input here.
-    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES> voiceMixerDryRight; // all voices input here.
-    AudioConnection patchVoicesDryToOutpLeft = {voiceMixerDryLeft, 0, postMixerLeft, 0};
-    AudioConnection patchVoicesDryToOutpRight = {voiceMixerDryRight, 0, postMixerRight, 0};
-
-    // delay input mix
-    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1>
-        delayInputMixerLeft; // +1 to account for the delay feedback signal
-    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1>
-        delayInputMixerRight; // +1 to account for the delay feedback signal
-    AudioConnection patchDelayInputMixToDelayL = {delayInputMixerLeft, 0, delayLeft, 0};
-    AudioConnection patchDelayInputMixToDelayR = {delayInputMixerRight, 0, delayRight, 0};
-
-    // delay fb
-    AudioConnection patchDelayFBBackToInputLeft = {delayFeedbackAmpLeft, 0, delayInputMixerLeft, MAX_SYNTH_VOICES};
-    AudioConnection patchDelayFBBackToInputRight = {delayFeedbackAmpRight, 0, delayInputMixerRight, MAX_SYNTH_VOICES};
-
-    // verb input mix
-    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerLeft;  // all voices input here + 1 for delay line
-    ::clarinoid::MultiMixerNode<MAX_SYNTH_VOICES + 1> verbInputMixerRight; // all voices input here + 1 for delay line
-    AudioConnection patchVerbInputToVerbL = {verbInputMixerLeft, 0, verbInputMixer, 0};
-    AudioConnection patchVerbInputToVerbR = {verbInputMixerRight, 0, verbInputMixer, 1};
-
-    // delay verb
-    AudioConnection patchDelayVerbInputLeft = {delayFilterLeft, 0, verbInputMixerLeft, MAX_SYNTH_VOICES};
-    AudioConnection patchDelayVerbInputRight = {delayFilterRight, 0, verbInputMixerRight, MAX_SYNTH_VOICES};
-
-}; // namespace CCSynthGraph
-
-// dynamic allocate to ensure it goes into RAM2
-SynthGraph *gpSynthGraph = nullptr;
-
-StaticInit __synthGraphInit([]() { gpSynthGraph = new SynthGraph(); });
 
 struct Voice : IModulationProvider
 {
@@ -212,15 +107,15 @@ struct Voice : IModulationProvider
     CCPatch mPatchOutVerbRight;
 
     int mVoiceIndex;
-    SynthVoiceState mRunningVoice;
+    MusicalVoice mRunningVoice;       // latest running voice data.
+    uint32_t mReleaseTimestampMS = 0; // 0 means the note is still active.
     AppSettings *mAppSettings;
-    ISynthParamProvider *mParamProvider;
-    bool mTouched = false;
+    MusicalState *mpMusicalState;
 
-    void EnsurePatchConnections(AppSettings *appSettings, ISynthParamProvider *paramProvider)
+    void EnsurePatchConnections(AppSettings *appSettings, MusicalState *pMS)
     {
         mAppSettings = appSettings;
-        mParamProvider = paramProvider;
+        mpMusicalState = pMS;
 
         mPatchOsc1ToMixer.connect();
         mPatchOsc2ToMixer.connect();
@@ -244,9 +139,9 @@ struct Voice : IModulationProvider
         switch (src)
         {
         case KRateModulationSource::Breath:
-            return mParamProvider->SynthParamProvider_GetBreath01();
+            return mRunningVoice.mpParamProvider->SynthParamProvider_GetBreath01();
         case KRateModulationSource::PitchStrip:
-            return mParamProvider->SynthParamProvider_GetPitchBendN11();
+            return mRunningVoice.mpParamProvider->SynthParamProvider_GetPitchBendN11();
         case KRateModulationSource::Velocity:
             return mRunningVoice.mNoteInfo.mVelocity01;
         case KRateModulationSource::NoteValue:
@@ -254,17 +149,17 @@ struct Voice : IModulationProvider
         case KRateModulationSource::RandomTrigger:
             return mRunningVoice.mNoteInfo.mRandomTrigger01;
         case KRateModulationSource::ModWheel:
-            return float(mParamProvider->SynthParamProvider_GetMidiCC(MidiCCValue::ModWheel)) / 127;
+            return float(mRunningVoice.mpParamProvider->SynthParamProvider_GetMidiCC(MidiCCValue::ModWheel)) / 127;
         case KRateModulationSource::Macro1:
-            return mParamProvider->SynthParamProvider_GetMacroValue01(0);
+            return mRunningVoice.mpParamProvider->SynthParamProvider_GetMacroValue01(0);
         case KRateModulationSource::Macro2:
-            return mParamProvider->SynthParamProvider_GetMacroValue01(1);
+            return mRunningVoice.mpParamProvider->SynthParamProvider_GetMacroValue01(1);
         case KRateModulationSource::Macro3:
-            return mParamProvider->SynthParamProvider_GetMacroValue01(2);
+            return mRunningVoice.mpParamProvider->SynthParamProvider_GetMacroValue01(2);
         case KRateModulationSource::Macro4:
-            return mParamProvider->SynthParamProvider_GetMacroValue01(3);
+            return mRunningVoice.mpParamProvider->SynthParamProvider_GetMacroValue01(3);
         case KRateModulationSource::Pedal:
-            return float(mParamProvider->SynthParamProvider_GetMidiCC(MidiCCValue::DamperPedal)) / 127;
+            return float(mRunningVoice.mpParamProvider->SynthParamProvider_GetMidiCC(MidiCCValue::DamperPedal)) / 127;
         }
         CCASSERT(!"requesting an unsupported krate source");
         return 0;
@@ -291,11 +186,105 @@ struct Voice : IModulationProvider
         return WAVEFORM_SINE;
     };
 
-    void ApplyPatchToGraph()
+    float CalcFreq(const SynthOscillatorSettings &osc, float detune, float krateFreqModN11, PortamentoCalc &portamento)
     {
-        const auto &patch = *mRunningVoice.mSynthPatch;
-        const auto &perf = mAppSettings->GetCurrentPerformancePatch();
+        // we're in semis land... let's figure out the semitone.
+        float midiNote = mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue();
 
+        float userPB = mRunningVoice.mpParamProvider->SynthParamProvider_GetPitchBendN11();
+        float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive : (-osc.mPitchBendRangeNegative));
+
+        float paramSemis = osc.mFreqParam.GetMidiNote(midiNote, krateFreqModN11);
+
+        float idealSemis = paramSemis + osc.mPitchFine + osc.mPitchSemis + detune;
+
+        float retSemis = portamento.KStep(idealSemis, osc.mPortamentoTimeMS);
+        retSemis += pbSemis; // Pitchbend needs to be after portamento.
+
+        float retHz = MIDINoteToFreq(retSemis);
+        retHz *= osc.mFreqMultiplier;
+        retHz += osc.mFreqOffsetHz;
+
+        return Clamp(retHz, 0.0f, 22050.0f);
+    };
+
+    void Update()
+    {
+        auto newRunningVoice = mpMusicalState->GetLiveMusicalVoice(this->mRunningVoice);
+
+        if (newRunningVoice.mIsActive)
+        {
+            this->mRunningVoice = newRunningVoice;
+        }
+        else
+        {
+            // not active; we cannot use newRunningVoice
+
+            // we need to distinguish between:
+            // 1- the synth params changing and the rug getting pulled from underneath,
+            // 2- the note has been released and we should continue releasing it.
+            // we use our envelope state to determine this. musicalstate forgets about notes
+            // as soon as they're released.
+            mRunningVoice.mNoteInfo.mIsPhysicallyHeld = false; // important for releaseability calc
+            if (mEnvelopes[0].GetStage() != EnvelopeStage::Release)
+            {
+                // in release stage, we expect mIsActive to be false, and we continue with our existing
+                // running voice until it's done.
+                // otherwise it's over; bail.
+                mOsc.mIsPlaying = false;
+                return;
+            }
+        }
+
+        const auto &patch = *mRunningVoice.mpSynthPatch;
+        const auto &perf = *mRunningVoice.mpPerf;
+
+        float externalGain = 1.0f;
+        switch (mRunningVoice.mSource.mType)
+        {
+        case MusicalEventSourceType::Harmonizer:
+            // TODO: stereo sep of perf harm
+            // TODO: stereo sep of harm voice
+            if (!perf.mHarmEnabled)
+            {
+                mOsc.mIsPlaying = false;
+                return;
+            }
+            mOsc.mIsPlaying = true;
+            externalGain = perf.mHarmGain;
+            // individual harmonizer voices don't have their own volume (yet?)
+            // externalGain =
+            // mAppSettings->FindHarmPreset(perf.mHarmPreset).mVoiceSettings[mRunningVoice.mSource.mHarmonizerVoiceIndex].
+            break;
+        case MusicalEventSourceType::LivePlayA:
+            // TODO: stereo sep of perf patches
+            if (!perf.mSynthAEnabled)
+            {
+                mOsc.mIsPlaying = false;
+                return;
+            }
+            mOsc.mIsPlaying = true;
+            externalGain = perf.mSynthAGain;
+            break;
+        case MusicalEventSourceType::LivePlayB:
+            // TODO: stereo sep of perf patches
+            if (!perf.mSynthBEnabled)
+            {
+                mOsc.mIsPlaying = false;
+                return;
+            }
+            mOsc.mIsPlaying = true;
+            externalGain = perf.mSynthBGain;
+            break;
+        case MusicalEventSourceType::Loopstation:
+            // TODO... how does this work?
+            break;
+        default:
+            CCASSERT(!"unknown event source");
+            break;
+        }
+
+        // apply ongoing params
         for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
         {
             EnvelopeModulationValues modValues;
@@ -323,90 +312,6 @@ struct Voice : IModulationProvider
 
             mLfos[i].frequency(patch.mLFOs[i].mTime.ToHertz(perf.mBPM));
         }
-    }
-
-    float CalcFreq(const SynthOscillatorSettings &osc, float detune, float krateFreqModN11, PortamentoCalc &portamento)
-    {
-        // we're in semis land... let's figure out the semitone.
-        float midiNote = mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue();
-
-        float userPB = mParamProvider->SynthParamProvider_GetPitchBendN11();
-        float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive : (-osc.mPitchBendRangeNegative));
-
-        float paramSemis = osc.mFreqParam.GetMidiNote(midiNote, krateFreqModN11);
-
-        float idealSemis = paramSemis + osc.mPitchFine + osc.mPitchSemis + detune;
-
-        float retSemis = portamento.KStep(idealSemis, osc.mPortamentoTimeMS);
-        retSemis += pbSemis; // Pitchbend needs to be after portamento.
-
-        float retHz = MIDINoteToFreq(retSemis);
-        retHz *= osc.mFreqMultiplier;
-        retHz += osc.mFreqOffsetHz;
-
-        return Clamp(retHz, 0.0f, 22050.0f);
-    };
-
-    void Update(USBMidiMusicalState &ms)
-    {
-        // make sure this gets updated; it doesn't get automatically syncd
-        this->mRunningVoice.mNoteInfo.mIsPhysicallyHeld =
-            ms.isPhysicallyPressed(mRunningVoice.mNoteInfo.mLiveNoteSequenceID);
-        // basically the only time this will become -1 is at startup
-        if (mRunningVoice.mSynthPatch == nullptr)
-        {
-            mOsc.mIsPlaying = false;
-            return;
-        }
-
-        mOsc.mIsPlaying = true;
-
-        const auto &patch = *mRunningVoice.mSynthPatch;
-        const auto &perf = mAppSettings->GetCurrentPerformancePatch();
-
-        float externalGain = 1.0f;
-        switch (mRunningVoice.mSource.mType)
-        {
-        case MusicalEventSourceType::Harmonizer:
-            // TODO: stereo sep of perf harm
-            // TODO: stereo sep of harm voice
-            if (!perf.mHarmEnabled)
-            {
-                mOsc.mIsPlaying = false;
-                return;
-            }
-            externalGain = perf.mHarmGain;
-            // individual harmonizer voices don't have their own volume (yet?)
-            // externalGain =
-            // mAppSettings->FindHarmPreset(perf.mHarmPreset).mVoiceSettings[mRunningVoice.mSource.mHarmonizerVoiceIndex].
-            break;
-        case MusicalEventSourceType::LivePlayA:
-            // TODO: stereo sep of perf patches
-            if (!perf.mSynthAEnabled)
-            {
-                mOsc.mIsPlaying = false;
-                return;
-            }
-            externalGain = perf.mSynthAGain;
-            break;
-        case MusicalEventSourceType::LivePlayB:
-            // TODO: stereo sep of perf patches
-            if (!perf.mSynthBEnabled)
-            {
-                mOsc.mIsPlaying = false;
-                return;
-            }
-            externalGain = perf.mSynthBGain;
-            break;
-        case MusicalEventSourceType::Loopstation:
-            // TODO... how does this work?
-            break;
-        default:
-            break;
-        }
-
-        // apply ongoing params
-        ApplyPatchToGraph();
 
         // figure out which oscillators are enabled. Get a count and grab enabled indices.
         int oscEnabledCount = 0;
@@ -439,8 +344,9 @@ struct Voice : IModulationProvider
             detunes[0] = 0;
             detunes[1] = detune;
             detunes[2] = -detune;
-            spreads[0] = 0;
-            spreads[1] = spread;
+            spreads[0] = spread * 0.2f; // when spread is != 0, I feel that there should be NO voices in the center. we
+                                        // rotate around somehow.
+            spreads[1] = spread * 0.8f;
             spreads[2] = -spread;
             break;
         default:
@@ -502,7 +408,7 @@ struct Voice : IModulationProvider
         //     Serial.println(sd);
 
         // TODO: if portamento is enabled for an oscillator, it should be accounted for here.
-        float filterFreq = mRunningVoice.mSynthPatch->mFilterFreqParam.GetFrequency(
+        float filterFreq = patch.mFilterFreqParam.GetFrequency(
             MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()),
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
         mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
@@ -524,37 +430,37 @@ struct Voice : IModulationProvider
     }
 
     // if there's already a note playing, it gets cut off
-    void IncomingMusicalEvents_OnNoteOn(const MusicalEventSource &source,
-                                        const HeldNoteInfo &noteInfo,
-                                        uint16_t synthPatchIndex)
+    void IncomingMusicalEvents_OnNoteOn(const MusicalVoice &v)
     {
-        auto newSynthPatch = &mAppSettings->FindSynthPreset(synthPatchIndex);
+        CCASSERT(v.mIsActive);
 
-        bool isLegato = (mRunningVoice.mSource.Equals(source)) && (mRunningVoice.mReleaseTimestampMS == 0) &&
-                        (newSynthPatch->mVoicingMode == VoicingMode::Monophonic);
+        bool isLegato = (mRunningVoice.mSource.Equals(v.mSource)) && (mReleaseTimestampMS == 0) &&
+                        (mRunningVoice.mIsActive) && (v.mpSynthPatch->mVoicingMode == VoicingMode::Monophonic);
 
-        // i don't actually think this is necessary. to be confirmed.
-        for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
-        {
-            if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnvelopes[i].mLegatoRestart))
-                mEnvelopes[i].noteOff();
-        }
+        // // i don't actually think this is necessary. to be confirmed.
+        // for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
+        // {
+        //     if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnvelopes[i].mLegatoRestart))
+        //         mEnvelopes[i].noteOff();
+        // }
 
         // adjust running voice.
-        mRunningVoice.mSource = source;
-        mRunningVoice.mNoteInfo = noteInfo;
-        mRunningVoice.mReleaseTimestampMS = 0; // important so we know the note is playing
+        mRunningVoice = v;
+        // mRunningVoice.mSource = source;
+        // mRunningVoice.mNoteInfo = noteInfo;
+        mReleaseTimestampMS = 0; // important so we know the note is playing
 
-        if (mRunningVoice.mSynthPatch != newSynthPatch)
-        {
-            mRunningVoice.mSynthPatchIndex = synthPatchIndex;
-            mRunningVoice.mSynthPatch = newSynthPatch;
-            mModMatrix.SetSynthPatch(newSynthPatch, this);
-        }
+        // if (mRunningVoice.mSynthPatch != newSynthPatch)
+        // {
+        //     mRunningVoice.mSynthPatchIndex = synthPatchIndex;
+        //     mRunningVoice.mSynthPatch = newSynthPatch;
+        //     mModMatrix.SetSynthPatch(newSynthPatch, this);
+        // }
+        mModMatrix.SetSynthPatch(mRunningVoice.mpSynthPatch, this);
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
-            if (mRunningVoice.mSynthPatch->mOsc[i].mPhaseRestart)
+            if (mRunningVoice.mpSynthPatch->mOsc[i].mPhaseRestart)
             {
                 mOsc.mOsc[i].ResetPhase();
             }
@@ -562,15 +468,17 @@ struct Voice : IModulationProvider
 
         for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
         {
-            if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnvelopes[i].mLegatoRestart))
+            if (!isLegato || (isLegato && mRunningVoice.mpSynthPatch->mEnvelopes[i].mLegatoRestart))
+            {
                 mEnvelopes[i].noteOn();
+            }
         }
 
         for (size_t i = 0; i < LFO_COUNT; ++i)
         {
-            if (mRunningVoice.mSynthPatch->mLFOs[i].mPhaseRestart)
+            if (mRunningVoice.mpSynthPatch->mLFOs[i].mPhaseRestart)
             {
-                mLfos[i].begin(convertWaveType(mRunningVoice.mSynthPatch->mLFOs[i].mWaveShape));
+                mLfos[i].begin(convertWaveType(mRunningVoice.mpSynthPatch->mLFOs[i].mWaveShape));
                 mLfos[i].amplitude(1.0f);
             }
         }
@@ -578,7 +486,7 @@ struct Voice : IModulationProvider
 
     void IncomingMusicalEvents_OnNoteOff()
     {
-        mRunningVoice.mReleaseTimestampMS = millis();
+        mReleaseTimestampMS = millis();
         // if (this->mVoiceIndex == 0) {
         // Serial.println(String("[") + mVoiceIndex + "] voice env.NoteOff. " +
         // mRunningVoice.mNoteInfo.mMidiNote.GetNoteDesc().mName);
@@ -604,13 +512,13 @@ struct Voice : IModulationProvider
         }
 
         // if playing, before any release, then 0-1
-        if (mRunningVoice.mReleaseTimestampMS == 0)
+        if (mReleaseTimestampMS == 0)
         {
             return TimeTo01(millis() - mRunningVoice.mNoteInfo.mAttackTimestampMS);
         }
 
         // ok we're at least at release stage.
-        auto timeSinceReleaseMS = millis() - mRunningVoice.mReleaseTimestampMS;
+        auto timeSinceReleaseMS = millis() - mReleaseTimestampMS;
         return 1.0f + TimeTo01(timeSinceReleaseMS);
     }
 
@@ -645,7 +553,7 @@ struct Voice : IModulationProvider
             return false;
         }
 
-        if (mRunningVoice.mReleaseTimestampMS == 0)
+        if (mReleaseTimestampMS == 0)
         {
             return true;
         }
@@ -658,7 +566,7 @@ struct Voice : IModulationProvider
         // idle
         // p1 C#9 idle
         auto ret = String("v") + mVoiceIndex + " r" + GetReleaseability() + "> ";
-        if (!mRunningVoice.mSynthPatch)
+        if (!mRunningVoice.mIsActive)
         {
             ret += "<idle>";
             return ret;
@@ -682,91 +590,5 @@ struct Voice : IModulationProvider
 };
 
 Voice gVoices[MAX_SYNTH_VOICES] = {VOICE_INITIALIZER};
-
-struct SynthGraphControl
-{
-    float mPrevMetronomeBeatFrac = 0;
-    AppSettings *mAppSettings;
-    Metronome *mMetronome;
-    ISynthParamProvider *mParamProvider;
-
-    void Setup(AppSettings *appSettings, Metronome *metronome, ISynthParamProvider *paramProvider)
-    {
-        AudioStream::initialize_memory(CLARINOID_AUDIO_MEMORY, SizeofStaticArray(CLARINOID_AUDIO_MEMORY));
-
-        mAppSettings = appSettings;
-        mMetronome = metronome;
-        mParamProvider = paramProvider;
-
-        // for some reason patches really don't like to connect unless they are
-        // last in the initialization order. Here's a workaround to force them to
-        // connect.
-        for (auto &v : gVoices)
-        {
-            v.EnsurePatchConnections(appSettings, paramProvider);
-        }
-
-        gpSynthGraph->ampLeft.gain(1);
-        gpSynthGraph->ampRight.gain(1);
-
-        gpSynthGraph->metronomeEnv.delay(0);
-        gpSynthGraph->metronomeEnv.attack(0);
-        gpSynthGraph->metronomeEnv.hold(0);
-        gpSynthGraph->metronomeEnv.releaseNoteOn(0);
-        gpSynthGraph->metronomeEnv.sustain(0);
-    }
-
-    void UpdatePostFx()
-    {
-        auto &perf = mAppSettings->GetCurrentPerformancePatch();
-
-        gpSynthGraph->delayFeedbackAmpLeft.gain(perf.mDelayFeedbackLevel);
-        gpSynthGraph->delayFeedbackAmpRight.gain(perf.mDelayFeedbackLevel);
-        gpSynthGraph->delayLeft.delay(0, perf.mDelayTime.ToMS(perf.mBPM) - perf.mDelayStereoSep * .5f);
-        gpSynthGraph->delayRight.delay(0, perf.mDelayTime.ToMS(perf.mBPM) + perf.mDelayStereoSep * .5f);
-
-        gpSynthGraph->delayFilterLeft.SetParams(
-            perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
-        gpSynthGraph->delayFilterRight.SetParams(
-            perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
-
-        gpSynthGraph->delayWetAmpLeft.gain(
-            (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
-        gpSynthGraph->delayWetAmpRight.gain(
-            (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
-
-        gpSynthGraph->verb.roomsize(perf.mReverbSize);
-        gpSynthGraph->verb.damping(perf.mReverbDamping);
-
-        gpSynthGraph->verbWetAmpLeft.gain(
-            (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
-        gpSynthGraph->verbWetAmpRight.gain(
-            (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
-
-        gpSynthGraph->ampLeft.gain(perf.mMasterGain);
-        gpSynthGraph->ampRight.gain(perf.mMasterGain);
-
-        if (!mAppSettings->mMetronomeSoundOn)
-        {
-            gpSynthGraph->metronomeOsc.amplitude(0);
-        }
-        else
-        {
-            gpSynthGraph->metronomeEnv.decay(mAppSettings->mMetronomeDecayMS);
-            gpSynthGraph->metronomeOsc.amplitude(mAppSettings->mMetronomeGain);
-            gpSynthGraph->metronomeOsc.frequency(MIDINoteToFreq(mAppSettings->mMetronomeNote));
-
-            float metronomeBeatFrac = mMetronome->GetBeatFrac();
-            if (metronomeBeatFrac < mPrevMetronomeBeatFrac)
-            { // beat boundary is when the frac drops back
-              // to 0
-                gpSynthGraph->metronomeEnv.noteOn();
-            }
-            mPrevMetronomeBeatFrac = metronomeBeatFrac;
-        }
-    }
-};
-
-SynthGraphControl gSynthGraphControl;
 
 } // namespace clarinoid

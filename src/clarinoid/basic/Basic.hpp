@@ -14,7 +14,6 @@
 #include "FPS.hpp"
 #include "MovingAverage.hpp"
 #include "Stopwatch.hpp"
-#include "Music.hpp"
 #include "ModCurve.hpp"
 #include "SynthParamValues.hpp"
 #include "Profiler.hpp"
@@ -25,3 +24,7 @@
 #include "Control.hpp"
 #include "NumericRanges.hpp"
 #include "fixedPoint.hpp"
+#include "AnalogValue.hpp"
+
+#include "Music.hpp"
+#include "HeldNoteTracker.hpp"

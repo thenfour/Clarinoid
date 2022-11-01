@@ -8,7 +8,6 @@
 
 namespace clarinoid
 {
-#ifndef POLYPHONIC // polyphonic device just doesn't support this yet.
 
 struct Harmonizer
 {
@@ -224,5 +223,5 @@ struct Harmonizer
         return ret;
     }
 };
-#endif
+
 } // namespace clarinoid

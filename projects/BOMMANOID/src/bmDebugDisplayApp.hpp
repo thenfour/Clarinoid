@@ -281,7 +281,7 @@ struct DebugDisplayApp : SettingsMenuApp
     virtual void RenderFrontPage()
     {
         mDisplay.println(String("Debug info ->"));
-        mDisplay.println(String("held notes: ") + this->mMusicalStateTask.mMusicalState.mHeldNotes.mHeldNotes.size());
+        //mDisplay.println(String("held notes: ") + this->mMusicalStateTask.mMusicalState.mHeldNotes.mHeldNotes.size());
         SettingsMenuApp::RenderFrontPage();
     }
 };

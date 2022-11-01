@@ -1,147 +1,63 @@
-// musical note data flows through multiple stages of processing.
-// 1. device level
-//   - loopstation memory gets converted to note on/ off / etc events
-//   - physical keyboard similarly get converted to noteon/off/etc events
-//   at this stage, no synth patch data or harmonizing processing is applied. these are raw device notes.
-//   MIDI parameters like CC values, pedal, pitch bend, are all stored by device.
-// 2. musical state
-//   takes device data and applies synth patch, harmonization.
-// 3. synthesizer
-//   takes "idealized" musical state and distributes to synth voices.
 
-// Despite these 3 separate stages, MusicalState is the orchestrator of all this.
-// it tells devices to update, handles their events, and then passes to synthesizer.
+// #pragma once
 
-#pragma once
+// #include <clarinoid/harmonizer/harmonizer.hpp>
+// #include <clarinoid/loopstation/LooperHarmonizer.hpp>
+// #include <clarinoid/application/ControlMapper.hpp>
 
-//#include <clarinoid/harmonizer/harmonizer.hpp>
-//#include <clarinoid/loopstation/LooperHarmonizer.hpp>
-//#include <clarinoid/application/ControlMapper.hpp>
-#include <clarinoid/synth/MusicalVoice.hpp>
-#include <clarinoid/synth/MusicalDevice.hpp>
+// namespace clarinoid
+// {
 
-namespace clarinoid
-{
+// int KeyStateToRelativeNote(bool LH1, bool LH2, bool LH3, bool LH4, bool RH1, bool RH2, bool RH3, bool RH4)
+// {
+//     int relativeNote = 0;
+//     if (LH1)
+//         relativeNote -= 2; // B from C#
+//     if (LH2)
+//         relativeNote -= LH1 ? 2 : 1;
+//     if (LH3)
+//         relativeNote -= 2;
+//     if (LH4)
+//         relativeNote += 1;
 
-// orchestrates propagation of musical events from physical device to synthesizer
-struct MusicalState : IMusicalDeviceEvents
-{
-    AppSettings &mAppSettings;
+//     if (RH1)
+//     {
+//         // naturally we expect this to be -2 (for G-F trill for example)
+//         // but we need to support Bb.
+//         if (LH1 && !LH2)
+//             relativeNote -= 1;
+//         else
+//             relativeNote -= 2;
+//     }
+//     if (RH2)
+//         relativeNote -= 1;
+//     if (RH3)
+//     {
+//         // coming from G  0 000 -> 001 this is -1 F#
+//         // coming from F# 0 010 -> 011 this is -1 F   <-- allows rh2 trill between F and F#
+//         // coming from F  0 100 -> 101 this is -1 E
+//         // coming from E  0 110 -> 111 this is -2 D
 
-    USBKeyboardMusicalDevice mUsbKeyboard;
-    VoicingModeInterpreter mUsbKeyboardVoicing;
+//         // Normally you want to use LH4 as a +1 key, but when it's down you often still want to +1 (Eb - E or Db - D). it's natural to use rh2 for this.
+//         // coming from G# 1 000 -> 001 this is -1 F#
+//         // coming from G  1 010 -> 011 this is -1 F   <-- allows rh2 trill between F and F#
+//         // coming from F# 1 100 -> 101 this is -1 E
+//         // coming from F  1 110 -> 111 this is -2 D
+//         relativeNote --;;
+//         if (!LH4 && RH2 && RH1) { 
+//             relativeNote --;
+//         } else if (LH4) {
+//             relativeNote --;
+//         }
 
-    IMusicalEventsForSynth *mpSynth = nullptr;
+//         // the ugly thing about enabling those trills is that now LH4 no longer acts as a +1, but i think it's an acceptable compromise.
+//     }
+//     if (RH4)
+//         relativeNote -= 2;
+//     return relativeNote;
+// }
 
-    MusicalState(AppSettings &appSettings, IMusicalEventsForSynth *pSynth)
-        : mAppSettings(appSettings), mUsbKeyboard(&appSettings, this, &mUsbKeyboard),
-          mUsbKeyboardVoicing(this, &mUsbKeyboardVoicing), mpSynth(pSynth)
-    {
-    }
-
-    virtual void IMusicalDeviceEvents_OnNoteOn(const HeldNoteInfo &noteInfo, void *cap) override
-    {
-        // handles note on for many things. delegate based on cap
-        if (cap == &mUsbKeyboard)
-        {
-            mUsbKeyboardVoicing.IHeldNoteTrackerEvents_OnNoteOn(noteInfo);
-        }
-        else if (cap == &mUsbKeyboardVoicing)
-        {
-            UsbKeyboardVoicing_OnNoteOn(noteInfo);
-        }
-        else
-        {
-            CCASSERT(!"note on from unknown source");
-        }
-    }
-
-    virtual void IMusicalDeviceEvents_OnNoteOff(const HeldNoteInfo &noteInfo,
-                                                const HeldNoteInfo *trillNote,
-                                                void *cap) override
-    {
-        if (cap == &mUsbKeyboard)
-        {
-            mUsbKeyboardVoicing.IHeldNoteTrackerEvents_OnNoteOff(noteInfo, trillNote);
-        }
-        else if (cap == &mUsbKeyboardVoicing)
-        {
-            UsbKeyboardVoicing_OnNoteOff(noteInfo);
-        }
-        else
-        {
-            CCASSERT(!"note on from unknown source");
-        }
-    }
-
-    virtual void IMusicalDeviceEvents_OnAllNotesOff(void *cap) override
-    {
-        // TODO
-    }
-
-    void UsbKeyboardVoicing_OnNoteOn(const HeldNoteInfo &noteInfo)
-    {
-        // EMIT live notes to synth.
-        MusicalVoice mv;
-        mv.mNoteInfo = noteInfo;
-        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
-        mv.mpParamProvider = &mUsbKeyboard;
-        mv.mpPerf = &mAppSettings.GetCurrentPerformancePatch();
-        mv.mpSynthPatch = &mAppSettings.FindSynthPreset(mv.mpPerf->mSynthPresetA);
-        mv.mIsActive = mv.mpPerf->mSynthAEnabled;
-        // TODO: collect other things like harmonize emit live note etc.
-        if (mv.mIsActive)
-        {
-            mpSynth->IMusicalEventsForSynth_OnNoteOn(mv);
-        }
-    }
-
-    void UsbKeyboardVoicing_OnNoteOff(const HeldNoteInfo &noteInfo)
-    {
-        MusicalVoice mv;
-        mv.mNoteInfo = noteInfo;
-        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
-        mv.mpParamProvider = &mUsbKeyboard;
-        mv.mpPerf = &mAppSettings.GetCurrentPerformancePatch();
-        mv.mpSynthPatch = &mAppSettings.FindSynthPreset(mv.mpPerf->mSynthPresetA);
-        mv.mIsActive = mv.mpPerf->mSynthAEnabled;
-        // TODO: collect other things like harmonize emit live note etc.
-        if (mv.mIsActive)
-        {
-            mpSynth->IMusicalEventsForSynth_OnNoteOff(mv);
-        }
-    }
-
-    // synth voices need to be able to get any updates to the notes they're playing.
-    // replace their existing copy with a live version.
-    MusicalVoice GetLiveMusicalVoice(const MusicalVoice &existing) // non-const because we assign the non-const param provider lel
-    {
-        MusicalVoice mv;
-        mv.mSource = MusicalEventSource{MusicalEventSourceType::LivePlayA};
-        mv.mpParamProvider = &mUsbKeyboard;
-        mv.mpPerf = &mAppSettings.GetCurrentPerformancePatch();
-        mv.mpSynthPatch = &mAppSettings.FindSynthPreset(mv.mpPerf->mSynthPresetA);
-        const HeldNoteInfo *pCurrentNoteInfo = mUsbKeyboard.GetLiveNoteInfo(existing.mNoteInfo);
-        if (!pCurrentNoteInfo) {
-            mv.mIsActive= false;
-            return mv;
-        }
-        mv.mNoteInfo = *pCurrentNoteInfo;
-        mv.mIsActive = mv.mpPerf->mSynthAEnabled;
-        return mv;
-    }
-
-    void Update()
-    {
-        // update physical device
-        mUsbKeyboard.Update();
-
-        // update harmonizer, loopstation
-    }
-};
-
-//     // updates devices, converts device notes into musical notes
-// struct MusicalStateProcessor
+// struct CCEWIMusicalState
 // {
 //     IDisplay *mpDisplay;
 //     AppSettings *mAppSettings;
@@ -185,8 +101,7 @@ struct MusicalState : IMusicalDeviceEvents
 //     int noteOns = 0;
 
 //     int mLastPlayedNote = 0; // valid even when mLiveVoice is not.
-//     int mLiveOctave = 0; // whether or not you're playing a note, indicates the octave # you're fingering. used for
-//     LED indication.
+//     int mLiveOctave = 0; // whether or not you're playing a note, indicates the octave # you're fingering. used for LED indication.
 
 //     int mDefaultBaseNote = 49; // C#2
 //     bool mHoldingBaseNote = false;
@@ -441,4 +356,4 @@ struct MusicalState : IMusicalDeviceEvents
 
 // static constexpr auto aoechusnthcphic = sizeof(CCEWIMusicalState);
 
-} // namespace clarinoid
+// } // namespace clarinoid

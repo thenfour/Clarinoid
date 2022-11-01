@@ -834,6 +834,7 @@ struct LFOSpec
     float mWaveformMorph01 = 0.0f;
 };
 
+
 enum class VoicingMode : uint8_t
 {
     Monophonic,
@@ -846,6 +847,7 @@ EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
 };
 
 EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
+
 
 struct SynthPreset
 {
