@@ -351,13 +351,10 @@ struct Oscillator
 {
     PhaseAccumulator mMainPhase;
 
+    bool mHardSyncEnabled = false;
     PhaseAccumulator mSyncPhase; // when sync is enabled, this is the phase of the "main" frequency. it resets the phase
                                  // of mMainPhase.
 
-    bool IsHardSync() const
-    {
-        return IsSyncWaveform(mWaveformShape);
-    }
     bool mEnabled = true;
 
     OscWaveformShape mWaveformShape = OscWaveformShape::Sine;
@@ -381,20 +378,11 @@ struct Oscillator
         mMainPhase.ResetPhase();
     }
 
-    // void waveform(OscWaveformShape wform)
-    // {
-    //     mWaveformShape = wform;
-    // }
-
-    // void SetAmplitude(float amplitude01)
-    // {
-    //     mAmplitude = amplitude01;
-    // }
-
-    void SetBasicParams(OscWaveformShape wform, float freq, float phaseOffset01, int portamentoMS, float syncFreq)
+    void SetBasicParams(OscWaveformShape wform, float freq, float phaseOffset01, int portamentoMS, bool hardSyncEnabled, float syncFreq)
     {
         mWaveformShape = wform;
-        if (IsSyncWaveform(wform))
+        mHardSyncEnabled = hardSyncEnabled;
+        if (mHardSyncEnabled)
         {
             mSyncPhase.SetParams(freq, phaseOffset01);
             mMainPhase.SetParams(syncFreq, 0);
@@ -442,7 +430,7 @@ struct Oscillator
         TWaveformProvider::Step(*this, fboutput, phaseShift);
 
         float x;
-        if (IsHardSync() && mSyncPhase.StepWithFrac(x))
+        if (mHardSyncEnabled && mSyncPhase.StepWithFrac(x))
         {
             TWaveformProvider::ResetPhaseDueToSync(*this, x);
         }
@@ -474,12 +462,6 @@ struct Oscillator
             }
             break;
         case OscWaveformShape::Pulse:
-            for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-            {
-                this->Step<PulseWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
-            }
-            break;
-        case OscWaveformShape::SyncPulse:
             for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
             {
                 this->Step<PulseWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);

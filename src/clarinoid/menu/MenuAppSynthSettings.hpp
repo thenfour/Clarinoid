@@ -437,7 +437,22 @@ struct SynthPatchOscillatorMenuStuff
                                    AlwaysEnabled};
 
 
-    FloatSettingItem mSyncFreqParam = {"Sync Freq",
+    BoolSettingItem mHardSyncEnabled = {"Hard Sync",
+                                     "<on>",
+                                     "<off>",
+                                     Property<bool>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        return pThis->GetBinding().mHardSyncEnabled;
+                                                    },
+                                                    [](void *cap, const bool &v) FLASHMEM {
+                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                        pThis->GetBinding().mHardSyncEnabled = v;
+                                                    },
+                                                    this},
+                                     AlwaysEnabled};
+
+
+    FloatSettingItem mSyncFreqParam = {" - Freq",
                                    StandardRangeSpecs::gFloat_0_1,
                                    Property<float>{[](void *cap) FLASHMEM {
                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -450,7 +465,7 @@ struct SynthPatchOscillatorMenuStuff
                                                    this},
                                        Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return IsSyncWaveform(pThis->GetBinding().mWaveform);
+                                                         return pThis->GetBinding().mHardSyncEnabled;
                                                       },
                                                       this}};
 
@@ -467,7 +482,7 @@ struct SynthPatchOscillatorMenuStuff
                                                      this},
                                        Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return IsSyncWaveform(pThis->GetBinding().mWaveform);
+                                                         return pThis->GetBinding().mHardSyncEnabled;
                                                       },
                                                       this}};
 
@@ -483,10 +498,9 @@ struct SynthPatchOscillatorMenuStuff
                                                         pThis->GetBinding().mPulseWidth = v;
                                                     },
                                                     this},
-                                       Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
+                                       Property<bool>{[](void *cap) FLASHMEM -> bool {
                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
                                                          return (pThis->GetBinding().mWaveform == OscWaveformShape::Pulse)
-                                                         || (pThis->GetBinding().mWaveform == OscWaveformShape::SyncPulse)
                                                          || (pThis->GetBinding().mWaveform == OscWaveformShape::VarTriangle)
                                                          ;
                                                       },
@@ -551,22 +565,25 @@ struct SynthPatchOscillatorMenuStuff
         AlwaysEnabled,
         this};
 
-    ISettingItem *mArray[18] = {
+    ISettingItem *mArray[19] = {
         &mEnabled,
         &mWaveform,
         &mGain,
+        &mPulseWidth,
         &mFMFeedback,
         &mPan,
-        &mPortamentoTimeMS,
-        &mFreqMul,
-        &mFreqOffset,
-        &mFreqParam,
-        &mFreqParamKT,
-        &mSyncFreqParam,
-        &mSyncFreqParamKT,
         &mPitchSemis,
         &mPitchFine,
-        &mPulseWidth,
+        &mFreqParam,
+        &mFreqParamKT,
+        &mFreqMul,
+        &mFreqOffset,
+        &mPortamentoTimeMS,
+
+        &mHardSyncEnabled,
+        &mSyncFreqParam,
+        &mSyncFreqParamKT,
+
         &mPhaseRestart,
         &mPhaseOffset,
         &mCopyToOsc,

@@ -160,24 +160,17 @@ enum class OscWaveformShape : uint8_t
     VarTriangle = 1, // [aka Saw-Tri]   shape
     Pulse = 2,       //                 pulsewidth
     SawSync = 3,     //                 ??           curve
-    SyncPulse = 4,   //                 pulsewidth   syncfreq
+    //SyncPulse = 4,   //                 pulsewidth   syncfreq
 };
 
-EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[5] = {
+EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[4] = {
     {OscWaveformShape::Sine, "Sine"},
     {OscWaveformShape::VarTriangle, "Tri-Saw"},
-    {OscWaveformShape::Pulse, "Square"},
-    {OscWaveformShape::SawSync, "Sync Saw"},
-    {OscWaveformShape::SyncPulse, "Sync Square"},
+    {OscWaveformShape::Pulse, "Pulse"},
+    {OscWaveformShape::SawSync, "HQ Sawtooth"},
 };
 
 EnumInfo<OscWaveformShape> gOscWaveformShapeInfo("OscWaveformShape", gOscWaveformShapeItems);
-
-static bool IsSyncWaveform(OscWaveformShape x) {
-    if (x == OscWaveformShape::SyncPulse) return true;
-    if (x == OscWaveformShape::SawSync) return true;
-    return false;
-}
 
 enum class ClarinoidFilterType : uint8_t
 {
@@ -790,17 +783,8 @@ struct SynthOscillatorSettings
     // these are good for modulation, and for sync frequency.
     FrequencyParamValue mFreqParam = {0.3f, 1.0f}; // param, kt amt
 
+    bool mHardSyncEnabled = false;
     FrequencyParamValue mSyncFreqParam = {0.4f, 1.0f}; // param, kt amt
-
-    // float mFreqParam =
-    //     0.3f; // same as filter frequency calc. 0.3 = unity, and each 0.1 param value = 1 octave transposition, when
-    //     KT
-    //           // = 1. when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
-    // float mFreqParamKT = 1.0f; // keytracking
-
-    // // these are good for modulation, and for sync frequency.
-    // float mSyncFreqParam = 0.3f;
-    // float mSyncFreqParamKT = 1.0f; // keytracking
 
     // these are good for musical stuff like transposition.
     int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
@@ -819,10 +803,6 @@ struct SynthOscillatorSettings
     float mPulseWidth = 0.5f;
 
     float mFMFeedbackGain = 0.0f; // 0 to 1
-
-    // this depends on the type of waveform (eventually)
-    // currently it only controls "curve", where 0.5 is linear.
-    float mWaveformMorph01 = 0.5f;
 };
 
 struct LFOSpec
@@ -831,7 +811,6 @@ struct LFOSpec
     float mPulseWidth = 0.5f;
     TimeWithBasis mTime;
     bool mPhaseRestart = false;
-    float mWaveformMorph01 = 0.0f;
 };
 
 

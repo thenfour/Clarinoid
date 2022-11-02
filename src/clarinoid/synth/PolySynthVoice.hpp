@@ -174,7 +174,6 @@ struct Voice : IModulationProvider
         switch (s)
         {
         case OscWaveformShape::Pulse:
-        case OscWaveformShape::SyncPulse:
             return WAVEFORM_PULSE;
         case OscWaveformShape::SawSync:
             return WAVEFORM_SAWTOOTH;
@@ -402,6 +401,7 @@ struct Voice : IModulationProvider
                 freq,
                 patch.mOsc[i].mPhase01,
                 patch.mOsc[i].mPortamentoTimeMS,
+                patch.mOsc[i].mHardSyncEnabled,
                 patch.mOsc[i].mSyncFreqParam.GetFrequency(
                     mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(),
                     mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency)));
