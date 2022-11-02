@@ -211,6 +211,7 @@ struct Voice : IModulationProvider
     void Update()
     {
         auto newRunningVoice = mpMusicalState->GetLiveMusicalVoice(this->mRunningVoice);
+        const auto& perf = this->mAppSettings->GetCurrentPerformancePatch();
 
         if (newRunningVoice.mIsActive)
         {
@@ -237,21 +238,25 @@ struct Voice : IModulationProvider
         }
 
         const auto &patch = *mRunningVoice.mpSynthPatch;
-        const auto &perf = *mRunningVoice.mpPerf;
+        //const auto &perf = *mRunningVoice.mpPerf;
 
         float externalGain = 1.0f;
         switch (mRunningVoice.mSource.mType)
         {
         case MusicalEventSourceType::Harmonizer:
+
+            // todo. because of loopstation we cannot just use the performance harmonizer patch.
+            // probably need to add harm patch to musicalvoice just like synthpatch.
+
             // TODO: stereo sep of perf harm
             // TODO: stereo sep of harm voice
-            if (!perf.mHarmEnabled)
-            {
-                mOsc.mIsPlaying = false;
-                return;
-            }
-            mOsc.mIsPlaying = true;
-            externalGain = perf.mHarmGain;
+            // if (!perf.mHarmEnabled)
+            // {
+            //     mOsc.mIsPlaying = false;
+            //     return;
+            // }
+            // mOsc.mIsPlaying = true;
+            // externalGain = perf.mHarmGain;
             // individual harmonizer voices don't have their own volume (yet?)
             // externalGain =
             // mAppSettings->FindHarmPreset(perf.mHarmPreset).mVoiceSettings[mRunningVoice.mSource.mHarmonizerVoiceIndex].
@@ -497,6 +502,16 @@ struct Voice : IModulationProvider
         {
             e.noteOff();
         }
+    }
+
+    void IncomingMusicalEvents_OnNoteKill() {
+        //Serial.println(String("killing voice ") + this->ToString());
+        // for when a hard stop should be done; skip release phase.
+        for (auto &e : mEnvelopes)
+        {
+            e.AdvanceToStage(EnvelopeStage::Idle);
+        }
+        mRunningVoice = {};
     }
 
     // TODO: 3.x: note hasn't quite gotten off the ground

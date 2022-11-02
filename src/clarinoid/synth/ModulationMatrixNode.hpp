@@ -103,14 +103,14 @@ struct VoiceModulationMatrixNode : public AudioStream
 
     audio_block_t *inputQueueArray[gARateModulationSourceCount];
 
-    SynthPreset *mSynthPatch = nullptr;
+    const SynthPreset *mSynthPatch = nullptr;
     IModulationProvider *mpkRateProvider;
 
     VoiceModulationMatrixNode() : AudioStream(gARateModulationSourceCount, inputQueueArray)
     {
     }
 
-    void SetSynthPatch(SynthPreset *patch, IModulationProvider *pkRateProvider)
+    void SetSynthPatch(const SynthPreset *patch, IModulationProvider *pkRateProvider)
     {
         mSynthPatch = patch;
         mpkRateProvider = pkRateProvider;
@@ -258,7 +258,7 @@ struct VoiceModulationMatrixNode : public AudioStream
 
     void MapARateToARateAndApply_NoAux(audio_block_t *src,
                                        audio_block_t *dest,
-                                       SynthModulationSpec &modSpec,
+                                       const SynthModulationSpec &modSpec,
                                        const ModulationSourceInfo &sourceInfo,
                                        const ModulationDestinationInfo &destInfo)
     {
@@ -291,7 +291,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     void MapARateToARateAndApply_KRateAux(Buffers &buffers,
                                           audio_block_t *src,
                                           audio_block_t *dest,
-                                          SynthModulationSpec &modSpec,
+                                          const SynthModulationSpec &modSpec,
                                           const ModulationSourceInfo &sourceInfo,
                                           const ModulationDestinationInfo &destInfo,
                                           const ModulationSourceInfo &auxInfo)
@@ -343,7 +343,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     void MapARateToARateAndApply_ARateAux(Buffers &buffers,
                                           audio_block_t *src,
                                           audio_block_t *dest,
-                                          SynthModulationSpec &modSpec,
+                                          const SynthModulationSpec &modSpec,
                                           const ModulationSourceInfo &sourceInfo,
                                           const ModulationDestinationInfo &destInfo,
                                           const ModulationSourceInfo &auxInfo)
@@ -412,7 +412,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     void MapARateToARateAndApply(Buffers &buffers,
                                  audio_block_t *src,
                                  audio_block_t *dest,
-                                 SynthModulationSpec &modSpec,
+                                 const SynthModulationSpec &modSpec,
                                  const ModulationSourceInfo &sourceInfo,
                                  const ModulationDestinationInfo &destInfo,
                                  const ModulationSourceInfo &auxInfo)
@@ -437,7 +437,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     }
 
     // for k-rate to a-rate
-    void ApplyKRateValueToARateDest(float val, audio_block_t *dest, SynthModulationSpec &modulation)
+    void ApplyKRateValueToARateDest(float val, audio_block_t *dest, const SynthModulationSpec &modulation)
     {
         int16_t v16 = fast::Sample32To16(val);
         arm_offset_q15(dest->data, v16, dest->data, AUDIO_BLOCK_SAMPLES);
@@ -464,7 +464,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     }
 
     void ProcessKRateToKRate(Buffers &buffers,
-                             SynthModulationSpec &modulation,
+                             const SynthModulationSpec &modulation,
                              const ModulationSourceInfo &sourceInfo,
                              const ModulationDestinationInfo &destInfo)
     {
@@ -474,7 +474,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     }
 
     void ProcessKRateToARate(Buffers &buffers,
-                             SynthModulationSpec &modulation,
+                             const SynthModulationSpec &modulation,
                              const ModulationSourceInfo &sourceInfo,
                              const ModulationDestinationInfo &destInfo)
     {
@@ -496,7 +496,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     }
 
     void ProcessARateToKRate(Buffers &buffers,
-                             SynthModulationSpec &modulation,
+                             const SynthModulationSpec &modulation,
                              const ModulationSourceInfo &sourceInfo,
                              const ModulationDestinationInfo &destInfo)
     {
@@ -511,7 +511,7 @@ struct VoiceModulationMatrixNode : public AudioStream
     }
 
     void ProcessARateToARate(Buffers &buffers,
-                             SynthModulationSpec &modulation,
+                             const SynthModulationSpec &modulation,
                              const ModulationSourceInfo &sourceInfo,
                              const ModulationDestinationInfo &destInfo)
     {
@@ -533,7 +533,7 @@ struct VoiceModulationMatrixNode : public AudioStream
         MapARateToARateAndApply(buffers, source, dest, modulation, sourceInfo, destInfo, auxInfo);
     }
 
-    void ProcessModulation(Buffers &buffers, SynthModulationSpec &modulation)
+    void ProcessModulation(Buffers &buffers, const SynthModulationSpec &modulation)
     {
         auto sourceInfo = GetModulationSourceInfo(modulation.mSource);
         if (!sourceInfo.mIsValidModulation)
@@ -566,7 +566,7 @@ struct VoiceModulationMatrixNode : public AudioStream
 
     void ProcessFMModulation(Buffers &buffers,
                              float amount,
-                             SynthOscillatorSettings &osc,
+                             const SynthOscillatorSettings &osc,
                              AnyModulationSource src,
                              AnyModulationDestination dest)
     {

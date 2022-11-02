@@ -298,14 +298,6 @@ struct InputDelegator
         mpSrc->InputSource_Init(this);
     }
 
-    template <typename Tval, typename TEnum>
-    static bool HasFlag(Tval val, TEnum e)
-    {
-        auto ival = (typename std::underlying_type<TEnum>::type)val;
-        auto ie = (typename std::underlying_type<TEnum>::type)e;
-        return (ival & ie) == ie;
-    }
-
     bool MatchesModifierKeys(const ControlMapping &m)
     {
         switch (m.mModifier)

@@ -64,9 +64,9 @@ struct PolySynth : IMusicalEventsForSynth
     virtual void IMusicalEventsForSynth_OnNoteOn(const MusicalVoice &mv) override
     {
         // if it's not active, why is this being called? handle that outside of the synth please.
-        CCASSERT(mv.mIsActive); 
+        CCASSERT(mv.mIsActive);
 
-        // Serial.println(String("synth note on: ") + noteInfo.mMidiNote.GetNoteDesc().mName);
+        // Serial.println(String("synth note on: ") + mv.ToString());
 
         // monophonic wants to reuse the same voice for everything.
         // so find a voice already playing from this source
@@ -88,30 +88,64 @@ struct PolySynth : IMusicalEventsForSynth
         bestVoice->IncomingMusicalEvents_OnNoteOn(mv);
         return;
     }
+
+    // you're effectively saying to note off for the given
+    // mLiveNoteSequenceID.
+    // in the case of harmonizer
     virtual void IMusicalEventsForSynth_OnNoteOff(const MusicalVoice &mv) override
     {
-        //Serial.println(String("synth note off: ") + mv.mSource.ToString() + ", note:" + mv.mNoteInfo.ToString());
-        //  find this note
-        for (auto &v : gVoices)
+        // Serial.println(String("synth note off: ") + mv.mSource.ToString() + ", note:" + mv.mNoteInfo.ToString());
+        //   find this note
+        switch (mv.mSource.mType)
         {
-            if (mv.mSource.Equals(v.mRunningVoice.mSource) && (v.mRunningVoice.mNoteInfo.mLiveNoteSequenceID == mv.mNoteInfo.mLiveNoteSequenceID))
+            default:
+            CCASSERT(!"unexpected source types");
+        case MusicalEventSourceType::LivePlayA:
+        case MusicalEventSourceType::LivePlayB:
+        case MusicalEventSourceType::Loopstation:
+            for (auto &v : gVoices)
             {
-                v.IncomingMusicalEvents_OnNoteOff();
-                //Serial.println(" -> success");
-                return;
+                if (mv.mSource.Equals(v.mRunningVoice.mSource) &&
+                    (v.mRunningVoice.mNoteInfo.mLiveNoteSequenceID == mv.mNoteInfo.mLiveNoteSequenceID))
+                {
+                    v.IncomingMusicalEvents_OnNoteOff();
+                    // Serial.println(" -> success");
+                    return;
+                }
             }
+            break;
+        case MusicalEventSourceType::Harmonizer:
+        case MusicalEventSourceType::LoopstationHarmonizer:
+            for (auto &v : gVoices)
+            {
+                // harmonizer noteoffs will not know the actual noteid. they'll specify the source note id instead.
+                if (mv.mSource.Equals(v.mRunningVoice.mSource) &&
+                    (v.mRunningVoice.mHarmonizerSourceNoteID == mv.mHarmonizerSourceNoteID))
+                {
+                    v.IncomingMusicalEvents_OnNoteOff();
+                    //Serial.println(" -> success");
+                    return;
+                }
+            }
+            break;
         }
-        // Serial.println(" -> Note off sent to synth, but i didn't find any voices playing that note. i guess we culled it due to max voice polyphony.");
-        // Serial.println("{");
-        // for (auto &v : gVoices)
+        // Serial.println(" -> Note off sent to synth, but i didn't find any voices playing that note. i guess we culled
+        // it due to max voice polyphony."); Serial.println("{"); for (auto &v : gVoices)
         // {
-        //     Serial.println(String("  ") + v.mRunningVoice.mSource.ToString() + ", note:" + v.mRunningVoice.mNoteInfo.ToString());
+        //     Serial.println(String("  ") + v.mRunningVoice.mSource.ToString() + ", note:" +
+        //     v.mRunningVoice.mNoteInfo.ToString());
         // }
         // Serial.println("}");
     }
-    virtual void IMusicalEventsForSynth_OnAllNoteOff() override
+    virtual void IMusicalEventsForSynth_OnAllNoteOff(MusicalEventSource src) override
     {
-        // Serial.println(String("synth all notes off"));
+        for (auto &v : gVoices)
+        {
+            if (src.Equals(v.mRunningVoice.mSource))
+            {
+                v.IncomingMusicalEvents_OnNoteKill();
+            }
+        }
     }
 
     // After musical state has been updated, call this to apply those changes to the synth state.

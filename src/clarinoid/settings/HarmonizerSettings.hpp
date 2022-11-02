@@ -171,10 +171,10 @@ struct HarmPreset
     Scale mPresetScale = {0, ScaleFlavorIndex::Chromatic};
     HarmVoiceSettings mVoiceSettings[HARM_VOICES];
     uint32_t mMinRotationTimeMS = 70;
-    uint16_t mSynthPreset1 = SynthPresetID_Bommanoid;// SynthPresetID_HarmSync;  // harm-friendly sync
-    uint16_t mSynthPreset2 = SynthPresetID_Bommanoid;// SynthPresetID_HarmTri;   // harm-friendly tri
-    uint16_t mSynthPreset3 = SynthPresetID_Bommanoid;// SynthPresetID_HarmPulse; // harm-friendly pulse
-    uint16_t mSynthPreset4 = SynthPresetID_Bommanoid;// SynthPresetID_HarmSaw;   // harm-friendly saw
+    uint16_t mSynthPreset1 = SynthPresetID_Bommanoid;
+    uint16_t mSynthPreset2 = SynthPresetID_Bommanoid;
+    uint16_t mSynthPreset3 = SynthPresetID_Bommanoid;
+    uint16_t mSynthPreset4 = SynthPresetID_Bommanoid;
 
     String ToString(int index) const
     {

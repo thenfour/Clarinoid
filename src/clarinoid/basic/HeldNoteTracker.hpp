@@ -27,11 +27,12 @@ struct HeldNoteInfo
 
 // the held note tracker emits note events (think releasing a pedal etc); this is where to send em.
 // this will be a musical device typically (USBKeyboardMusicalDevice).
+template<typename TNoteInfo>
 struct IHeldNoteTrackerEvents
 {
-    virtual void IHeldNoteTrackerEvents_OnNoteOn(const HeldNoteInfo &noteInfo) = 0;
-    virtual void IHeldNoteTrackerEvents_OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote) = 0;
-    virtual void IHeldNoteTrackerEvents_OnAllNotesOff() = 0;
+    virtual void IHeldNoteTrackerEvents_OnNoteOn(const TNoteInfo &noteInfo) = 0;
+    virtual void IHeldNoteTrackerEvents_OnNoteOff(const TNoteInfo &noteInfo, const TNoteInfo *trillNote) = 0;
+    //virtual void IHeldNoteTrackerEvents_OnAllNotesOff() = 0;
 };
 
 // takes incoming note ons & offs, and keeps track of what's happening
@@ -43,10 +44,10 @@ struct HeldNoteTracker
     bool mPedalDown = false;
     static constexpr size_t MAX_HELD_NOTES = 128;
     std::vector<HeldNoteInfo> mHeldNotes; // NEW NOTES get placed at the BACK.
-    IHeldNoteTrackerEvents *mEventHandler;
+    IHeldNoteTrackerEvents<HeldNoteInfo> *mEventHandler;
 
   public:
-    HeldNoteTracker(IHeldNoteTrackerEvents *eventHandler) : mEventHandler(eventHandler)
+    HeldNoteTracker(IHeldNoteTrackerEvents<HeldNoteInfo> *eventHandler) : mEventHandler(eventHandler)
     {
         mHeldNotes.reserve(MAX_HELD_NOTES);
     }
@@ -66,9 +67,11 @@ struct HeldNoteTracker
 
     void AllNotesOff()
     {
-        mHeldNotes.clear();
         mPedalDown = false;
-        mEventHandler->IHeldNoteTrackerEvents_OnAllNotesOff();
+        for (size_t i = 0; i < mHeldNotes.size(); ++ i) {
+            mEventHandler->IHeldNoteTrackerEvents_OnNoteOff(mHeldNotes[i], nullptr);
+        }
+        mHeldNotes.clear();
     }
 
     // void DumpHeldNotes(const char *src)

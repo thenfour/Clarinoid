@@ -478,6 +478,7 @@ inline float DecibelsToLinear(float aDecibels, float aNegInfDecibels = MIN_DECIB
 }
 
 static const float gMinGainLinear = DecibelsToLinear(MIN_DECIBEL_GAIN);
+static constexpr float gMinMidiVelocity01 = 0.99f / 127.0f;
 
 template <typename T>
 inline const char *GetSignStr(T f)

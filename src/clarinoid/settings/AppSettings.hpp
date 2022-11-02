@@ -117,7 +117,7 @@ struct AppSettings
 
     PerformancePatch &GetCurrentPerformancePatch()
     {
-        return mPerformancePatches[mCurrentPerformancePatch];
+        return mPerformancePatches[RotateIntoRange(mCurrentPerformancePatch, SizeofStaticArray(mPerformancePatches))];
     }
 
     bool IsValidSynthPatchId(int16_t id)
@@ -158,6 +158,32 @@ struct AppSettings
     {
         id = RotateIntoRange(id, SYNTH_PRESET_COUNT);
         return mSynthSettings.mPresets[id];
+    }
+
+    SynthPreset &GetSynthPresetForHarmonizerLayer(const HarmPreset &harm, size_t voiceId)
+    {
+        CCASSERT(voiceId < HARM_VOICES);
+        auto &perf = GetCurrentPerformancePatch();
+        auto &voice = harm.mVoiceSettings[voiceId];
+        switch (voice.mSynthPresetRef)
+        {
+        case HarmSynthPresetRefType::GlobalA:
+            return FindSynthPreset(perf.mSynthPresetA);
+        case HarmSynthPresetRefType::GlobalB:
+            return FindSynthPreset(perf.mSynthPresetB);
+        case HarmSynthPresetRefType::Preset1:
+            return FindSynthPreset(harm.mSynthPreset1);
+        case HarmSynthPresetRefType::Preset2:
+            return FindSynthPreset(harm.mSynthPreset2);
+        case HarmSynthPresetRefType::Preset3:
+            return FindSynthPreset(harm.mSynthPreset3);
+        case HarmSynthPresetRefType::Preset4:
+            return FindSynthPreset(harm.mSynthPreset4);
+        case HarmSynthPresetRefType::Voice:
+            return FindSynthPreset(voice.mVoiceSynthPreset);
+        }
+        CCASSERT(!"unknown HarmSynthPresetRefType");
+        return FindSynthPreset(perf.mSynthPresetA);
     }
 
     // static void InitSoaringGuitarPerf(PerformancePatch &p) // originally thicc
@@ -287,7 +313,7 @@ struct AppSettings
 
     AppSettings()
     {
-        //size_t i = 1; // 0 = default, no performance
+        // size_t i = 1; // 0 = default, no performance
 
         // InitSoaringGuitarPerf(mPerformancePatches[i++]);
         // InitRoadPerf(mPerformancePatches[i++]);

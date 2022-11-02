@@ -127,6 +127,18 @@ class MidiNote
         return !(*this == rhs);
     }
 
+    MidiNote& operator += (int8_t t)
+    {
+        mValue += t;
+        DivRem<uint8_t, 12>(mValue, mOctave, mNoteIndex);
+        return *this;
+    }
+
+    MidiNote& operator -= (int8_t t)
+    {
+        return (*this) += (-t);
+    }
+
     MidiNote(uint8_t oct, uint8_t note) : mValue(oct * 12 + note), mNoteIndex(note), mOctave(oct)
     {
     }

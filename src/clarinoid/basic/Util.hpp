@@ -8,6 +8,14 @@
 namespace clarinoid
 {
 
+template <typename Tval, typename TEnum>
+static bool HasFlag(Tval val, TEnum e)
+{
+    auto ival = (typename std::underlying_type<TEnum>::type)val;
+    auto ie = (typename std::underlying_type<TEnum>::type)e;
+    return (ival & ie) == ie;
+}
+
 // use as a global var to run init code
 struct StaticInit
 {
@@ -57,20 +65,24 @@ constexpr auto array_of(T &&...t) -> std::array<V, sizeof...(T)>
 
 // Tfn is callable bool(const Item&)
 template <typename Tit, typename Tfn>
-bool Any(const Tit& begin, const Tit& end, Tfn pred)
+bool Any(const Tit &begin, const Tit &end, Tfn pred)
 {
-    for (Tit it = begin; it != end; ++ it) {
-        if (pred(*it)) return true;
+    for (Tit it = begin; it != end; ++it)
+    {
+        if (pred(*it))
+            return true;
     }
     return false;
 }
 
 // Tfn is callable bool(const Item&)
 template <typename Tcontainer, typename Tfn>
-bool Any(const Tcontainer& container, Tfn pred)
+bool Any(const Tcontainer &container, Tfn pred)
 {
-    for (auto x : container) {
-        if (pred(x)) return true;
+    for (auto x : container)
+    {
+        if (pred(x))
+            return true;
     }
     return false;
 }
