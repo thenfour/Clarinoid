@@ -18,7 +18,7 @@
 namespace clarinoid
 {
 
-static constexpr int TOAST_DURATION_MILLIS = 1700;
+static constexpr int TOAST_DURATION_MILLIS = 1400;
 
 //////////////////////////////////////////////////////////////////////
 struct _CCDisplay : IDisplay

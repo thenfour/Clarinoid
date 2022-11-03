@@ -40,31 +40,31 @@ struct LFOMenuApp
                                    AlwaysEnabled};
 
     BoolSettingItem mRetrig = {"Retrig",
-                                     "On",
-                                     "Off",
-                                     Property<bool>{[](void *cap) FLASHMEM {
-                                                        auto *pThis = (LFOMenuApp *)cap;
-                                                        return pThis->mBinding->mPhaseRestart;
-                                                    },
-                                                    [](void *cap, const bool &v) FLASHMEM {
-                                                        auto *pThis = (LFOMenuApp *)cap;
-                                                        pThis->mBinding->mPhaseRestart = v;
-                                                    },
-                                                    this},
-                                     AlwaysEnabled};
+                               "On",
+                               "Off",
+                               Property<bool>{[](void *cap) FLASHMEM {
+                                                  auto *pThis = (LFOMenuApp *)cap;
+                                                  return pThis->mBinding->mPhaseRestart;
+                                              },
+                                              [](void *cap, const bool &v) FLASHMEM {
+                                                  auto *pThis = (LFOMenuApp *)cap;
+                                                  pThis->mBinding->mPhaseRestart = v;
+                                              },
+                                              this},
+                               AlwaysEnabled};
 
     FloatSettingItem mPulseWidth = {"Pulse Width",
-                                StandardRangeSpecs::gFloat_N1_1,
-                                Property<float>{[](void *cap) FLASHMEM {
-                                                    auto *pThis = (LFOMenuApp *)cap;
-                                                    return pThis->mBinding->mPulseWidth;
-                                                },
-                                                [](void *cap, const float &v) FLASHMEM {
-                                                    auto *pThis = (LFOMenuApp *)cap;
-                                                    pThis->mBinding->mPulseWidth = v;
-                                                },
-                                                this},
-                                AlwaysEnabled};
+                                    StandardRangeSpecs::gFloat_N1_1,
+                                    Property<float>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        return pThis->mBinding->mPulseWidth;
+                                                    },
+                                                    [](void *cap, const float &v) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        pThis->mBinding->mPulseWidth = v;
+                                                    },
+                                                    this},
+                                    AlwaysEnabled};
 
     ISettingItem *mArray[4] = {
         &mWaveform,
@@ -72,7 +72,6 @@ struct LFOMenuApp
         &mRetrig,
         &mPulseWidth,
     };
-
 
     SettingsList mRootList = {mArray};
 
@@ -128,17 +127,17 @@ struct EnvelopeMenuApp
                                   AlwaysEnabled};
 
     FloatSettingItem mAttackCurve = {" - Curve",
-                                StandardRangeSpecs::gFloat_N1_1,
-                                Property<float>{[](void *cap) FLASHMEM {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return pThis->mBinding->mAttackCurve.GetParamValue();
-                                              },
-                                              [](void *cap, const float &v) FLASHMEM {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mAttackCurve.SetParamValue(v);
-                                              },
-                                              this},
-                                AlwaysEnabled};
+                                     StandardRangeSpecs::gFloat_N1_1,
+                                     Property<float>{[](void *cap) FLASHMEM {
+                                                         auto *pThis = (EnvelopeMenuApp *)cap;
+                                                         return pThis->mBinding->mAttackCurve.GetParamValue();
+                                                     },
+                                                     [](void *cap, const float &v) FLASHMEM {
+                                                         auto *pThis = (EnvelopeMenuApp *)cap;
+                                                         pThis->mBinding->mAttackCurve.SetParamValue(v);
+                                                     },
+                                                     this},
+                                     AlwaysEnabled};
 
     FloatSettingItem mHoldMS = {"Hold",
                                 StandardRangeSpecs::gFloat_0_1,
@@ -167,17 +166,17 @@ struct EnvelopeMenuApp
                                  AlwaysEnabled};
 
     FloatSettingItem mDecayCurve = {" - Curve",
-                                StandardRangeSpecs::gFloat_N1_1,
-                                Property<float>{[](void *cap) FLASHMEM {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return pThis->mBinding->mDecayCurve.GetParamValue();
-                                              },
-                                              [](void *cap, const float &v) FLASHMEM {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mDecayCurve.SetParamValue(v);
-                                              },
-                                              this},
-                                AlwaysEnabled};
+                                    StandardRangeSpecs::gFloat_N1_1,
+                                    Property<float>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (EnvelopeMenuApp *)cap;
+                                                        return pThis->mBinding->mDecayCurve.GetParamValue();
+                                                    },
+                                                    [](void *cap, const float &v) FLASHMEM {
+                                                        auto *pThis = (EnvelopeMenuApp *)cap;
+                                                        pThis->mBinding->mDecayCurve.SetParamValue(v);
+                                                    },
+                                                    this},
+                                    AlwaysEnabled};
 
     FloatSettingItem mSustainLevel = {"Sustain",
                                       StandardRangeSpecs::gEnvSustainLevel,
@@ -206,17 +205,17 @@ struct EnvelopeMenuApp
                                    AlwaysEnabled};
 
     FloatSettingItem mReleaseCurve = {" - Curve",
-                                StandardRangeSpecs::gFloat_N1_1,
-                                Property<float>{[](void *cap) FLASHMEM {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      return pThis->mBinding->mReleaseCurve.GetParamValue();
-                                              },
-                                              [](void *cap, const float &v) FLASHMEM {
-                                                      auto *pThis = (EnvelopeMenuApp *)cap;
-                                                      pThis->mBinding->mReleaseCurve.SetParamValue(v);
-                                              },
-                                              this},
-                                AlwaysEnabled};
+                                      StandardRangeSpecs::gFloat_N1_1,
+                                      Property<float>{[](void *cap) FLASHMEM {
+                                                          auto *pThis = (EnvelopeMenuApp *)cap;
+                                                          return pThis->mBinding->mReleaseCurve.GetParamValue();
+                                                      },
+                                                      [](void *cap, const float &v) FLASHMEM {
+                                                          auto *pThis = (EnvelopeMenuApp *)cap;
+                                                          pThis->mBinding->mReleaseCurve.SetParamValue(v);
+                                                      },
+                                                      this},
+                                      AlwaysEnabled};
 
     ISettingItem *mArray[10] = {
         &mLegatoRetrig,
@@ -318,19 +317,6 @@ struct SynthPatchOscillatorMenuStuff
                                                     },
                                                     this},
                                     AlwaysEnabled};
-
-    // IntSettingItem mCurve = {"Curve",
-    //                          StandardRangeSpecs::gCurveIndexRange,
-    //                          Property<int>{[](void *cap) FLASHMEM {
-    //                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-    //                                            return (int)pThis->GetBinding().mCurveIndex;
-    //                                        },
-    //                                        [](void *cap, const int &v) FLASHMEM {
-    //                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-    //                                            pThis->GetBinding().mCurveIndex = v;
-    //                                        },
-    //                                        this},
-    //                          AlwaysEnabled};
 
     FloatSettingItem mPan = {"Pan",
                              StandardRangeSpecs::gFloat_N1_1,
@@ -436,75 +422,73 @@ struct SynthPatchOscillatorMenuStuff
                                                    this},
                                    AlwaysEnabled};
 
-
     BoolSettingItem mHardSyncEnabled = {"Hard Sync",
-                                     "<on>",
-                                     "<off>",
-                                     Property<bool>{[](void *cap) FLASHMEM {
-                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                        return pThis->GetBinding().mHardSyncEnabled;
-                                                    },
-                                                    [](void *cap, const bool &v) FLASHMEM {
-                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                        pThis->GetBinding().mHardSyncEnabled = v;
-                                                    },
-                                                    this},
-                                     AlwaysEnabled};
-
+                                        "<on>",
+                                        "<off>",
+                                        Property<bool>{[](void *cap) FLASHMEM {
+                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                           return pThis->GetBinding().mHardSyncEnabled;
+                                                       },
+                                                       [](void *cap, const bool &v) FLASHMEM {
+                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                           pThis->GetBinding().mHardSyncEnabled = v;
+                                                       },
+                                                       this},
+                                        AlwaysEnabled};
 
     FloatSettingItem mSyncFreqParam = {" - Freq",
-                                   StandardRangeSpecs::gFloat_0_1,
-                                   Property<float>{[](void *cap) FLASHMEM {
-                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                       return pThis->GetBinding().mSyncFreqParam.GetParamValue();
-                                                   },
-                                                   [](void *cap, const float &v) FLASHMEM {
-                                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                       pThis->GetBinding().mSyncFreqParam.SetParamValue(v);
-                                                   },
-                                                   this},
+                                       StandardRangeSpecs::gFloat_0_1,
+                                       Property<float>{[](void *cap) FLASHMEM {
+                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                           return pThis->GetBinding().mSyncFreqParam.GetParamValue();
+                                                       },
+                                                       [](void *cap, const float &v) FLASHMEM {
+                                                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                           pThis->GetBinding().mSyncFreqParam.SetParamValue(v);
+                                                       },
+                                                       this},
                                        Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
-                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return pThis->GetBinding().mHardSyncEnabled;
+                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                          return pThis->GetBinding().mHardSyncEnabled;
                                                       },
                                                       this}};
 
-    FloatSettingItem mSyncFreqParamKT = {" - KT",
-                                     StandardRangeSpecs::gFloat_N1_1,
-                                     Property<float>{[](void *cap) FLASHMEM {
-                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return pThis->GetBinding().mSyncFreqParam.GetKTParamValue();
-                                                     },
-                                                     [](void *cap, const float &v) FLASHMEM {
-                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         pThis->GetBinding().mSyncFreqParam.SetKTParamValue(v);
-                                                     },
-                                                     this},
-                                       Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
-                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return pThis->GetBinding().mHardSyncEnabled;
-                                                      },
-                                                      this}};
+    FloatSettingItem mSyncFreqParamKT = {
+        " - KT",
+        StandardRangeSpecs::gFloat_N1_1,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                            return pThis->GetBinding().mSyncFreqParam.GetKTParamValue();
+                        },
+                        [](void *cap, const float &v) FLASHMEM {
+                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                            pThis->GetBinding().mSyncFreqParam.SetKTParamValue(v);
+                        },
+                        this},
+        Property<bool>{[](void *cap) FLASHMEM -> bool { // enabled only for sync
+                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                           return pThis->GetBinding().mHardSyncEnabled;
+                       },
+                       this}};
 
-
-    FloatSettingItem mPulseWidth = {"PulseWidth",
-                                    StandardRangeSpecs::gFloat_0_1,
-                                    Property<float>{[](void *cap) FLASHMEM {
-                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                        return pThis->GetBinding().mPulseWidth;
-                                                    },
-                                                    [](void *cap, const float &v) FLASHMEM {
-                                                        auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                        pThis->GetBinding().mPulseWidth = v;
-                                                    },
-                                                    this},
-                                       Property<bool>{[](void *cap) FLASHMEM -> bool {
-                                                         auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                         return (pThis->GetBinding().mWaveform == OscWaveformShape::Pulse)
-                                                         || (pThis->GetBinding().mWaveform == OscWaveformShape::VarTriangle)
-                                                         ;
-                                                      },
-                                                      this}};
+    FloatSettingItem mPulseWidth = {
+        "PulseWidth",
+        StandardRangeSpecs::gFloat_0_1,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                            return pThis->GetBinding().mPulseWidth;
+                        },
+                        [](void *cap, const float &v) FLASHMEM {
+                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                            pThis->GetBinding().mPulseWidth = v;
+                        },
+                        this},
+        Property<bool>{[](void *cap) FLASHMEM -> bool {
+                           auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                           return (pThis->GetBinding().mWaveform == OscWaveformShape::Pulse) ||
+                                  (pThis->GetBinding().mWaveform == OscWaveformShape::VarTriangle);
+                       },
+                       this}};
 
     BoolSettingItem mPhaseRestart = {"PhaseRestart",
                                      "Yes",
@@ -566,12 +550,13 @@ struct SynthPatchOscillatorMenuStuff
         this};
 
     ISettingItem *mArray[19] = {
-        &mEnabled,
-        &mWaveform,
-        &mGain,
-        &mPulseWidth,
-        &mFMFeedback,
+        &mEnabled, //
+        &mGain,    //
         &mPan,
+
+        &mWaveform,
+        &mPulseWidth,
+
         &mPitchSemis,
         &mPitchFine,
         &mFreqParam,
@@ -580,12 +565,15 @@ struct SynthPatchOscillatorMenuStuff
         &mFreqOffset,
         &mPortamentoTimeMS,
 
+        &mFMFeedback,
+
         &mHardSyncEnabled,
         &mSyncFreqParam,
         &mSyncFreqParamKT,
 
         &mPhaseRestart,
         &mPhaseOffset,
+
         &mCopyToOsc,
     };
 
@@ -601,7 +589,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         return "SynthPatchMenuApp";
     }
 
-    SynthPatchMenuApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input)
+    SynthPatchMenuApp(IDisplay &d, AppSettings &appSettings, InputDelegator &input)
+        : SettingsMenuApp(d, appSettings, input)
     {
     }
 
@@ -787,7 +776,6 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                         },
                                                         this},
                                         AlwaysEnabled};
-
 
     // EnumSettingItem(const String& name, const EnumInfo<T>& enumInfo, const Property<T>& binding,
     // cc::function<bool()>::ptr_t isEnabled) :
@@ -989,17 +977,17 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         AlwaysEnabled};
 
     FloatSettingItem mModCurve = {"Curve",
-                                StandardRangeSpecs::gFloat_N1_1,
-                                Property<float>{[](void *cap) FLASHMEM {
-                                                  auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->GetModulationBinding().mCurveShape.GetParamValue();
-                                              },
-                                              [](void *cap, const float &v) FLASHMEM {
-                                                  auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  pThis->GetModulationBinding().mCurveShape.SetParamValue(v);
-                                              },
-                                              this},
-                                AlwaysEnabled};
+                                  StandardRangeSpecs::gFloat_N1_1,
+                                  Property<float>{[](void *cap) FLASHMEM {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      return pThis->GetModulationBinding().mCurveShape.GetParamValue();
+                                                  },
+                                                  [](void *cap, const float &v) FLASHMEM {
+                                                      auto *pThis = (SynthPatchMenuApp *)cap;
+                                                      pThis->GetModulationBinding().mCurveShape.SetParamValue(v);
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
 
     BoolSettingItem mModAuxEnable = {"Aux enable",
                                      "On",
@@ -1056,20 +1044,55 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               this},
         AlwaysEnabled};
 
-    FloatSettingItem mModAuxCurve = {" - Aux Curve",
-                                   StandardRangeSpecs::gFloat_N1_1,
-                                   Property<float>{[](void *cap) FLASHMEM {
-                                                     auto *pThis = (SynthPatchMenuApp *)cap;
-                                                     return pThis->GetModulationBinding().mAuxCurveShape.GetParamValue();
-                                                 },
-                                                 [](void *cap, const float &v) FLASHMEM {
-                                                     auto *pThis = (SynthPatchMenuApp *)cap;
-                                                     pThis->GetModulationBinding().mAuxCurveShape.SetParamValue(v);
-                                                 },
-                                                 this},
-                                   AlwaysEnabled};
+    FloatSettingItem mModAuxCurve = {
+        " - Aux Curve",
+        StandardRangeSpecs::gFloat_N1_1,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (SynthPatchMenuApp *)cap;
+                            return pThis->GetModulationBinding().mAuxCurveShape.GetParamValue();
+                        },
+                        [](void *cap, const float &v) FLASHMEM {
+                            auto *pThis = (SynthPatchMenuApp *)cap;
+                            pThis->GetModulationBinding().mAuxCurveShape.SetParamValue(v);
+                        },
+                        this},
+        AlwaysEnabled};
 
-    ISettingItem *mModulationSubmenu[10] = {
+
+    // returns info about any OTHER item than the one in focus.
+    size_t GetOtherModulationIndex(size_t i)
+    {
+        // if i am #2, and you demand #2, then add 1.
+        if (i < this->mEditingModulationIndex)
+            return i;
+        return i + 1;
+    }
+
+    FunctionListSettingItem mCopyToMod = {
+        "> Copy to mod...",
+        SYNTH_MODULATIONS_MAX - 1,                   // minus one because you can't copy to self.
+        [](void *cap, size_t i) FLASHMEM -> String { // itemNameGetter,
+            auto *pThis = (SynthPatchMenuApp *)cap;
+            size_t iOtherOsc = pThis->GetOtherModulationIndex(i);
+            auto& mod = pThis->GetBinding().mModulations[iOtherOsc];
+            return String(String("#") + iOtherOsc + " " + mod.ToString());
+        },
+        [](void *cap, size_t i) FLASHMEM -> void { // cc::function<void(void*,size_t)>::ptr_t onClick,
+            auto *pThis = (SynthPatchMenuApp *)cap;
+            size_t iFrom = pThis->mEditingModulationIndex;
+            size_t iTo = pThis->GetOtherModulationIndex(i);
+
+            auto fromName =  String(String("#") + iFrom + " " + pThis->GetBinding().mModulations[iFrom].ToString());
+            auto toName =  String(String("#") + iTo + " " + pThis->GetBinding().mModulations[iTo].ToString());
+
+            pThis->GetBinding().mModulations[iTo] = pThis->GetBinding().mModulations[iFrom];
+
+            pThis->mDisplay.ShowToast(String("Copied ") + fromName + "\nto\n" + toName);
+        },
+        AlwaysEnabled,
+        this};
+
+    ISettingItem *mModulationSubmenu[11] = {
         &mModSource,
         &mModDest,
         &mModScale,
@@ -1081,6 +1104,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         &mModAuxAmount,
         &mModAuxPolarity,
         &mModAuxCurve,
+        &mCopyToMod,
     };
     SettingsList mModulationSubmenuList = {mModulationSubmenu};
 
@@ -1104,7 +1128,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     SubmenuSettingItem mModEnv1SubmenuItem = {String("ENV1 (voice)"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnvelopes[0]);
+                                                  return pThis->mEnvEditor.GetSubmenuList(
+                                                      pThis->GetBinding().mEnvelopes[0]);
                                               },
                                               AlwaysEnabled,
                                               this};
@@ -1112,7 +1137,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     SubmenuSettingItem mModEnv2SubmenuItem = {String("ENV2"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnvelopes[1]);
+                                                  return pThis->mEnvEditor.GetSubmenuList(
+                                                      pThis->GetBinding().mEnvelopes[1]);
                                               },
                                               AlwaysEnabled,
                                               this};
@@ -1120,7 +1146,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     SubmenuSettingItem mModEnv3SubmenuItem = {String("ENV3"),
                                               [](void *cap) FLASHMEM {
                                                   auto *pThis = (SynthPatchMenuApp *)cap;
-                                                  return pThis->mEnvEditor.GetSubmenuList(pThis->GetBinding().mEnvelopes[2]);
+                                                  return pThis->mEnvEditor.GetSubmenuList(
+                                                      pThis->GetBinding().mEnvelopes[2]);
                                               },
                                               AlwaysEnabled,
                                               this};
