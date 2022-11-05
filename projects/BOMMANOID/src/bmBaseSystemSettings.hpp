@@ -40,9 +40,6 @@ static constexpr size_t HARM_VOICES = 6;
 static constexpr size_t HARM_SEQUENCE_LEN = 8;
 
 static constexpr size_t LOOP_LAYERS = 4;
-// static constexpr size_t MAX_MUSICAL_VOICES =
-//     LOOP_LAYERS *
-//     (HARM_VOICES + 1 /* each harmonized preset can also output the playing (live) note as well, so make room.*/);
 
 static constexpr size_t PRESET_NAME_LEN = 16;
 
@@ -59,51 +56,18 @@ static constexpr size_t MAX_CONTROL_MAPPINGS = 48;
 enum class PhysicalControl : uint8_t
 {
     Enc,
-    Back,
-    Ok,
-    x1,
-    x2,
-    // CPToggleUp,
-    // CPEncButton,
-    // LHx1,
-    // LHx2,
-    // LHx3,
-    // LHx4,
-    // LHEncButton,
-    // LHBack,
-    // LHOk,
-    // LHThx1,
-    // LHThx2,
-    // LHOct1,
-    // LHOct2,
-    // LHOct3,
-    // LHKey1,
-    // LHKey2,
-    // LHKey3,
-    // LHKey4,
-    // RHTh1,
-    // RHTh2,
-    // RHTh3,
-    // // RHJoyButton,
-    // // RHEncButton,
-    // RHx1,
-    // RHx2,
-    // RHx3,
-    // RHx4,
-    // RHx5,
-    // RHKey1,
-    // RHKey2,
-    // RHKey3,
-    // RHKey4,
-
-    // Breath,
-    // Pitch,
-    // JoyX,
-    // JoyY,
-    // Volume,
-
-    // LHEnc,
-    // RHEnc,
+    EncBtn, // pin 2
+    L1,
+    L2,
+    L3,
+    L4,
+    R1,
+    R2,
+    Pot1,
+    Pot2,
+    Pot3,
+    Pot4,
+    Pedal,
 
     COUNT,
 };

@@ -40,7 +40,7 @@
 namespace clarinoid
 {
 
-CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 41 /*DC*/, 40 /*RST*/, 10 /*CS*/};
+CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 40 /*DC*/, 41 /*RST*/, 10 /*CS*/, 88 * 1000000UL};
 
 struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 {
@@ -56,6 +56,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     AppSettings mAppSettings;
 
     MusicalStateTask mMusicalStateTask;
+    TheShinies mShinies;
 
     PerformanceApp mPerformanceApp;
     DebugDisplayApp mDebugDisplayApp;
@@ -75,6 +76,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         : 
         mDisplay(gDisplay),
           mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
+          mShinies(&mAppSettings), //
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, mAppSettings, mInputDelegator), // 
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask, mAppSettings, mInputDelegator),
           mSystemSettingsApp(
@@ -188,17 +190,17 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         mInputDelegator.Init(&mAppSettings, &mControlMapper);
 
         mAppSettings.mControlMappings[0] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
+            ControlMapping::MomentaryMapping(PhysicalControl::R2, ControlMapping::Function::MenuOK);
         mAppSettings.mControlMappings[1] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
+            ControlMapping::MomentaryMapping(PhysicalControl::R1, ControlMapping::Function::MenuBack);
 
         mAppSettings.mControlMappings[14] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
         mAppSettings.mControlMappings[19] =
-            ControlMapping::MomentaryMapping(PhysicalControl::x1, ControlMapping::Function::ModifierFine);
+            ControlMapping::MomentaryMapping(PhysicalControl::L1, ControlMapping::Function::ModifierFine);
         mAppSettings.mControlMappings[20] =
-            ControlMapping::MomentaryMapping(PhysicalControl::x2, ControlMapping::Function::ModifierCourse);
+            ControlMapping::MomentaryMapping(PhysicalControl::L2, ControlMapping::Function::ModifierCourse);
 
         mAppSettings.GetCurrentPerformancePatch().mSynthPresetA = SynthPresetID_Bommanoid;
         //mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
@@ -231,6 +233,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         // NB: run an update task before display tasks in order to initialize things on 1st frame.
         TaskPlanner::TaskDeadline plan[] = {
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 0), &mMusicalStateTask, "MusS0"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 0), &mShinies, "SH0"},
 
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "MusS1"},
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mDisplayTask1, "Display1"},
@@ -245,6 +248,8 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
             //{TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mLed1, "mLed1"},
 
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &mMusicalStateTask, "MusS5"},
+            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &mShinies, "SH1"},
+
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 7), &mMusicalStateTask, "MusS6"},
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 8), &mMusicalStateTask, "MusS7"},
             {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 9), &mMusicalStateTask, "MusS8"},

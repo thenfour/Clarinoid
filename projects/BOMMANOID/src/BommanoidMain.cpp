@@ -34,6 +34,9 @@
 #pragma GCC diagnostic pop
 
 USBHost gUsbHost;
+USBHub hub1(gUsbHost);
+USBHub hub2(gUsbHost);
+USBHub hub3(gUsbHost);
 MIDIDevice_BigBuffer gUsbMidi(gUsbHost);
 static constexpr size_t aosnetuhpch = sizeof(gUsbMidi);
 
