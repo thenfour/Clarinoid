@@ -168,10 +168,10 @@ struct NumericEditRangeSpecWithBottom : NumericEditRangeSpec<float>
 namespace StandardRangeSpecs
 {
 static const NumericEditRangeSpec<float> gFloat_0_1 =
-    NumericEditRangeSpec<float>{0.0f, 1.0f, 0.1f /*course*/, 0.025f /*normal*/, 0.005f /*fine*/};
+    NumericEditRangeSpec<float>{0.0f, 1.0f, 0.1f /*course*/, 0.025f /*normal*/, 0.001f /*fine*/};
 static const NumericEditRangeSpec<float> gFloat_0_1_Fine =
-    NumericEditRangeSpec<float>{0.0f, 1.0f, 0.1f /*course*/, 0.025f /*normal*/, 0.005f /*fine*/};
-static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<float>{-1.0f, 1.0f, 0.1f /*course*/, 0.025f /*normal*/, 0.005f /*fine*/};
+    NumericEditRangeSpec<float>{0.0f, 1.0f, 0.1f /*course*/, 0.025f /*normal*/, 0.001f /*fine*/};
+static const NumericEditRangeSpec<float> gFloat_N1_1 = NumericEditRangeSpec<float>{-1.0f, 1.0f, 0.1f /*course*/, 0.025f /*normal*/, 0.001f /*fine*/};
 
 static const NumericEditRangeSpec<float> gBreathMin =
     NumericEditRangeSpec<float>{0.0f, 0.3f, 0.01f /*course*/, 0.005f /*normal*/, 0.001f /*fine*/};

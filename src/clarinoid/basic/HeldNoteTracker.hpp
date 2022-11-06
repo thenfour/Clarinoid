@@ -27,12 +27,12 @@ struct HeldNoteInfo
 
 // the held note tracker emits note events (think releasing a pedal etc); this is where to send em.
 // this will be a musical device typically (USBKeyboardMusicalDevice).
-template<typename TNoteInfo>
+template <typename TNoteInfo>
 struct IHeldNoteTrackerEvents
 {
     virtual void IHeldNoteTrackerEvents_OnNoteOn(const TNoteInfo &noteInfo) = 0;
     virtual void IHeldNoteTrackerEvents_OnNoteOff(const TNoteInfo &noteInfo, const TNoteInfo *trillNote) = 0;
-    //virtual void IHeldNoteTrackerEvents_OnAllNotesOff() = 0;
+    // virtual void IHeldNoteTrackerEvents_OnAllNotesOff() = 0;
 };
 
 // takes incoming note ons & offs, and keeps track of what's happening
@@ -52,6 +52,11 @@ struct HeldNoteTracker
         mHeldNotes.reserve(MAX_HELD_NOTES);
     }
 
+    bool IsPedalUp() const
+    {
+        return !mPedalDown;
+    }
+
     // similar function to MusicalState::GetLiveMusicalVoice(const MusicalVoice &existing) const
     const HeldNoteInfo *FindExisting(uint32_t noteID) const
     {
@@ -68,27 +73,28 @@ struct HeldNoteTracker
     void AllNotesOff()
     {
         mPedalDown = false;
-        for (size_t i = 0; i < mHeldNotes.size(); ++ i) {
+        for (size_t i = 0; i < mHeldNotes.size(); ++i)
+        {
             mEventHandler->IHeldNoteTrackerEvents_OnNoteOff(mHeldNotes[i], nullptr);
         }
         mHeldNotes.clear();
     }
 
-    // void DumpHeldNotes(const char *src)
-    // {
-    //     Serial.println(String(src) + "; held notes: ");
-    //     for (size_t i = 0; i < mHeldNotes.size(); ++i)
-    //     {
-    //         auto &noteInfo = mHeldNotes[i];
-    //         Serial.println(String(" #") + i + " id:" + noteInfo.mLiveNoteSequenceID +
-    //                        (noteInfo.mIsPhysicallyHeld ? "Fingered " : "pedaled ") +
-    //                        noteInfo.mMidiNote.GetNoteDesc().mName);
-    //     }
-    // }
+    void DumpHeldNotes(const char *src)
+    {
+        Serial.println(String(src) + "; held notes: ");
+        for (size_t i = 0; i < mHeldNotes.size(); ++i)
+        {
+            auto &noteInfo = mHeldNotes[i];
+            Serial.println(String(" #") + i + " id:" + noteInfo.mLiveNoteSequenceID +
+                           (noteInfo.mIsPhysicallyHeld ? "Fingered " : "pedaled ") +
+                           noteInfo.mMidiNote.GetNoteDesc().mName);
+        }
+    }
 
     void PedalUp()
     {
-        // DumpHeldNotes("pedal up");
+        //DumpHeldNotes("pedal up");
         mPedalDown = false;
         // figure out the last physically-held note, in order to do trilling monophonic behavior
         HeldNoteInfo *pTrill = nullptr;
@@ -124,7 +130,7 @@ struct HeldNoteTracker
 
     void PedalDown()
     {
-        // Serial.println(String("held note tracker PedalDown"));
+        //Serial.println(String("held note tracker PedalDown"));
         mPedalDown = true;
     }
 

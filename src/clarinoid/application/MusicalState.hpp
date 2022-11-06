@@ -126,6 +126,9 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
             mUsbKeyboard.mMacroValues[i] = mInput.mMacroPots[i].CurrentValue01();
         }
 
+        //Serial.println(String("sus pedal value as bool: ") + mInput.mSustainPedal.GetControlValue().AsBool());
+        mUsbKeyboard.UpdateExternalSustainPedalState(mInput.mSustainPedal.GetControlValue().AsBool());
+
         // update harmonizer, loopstation
     }
 };

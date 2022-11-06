@@ -21,7 +21,7 @@ struct TheShinies : ITask
 {
 
     static constexpr uint8_t pinBlink = 28;
-    static constexpr uint8_t pinAct1 = 27;
+    //static constexpr uint8_t pinAct1 = 27;
     static constexpr uint8_t pinAct2 = 16;
     static constexpr uint8_t pinAct3 = 5;
     static constexpr uint8_t pinRJ45green = 29;
@@ -54,7 +54,7 @@ struct TheShinies : ITask
         pinMode(Digit2Select, OUTPUT);
 
         pinMode(pinBlink, OUTPUT);
-        pinMode(pinAct1, OUTPUT);
+        //pinMode(pinAct1, OUTPUT);
         pinMode(pinAct2, OUTPUT);
         pinMode(pinAct3, OUTPUT);
         pinMode(pinRJ45green, OUTPUT);
@@ -188,8 +188,8 @@ struct TheShinies : ITask
         uint32_t y = 16384 * 2;
         digitalWrite(pinBlink, (t & y) ? HIGH : LOW);
         y <<= 1;
-        digitalWrite(pinAct1, (t & y) ? HIGH : LOW);
-        y <<= 1;
+        //digitalWrite(pinAct1, (t & y) ? HIGH : LOW);
+        //y <<= 1;
         digitalWrite(pinAct2, (t & y) ? HIGH : LOW);
         y <<= 1;
         digitalWrite(pinAct3, (t & y) ? HIGH : LOW);

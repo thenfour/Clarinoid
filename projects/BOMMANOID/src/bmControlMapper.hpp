@@ -34,11 +34,8 @@ struct BommanoidControlMapper : IInputSource, ITask
         }
         mADS1115.Update();
 
-        // sw.Restart();
-        // mVolumePot.Update();
-        // mPitchStrip.Update();
-        // mJoyX.Update();
-        // mJoyY.Update();
+        mSustainPedal.Update();
+        //Serial.println(String("pedal raw val: ") + mSustainPedal.CurrentValue());
 
         mFirstTaskUpdate = false;
     }
@@ -54,7 +51,7 @@ struct BommanoidControlMapper : IInputSource, ITask
         mControlInfo[(size_t)PhysicalControl::L4] = ControlInfo{"L4", &mPca.mButtons[0]};
         mControlInfo[(size_t)PhysicalControl::R1] = ControlInfo{"R1", &mPca.mButtons[5]};
         mControlInfo[(size_t)PhysicalControl::R2] = ControlInfo{"R2", &mPca.mButtons[4]};
-        mControlInfo[(size_t)PhysicalControl::Pedal] = ControlInfo{"Pedal", &mPca.mButtons[4]};
+        mControlInfo[(size_t)PhysicalControl::Pedal] = ControlInfo{"Pedal", &mSustainPedal};
 
         mControlInfo[(size_t)PhysicalControl::Pot1] = ControlInfo{"Pot1", &mADS1115.mAnalogControls[0]};
         mControlInfo[(size_t)PhysicalControl::Pot2] = ControlInfo{"Pot2", &mADS1115.mAnalogControls[1]};
@@ -81,6 +78,7 @@ struct BommanoidControlMapper : IInputSource, ITask
     PCA9554 mPca = PCA9554{Wire, 0x38};
     ADS1115Device mADS1115 {Wire, 0x48};
     ControlInfo mControlInfo[(size_t)PhysicalControl::COUNT];
+    DebouncedDigitalPinSwitchT<27, 20> mSustainPedal;// sustain pedal is pin 27 A13
 };
 
 } // namespace clarinoid

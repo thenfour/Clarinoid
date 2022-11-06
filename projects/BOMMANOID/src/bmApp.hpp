@@ -44,12 +44,12 @@ CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 40 /*DC*/, 41 /*RST*/, 10 /*CS*/, 8
 
 struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 {
-    //static constexpr size_t breathMappingIndex = 13;
-    //static constexpr size_t joyPitchMappingIndex = 21;
+    // static constexpr size_t breathMappingIndex = 13;
+    // static constexpr size_t joyPitchMappingIndex = 21;
 
-    //Leds1 mLed1;
-    //Leds2 mLed2;
-    //BreathLED mBreathLED;
+    // Leds1 mLed1;
+    // Leds2 mLed2;
+    // BreathLED mBreathLED;
     InputDelegator mInputDelegator;
     BommanoidControlMapper mControlMapper;
     _CCDisplay mDisplay;
@@ -73,11 +73,9 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     static constexpr auto xaoeu = sizeof(mAppSettings);
 
     BommanoidApp()
-        : 
-        mDisplay(gDisplay),
-          mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
-          mShinies(&mAppSettings), //
-          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, mAppSettings, mInputDelegator), // 
+        : mDisplay(gDisplay), mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),
+          mShinies(&mAppSettings),                                                                       //
+          mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, mAppSettings, mInputDelegator), //
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask, mAppSettings, mInputDelegator),
           mSystemSettingsApp(
               mDisplay,
@@ -85,20 +83,21 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
               -1,
               -1,
               [](void *cap) FLASHMEM { // raw breath value getter
-                  //BommanoidApp *pThis = (BommanoidApp *)cap;
-                  return 0.0f;// pThis->mControlMapper.mBreath.CurrentValue01();
+                  // BommanoidApp *pThis = (BommanoidApp *)cap;
+                  return 0.0f; // pThis->mControlMapper.mBreath.CurrentValue01();
               },
               [](void *cap) FLASHMEM { // raw joy pitchbend value getter
-                  //BommanoidApp *pThis = (BommanoidApp *)cap;
-                  return 0.0f;// pThis->mControlMapper.mJoyY.CurrentValue01();
+                  // BommanoidApp *pThis = (BommanoidApp *)cap;
+                  return 0.0f; // pThis->mControlMapper.mJoyY.CurrentValue01();
               },
               this,
               &mMusicalStateTask.mMetronome,
-              mAppSettings, mInputDelegator),
-          mAudioMonitorApp(mDisplay, mAppSettings, mInputDelegator),                                                    //
+              mAppSettings,
+              mInputDelegator),
+          mAudioMonitorApp(mDisplay, mAppSettings, mInputDelegator),                                      //
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay, mInputDelegator), //
-          mPerfPatchApp(mDisplay, mAppSettings, mInputDelegator),                                                       //
-          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome, mAppSettings, mInputDelegator)                     //
+          mPerfPatchApp(mDisplay, mAppSettings, mInputDelegator),                                         //
+          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome, mAppSettings, mInputDelegator)       //
     {
     }
 
@@ -141,7 +140,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     virtual MidiNote ISysInfoProvider_GetNote() override
     {
         return MidiNote(0);
-        //return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
+        // return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
     }
     virtual float ISysInfoProvider_GetTempo() override
     {
@@ -154,12 +153,12 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     virtual float ISysInfoProvider_GetPitchBendN11() override
     {
         return 0;
-        //return mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
+        // return mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
     }
     virtual float ISysInfoProvider_GetBreath01() override
     {
         return 0;
-        //return mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
+        // return mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
     }
     virtual AppSettings *ISysInfoProvider_GetSettings() override
     {
@@ -194,10 +193,17 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[1] =
             ControlMapping::MomentaryMapping(PhysicalControl::R1, ControlMapping::Function::MenuBack);
 
-        mAppSettings.mControlMappings[2] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot1, ControlMapping::Function::MacroPot1, 0.0f, 1.0f);
-        mAppSettings.mControlMappings[3] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot2, ControlMapping::Function::MacroPot2, 0.0f, 1.0f);
-        mAppSettings.mControlMappings[4] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot3, ControlMapping::Function::MacroPot3, 0.0f, 1.0f);
-        mAppSettings.mControlMappings[5] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot4, ControlMapping::Function::MacroPot4, 0.0f, 1.0f);
+        mAppSettings.mControlMappings[2] =
+            ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot1, ControlMapping::Function::MacroPot1, 0.0f, 1.0f);
+        mAppSettings.mControlMappings[3] =
+            ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot2, ControlMapping::Function::MacroPot2, 0.0f, 1.0f);
+        mAppSettings.mControlMappings[4] =
+            ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot3, ControlMapping::Function::MacroPot3, 0.0f, 1.0f);
+        mAppSettings.mControlMappings[5] =
+            ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot4, ControlMapping::Function::MacroPot4, 0.0f, 1.0f);
+
+        mAppSettings.mControlMappings[6] =
+            ControlMapping::MomentaryMapping(PhysicalControl::Pedal, ControlMapping::Function::SustainPedal);
 
         mAppSettings.mControlMappings[14] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
@@ -208,7 +214,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
             ControlMapping::MomentaryMapping(PhysicalControl::L2, ControlMapping::Function::ModifierCourse);
 
         mAppSettings.GetCurrentPerformancePatch().mSynthPresetA = SynthPresetID_Bommanoid;
-        //mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
+        // mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
 
         DefaultHud hud = {mDisplay, this};
 
@@ -273,7 +279,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
     }
 };
 
-//static constexpr auto a3oeu = sizeof(HarmSettingsApp);
+// static constexpr auto a3oeu = sizeof(HarmSettingsApp);
 static constexpr auto ao4eu = sizeof(SynthPatchMenuApp);
 static constexpr auto aoe5u = sizeof(TaskPlanner::TaskDeadline);
 

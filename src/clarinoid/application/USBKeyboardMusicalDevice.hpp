@@ -51,7 +51,7 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
     // events coming from held note tracker
     virtual void IHeldNoteTrackerEvents_OnNoteOn(const HeldNoteInfo &noteInfo) override
     {
-        //Serial.println("USBKeyboardMusicalDevice::IHeldNoteTrackerEvents_OnNoteOn");
+        // Serial.println("USBKeyboardMusicalDevice::IHeldNoteTrackerEvents_OnNoteOn");
         mpEventHandler->IMusicalDeviceEvents_OnPhysicalNoteOn(noteInfo, mpCapture);
 
         // EMIT live notes to synth.
@@ -72,7 +72,7 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         mv.mNoteInfo = noteInfo;
         mv.mSource = MusicalEventSource{source};
         mv.mpParamProvider = this;
-        //mv.mpPerf = &perf;
+        // mv.mpPerf = &perf;
         bool isValidPatch = mAppSettings->IsValidSynthPatchId(synthPatchId);
         if (isValidPatch)
         {
@@ -124,7 +124,7 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         mv.mNoteInfo = noteInfo;
         mv.mSource = MusicalEventSource{source};
         mv.mpParamProvider = this;
-        //mv.mpPerf = &perf;
+        // mv.mpPerf = &perf;
         mv.mIsActive = perfSynthPatchEnabled && synthPatchValid;
         if (mv.mIsActive)
         {
@@ -163,17 +163,18 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
                                                         const PerformancePatch &perf,
                                                         int16_t synthPatchId,
                                                         bool perfSynthPatchEnabled,
-                                                        VoicingMode& cachedVoicingMode)
+                                                        VoicingMode &cachedVoicingMode)
     {
         MusicalVoice mv = existing;
-        //mv.mpPerf = &perf;
+        // mv.mpPerf = &perf;
         bool validSynthPatch = mAppSettings->IsValidSynthPatchId(synthPatchId);
         if (validSynthPatch)
         {
             mv.mpSynthPatch = &mAppSettings->FindSynthPreset(synthPatchId);
 
             // if the voicing mode has changed, send all notes off for this source
-            if (mv.mpSynthPatch->mVoicingMode != cachedVoicingMode) {
+            if (mv.mpSynthPatch->mVoicingMode != cachedVoicingMode)
+            {
                 mpEventHandler->IMusicalDeviceEvents_OnDeviceAllNotesOff(MusicalEventSource{source}, mpCapture);
                 cachedVoicingMode = mv.mpSynthPatch->mVoicingMode;
             }
@@ -201,9 +202,19 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         switch (existing.mSource.mType)
         {
         case MusicalEventSourceType::LivePlayA:
-            return GetLiveMusicalVoice_ForPerfVoice(existing, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPresetA, perf.mSynthAEnabled, mLastVoicingModeA);
+            return GetLiveMusicalVoice_ForPerfVoice(existing,
+                                                    MusicalEventSourceType::LivePlayA,
+                                                    perf,
+                                                    perf.mSynthPresetA,
+                                                    perf.mSynthAEnabled,
+                                                    mLastVoicingModeA);
         case MusicalEventSourceType::LivePlayB:
-            return GetLiveMusicalVoice_ForPerfVoice(existing, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPresetB, perf.mSynthBEnabled, mLastVoicingModeB);
+            return GetLiveMusicalVoice_ForPerfVoice(existing,
+                                                    MusicalEventSourceType::LivePlayA,
+                                                    perf,
+                                                    perf.mSynthPresetB,
+                                                    perf.mSynthBEnabled,
+                                                    mLastVoicingModeB);
         default:
             CCASSERT(!"didn't expect that source type");
         }
@@ -250,7 +261,7 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         }
         // Serial.println(String("midi device note on: ") + note);
         float velocity01 = float(velocity) / 127.0f;
-        //Serial.println("USBKeyboardMusicalDevice::HandleNoteOn");
+        // Serial.println("USBKeyboardMusicalDevice::HandleNoteOn");
         gInstance->mHeldNotes.NoteOn(MidiNote(note), velocity01);
     }
 
@@ -282,6 +293,24 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
             gInstance->mHeldNotes.AllNotesOff();
         }
         gInstance->mCurrentCCValue[control] = value;
+    }
+
+    void UpdateExternalSustainPedalState(float val)
+    {
+        if (val < 0.5f)
+        {
+            if (!mHeldNotes.IsPedalUp())
+            {
+                mHeldNotes.PedalUp();
+            }
+        }
+        else
+        {
+            if (mHeldNotes.IsPedalUp())
+            {
+                gInstance->mHeldNotes.PedalDown();
+            }
+        }
     }
 
     static void HandlePitchChange(uint8_t channel, int pitch /* -8192 to 8191 inclusive */)

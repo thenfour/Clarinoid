@@ -34,7 +34,9 @@ struct DigitalPinSwitch : ISwitch
 
     void Update()
     {
-        mCurrentValue = !!digitalReadFast(mPin);
+        pinMode(mPin, INPUT_PULLUP);
+        // mCurrentValue = !!digitalReadFast(mPin);
+        mCurrentValue = !!digitalRead(mPin);
     }
 
     virtual bool CurrentValue() const override
@@ -63,4 +65,31 @@ struct DigitalPinSwitchT : ISwitch
         return mCurrentValue;
     }
 };
+
+template <uint8_t mPin, uint32_t mIntervalMillis>
+struct DebouncedDigitalPinSwitchT : ISwitch
+{
+    Bounce mBounce;
+
+    DebouncedDigitalPinSwitchT() : mBounce(mPin, mIntervalMillis)
+    {
+        pinMode(mPin, INPUT_PULLUP);
+    }
+
+    void Update()
+    {
+        mBounce.update();
+    }
+
+    virtual bool CurrentValue() const override
+    {
+        return const_cast<DebouncedDigitalPinSwitchT<mPin, mIntervalMillis> *>(this)->CurrentValue();
+    }
+
+    bool CurrentValue()
+    {
+        return (int)mBounce.read() == 0;
+    }
+};
+
 } // namespace clarinoid

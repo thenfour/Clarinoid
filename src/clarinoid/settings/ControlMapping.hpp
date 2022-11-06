@@ -66,6 +66,7 @@ struct ControlMapping
         MacroPot2,
         MacroPot3,
         MacroPot4,
+        SustainPedal,
         COUNT,
     };
 

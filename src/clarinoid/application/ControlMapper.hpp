@@ -213,6 +213,7 @@ struct InputDelegator
 
     VirtualAxis mBreath;
     VirtualAxis mPitchBend;
+    VirtualAxis mSustainPedal;
 
     VirtualSwitch mModifierFine;
     VirtualSwitch mModifierCourse;
@@ -286,6 +287,8 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::MacroPot2, &mMacroPots[1]);
         RegisterFunction(ControlMapping::Function::MacroPot3, &mMacroPots[2]);
         RegisterFunction(ControlMapping::Function::MacroPot4, &mMacroPots[3]);
+
+        RegisterFunction(ControlMapping::Function::SustainPedal, &mSustainPedal);
 
         RegisterFunction(ControlMapping::Function::SynthPresetA, &mSynthPresetAFn);
         RegisterFunction(ControlMapping::Function::SynthPresetB, &mSynthPresetBFn);
