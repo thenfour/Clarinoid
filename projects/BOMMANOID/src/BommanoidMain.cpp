@@ -51,7 +51,7 @@ void setup()
     AudioNoInterrupts();
     Serial.begin(9600);
     Wire.begin();
-    Wire.setClock(400000);
+    Wire.setClock(clarinoid::gWireDataRate);
 
     gUsbHost.begin();
 

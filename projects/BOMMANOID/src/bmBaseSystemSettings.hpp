@@ -6,6 +6,8 @@
 namespace clarinoid
 {
 
+    static constexpr uint32_t gWireDataRate = 400000;
+
 static constexpr int RNG_SEED = 8;
 
     // for breath controllers, this is true to enable a specialized filter controlled by breath.

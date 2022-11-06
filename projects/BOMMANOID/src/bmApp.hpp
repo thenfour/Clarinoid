@@ -194,6 +194,11 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[1] =
             ControlMapping::MomentaryMapping(PhysicalControl::R1, ControlMapping::Function::MenuBack);
 
+        mAppSettings.mControlMappings[2] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot1, ControlMapping::Function::MacroPot1, 0.0f, 1.0f);
+        mAppSettings.mControlMappings[3] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot2, ControlMapping::Function::MacroPot2, 0.0f, 1.0f);
+        mAppSettings.mControlMappings[4] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot3, ControlMapping::Function::MacroPot3, 0.0f, 1.0f);
+        mAppSettings.mControlMappings[5] =ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot4, ControlMapping::Function::MacroPot4, 0.0f, 1.0f);
+
         mAppSettings.mControlMappings[14] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 

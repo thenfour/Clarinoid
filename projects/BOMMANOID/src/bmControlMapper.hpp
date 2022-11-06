@@ -8,12 +8,14 @@
 #include "clarinoid/components/Encoder.hpp"
 #include "clarinoid/components/Switch.hpp"
 #include "clarinoid/components/HoneywellABPI2C.hpp"
+#include "clarinoid/components/ADS1115.hpp"
 
 namespace clarinoid
 {
 
 struct BommanoidControlMapper : IInputSource, ITask
 {
+    bool mFirstTaskUpdate = true;
     IDisplay *mDisplay = nullptr;
 
     void Init(IDisplay *display)
@@ -27,12 +29,18 @@ struct BommanoidControlMapper : IInputSource, ITask
         NoInterrupts _ni;
         mEncoder.Update();
         mPca.Update();
+        if (mFirstTaskUpdate) {
+            mADS1115.Begin();
+        }
+        mADS1115.Update();
 
         // sw.Restart();
         // mVolumePot.Update();
         // mPitchStrip.Update();
         // mJoyX.Update();
         // mJoyY.Update();
+
+        mFirstTaskUpdate = false;
     }
 
     // set up the mControlInfo, mapping enum to structured control interface
@@ -47,10 +55,11 @@ struct BommanoidControlMapper : IInputSource, ITask
         mControlInfo[(size_t)PhysicalControl::R1] = ControlInfo{"R1", &mPca.mButtons[5]};
         mControlInfo[(size_t)PhysicalControl::R2] = ControlInfo{"R2", &mPca.mButtons[4]};
         mControlInfo[(size_t)PhysicalControl::Pedal] = ControlInfo{"Pedal", &mPca.mButtons[4]};
-        // mControlInfo[(size_t)PhysicalControl::Pot1] = ControlInfo{"Pot1", &mPca.mButtons[3]};
-        // mControlInfo[(size_t)PhysicalControl::Pot2] = ControlInfo{"Pot2", &mPca.mButtons[3]};
-        // mControlInfo[(size_t)PhysicalControl::Pot3] = ControlInfo{"Pot3", &mPca.mButtons[3]};
-        // mControlInfo[(size_t)PhysicalControl::Pot4] = ControlInfo{"Pot4", &mPca.mButtons[3]};
+
+        mControlInfo[(size_t)PhysicalControl::Pot1] = ControlInfo{"Pot1", &mADS1115.mAnalogControls[0]};
+        mControlInfo[(size_t)PhysicalControl::Pot2] = ControlInfo{"Pot2", &mADS1115.mAnalogControls[1]};
+        mControlInfo[(size_t)PhysicalControl::Pot3] = ControlInfo{"Pot3", &mADS1115.mAnalogControls[2]};
+        mControlInfo[(size_t)PhysicalControl::Pot4] = ControlInfo{"Pot4", &mADS1115.mAnalogControls[3]};
     }
 
     virtual size_t InputSource_GetControlCount() override
@@ -70,7 +79,7 @@ struct BommanoidControlMapper : IInputSource, ITask
 
     CCEncoder<1, 30, 31> mEncoder;
     PCA9554 mPca = PCA9554{Wire, 0x38};
-
+    ADS1115Device mADS1115 {Wire, 0x48};
     ControlInfo mControlInfo[(size_t)PhysicalControl::COUNT];
 };
 

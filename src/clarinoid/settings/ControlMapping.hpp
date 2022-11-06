@@ -62,6 +62,10 @@ struct ControlMapping
         BaseNoteHoldToggle,
         MetronomeLEDToggle,
         HarmPresetOnOffToggle,
+        MacroPot1,
+        MacroPot2,
+        MacroPot3,
+        MacroPot4,
         COUNT,
     };
 

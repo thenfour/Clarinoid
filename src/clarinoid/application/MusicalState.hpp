@@ -23,17 +23,20 @@ namespace clarinoid
 {
 
 // orchestrates propagation of musical events from physical device to synthesizer
+// some musical state depends directly on hardware, like sustain pedal and analog controls; those are also handled here
 struct MusicalState : IMusicalDeviceEvents // for receiving musical event data from various devices
 {
     AppSettings &mAppSettings;
+    InputDelegator &mInput;
 
     USBKeyboardMusicalDevice mUsbKeyboard;
     HarmonizerMusicalDevice mLiveHarmonizer;
 
     IMusicalEventsForSynth *mpSynth = nullptr;
 
-    MusicalState(AppSettings &appSettings, IMusicalEventsForSynth *pSynth)
+    MusicalState(AppSettings &appSettings, InputDelegator &input, IMusicalEventsForSynth *pSynth)
         : mAppSettings(appSettings),                                           //
+          mInput(input),                                                       //
           mUsbKeyboard(&appSettings, this, &mUsbKeyboard),                     //
           mLiveHarmonizer(appSettings, &mUsbKeyboard, this, &mLiveHarmonizer), //
           mpSynth(pSynth)
@@ -95,7 +98,10 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
         case MusicalEventSourceType::LivePlayB:
             return mUsbKeyboard.GetLiveMusicalVoice(existing);
         case MusicalEventSourceType::Harmonizer:
-            return mLiveHarmonizer.GetLiveMusicalVoice(mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset), existing, mUsbKeyboard.mHeldNotes);
+            return mLiveHarmonizer.GetLiveMusicalVoice(
+                mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset),
+                existing,
+                mUsbKeyboard.mHeldNotes);
         case MusicalEventSourceType::Loopstation:
             // TODO
             break;
@@ -111,8 +117,14 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
 
     void Update()
     {
-        // update physical device
+        // update physical devices
         mUsbKeyboard.Update();
+
+        // maybe a "better" design is if THIS class is a param source, and for certain params we get from the inputdelegator.
+        // or we can keep the USB Keyboard as the param provider, and just tell it some stuff.
+        for (size_t i = 0; i < 4; ++ i) {
+            mUsbKeyboard.mMacroValues[i] = mInput.mMacroPots[i].CurrentValue01();
+        }
 
         // update harmonizer, loopstation
     }

@@ -221,6 +221,8 @@ struct InputDelegator
     VirtualSwitch mModifierHarm;
     VirtualSwitch mModifierShift;
 
+    VirtualAxis mMacroPots[4];
+
     SynthPresetAMappableFunction mSynthPresetAFn;
     SynthPresetBMappableFunction mSynthPresetBFn;
     HarmPresetMappableFunction mHarmPresetFn;
@@ -279,6 +281,11 @@ struct InputDelegator
 
         RegisterFunction(ControlMapping::Function::Breath, &mBreath);
         RegisterFunction(ControlMapping::Function::PitchBend, &mPitchBend);
+
+        RegisterFunction(ControlMapping::Function::MacroPot1, &mMacroPots[0]);
+        RegisterFunction(ControlMapping::Function::MacroPot2, &mMacroPots[1]);
+        RegisterFunction(ControlMapping::Function::MacroPot3, &mMacroPots[2]);
+        RegisterFunction(ControlMapping::Function::MacroPot4, &mMacroPots[3]);
 
         RegisterFunction(ControlMapping::Function::SynthPresetA, &mSynthPresetAFn);
         RegisterFunction(ControlMapping::Function::SynthPresetB, &mSynthPresetBFn);

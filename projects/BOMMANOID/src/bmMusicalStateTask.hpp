@@ -31,7 +31,11 @@ struct MusicalStateTask : ITask
                      AppSettings *appSettings,
                      InputDelegator *input,
                      BommanoidControlMapper *controlMapper)
-        : mAppSettings(appSettings), mControlMapper(controlMapper), mpInput(input), mMetronome(*appSettings), mMusicalState(*appSettings, &mSynth)
+        : mAppSettings(appSettings),     //
+          mControlMapper(controlMapper), //
+          mpInput(input),                //
+          mMetronome(*appSettings),      //
+          mMusicalState(*appSettings, *input, &mSynth)
     {
     }
 

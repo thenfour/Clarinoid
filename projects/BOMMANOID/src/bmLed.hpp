@@ -158,7 +158,7 @@ struct TheShinies : ITask
     virtual void TaskRun() override
     {
         uint32_t t = millis() / ((mFrame & 1) ? 300 : 133);
-        int ts[4] = {t, t, t, t};
+        uint32_t ts[4] = {t, t, t, t};
         // hash it.
         t = lookup3(ts, sizeof(ts), 0xa3a3a3a3);
 
