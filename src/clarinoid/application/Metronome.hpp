@@ -17,7 +17,7 @@ struct Metronome
 
     Metronome(AppSettings &appSettings) : mAppSettings(appSettings)
     {
-        mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM;
+        mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM.GetValue();
         mRootTime = Uptime();
     }
 
@@ -27,9 +27,9 @@ struct Metronome
         // so, make the new root time (now - current beat fraction * new bpm)
         // this is required in order to make BPM changes and not cause total chaos with regards to sequencer timing.
         float b = GetBeatFloat();                                                        // old bpm
-        auto t = TimeSpan::FromBeats(b, mAppSettings.GetCurrentPerformancePatch().mBPM); // new bpm
+        auto t = TimeSpan::FromBeats(b, mAppSettings.GetCurrentPerformancePatch().mBPM.GetValue()); // new bpm
         mRootTime = Uptime() - t;
-        mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM;
+        mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM.GetValue();
     }
 
     uint32_t GetBeatInt() const

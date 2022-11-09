@@ -46,7 +46,7 @@ struct PolySynth : IMusicalEventsForSynth
         Voice *bestVoice = nullptr;
         // size_t bestVoiceIndex = 99;
         float bestReleaseabilityScore = 0;
-        for (size_t i = 0; i < SizeofStaticArray(gVoices); ++i)
+        for (size_t i = 0; i < gVoices.size(); ++i)
         {
             auto &v = gVoices[i];
             float r = v.GetReleaseability();
@@ -72,7 +72,7 @@ struct PolySynth : IMusicalEventsForSynth
         // so find a voice already playing from this source
         if (mv.mpSynthPatch->mVoicingMode == VoicingMode::Monophonic)
         {
-            for (size_t i = 0; i < SizeofStaticArray(gVoices); ++i)
+            for (size_t i = 0; i < gVoices.size(); ++i)
             {
                 auto &v = gVoices[i];
                 if (v.mRunningVoice.mSource.Equals(mv.mSource))

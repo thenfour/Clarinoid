@@ -22,7 +22,8 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
         return mAppSettings->GetCurrentPerformancePatch();
     }
 
-    PerformancePatchSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input)
+    PerformancePatchSettingsApp(IDisplay &d, AppSettings &appSettings, InputDelegator &input)
+        : SettingsMenuApp(d, appSettings, input)
     {
     }
 
@@ -30,11 +31,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                    StandardRangeSpecs::gMasterGainDb,
                                    Property<float>{[](void *cap) FLASHMEM {
                                                        auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                       return pThis->GetBinding().mMasterGain;
+                                                       return pThis->GetBinding().mMasterGain.GetValue();
                                                    },
                                                    [](void *cap, const float &v) {
                                                        auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                       pThis->GetBinding().mMasterGain = v;
+                                                       pThis->GetBinding().mMasterGain.SetValue(v);
                                                    },
                                                    this},
                                    AlwaysEnabled};
@@ -43,11 +44,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                  StandardRangeSpecs::gTransposeRange,
                                  Property<int>{[](void *cap) FLASHMEM {
                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   return (int)pThis->GetBinding().mTranspose;
+                                                   return (int)pThis->GetBinding().mTranspose.GetValue();
                                                },
                                                [](void *cap, const int &v) {
                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   pThis->GetBinding().mTranspose = v;
+                                                   pThis->GetBinding().mTranspose.SetValue(v);
                                                },
                                                this},
                                  AlwaysEnabled};
@@ -56,11 +57,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                    StandardRangeSpecs::gGeneralGain,
                                    Property<float>{[](void *cap) FLASHMEM {
                                                        auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                       return pThis->GetBinding().mReverbGain;
+                                                       return pThis->GetBinding().mReverb.mGain.GetValue();
                                                    },
                                                    [](void *cap, const float &v) {
                                                        auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                       pThis->GetBinding().mReverbGain = v;
+                                                       pThis->GetBinding().mReverb.mGain.SetValue(v);
                                                    },
                                                    this},
                                    AlwaysEnabled};
@@ -69,11 +70,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                       StandardRangeSpecs::gFloat_0_1,
                                       Property<float>{[](void *cap) FLASHMEM {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          return pThis->GetBinding().mSynthStereoSpread;
+                                                          return pThis->GetBinding().mSynthStereoSpread.GetValue();
                                                       },
                                                       [](void *cap, const float &v) {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          pThis->GetBinding().mSynthStereoSpread = v;
+                                                          pThis->GetBinding().mSynthStereoSpread.SetValue(v);
                                                       },
                                                       this},
                                       AlwaysEnabled};
@@ -82,11 +83,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                        StandardRangeSpecs::gFloat_0_1,
                                        Property<float>{[](void *cap) FLASHMEM {
                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                           return pThis->GetBinding().mReverbDamping;
+                                                           return pThis->GetBinding().mReverb.mDamping.GetValue();
                                                        },
                                                        [](void *cap, const float &v) {
                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                           pThis->GetBinding().mReverbDamping = v;
+                                                           pThis->GetBinding().mReverb.mDamping.SetValue(v);
                                                        },
                                                        this},
                                        AlwaysEnabled};
@@ -95,11 +96,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                     StandardRangeSpecs::gFloat_0_1,
                                     Property<float>{[](void *cap) FLASHMEM {
                                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                        return pThis->GetBinding().mReverbSize;
+                                                        return pThis->GetBinding().mReverb.mSize.GetValue();
                                                     },
                                                     [](void *cap, const float &v) {
                                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                        pThis->GetBinding().mReverbSize = v;
+                                                        pThis->GetBinding().mReverb.mSize.SetValue(v);
                                                     },
                                                     this},
                                     AlwaysEnabled};
@@ -108,11 +109,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                   StandardRangeSpecs::gGeneralGain,
                                   Property<float>{[](void *cap) FLASHMEM {
                                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                      return pThis->GetBinding().mDelayGain;
+                                                      return pThis->GetBinding().mDelay.mGain.GetValue();
                                                   },
                                                   [](void *cap, const float &v) {
                                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                      pThis->GetBinding().mDelayGain = v;
+                                                      pThis->GetBinding().mDelay.mGain.SetValue(v);
                                                   },
                                                   this},
                                   AlwaysEnabled};
@@ -121,90 +122,94 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                      NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
                                      Property<float>{[](void *cap) FLASHMEM {
                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                         return pThis->GetBinding().mDelayTime.mTimeMS;
+                                                         return pThis->GetBinding().mDelay.mTime.mParamValue.GetValue();
                                                      },
                                                      [](void *cap, const float &v) {
                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                         pThis->GetBinding().mDelayTime.mTimeMS = v;
+                                                         pThis->GetBinding().mDelay.mTime.mParamValue.SetValue(v);
                                                      },
                                                      this},
                                      AlwaysEnabled};
 
-    FloatSettingItem mDelayStereoSep = {" >Width",
-                                        NumericEditRangeSpec<float>(1, 100),
-                                        Property<float>{[](void *cap) FLASHMEM {
-                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                            return pThis->GetBinding().mDelayStereoSep;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                            pThis->GetBinding().mDelayStereoSep = v;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
+    FloatSettingItem mDelayStereoSep = {
+        " >Width",
+        NumericEditRangeSpec<float>(1, 100),
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            return pThis->GetBinding().mDelay.mStereoSeparationDelayMS.GetValue();
+                        },
+                        [](void *cap, const float &v) {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            pThis->GetBinding().mDelay.mStereoSeparationDelayMS.SetValue(v);
+                        },
+                        this},
+        AlwaysEnabled};
 
-    FloatSettingItem mDelayFeedbackLevel = {" >FB",
-                                            StandardRangeSpecs::gFloat_0_1,
-                                            Property<float>{[](void *cap) FLASHMEM {
-                                                                auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                return pThis->GetBinding().mDelayFeedbackLevel;
-                                                            },
-                                                            [](void *cap, const float &v) {
-                                                                auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                pThis->GetBinding().mDelayFeedbackLevel = v;
-                                                            },
-                                                            this},
-                                            AlwaysEnabled};
+    FloatSettingItem mDelayFeedbackLevel = {
+        " >FB",
+        StandardRangeSpecs::gFloat_0_1,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            return pThis->GetBinding().mDelay.mFeedbackGain.GetValue();
+                        },
+                        [](void *cap, const float &v) {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            pThis->GetBinding().mDelay.mFeedbackGain.SetValue(v);
+                        },
+                        this},
+        AlwaysEnabled};
 
     EnumSettingItem<ClarinoidFilterType> mDelayFilterType = {
         " >Filter",
         gClarinoidFilterTypeInfo,
         Property<ClarinoidFilterType>{[](void *cap) FLASHMEM {
                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                          return pThis->GetBinding().mDelayFilterType;
+                                          return pThis->GetBinding().mDelay.mFilter.mType.GetValue();
                                       },
                                       [](void *cap, const ClarinoidFilterType &v) {
                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                          pThis->GetBinding().mDelayFilterType = v;
+                                          pThis->GetBinding().mDelay.mFilter.mType.SetValue(v);
                                       },
                                       this},
         AlwaysEnabled};
 
-    FloatSettingItem mDelayCutoffFrequency = {" > >Freq",
-                                              NumericEditRangeSpec<float>(0, 22050),
-                                              Property<float>{[](void *cap) FLASHMEM {
-                                                                  auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                  return pThis->GetBinding().mDelayCutoffFrequency;
-                                                              },
-                                                              [](void *cap, const float &v) {
-                                                                  auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                                  pThis->GetBinding().mDelayCutoffFrequency = v;
-                                                              },
-                                                              this},
-                                              AlwaysEnabled};
+    FloatSettingItem mDelayCutoffFrequency = {
+        " > >Freq",
+        StandardRangeSpecs::gFloat_0_1,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            return pThis->GetBinding().mDelay.mFilter.mFrequency.GetParamValue();
+                        },
+                        [](void *cap, const float &v) {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            pThis->GetBinding().mDelay.mFilter.mFrequency.SetParamValue(v);
+                        },
+                        this},
+        AlwaysEnabled};
 
-    FloatSettingItem mDelaySaturation = {" > >Sat",
-                                         StandardRangeSpecs::gFloat_0_1,
-                                         Property<float>{[](void *cap) FLASHMEM {
-                                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                             return pThis->GetBinding().mDelaySaturation;
-                                                         },
-                                                         [](void *cap, const float &v) {
-                                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                             pThis->GetBinding().mDelaySaturation = v;
-                                                         },
-                                                         this},
-                                         AlwaysEnabled};
+    FloatSettingItem mDelaySaturation = {
+        " > >Sat",
+        StandardRangeSpecs::gFloat_0_1,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            return pThis->GetBinding().mDelay.mFilter.mSaturation.GetValue();
+                        },
+                        [](void *cap, const float &v) {
+                            auto *pThis = (PerformancePatchSettingsApp *)cap;
+                            pThis->GetBinding().mDelay.mFilter.mSaturation.SetValue(v);
+                        },
+                        this},
+        AlwaysEnabled};
 
     FloatSettingItem mDelayQ = {" > >Q",
                                 StandardRangeSpecs::gFloat_0_1,
                                 Property<float>{[](void *cap) FLASHMEM {
                                                     auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                    return pThis->GetBinding().mDelayQ;
+                                                    return pThis->GetBinding().mDelay.mFilter.mQ.GetValue();
                                                 },
                                                 [](void *cap, const float &v) {
                                                     auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                    pThis->GetBinding().mDelayQ = v;
+                                                    pThis->GetBinding().mDelay.mFilter.mQ.SetValue(v);
                                                 },
                                                 this},
                                 AlwaysEnabled};
@@ -214,11 +219,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                        "No",
                                        Property<bool>{[](void *cap) FLASHMEM {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          return pThis->GetBinding().mMasterFXEnable;
+                                                          return pThis->GetBinding().mMasterFXEnable.GetValue();
                                                       },
                                                       [](void *cap, const bool &v) {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          pThis->GetBinding().mMasterFXEnable = v;
+                                                          pThis->GetBinding().mMasterFXEnable.SetValue(v);
                                                       },
                                                       this},
                                        AlwaysEnabled};
@@ -228,11 +233,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                            Property<int>{
                                                [](void *cap) FLASHMEM {
                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   return (int)pThis->GetBinding().mSynthPresetA;
+                                                   return (int)pThis->GetBinding().mSynthPatchA.GetValue();
                                                }, // getter
                                                [](void *cap, const int &val) {
                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   pThis->GetBinding().mSynthPresetA = val;
+                                                   pThis->GetBinding().mSynthPatchA.SetValue(val);
                                                },   // setter
                                                this // capture val
                                            },
@@ -248,11 +253,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                            Property<int>{
                                                [](void *cap) FLASHMEM {
                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   return (int)pThis->GetBinding().mSynthPresetB;
+                                                   return (int)pThis->GetBinding().mSynthPatchB.GetValue();
                                                }, // getter
                                                [](void *cap, const int &val) {
                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   pThis->GetBinding().mSynthPresetB = val;
+                                                   pThis->GetBinding().mSynthPatchB.SetValue(val);
                                                },   // setter
                                                this // capture val
                                            },
@@ -268,11 +273,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                          Property<int>{
                                              [](void *cap) FLASHMEM {
                                                  auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                 return (int)pThis->GetBinding().mHarmPreset;
+                                                 return (int)pThis->GetBinding().mHarmPreset.GetValue();
                                              }, // getter
                                              [](void *cap, const int &val) {
                                                  auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                 pThis->GetBinding().mHarmPreset = val;
+                                                 pThis->GetBinding().mHarmPreset.SetValue(val);
                                              },   // setter
                                              this // capture val
                                          },
@@ -322,7 +327,7 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
     {
         mDisplay.ClearState();
         mDisplay.println(String("Performance > "));
-        mDisplay.println(GetAppSettings()->GetPerfPatchName(GetAppSettings()->mCurrentPerformancePatch));
+        mDisplay.println(GetAppSettings()->GetPerfPatchName(GetAppSettings()->mCurrentPerformancePatch.GetValue()));
 
         SettingsMenuApp::RenderFrontPage();
     }

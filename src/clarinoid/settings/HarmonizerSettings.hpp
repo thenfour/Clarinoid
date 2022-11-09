@@ -131,21 +131,29 @@ EnumItemInfo<PitchBendParticipation> gPitchBendParticipationItems[3] = {
 EnumInfo<PitchBendParticipation> gPitchBendParticipationInfo("PitchBendParticipation", gPitchBendParticipationItems);
 
 ////////////////////////////////////////////////////
-struct HarmVoiceSettings
+struct HarmVoiceSettings : SerializableDictionary
 {
-    int8_t mSequence[HARM_SEQUENCE_LEN] = {0};
+    std::array<int8_t, HARM_SEQUENCE_LEN> mSequence{};
     uint8_t mSequenceLength = 0;
+    HarmVoiceNoteSequenceSerializer mSequenceSerializer{"Sequence", mSequence, mSequenceLength};
 
-    HarmSynthPresetRefType mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
-    uint16_t mVoiceSynthPreset = 0;
+    EnumParam<HarmSynthPresetRefType> mSynthPatchRef = {"SynthPatchRef",
+                                                        gHarmSynthPresetRefTypeInfo,
+                                                        HarmSynthPresetRefType::GlobalA};
+    IntParam<uint16_t> mSynthPatch = {"SynthPatch", 0};
 
-    HarmScaleRefType mScaleRef = HarmScaleRefType::Global;
-    Scale mLocalScale = {0, ScaleFlavorIndex::Chromatic};
-    uint8_t mMinOutpNote = 0;
-    uint8_t mMaxOutpNote = 127;
-    NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::TransposeOctave;
-    NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
-    PitchBendParticipation mPitchBendParticipation = PitchBendParticipation::Same;
+    EnumParam<HarmScaleRefType> mScaleRef = {"ScaleRef", gHarmScaleRefTypeInfo, HarmScaleRefType::Global};
+    ScaleParam mLocalScale = {"LocalScale", {0, ScaleFlavorIndex::Chromatic}};
+    MidiNote mMinOutpNote = MidiNote::MinimumValue();
+    MidiNote mMaxOutpNote = MidiNote::MaximumValue();
+    MidiNoteRangeSerializer mRangeSerializer{"Range", mMinOutpNote, mMaxOutpNote};
+
+    EnumParam<NoteOOBBehavior> mNoteOOBBehavior = {"NoteOOBBehavior",
+                                                   gNoteOOBBehaviorInfo,
+                                                   NoteOOBBehavior::TransposeOctave};
+    // EnumParam<NonDiatonicBehavior> mNonDiatonicBehavior = {"NonDiatonicBehavior", gNonDiatonicBehaviorInfo,
+    // NonDiatonicBehavior::NextDiatonicNote }; EnumParam<PitchBendParticipation> mPitchBendParticipation =
+    // {"PitchBendParticipation", gPitchBendParticipationInfo, PitchBendParticipation::Same };
 
     String GetMenuDetailString() const
     {
@@ -161,30 +169,81 @@ struct HarmVoiceSettings
         ret += "]";
         return ret;
     }
-};
 
-struct HarmPreset
-{
-    String mName = "--";
-    bool mEmitLiveNote = true;
-    float mStereoSeparation = 0.1f; // spreads stereo signal of the voices.
-    Scale mPresetScale = {0, ScaleFlavorIndex::Chromatic};
-    HarmVoiceSettings mVoiceSettings[HARM_VOICES];
-    uint32_t mMinRotationTimeMS = 70;
-    uint16_t mSynthPreset1 = SynthPresetID_Bommanoid;
-    uint16_t mSynthPreset2 = SynthPresetID_Bommanoid;
-    uint16_t mSynthPreset3 = SynthPresetID_Bommanoid;
-    uint16_t mSynthPreset4 = SynthPresetID_Bommanoid;
+    SerializableObject *mSerializableChildObjects[7] = {
+        &mSequenceSerializer,
+        &mSynthPatchRef,
+        &mSynthPatch,
+        &mScaleRef,
+        &mLocalScale,
+        &mRangeSerializer,
+        &mNoteOOBBehavior,
+    };
 
-    String ToString(int index) const
+    const size_t mMyIndex;
+
+    HarmVoiceSettings(size_t myIndex)
+        :                                                                 //
+          SerializableDictionary("HarmPatch", mSerializableChildObjects), //
+          mMyIndex(myIndex)
     {
-        return String("") + index + ":" + mName;
     }
 };
 
-struct HarmSettings
+struct HarmPatch : SerializableDictionary
 {
-    HarmPreset mPresets[HARM_PRESET_COUNT];
+    StringParam mName = {"Name", "--"};
+    BoolParam mEmitLiveNote = {"EmitLiveNote", true};
+    FloatParam mStereoSeparation = {"StereoSep", 0.1f}; // spreads stereo signal of the voices.
+    ScaleParam mPatchScale{"PatchScale", {0, ScaleFlavorIndex::Chromatic}};
+    std::array<HarmVoiceSettings, HARM_VOICES> mVoiceSettings{
+        initialize_array_with_indices<HarmVoiceSettings, HARM_VOICES>()};
+    ArraySerializer<HarmVoiceSettings, HARM_VOICES> mVoiceSerializer{"Voices", mVoiceSettings};
+
+    IntParam<uint32_t> mMinRotationTimeMS = {"MinRotationTimeMS", 70};
+    IntParam<uint16_t> mSynthPatch1 = {"SynthPatch1", SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch2 = {"SynthPatch2", SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch3 = {"SynthPatch3", SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch4 = {"SynthPatch4", SynthPresetID_Bommanoid};
+
+    String ToString(int index) const
+    {
+        return String("") + index + ":" + mName.GetValue();
+    }
+
+    void CopyFrom(const HarmPatch &rhs)
+    {
+        Serial.println("TODO: Harm patch copy");
+#pragma message "TODO: Harm patch copy"
+    }
+
+    const size_t mMyIndex;
+
+    SerializableObject *mSerializableChildObjects[10] = {
+        &mName,
+        &mEmitLiveNote,
+        &mStereoSeparation,
+        &mPatchScale,
+        &mVoiceSerializer,
+        &mMinRotationTimeMS,
+        &mSynthPatch1,
+        &mSynthPatch2,
+        &mSynthPatch3,
+        &mSynthPatch4,
+    };
+
+    HarmPatch(size_t myIndex)
+        :                                                                 //
+          SerializableDictionary("HarmPatch", mSerializableChildObjects), //
+          mMyIndex(myIndex)
+    {
+    }
+};
+
+struct HarmSettings : SerializableDictionary
+{
+    std::array<HarmPatch, HARM_PRESET_COUNT> mPatches{initialize_array_with_indices<HarmPatch, HARM_PRESET_COUNT>()};
+    ArraySerializer<HarmPatch, HARM_PRESET_COUNT> mPatchSerializer{"Patches", mPatches};
 
     // static void InitSlumsHarmPreset(HarmPreset &p)
     // {
@@ -338,29 +397,29 @@ struct HarmSettings
     //     p.mVoiceSettings[2].mSequence[2] = -9;  // Eb
     // }
 
-    static void InitQuartalHarmPreset2(HarmPreset &p)
+    static void InitQuartalHarmPreset2(HarmPatch &p)
     {
-        p.mName = "Quartal Madness";
-        p.mPresetScale.mRootNoteIndex = Note::C;
-        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-        //p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
+        p.mName.SetValue("Quartal Madness");
+        p.mPatchScale.mValue.mRootNoteIndex = Note::C;
+        p.mPatchScale.mValue.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        // p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
 
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[0].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset1);
         p.mVoiceSettings[0].mSequenceLength = 3;
         p.mVoiceSettings[0].mSequence[0] = -16; // Ab
         p.mVoiceSettings[0].mSequence[1] = -15; // A
         p.mVoiceSettings[0].mSequence[2] = -14; // Bb
 
-        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[1].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset1);
         p.mVoiceSettings[1].mSequenceLength = 3;
         p.mVoiceSettings[1].mSequence[0] = -11; // Db
         p.mVoiceSettings[1].mSequence[1] = -10; // D
         p.mVoiceSettings[1].mSequence[2] = -9;  // Eb
 
-        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[2].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[2].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset1);
         p.mVoiceSettings[2].mSequenceLength = 3;
         p.mVoiceSettings[2].mSequence[0] = -6; // Gb
         p.mVoiceSettings[2].mSequence[1] = -5; // G
@@ -505,32 +564,32 @@ struct HarmSettings
     //     p.mVoiceSettings[3].mSequence[2] = -9; // C
     // }
 
-    static void InitBigBandPreset(HarmPreset &p, const char *name, Note scaleRoot)
+    static void InitBigBandPreset(HarmPatch &p, const char *name, Note scaleRoot)
     {
-        p.mName = name;//"World Peace Eb";
-        p.mPresetScale.mRootNoteIndex = scaleRoot;//Note::Eb;
-        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
-        p.mStereoSeparation = 0.7f;
+        p.mName.SetValue(name);                          //"World Peace Eb";
+        p.mPatchScale.mValue.mRootNoteIndex = scaleRoot; // Note::Eb;
+        p.mPatchScale.mValue.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
+        p.mStereoSeparation.SetValue(0.7f);
 
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[0].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[0].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset2);
         p.mVoiceSettings[0].mSequenceLength = 2;
         p.mVoiceSettings[0].mSequence[0] = -1; // Bb
         p.mVoiceSettings[0].mSequence[1] = -2; // G
 
-        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+        p.mVoiceSettings[1].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[1].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset3);
         p.mVoiceSettings[1].mSequenceLength = 2;
         p.mVoiceSettings[1].mSequence[0] = -2; // G
         p.mVoiceSettings[1].mSequence[1] = -3; // F
 
-        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+        p.mVoiceSettings[2].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[2].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset2);
         p.mVoiceSettings[2].mSequenceLength = 1;
         p.mVoiceSettings[2].mSequence[0] = -4; // Eb
 
-        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+        p.mVoiceSettings[3].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[3].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset4);
         p.mVoiceSettings[3].mSequenceLength = 2;
         p.mVoiceSettings[3].mSequence[0] = -5; // D
         p.mVoiceSettings[3].mSequence[1] = -7; // Bb
@@ -569,15 +628,15 @@ struct HarmSettings
     //     p.mVoiceSettings[0].mSequence[0] = -12;
     // }
 
-    void InitColBassPreset(HarmPreset &p)
+    void InitColBassPreset(HarmPatch &p)
     {
-        p.mName = "Col Bass";
-        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mName.SetValue("Col Bass");
+        p.mPatchScale.mValue.mFlavorIndex = ScaleFlavorIndex::Chromatic;
         p.mVoiceSettings[0].mMaxOutpNote = 36;
         p.mVoiceSettings[0].mMaxOutpNote = 50;
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
-        //p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_MoogBass;
+        p.mVoiceSettings[0].mScaleRef.SetValue(HarmScaleRefType::Preset);
+        p.mVoiceSettings[0].mSynthPatchRef.SetValue(HarmSynthPresetRefType::GlobalA);
+        // p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_MoogBass;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -12;
     }
@@ -603,13 +662,18 @@ struct HarmSettings
     //     p.mVoiceSettings[0].mSequence[0] = 7;
     // }
 
-    HarmSettings()
+    SerializableObject *mSerializableChildObjects[1] = {
+        &mPatchSerializer,
+    };
+
+    HarmSettings() : SerializableDictionary("HarmSettings", mSerializableChildObjects)
     {
         size_t iPreset = 1;
 
-        InitBigBandPreset(mPresets[iPreset++], "World Peace Eb", Note::Eb);
-        InitColBassPreset(mPresets[iPreset++]);
-        InitQuartalHarmPreset2(mPresets[iPreset++]);
+        InitBigBandPreset(mPatches[iPreset++], "World Peace Eb", Note::Eb);
+        InitColBassPreset(mPatches[iPreset++]);
+        InitQuartalHarmPreset2(mPatches[iPreset++]);
+
         // InitFuzionPreset(mPresets[iPreset++]);
 
         // InitFunkyHarmPreset(mPresets[iPreset++]);
@@ -624,7 +688,7 @@ struct HarmSettings
         // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Bb], "World Peace Bb", Note::Bb);
         // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Eb], "World Peace Eb", Note::Eb);
         // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Gb], "World Peace Gb", Note::Gb);
-        //InitRoadPreset(mPresets[HarmPresetID_Road]);
+        // InitRoadPreset(mPresets[HarmPresetID_Road]);
     }
 };
 

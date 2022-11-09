@@ -82,6 +82,7 @@ struct ControlMapping
                             // Y.
         TriggerUpValueSequence, // when trigger condition is met, set the dest value to the next value in the sequence,
                                 // cycling. can be used to set up a toggle.
+        TriggerUpDownValueSequence,
     };
 
     // specifies how aggregate values are combined, AND how it's applied to the destination parameter.
@@ -204,6 +205,19 @@ struct ControlMapping
             mCursor++;
             mCursor %= mValueCount;
             return true;
+        case MapStyle::TriggerUpDownValueSequence: // when trigger condition is met, set the dest value to the next
+                                                   // value in the sequence, cycling. can be used to set up a toggle.
+            if (IsTriggerUp())
+            {
+                mCursor++;
+            }
+            if (IsTriggerDown())
+            {
+                mCursor--;
+            }
+            CCASSERT(mValueCount > 0);
+            out = ControlValue::FloatValue(mValueArray[RotateIntoRange(mCursor, mValueCount)]);
+            return true;
         }
     }
 
@@ -231,6 +245,8 @@ struct ControlMapping
         return {};
     }
 
+    // NB: pay attention to when you can't use this and you should use UniqueMomentaryMapping
+    // instead.
     static ControlMapping MomentaryMapping(PhysicalControl source, Function d)
     {
         ControlMapping ret;

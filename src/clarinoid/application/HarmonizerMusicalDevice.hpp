@@ -71,7 +71,7 @@ struct HarmonizerDeviceLayer
         mHarmonizerLayer.Init(appSettings, layerIndex);
     }
 
-    void OnNoteOn(const HeldNoteInfo &liveNote, const HarmPreset &harmPatch)
+    void OnNoteOn(const HeldNoteInfo &liveNote, const HarmPatch &harmPatch)
     {
         MusicalVoice mv = mHarmonizerLayer.GetHarmonizedNote(
             harmPatch, liveNote, mModelVoice, HarmonizerLayer::HarmonizeFlags::BecauseOfNoteOn);
@@ -88,7 +88,7 @@ struct HarmonizerDeviceLayer
 
     // user has lifted a key (or removed pedal with unpressed keys).
     // note-off all notes of the given source id. i think this should always incur <=1 note offs.
-    void OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote, const HarmPreset &harmPatch)
+    void OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote, const HarmPatch &harmPatch)
     {
         auto& synthPatch = mpAppSettings->GetSynthPresetForHarmonizerLayer(harmPatch, mLayerIndex);
         if ((synthPatch.mVoicingMode == VoicingMode::Monophonic) && !!trillNote) {
@@ -104,12 +104,12 @@ struct HarmonizerDeviceLayer
         mpEventHandler->IMusicalDeviceEvents_OnDeviceNoteOff(mv, mpCapture);
     }
 
-    void OnAllNotesOff(const HarmPreset &harmPatch)
+    void OnAllNotesOff(const HarmPatch &harmPatch)
     {
         mpEventHandler->IMusicalDeviceEvents_OnDeviceAllNotesOff(mModelVoice.mSource, mpCapture);
     }
 
-    const MusicalVoice GetLiveMusicalVoice(const HarmPreset &harmPatch,
+    const MusicalVoice GetLiveMusicalVoice(const HarmPatch &harmPatch,
                                            const MusicalVoice &synthCurrentlyPlaying, // from synth
                                            const HeldNoteTracker &noteSource)
     {
@@ -164,7 +164,7 @@ struct HarmonizerMusicalDevice
         }
     }
 
-    void OnSourceNoteOn(const HeldNoteInfo &noteInfo, const HarmPreset &harmPatch)
+    void OnSourceNoteOn(const HeldNoteInfo &noteInfo, const HarmPatch &harmPatch)
     {
         //Serial.println("harmonizer device source note on");
         for (auto &layer : mLayers)
@@ -173,7 +173,7 @@ struct HarmonizerMusicalDevice
         }
     }
 
-    void OnSourceNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote, const HarmPreset &harmPatch)
+    void OnSourceNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote, const HarmPatch &harmPatch)
     {
         for (auto &layer : mLayers)
         {
@@ -181,7 +181,7 @@ struct HarmonizerMusicalDevice
         }
     }
 
-    void OnSourceAllNotesOff(const HarmPreset &harmPatch)
+    void OnSourceAllNotesOff(const HarmPatch &harmPatch)
     {
         for (auto &layer : mLayers)
         {
@@ -189,7 +189,7 @@ struct HarmonizerMusicalDevice
         }
     }
 
-    const MusicalVoice GetLiveMusicalVoice(const HarmPreset &harmPatch,
+    const MusicalVoice GetLiveMusicalVoice(const HarmPatch &harmPatch,
                                            const MusicalVoice &existing,
                                            HeldNoteTracker &noteSource)
     {

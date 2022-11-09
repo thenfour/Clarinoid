@@ -198,7 +198,16 @@ struct DebugDisplayApp : SettingsMenuApp
     LabelSettingItem mEnc = {Property<String>{[](void *cap) FLASHMEM {
                                                   DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
                                                   String ret =
-                                                      String("RH Encoder raw:") + pThis->mControls.mEncoder.RawValue();
+                                                      String("Encoder:") + pThis->mControls.mEncoder.RawValue();
+                                                  return ret;
+                                              },
+                                              this},
+                             AlwaysEnabled};
+
+    LabelSettingItem mPedal = {Property<String>{[](void *cap) FLASHMEM {
+                                                  DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+                                                  String ret =
+                                                      String("Pedal: ") + pThis->mControls.mSustainPedal.CurrentValue();
                                                   return ret;
                                               },
                                               this},
@@ -250,7 +259,7 @@ struct DebugDisplayApp : SettingsMenuApp
                                              AlwaysEnabled};
 
     MultiLabelSettingItem mVoiceState = {[](void *pThis) FLASHMEM -> size_t { // get item count
-                                             return SizeofStaticArray(gVoices);
+                                             return gVoices.size();
                                          },
                                          [](void *pThis, size_t i) FLASHMEM -> String { // get item text
                                              return gVoices[i].ToString();
@@ -260,10 +269,11 @@ struct DebugDisplayApp : SettingsMenuApp
                                          },
                                          this};
 
-    ISettingItem *mArray[7] = {
+    ISettingItem *mArray[8] = {
         //&mMidiNote,
         //&mFilterFreq,
         &mVoiceState,
+        &mPedal,
         &mEnc,
         &mSynthPoly,
         &mAudioProcessorUsage,

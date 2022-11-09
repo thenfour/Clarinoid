@@ -75,7 +75,7 @@ struct _CCDisplay : IDisplay
             glyph.yOffset += 6;
         }
 
-        mDisplay.dim(mAppSettings->mDisplayDim);
+        mDisplay.dim(mAppSettings->mDisplayDim.GetValue());
 
         // welcome msg.
         ClearState();

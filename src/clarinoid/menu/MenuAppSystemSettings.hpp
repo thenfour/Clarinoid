@@ -52,15 +52,53 @@ struct SystemSettingsApp : SettingsMenuApp
                                    "No",
                                    Property<bool>{[](void *cap) FLASHMEM {
                                                       auto pThis = (SystemSettingsApp *)cap;
-                                                      return pThis->mAppSettings->mDisplayDim;
+                                                      return pThis->mAppSettings->mDisplayDim.GetValue();
                                                   }, // getter
                                                   [](void *cap, const bool &x) {
                                                       auto pThis = (SystemSettingsApp *)cap;
-                                                      pThis->mAppSettings->mDisplayDim = x;
+                                                      pThis->mAppSettings->mDisplayDim.SetValue(x);
                                                       pThis->mDisplay.dim(x);
                                                   },
                                                   this},
                                    AlwaysEnabled};
+
+    BoolSettingItem mPedalPolarity = {"Pedal polarity",
+                                      "+",
+                                      "-",
+                                      Property<bool>{[](void *cap) FLASHMEM {
+                                                         auto pThis = (SystemSettingsApp *)cap;
+                                                         return pThis->mAppSettings->mSustainPedalPolarity.GetValue();
+                                                     }, // getter
+                                                     [](void *cap, const bool &x) {
+                                                         auto pThis = (SystemSettingsApp *)cap;
+                                                         pThis->mAppSettings->mSustainPedalPolarity.SetValue(x);
+                                                     },
+                                                     this},
+                                      AlwaysEnabled};
+
+    // save settings...
+    // [ ] system
+    // [ ] performances
+    // [ ] synth patches
+    // [ ] harmonizer
+    // back up existing,
+
+    // Load settings ...
+    // show file list
+
+    // file explorer to delete
+
+    TriggerSettingItem mExportToSerial{String("Export-> Serial"),
+                                       [](void *cap) {
+                                                         auto pThis = (SystemSettingsApp *)cap;
+
+                                                         while(!Serial);
+                                                         auto str = pThis->mAppSettings->SerializableObject_ToString();
+                                                         Serial.println(str);
+                                                         pThis->mDisplay.ShowToast(String("Exported ") + str.length() + " bytes.");
+                                       },
+                                       this,
+                                       AlwaysEnabled};
 
     UnipolarCalibrationSettingItem mBreath = {
         "Breath",
@@ -146,47 +184,47 @@ struct SystemSettingsApp : SettingsMenuApp
         },
         this};
 
-    IntSettingItem mNoteChangeFrames = {"Note chg frames",
-                                        NumericEditRangeSpec<int>{0, 25},
-                                        Property<int>{
-                                            [](void *cap) FLASHMEM {
-                                                auto *pThis = (SystemSettingsApp *)cap;
-                                                return (int)pThis->mAppSettings->mNoteChangeSmoothingFrames;
-                                            }, // getter
-                                            [](void *cap, const int &val) {
-                                                auto *pThis = (SystemSettingsApp *)cap;
-                                                pThis->mAppSettings->mNoteChangeSmoothingFrames = val;
-                                            },   // setter
-                                            this // capture val
-                                        },
-                                        AlwaysEnabled};
+    // IntSettingItem mNoteChangeFrames = {"Note chg frames",
+    //                                     NumericEditRangeSpec<int>{0, 25},
+    //                                     Property<int>{
+    //                                         [](void *cap) FLASHMEM {
+    //                                             auto *pThis = (SystemSettingsApp *)cap;
+    //                                             return (int)pThis->mAppSettings->mNoteChangeSmoothingFrames;
+    //                                         }, // getter
+    //                                         [](void *cap, const int &val) {
+    //                                             auto *pThis = (SystemSettingsApp *)cap;
+    //                                             pThis->mAppSettings->mNoteChangeSmoothingFrames = val;
+    //                                         },   // setter
+    //                                         this // capture val
+    //                                     },
+    //                                     AlwaysEnabled};
 
-    FloatSettingItem mNoteChangeIntFrames = {
-        "Note delta*",
-        StandardRangeSpecs::gFloat_0_1,
-        Property<float>{
-            [](void *cap) FLASHMEM {
-                auto *pThis = (SystemSettingsApp *)cap;
-                return pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor;
-            }, // getter
-            [](void *cap, const float &val) {
-                auto *pThis = (SystemSettingsApp *)cap;
-                pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor = val;
-            },   // setter
-            this // capture val
-        },
-        AlwaysEnabled};
+    // FloatSettingItem mNoteChangeIntFrames = {
+    //     "Note delta*",
+    //     StandardRangeSpecs::gFloat_0_1,
+    //     Property<float>{
+    //         [](void *cap) FLASHMEM {
+    //             auto *pThis = (SystemSettingsApp *)cap;
+    //             return pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor;
+    //         }, // getter
+    //         [](void *cap, const float &val) {
+    //             auto *pThis = (SystemSettingsApp *)cap;
+    //             pThis->mAppSettings->mNoteChangeSmoothingIntervalFrameFactor = val;
+    //         },   // setter
+    //         this // capture val
+    //     },
+    //     AlwaysEnabled};
 
     IntSettingItem mSelectedPerfPatch = {"Perf patch",
                                          NumericEditRangeSpec<int>{0, clarinoid::PERFORMANCE_PATCH_COUNT - 1},
                                          Property<int>{
                                              [](void *cap) FLASHMEM {
                                                  auto *pThis = (SystemSettingsApp *)cap;
-                                                 return (int)pThis->mAppSettings->mCurrentPerformancePatch;
+                                                 return (int)pThis->mAppSettings->mCurrentPerformancePatch.GetValue();
                                              }, // getter
                                              [](void *cap, const int &val) {
                                                  auto *pThis = (SystemSettingsApp *)cap;
-                                                 pThis->mAppSettings->mCurrentPerformancePatch = val;
+                                                 pThis->mAppSettings->mCurrentPerformancePatch.SetValue(val);
                                                  pThis->mpMetronome->OnBPMChanged();
                                              },   // setter
                                              this // capture val
@@ -199,13 +237,15 @@ struct SystemSettingsApp : SettingsMenuApp
                                          this};
 
     ISettingItem *mArray[7] = {
+        &mExportToSerial,
         &mSelectedPerfPatch,
+        &mPedalPolarity,
         &mDimDisplay,
         &mBreath,
         &mPitchUp,
         &mPitchDown,
-        &mNoteChangeFrames,
-        &mNoteChangeIntFrames,
+        // &mNoteChangeFrames,
+        // &mNoteChangeIntFrames,
     };
 
     SettingsList mRootList = {mArray};

@@ -262,23 +262,23 @@ struct Voice : IModulationProvider
             break;
         case MusicalEventSourceType::LivePlayA:
             // TODO: stereo sep of perf patches
-            if (!perf.mSynthAEnabled)
+            if (!perf.mSynthAEnabled.GetValue())
             {
                 mOsc.mIsPlaying = false;
                 return;
             }
             mOsc.mIsPlaying = true;
-            externalGain = perf.mSynthAGain;
+            externalGain = perf.mSynthAGain.GetValue();
             break;
         case MusicalEventSourceType::LivePlayB:
             // TODO: stereo sep of perf patches
-            if (!perf.mSynthBEnabled)
+            if (!perf.mSynthBEnabled.GetValue())
             {
                 mOsc.mIsPlaying = false;
                 return;
             }
             mOsc.mIsPlaying = true;
-            externalGain = perf.mSynthBGain;
+            externalGain = perf.mSynthBGain.GetValue();
             break;
         case MusicalEventSourceType::Loopstation:
             // TODO... how does this work?
@@ -307,14 +307,14 @@ struct Voice : IModulationProvider
 
         for (size_t i = 0; i < LFO_COUNT; ++i)
         {
-            short wantsWaveType = convertWaveType(patch.mLFOs[i].mWaveShape);
+            short wantsWaveType = convertWaveType(patch.mLFOs[i].mWaveShape.GetValue());
             if (mLfoWaveshapes[i] != wantsWaveType)
             {
                 mLfos[i].begin(wantsWaveType);
                 mLfos[i].amplitude(1.0f);
             }
 
-            mLfos[i].frequency(patch.mLFOs[i].mTime.ToHertz(perf.mBPM));
+            mLfos[i].frequency(patch.mLFOs[i].mSpeed.ToHertz(perf.mBPM.GetValue()));
         }
 
         // figure out which oscillators are enabled. Get a count and grab enabled indices.
@@ -323,7 +323,7 @@ struct Voice : IModulationProvider
         for (size_t iosc = 0; iosc < POLYBLEP_OSC_COUNT; ++iosc)
         {
             if (!patch.mOsc[iosc].mEnabled)
-                break;
+                continue;
             // enabledOscIndices[oscEnabledCount] = iosc;
             oscEnabledCount++;
         }
@@ -413,10 +413,10 @@ struct Voice : IModulationProvider
         //     Serial.println(sd);
 
         // TODO: if portamento is enabled for an oscillator, it should be accounted for here.
-        float filterFreq = patch.mFilterFreqParam.GetFrequency(
+        float filterFreq = patch.mFilter.mFrequency.GetFrequency(
             MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()),
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
-        mFilter.SetParams(patch.mFilterType, filterFreq, patch.mFilterQ, patch.mFilterSaturation);
+        mFilter.SetParams(patch.mFilter.mType.GetValue(), filterFreq, patch.mFilter.mQ.GetValue(), patch.mFilter.mSaturation.GetValue());
         mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
 
         // for "mix" behavior, we can look to panning. the pan law applies here; you're effectively panning between the
@@ -481,9 +481,9 @@ struct Voice : IModulationProvider
 
         for (size_t i = 0; i < LFO_COUNT; ++i)
         {
-            if (mRunningVoice.mpSynthPatch->mLFOs[i].mPhaseRestart)
+            if (mRunningVoice.mpSynthPatch->mLFOs[i].mPhaseRestart.GetValue())
             {
-                mLfos[i].begin(convertWaveType(mRunningVoice.mpSynthPatch->mLFOs[i].mWaveShape));
+                mLfos[i].begin(convertWaveType(mRunningVoice.mpSynthPatch->mLFOs[i].mWaveShape.GetValue()));
                 mLfos[i].amplitude(1.0f);
             }
         }
@@ -604,6 +604,6 @@ struct Voice : IModulationProvider
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = {VOICE_INITIALIZER};
+std::array<Voice, MAX_SYNTH_VOICES> gVoices { initialize_array_with_indices<Voice, MAX_SYNTH_VOICES>() };
 
 } // namespace clarinoid

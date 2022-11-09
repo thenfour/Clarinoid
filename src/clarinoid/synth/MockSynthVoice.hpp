@@ -50,7 +50,7 @@ struct Voice
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES];
+std::array<Voice, MAX_SYNTH_VOICES> gVoices = initialize_array_with_indices<Voice, MAX_SYNTH_VOICES>();
 
 struct SynthGraphControl
 {

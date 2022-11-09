@@ -6,6 +6,8 @@
 
 #include "bmBaseSystemSettings.hpp"
 
+#include <ArduinoJson.h>
+
 #include <clarinoid/basic/Basic.hpp>
 
 #include <clarinoid/components/Switch.hpp>
@@ -167,7 +169,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 
     void Main()
     {
-        mControlMapper.Init(&mDisplay);
+        mControlMapper.Init(&mDisplay, mAppSettings);
 
         HarmSettingsApp mHarmVoiceSettingsApp(mDisplay, mAppSettings, mInputDelegator);
         SynthPatchMenuApp mSynthPatchApp(mDisplay, mAppSettings, mInputDelegator);
@@ -203,7 +205,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
             ControlMapping::MakeUnipolarMapping(PhysicalControl::Pot4, ControlMapping::Function::MacroPot4, 0.0f, 1.0f);
 
         mAppSettings.mControlMappings[6] =
-            ControlMapping::MomentaryMapping(PhysicalControl::Pedal, ControlMapping::Function::SustainPedal);
+            ControlMapping::UniqueMomentaryMapping(PhysicalControl::Pedal, ControlMapping::Function::SustainPedal);
 
         mAppSettings.mControlMappings[14] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
@@ -213,7 +215,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[20] =
             ControlMapping::MomentaryMapping(PhysicalControl::L2, ControlMapping::Function::ModifierCourse);
 
-        mAppSettings.GetCurrentPerformancePatch().mSynthPresetA = SynthPresetID_Bommanoid;
+        mAppSettings.GetCurrentPerformancePatch().mSynthPatchA.SetValue(SynthPresetID_Bommanoid);
         // mAppSettings.GetCurrentPerformancePatch().mMasterFXEnable = false;
 
         DefaultHud hud = {mDisplay, this};

@@ -29,7 +29,6 @@ inline float FrequencyToMIDINote(float hz)
     return ret;
 }
 
-
 // https://www.paulcecchettimusic.com/full-list-of-midi-cc-numbers/
 enum class MidiCCValue
 {
@@ -40,7 +39,6 @@ enum class MidiCCValue
     DamperPedal = 64,
     AllNotesOff = 123,
 };
-
 
 ////////////////////////////////////////////////////
 struct NoteDesc
@@ -107,7 +105,7 @@ class MidiNote
 
   public:
     MidiNote() = default;
-    MidiNote(uint8_t val) : mValue(val)
+    MidiNote(uint8_t midiValue) : mValue(midiValue)
     {
         // for reference, 36 = C2
         // but MIDI "octaves" are like, not very handy because A0 is val 21.
@@ -115,7 +113,25 @@ class MidiNote
         // which makens C0 = 12
         // so... what's below that???
         // for mathematical simplicity
-        DivRem<uint8_t, 12>(val, mOctave, mNoteIndex);
+        DivRem<uint8_t, 12>(midiValue, mOctave, mNoteIndex);
+    }
+
+    static MidiNote MinimumValue()
+    {
+        return {0};
+    }
+    static MidiNote MaximumValue()
+    {
+        return {128};
+    }
+
+    // avoid ambiguity
+    // MidiNote(uint8_t oct, uint8_t note) : mValue(oct * 12 + note), mNoteIndex(note), mOctave(oct)
+    // {
+    // }
+
+    MidiNote(uint8_t oct, Note note) : mValue(oct * 12 + (uint8_t)note), mNoteIndex((uint8_t)note), mOctave(oct)
+    {
     }
 
     bool operator==(const MidiNote &rhs) const
@@ -126,30 +142,43 @@ class MidiNote
     {
         return !(*this == rhs);
     }
+    bool operator<(const MidiNote &rhs) const
+    {
+        return this->mValue < rhs.mValue;
+    }
+    bool operator<=(const MidiNote &rhs) const
+    {
+        return this->mValue <= rhs.mValue;
+    }
+    bool operator>(const MidiNote &rhs) const
+    {
+        return this->mValue > rhs.mValue;
+    }
+    bool operator>=(const MidiNote &rhs) const
+    {
+        return this->mValue >= rhs.mValue;
+    }
 
-    MidiNote& operator += (int8_t t)
+    MidiNote &operator+=(int8_t t)
     {
         mValue += t;
         DivRem<uint8_t, 12>(mValue, mOctave, mNoteIndex);
         return *this;
     }
 
-    MidiNote& operator -= (int8_t t)
+    MidiNote &operator-=(int8_t t)
     {
         return (*this) += (-t);
     }
 
-    MidiNote(uint8_t oct, uint8_t note) : mValue(oct * 12 + note), mNoteIndex(note), mOctave(oct)
+    String ToString() const
     {
+        return String(gNotes[mNoteIndex].mName) + mOctave;
     }
 
-    MidiNote(uint8_t oct, Note note) : mValue(oct * 12 + (uint8_t)note), mNoteIndex((uint8_t)note), mOctave(oct)
+    String ToStringWithCustomGlyphs() const
     {
-    }
-
-    const char *ToString() const
-    {
-        return gNotes[mNoteIndex].mNameWithCustomGlyphs;
+        return String(gNotes[mNoteIndex].mNameWithCustomGlyphs) + mOctave;
     }
 
     uint8_t GetMidiValue() const
@@ -502,6 +531,18 @@ struct Scale
     }
     Scale(Note root, ScaleFlavorIndex flavor) : mRootNoteIndex(root), mFlavorIndex(flavor)
     {
+    }
+
+    String ToSerializableString() const
+    {
+        return String(gNoteInfo.GetValueString(mRootNoteIndex)) + " " +
+               gScaleFlavorIndexInfo.GetValueString(mFlavorIndex);
+    }
+
+    bool DeserializeFromString(const String &s) const
+    {
+        // todo
+        return false;
     }
 
     Scale &operator=(const Scale &rhs)

@@ -64,7 +64,7 @@ struct DefaultHud : IHudProvider
         auto rcbpm = mDisplay.GetTextBounds(bpmStr);
 
         mDisplay.setCursor(mDisplay.width() - rcbpm.width, mDisplay.getCursorY());
-        if (mpInfo->ISysInfoProvider_GetSettings()->mMetronomeSoundOn)
+        if (mpInfo->ISysInfoProvider_GetSettings()->mMetronome.mSoundOn.GetValue())
         {
             mDisplay.DrawBitmap(PointI::Construct((mDisplay.width() - rcbpm.width - gPatchDisabledSpec.widthPixels) - 1,
                                                   mDisplay.GetClientRect().bottom() + 2),

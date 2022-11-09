@@ -129,13 +129,13 @@ struct TriggerSettingItem : public ISettingItem
 {
     String mName;
     typename cc::function<void(void *)>::ptr_t mAction;
-    typename cc::function<bool()>::ptr_t mIsEnabled;
+    typename cc::function<bool(void *)>::ptr_t mIsEnabled;
     void *mActionCapture = nullptr;
 
     TriggerSettingItem(const String &name,
                        cc::function<void(void *)>::ptr_t action,
                        void *actionCapture,
-                       typename cc::function<bool()>::ptr_t isEnabled)
+                       typename cc::function<bool(void *)>::ptr_t isEnabled)
         : mName(name), mAction(action), mIsEnabled(isEnabled), mActionCapture(actionCapture)
     {
     }
@@ -150,13 +150,15 @@ struct TriggerSettingItem : public ISettingItem
     }
     virtual bool IsEnabled(size_t multiIndex) const
     {
-        return mIsEnabled();
+        return mIsEnabled(mActionCapture);
     }
     virtual void Trigger(size_t multiIndex)
     {
         mAction(mActionCapture);
     }
 };
+
+using FunctionSettingItem = TriggerSettingItem;
 
 struct SubmenuSettingItem : public ISettingItem
 {
@@ -190,7 +192,8 @@ struct SubmenuSettingItem : public ISettingItem
 
     virtual String GetName(size_t multiIndex)
     {
-        if (mNameGetter) {
+        if (mNameGetter)
+        {
             return mNameGetter(this->mpCapture);
         }
         return mName;
@@ -382,7 +385,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
 {
     ISettingItemEditor *mpCurrentEditor = nullptr;
 
-    SettingsMenuApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : DisplayApp(d, appSettings, input)
+    SettingsMenuApp(IDisplay &d, AppSettings &appSettings, InputDelegator &input) : DisplayApp(d, appSettings, input)
     {
     }
 

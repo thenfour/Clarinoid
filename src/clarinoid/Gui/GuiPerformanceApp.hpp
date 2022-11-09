@@ -31,7 +31,7 @@ struct GuiPerformanceApp : GuiApp
         "Enabled",
         "Muted",
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAEnabled.mValue;
          },
          this},
         NeverEnabled};
@@ -43,7 +43,7 @@ struct GuiPerformanceApp : GuiApp
         "Enabled",
         "Muted",
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBEnabled.mValue;
          },
          this},
         NeverEnabled};
@@ -55,7 +55,7 @@ struct GuiPerformanceApp : GuiApp
         "Enabled",
         "Muted",
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmEnabled.mValue;
          },
          this},
         NeverEnabled};
@@ -66,11 +66,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gGeneralGain,
         "Synth A Gain",
         {[](void *cap) -> float & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAGain.mValue;
          },
          this},
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthAEnabled.mValue;
          },
          this},
         AlwaysEnabled};
@@ -81,11 +81,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gGeneralGain,
         "Synth B Gain",
         {[](void *cap) -> float & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBGain.mValue;
          },
          this},
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthBEnabled.mValue;
          },
          this},
         AlwaysEnabled};
@@ -96,11 +96,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gGeneralGain,
         "Harm Gain",
         {[](void *cap) -> float & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmGain.mValue;
          },
          this},
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mHarmEnabled.mValue;
          },
          this},
         AlwaysEnabled};
@@ -112,7 +112,7 @@ struct GuiPerformanceApp : GuiApp
         "Synth Patch A", //
         {[](void *cap) -> int16_t & {
              auto *pThis = (GuiPerformanceApp *)cap;
-             return pThis->mAppSettings->GetCurrentPerformancePatch().mSynthPresetA;
+             return pThis->mAppSettings->GetCurrentPerformancePatch().mSynthPatchA.mValue;
          },
          this},
         AlwaysEnabled};
@@ -124,7 +124,7 @@ struct GuiPerformanceApp : GuiApp
         "Synth Patch B", //
         {[](void *cap) -> int16_t & {
              auto *pThis = (GuiPerformanceApp *)cap;
-             return pThis->mAppSettings->GetCurrentPerformancePatch().mSynthPresetB;
+             return pThis->mAppSettings->GetCurrentPerformancePatch().mSynthPatchB.mValue;
          },
          this},
         AlwaysEnabled};
@@ -135,7 +135,7 @@ struct GuiPerformanceApp : GuiApp
         "Harm Patch",
         {[](void *cap) -> int16_t & {
              auto *pThis = (GuiPerformanceApp *)cap;
-             return pThis->mAppSettings->GetCurrentPerformancePatch().mHarmPreset;
+             return pThis->mAppSettings->GetCurrentPerformancePatch().mHarmPreset.mValue;
          },
          this},
         AlwaysEnabled};
@@ -148,7 +148,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gMasterGainDb,
         "Master gain",
         {[](void *cap) -> float & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterGain.mValue;
          },
          this},
         NullBoolBinding,
@@ -160,7 +160,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_N1_1, // range
         "Stereo spread",                 // tooltip
         {[](void *cap) -> float & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthStereoSpread;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mSynthStereoSpread.mValue;
          },
          this},
         AlwaysEnabled // always en
@@ -190,11 +190,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gGeneralGain,
         "Master gain",
         {[](void *cap) -> float & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXGain.mValue;
          },
          this},
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable.mValue;
          },
          this},
         AlwaysEnabled};
@@ -206,7 +206,7 @@ struct GuiPerformanceApp : GuiApp
         "Enabled",
         "Disabled", //
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable; //
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable.mValue;
          },
          this},
         NeverEnabled};
@@ -217,17 +217,17 @@ struct GuiPerformanceApp : GuiApp
                               "Master BPM",
                               {[](void *cap) -> float {
                                    auto *pThis = (GuiPerformanceApp *)cap;
-                                   return pThis->mAppSettings->GetCurrentPerformancePatch().mBPM;
+                                   return pThis->mAppSettings->GetCurrentPerformancePatch().mBPM.GetValue();
                                },
                                [](void *cap, const float &val) -> void {
                                    auto *pThis = (GuiPerformanceApp *)cap;
-                                   pThis->mAppSettings->GetCurrentPerformancePatch().mBPM = val;
+                                   pThis->mAppSettings->GetCurrentPerformancePatch().mBPM.SetValue(val);
                                    pThis->mMetronome.OnBPMChanged();
                                },
                                this},
                               {[](void *cap) -> bool & { // on toggle handler
                                    auto *pThis = (GuiPerformanceApp *)cap;
-                                   return pThis->mAppSettings->mMetronomeSoundOn;
+                                   return pThis->mAppSettings->mMetronome.mSoundOn.mValue;
                                },
                                this},
                               AlwaysEnabled};
@@ -239,13 +239,13 @@ struct GuiPerformanceApp : GuiApp
         "Transpose",
         {[](void *cap) -> int8_t & {
              auto *pThis = (GuiPerformanceApp *)cap;
-             return pThis->mAppSettings->GetCurrentPerformancePatch().mTranspose;
+             return pThis->mAppSettings->GetCurrentPerformancePatch().mTranspose.mValue;
          },
          this},
         {[](void *cap) -> bool { return true; }, // double-click getter (not used)
          [](void *cap, const bool &val) {        // double-click setter (set transpose to 0)
              auto *pThis = (GuiPerformanceApp *)cap;
-             pThis->mAppSettings->GetCurrentPerformancePatch().mTranspose = 0;
+             pThis->mAppSettings->GetCurrentPerformancePatch().mTranspose.SetValue(0);
          },
          this},
         AlwaysEnabled};
@@ -265,7 +265,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_0_1,
         "Size",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverbSize;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverb.mSize.mValue;
          },
          this},
         NullBoolBinding,
@@ -280,7 +280,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_0_1,
         "Damp",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverbDamping;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverb.mDamping.mValue;
          },
          this},
         NullBoolBinding,
@@ -294,11 +294,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gGeneralGain,
         "Gain",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverbGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverb.mGain.mValue;
          },
          this},
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverbEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverb.mEnabled.mValue;
          },
          this},
         AlwaysEnabled};
@@ -312,7 +312,7 @@ struct GuiPerformanceApp : GuiApp
         "",
         "", //
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverbEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mReverb.mEnabled.mValue;
          },
          this},
         NeverEnabled};
@@ -328,11 +328,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gGeneralGain,
         "Gain",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayGain;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mGain.mValue;
          },
          this},
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mEnabled.mValue;
          },
          this},
         AlwaysEnabled};
@@ -344,7 +344,7 @@ struct GuiPerformanceApp : GuiApp
         "",
         "", //
         {[](void *cap) -> bool & {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayEnabled;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mEnabled.mValue;
          },
          this},
         NeverEnabled};
@@ -357,7 +357,7 @@ struct GuiPerformanceApp : GuiApp
         NumericEditRangeSpec<float>(0, MAX_DELAY_MS),
         "Time(MS)",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayTime.mTimeMS;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mTime.mParamValue.mValue;
          },
          this},
         NullBoolBinding,
@@ -369,11 +369,11 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_0_1, // range
         "Stereo spread",                // tooltip
         {[](void *cap) -> float {
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayStereoSep /
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mStereoSeparationDelayMS.mValue /
                     StandardRangeSpecs::gDelayStereoSpread.mRangeMax;
          },
          [](void *cap, const float &val) {
-             ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayStereoSep =
+             ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mStereoSeparationDelayMS.mValue =
                  val * StandardRangeSpecs::gDelayStereoSpread.mRangeMax;
          },
          this},
@@ -388,7 +388,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gGeneralGain,
         "Feedback level",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayFeedbackLevel;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mFeedbackGain.mValue;
          },
          this},
         NullBoolBinding,
@@ -402,7 +402,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFilterFreqRange,
         "Cutoff Hz",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayCutoffFrequency;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mFilter.mFrequency.mValue.mValue;
          },
          this},
         NullBoolBinding,
@@ -416,7 +416,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_0_1,
         "Saturation",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelaySaturation;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mFilter.mSaturation.mValue;
          },
          this},
         NullBoolBinding,
@@ -430,7 +430,7 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_0_1,
         "Resonance",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelayQ;
+             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mFilter.mQ.mValue;
          },
          this},
         NullBoolBinding,

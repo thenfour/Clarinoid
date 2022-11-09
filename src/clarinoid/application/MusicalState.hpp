@@ -65,7 +65,7 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
         CCASSERT(cap == &mUsbKeyboard);
         // forward to things that care about physical musical events
         mLiveHarmonizer.OnSourceNoteOn(
-            noteInfo, mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset));
+            noteInfo, mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset.GetValue()));
     }
     virtual void IMusicalDeviceEvents_OnPhysicalNoteOff(const HeldNoteInfo &noteInfo,
                                                         const HeldNoteInfo *trillNote,
@@ -74,14 +74,14 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
         CCASSERT(cap == &mUsbKeyboard);
         // forward to things that care about physical musical events
         mLiveHarmonizer.OnSourceNoteOff(
-            noteInfo, trillNote, mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset));
+            noteInfo, trillNote, mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset.GetValue()));
     }
     virtual void IMusicalDeviceEvents_OnPhysicalAllNotesOff(void *cap) override
     {
         CCASSERT(cap == &mUsbKeyboard);
         // forward to things that care about physical musical events
         mLiveHarmonizer.OnSourceAllNotesOff(
-            mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset));
+            mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset.GetValue()));
     }
 
     // synth voices need to be able to get any updates to the notes they're playing.
@@ -99,7 +99,7 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
             return mUsbKeyboard.GetLiveMusicalVoice(existing);
         case MusicalEventSourceType::Harmonizer:
             return mLiveHarmonizer.GetLiveMusicalVoice(
-                mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset),
+                mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset.GetValue()),
                 existing,
                 mUsbKeyboard.mHeldNotes);
         case MusicalEventSourceType::Loopstation:
@@ -126,8 +126,14 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
             mUsbKeyboard.mMacroValues[i] = mInput.mMacroPots[i].CurrentValue01();
         }
 
-        //Serial.println(String("sus pedal value as bool: ") + mInput.mSustainPedal.GetControlValue().AsBool());
-        mUsbKeyboard.UpdateExternalSustainPedalState(mInput.mSustainPedal.GetControlValue().AsBool());
+        bool pedalState = mInput.mSustainPedal.CurrentValue01() > 0.5f;
+        if (mAppSettings.mSustainPedalPolarity.GetValue()) {
+            pedalState = !pedalState;
+        }
+        
+        //Serial.println(String("PEDAL raw:") + mInput.mSustainPedal.CurrentValue01() + ", pedalState:" + pedalState + ", existingpedalstate:" + mUsbKeyboard.mHeldNotes.IsPedalUp());
+        
+        mUsbKeyboard.UpdateExternalSustainPedalState(pedalState);
 
         // update harmonizer, loopstation
     }

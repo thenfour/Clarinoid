@@ -34,7 +34,7 @@ struct HarmonizerLayer
 
     // modelvoice could be nullptr for note ons.
     MusicalVoice GetHarmonizedNote(
-        const HarmPreset &harmPatch,
+        const HarmPatch &harmPatch,
         const HeldNoteInfo &liveNote,
         const MusicalVoice &modelVoice, // required to know things like paramprovider, source, noteID for non-noteons
         HarmonizeFlags opt)
@@ -78,17 +78,17 @@ struct HarmonizerLayer
 
         Scale scale;
 
-        switch (harmLayer.mScaleRef)
+        switch (harmLayer.mScaleRef.GetValue())
         {
         case HarmScaleRefType::Voice:
-            scale = harmLayer.mLocalScale;
+            scale = harmLayer.mLocalScale.mValue;
             break;
         case HarmScaleRefType::Preset:
-            scale = harmPatch.mPresetScale;
+            scale = harmPatch.mPatchScale.mValue;
             break;
         case HarmScaleRefType::Global: {
-            bool globalDeduced = perf.mGlobalScaleRef == GlobalScaleRefType::Deduced;
-            Scale globalScale = globalDeduced ? perf.mDeducedScale : perf.mGlobalScale;
+            bool globalDeduced = perf.mGlobalScaleRef.GetValue() == GlobalScaleRefType::Deduced;
+            Scale globalScale = globalDeduced ? perf.mDeducedScale.mValue : perf.mGlobalScale.mValue;
             scale = globalScale;
             break;
         }
@@ -111,20 +111,20 @@ struct HarmonizerLayer
         ret.mNoteInfo.mMidiNote = newNote;
 
         // corrective settings...
-        switch (harmLayer.mNoteOOBBehavior)
+        switch (harmLayer.mNoteOOBBehavior.GetValue())
         {
         case NoteOOBBehavior::TransposeOctave:
-            while (ret.mNoteInfo.mMidiNote.GetMidiValue() < harmLayer.mMinOutpNote)
+            while (ret.mNoteInfo.mMidiNote < harmLayer.mMinOutpNote)
                 ret.mNoteInfo.mMidiNote += 12;
-            while (ret.mNoteInfo.mMidiNote.GetMidiValue() > harmLayer.mMaxOutpNote)
+            while (ret.mNoteInfo.mMidiNote > harmLayer.mMaxOutpNote)
                 ret.mNoteInfo.mMidiNote -= 12;
             break;
         case NoteOOBBehavior::Mute:
             break;
         }
 
-        if ((ret.mNoteInfo.mMidiNote.GetMidiValue() < harmLayer.mMinOutpNote) ||
-            (ret.mNoteInfo.mMidiNote.GetMidiValue() > harmLayer.mMaxOutpNote))
+        if ((ret.mNoteInfo.mMidiNote < harmLayer.mMinOutpNote) ||
+            (ret.mNoteInfo.mMidiNote > harmLayer.mMaxOutpNote))
         {
             if (noteOn && log)
             {
@@ -145,7 +145,7 @@ struct HarmonizerLayer
             // create a new note.
             ret.mNoteInfo.mLiveNoteSequenceID = GetNextLiveNoteSequenceID();
             ret.mNoteInfo.mRandomTrigger01 = prng_f01();
-            if (mRotationTriggerTimer.ElapsedTime().ElapsedMillisI() >= harmPatch.mMinRotationTimeMS)
+            if (mRotationTriggerTimer.ElapsedTime().ElapsedMillisI() >= harmPatch.mMinRotationTimeMS.GetValue())
             {
                 mRotationTriggerTimer.Restart();
                 mSequencePos++;

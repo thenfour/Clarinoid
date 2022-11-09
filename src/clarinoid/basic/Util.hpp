@@ -29,25 +29,34 @@ struct StaticInit
 template <typename T>
 struct array_view
 {
-    size_t mSize = 0;
-    T *mData = nullptr;
+	size_t mSize = 0;
+	T* mData = nullptr;
 
-    array_view() = default;
-    size_t size() const
-    {
-        return mSize;
-    }
+	array_view() = default;
+	size_t size() const
+	{
+		return mSize;
+	}
 
-    template <size_t N>
-    array_view(T (&a)[N]) : mSize(N), mData(a)
-    {
-    }
+	template <size_t N>
+	array_view(T(&a)[N]) : mSize(N), mData(a)
+	{
+	}
 
-    T &operator[](size_t i)
-    {
-        CCASSERT(i < mSize);
-        return mData[i];
-    }
+	using iterator = T*;
+
+	iterator begin() {
+		return mData;
+	}
+	iterator end() {
+		return mData + mSize;
+	}
+
+	T& operator[](size_t i)
+	{
+		CCASSERT(i < mSize);
+		return mData[i];
+	}
 };
 
 template <typename T, size_t N>

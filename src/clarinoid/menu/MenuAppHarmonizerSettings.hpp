@@ -14,12 +14,13 @@ namespace clarinoid
 struct HarmVoiceSettingsApp
 {
 
-    HarmVoiceSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : mDisplay(d), mAppSettings(appSettings)
+    HarmVoiceSettingsApp(IDisplay &d, AppSettings &appSettings, InputDelegator &input)
+        : mDisplay(d), mAppSettings(appSettings)
     {
     }
 
     IDisplay &mDisplay;
-    AppSettings& mAppSettings;
+    AppSettings &mAppSettings;
 
     int mEditingHarmVoice = -1;
 
@@ -27,50 +28,51 @@ struct HarmVoiceSettingsApp
     {
         CCASSERT(mEditingHarmVoice >= 0 && mEditingHarmVoice < (int)clarinoid::HARM_VOICES);
         auto &perf = mAppSettings.GetCurrentPerformancePatch();
-        auto &h = mAppSettings.FindHarmPreset(perf.mHarmPreset);
+        auto &h = mAppSettings.FindHarmPreset(perf.mHarmPreset.GetValue());
         return h.mVoiceSettings[mEditingHarmVoice];
     }
 
-    EnumSettingItem<HarmSynthPresetRefType> mSynthPresetRef = {"Synth patch ref",
-                                                               gHarmSynthPresetRefTypeInfo,
-                                                               Property<HarmSynthPresetRefType>{
-                                                                   [](void *cap) FLASHMEM {
-                                                                       auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                                                       return pThis->EditingVoice().mSynthPresetRef;
-                                                                   }, // getter
-                                                                   [](void *cap, const HarmSynthPresetRefType &val) {
-                                                                       auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                                                       pThis->EditingVoice().mSynthPresetRef = val;
-                                                                   },   // setter
-                                                                   this // capture val
-                                                               },
-                                                               AlwaysEnabled};
-
-    IntSettingItem mOwnSynthPatch = {
-        "Own synth patch",
-        NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
-        Property<int>{
+    EnumSettingItem<HarmSynthPresetRefType> mSynthPresetRef = {
+        "Synth patch ref",
+        gHarmSynthPresetRefTypeInfo,
+        Property<HarmSynthPresetRefType>{
             [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
-                return (int)pThis->EditingVoice().mVoiceSynthPreset;
+                return pThis->EditingVoice().mSynthPatchRef.GetValue();
             }, // getter
-            [](void *cap, const int &val) {
+            [](void *cap, const HarmSynthPresetRefType &val) {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
-                pThis->EditingVoice().mVoiceSynthPreset = val;
+                pThis->EditingVoice().mSynthPatchRef.SetValue(val);
             },   // setter
             this // capture val
         },
-        [](void *cap, int n) { // formatter
-            auto *pThis = (HarmVoiceSettingsApp *)cap;
-            return pThis->mAppSettings.mSynthSettings.mPresets[n].ToString(n);
-        },
-        Property<bool>{// enabled only if ref type = voice.
-                       [](void *cap) FLASHMEM {
-                           auto *pThis = (HarmVoiceSettingsApp *)cap;
-                           return pThis->EditingVoice().mSynthPresetRef == HarmSynthPresetRefType::Voice;
-                       },
-                       this},
-        this};
+        AlwaysEnabled};
+
+    IntSettingItem mOwnSynthPatch = {"Own synth patch",
+                                     NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
+                                     Property<int>{
+                                         [](void *cap) FLASHMEM {
+                                             auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                             return (int)pThis->EditingVoice().mSynthPatch.GetValue();
+                                         }, // getter
+                                         [](void *cap, const int &val) {
+                                             auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                             pThis->EditingVoice().mSynthPatch.SetValue(val);
+                                         },   // setter
+                                         this // capture val
+                                     },
+                                     [](void *cap, int n) { // formatter
+                                         auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                         return pThis->mAppSettings.mSynthSettings.mPresets[n].ToString(n);
+                                     },
+                                     Property<bool>{// enabled only if ref type = voice.
+                                                    [](void *cap) FLASHMEM {
+                                                        auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                                        return pThis->EditingVoice().mSynthPatchRef.GetValue() ==
+                                                               HarmSynthPresetRefType::Voice;
+                                                    },
+                                                    this},
+                                     this};
 
     IntSettingItem mSequenceLength = {"Seq length",
                                       NumericEditRangeSpec<int>{0, clarinoid::HARM_SEQUENCE_LEN - 1},
@@ -117,11 +119,11 @@ struct HarmVoiceSettingsApp
                                    Property<int>{
                                        [](void *cap) FLASHMEM {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           return (int)pThis->EditingVoice().mMinOutpNote;
+                                           return (int)pThis->EditingVoice().mMinOutpNote.GetMidiValue();
                                        }, // getter
                                        [](void *cap, const int &val) {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           pThis->EditingVoice().mMinOutpNote = val;
+                                           pThis->EditingVoice().mMinOutpNote = MidiNote{(uint8_t)val};
                                        },   // setter
                                        this // capture val
                                    },
@@ -132,11 +134,11 @@ struct HarmVoiceSettingsApp
                                    Property<int>{
                                        [](void *cap) FLASHMEM {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           return (int)pThis->EditingVoice().mMaxOutpNote;
+                                           return (int)pThis->EditingVoice().mMaxOutpNote.GetMidiValue();
                                        }, // getter
                                        [](void *cap, const int &val) {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           pThis->EditingVoice().mMaxOutpNote = val;
+                                           pThis->EditingVoice().mMaxOutpNote = MidiNote{(uint8_t)val};
                                        },   // setter
                                        this // capture val
                                    },
@@ -147,11 +149,11 @@ struct HarmVoiceSettingsApp
                                                      Property<NoteOOBBehavior>{
                                                          [](void *cap) FLASHMEM {
                                                              auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                                             return pThis->EditingVoice().mNoteOOBBehavior;
+                                                             return pThis->EditingVoice().mNoteOOBBehavior.GetValue();
                                                          }, // getter
                                                          [](void *cap, const NoteOOBBehavior &val) {
                                                              auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                                             pThis->EditingVoice().mNoteOOBBehavior = val;
+                                                             pThis->EditingVoice().mNoteOOBBehavior.SetValue(val);
                                                          },   // setter
                                                          this // capture val
                                                      },
@@ -162,11 +164,11 @@ struct HarmVoiceSettingsApp
                                                        Property<HarmScaleRefType>{
                                                            [](void *cap) FLASHMEM {
                                                                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                                               return pThis->EditingVoice().mScaleRef;
+                                                               return pThis->EditingVoice().mScaleRef.GetValue();
                                                            }, // getter
                                                            [](void *cap, const HarmScaleRefType &val) {
                                                                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                                               pThis->EditingVoice().mScaleRef = val;
+                                                               pThis->EditingVoice().mScaleRef.SetValue(val);
                                                            },   // setter
                                                            this // capture val
                                                        },
@@ -178,11 +180,11 @@ struct HarmVoiceSettingsApp
         Property<Note>{
             [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
-                return pThis->EditingVoice().mLocalScale.mRootNoteIndex;
+                return pThis->EditingVoice().mLocalScale.mValue.mRootNoteIndex;
             }, // getter
             [](void *cap, const Note &val) {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
-                pThis->EditingVoice().mLocalScale.mRootNoteIndex = val;
+                pThis->EditingVoice().mLocalScale.mValue.mRootNoteIndex = val;
             },   // setter
             this // capture val
         },
@@ -200,11 +202,11 @@ struct HarmVoiceSettingsApp
         Property<ScaleFlavorIndex>{
             [](void *cap) FLASHMEM {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
-                return pThis->EditingVoice().mLocalScale.mFlavorIndex;
+                return pThis->EditingVoice().mLocalScale.mValue.mFlavorIndex;
             }, // getter
             [](void *cap, const ScaleFlavorIndex &val) {
                 auto *pThis = (HarmVoiceSettingsApp *)cap;
-                pThis->EditingVoice().mLocalScale.mFlavorIndex = val;
+                pThis->EditingVoice().mLocalScale.mValue.mFlavorIndex = val;
             },   // setter
             this // capture val
         },
@@ -216,39 +218,39 @@ struct HarmVoiceSettingsApp
         //   }
     };
 
-    EnumSettingItem<NonDiatonicBehavior> mNonDiatonicBehavior = {
-        "OOS behav",
-        gNonDiatonicBehaviorInfo,
-        Property<NonDiatonicBehavior>{
-            [](void *cap) FLASHMEM {
-                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                return pThis->EditingVoice().mNonDiatonicBehavior;
-            }, // getter
-            [](void *cap, const NonDiatonicBehavior &val) {
-                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                pThis->EditingVoice().mNonDiatonicBehavior = val;
-            },   // setter
-            this // capture val
-        },
-        AlwaysEnabled};
+    // EnumSettingItem<NonDiatonicBehavior> mNonDiatonicBehavior = {
+    //     "OOS behav",
+    //     gNonDiatonicBehaviorInfo,
+    //     Property<NonDiatonicBehavior>{
+    //         [](void *cap) FLASHMEM {
+    //             auto *pThis = (HarmVoiceSettingsApp *)cap;
+    //             return pThis->EditingVoice().mNonDiatonicBehavior;
+    //         }, // getter
+    //         [](void *cap, const NonDiatonicBehavior &val) {
+    //             auto *pThis = (HarmVoiceSettingsApp *)cap;
+    //             pThis->EditingVoice().mNonDiatonicBehavior = val;
+    //         },   // setter
+    //         this // capture val
+    //     },
+    //     AlwaysEnabled};
 
-    EnumSettingItem<PitchBendParticipation> mPitchbendBehav = {
-        "PB behav",
-        gPitchBendParticipationInfo,
-        Property<PitchBendParticipation>{
-            [](void *cap) FLASHMEM {
-                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                return pThis->EditingVoice().mPitchBendParticipation;
-            }, // getter
-            [](void *cap, const PitchBendParticipation &val) {
-                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                pThis->EditingVoice().mPitchBendParticipation = val;
-            },   // setter
-            this // capture val
-        },
-        AlwaysEnabled};
+    // EnumSettingItem<PitchBendParticipation> mPitchbendBehav = {
+    //     "PB behav",
+    //     gPitchBendParticipationInfo,
+    //     Property<PitchBendParticipation>{
+    //         [](void *cap) FLASHMEM {
+    //             auto *pThis = (HarmVoiceSettingsApp *)cap;
+    //             return pThis->EditingVoice().mPitchBendParticipation;
+    //         }, // getter
+    //         [](void *cap, const PitchBendParticipation &val) {
+    //             auto *pThis = (HarmVoiceSettingsApp *)cap;
+    //             pThis->EditingVoice().mPitchBendParticipation = val;
+    //         },   // setter
+    //         this // capture val
+    //     },
+    //     AlwaysEnabled};
 
-    ISettingItem *mArray[12] = {
+    ISettingItem *mArray[10] = {
         &mSynthPresetRef,
         &mOwnSynthPatch,
         &mSequenceLength,
@@ -256,11 +258,11 @@ struct HarmVoiceSettingsApp
         &mMinOutpNote,
         &mMaxOutpNote,
         &mOOBBehavior,
-        &mPitchbendBehav,
+        //&mPitchbendBehav,
         &mScaleRefType,
         &mLocalScaleNote,
         &mLocalScaleFlavor,
-        &mNonDiatonicBehavior,
+        //&mNonDiatonicBehavior,
     };
     SettingsList mRootList = {mArray};
 }; // namespace clarinoid
@@ -273,17 +275,18 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         return "HarmPatchSettingsApp";
     }
 
-    HarmPatchSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input), mDisplay(d), mHarmVoiceSettingsApp(d, appSettings, input)
+    HarmPatchSettingsApp(IDisplay &d, AppSettings &appSettings, InputDelegator &input)
+        : SettingsMenuApp(d, appSettings, input), mDisplay(d), mHarmVoiceSettingsApp(d, appSettings, input)
     {
     }
 
     IDisplay &mDisplay;
     HarmVoiceSettingsApp mHarmVoiceSettingsApp;
 
-    HarmPreset &EditingPreset()
+    HarmPatch &EditingPreset()
     {
         auto &perf = this->mAppSettings->GetCurrentPerformancePatch();
-        return mAppSettings->FindHarmPreset(perf.mHarmPreset);
+        return mAppSettings->FindHarmPreset(perf.mHarmPreset.GetValue());
     }
 
     BoolSettingItem mEmitLiveNote = {"Emit live note?",
@@ -292,39 +295,40 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                      Property<bool>{
                                          [](void *cap) FLASHMEM { // getter
                                              auto *pThis = (HarmPatchSettingsApp *)cap;
-                                             return pThis->EditingPreset().mEmitLiveNote;
+                                             return pThis->EditingPreset().mEmitLiveNote.GetValue();
                                          },
                                          [](void *cap, const bool &val) { // setter
                                              auto *pThis = (HarmPatchSettingsApp *)cap;
-                                             pThis->EditingPreset().mEmitLiveNote = val;
+                                             pThis->EditingPreset().mEmitLiveNote.SetValue(val);
                                          },
                                          this // capture val
                                      },
                                      AlwaysEnabled};
 
-    FloatSettingItem mStereoSeparation = {"Stereo Sep",
-                                          StandardRangeSpecs::gFloat_0_1,
-                                          Property<float>{[](void *cap) FLASHMEM {
-                                                              auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                              return pThis->EditingPreset().mStereoSeparation;
-                                                          },
-                                                          [](void *cap, const float &v) {
-                                                              auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                              pThis->EditingPreset().mStereoSeparation = v;
-                                                          },
-                                                          this},
-                                          AlwaysEnabled};
+    FloatSettingItem mStereoSeparation = {
+        "Stereo Sep",
+        StandardRangeSpecs::gFloat_0_1,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (HarmPatchSettingsApp *)cap;
+                            return pThis->EditingPreset().mStereoSeparation.GetValue();
+                        },
+                        [](void *cap, const float &v) {
+                            auto *pThis = (HarmPatchSettingsApp *)cap;
+                            pThis->EditingPreset().mStereoSeparation.SetValue(v);
+                        },
+                        this},
+        AlwaysEnabled};
 
     IntSettingItem mMinRotationTimeMS = {"Min Rotation MS",
                                          NumericEditRangeSpec<int>{0, 10000},
                                          Property<int>{
                                              [](void *cap) FLASHMEM {
                                                  auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                 return (int)pThis->EditingPreset().mMinRotationTimeMS;
+                                                 return (int)pThis->EditingPreset().mMinRotationTimeMS.GetValue();
                                              }, // getter
                                              [](void *cap, const int &val) {
                                                  auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                 pThis->EditingPreset().mMinRotationTimeMS = val;
+                                                 pThis->EditingPreset().mMinRotationTimeMS.SetValue(val);
                                              },   // setter
                                              this // capture val
                                          },
@@ -335,11 +339,11 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     Property<int>{
                                         [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            return (int)pThis->EditingPreset().mSynthPreset1;
+                                            return (int)pThis->EditingPreset().mSynthPatch1.GetValue();
                                         }, // getter
                                         [](void *cap, const int &val) {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            pThis->EditingPreset().mSynthPreset1 = val;
+                                            pThis->EditingPreset().mSynthPatch1.SetValue(val);
                                         },   // setter
                                         this // capture val
                                     },
@@ -355,11 +359,11 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     Property<int>{
                                         [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            return (int)pThis->EditingPreset().mSynthPreset2;
+                                            return (int)pThis->EditingPreset().mSynthPatch2.GetValue();
                                         }, // getter
                                         [](void *cap, const int &val) {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            pThis->EditingPreset().mSynthPreset2 = val;
+                                            pThis->EditingPreset().mSynthPatch1.SetValue(val);
                                         },   // setter
                                         this // capture val
                                     },
@@ -375,11 +379,11 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     Property<int>{
                                         [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            return (int)pThis->EditingPreset().mSynthPreset3;
+                                            return (int)pThis->EditingPreset().mSynthPatch3.GetValue();
                                         }, // getter
                                         [](void *cap, const int &val) {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            pThis->EditingPreset().mSynthPreset3 = val;
+                                            pThis->EditingPreset().mSynthPatch3.SetValue(val);
                                         },   // setter
                                         this // capture val
                                     },
@@ -395,11 +399,11 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     Property<int>{
                                         [](void *cap) FLASHMEM {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            return (int)pThis->EditingPreset().mSynthPreset4;
+                                            return (int)pThis->EditingPreset().mSynthPatch4.GetValue();
                                         }, // getter
                                         [](void *cap, const int &val) {
                                             auto *pThis = (HarmPatchSettingsApp *)cap;
-                                            pThis->EditingPreset().mSynthPreset4 = val;
+                                            pThis->EditingPreset().mSynthPatch4.SetValue(val);
                                         },   // setter
                                         this // capture val
                                     },
@@ -415,11 +419,11 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                               Property<Note>{
                                                   [](void *cap) FLASHMEM {
                                                       auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                      return pThis->EditingPreset().mPresetScale.mRootNoteIndex;
+                                                      return pThis->EditingPreset().mPatchScale.mValue.mRootNoteIndex;
                                                   }, // getter
                                                   [](void *cap, const Note &val) {
                                                       auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                      pThis->EditingPreset().mPresetScale.mRootNoteIndex = val;
+                                                      pThis->EditingPreset().mPatchScale.mValue.mRootNoteIndex = val;
                                                   },   // setter
                                                   this // capture val
                                               },
@@ -431,47 +435,47 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         Property<ScaleFlavorIndex>{
             [](void *cap) FLASHMEM {
                 auto *pThis = (HarmPatchSettingsApp *)cap;
-                return pThis->EditingPreset().mPresetScale.mFlavorIndex;
+                return pThis->EditingPreset().mPatchScale.mValue.mFlavorIndex;
             }, // getter
             [](void *cap, const ScaleFlavorIndex &val) {
                 auto *pThis = (HarmPatchSettingsApp *)cap;
-                pThis->EditingPreset().mPresetScale.mFlavorIndex = val;
+                pThis->EditingPreset().mPatchScale.mValue.mFlavorIndex = val;
             },   // setter
             this // capture val
         },
         AlwaysEnabled};
 
-    MultiSubmenuSettingItem mVoiceSubmenu = {[](void *cap) FLASHMEM { return clarinoid::HARM_VOICES; },
-                                             [](void *cap, size_t mi) { // name
-                                                 auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                 // like
-                                                 // Voice 5 [-2,2]
-                                                 return (String)(
-                                                     String("Voice ") + mi + "" +
-                                                     pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
-                                             },                         // return string name
-                                             [](void *cap, size_t mi) { // get submenu for item
-                                                 auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                 pThis->mHarmVoiceSettingsApp.mEditingHarmVoice = mi;
-                                                 return &pThis->mHarmVoiceSettingsApp.mRootList;
-                                             },                                         // return submenu
-                                             [](void *cap, size_t mi) { return true; }, // is enabled
-                                             this};                                     // capture
+    MultiSubmenuSettingItem mVoiceSubmenu = {
+        [](void *cap) FLASHMEM { return clarinoid::HARM_VOICES; },
+        [](void *cap, size_t mi) { // name
+            auto *pThis = (HarmPatchSettingsApp *)cap;
+            // like
+            // Voice 5 [-2,2]
+            return (String)(String("Voice ") + mi + "" +
+                            pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
+        },                         // return string name
+        [](void *cap, size_t mi) { // get submenu for item
+            auto *pThis = (HarmPatchSettingsApp *)cap;
+            pThis->mHarmVoiceSettingsApp.mEditingHarmVoice = mi;
+            return &pThis->mHarmVoiceSettingsApp.mRootList;
+        },                                         // return submenu
+        [](void *cap, size_t mi) { return true; }, // is enabled
+        this};                                     // capture
 
     FunctionListSettingItem mCopyPreset = {
         "Copy to ...",
         HARM_PRESET_COUNT,
         [](void *cap, size_t i) { // itemNameGetter,
             auto *pThis = (HarmPatchSettingsApp *)cap;
-            return String(String("") + i + ":" + pThis->mAppSettings->mHarmSettings.mPresets[i].mName);
+            return String(String("") + i + ":" + pThis->mAppSettings->mHarmSettings.mPatches[i].mName.GetValue());
         },
         [](void *cap,
            size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (HarmPatchSettingsApp *)cap;
-            pThis->mAppSettings->mHarmSettings.mPresets[i] = pThis->EditingPreset();
+            pThis->mAppSettings->mHarmSettings.mPatches[i].CopyFrom(pThis->EditingPreset());
             auto &settings = *pThis->mAppSettings;
             auto &perf = settings.GetCurrentPerformancePatch();
-            auto fromName = settings.GetHarmPatchName(perf.mHarmPreset);
+            auto fromName = settings.GetHarmPatchName(perf.mHarmPreset.GetValue());
             auto toName = settings.GetHarmPatchName(i);
             pThis->mDisplay.ShowToast(String("Copied ") + fromName + "\nto\n" + toName);
         },
@@ -504,7 +508,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         mDisplay.println(String("Harmonizer"));
         mDisplay.println(String("     patch >>"));
         auto &perf = GetAppSettings()->GetCurrentPerformancePatch();
-        auto name = GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
+        auto name = GetAppSettings()->GetHarmPatchName(perf.mHarmPreset.GetValue());
         mDisplay.println(name);
         SettingsMenuApp::RenderFrontPage();
     }
@@ -520,19 +524,21 @@ struct HarmSettingsApp : public SettingsMenuApp
 
     HarmPatchSettingsApp mHarmPatchSettings;
 
-    HarmSettingsApp(IDisplay &d, AppSettings& appSettings, InputDelegator& input) : SettingsMenuApp(d, appSettings, input), mHarmPatchSettings(d, appSettings, input)
+    HarmSettingsApp(IDisplay &d, AppSettings &appSettings, InputDelegator &input)
+        : SettingsMenuApp(d, appSettings, input), mHarmPatchSettings(d, appSettings, input)
     {
     }
 
     MultiSubmenuSettingItem mPatchSubmenu = {
         [](void *cap) FLASHMEM { return clarinoid::HARM_PRESET_COUNT; }, // get item count
-        [](void *cap, size_t mi) {                              // get item name
+        [](void *cap, size_t mi) {                                       // get item name
             auto *pThis = (HarmSettingsApp *)cap;
-            return (String)(String("") + mi + ":" + pThis->GetAppSettings()->mHarmSettings.mPresets[mi].mName);
+            return (String)(String("") + mi + ":" +
+                            pThis->GetAppSettings()->mHarmSettings.mPatches[mi].mName.GetValue());
         },
         [](void *cap, size_t mi) { // get submenu
             auto *pThis = (HarmSettingsApp *)cap;
-            pThis->GetAppSettings()->GetCurrentPerformancePatch().mHarmPreset = mi;
+            pThis->GetAppSettings()->GetCurrentPerformancePatch().mHarmPreset.SetValue(mi);
             return &pThis->mHarmPatchSettings.mRootList;
         },
         [](void *cap, size_t mi) { return true; }, // is enabled?
@@ -552,7 +558,7 @@ struct HarmSettingsApp : public SettingsMenuApp
         this->mDisplay.println("Harmonizer >");
 
         auto &perf = this->GetAppSettings()->GetCurrentPerformancePatch();
-        auto name = this->GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
+        auto name = this->GetAppSettings()->GetHarmPatchName(perf.mHarmPreset.GetValue());
         // auto& h = this->GetAppSettings()->FindHarmPreset(perf.mHarmPreset);
 
         this->mDisplay.println(name);

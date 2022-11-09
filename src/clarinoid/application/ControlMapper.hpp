@@ -23,17 +23,17 @@ struct SynthPresetAMappableFunction : FunctionHandler
     {
         int nv = v.AsRoundedInt();
         nv = RotateIntoRange(nv, SYNTH_PRESET_COUNT);
-        int old = mAppSettings->GetCurrentPerformancePatch().mSynthPresetA;
+        int old = mAppSettings->GetCurrentPerformancePatch().mSynthPatchA.GetValue();
         if (old != nv)
         {
             auto &p = mAppSettings->FindSynthPreset(nv);
             mInputSrc->InputSource_ShowToast(String("Synth patch A: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
-            mAppSettings->GetCurrentPerformancePatch().mSynthPresetA = nv;
+            mAppSettings->GetCurrentPerformancePatch().mSynthPatchA.SetValue(nv);
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        int v = mAppSettings->GetCurrentPerformancePatch().mSynthPresetA;
+        int v = mAppSettings->GetCurrentPerformancePatch().mSynthPatchA.GetValue();
         return ControlValue::IntValue(v);
     }
 };
@@ -63,18 +63,18 @@ struct SynthPresetBMappableFunction : FunctionHandler
         {
             nv = -1;
         }
-        int old = mAppSettings->GetCurrentPerformancePatch().mSynthPresetB;
+        int old = mAppSettings->GetCurrentPerformancePatch().mSynthPatchB.GetValue();
         if (old != nv)
         {
             // auto &p = mAppSettings->FindSynthPreset(nv);
             auto name = mAppSettings->GetSynthPatchName(nv);
             mInputSrc->InputSource_ShowToast(String("Synth patch B: ") + nv + " (" + (nv - old) + ")\r\n" + name);
-            mAppSettings->GetCurrentPerformancePatch().mSynthPresetB = nv;
+            mAppSettings->GetCurrentPerformancePatch().mSynthPatchB.SetValue(nv);
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        int v = mAppSettings->GetCurrentPerformancePatch().mSynthPresetB;
+        int v = mAppSettings->GetCurrentPerformancePatch().mSynthPatchB.GetValue();
         return ControlValue::IntValue(v);
     }
 };
@@ -94,17 +94,17 @@ struct HarmPresetMappableFunction : FunctionHandler
     {
         int nv = v.AsRoundedInt();
         nv = RotateIntoRange(nv, HARM_PRESET_COUNT);
-        int old = mAppSettings->GetCurrentPerformancePatch().mHarmPreset;
+        int old = mAppSettings->GetCurrentPerformancePatch().mHarmPreset.GetValue();
         if (old != nv)
         {
             auto &p = mAppSettings->FindHarmPreset(nv);
-            mInputSrc->InputSource_ShowToast(String("Harmonizer: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
-            mAppSettings->GetCurrentPerformancePatch().mHarmPreset = nv;
+            mInputSrc->InputSource_ShowToast(String("Harmonizer: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName.GetValue());
+            mAppSettings->GetCurrentPerformancePatch().mHarmPreset.SetValue(nv);
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        int v = mAppSettings->GetCurrentPerformancePatch().mHarmPreset;
+        int v = mAppSettings->GetCurrentPerformancePatch().mHarmPreset.GetValue();
         return ControlValue::IntValue(v);
     }
 };
@@ -127,17 +127,17 @@ struct PerfPresetMappableFunction : FunctionHandler
         CCASSERT(!!mAppSettings); // make sure Init() is called!
         int nv = v.AsRoundedInt();
         nv = RotateIntoRange(nv, PERFORMANCE_PATCH_COUNT);
-        int old = mAppSettings->mCurrentPerformancePatch;
+        int old = mAppSettings->mCurrentPerformancePatch.GetValue();
         if (old != nv)
         {
             auto name = mAppSettings->GetPerfPatchName(nv);
             mInputSrc->InputSource_ShowToast(String("Perf: ") + nv + " (" + (nv - old) + ")\r\n" + name);
-            mAppSettings->mCurrentPerformancePatch = nv;
+            mAppSettings->mCurrentPerformancePatch.SetValue(nv);
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        int v = mAppSettings->mCurrentPerformancePatch;
+        int v = mAppSettings->mCurrentPerformancePatch.GetValue();
         v = RotateIntoRange(v, PERFORMANCE_PATCH_COUNT);
         return ControlValue::IntValue(v);
     }
@@ -167,16 +167,16 @@ struct TransposeMappableFunction : FunctionHandler
             mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo high"));
             return;
         }
-        int old = mAppSettings->GetCurrentPerformancePatch().mTranspose;
+        int old = mAppSettings->GetCurrentPerformancePatch().mTranspose.GetValue();
         if (old != nv)
         {
             mInputSrc->InputSource_ShowToast(String("Transpose: ") + nv + " (" + (nv - old) + ")");
-            mAppSettings->GetCurrentPerformancePatch().mTranspose = nv;
+            mAppSettings->GetCurrentPerformancePatch().mTranspose.SetValue(nv);
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
     {
-        return ControlValue::IntValue(mAppSettings->GetCurrentPerformancePatch().mTranspose);
+        return ControlValue::IntValue(mAppSettings->GetCurrentPerformancePatch().mTranspose.GetValue());
     }
 };
 

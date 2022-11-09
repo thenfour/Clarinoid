@@ -20,47 +20,48 @@ struct MetronomeSettingsApp : public SettingsMenuApp
     Metronome *mpMetronome;
     AppSettings *mpAppSettings;
 
-    MetronomeSettingsApp(Metronome *pm, AppSettings *pas, IDisplay &d, InputDelegator& input)
+    MetronomeSettingsApp(Metronome *pm, AppSettings *pas, IDisplay &d, InputDelegator &input)
         : SettingsMenuApp(d, *pas, input), mpMetronome(pm), mpAppSettings(pas)
     {
     }
 
     Property<bool> EnabledIfSoundOn = Property<bool>{[](void *cap) FLASHMEM {
                                                          auto *pThis = (MetronomeSettingsApp *)cap;
-                                                         return pThis->mpAppSettings->mMetronomeSoundOn;
+                                                         return pThis->mpAppSettings->mMetronome.mSoundOn.GetValue();
                                                      },
                                                      this};
 
     Property<bool> EnabledIfLEDOn = Property<bool>{[](void *cap) FLASHMEM {
                                                        auto *pThis = (MetronomeSettingsApp *)cap;
-                                                       return pThis->mpAppSettings->mMetronomeLED;
+                                                       return pThis->mpAppSettings->mMetronome.mLEDOn.GetValue();
                                                    },
                                                    this};
 
-    FloatSettingItem mBPM = {"BPM",
-                             StandardRangeSpecs::gBPMRange,
-                             Property<float>{[](void *cap) FLASHMEM {
-                                                 auto *pThis = (MetronomeSettingsApp *)cap;
-                                                 return pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM;
-                                             },
-                                             [](void *cap, const float &v) {
-                                                 auto *pThis = (MetronomeSettingsApp *)cap;
-                                                 pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM = v;
-                                                 pThis->mpMetronome->OnBPMChanged();
-                                             },
-                                             this},
-                             AlwaysEnabled};
+    FloatSettingItem mBPM = {
+        "BPM",
+        StandardRangeSpecs::gBPMRange,
+        Property<float>{[](void *cap) FLASHMEM {
+                            auto *pThis = (MetronomeSettingsApp *)cap;
+                            return pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM.GetValue();
+                        },
+                        [](void *cap, const float &v) {
+                            auto *pThis = (MetronomeSettingsApp *)cap;
+                            pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM.SetValue(v);
+                            pThis->mpMetronome->OnBPMChanged();
+                        },
+                        this},
+        AlwaysEnabled};
 
     BoolSettingItem mSoundEnable = {"SoundEnable",
                                     "On",
                                     "Off",
                                     Property<bool>{[](void *cap) FLASHMEM {
                                                        auto *pThis = (MetronomeSettingsApp *)cap;
-                                                       return pThis->mpAppSettings->mMetronomeSoundOn;
+                                                       return pThis->mpAppSettings->mMetronome.mSoundOn.GetValue();
                                                    },
                                                    [](void *cap, const bool &v) {
                                                        auto *pThis = (MetronomeSettingsApp *)cap;
-                                                       pThis->mpAppSettings->mMetronomeSoundOn = v;
+                                                       pThis->mpAppSettings->mMetronome.mSoundOn.SetValue(v);
                                                    },
                                                    this},
                                     AlwaysEnabled};
@@ -70,50 +71,50 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                   "Off",
                                   Property<bool>{[](void *cap) FLASHMEM {
                                                      auto *pThis = (MetronomeSettingsApp *)cap;
-                                                     return pThis->mpAppSettings->mMetronomeLED;
+                                                     return pThis->mpAppSettings->mMetronome.mLEDOn.GetValue();
                                                  },
                                                  [](void *cap, const bool &v) {
                                                      auto *pThis = (MetronomeSettingsApp *)cap;
-                                                     pThis->mpAppSettings->mMetronomeLED = v;
+                                                     pThis->mpAppSettings->mMetronome.mLEDOn.SetValue(v);
                                                  },
                                                  this},
                                   AlwaysEnabled};
 
-    FloatSettingItem mLEDDecay = {"LED decay",
-                                  StandardRangeSpecs::gFloat_0_1,
-                                  Property<float>{[](void *cap) FLASHMEM {
-                                                      auto *pThis = (MetronomeSettingsApp *)cap;
-                                                      return pThis->mpAppSettings->mMetronomeLEDDecay;
-                                                  },
-                                                  [](void *cap, const float &v) {
-                                                      auto *pThis = (MetronomeSettingsApp *)cap;
-                                                      pThis->mpAppSettings->mMetronomeLEDDecay = v;
-                                                  },
-                                                  this},
-                                  AlwaysEnabled};
+    // FloatSettingItem mLEDDecay = {"LED decay",
+    //                               StandardRangeSpecs::gFloat_0_1,
+    //                               Property<float>{[](void *cap) FLASHMEM {
+    //                                                   auto *pThis = (MetronomeSettingsApp *)cap;
+    //                                                   return pThis->mpAppSettings->mMetronome.mle;
+    //                                               },
+    //                                               [](void *cap, const float &v) {
+    //                                                   auto *pThis = (MetronomeSettingsApp *)cap;
+    //                                                   pThis->mpAppSettings->mMetronome.mMetronomeLEDDecay = v;
+    //                                               },
+    //                                               this},
+    //                               AlwaysEnabled};
 
-    IntSettingItem mLEDBrightness = {"LED brightness",
-                                     NumericEditRangeSpec<int>{1, 255},
-                                     Property<int>{[](void *cap) FLASHMEM {
-                                                       auto *pThis = (MetronomeSettingsApp *)cap;
-                                                       return pThis->mpAppSettings->mMetronomeBrightness;
-                                                   },
-                                                   [](void *cap, const int &v) {
-                                                       auto *pThis = (MetronomeSettingsApp *)cap;
-                                                       pThis->mpAppSettings->mMetronomeBrightness = v;
-                                                   },
-                                                   this},
-                                     AlwaysEnabled};
+    // IntSettingItem mLEDBrightness = {"LED brightness",
+    //                                  NumericEditRangeSpec<int>{1, 255},
+    //                                  Property<int>{[](void *cap) FLASHMEM {
+    //                                                    auto *pThis = (MetronomeSettingsApp *)cap;
+    //                                                    return pThis->mpAppSettings->mMetronome.mMetronomeBrightness;
+    //                                                },
+    //                                                [](void *cap, const int &v) {
+    //                                                    auto *pThis = (MetronomeSettingsApp *)cap;
+    //                                                    pThis->mpAppSettings->mMetronome.mMetronomeBrightness = v;
+    //                                                },
+    //                                                this},
+    //                                  AlwaysEnabled};
 
     FloatSettingItem mGain = {"Gain",
                               StandardRangeSpecs::gFloat_0_1,
                               Property<float>{[](void *cap) FLASHMEM {
                                                   auto *pThis = (MetronomeSettingsApp *)cap;
-                                                  return pThis->mpAppSettings->mMetronomeGain;
+                                                  return pThis->mpAppSettings->mMetronome.mGain.GetValue();
                                               },
                                               [](void *cap, const float &v) {
                                                   auto *pThis = (MetronomeSettingsApp *)cap;
-                                                  pThis->mpAppSettings->mMetronomeGain = v;
+                                                  pThis->mpAppSettings->mMetronome.mGain.SetValue(v);
                                               },
                                               this},
                               EnabledIfSoundOn};
@@ -122,11 +123,11 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                             StandardRangeSpecs::gMetronomeNoteRange,
                             Property<int>{[](void *cap) FLASHMEM {
                                               auto *pThis = (MetronomeSettingsApp *)cap;
-                                              return pThis->mpAppSettings->mMetronomeNote;
+                                              return (int)pThis->mpAppSettings->mMetronome.mMidiNote.GetValue();
                                           },
                                           [](void *cap, const int &v) {
                                               auto *pThis = (MetronomeSettingsApp *)cap;
-                                              pThis->mpAppSettings->mMetronomeNote = v;
+                                              pThis->mpAppSettings->mMetronome.mMidiNote.SetValue(v);
                                           },
                                           this},
                             EnabledIfSoundOn};
@@ -135,16 +136,24 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                              StandardRangeSpecs::gMetronomeDecayRange,
                              Property<int>{[](void *cap) FLASHMEM {
                                                auto *pThis = (MetronomeSettingsApp *)cap;
-                                               return pThis->mpAppSettings->mMetronomeDecayMS;
+                                               return pThis->mpAppSettings->mMetronome.mDecayMS.GetValue();
                                            },
                                            [](void *cap, const int &v) {
                                                auto *pThis = (MetronomeSettingsApp *)cap;
-                                               pThis->mpAppSettings->mMetronomeDecayMS = v;
+                                               pThis->mpAppSettings->mMetronome.mDecayMS.SetValue(v);
                                            },
                                            this},
                              EnabledIfSoundOn};
 
-    ISettingItem *mArray[8] = {&mBPM, &mGain, &mSoundEnable, &mLEDEnable, &mLEDDecay, &mLEDBrightness, &mNote, &mDecay};
+    ISettingItem *mArray[6] = {
+        //
+        &mBPM,
+        &mGain,        //
+        &mSoundEnable, //
+        &mLEDEnable,   //
+        &mNote,
+        &mDecay, //
+    };
     SettingsList mRootList = {mArray};
 
     virtual SettingsList *GetRootSettingsList()
@@ -169,10 +178,10 @@ struct MetronomeSettingsApp : public SettingsMenuApp
         mDisplay.setTextColor(highlight ? BLACK : WHITE);
 
         mDisplay.println(String("METRONOME"));
-        mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");
+        mDisplay.print(mpAppSettings->mMetronome.mSoundOn.GetValue() ? "SoundOn" : "SoundOff");
         mDisplay.print(" ");
-        mDisplay.println(mpAppSettings->mMetronomeSoundOn ? "LEDOn" : "LEDOff");
-        mDisplay.println(String(" bpm=") + mpAppSettings->GetCurrentPerformancePatch().mBPM);
+        mDisplay.println(mpAppSettings->mMetronome.mSoundOn.GetValue() ? "LEDOn" : "LEDOff");
+        mDisplay.println(String(" bpm=") + mpAppSettings->GetCurrentPerformancePatch().mBPM.GetValue());
 
         const int r = 4;
         int x = beatFrac * (MAX_DISPLAY_WIDTH - r * 2);

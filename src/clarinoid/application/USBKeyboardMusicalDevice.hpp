@@ -57,9 +57,9 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         // EMIT live notes to synth.
         const auto &perf = mAppSettings->GetCurrentPerformancePatch();
         DoNoteOnForPerfVoice(
-            noteInfo, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPresetA, perf.mSynthAEnabled);
+            noteInfo, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPatchA.GetValue(), perf.mSynthAEnabled.GetValue());
         DoNoteOnForPerfVoice(
-            noteInfo, MusicalEventSourceType::LivePlayB, perf, perf.mSynthPresetB, perf.mSynthBEnabled);
+            noteInfo, MusicalEventSourceType::LivePlayB, perf, perf.mSynthPatchB.GetValue(), perf.mSynthBEnabled.GetValue());
     }
 
     void DoNoteOnForPerfVoice(const HeldNoteInfo &noteInfo,
@@ -94,9 +94,9 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
 
         const auto &perf = mAppSettings->GetCurrentPerformancePatch();
         DoNoteOffForPerfVoice(
-            noteInfo, trillNote, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPresetA, perf.mSynthAEnabled);
+            noteInfo, trillNote, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPatchA.GetValue(), perf.mSynthAEnabled.GetValue());
         DoNoteOffForPerfVoice(
-            noteInfo, trillNote, MusicalEventSourceType::LivePlayB, perf, perf.mSynthPresetB, perf.mSynthBEnabled);
+            noteInfo, trillNote, MusicalEventSourceType::LivePlayB, perf, perf.mSynthPatchB.GetValue(), perf.mSynthBEnabled.GetValue());
     }
 
     void DoNoteOffForPerfVoice(const HeldNoteInfo &noteInfo,
@@ -205,15 +205,15 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
             return GetLiveMusicalVoice_ForPerfVoice(existing,
                                                     MusicalEventSourceType::LivePlayA,
                                                     perf,
-                                                    perf.mSynthPresetA,
-                                                    perf.mSynthAEnabled,
+                                                    perf.mSynthPatchA.GetValue(),
+                                                    perf.mSynthAEnabled.GetValue(),
                                                     mLastVoicingModeA);
         case MusicalEventSourceType::LivePlayB:
             return GetLiveMusicalVoice_ForPerfVoice(existing,
                                                     MusicalEventSourceType::LivePlayA,
                                                     perf,
-                                                    perf.mSynthPresetB,
-                                                    perf.mSynthBEnabled,
+                                                    perf.mSynthPatchB.GetValue(),
+                                                    perf.mSynthBEnabled.GetValue(),
                                                     mLastVoicingModeB);
         default:
             CCASSERT(!"didn't expect that source type");

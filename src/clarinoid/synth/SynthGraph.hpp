@@ -140,41 +140,41 @@ struct SynthGraphControl
     {
         auto &perf = mAppSettings->GetCurrentPerformancePatch();
 
-        gpSynthGraph->delayFeedbackAmpLeft.gain(perf.mDelayFeedbackLevel);
-        gpSynthGraph->delayFeedbackAmpRight.gain(perf.mDelayFeedbackLevel);
-        gpSynthGraph->delayLeft.delay(0, perf.mDelayTime.ToMS(perf.mBPM) - perf.mDelayStereoSep * .5f);
-        gpSynthGraph->delayRight.delay(0, perf.mDelayTime.ToMS(perf.mBPM) + perf.mDelayStereoSep * .5f);
+        gpSynthGraph->delayFeedbackAmpLeft.gain(perf.mDelay.mFeedbackGain.GetValue());
+        gpSynthGraph->delayFeedbackAmpRight.gain(perf.mDelay.mFeedbackGain.GetValue());
+        gpSynthGraph->delayLeft.delay(0, perf.mDelay.mTime.ToMS(perf.mBPM.GetValue()) - perf.mDelay.mStereoSeparationDelayMS.GetValue() * .5f);
+        gpSynthGraph->delayRight.delay(0, perf.mDelay.mTime.ToMS(perf.mBPM.GetValue()) + perf.mDelay.mStereoSeparationDelayMS.GetValue() * .5f);
 
         gpSynthGraph->delayFilterLeft.SetParams(
-            perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
+            perf.mDelay.mFilter.mType.GetValue(), perf.mDelay.mFilter.mFrequency.GetFrequency(64, 0), perf.mDelay.mFilter.mQ.GetValue(), perf.mDelay.mFilter.mSaturation.GetValue());
         gpSynthGraph->delayFilterRight.SetParams(
-            perf.mDelayFilterType, perf.mDelayCutoffFrequency, perf.mDelayQ, perf.mDelaySaturation);
+            perf.mDelay.mFilter.mType.GetValue(), perf.mDelay.mFilter.mFrequency.GetFrequency(64, 0), perf.mDelay.mFilter.mQ.GetValue(), perf.mDelay.mFilter.mSaturation.GetValue());
 
         gpSynthGraph->delayWetAmpLeft.gain(
-            (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
+            (perf.mMasterFXEnable.GetValue() && perf.mDelay.mEnabled.GetValue()) ? (perf.mDelay.mGain.GetValue() * perf.mMasterFXGain.GetValue()) : 0.0f);
         gpSynthGraph->delayWetAmpRight.gain(
-            (perf.mMasterFXEnable && perf.mDelayEnabled) ? (perf.mDelayGain * perf.mMasterFXGain) : 0.0f);
+            (perf.mMasterFXEnable.GetValue() && perf.mDelay.mEnabled.GetValue()) ? (perf.mDelay.mGain.GetValue() * perf.mMasterFXGain.GetValue()) : 0.0f);
 
-        gpSynthGraph->verb.roomsize(perf.mReverbSize);
-        gpSynthGraph->verb.damping(perf.mReverbDamping);
+        gpSynthGraph->verb.roomsize(perf.mReverb.mSize.GetValue());
+        gpSynthGraph->verb.damping(perf.mReverb.mDamping.GetValue());
 
         gpSynthGraph->verbWetAmpLeft.gain(
-            (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
+            (perf.mMasterFXEnable.GetValue() && perf.mReverb.mEnabled.GetValue()) ? (perf.mReverb.mGain.GetValue() * perf.mMasterFXGain.GetValue()) : 0.0f);
         gpSynthGraph->verbWetAmpRight.gain(
-            (perf.mMasterFXEnable && perf.mReverbEnabled) ? (perf.mReverbGain * perf.mMasterFXGain) : 0.0f);
+            (perf.mMasterFXEnable.GetValue() && perf.mReverb.mEnabled.GetValue()) ? (perf.mReverb.mGain.GetValue() * perf.mMasterFXGain.GetValue()) : 0.0f);
 
-        gpSynthGraph->ampLeft.gain(perf.mMasterGain);
-        gpSynthGraph->ampRight.gain(perf.mMasterGain);
+        gpSynthGraph->ampLeft.gain(perf.mMasterGain.GetValue());
+        gpSynthGraph->ampRight.gain(perf.mMasterGain.GetValue());
 
-        if (!mAppSettings->mMetronomeSoundOn)
+        if (!mAppSettings->mMetronome.mSoundOn.GetValue())
         {
             gpSynthGraph->metronomeOsc.amplitude(0);
         }
         else
         {
-            gpSynthGraph->metronomeEnv.decay(mAppSettings->mMetronomeDecayMS);
-            gpSynthGraph->metronomeOsc.amplitude(mAppSettings->mMetronomeGain);
-            gpSynthGraph->metronomeOsc.frequency(MIDINoteToFreq(mAppSettings->mMetronomeNote));
+            gpSynthGraph->metronomeEnv.decay(mAppSettings->mMetronome.mDecayMS.GetValue());
+            gpSynthGraph->metronomeOsc.amplitude(mAppSettings->mMetronome.mGain.GetValue());
+            gpSynthGraph->metronomeOsc.frequency(MIDINoteToFreq(mAppSettings->mMetronome.mMidiNote.GetValue()));
 
             float metronomeBeatFrac = mMetronome->GetBeatFrac();
             if (metronomeBeatFrac < mPrevMetronomeBeatFrac)

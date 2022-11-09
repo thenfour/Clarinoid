@@ -94,7 +94,7 @@ struct HeldNoteTracker
 
     void PedalUp()
     {
-        //DumpHeldNotes("pedal up");
+        //DumpHeldNotes("held note tracker pedal up");
         mPedalDown = false;
         // figure out the last physically-held note, in order to do trilling monophonic behavior
         HeldNoteInfo *pTrill = nullptr;

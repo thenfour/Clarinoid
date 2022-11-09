@@ -6,14 +6,16 @@
 namespace clarinoid
 {
 
-    static constexpr uint32_t gWireDataRate = 400000;
+static constexpr uint32_t gWireDataRate = 400000;
+
+static constexpr size_t gJSONExportSize = 10000;
 
 static constexpr int RNG_SEED = 8;
 
-    // for breath controllers, this is true to enable a specialized filter controlled by breath.
-    // that filter is a temporary thing in the design and should be replaced by a proper modulation in the graph,
-    // but for the moment it's a hard-coded graph element with logic in synthvoice. So for non-breath controllers,
-    // this is a way to disable it.
+// for breath controllers, this is true to enable a specialized filter controlled by breath.
+// that filter is a temporary thing in the design and should be replaced by a proper modulation in the graph,
+// but for the moment it's a hard-coded graph element with logic in synthvoice. So for non-breath controllers,
+// this is a way to disable it.
 static constexpr bool USE_BREATH_FILTER = false;
 
 const char gClarinoidVersion[] = "Bommanoid v0.00";
@@ -22,10 +24,9 @@ static constexpr int8_t DEFAULT_TRANSPOSE = 0;
 static constexpr int8_t PERFORMANCE_PATCH_COUNT = 24;
 
 static constexpr size_t MAX_SYNTH_VOICES = 8;
-#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
 
 static constexpr size_t LOOPER_MEMORY_TOTAL_BYTES = 1024;
-static constexpr size_t LOOPER_TEMP_BUFFER_BYTES = 128;   // a smaller buffer that's just used for intermediate copy ops
+static constexpr size_t LOOPER_TEMP_BUFFER_BYTES = 128; // a smaller buffer that's just used for intermediate copy ops
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
@@ -73,5 +74,25 @@ enum class PhysicalControl : uint8_t
 
     COUNT,
 };
+
+// .../AudioStream.h:107:30: error: data causes a section type conflict with gLoopStationBuffer
+// https://stackoverflow.com/questions/30076949/gcc-error-variable-causes-a-section-type-conflict
+// one cheap solution is to just put all our DMAMEM stuff in 1 struct like this.
+struct DMAClarinoidMemory
+{
+    uint8_t gJSONBuffer[gJSONExportSize];
+    uint8_t gLoopStationBuffer[LOOPER_MEMORY_TOTAL_BYTES];
+    uint8_t gLoopStationTempBuffer[LOOPER_TEMP_BUFFER_BYTES];
+#ifndef CLARINOID_MODULE_TEST
+    audio_block_t gAudioMemory[AUDIO_MEMORY_TO_ALLOCATE];
+#endif // CLARINOID_MODULE_TEST
+};
+static DMAMEM DMAClarinoidMemory gClarinoidDmaMem;
+
+// #define LOOPSTATION_BUFFER (gLoopStationBuffer)
+// #define LOOPSTATION_TEMP_BUFFER (gLoopStationTempBuffer)
+#define LOOPSTATION_BUFFER (gClarinoidDmaMem.gLoopStationBuffer)
+#define LOOPSTATION_TEMP_BUFFER (gClarinoidDmaMem.gLoopStationTempBuffer)
+#define CLARINOID_AUDIO_MEMORY (gClarinoidDmaMem.gAudioMemory)
 
 } // namespace clarinoid

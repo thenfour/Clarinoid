@@ -17,10 +17,12 @@ struct BommanoidControlMapper : IInputSource, ITask
 {
     bool mFirstTaskUpdate = true;
     IDisplay *mDisplay = nullptr;
+    AppSettings* mpAppSettings = nullptr;
 
-    void Init(IDisplay *display)
+    void Init(IDisplay *display, AppSettings& appSettings)
     {
         mDisplay = display;
+        mpAppSettings = &appSettings;
     }
 
     // Task manager task; basically an "Update()" sort of fn to update internal state.
@@ -35,7 +37,9 @@ struct BommanoidControlMapper : IInputSource, ITask
         mADS1115.Update();
 
         mSustainPedal.Update();
-        //Serial.println(String("pedal raw val: ") + mSustainPedal.CurrentValue());
+        if (mFirstTaskUpdate) {
+            mpAppSettings->mSustainPedalPolarity.SetValue(mSustainPedal.CurrentValue());
+        }
 
         mFirstTaskUpdate = false;
     }
