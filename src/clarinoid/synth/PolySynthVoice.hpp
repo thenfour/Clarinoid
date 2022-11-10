@@ -8,7 +8,6 @@
 #include <cfloat>
 
 #include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/loopstation/LoopstationMemory.hpp>
 #include <clarinoid/synth/EnvelopeNode.hpp>
 
 #include "FilterNode.hpp"
@@ -589,7 +588,7 @@ struct Voice : IModulationProvider
         // synth patch exists.
         ret += String() // + String("p") + mRunningVoice.mSynthPatchIndex + " "
                + mRunningVoice.mNoteInfo.mMidiNote.ToString() + " " +
-               gEnvelopeStageInfo.GetValueString(mEnvelopes[0].GetStage());
+               gEnvelopeStageInfo.GetValueDisplayName(mEnvelopes[0].GetStage());
         return ret;
     }
 

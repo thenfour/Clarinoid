@@ -53,7 +53,7 @@ struct ModulationCurveLUT
     using q63_t = int64_t;
     // optimized version of arm_linear_interp_q15, by assuming x is in range, and 16.16 format instead of 12.20.
     // that avoids extra shifting to cram the 16-bit sample value into the 12-bit integral portion
-    q15_t arm_linear_interp_q15(q15_t *pYData, q31_t x)
+    q15_t arm_linear_interp_q15(const q15_t *pYData, q31_t x)
     {
         q63_t y;       /* output */
         q15_t y0, y1;  /* Nearest output values */
@@ -108,16 +108,17 @@ struct ModulationCurveLUT
     // - +.49999 so it rounds as we convert to a uint32_t.
     static constexpr uint32_t TransferDenominator = (uint32_t)(double(ValueScale * 2) / (LutSizeX - 1) + .499999999);
 
-    int16_t *mpLut = nullptr;
+    const int16_t *mpLut = nullptr;
 
     void setLUTData(int16_t *plut) {
         mpLut = plut;
     }
 
-    explicit ModulationCurveLUT(int16_t *plut) : mpLut(plut)
+    explicit ModulationCurveLUT(const int16_t *plut) : mpLut(plut)
     {
     }
 
+#ifndef ARDUINO
     ModulationCurveLUT()
     {
         // because the 12.20 LUT index format, Lut sizes of > 12 would break the interpolation.
@@ -136,6 +137,7 @@ struct ModulationCurveLUT
             }
         }
     }
+#endif
 
     // from double to 12.20 integer
     // static int32_t To12p20(double x)
@@ -176,13 +178,13 @@ struct ModulationCurveLUT
     //  return ((numerator << IntegralPartHeadroomBits) >> denominatorShift) << (20 - IntegralPartHeadroomBits);
     //}
 
-    inline q15_t *BeginLookupF(float kN11)
+    inline const q15_t *BeginLookupF(float kN11)
     {
         int32_t lutY = (kN11 * .5 + .5) * LutSizeY;
         return BeginLookupI(lutY);
     }
 
-    inline q15_t *BeginLookupI(int32_t lutY)
+    inline const q15_t *BeginLookupI(int32_t lutY)
     {
         if (lutY >= LutSizeY)
             lutY = LutSizeY - 1; // for kN11 == 1.
@@ -194,14 +196,14 @@ struct ModulationCurveLUT
         return ret;
     }
 
-    inline int16_t Transfer16(int16_t inpVal, q15_t *pLutRow)
+    inline int16_t Transfer16(int16_t inpVal, const q15_t *pLutRow)
     {
         if (!pLutRow)
             return inpVal;
         int32_t lutX12p20 = To16p16(int32_t(inpVal) + ValueScale, TransferDenominator);
         return arm_linear_interp_q15(pLutRow, lutX12p20);
     }
-    inline float Transfer32(float inpVal, q15_t *pLutRow)
+    inline float Transfer32(float inpVal, const q15_t *pLutRow)
     {
         if (!pLutRow)
             return inpVal;
@@ -217,15 +219,16 @@ struct ModulationCurveLUT
 
 namespace clarinoid
 {
-    static int16_t *gModCurveLUTData = nullptr;
+    //static int16_t *gModCurveLUTData = nullptr;
+    static const int16_t *gModCurveLUTData = gModCurveLUTData_PROGMEM;
     static ModCurve::ModulationCurveLUT<7, 7, 15> gModCurveLUT(gModCurveLUTData);
 
     StaticInit __initModCurveLUT([](){
-        gModCurveLUTData = new int16_t[SizeofStaticArray(gModCurveLUTData_PROGMEM)];
-        for (size_t i = 0; i < SizeofStaticArray(gModCurveLUTData_PROGMEM); ++ i){
-            gModCurveLUTData[i] = gModCurveLUTData_PROGMEM[i];
-        }
-        gModCurveLUT.setLUTData(gModCurveLUTData);
+        //gModCurveLUTData = new int16_t[SizeofStaticArray(gModCurveLUTData_PROGMEM)];
+        // for (size_t i = 0; i < SizeofStaticArray(gModCurveLUTData_PROGMEM); ++ i){
+        //     gModCurveLUTData[i] = gModCurveLUTData_PROGMEM[i];
+        // }
+        // gModCurveLUT.setLUTData(gModCurveLUTData);
     });
 }
 

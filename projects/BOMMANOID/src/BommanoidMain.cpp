@@ -14,13 +14,13 @@
 
 #include <USBHost_t36.h>
 #include <Wire.h>
-#include <EasyTransfer.h>
-#include <FastCRC.h>
+//#include <EasyTransfer.h>
+//#include <FastCRC.h>
 #include <Bounce.h>
 #include <SPI.h>
 #include <MIDI.h>
-#include <SD.h>
-#include <SerialFlash.h>
+//#include <SD.h>
+//#include <SerialFlash.h>
 #include <Encoder.h>
 #include <Audio.h>
 #include <WS2812Serial.h>
@@ -38,9 +38,15 @@ USBHub hub1(gUsbHost);
 USBHub hub2(gUsbHost);
 USBHub hub3(gUsbHost);
 MIDIDevice_BigBuffer gUsbMidi(gUsbHost);
+
 static constexpr size_t aosnetuhpch = sizeof(gUsbMidi);
+static constexpr size_t aosnet9uhpch = sizeof(hub1);
+static constexpr size_t aos8net9uhpch = sizeof(gUsbHost);
 
 #include "bmApp.hpp"
+
+//std::array<uint8_t, sizeof(clarinoid::BommanoidApp)> gAppStorage;
+//static constexpr size_t aosnetuh8pch = sizeof(clarinoid::BommanoidApp);
 
 void setup()
 {
@@ -57,7 +63,8 @@ void setup()
 
     // while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
 
-    auto *app = new clarinoid::BommanoidApp;
+    clarinoid::BommanoidApp *app = new clarinoid::BommanoidApp;
+    //clarinoid::BommanoidApp *app = new (gAppStorage.data()) clarinoid::BommanoidApp();
     app->Main();
 }
 

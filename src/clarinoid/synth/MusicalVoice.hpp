@@ -42,7 +42,7 @@ struct MusicalEventSource
     String ToString() const
     {
         String ret = String("src:");
-        ret += gMusicalEventSourceTypeInfo.GetValueString(mType);
+        ret += gMusicalEventSourceTypeInfo.GetValueDisplayName(mType);
         ret += String(", h:") + mHarmonizerVoiceIndex + ", l:" + mLoopstationLayerIndex;
         return ret;
     }

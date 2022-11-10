@@ -255,7 +255,7 @@ struct EnvelopeNode : public AudioStream
     float mStagePosIncPerSample =
         0.0f; // how much mStagePos01 changes per sample (recalculated when mStage changes, or when spec changes)
 
-    q15_t *mpLutRow = nullptr; // for curved operations, this is the current transfer kernel
+    const q15_t *mpLutRow = nullptr; // for curved operations, this is the current transfer kernel
 
     float mReleaseFromValue01 = 0.0f; // when release stage begins, what value is it releasing from?
 

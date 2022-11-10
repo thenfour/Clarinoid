@@ -535,8 +535,8 @@ struct Scale
 
     String ToSerializableString() const
     {
-        return String(gNoteInfo.GetValueString(mRootNoteIndex)) + " " +
-               gScaleFlavorIndexInfo.GetValueString(mFlavorIndex);
+        return String(gNoteInfo.GetValueShortName(mRootNoteIndex)) + " " +
+               gScaleFlavorIndexInfo.GetValueShortName(mFlavorIndex);
     }
 
     bool DeserializeFromString(const String &s) const

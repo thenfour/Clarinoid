@@ -24,7 +24,7 @@ struct GuiEnumAsTextRenderer : IGuiRenderer<T>
                                      bool isEditing,
                                      DisplayApp &app) override
     {
-        app.mDisplay.print(mEnumInfo.GetValueString(val));
+        app.mDisplay.print(mEnumInfo.GetValueDisplayName(val));
     }
 };
 
@@ -48,7 +48,7 @@ struct GuiLabelEnumTooltipRenderer : IGuiRenderer<T>
     {
         if (GuiInitiateTooltip(isSelected, isEditing, app))
         {
-            app.mDisplay.print(mStaticCaption + ": " + mEnumInfo.GetValueString(val));
+            app.mDisplay.print(mStaticCaption + ": " + mEnumInfo.GetValueDisplayName(val));
         }
     }
 };

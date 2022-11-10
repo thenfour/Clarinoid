@@ -24,7 +24,7 @@ struct FunctionListEditor : ISettingItemEditor
         {
             return mItemCount;
         }
-        virtual String List_GetItemCaption(int i) const override
+        virtual String List_GetItemDisplayName(int i) const override
         {
             return mItemNameGetter(mCap, (size_t)i);
         }

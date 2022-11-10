@@ -92,10 +92,46 @@ struct SystemSettingsApp : SettingsMenuApp
                                        [](void *cap) {
                                                          auto pThis = (SystemSettingsApp *)cap;
 
-                                                         while(!Serial);
-                                                         auto str = pThis->mAppSettings->SerializableObject_ToString();
-                                                         Serial.println(str);
-                                                         pThis->mDisplay.ShowToast(String("Exported ") + str.length() + " bytes.");
+                                                         //while(!Serial);
+                                                         auto size = pThis->mAppSettings->SerializableObject_ToSerial();
+                                                         Serial.println();
+                                                         Serial.println(String("that was: ") + size + " bytes.");
+                                                         //Serial.println(str);
+
+        // size_t harmSize =  pThis->mAppSettings->mHarmSettings.mPatches[0].SerializableObject_ToSerial();
+        // //size_t synthPatchSize =  pThis->mAppSettings->mSynthSettings.mPresets[0].SerializableObject_ToSerial();
+        // size_t perfSize =  pThis->mAppSettings->mPerformancePatches[0].SerializableObject_ToSerial();
+        // Serial.println(String("harmSize: ") + harmSize);
+        // //Serial.println(String("synthPatchSize: ") + synthPatchSize);
+        // Serial.println(String("perfSize: ") + perfSize);
+
+// 0               0x7FFFF - RAM1: ITCM (512KB) (FASTRUN), copied from flash
+// 0x20000000 - 0x2007FFFF - RAM1: DTCM (512KB) (variables, initialized copied from flash)
+// 0x20200000 - 0x2027FFFF - RAM2: OCRMA2 (512KB) (malloc,new)
+// 0x60000000 - 0x6FFFFFFF - FLEXSPI ... (PROGMEM, modcurve data progmem)
+
+// usb
+// usb midi
+// usb storage
+// ssd1306
+
+int m = millis();
+
+Serial.println();
+//Serial.println(String("lambda                       : ") + PointerToString(cc::function<void()>::ptr_t([](){})));
+//Serial.println(String("fn                           : ") + PointerToString(&PointerToString));
+Serial.println(String("global var                   : ") + PointerToString(&gOscWaveformShapeInfo));
+Serial.println(String("FLASH static str             : ") + PointerToString("tes9t"));
+Serial.println(String("FLASH F      str             : ") + PointerToString("ttc#$t"));
+
+Serial.println(String("DMAMEM gJSONBuffer           : ") + PointerToString(gClarinoidDmaMem.gJSONBuffer));
+Serial.println(String("DMAMEM gAudioMemory          : ") + PointerToString(gClarinoidDmaMem.gAudioMemory));
+Serial.println(String("DMAMEM gLoopStationBuffer    : ") + PointerToString(gClarinoidDmaMem.gLoopStationBuffer));
+Serial.println(String("stack var                    : ") + PointerToString(&m));
+Serial.println(String("gModCurveLUTData_PROGMEM     : ") + PointerToString(gModCurveLUTData_PROGMEM));
+Serial.println(String("     : ") + PointerToString(gModCurveLUTData_PROGMEM));
+
+                                                         //pThis->mDisplay.ShowToast(String("Exported ") + size + " bytes.");
                                        },
                                        this,
                                        AlwaysEnabled};
@@ -263,5 +299,7 @@ struct SystemSettingsApp : SettingsMenuApp
         SettingsMenuApp::RenderFrontPage();
     }
 };
+
+static constexpr auto aoesntuh = sizeof(SystemSettingsApp);
 
 } // namespace clarinoid

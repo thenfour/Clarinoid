@@ -94,7 +94,7 @@ struct EnumSettingItem : public ISettingItem
     }
     virtual String GetValueString(size_t multiIndex)
     {
-        return mEnumInfo.GetValueString(mBinding.GetValue());
+        return mEnumInfo.GetValueDisplayName(mBinding.GetValue());
     }
     virtual SettingItemType GetType(size_t multiIndex)
     {

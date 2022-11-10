@@ -40,37 +40,37 @@ enum class HarmScaleRefType : uint8_t
 };
 
 EnumItemInfo<HarmScaleRefType> gHarmScaleRefTypeItems[3] = {
-    {HarmScaleRefType::Global, "Global"},
-    {HarmScaleRefType::Preset, "Preset"},
-    {HarmScaleRefType::Voice, "Voice"},
+    {HarmScaleRefType::Global, "Global", "g"},
+    {HarmScaleRefType::Preset, "Preset", "p"},
+    {HarmScaleRefType::Voice, "Voice", "v"},
 };
 
 EnumInfo<HarmScaleRefType> gHarmScaleRefTypeInfo("HarmScaleRefType", gHarmScaleRefTypeItems);
 
 ////////////////////////////////////////////////////
-enum class NonDiatonicBehavior : uint8_t
-{
-    NextDiatonicNote,
-    PrevDiatonicNote,
-    PreferStay, // keep playing the same note, if it's within range. otherwise change to the next.
-    PreferMove, // change to the next note (think cantaloupe comp that passing B)
-    Drop,       // just don't play this note.
-    // FollowMelodyFromBelow, // so this voice plays a nondiatonic note too, based on distance from lower note
-    // FollowMelodyFromAbove, // so this voice plays a nondiatonic note too, based on distance from upper note
-    TryAlternateScale, // could be interesting to have a list of alternative scales to try. need to have a LUT of
-                       // alternative scales or maybe even just use the scale follower's LUT?
-};
+// enum class NonDiatonicBehavior : uint8_t
+// {
+//     NextDiatonicNote,
+//     PrevDiatonicNote,
+//     PreferStay, // keep playing the same note, if it's within range. otherwise change to the next.
+//     PreferMove, // change to the next note (think cantaloupe comp that passing B)
+//     Drop,       // just don't play this note.
+//     // FollowMelodyFromBelow, // so this voice plays a nondiatonic note too, based on distance from lower note
+//     // FollowMelodyFromAbove, // so this voice plays a nondiatonic note too, based on distance from upper note
+//     TryAlternateScale, // could be interesting to have a list of alternative scales to try. need to have a LUT of
+//                        // alternative scales or maybe even just use the scale follower's LUT?
+// };
 
-EnumItemInfo<NonDiatonicBehavior> gNonDiatonicBehaviorItems[6] = {
-    {NonDiatonicBehavior::NextDiatonicNote, "NextDiatonicNote"},
-    {NonDiatonicBehavior::PrevDiatonicNote, "PrevDiatonicNote"},
-    {NonDiatonicBehavior::PreferStay, "PreferStay"},
-    {NonDiatonicBehavior::PreferMove, "PreferMove"},
-    {NonDiatonicBehavior::Drop, "Drop"},
-    {NonDiatonicBehavior::TryAlternateScale, "TryAlternateScale"},
-};
+// EnumItemInfo<NonDiatonicBehavior> gNonDiatonicBehaviorItems[6] = {
+//     {NonDiatonicBehavior::NextDiatonicNote, "NextDiatonicNote"},
+//     {NonDiatonicBehavior::PrevDiatonicNote, "PrevDiatonicNote"},
+//     {NonDiatonicBehavior::PreferStay, "PreferStay"},
+//     {NonDiatonicBehavior::PreferMove, "PreferMove"},
+//     {NonDiatonicBehavior::Drop, "Drop"},
+//     {NonDiatonicBehavior::TryAlternateScale, "TryAlternateScale"},
+// };
 
-EnumInfo<NonDiatonicBehavior> gNonDiatonicBehaviorInfo("NonDiatonicBehavior", gNonDiatonicBehaviorItems);
+// EnumInfo<NonDiatonicBehavior> gNonDiatonicBehaviorInfo("NonDiatonicBehavior", gNonDiatonicBehaviorItems);
 
 ////////////////////////////////////////////////////
 enum class NoteOOBBehavior : uint8_t
@@ -83,8 +83,8 @@ enum class NoteOOBBehavior : uint8_t
 };
 
 EnumItemInfo<NoteOOBBehavior> gNoteOOBBehaviorItems[2] = {
-    {NoteOOBBehavior::Mute, "Mute"},
-    {NoteOOBBehavior::TransposeOctave, "TransposeOctave"},
+    {NoteOOBBehavior::Mute, "Mute", "off"},
+    {NoteOOBBehavior::TransposeOctave, "TransposeOctave", "oct"},
 };
 
 EnumInfo<NoteOOBBehavior> gNoteOOBBehaviorInfo("NoteOOBBehavior", gNoteOOBBehaviorItems);
@@ -103,39 +103,38 @@ enum class HarmSynthPresetRefType : uint8_t
 };
 
 EnumItemInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeItems[7] = {
-    {HarmSynthPresetRefType::GlobalA, "GlobalA"},
-    {HarmSynthPresetRefType::GlobalB, "GlobalB"},
-    {HarmSynthPresetRefType::Preset1, "Preset1"},
-    {HarmSynthPresetRefType::Preset2, "Preset2"},
-    {HarmSynthPresetRefType::Preset3, "Preset3"},
-    {HarmSynthPresetRefType::Preset4, "Preset4"},
-    {HarmSynthPresetRefType::Voice, "Voice"},
+    {HarmSynthPresetRefType::GlobalA, "GlobalA", "A"},
+    {HarmSynthPresetRefType::GlobalB, "GlobalB", "B"},
+    {HarmSynthPresetRefType::Preset1, "Preset1", "p1"},
+    {HarmSynthPresetRefType::Preset2, "Preset2", "p2"},
+    {HarmSynthPresetRefType::Preset3, "Preset3", "p3"},
+    {HarmSynthPresetRefType::Preset4, "Preset4", "p4"},
+    {HarmSynthPresetRefType::Voice, "Voice", "v"},
 };
 
 EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo("HarmSynthPresetRefType", gHarmSynthPresetRefTypeItems);
 
 ////////////////////////////////////////////////////
-enum class PitchBendParticipation : uint8_t
-{
-    Same,
-    Invert,
-    Off,
-};
+// enum class PitchBendParticipation : uint8_t
+// {
+//     Same,
+//     Invert,
+//     Off,
+// };
 
-EnumItemInfo<PitchBendParticipation> gPitchBendParticipationItems[3] = {
-    {PitchBendParticipation::Same, "Same"},
-    {PitchBendParticipation::Invert, "Invert"},
-    {PitchBendParticipation::Off, "Off"},
-};
+// EnumItemInfo<PitchBendParticipation> gPitchBendParticipationItems[3] = {
+//     {PitchBendParticipation::Same, "Same"},
+//     {PitchBendParticipation::Invert, "Invert"},
+//     {PitchBendParticipation::Off, "Off"},
+// };
 
-EnumInfo<PitchBendParticipation> gPitchBendParticipationInfo("PitchBendParticipation", gPitchBendParticipationItems);
+// EnumInfo<PitchBendParticipation> gPitchBendParticipationInfo("PitchBendParticipation", gPitchBendParticipationItems);
 
 ////////////////////////////////////////////////////
-struct HarmVoiceSettings : SerializableDictionary
+struct HarmVoiceSettings //: SerializableDictionary
 {
     std::array<int8_t, HARM_SEQUENCE_LEN> mSequence{};
     uint8_t mSequenceLength = 0;
-    HarmVoiceNoteSequenceSerializer mSequenceSerializer{"Sequence", mSequence, mSequenceLength};
 
     EnumParam<HarmSynthPresetRefType> mSynthPatchRef = {"SynthPatchRef",
                                                         gHarmSynthPresetRefTypeInfo,
@@ -146,7 +145,7 @@ struct HarmVoiceSettings : SerializableDictionary
     ScaleParam mLocalScale = {"LocalScale", {0, ScaleFlavorIndex::Chromatic}};
     MidiNote mMinOutpNote = MidiNote::MinimumValue();
     MidiNote mMaxOutpNote = MidiNote::MaximumValue();
-    MidiNoteRangeSerializer mRangeSerializer{"Range", mMinOutpNote, mMaxOutpNote};
+    // MidiNoteRangeSerializer mRangeSerializer{"Range", mMinOutpNote, mMaxOutpNote};
 
     EnumParam<NoteOOBBehavior> mNoteOOBBehavior = {"NoteOOBBehavior",
                                                    gNoteOOBBehaviorInfo,
@@ -170,27 +169,53 @@ struct HarmVoiceSettings : SerializableDictionary
         return ret;
     }
 
-    SerializableObject *mSerializableChildObjects[7] = {
-        &mSequenceSerializer,
-        &mSynthPatchRef,
-        &mSynthPatch,
-        &mScaleRef,
-        &mLocalScale,
-        &mRangeSerializer,
-        &mNoteOOBBehavior,
-    };
+    // SerializableObject *mSerializableChildObjects[7] = {
+    //     &mSequenceSerializer,
+    //     &mSynthPatchRef,
+    //     &mSynthPatch,
+    //     &mScaleRef,
+    //     &mLocalScale,
+    //     &mRangeSerializer,
+    //     &mNoteOOBBehavior,
+    // };
+    bool SerializableObject_ToJSON(JsonVariant rhs) const
+    {
+        bool ret = true;
+
+        ret = ret && SerializeHarmVoiceNoteSequence(mSequence, mSequenceLength, rhs.createNestedObject("seq"));
+
+        // ret = ret && mSequenceSerializer.SerializeObject_ToJSON(rhs.createNestedObject("mSequenceSerializer"));
+        ret = ret && mSynthPatchRef.SerializableObject_ToJSON(rhs.createNestedObject("pref"));
+        ret = ret && mSynthPatch.SerializableObject_ToJSON(rhs.createNestedObject("patch"));
+        ret = ret && mScaleRef.SerializableObject_ToJSON(rhs.createNestedObject("sref"));
+        ret = ret && mLocalScale.SerializableObject_ToJSON(rhs.createNestedObject("scale"));
+        ret = ret && SerializeMidiNoteRange(mMinOutpNote, mMaxOutpNote, rhs.createNestedObject("range"));
+        ret = ret && mNoteOOBBehavior.SerializableObject_ToJSON(rhs.createNestedObject("oob"));
+
+        // ret = ret && mName.SerializableObject_ToJSON(rhs.createNestedObject("name"));
+        // ret = ret && mEmitLiveNote.SerializableObject_ToJSON(rhs.createNestedObject("live"));
+        // ret = ret && mStereoSeparation.SerializableObject_ToJSON(rhs.createNestedObject("stereo"));
+        // ret = ret && mPatchScale.SerializableObject_ToJSON(rhs.createNestedObject("scale"));
+        // ret = ret && SerializeArrayToJSON(rhs.createNestedArray("voices"), mVoiceSettings);
+        // ret = ret && mMinRotationTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("rotmin"));
+        // ret = ret && mSynthPatch1.SerializableObject_ToJSON(rhs.createNestedObject("patch1"));
+        // ret = ret && mSynthPatch2.SerializableObject_ToJSON(rhs.createNestedObject("patch2"));
+        // ret = ret && mSynthPatch3.SerializableObject_ToJSON(rhs.createNestedObject("patch3"));
+        // ret = ret && mSynthPatch4.SerializableObject_ToJSON(rhs.createNestedObject("patch4"));
+        return ret;
+    }
 
     const size_t mMyIndex;
 
     HarmVoiceSettings(size_t myIndex)
-        :                                                                 //
-          SerializableDictionary("HarmPatch", mSerializableChildObjects), //
+        : //
+          // SerializableDictionary("HarmPatch", mSerializableChildObjects), //
           mMyIndex(myIndex)
     {
     }
 };
 
-struct HarmPatch : SerializableDictionary
+struct HarmPatch //: SerializableDictionary
 {
     StringParam mName = {"Name", "--"};
     BoolParam mEmitLiveNote = {"EmitLiveNote", true};
@@ -198,7 +223,7 @@ struct HarmPatch : SerializableDictionary
     ScaleParam mPatchScale{"PatchScale", {0, ScaleFlavorIndex::Chromatic}};
     std::array<HarmVoiceSettings, HARM_VOICES> mVoiceSettings{
         initialize_array_with_indices<HarmVoiceSettings, HARM_VOICES>()};
-    ArraySerializer<HarmVoiceSettings, HARM_VOICES> mVoiceSerializer{"Voices", mVoiceSettings};
+    // ArraySerializer<HarmVoiceSettings, HARM_VOICES> mVoiceSerializer{"Voices", mVoiceSettings};
 
     IntParam<uint32_t> mMinRotationTimeMS = {"MinRotationTimeMS", 70};
     IntParam<uint16_t> mSynthPatch1 = {"SynthPatch1", SynthPresetID_Bommanoid};
@@ -219,31 +244,49 @@ struct HarmPatch : SerializableDictionary
 
     const size_t mMyIndex;
 
-    SerializableObject *mSerializableChildObjects[10] = {
-        &mName,
-        &mEmitLiveNote,
-        &mStereoSeparation,
-        &mPatchScale,
-        &mVoiceSerializer,
-        &mMinRotationTimeMS,
-        &mSynthPatch1,
-        &mSynthPatch2,
-        &mSynthPatch3,
-        &mSynthPatch4,
-    };
+    // SerializableObject *mSerializableChildObjects[10] = {
+    //     &mName,
+    //     &mEmitLiveNote,
+    //     &mStereoSeparation,
+    //     &mPatchScale,
+    //     &mVoiceSerializer,
+    //     &mMinRotationTimeMS,
+    //     &mSynthPatch1,
+    //     &mSynthPatch2,
+    //     &mSynthPatch3,
+    //     &mSynthPatch4,
+    // };
+
+    bool SerializableObject_ToJSON(JsonVariant rhs) const
+    {
+        bool ret = true;
+
+        ret = ret && mName.SerializableObject_ToJSON(rhs.createNestedObject("name"));
+        ret = ret && mEmitLiveNote.SerializableObject_ToJSON(rhs.createNestedObject("live"));
+        ret = ret && mStereoSeparation.SerializableObject_ToJSON(rhs.createNestedObject("stereo"));
+        ret = ret && mPatchScale.SerializableObject_ToJSON(rhs.createNestedObject("scale"));
+        ret = ret && SerializeArrayToJSON(rhs.createNestedArray("voices"), mVoiceSettings);
+        ret = ret && mMinRotationTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("rotmin"));
+        ret = ret && mSynthPatch1.SerializableObject_ToJSON(rhs.createNestedObject("patch1"));
+        ret = ret && mSynthPatch2.SerializableObject_ToJSON(rhs.createNestedObject("patch2"));
+        ret = ret && mSynthPatch3.SerializableObject_ToJSON(rhs.createNestedObject("patch3"));
+        ret = ret && mSynthPatch4.SerializableObject_ToJSON(rhs.createNestedObject("patch4"));
+
+        return ret;
+    }
 
     HarmPatch(size_t myIndex)
-        :                                                                 //
-          SerializableDictionary("HarmPatch", mSerializableChildObjects), //
+        : //
+          // SerializableDictionary("HarmPatch", mSerializableChildObjects), //
           mMyIndex(myIndex)
     {
     }
 };
 
-struct HarmSettings : SerializableDictionary
+struct HarmSettings // : SerializableDictionary
 {
     std::array<HarmPatch, HARM_PRESET_COUNT> mPatches{initialize_array_with_indices<HarmPatch, HARM_PRESET_COUNT>()};
-    ArraySerializer<HarmPatch, HARM_PRESET_COUNT> mPatchSerializer{"Patches", mPatches};
+    // ArraySerializer<HarmPatch, HARM_PRESET_COUNT> mPatchSerializer{"Patches", mPatches};
 
     // static void InitSlumsHarmPreset(HarmPreset &p)
     // {
@@ -662,11 +705,18 @@ struct HarmSettings : SerializableDictionary
     //     p.mVoiceSettings[0].mSequence[0] = 7;
     // }
 
-    SerializableObject *mSerializableChildObjects[1] = {
-        &mPatchSerializer,
-    };
+    // SerializableObject *mSerializableChildObjects[1] = {
+    //     &mPatchSerializer,
+    // };
 
-    HarmSettings() : SerializableDictionary("HarmSettings", mSerializableChildObjects)
+    bool SerializableObject_ToJSON(JsonVariant rhs) const
+    {
+        bool ret = true;
+        ret = ret && SerializeArrayToJSON(rhs.createNestedArray("patches"), mPatches);
+        return ret;
+    }
+
+    HarmSettings() // : SerializableDictionary("HarmSettings", mSerializableChildObjects)
     {
         size_t iPreset = 1;
 

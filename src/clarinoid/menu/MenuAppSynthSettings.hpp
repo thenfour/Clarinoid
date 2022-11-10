@@ -1075,15 +1075,15 @@ struct SynthPatchMenuApp : public SettingsMenuApp
             auto *pThis = (SynthPatchMenuApp *)cap;
             size_t iOtherOsc = pThis->GetOtherModulationIndex(i);
             auto& mod = pThis->GetBinding().mModulations[iOtherOsc];
-            return String(String("#") + iOtherOsc + " " + mod.ToString());
+            return String(String("#") + iOtherOsc + " " + mod.ToDisplayString());
         },
         [](void *cap, size_t i) FLASHMEM -> void { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (SynthPatchMenuApp *)cap;
             size_t iFrom = pThis->mEditingModulationIndex;
             size_t iTo = pThis->GetOtherModulationIndex(i);
 
-            auto fromName =  String(String("#") + iFrom + " " + pThis->GetBinding().mModulations[iFrom].ToString());
-            auto toName =  String(String("#") + iTo + " " + pThis->GetBinding().mModulations[iTo].ToString());
+            auto fromName =  String(String("#") + iFrom + " " + pThis->GetBinding().mModulations[iFrom].ToDisplayString());
+            auto toName =  String(String("#") + iTo + " " + pThis->GetBinding().mModulations[iTo].ToDisplayString());
 
             pThis->GetBinding().mModulations[iTo] = pThis->GetBinding().mModulations[iFrom];
 
@@ -1112,7 +1112,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                 [](void *cap, size_t i) {
                                                     auto *pThis = (SynthPatchMenuApp *)cap;
                                                     return String(String("#") + i + " " +
-                                                                  pThis->GetBinding().mModulations[i].ToString());
+                                                                  pThis->GetBinding().mModulations[i].ToDisplayString());
                                                 },
                                                 [](void *cap, size_t i) { // get submenu
                                                     auto *pThis = (SynthPatchMenuApp *)cap;

@@ -6,7 +6,6 @@
 #endif
 
 #include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/loopstation/LoopstationMemory.hpp>
 
 #include "FilterNode.hpp"
 #include "PannerNode.hpp"

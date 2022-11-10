@@ -8,7 +8,7 @@ namespace clarinoid
 
 static constexpr uint32_t gWireDataRate = 400000;
 
-static constexpr size_t gJSONExportSize = 10000;
+static constexpr size_t gJSONExportSize = 40000;
 
 static constexpr int RNG_SEED = 8;
 

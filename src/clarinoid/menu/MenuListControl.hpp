@@ -31,7 +31,7 @@ struct ListControl
         const int itemsToRender = min(mVisibleItems, count);
         for (int i = 0; i < itemsToRender; ++i)
         {
-            mDisplay->PrintInvertedLine(mpList->List_GetItemCaption(itemToRender),
+            mDisplay->PrintInvertedLine(mpList->List_GetItemDisplayName(itemToRender),
                                         itemToRender == mSelectedItem.GetValue());
             itemToRender = RotateIntoRange(itemToRender + 1, count);
             if (itemToRender == (mpList->List_GetItemCount() - 1))
