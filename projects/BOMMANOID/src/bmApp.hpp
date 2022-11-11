@@ -4,6 +4,9 @@
 #define CLARINOID_PLATFORM_TEENSY
 #define CLARINOID_MODULE_MAIN // as opposed to some submodules like LH / RH
 
+
+#include <clarinoid/basic/BasicBasic.hpp>
+
 #include "bmBaseSystemSettings.hpp"
 
 #include <ArduinoJson.h>
@@ -23,20 +26,20 @@
 #include <clarinoid/menu/MenuAppSystemSettings.hpp>
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
+#include <clarinoid/menu/MenuAppMetronome.hpp>
+#include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 #include <clarinoid/application/USBKeyboardMusicalDevice.hpp>
 #include <clarinoid/application/MusicalState.hpp>
-#include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 #include <clarinoid/Gui/GuiPerformanceApp.hpp>
 #include <clarinoid/application/DefaultHud.hpp>
 
 #include <clarinoid/synth/polyBlepOscillator.hpp> // https://gitlab.com/flojawi/teensy-polyblep-oscillator/-/tree/master/polySynth
 #include <clarinoid/synth/PolySynth.hpp>
 
+#include "bmStorage.hpp"
 #include "bmLed.hpp"
 #include "bmControlMapper.hpp"
 #include "bmDebugDisplayApp.hpp"
-#include <clarinoid/menu/MenuAppSynthSettings.hpp>
-#include <clarinoid/menu/MenuAppMetronome.hpp>
 #include "bmMusicalStateTask.hpp"
 
 namespace clarinoid
@@ -59,6 +62,7 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 
     MusicalStateTask mMusicalStateTask;
     TheShinies mShinies;
+    BommanoidStorage mStorage;
 
     PerformanceApp mPerformanceApp;
     DebugDisplayApp mDebugDisplayApp;
@@ -79,23 +83,23 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
           mShinies(&mAppSettings),                                                                       //
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, mAppSettings, mInputDelegator), //
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask, mAppSettings, mInputDelegator),
-          mSystemSettingsApp(
-              mDisplay,
-              -1,
-              -1,
-              -1,
-              [](void *cap) FLASHMEM { // raw breath value getter
-                  // BommanoidApp *pThis = (BommanoidApp *)cap;
-                  return 0.0f; // pThis->mControlMapper.mBreath.CurrentValue01();
-              },
-              [](void *cap) FLASHMEM { // raw joy pitchbend value getter
-                  // BommanoidApp *pThis = (BommanoidApp *)cap;
-                  return 0.0f; // pThis->mControlMapper.mJoyY.CurrentValue01();
-              },
-              this,
-              &mMusicalStateTask.mMetronome,
-              mAppSettings,
-              mInputDelegator),
+          mSystemSettingsApp(mDisplay,
+                             //   -1,
+                             //   -1,
+                             //   -1,
+                             //   [](void *cap) FLASHMEM { // raw breath value getter
+                             //       // BommanoidApp *pThis = (BommanoidApp *)cap;
+                             //       return 0.0f; // pThis->mControlMapper.mBreath.CurrentValue01();
+                             //   },
+                             //   [](void *cap) FLASHMEM { // raw joy pitchbend value getter
+                             //       // BommanoidApp *pThis = (BommanoidApp *)cap;
+                             //       return 0.0f; // pThis->mControlMapper.mJoyY.CurrentValue01();
+                             //   },
+                             this,
+                             &mMusicalStateTask.mMetronome,
+                             mAppSettings,
+                             mInputDelegator,
+                             &mStorage),
           mAudioMonitorApp(mDisplay, mAppSettings, mInputDelegator),                                      //
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay, mInputDelegator), //
           mPerfPatchApp(mDisplay, mAppSettings, mInputDelegator),                                         //

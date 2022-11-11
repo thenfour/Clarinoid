@@ -14,6 +14,11 @@ static bool AlwaysEnabled(void *)
     return true;
 }
 
+static bool AlwaysEnabledMulti(void *, size_t)
+{
+    return true;
+}
+
 static bool NeverEnabled(void *)
 {
     return false;
@@ -155,6 +160,51 @@ struct TriggerSettingItem : public ISettingItem
     virtual void Trigger(size_t multiIndex)
     {
         mAction(mActionCapture);
+    }
+};
+
+struct MultiTriggerSettingItem : public ISettingItem
+{
+    typename cc::function<size_t(void *)>::ptr_t mpGetItemCount;
+    typename cc::function<String(void *, size_t)>::ptr_t mpGetItemName;
+    typename cc::function<void(void *, size_t)>::ptr_t mpTriggerFn;
+    typename cc::function<bool(void *, size_t)>::ptr_t mpIsEnabled;
+    void *mpCapture;
+
+    MultiTriggerSettingItem(typename cc::function<size_t(void *)>::ptr_t getItemCount,
+                            typename cc::function<String(void *, size_t)>::ptr_t getItemName,
+                            typename cc::function<void(void *, size_t)>::ptr_t triggerFn,
+                            typename cc::function<bool(void *, size_t)>::ptr_t isEnabled,
+                            void *capture)
+        : //
+          mpGetItemCount(getItemCount), //
+          mpGetItemName(getItemName),   //
+          mpTriggerFn(triggerFn),       //
+          mpIsEnabled(isEnabled),       //
+          mpCapture(capture)            //
+    {
+    }
+
+    virtual size_t GetMultiCount()
+    {
+        return mpGetItemCount(mpCapture);
+    }
+    virtual String GetName(size_t multiIndex)
+    {
+        return mpGetItemName(mpCapture, multiIndex);
+    }
+    virtual SettingItemType GetType(size_t multiIndex)
+    {
+        return SettingItemType::Trigger;
+    }
+    virtual bool IsEnabled(size_t multiIndex) const
+    {
+        return mpIsEnabled(mpCapture, multiIndex);
+    }
+
+    virtual void Trigger(size_t multiIndex)
+    {
+        mpTriggerFn(mpCapture, multiIndex);
     }
 };
 

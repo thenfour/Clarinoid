@@ -478,14 +478,6 @@ struct Voice : IModulationProvider
             }
         }
 
-        for (size_t i = 0; i < LFO_COUNT; ++i)
-        {
-            if (mRunningVoice.mpSynthPatch->mLFOs[i].mPhaseRestart.GetValue())
-            {
-                mLfos[i].begin(convertWaveType(mRunningVoice.mpSynthPatch->mLFOs[i].mWaveShape.GetValue()));
-                mLfos[i].amplitude(1.0f);
-            }
-        }
     }
 
     void IncomingMusicalEvents_OnNoteOff()

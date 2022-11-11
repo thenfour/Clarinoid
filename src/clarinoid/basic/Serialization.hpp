@@ -14,8 +14,8 @@ struct ClarinoidJsonDocument : public JsonDocument
     ClarinoidJsonDocument()
         : JsonDocument((char *)gClarinoidDmaMem.gJSONBuffer, SizeofStaticArray(gClarinoidDmaMem.gJSONBuffer))
     {
-        Serial.println(String("ClarinoidJsonDocument::ClarinoidJsonDocument() ->gInstance=") +
-                       String((uintptr_t)gInstance, 16) + "; pThis=" + String((uintptr_t)this, 16));
+        // Serial.println(String("ClarinoidJsonDocument::ClarinoidJsonDocument() ->gInstance=") +
+        //                String((uintptr_t)gInstance, 16) + "; pThis=" + String((uintptr_t)this, 16));
 
         // singleton because we use a single static heap
         CCASSERT(!gInstance);

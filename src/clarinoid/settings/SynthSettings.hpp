@@ -627,6 +627,12 @@ struct EnvelopeSpec
     EnvTimeParamValue mReleaseTime = 0.6f;
     CurveLUTParamValue mReleaseCurve = 0;
     bool mLegatoRestart = false;
+
+    EnvelopeSpec(size_t myIndex)
+    {
+    }
+
+    EnvelopeSpec() = default;
 };
 
 struct SynthOscillatorSettings
@@ -690,7 +696,8 @@ struct LFOSpec //: SerializableDictionary
     EnumParam<OscWaveformShape> mWaveShape = {"Waveform", gOscWaveformShapeInfo, OscWaveformShape::Sine};
     FloatParam mPulseWidth = {"PulseWidth", 0.5f};
     TimeWithBasisParam mSpeed = {"Speed", TimeBasis::Hertz, 1.0f};
-    BoolParam mPhaseRestart = {"PhaseRestart", false};
+
+    // BoolParam mPhaseRestart = {"PhaseRestart", false};
 
     // SerializableObject *mSerializableChildObjects[4] = {
     //     &mWaveShape,

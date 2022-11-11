@@ -10,8 +10,6 @@ static constexpr uint32_t gWireDataRate = 400000;
 
 static constexpr size_t gJSONExportSize = 40000;
 
-static constexpr int RNG_SEED = 8;
-
 // for breath controllers, this is true to enable a specialized filter controlled by breath.
 // that filter is a temporary thing in the design and should be replaced by a proper modulation in the graph,
 // but for the moment it's a hard-coded graph element with logic in synthvoice. So for non-breath controllers,
@@ -74,6 +72,35 @@ enum class PhysicalControl : uint8_t
 
     COUNT,
 };
+
+// this is just a practical/simple way to deal with settings destinations.
+// ideally we would allow saving to arbitrary devices / filenames / etc, however
+// that's tricky 1) to actually implement in a reasonable way, especially on a device with
+// no keyboard for typing filenames, and 2) to make generic across clarinoid-style devices.
+enum class StorageChannel : uint8_t{
+    UsbMassStorage0,
+    UsbMassStorage1,
+    UsbMassStorage2,
+    UsbMassStorage3,
+    SerialStream,
+    USBMidiSysex,
+    TRSMidiSysex,
+};
+
+
+EnumItemInfo<StorageChannel> gStorageChannelItems[7] = {
+    {StorageChannel::UsbMassStorage0, "Internal slot #1"},
+    {StorageChannel::UsbMassStorage1, "Internal slot #2"},
+    {StorageChannel::UsbMassStorage2, "Internal slot #3"},
+    {StorageChannel::UsbMassStorage3, "Internal slot #4"},
+    {StorageChannel::SerialStream, "Serial"},
+    {StorageChannel::USBMidiSysex, "USB MIDI"},
+    {StorageChannel::TRSMidiSysex, "TRS MIDI"},
+};
+
+EnumInfo<StorageChannel> gStorageChannelInfo("StorageChannel", gStorageChannelItems);
+
+
 
 // .../AudioStream.h:107:30: error: data causes a section type conflict with gLoopStationBuffer
 // https://stackoverflow.com/questions/30076949/gcc-error-variable-causes-a-section-type-conflict

@@ -735,7 +735,7 @@ int ModularDistance(int period, int a, int b)
 
 // a nice practical couple snippets for prng:
 // https://forum.pjrc.com/threads/61125-Teensy-4-1-Random-Number-Generator?p=243895&viewfull=1#post243895
-static volatile uint64_t prng_state = RNG_SEED; /* Any nonzero state is valid! */
+static uint64_t prng_state = 853739777;
 
 uint32_t prng_u32(void)
 {

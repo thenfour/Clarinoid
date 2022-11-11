@@ -1,3 +1,40 @@
+// 0               0x7FFFF - RAM1: ITCM (512KB) (FASTRUN), copied from flash
+// 0x20000000 - 0x2007FFFF - RAM1: DTCM (512KB) (variables, initialized
+// copied from flash) 0x20200000 - 0x2027FFFF - RAM2: OCRMA2 (512KB)
+// (malloc,new) 0x60000000 - 0x6FFFFFFF - FLEXSPI ... (PROGMEM, modcurve data
+// progmem)
+
+// usb
+// usb midi
+// usb storage
+// ssd1306
+
+// int m = millis();
+
+// Serial.println();
+// // Serial.println(String("lambda                       : ") +
+// // PointerToString(cc::function<void()>::ptr_t([](){})));
+// Serial.println(String("fn : ") +
+// // PointerToString(&PointerToString));
+// Serial.println(String("global var                   : ") +
+// PointerToString(&gOscWaveformShapeInfo)); Serial.println(String("FLASH
+// static str             : ") + PointerToString("tes9t"));
+// Serial.println(String("FLASH F      str             : ") +
+// PointerToString("ttc#$t"));
+
+// Serial.println(String("DMAMEM gJSONBuffer           : ") +
+// PointerToString(gClarinoidDmaMem.gJSONBuffer));
+// Serial.println(String("DMAMEM gAudioMemory          : ") +
+// PointerToString(gClarinoidDmaMem.gAudioMemory));
+// Serial.println(String("DMAMEM gLoopStationBuffer    : ") +
+//                PointerToString(gClarinoidDmaMem.gLoopStationBuffer));
+// Serial.println(String("stack var                    : ") +
+// PointerToString(&m)); Serial.println(String("gModCurveLUTData_PROGMEM : ")
+// + PointerToString(gModCurveLUTData_PROGMEM)); Serial.println(String(" : ")
+// + PointerToString(gModCurveLUTData_PROGMEM));
+
+// pThis->mDisplay.ShowToast(String("Exported ") + size + " bytes.");
+
 #pragma once
 
 #include <clarinoid/application/Metronome.hpp>
@@ -18,32 +55,35 @@ struct SystemSettingsApp : SettingsMenuApp
     {
         return "SystemSettingsApp";
     }
-    int mBreathMappingIndex;
-    int mPitchUpMappingIndex;
-    int mPitchDownMappingIndex;
-    cc::function<float(void *)>::ptr_t mRawBreathGetter;
-    cc::function<float(void *)>::ptr_t mRawPitchBendGetter;
+    // int mBreathMappingIndex;
+    // int mPitchUpMappingIndex;
+    // int mPitchDownMappingIndex;
+    // cc::function<float(void *)>::ptr_t mRawBreathGetter;
+    // cc::function<float(void *)>::ptr_t mRawPitchBendGetter;
     void *mpCapture;
-    Metronome *mpMetronome = nullptr;
+    Metronome *mpMetronome;
+    IStorage *mpStorage;
 
     SystemSettingsApp(IDisplay &d,
-                      int breathMappingIndex,
-                      int pitchUpMappingIndex,
-                      int pitchDownMappingIndex,
-                      cc::function<float(void *)>::ptr_t rawBreathGetter,
-                      cc::function<float(void *)>::ptr_t rawPitchBendGetter,
+                      //   int breathMappingIndex,
+                      //   int pitchUpMappingIndex,
+                      //   int pitchDownMappingIndex,
+                      //   cc::function<float(void *)>::ptr_t rawBreathGetter,
+                      //   cc::function<float(void *)>::ptr_t rawPitchBendGetter,
                       void *capture,
                       Metronome *pm,
                       AppSettings &appSettings,
-                      InputDelegator &input)
-        : SettingsMenuApp(d, appSettings, input),        //
-          mBreathMappingIndex(breathMappingIndex),       //
-          mPitchUpMappingIndex(pitchUpMappingIndex),     //
-          mPitchDownMappingIndex(pitchDownMappingIndex), //
-          mRawBreathGetter(rawBreathGetter),             //
-          mRawPitchBendGetter(rawPitchBendGetter),       //
-          mpCapture(capture),                            //
-          mpMetronome(pm)
+                      InputDelegator &input,
+                      IStorage *pStorage)
+        : SettingsMenuApp(d, appSettings, input), //
+                                                  //   mBreathMappingIndex(breathMappingIndex),       //
+                                                  //   mPitchUpMappingIndex(pitchUpMappingIndex),     //
+                                                  //   mPitchDownMappingIndex(pitchDownMappingIndex), //
+                                                  //   mRawBreathGetter(rawBreathGetter),             //
+                                                  //   mRawPitchBendGetter(rawPitchBendGetter),       //
+          mpCapture(capture),                     //
+          mpMetronome(pm),                        //
+          mpStorage(pStorage)
     {
     }
 
@@ -76,149 +116,133 @@ struct SystemSettingsApp : SettingsMenuApp
                                                      this},
                                       AlwaysEnabled};
 
-    // save settings...
-    // [ ] system
-    // [ ] performances
-    // [ ] synth patches
-    // [ ] harmonizer
-    // back up existing,
+    TriggerSettingItem mDirToSerial{String("dir > Serial"),
+                                    [](void *cap) {
+                                        auto pThis = (SystemSettingsApp *)cap;
+                                        pThis->mpStorage->Dir(StorageChannel::SerialStream);
+                                    },
+                                    this,
+                                    AlwaysEnabled};
 
-    // Load settings ...
-    // show file list
+    MultiTriggerSettingItem mExport{[](void *) { return gStorageChannelInfo.count(); },
+                                    [](void *, size_t i) {
+                                        return (String)(String("Save >") +
+                                                        gStorageChannelInfo.GetValueDisplayName((StorageChannel)i));
+                                    },
+                                    [](void *cap, size_t i) {
+                                        auto pThis = (SystemSettingsApp *)cap;
 
-    // file explorer to delete
+                                        ClarinoidJsonDocument doc;
+                                        if (!pThis->mAppSettings->SerializableObject_ToJSON(doc))
+                                        {
+                                            Serial.println("mAppSettings->SerializableObject_ToJSON failed");
+                                            return;
+                                        }
+                                        pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
+                                    },
+                                    AlwaysEnabledMulti, this};
 
-    TriggerSettingItem mExportToSerial{String("Export-> Serial"),
-                                       [](void *cap) {
-                                                         auto pThis = (SystemSettingsApp *)cap;
+    MultiTriggerSettingItem mImport{[](void *) { return gStorageChannelInfo.count(); },
+                                    [](void *, size_t i) {
+                                        return (String)(String("Load <") +
+                                                        gStorageChannelInfo.GetValueDisplayName((StorageChannel)i));
+                                    },
+                                    [](void *cap, size_t i) {
+                                        //auto pThis = (SystemSettingsApp *)cap;
 
-                                                         //while(!Serial);
-                                                         auto size = pThis->mAppSettings->SerializableObject_ToSerial();
-                                                         Serial.println();
-                                                         Serial.println(String("that was: ") + size + " bytes.");
-                                                         //Serial.println(str);
+                                        // ClarinoidJsonDocument doc;
+                                        // if (!pThis->mAppSettings->SerializableObject_ToJSON(doc))
+                                        // {
+                                        //     Serial.println("mAppSettings->SerializableObject_ToJSON failed");
+                                        //     return;
+                                        // }
+                                        // pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
+                                    },
+                                    AlwaysEnabledMulti, this};
 
-        // size_t harmSize =  pThis->mAppSettings->mHarmSettings.mPatches[0].SerializableObject_ToSerial();
-        // //size_t synthPatchSize =  pThis->mAppSettings->mSynthSettings.mPresets[0].SerializableObject_ToSerial();
-        // size_t perfSize =  pThis->mAppSettings->mPerformancePatches[0].SerializableObject_ToSerial();
-        // Serial.println(String("harmSize: ") + harmSize);
-        // //Serial.println(String("synthPatchSize: ") + synthPatchSize);
-        // Serial.println(String("perfSize: ") + perfSize);
+    // UnipolarCalibrationSettingItem mBreath = {
+    //     "Breath",
+    //     Property<UnipolarMapping>{
+    //         [](void *cap) FLASHMEM {
+    //             auto pThis = (SystemSettingsApp *)cap;
+    //             if (pThis->mBreathMappingIndex < 0)
+    //             {
+    //                 return UnipolarMapping{};
+    //             }
+    //             UnipolarMapping ret =
+    //                 pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping;
+    //             return ret;
+    //         }, // getter
+    //         [](void *cap, const UnipolarMapping &x) {
+    //             auto pThis = (SystemSettingsApp *)cap;
+    //             if (pThis->mBreathMappingIndex < 0)
+    //             {
+    //                 return;
+    //             }
+    //             pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping = x;
+    //         },
+    //         this},
+    //     [](void *cap) FLASHMEM {
+    //         auto pThis = (SystemSettingsApp *)cap;
+    //         return pThis->mRawBreathGetter(pThis->mpCapture);
+    //     },
+    //     this};
 
-// 0               0x7FFFF - RAM1: ITCM (512KB) (FASTRUN), copied from flash
-// 0x20000000 - 0x2007FFFF - RAM1: DTCM (512KB) (variables, initialized copied from flash)
-// 0x20200000 - 0x2027FFFF - RAM2: OCRMA2 (512KB) (malloc,new)
-// 0x60000000 - 0x6FFFFFFF - FLEXSPI ... (PROGMEM, modcurve data progmem)
+    // UnipolarCalibrationSettingItem mPitchUp = {
+    //     "Pitch Up",
+    //     Property<UnipolarMapping>{
+    //         [](void *cap) FLASHMEM {
+    //             auto pThis = (SystemSettingsApp *)cap;
+    //             if (pThis->mPitchUpMappingIndex < 0)
+    //             {
+    //                 return UnipolarMapping{};
+    //             }
+    //             UnipolarMapping ret =
+    //                 pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping;
+    //             return ret;
+    //         }, // getter
+    //         [](void *cap, const UnipolarMapping &x) {
+    //             auto pThis = (SystemSettingsApp *)cap;
+    //             if (pThis->mPitchUpMappingIndex < 0)
+    //             {
+    //                 return;
+    //             }
+    //             pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping = x;
+    //         },
+    //         this},
+    //     [](void *cap) FLASHMEM {
+    //         auto pThis = (SystemSettingsApp *)cap;
+    //         return pThis->mRawPitchBendGetter(pThis->mpCapture);
+    //     },
+    //     this};
 
-// usb
-// usb midi
-// usb storage
-// ssd1306
-
-int m = millis();
-
-Serial.println();
-//Serial.println(String("lambda                       : ") + PointerToString(cc::function<void()>::ptr_t([](){})));
-//Serial.println(String("fn                           : ") + PointerToString(&PointerToString));
-Serial.println(String("global var                   : ") + PointerToString(&gOscWaveformShapeInfo));
-Serial.println(String("FLASH static str             : ") + PointerToString("tes9t"));
-Serial.println(String("FLASH F      str             : ") + PointerToString("ttc#$t"));
-
-Serial.println(String("DMAMEM gJSONBuffer           : ") + PointerToString(gClarinoidDmaMem.gJSONBuffer));
-Serial.println(String("DMAMEM gAudioMemory          : ") + PointerToString(gClarinoidDmaMem.gAudioMemory));
-Serial.println(String("DMAMEM gLoopStationBuffer    : ") + PointerToString(gClarinoidDmaMem.gLoopStationBuffer));
-Serial.println(String("stack var                    : ") + PointerToString(&m));
-Serial.println(String("gModCurveLUTData_PROGMEM     : ") + PointerToString(gModCurveLUTData_PROGMEM));
-Serial.println(String("     : ") + PointerToString(gModCurveLUTData_PROGMEM));
-
-                                                         //pThis->mDisplay.ShowToast(String("Exported ") + size + " bytes.");
-                                       },
-                                       this,
-                                       AlwaysEnabled};
-
-    UnipolarCalibrationSettingItem mBreath = {
-        "Breath",
-        Property<UnipolarMapping>{
-            [](void *cap) FLASHMEM {
-                auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mBreathMappingIndex < 0)
-                {
-                    return UnipolarMapping{};
-                }
-                UnipolarMapping ret =
-                    pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping;
-                return ret;
-            }, // getter
-            [](void *cap, const UnipolarMapping &x) {
-                auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mBreathMappingIndex < 0)
-                {
-                    return;
-                }
-                pThis->mAppSettings->mControlMappings[pThis->mBreathMappingIndex].mUnipolarMapping = x;
-            },
-            this},
-        [](void *cap) FLASHMEM {
-            auto pThis = (SystemSettingsApp *)cap;
-            return pThis->mRawBreathGetter(pThis->mpCapture);
-        },
-        this};
-
-    UnipolarCalibrationSettingItem mPitchUp = {
-        "Pitch Up",
-        Property<UnipolarMapping>{
-            [](void *cap) FLASHMEM {
-                auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchUpMappingIndex < 0)
-                {
-                    return UnipolarMapping{};
-                }
-                UnipolarMapping ret =
-                    pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping;
-                return ret;
-            }, // getter
-            [](void *cap, const UnipolarMapping &x) {
-                auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchUpMappingIndex < 0)
-                {
-                    return;
-                }
-                pThis->mAppSettings->mControlMappings[pThis->mPitchUpMappingIndex].mUnipolarMapping = x;
-            },
-            this},
-        [](void *cap) FLASHMEM {
-            auto pThis = (SystemSettingsApp *)cap;
-            return pThis->mRawPitchBendGetter(pThis->mpCapture);
-        },
-        this};
-
-    UnipolarCalibrationSettingItem mPitchDown = {
-        "Pitch Down",
-        Property<UnipolarMapping>{
-            [](void *cap) FLASHMEM {
-                auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchDownMappingIndex < 0)
-                {
-                    return UnipolarMapping{};
-                }
-                UnipolarMapping ret =
-                    pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping;
-                return ret;
-            }, // getter
-            [](void *cap, const UnipolarMapping &x) {
-                auto pThis = (SystemSettingsApp *)cap;
-                if (pThis->mPitchDownMappingIndex < 0)
-                {
-                    return;
-                }
-                pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping = x;
-            },
-            this},
-        [](void *cap) FLASHMEM {
-            auto pThis = (SystemSettingsApp *)cap;
-            return pThis->mRawPitchBendGetter(pThis->mpCapture);
-        },
-        this};
+    // UnipolarCalibrationSettingItem mPitchDown = {
+    //     "Pitch Down",
+    //     Property<UnipolarMapping>{
+    //         [](void *cap) FLASHMEM {
+    //             auto pThis = (SystemSettingsApp *)cap;
+    //             if (pThis->mPitchDownMappingIndex < 0)
+    //             {
+    //                 return UnipolarMapping{};
+    //             }
+    //             UnipolarMapping ret =
+    //                 pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping;
+    //             return ret;
+    //         }, // getter
+    //         [](void *cap, const UnipolarMapping &x) {
+    //             auto pThis = (SystemSettingsApp *)cap;
+    //             if (pThis->mPitchDownMappingIndex < 0)
+    //             {
+    //                 return;
+    //             }
+    //             pThis->mAppSettings->mControlMappings[pThis->mPitchDownMappingIndex].mUnipolarMapping = x;
+    //         },
+    //         this},
+    //     [](void *cap) FLASHMEM {
+    //         auto pThis = (SystemSettingsApp *)cap;
+    //         return pThis->mRawPitchBendGetter(pThis->mpCapture);
+    //     },
+    //     this};
 
     // IntSettingItem mNoteChangeFrames = {"Note chg frames",
     //                                     NumericEditRangeSpec<int>{0, 25},
@@ -272,14 +296,16 @@ Serial.println(String("     : ") + PointerToString(gModCurveLUTData_PROGMEM));
                                          AlwaysEnabled,
                                          this};
 
-    ISettingItem *mArray[7] = {
-        &mExportToSerial,
+    ISettingItem *mArray[6] = {
+        &mDirToSerial,
+        &mExport,
+        &mImport,
         &mSelectedPerfPatch,
         &mPedalPolarity,
         &mDimDisplay,
-        &mBreath,
-        &mPitchUp,
-        &mPitchDown,
+        // &mBreath,
+        // &mPitchUp,
+        // &mPitchDown,
         // &mNoteChangeFrames,
         // &mNoteChangeIntFrames,
     };

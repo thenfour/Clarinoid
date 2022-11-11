@@ -39,19 +39,19 @@ struct LFOMenuApp
                                                    this},
                                    AlwaysEnabled};
 
-    BoolSettingItem mRetrig = {"Retrig",
-                               "On",
-                               "Off",
-                               Property<bool>{[](void *cap) FLASHMEM {
-                                                  auto *pThis = (LFOMenuApp *)cap;
-                                                  return pThis->mBinding->mPhaseRestart.GetValue();
-                                              },
-                                              [](void *cap, const bool &v) FLASHMEM {
-                                                  auto *pThis = (LFOMenuApp *)cap;
-                                                  pThis->mBinding->mPhaseRestart.SetValue(v);
-                                              },
-                                              this},
-                               AlwaysEnabled};
+    // BoolSettingItem mRetrig = {"Retrig",
+    //                            "On",
+    //                            "Off",
+    //                            Property<bool>{[](void *cap) FLASHMEM {
+    //                                               auto *pThis = (LFOMenuApp *)cap;
+    //                                               return pThis->mBinding->mPhaseRestart.GetValue();
+    //                                           },
+    //                                           [](void *cap, const bool &v) FLASHMEM {
+    //                                               auto *pThis = (LFOMenuApp *)cap;
+    //                                               pThis->mBinding->mPhaseRestart.SetValue(v);
+    //                                           },
+    //                                           this},
+    //                            AlwaysEnabled};
 
     FloatSettingItem mPulseWidth = {"Pulse Width",
                                     StandardRangeSpecs::gFloat_N1_1,
@@ -66,10 +66,10 @@ struct LFOMenuApp
                                                     this},
                                     AlwaysEnabled};
 
-    ISettingItem *mArray[4] = {
+    ISettingItem *mArray[3] = {
         &mWaveform,
         &mFrequency,
-        &mRetrig,
+        //&mRetrig,
         &mPulseWidth,
     };
 

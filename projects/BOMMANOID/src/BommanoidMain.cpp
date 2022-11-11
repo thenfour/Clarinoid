@@ -45,8 +45,8 @@ static constexpr size_t aos8net9uhpch = sizeof(gUsbHost);
 
 #include "bmApp.hpp"
 
-//std::array<uint8_t, sizeof(clarinoid::BommanoidApp)> gAppStorage;
-//static constexpr size_t aosnetuh8pch = sizeof(clarinoid::BommanoidApp);
+// std::array<uint8_t, sizeof(clarinoid::BommanoidApp)> gAppStorage;
+// static constexpr size_t aosnetuh8pch = sizeof(clarinoid::BommanoidApp);
 
 void setup()
 {
@@ -59,12 +59,8 @@ void setup()
     Wire.begin();
     Wire.setClock(clarinoid::gWireDataRate);
 
-    gUsbHost.begin();
-
-    // while(!Serial) {} // when you are debugging with serial, uncomment this to ensure you see startup msgs
-
     clarinoid::BommanoidApp *app = new clarinoid::BommanoidApp;
-    //clarinoid::BommanoidApp *app = new (gAppStorage.data()) clarinoid::BommanoidApp();
+    // clarinoid::BommanoidApp *app = new (gAppStorage.data()) clarinoid::BommanoidApp();
     app->Main();
 }
 

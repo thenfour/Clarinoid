@@ -338,36 +338,27 @@ struct AppSettings // : SerializableDictionary
         return FindSynthPreset(perf.mSynthPatchA.GetValue());
     }
 
-    // SerializableObject *mSerializableChildObjects[4] = {
-    //     &mCurrentPerformancePatch,
-    //     //&mSustainPedalPolarity,
-    //     //&mDisplayDim,
-    //     &mMetronome,
-    //     &mPerformancePatchSerializer,
-    //     &mHarmSettings,
-    //     //&mSynthSettings,
-    //     // mPerformancePatches
-    // };
-
     // AppSettings() : SerializableDictionary("AppSettings", mSerializableChildObjects)
     // {
     // }
 
-    size_t SerializableObject_ToSerial() const
+    bool SerializableObject_ToJSON(JsonVariant doc) const
     {
-        ClarinoidJsonDocument doc;
         // SerializableObject_ToJSON(doc);
         //  String ret;
+        bool ret = true;
 
-        mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch"));
-        mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome"));
-        SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches);
-        mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm"));
+        ret = ret && mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch"));
+        ret = ret && mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome"));
+        ret = ret && SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches);
+        ret = ret && mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm"));
+        // synth settings
 
         // return serializeJson(doc, Serial); // minified
-        return serializeMsgPack(doc, Serial); // minified
+        //size_t ret = serializeMsgPack(doc, *pOut); // minified
         // serializeJsonPretty(doc, ret); // pretty
         // return "";
+        return ret;
     }
 };
 
