@@ -17,15 +17,15 @@ namespace clarinoid
 #define CHARSTR_NARROWPLUSMINUS "\x86"
 #define CHARSTR_DIGITWIDTHSPACE "\x87"
 
-template <typename T, size_t N>
-struct StaticArray
-{
-    T (&mArray)[N];
-    static constexpr size_t Size = N;
-    StaticArray(T (&x)[N]) : mArray(x)
-    {
-    }
-};
+// template <typename T, size_t N>
+// struct StaticArray
+// {
+//     T (&mArray)[N];
+//     static constexpr size_t Size = N;
+//     StaticArray(T (&x)[N]) : mArray(x)
+//     {
+//     }
+// };
 
 template <typename T, size_t N>
 constexpr size_t SizeofStaticArray(const T (&x)[N])
@@ -33,17 +33,17 @@ constexpr size_t SizeofStaticArray(const T (&x)[N])
     return N;
 }
 
-template <typename T, size_t N>
-void CopyPODArray(const T (&from)[N], T (&to)[N])
-{
-    memcpy(to, from, sizeof(T) * N);
-}
+// template <typename T, size_t N>
+// void CopyPODArray(const T (&from)[N], T (&to)[N])
+// {
+//     memcpy(to, from, sizeof(T) * N);
+// }
 
-template <typename T>
-void CopyPODArray(const T *from, T *to, size_t N)
-{
-    memcpy(to, from, sizeof(T) * N);
-}
+// template <typename T>
+// void CopyPODArray(const T *from, T *to, size_t N)
+// {
+//     memcpy(to, from, sizeof(T) * N);
+// }
 
 struct PointI
 {
@@ -178,50 +178,103 @@ struct BitmapSpec
     }
 };
 
-// #define STATIC_INITIALIZER_LIST_1 {0}
-// #define STATIC_INITIALIZER_LIST_2 {0},{1}
-// #define STATIC_INITIALIZER_LIST_3 {0},{1},{2}
-// #define STATIC_INITIALIZER_LIST_4 {0},{1},{2},{3}
-// #define STATIC_INITIALIZER_LIST_5 {0},{1},{2},{3},{4}
-// #define STATIC_INITIALIZER_LIST_6 {0},{1},{2},{3},{4},{5}
-// #define STATIC_INITIALIZER_LIST_7 {0},{1},{2},{3},{4},{5},{6}
-// #define STATIC_INITIALIZER_LIST_8 {0},{1},{2},{3},{4},{5},{6},{7}
-// #define STATIC_INITIALIZER_LIST_9 {0},{1},{2},{3},{4},{5},{6},{7},{8}
-// #define STATIC_INITIALIZER_LIST_10 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9}
-// #define STATIC_INITIALIZER_LIST_11 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}
-// #define STATIC_INITIALIZER_LIST_12 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}
-// #define STATIC_INITIALIZER_LIST_13 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}
-// #define STATIC_INITIALIZER_LIST_14 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13}
-// #define STATIC_INITIALIZER_LIST_15 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}
-// #define STATIC_INITIALIZER_LIST_16 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15}
-// #define STATIC_INITIALIZER_LIST_17 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}
-// #define STATIC_INITIALIZER_LIST_18 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17}
-// #define STATIC_INITIALIZER_LIST_19 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18}
-// #define STATIC_INITIALIZER_LIST_20 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19}
-// #define STATIC_INITIALIZER_LIST_21 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20}
-// #define STATIC_INITIALIZER_LIST_22 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21}
-// #define STATIC_INITIALIZER_LIST_23 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22}
-// #define STATIC_INITIALIZER_LIST_24 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23}
-// #define STATIC_INITIALIZER_LIST_25 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24}
-// #define STATIC_INITIALIZER_LIST_26 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25}
-// #define STATIC_INITIALIZER_LIST_27 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26}
-// #define STATIC_INITIALIZER_LIST_28 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27}
-// #define STATIC_INITIALIZER_LIST_29 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28}
-// #define STATIC_INITIALIZER_LIST_30 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28},{29}
-// #define STATIC_INITIALIZER_LIST_31 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28},{29},{30}
-// #define STATIC_INITIALIZER_LIST_32 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28},{29},{30},{31}
-// #define STATIC_INITIALIZER_LIST_48 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28},{29},{30},{31},{32},{33},{34},{35},{36},{37},{38},{39},{40},{41},{42},{43},{44},{45},{46},{47}
-// #define STATIC_INITIALIZER_LIST_80 {0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28},{29},{30},{31},{32},{33},{34},{35},{36},{37},{38},{39},{40},{41},{42},{43},{44},{45},{46},{47},{48},{49},{50},{51},{52},{53},{54},{55},{56},{57},{58},{59},{60},{61},{62},{63},{64},{65},{66},{67},{68},{69},{70},{71},{72},{73},{74},{75},{76},{77},{78},{79}
+// effectively just a tuple<bool, string>
+struct Result
+{
+    bool mSuccess = false;
+    String mMessage{};
+    Result() = default;
+    Result (const Result & rhs) = default;
+    Result(bool success, const String &message) :mSuccess(success), mMessage(message)
+    {
+    }
+    Result(bool success) : mSuccess(success)
+    {
+    }
+    bool IsSuccess() const
+    {
+        return mSuccess;
+    }
+    bool IsFailure() const
+    {
+        return !mSuccess;
+    }
+    static Result Failure(const String &message)
+    {
+        return {false, message};
+    }
+    static Result Failure()
+    {
+        return {false};
+    }
+    static Result Success(const String &message)
+    {
+        return {true, message};
+    }
+    static Result Success()
+    {
+        return {true};
+    }
 
+    // use for chaining conditions together and accumulating error status.
+    // when condition is false, we return false after setting the message.
+    // enables this kind of usage:
+    // Result ret = Result::Success();
+    // if (!ret.AndRequires(trySomething(), "trySomething failed"))) return ret;
+    // if (!ret.AndRequires(trySomethingElse(), "trySomethingElse failed"))) return ret;
+    // if (!ret.AndRequires(tryAnotherThing(), "tryAnotherThing failed"))) return ret;
+    // or,
+    // Result ret = Result::Success();
+    // ret.AndRequires(trySomething(), "trySomething failed"));
+    // ret.AndRequires(trySomethingElse(), "trySomethingElse failed"));
+    // ret.AndRequires(tryAnotherThing(), "tryAnotherThing failed"));
+    // if (!ret) return ret; // now contains all the error messages concatenated.
+    bool AndRequires(bool condition, const String& messageIfFailure)
+    {
+        if (!condition) {
+            mMessage += messageIfFailure;
+        }
+        mSuccess = mSuccess && condition;
+        return mSuccess;
+    }
+
+    // when condition is false, we return false after setting the message.
+    // clears any existing state.
+    // enables this kind of usage:
+    // Result ret;
+    // if (!ret.Requires(trySomething(), "trySomething failed"))) return ret;
+    // if (!ret.Requires(trySomethingElse(), "trySomethingElse failed"))) return ret;
+    // if (!ret.Requires(tryAnotherThing(), "tryAnotherThing failed"))) return ret;
+    bool Requires(bool condition, const String& messageIfFailure)
+    {
+        if (!condition) {
+            mMessage = messageIfFailure;
+        }
+        mSuccess = condition;
+        return mSuccess;
+    }
+
+    // use when an inner call returns a Result, but you want to add a prefix msg in case of error.
+    bool Requires(const Result& rhs, const String& messagePrefix)
+    {
+        mSuccess = rhs.mSuccess;
+        if (!mSuccess) {
+            mMessage = messagePrefix + rhs.mMessage;
+        }
+        return mSuccess;
+    }
+};
 
 // https://stackoverflow.com/a/74351185/402169
-template<typename T, std::size_t N, std::size_t... Is>
-constexpr std::array<T, N> initialize_array_with_indices_helper(std::index_sequence<Is...>) {
+template <typename T, std::size_t N, std::size_t... Is>
+constexpr std::array<T, N> initialize_array_with_indices_helper(std::index_sequence<Is...>)
+{
     return std::array<T, N>{Is...};
 }
 
-template<typename T, std::size_t N>
-constexpr std::array<T,N> initialize_array_with_indices() {
+template <typename T, std::size_t N>
+constexpr std::array<T, N> initialize_array_with_indices()
+{
     return initialize_array_with_indices_helper<T, N>(std::make_index_sequence<N>());
 }
 

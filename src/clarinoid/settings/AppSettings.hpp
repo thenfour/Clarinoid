@@ -360,6 +360,20 @@ struct AppSettings // : SerializableDictionary
         // return "";
         return ret;
     }
+
+    Result SerializableObject_Deserialize(JsonVariant obj) {
+        Result ret = Result::Success();
+        if (!ret.Requires(obj.is<JsonObject>(), "AppSettings is not a json object")) {
+            return ret;
+        }
+
+        ret.Requires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
+        // ret.Requires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
+        // ret.Requires(DeserializeArray(SerializeArrayToJSON, obj["perfPatches"]), "perfPatches");
+        // ret.Requires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
+
+        return ret;
+    }
 };
 
 static constexpr auto appsettingssize = sizeof(AppSettings);

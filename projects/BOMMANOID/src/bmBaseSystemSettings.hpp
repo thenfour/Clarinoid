@@ -16,6 +16,8 @@ static constexpr size_t gJSONExportSize = 40000;
 // this is a way to disable it.
 static constexpr bool USE_BREATH_FILTER = false;
 
+static constexpr size_t MODAL_DIALOG_STACK_SIZE = 10;
+
 const char gClarinoidVersion[] = "Bommanoid v0.00";
 
 static constexpr int8_t DEFAULT_TRANSPOSE = 0;

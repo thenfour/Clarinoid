@@ -3,6 +3,9 @@
 
 #pragma once
 
+static constexpr int TOAST_DURATION_MILLIS = 1400;
+static constexpr int MESSAGE_BOX_MIN_DURATION_MS = 500;
+
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 #include "clarinoid/components/AdafruitSSD1366Wrapper.hpp"
@@ -18,17 +21,136 @@
 namespace clarinoid
 {
 
-static constexpr int TOAST_DURATION_MILLIS = 1400;
+
+enum class ModalDialogType : uint8_t
+{
+    None,
+    Toast,
+    MessageBox,
+    Custom,
+};
+
+enum class ModalDialogUpdateResult : uint8_t
+{
+    OK,
+    Close, // display should close this dialog and stop using it.
+};
+
+struct ModalDialogSpec
+{
+    ModalDialogType mType = ModalDialogType::None;
+    String mMessage;
+    Stopwatch mTimer;
+    int mToastDurationMS = TOAST_DURATION_MILLIS;
+    cc::function<ModalDialogUpdateResult(void *, ModalDialogSpec &)>::ptr_t mUpdateProc = nullptr;
+    cc::function<void(void *)>::ptr_t mRenderProc = nullptr;
+    void *mpCapture = nullptr;
+    SwitchControlReader mOKReader;
+    AppSettings *mpAppSettings = nullptr;
+    InputDelegator *mpInput = nullptr;
+
+    // display calls this.
+    ModalDialogUpdateResult Update(AppSettings *pAppSettings, InputDelegator *pInput)
+    {
+        mOKReader.Update(&mpInput->mMenuOK);
+        switch (mType)
+        {
+        case ModalDialogType::Toast:
+            if (mTimer.ElapsedTime().ElapsedMillisI() >= mToastDurationMS)
+            {
+                return ModalDialogUpdateResult::Close;
+            }
+            return ModalDialogUpdateResult::OK;
+        case ModalDialogType::MessageBox:
+            //Serial.println(String("Modal Messag ebox update proc..."));
+            if ((mTimer.ElapsedTime().ElapsedMillisI() > MESSAGE_BOX_MIN_DURATION_MS) && mOKReader.IsNewlyPressed())
+            {
+                //Serial.println(String(" -> close"));
+                return ModalDialogUpdateResult::Close;
+            }
+            //Serial.println(String(" -> OK"));
+            return ModalDialogUpdateResult::OK;
+        case ModalDialogType::Custom:
+            return mUpdateProc(mpCapture, *this);
+        default:
+            break;
+        }
+        return ModalDialogUpdateResult::OK;
+    }
+
+    // display calls this.
+    void Render(IDisplay *p)
+    {
+        switch (mType)
+        {
+        case ModalDialogType::Toast:
+        case ModalDialogType::MessageBox:
+            // Serial.println(String("Modal Messagebox render proc..."));
+            p->SetupModal();
+            p->print(mMessage);
+            break;
+        case ModalDialogType::Custom:
+            mRenderProc(mpCapture);
+            return;
+        default:
+            return;
+        }
+    }
+
+    static ModalDialogSpec CreateToast(const String &s, int durationMS, AppSettings *appSettings, InputDelegator *pInput)
+    {
+        ModalDialogSpec ret;
+        ret.mType = ModalDialogType::Toast;
+        ret.mToastDurationMS = durationMS;
+        ret.mMessage = s;
+        ret.mTimer.Restart();
+        ret.mpAppSettings = appSettings;
+        ret.mpInput = pInput;
+        return ret;
+    }
+
+    static ModalDialogSpec CreateMessageBox(const String &s, AppSettings *appSettings, InputDelegator *pInput)
+    {
+        ModalDialogSpec ret;
+        ret.mType = ModalDialogType::MessageBox;
+        ret.mMessage = s;
+        ret.mTimer.Restart();
+        ret.mpAppSettings = appSettings;
+        ret.mpInput = pInput;
+        return ret;
+    }
+
+    static ModalDialogSpec CreateCustomDialog(
+        cc::function<ModalDialogUpdateResult(void *, ModalDialogSpec &)>::ptr_t updateProc,
+        cc::function<void(void *)>::ptr_t renderProc,
+        void *capture,
+        AppSettings *appSettings,
+        InputDelegator *pInput)
+    {
+        ModalDialogSpec ret;
+        ret.mType = ModalDialogType::Custom;
+        ret.mTimer.Restart();
+        ret.mUpdateProc = updateProc;
+        ret.mpCapture = capture;
+        ret.mRenderProc = renderProc;
+        ret.mpAppSettings = appSettings;
+        ret.mpInput = pInput;
+        return ret;
+    }
+};
+
+static constexpr size_t rcihpcrc = sizeof(ModalDialogSpec);
 
 //////////////////////////////////////////////////////////////////////
 struct _CCDisplay : IDisplay
 {
-//   private:
-//     static CCAdafruitSSD1306
-//         *gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in general.
+    //   private:
+    //     static CCAdafruitSSD1306
+    //         *gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in
+    //         general.
 
   public:
-    CCAdafruitSSD1306& mDisplay;
+    CCAdafruitSSD1306 &mDisplay;
 
     AppSettings *mAppSettings = nullptr;
     InputDelegator *mInput = nullptr;
@@ -41,8 +163,7 @@ struct _CCDisplay : IDisplay
     int mCurrentAppIndex = 0;
 
     // hardware SPI
-    _CCDisplay(CCAdafruitSSD1306& display)
-        : mDisplay(display)
+    _CCDisplay(CCAdafruitSSD1306 &display) : mDisplay(display)
     {
     }
 
@@ -149,18 +270,30 @@ struct _CCDisplay : IDisplay
             pMenuApp->DisplayAppRender();
         }
 
-        if (mIsShowingToast)
+        // update & render modal dialogs
+        for (size_t i = 0; i < this->mModalStackCount;)
         {
-            if (mToastTimer.ElapsedTime().ElapsedMillisI() >= TOAST_DURATION_MILLIS)
+            if (this->mModals[i].Update(this->mAppSettings, this->mInput) == ModalDialogUpdateResult::Close)
             {
-                mIsShowingToast = false;
+                //Serial.println(String("MODAL CLOSE: erasing ") + i);
+
+                // erase this item; i stays the same
+                for (size_t i2 = i + 1; i2 < mModalStackCount; ++i2)
+                {
+                    mModals[i2 - 1] = mModals[i2];
+                }
+                this->mModalStackCount--;
+                //Serial.println(String(" -> stack count = ") + this->mModalStackCount);
             }
             else
             {
-                // render toast.
-                SetupModal();
-                mDisplay.print(mToastMsg);
+                i++;
             }
+        }
+
+        for (size_t i = 0; i < this->mModalStackCount; ++i)
+        {
+            this->mModals[i].Render(this);
         }
 
         ClearState();
@@ -254,9 +387,6 @@ struct _CCDisplay : IDisplay
         mDisplay.display();
     }
 
-    Stopwatch mToastTimer;
-    bool mIsShowingToast = false;
-    String mToastMsg;
     size_t mCurrentFontIndex = 0;
 
     // NB: CHANGING ANYTHING IN HERE, ALSO CHANGE
@@ -286,11 +416,28 @@ struct _CCDisplay : IDisplay
 
     SwitchControlReader mToggleReader;
 
-    virtual void ShowToast(const String &msg) override
+    size_t mModalStackCount = 0;
+    std::array<ModalDialogSpec, MODAL_DIALOG_STACK_SIZE> mModals;
+
+    void PushDialog(ModalDialogSpec &&rhs)
     {
-        mIsShowingToast = true;
-        mToastMsg = msg;
-        mToastTimer.Restart();
+        CCASSERT(mModalStackCount < MODAL_DIALOG_STACK_SIZE);
+        mModals[mModalStackCount] = std::move(rhs);
+        mModalStackCount++;
+    }
+
+    virtual void ShowToast(const String &msg, int durationMS = TOAST_DURATION_MILLIS) override
+    {
+        PushDialog(ModalDialogSpec::CreateToast(msg, durationMS, mAppSettings, mInput));
+    }
+
+    // message box unfortunately introduces issues about inputs. when a message box is displayed,
+    // button inputs will be handled by multiple things. modals should just be designed to not require any inputs,
+    // and eventually we should handle inputs with some abstraction.
+    virtual void MessageBox(const String &msg) override
+    {
+        //Serial.println(String("push MessageBox ... "));
+        PushDialog(ModalDialogSpec::CreateMessageBox(msg, mAppSettings, mInput));
     }
 
     virtual int ClippedAreaHeight() const override

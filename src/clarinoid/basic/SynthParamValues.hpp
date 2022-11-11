@@ -34,6 +34,16 @@ struct IntParam // : ParameterBase
     {
         return rhs.set(mValue);
     }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        Result ret = Result::Success();
+        if (!ret.Requires(obj.is<T>(), "expected integer type"))
+            return ret;
+        mValue = obj.as<T>();
+        return ret;
+    }
+
     bool SerializableObject_FromJSON(JsonVariant rhs)
     {
         mValue = rhs.as<T>();
@@ -539,8 +549,7 @@ bool SerializeHarmVoiceNoteSequence(const std::array<int8_t, HARM_SEQUENCE_LEN> 
     return ret;
 }
 
-bool SerializeMidiNoteRange(const MidiNote &minValue, const MidiNote &maxValue,
-                                    JsonVariant rhs)
+bool SerializeMidiNoteRange(const MidiNote &minValue, const MidiNote &maxValue, JsonVariant rhs)
 {
     rhs.to<JsonArray>();
     bool ret = true;

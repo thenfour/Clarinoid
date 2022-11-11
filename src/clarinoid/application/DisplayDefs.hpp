@@ -31,8 +31,8 @@ struct IDisplay
                       IHudProvider *hud,
                       const array_view<IDisplayApp *> &apps) = 0;
 
-    //virtual AppSettings *GetAppSettings() = 0;
-    //virtual InputDelegator *GetInput() = 0;
+    // virtual AppSettings *GetAppSettings() = 0;
+    // virtual InputDelegator *GetInput() = 0;
 
     virtual uint16_t GetLineHeight() const = 0;
     virtual RectI SetupModal() = 0;
@@ -81,7 +81,8 @@ struct IDisplay
     virtual void SelectTinyFont() = 0;
     virtual void SelectEightiesFont() = 0;
     virtual void SelectNormalFont() = 0;
-    virtual void ShowToast(const String &msg) = 0;
+    virtual void ShowToast(const String &msg, int durationMS = TOAST_DURATION_MILLIS) = 0;
+    virtual void MessageBox(const String &msg) = 0;
     virtual int ClippedAreaHeight() const = 0;
     virtual void ResetClip() = 0;
     virtual void SetClipRect(const RectI &rc) = 0;

@@ -132,13 +132,22 @@ struct SystemSettingsApp : SettingsMenuApp
                                     [](void *cap, size_t i) {
                                         auto pThis = (SystemSettingsApp *)cap;
 
+                                        //Serial.println("exporting ...");
+
                                         ClarinoidJsonDocument doc;
                                         if (!pThis->mAppSettings->SerializableObject_ToJSON(doc))
                                         {
                                             Serial.println("mAppSettings->SerializableObject_ToJSON failed");
                                             return;
                                         }
-                                        pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
+                                        //Serial.println("document has been generated. now saving...");
+                                        auto ret = pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
+                                        if (ret.IsFailure()) {
+                                            pThis->mDisplay.ShowToast(String("Fail: ") + ret.mMessage, 4000);
+                                        }
+                                        else {
+                                            pThis->mDisplay.ShowToast(String("Success: ") + ret.mMessage, 4000);
+                                        }
                                     },
                                     AlwaysEnabledMulti, this};
 
@@ -148,15 +157,22 @@ struct SystemSettingsApp : SettingsMenuApp
                                                         gStorageChannelInfo.GetValueDisplayName((StorageChannel)i));
                                     },
                                     [](void *cap, size_t i) {
-                                        //auto pThis = (SystemSettingsApp *)cap;
+                                        auto pThis = (SystemSettingsApp *)cap;
 
-                                        // ClarinoidJsonDocument doc;
-                                        // if (!pThis->mAppSettings->SerializableObject_ToJSON(doc))
-                                        // {
-                                        //     Serial.println("mAppSettings->SerializableObject_ToJSON failed");
-                                        //     return;
-                                        // }
-                                        // pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
+                                        ClarinoidJsonDocument doc;
+                                        auto err = pThis->mpStorage->LoadDocument(StorageChannel(i), doc);
+                                        if (err.code() != DeserializationError::Ok) {
+                                            pThis->mDisplay.ShowToast(err.c_str(), 5000);
+                                            return;
+                                        }
+
+                                        auto err2 = pThis->mAppSettings->SerializableObject_Deserialize(doc);
+                                        if (err2.IsSuccess()) {
+                                            pThis->mDisplay.ShowToast(String("Success; ") + err2.mMessage, 4000);
+                                            return;
+                                        }
+
+                                        pThis->mDisplay.ShowToast(String("FAIL: ") + err2.mMessage, 4000);
                                     },
                                     AlwaysEnabledMulti, this};
 
