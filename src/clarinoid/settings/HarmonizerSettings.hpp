@@ -133,23 +133,19 @@ EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo("HarmSynthPresetRef
 ////////////////////////////////////////////////////
 struct HarmVoiceSettings //: SerializableDictionary
 {
+    // const size_t mMyIndex;
     std::array<int8_t, HARM_SEQUENCE_LEN> mSequence{};
     uint8_t mSequenceLength = 0;
 
-    EnumParam<HarmSynthPresetRefType> mSynthPatchRef = {"SynthPatchRef",
-                                                        gHarmSynthPresetRefTypeInfo,
-                                                        HarmSynthPresetRefType::GlobalA};
-    IntParam<uint16_t> mSynthPatch = {"SynthPatch", 0};
+    EnumParam<HarmSynthPresetRefType> mSynthPatchRef{gHarmSynthPresetRefTypeInfo, HarmSynthPresetRefType::GlobalA};
+    IntParam<uint16_t> mSynthPatch{0};
 
-    EnumParam<HarmScaleRefType> mScaleRef = {"ScaleRef", gHarmScaleRefTypeInfo, HarmScaleRefType::Global};
-    ScaleParam mLocalScale = {"LocalScale", {0, ScaleFlavorIndex::Chromatic}};
+    EnumParam<HarmScaleRefType> mScaleRef{gHarmScaleRefTypeInfo, HarmScaleRefType::Global};
+    ScaleParam mLocalScale{{0, ScaleFlavorIndex::Chromatic}};
     MidiNote mMinOutpNote = MidiNote::MinimumValue();
     MidiNote mMaxOutpNote = MidiNote::MaximumValue();
-    // MidiNoteRangeSerializer mRangeSerializer{"Range", mMinOutpNote, mMaxOutpNote};
 
-    EnumParam<NoteOOBBehavior> mNoteOOBBehavior = {"NoteOOBBehavior",
-                                                   gNoteOOBBehaviorInfo,
-                                                   NoteOOBBehavior::TransposeOctave};
+    EnumParam<NoteOOBBehavior> mNoteOOBBehavior{gNoteOOBBehaviorInfo, NoteOOBBehavior::TransposeOctave};
     // EnumParam<NonDiatonicBehavior> mNonDiatonicBehavior = {"NonDiatonicBehavior", gNonDiatonicBehaviorInfo,
     // NonDiatonicBehavior::NextDiatonicNote }; EnumParam<PitchBendParticipation> mPitchBendParticipation =
     // {"PitchBendParticipation", gPitchBendParticipationInfo, PitchBendParticipation::Same };
@@ -169,28 +165,17 @@ struct HarmVoiceSettings //: SerializableDictionary
         return ret;
     }
 
-    // SerializableObject *mSerializableChildObjects[7] = {
-    //     &mSequenceSerializer,
-    //     &mSynthPatchRef,
-    //     &mSynthPatch,
-    //     &mScaleRef,
-    //     &mLocalScale,
-    //     &mRangeSerializer,
-    //     &mNoteOOBBehavior,
-    // };
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
         bool ret = true;
 
-        ret = ret && SerializeHarmVoiceNoteSequence(mSequence, mSequenceLength, rhs.createNestedObject("seq"));
-
-        // ret = ret && mSequenceSerializer.SerializeObject_ToJSON(rhs.createNestedObject("mSequenceSerializer"));
         ret = ret && mSynthPatchRef.SerializableObject_ToJSON(rhs.createNestedObject("pref"));
         ret = ret && mSynthPatch.SerializableObject_ToJSON(rhs.createNestedObject("patch"));
         ret = ret && mScaleRef.SerializableObject_ToJSON(rhs.createNestedObject("sref"));
         ret = ret && mLocalScale.SerializableObject_ToJSON(rhs.createNestedObject("scale"));
         ret = ret && mNoteOOBBehavior.SerializableObject_ToJSON(rhs.createNestedObject("oob"));
         ret = ret && SerializeMidiNoteRange(mMinOutpNote, mMaxOutpNote, rhs.createNestedObject("range"));
+        ret = ret && SerializeHarmVoiceNoteSequence(mSequence, mSequenceLength, rhs.createNestedObject("seq"));
         return ret;
     }
 
@@ -200,42 +185,74 @@ struct HarmVoiceSettings //: SerializableDictionary
         {
             return Result::Failure("expected object");
         }
-
         Result ret = Result::Success();
         ret.AndRequires(mSynthPatchRef.SerializableObject_Deserialize(obj["pref"]), "pref");
         ret.AndRequires(mSynthPatch.SerializableObject_Deserialize(obj["patch"]), "patch");
         ret.AndRequires(mScaleRef.SerializableObject_Deserialize(obj["sref"]), "sref");
         ret.AndRequires(mLocalScale.SerializableObject_Deserialize(obj["scale"]), "scale");
         ret.AndRequires(mNoteOOBBehavior.SerializableObject_Deserialize(obj["oob"]), "oob");
-
+        ret.AndRequires(DeserializeMidiNoteRange(obj["range"], mMinOutpNote, mMaxOutpNote), "range");
+        ret.AndRequires(DeserializeHarmVoiceNoteSequence(obj["seq"], mSequence, mSequenceLength), "seq");
         return ret;
     }
 
-    const size_t mMyIndex;
+    // COPIES mMyIndex
+    HarmVoiceSettings(const HarmVoiceSettings &rhs) = default;
+    //     :
+    //      mMyIndex (rhs.mMyIndex),
+    //       mSequence(rhs.mSequence),              //
+    //       mSequenceLength(rhs.mSequenceLength),  //
+    //       mSynthPatchRef(rhs.mSynthPatchRef),    //
+    //       mSynthPatch(rhs.mSynthPatch),          //
+    //       mScaleRef(rhs.mScaleRef),              //
+    //       mLocalScale(rhs.mLocalScale),          //
+    //       mMinOutpNote(rhs.mMinOutpNote),        //
+    //       mMaxOutpNote(rhs.mMaxOutpNote),        //
+    //       mNoteOOBBehavior(rhs.mNoteOOBBehavior) //
+    // {
+    // }
+    HarmVoiceSettings &operator=(const HarmVoiceSettings &rhs) = default;
 
-    HarmVoiceSettings(size_t myIndex)
-        : //
-          // SerializableDictionary("HarmPatch", mSerializableChildObjects), //
-          mMyIndex(myIndex)
+    // // RETAINS OWN mMyIndex
+    // HarmVoiceSettings &operator=(const HarmVoiceSettings &rhs)
+    // {
+    //     mSequence = rhs.mSequence;
+    //     mSequenceLength = rhs.mSequenceLength;
+    //     mSynthPatchRef = rhs.mSynthPatchRef;
+    //     mSynthPatch = rhs.mSynthPatch;
+    //     mScaleRef = rhs.mScaleRef;
+    //     mLocalScale = rhs.mLocalScale;
+    //     mMinOutpNote = rhs.mMinOutpNote;
+    //     mMaxOutpNote = rhs.mMaxOutpNote;
+    //     mNoteOOBBehavior = rhs.mNoteOOBBehavior;
+    //     return *this;
+    // }
+
+    explicit HarmVoiceSettings() // : mMyIndex(myIndex)
     {
     }
 };
 
 struct HarmPatch //: SerializableDictionary
 {
-    StringParam mName = {"Name", "--"};
-    BoolParam mEmitLiveNote = {"EmitLiveNote", true};
-    FloatParam mStereoSeparation = {"StereoSep", 0.1f}; // spreads stereo signal of the voices.
-    ScaleParam mPatchScale{"PatchScale", {0, ScaleFlavorIndex::Chromatic}};
-    std::array<HarmVoiceSettings, HARM_VOICES> mVoiceSettings{
-        initialize_array_with_indices<HarmVoiceSettings, HARM_VOICES>()};
+    //   private:
+    //     HarmPatch &operator=(const HarmPatch &rhs) = default;
+
+    //   public:
+    StringParam mName { "--"};
+    BoolParam mEmitLiveNote { true};
+    FloatParam mStereoSeparation { 0.1f}; // spreads stereo signal of the voices.
+    ScaleParam mPatchScale{{0, ScaleFlavorIndex::Chromatic}};
+    std::array<HarmVoiceSettings, HARM_VOICES>
+        mVoiceSettings; //{
+                        // initialize_array_with_indices<HarmVoiceSettings, HARM_VOICES>()};
     // ArraySerializer<HarmVoiceSettings, HARM_VOICES> mVoiceSerializer{"Voices", mVoiceSettings};
 
-    IntParam<uint32_t> mMinRotationTimeMS = {"MinRotationTimeMS", 70};
-    IntParam<uint16_t> mSynthPatch1 = {"SynthPatch1", SynthPresetID_Bommanoid};
-    IntParam<uint16_t> mSynthPatch2 = {"SynthPatch2", SynthPresetID_Bommanoid};
-    IntParam<uint16_t> mSynthPatch3 = {"SynthPatch3", SynthPresetID_Bommanoid};
-    IntParam<uint16_t> mSynthPatch4 = {"SynthPatch4", SynthPresetID_Bommanoid};
+    IntParam<uint32_t> mMinRotationTimeMS { 70};
+    IntParam<uint16_t> mSynthPatch1 { SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch2 { SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch3 { SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch4 { SynthPresetID_Bommanoid};
 
     String ToString(int index) const
     {
@@ -244,24 +261,12 @@ struct HarmPatch //: SerializableDictionary
 
     void CopyFrom(const HarmPatch &rhs)
     {
-        Serial.println("TODO: Harm patch copy");
-#pragma message "TODO: Harm patch copy"
+        // size_t mSavedIndex = mMyIndex;
+        *this = rhs;
+        // mMyIndex = mSavedIndex;
     }
 
-    const size_t mMyIndex;
-
-    // SerializableObject *mSerializableChildObjects[10] = {
-    //     &mName,
-    //     &mEmitLiveNote,
-    //     &mStereoSeparation,
-    //     &mPatchScale,
-    //     &mVoiceSerializer,
-    //     &mMinRotationTimeMS,
-    //     &mSynthPatch1,
-    //     &mSynthPatch2,
-    //     &mSynthPatch3,
-    //     &mSynthPatch4,
-    // };
+    // size_t mMyIndex;
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -303,17 +308,18 @@ struct HarmPatch //: SerializableDictionary
         return ret;
     }
 
-    HarmPatch(size_t myIndex)
-        : //
-          // SerializableDictionary("HarmPatch", mSerializableChildObjects), //
-          mMyIndex(myIndex)
-    {
-    }
+    // explicit HarmPatch(size_t myIndex)
+    //     : //
+    //       // SerializableDictionary("HarmPatch", mSerializableChildObjects), //
+    //       mMyIndex(myIndex)
+    // {
+    // }
 };
 
 struct HarmSettings // : SerializableDictionary
 {
-    std::array<HarmPatch, HARM_PRESET_COUNT> mPatches{initialize_array_with_indices<HarmPatch, HARM_PRESET_COUNT>()};
+    std::array<HarmPatch, HARM_PRESET_COUNT>
+        mPatches; //{initialize_array_with_indices<HarmPatch, HARM_PRESET_COUNT>()};
     // ArraySerializer<HarmPatch, HARM_PRESET_COUNT> mPatchSerializer{"Patches", mPatches};
 
     // static void InitSlumsHarmPreset(HarmPreset &p)

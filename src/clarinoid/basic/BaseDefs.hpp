@@ -201,6 +201,7 @@ struct Result
     }
     static Result Failure(const String &message)
     {
+        Serial.println(String("FAIL: ") + message);
         return {false, message};
     }
     static Result Failure()
@@ -209,6 +210,7 @@ struct Result
     }
     static Result Success(const String &message)
     {
+        Serial.println(String("Success: ") + message);
         return {true, message};
     }
     static Result Success()
@@ -234,11 +236,11 @@ struct Result
         if (!condition)
         {
             mMessage += messageIfFailure;
+            Serial.println(String("AndRequires FAIL: ") + mMessage);
         }
         mSuccess = mSuccess && condition;
         return mSuccess;
     }
-    
 
     // when condition is false, we return false after setting the message.
     // clears any existing state.
@@ -252,6 +254,7 @@ struct Result
         if (!condition)
         {
             mMessage = messageIfFailure;
+            Serial.println(String("Requires FAIL: ") + mMessage);
         }
         mSuccess = condition;
         return mSuccess;
@@ -264,6 +267,7 @@ struct Result
         if (!mSuccess)
         {
             mMessage = messagePrefix + rhs.mMessage;
+            Serial.println(String("Requires FAIL: ") + mMessage);
         }
         else
         {
@@ -277,14 +281,17 @@ struct Result
         if (rhs.IsFailure())
         {
             mMessage += messageIfFailure;
+            Serial.println(String("AndRequires FAIL: ") + mMessage);
         }
         mSuccess = mSuccess && rhs.mSuccess;
         return mSuccess;
     }
 
-    void AddWarning(const String &rhs)
+    Result& AddWarning(const String &rhs)
     {
         mMessage = rhs + mMessage;
+        Serial.println(String("AddWarning: ") + mMessage);
+        return *this;
     }
 };
 
@@ -292,7 +299,7 @@ struct Result
 template <typename T, std::size_t N, std::size_t... Is>
 constexpr std::array<T, N> initialize_array_with_indices_helper(std::index_sequence<Is...>)
 {
-    return std::array<T, N>{Is...};
+    return std::array<T, N>{T{Is}...};
 }
 
 template <typename T, std::size_t N>

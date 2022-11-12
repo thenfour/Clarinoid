@@ -103,14 +103,14 @@ struct VoiceModulationMatrixNode : public AudioStream
 
     audio_block_t *inputQueueArray[gARateModulationSourceCount];
 
-    const SynthPreset *mSynthPatch = nullptr;
+    const SynthPatch *mSynthPatch = nullptr;
     IModulationProvider *mpkRateProvider;
 
     VoiceModulationMatrixNode() : AudioStream(gARateModulationSourceCount, inputQueueArray)
     {
     }
 
-    void SetSynthPatch(const SynthPreset *patch, IModulationProvider *pkRateProvider)
+    void SetSynthPatch(const SynthPatch *patch, IModulationProvider *pkRateProvider)
     {
         mSynthPatch = patch;
         mpkRateProvider = pkRateProvider;

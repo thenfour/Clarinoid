@@ -63,7 +63,7 @@ struct HarmVoiceSettingsApp
                                      },
                                      [](void *cap, int n) { // formatter
                                          auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                         return pThis->mAppSettings.mSynthSettings.mPresets[n].ToString(n);
+                                         return pThis->mAppSettings.mSynthSettings.mPatches[n].ToString();
                                      },
                                      Property<bool>{// enabled only if ref type = voice.
                                                     [](void *cap) FLASHMEM {
@@ -349,7 +349,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPatches[n].ToString();
                                     },
                                     AlwaysEnabled,
                                     this};
@@ -369,7 +369,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPatches[n].ToString();
                                     },
                                     AlwaysEnabled,
                                     this};
@@ -389,7 +389,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPatches[n].ToString();
                                     },
                                     AlwaysEnabled,
                                     this};
@@ -409,7 +409,7 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
                                     },
                                     [](void *cap, int n) { // formatter
                                         auto *pThis = (HarmPatchSettingsApp *)cap;
-                                        return pThis->mAppSettings->mSynthSettings.mPresets[n].ToString(n);
+                                        return pThis->mAppSettings->mSynthSettings.mPatches[n].ToString();
                                     },
                                     AlwaysEnabled,
                                     this};

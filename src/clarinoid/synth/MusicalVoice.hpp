@@ -86,7 +86,7 @@ struct MusicalVoice
     HeldNoteInfo mNoteInfo;
     uint32_t mHarmonizerSourceNoteID = 0; // for harmonized notes, which is the source ID? this tells the synthesizer how to associate notes for note-off.
     ISynthParamProvider *mpParamProvider = nullptr;
-    const SynthPreset *mpSynthPatch = nullptr;
+    const SynthPatch *mpSynthPatch = nullptr;
     //const PerformancePatch *mpPerf = nullptr;
 
     String ToString() const 

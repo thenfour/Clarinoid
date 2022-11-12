@@ -25,7 +25,7 @@ enum class OscWaveformShape : uint8_t
     VarTriangle = 1, // [aka Saw-Tri]   shape
     Pulse = 2,       //                 pulsewidth
     SawSync = 3,     //                 ??           curve
-    // SyncPulse = 4,   //                 pulsewidth   syncfreq
+    // smooth square (for FM)
 };
 
 EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[4] = {
@@ -589,13 +589,13 @@ struct SynthModulationSpec
     AnyModulationSource mSource = AnyModulationSource::None;
     AnyModulationDestination mDest = AnyModulationDestination::None;
     ModulationPolarityTreatment mSourcePolarity = ModulationPolarityTreatment::Default;
-    CurveLUTParamValue mCurveShape = 0;
+    CurveLUTParamValue mCurveShape{0};
     float mScaleN11 = 0.5f;
 
     AnyModulationSource mAuxSource = AnyModulationSource::None;
     ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::AsPositive01;
     bool mAuxEnabled = true; // just allows bypassing without removing the aux source
-    CurveLUTParamValue mAuxCurveShape = 0;
+    CurveLUTParamValue mAuxCurveShape{0};
     float mAuxAmount = 0.0f; // amount of attenuation
 
     // to mimic old behavior with 0 offset and just a scale.
@@ -617,30 +617,29 @@ struct SynthModulationSpec
 
 struct EnvelopeSpec
 {
-    EnvTimeParamValue mDelayTime = 0.0f;
-    EnvTimeParamValue mAttackTime = 0.0f;
-    CurveLUTParamValue mAttackCurve = 0.0f;
-    EnvTimeParamValue mHoldTime = 0.0f;
-    EnvTimeParamValue mDecayTime = 0.5f;
-    CurveLUTParamValue mDecayCurve = 0;
+    EnvTimeParamValue mDelayTime{0.0f};
+    EnvTimeParamValue mAttackTime{0.0f};
+    CurveLUTParamValue mAttackCurve{0.0f};
+    EnvTimeParamValue mHoldTime{0.0f};
+    EnvTimeParamValue mDecayTime{0.5f};
+    CurveLUTParamValue mDecayCurve{0};
     float mSustainLevel = 0.5f;
-    EnvTimeParamValue mReleaseTime = 0.6f;
-    CurveLUTParamValue mReleaseCurve = 0;
+    EnvTimeParamValue mReleaseTime{0.6f};
+    CurveLUTParamValue mReleaseCurve{0};
     bool mLegatoRestart = false;
 
-    EnvelopeSpec(size_t myIndex)
-    {
-    }
+    // explicit EnvelopeSpec(size_t myIndex)
+    // {
+    // }
 
-    EnvelopeSpec() = default;
+    // EnvelopeSpec() = default;
 };
 
 struct SynthOscillatorSettings
 {
     void CopyFrom(const SynthOscillatorSettings &rhs)
     {
-        Serial.println("TODO: Harm patch copy");
-#pragma message "TODO: Harm patch copy"
+        *this = rhs;
     }
 
     VolumeParamValue mVolume = VolumeParamValue::FromParamValue(0.4f);
@@ -661,10 +660,10 @@ struct SynthOscillatorSettings
     float mFreqOffsetHz = 0.0f;
 
     // these are good for modulation, and for sync frequency.
-    FrequencyParamValue mFreqParam = {"Frequency", 0.3f, 1.0f}; // param, kt amt
+    FrequencyParamValue mFreqParam{0.3f, 1.0f}; // param, kt amt
 
     bool mHardSyncEnabled = false;
-    FrequencyParamValue mSyncFreqParam = {"SyncFrequency", 0.4f, 1.0f}; // param, kt amt
+    FrequencyParamValue mSyncFreqParam{0.4f, 1.0f}; // param, kt amt
 
     // these are good for musical stuff like transposition.
     int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
@@ -684,18 +683,18 @@ struct SynthOscillatorSettings
 
     float mFMFeedbackGain = 0.0f; // 0 to 1
 
-    const size_t mMyIndex;
-    SynthOscillatorSettings(size_t myIndex) : mMyIndex(myIndex)
-    {
-        //
-    }
+    // size_t mMyIndex;
+    //  explicit SynthOscillatorSettings(size_t myIndex) : mMyIndex(myIndex)
+    //  {
+    //      //
+    //  }
 };
 
 struct LFOSpec //: SerializableDictionary
 {
-    EnumParam<OscWaveformShape> mWaveShape = {"Waveform", gOscWaveformShapeInfo, OscWaveformShape::Sine};
-    FloatParam mPulseWidth = {"PulseWidth", 0.5f};
-    TimeWithBasisParam mSpeed = {"Speed", TimeBasis::Hertz, 1.0f};
+    EnumParam<OscWaveformShape> mWaveShape{gOscWaveformShapeInfo, OscWaveformShape::Sine};
+    FloatParam mPulseWidth{0.5f};
+    TimeWithBasisParam mSpeed{TimeBasis::Hertz, 1.0f};
 
     // BoolParam mPhaseRestart = {"PhaseRestart", false};
 
@@ -706,13 +705,13 @@ struct LFOSpec //: SerializableDictionary
     //     &mPhaseRestart,
     // };
 
-    const size_t mMyIndex;
+    // const size_t mMyIndex;
 
-    LFOSpec(size_t myIndex)
-        : // SerializableDictionary("LFO", mSerializableChildObjects), //
-          mMyIndex(myIndex)
-    {
-    }
+    // explicit LFOSpec(size_t myIndex)
+    //     : // SerializableDictionary("LFO", mSerializableChildObjects), //
+    //       mMyIndex(myIndex)
+    // {
+    // }
 
     // when 0, all voices use the same LFO phase
     // when 1, phase is distributed/staggered among voices
@@ -736,16 +735,12 @@ EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
 
 EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
 
-struct FilterSettings //: SerializableDictionary
+struct FilterSettings 
 {
-    FilterSettings(const char *fieldName) //: SerializableDictionary(fieldName, mSerializableChildObjects)
-    {
-    }
-
-    EnumParam<ClarinoidFilterType> mType = {"Type", gClarinoidFilterTypeInfo, ClarinoidFilterType::LP_Moog4};
-    FloatParam mQ = {"Q", 0.02f};
-    FloatParam mSaturation = {"Saturation", 0.2f};
-    FrequencyParamValue mFrequency = {"Frequency", 0.3f, 0.0f}; // param, kt amt
+    EnumParam<ClarinoidFilterType> mType {gClarinoidFilterTypeInfo, ClarinoidFilterType::LP_Moog4};
+    FloatParam mQ{0.02f};
+    FloatParam mSaturation{0.2f};
+    FrequencyParamValue mFrequency{0.3f, 0.0f}; // param, kt amt
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -770,24 +765,22 @@ struct FilterSettings //: SerializableDictionary
         ret.AndRequires(mSaturation.SerializableObject_Deserialize(obj["sat"]), "sat");
         ret.AndRequires(mFrequency.SerializableObject_Deserialize(obj["freq"]), "freq");
         return ret;
-    }    
-    // SerializableObject *mSerializableChildObjects[4] = {
-    //     &mType,
-    //     &mQ,
-    //     &mSaturation,
-    //     &mFrequency,
-    // };
+    }
 };
 
-struct SynthPreset
+struct SynthPatch
 {
-    std::array<SynthOscillatorSettings, POLYBLEP_OSC_COUNT> mOsc{
-        initialize_array_with_indices<SynthOscillatorSettings, POLYBLEP_OSC_COUNT>()};
+  private:
+    SynthPatch &operator=(const SynthPatch &rhs) = default;
 
-    void CopyFrom(const SynthPreset &rhs)
+  public:
+    std::array<SynthOscillatorSettings, POLYBLEP_OSC_COUNT> mOsc;
+
+    void CopyFrom(const SynthPatch &rhs)
     {
-        Serial.println("TODO: Harm patch copy");
-#pragma message "TODO: Harm patch copy"
+        size_t myIndex = mMyIndex;
+        *this = rhs;
+        mMyIndex = myIndex;
     }
 
     String mName = "--";
@@ -797,11 +790,12 @@ struct SynthPreset
     float mVerbMix = 0.08f;
     float mStereoSpread = 0.15f;
 
-    std::array<EnvelopeSpec, ENVELOPE_COUNT> mEnvelopes{initialize_array_with_indices<EnvelopeSpec, ENVELOPE_COUNT>()};
+    std::array<EnvelopeSpec, ENVELOPE_COUNT>
+        mEnvelopes; //{initialize_array_with_indices<EnvelopeSpec, ENVELOPE_COUNT>()};
 
     VoicingMode mVoicingMode = VoicingMode::Polyphonic;
 
-    std::array<LFOSpec, LFO_COUNT> mLFOs{initialize_array_with_indices<LFOSpec, LFO_COUNT>()};
+    std::array<LFOSpec, LFO_COUNT> mLFOs; //{initialize_array_with_indices<LFOSpec, LFO_COUNT>()};
 
     float mDetune = 0;
 
@@ -810,7 +804,7 @@ struct SynthPreset
     bool mDCFilterEnabled = true;
     float mDCFilterCutoff = 10.0f;
 
-    FilterSettings mFilter = {"Filter1"};
+    FilterSettings mFilter; // = {"Filter1"};
     // ClarinoidFilterType mFilterType = ClarinoidFilterType::LP_Moog4;
     // float mFilterQ = 0.02f;
     // float mFilterSaturation = 0.2f;
@@ -828,8 +822,8 @@ struct SynthPreset
 
     SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
 
-    const size_t mMyIndex;
-    SynthPreset(size_t myIndex) : mMyIndex(myIndex)
+    size_t mMyIndex;
+    explicit SynthPatch(size_t myIndex) : mMyIndex(myIndex)
     {
         mLFOs[0].mSpeed.SetFrequency(1.1f);
         mLFOs[1].mSpeed.SetFrequency(3.5f);
@@ -843,9 +837,9 @@ struct SynthPreset
         mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
     }
 
-    String ToString(int index) const
+    String ToString() const
     {
-        return String("") + index + ":" + mName;
+        return String(mMyIndex) + ":" + mName;
     }
 
     String OscillatorToString(size_t i) const
@@ -878,16 +872,42 @@ struct SynthPreset
         }
         return ret;
     }
+
+    bool SerializableObject_ToJSON(JsonVariant doc) const
+    {
+        bool ret = true;
+        // ret = ret && mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch"));
+        // ret = ret && mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome"));
+        // ret = ret && SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches);
+        // ret = ret && mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm"));
+        // ret = ret && mSynthSettings.SerializableObject_ToJSON(doc.createNestedObject("synth"));
+        return ret;
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        // if (!obj.is<JsonObject>())
+        // {
+        //     return Result::Failure("AppSettings is not a json object");
+        // }
+        Result ret = Result::Success();
+        // ret.AndRequires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
+        // ret.AndRequires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
+        // ret.AndRequires(DeserializeArray(obj["perfPatches"], mPerformancePatches), "perfPatches");
+        // ret.AndRequires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
+        // ret.AndRequires(mSynthSettings.SerializableObject_Deserialize(obj["synth"]), "synth");
+        return ret;
+    }
 };
 
-static constexpr auto synthpatchsize = sizeof(SynthPreset);
+static constexpr auto synthpatchsize = sizeof(SynthPatch);
 
 struct SynthSettings
 {
-    std::array<SynthPreset, SYNTH_PRESET_COUNT> mPresets{
-        initialize_array_with_indices<SynthPreset, SYNTH_PRESET_COUNT>()};
+    std::array<SynthPatch, SYNTH_PRESET_COUNT> mPatches{
+        initialize_array_with_indices<SynthPatch, SYNTH_PRESET_COUNT>()};
 
-    static void InitBommanoidPreset(SynthPreset &p, const char *name)
+    static void InitBommanoidPreset(SynthPatch &p, const char *name)
     {
         p.mName = name;
         p.mDetune = 0.0f;
@@ -905,10 +925,25 @@ struct SynthSettings
         p.mModulations[0].mScaleN11 = 1.0f;
     };
 
+    bool SerializableObject_ToJSON(JsonVariant rhs) const
+    {
+        return SerializeArrayToJSON(rhs.createNestedArray("patches"), mPatches);
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
+
+        return DeserializeArray(obj["patches"], mPatches);
+    }
+
     SynthSettings()
     {
-        InitBommanoidPreset(mPresets[0], "default");
-        InitBommanoidPreset(mPresets[SynthPresetID_Bommanoid], "Bommanoid");
+        InitBommanoidPreset(mPatches[0], "default");
+        InitBommanoidPreset(mPatches[SynthPresetID_Bommanoid], "Bommanoid");
     }
 };
 

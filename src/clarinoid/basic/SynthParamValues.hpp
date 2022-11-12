@@ -3,13 +3,6 @@
 namespace clarinoid
 {
 
-// using ParameterBase = SerializableObject;
-//  {
-//      ParameterBase(const char *fieldName) : SerializableObject(fieldName)
-//      {
-//      }
-//  };
-
 template <typename T>
 struct IntParam // : ParameterBase
 {
@@ -24,11 +17,13 @@ struct IntParam // : ParameterBase
         mValue = v;
     }
 
-    IntParam(const char *fieldName, T defaultValue)
-        : // ParameterBase(fieldName), //
+    explicit IntParam(T defaultValue)
+        : 
           mValue(defaultValue)
     {
     }
+    IntParam(const IntParam<T> &rhs) = default;
+    IntParam<T> &operator=(const IntParam<T> &rhs) = default;
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -43,18 +38,13 @@ struct IntParam // : ParameterBase
         return Result::Success();
     }
 
-    // bool SerializableObject_FromJSON(JsonVariant rhs)
-    // {
-    //     mValue = rhs.as<T>();
-    //     return true;
-    // }
 };
 
 static constexpr size_t arcih = sizeof(IntParam<int>);
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
 // on the other hand i want it to be human-readable.
-struct FloatParam //: ParameterBase
+struct FloatParam 
 {
     using T = float;
     T mValue;
@@ -68,11 +58,13 @@ struct FloatParam //: ParameterBase
         mValue = v;
     }
 
-    FloatParam(const char *fieldName, float defaultValue)
-        : // ParameterBase(fieldName), //
+    explicit FloatParam(float defaultValue)
+        :
           mValue(defaultValue)
     {
     }
+    FloatParam(const FloatParam &rhs) = default;
+    FloatParam &operator=(const FloatParam &rhs) = default;
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -88,12 +80,6 @@ struct FloatParam //: ParameterBase
         mValue = obj.as<T>();
         return ret;
     }
-
-    // bool SerializableObject_FromJSON(JsonVariant rhs)
-    // {
-    //     mValue = rhs.as<T>();
-    //     return true;
-    // }
 };
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
@@ -112,11 +98,13 @@ struct BoolParam //: ParameterBase
         mValue = v;
     }
 
-    BoolParam(const char *fieldName, bool initialValue)
-        : // ParameterBase(fieldName), //
+    explicit BoolParam(bool initialValue)
+        :
           mValue(initialValue)
     {
     }
+    BoolParam(const BoolParam &rhs) = default;
+    BoolParam &operator=(const BoolParam &rhs) = default;
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -133,12 +121,6 @@ struct BoolParam //: ParameterBase
         return Result::Success();
     }
 
-
-    // bool SerializableObject_FromJSON(JsonVariant rhs)
-    // {
-    //     mValue = rhs.as<int>() == 1;
-    //     return true;
-    // }
 };
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
@@ -158,13 +140,15 @@ struct StringParam // : ParameterBase
         mValue = v;
     }
 
-    StringParam(const char *fieldName, const T &initialValue)
-        : // arameterBase(fieldName), //
+    explicit StringParam(const T &initialValue)
+        : 
           mValue(initialValue)
     {
     }
 
     StringParam() = default;
+    StringParam(const StringParam &rhs) = default;
+    StringParam &operator=(const StringParam &rhs) = default;
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -180,18 +164,13 @@ struct StringParam // : ParameterBase
         return Result::Success();
     }
 
-    // bool SerializableObject_FromJSON(JsonVariant rhs)
-    // {
-    //     mValue = rhs.as<T>();
-    //     return true;
-    // }
 };
 
 // use enum values by NAME, so they can be human-readable.
 template <typename TEnum>
 struct EnumParam // : ParameterBase
 {
-    EnumInfo<TEnum> &mEnumInfo;
+    EnumInfo<TEnum> *mpEnumInfo;
     TEnum mValue;
 
     TEnum GetValue() const
@@ -203,16 +182,18 @@ struct EnumParam // : ParameterBase
         mValue = v;
     }
 
-    EnumParam(const char *fieldName, EnumInfo<TEnum> &info, TEnum initialValue)
-        :                  // ParameterBase(fieldName), //
-          mEnumInfo(info), //
+    explicit EnumParam(EnumInfo<TEnum> &info, TEnum initialValue)
+        : 
+          mpEnumInfo(&info), //
           mValue(initialValue)
     {
     }
+    EnumParam(const EnumParam<TEnum> &rhs) = default;
+    EnumParam<TEnum> &operator=(const EnumParam<TEnum> &rhs) = default;
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
-        return rhs.set(mEnumInfo.GetValueShortName(mValue));
+        return rhs.set(mpEnumInfo->GetValueShortName(mValue));
     }
 
     Result SerializableObject_Deserialize(JsonVariant obj)
@@ -220,16 +201,9 @@ struct EnumParam // : ParameterBase
         if (!obj.is<String>())
             return Result::Failure("expected string(enum)");
         String shortName = obj.as<String>();
-        return mEnumInfo.ValueForShortName(shortName, mValue);
+        return mpEnumInfo->ValueForShortName(shortName, mValue);
     }
 
-
-    // bool SerializableObject_FromJSON(JsonVariant rhs) const
-    // {
-    //     // const char * valueName = rhs.as<const char *>();
-    //     //  todo: convert value name to enum value.
-    //     return true;
-    // }
 };
 
 // use enum values by NAME, so they can be human-readable.
@@ -237,8 +211,8 @@ struct ScaleParam //: ParameterBase
 {
     Scale mValue;
 
-    ScaleParam(const char *fieldName, const Scale &initialValue)
-        : // ParameterBase(fieldName), //
+    explicit ScaleParam(const Scale &initialValue)
+        :
           mValue(initialValue)
     {
     }
@@ -257,13 +231,6 @@ struct ScaleParam //: ParameterBase
         String t = obj.as<String>();
         return mValue.DeserializeFromString(t);
     }
-
-
-
-    // bool SerializableObject_FromJSON(JsonVariant rhs) const
-    // {
-    //     return mValue.DeserializeFromString(rhs.as<String>());
-    // }
 };
 
 // "volume" parameters use a custom scale, so they feel more usable.
@@ -355,13 +322,8 @@ struct VolumeParamValue
 // when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
 struct FrequencyParamValue // : SerializableDictionary
 {
-    FloatParam mValue;   // = {"Value", 0.3f};
-    FloatParam mKTValue; // = {"KT", 1.0f};
-
-    // SerializableObject *mSerializableChildObjects[2] = {
-    //     &mValue,
-    //     &mKTValue,
-    // };
+    FloatParam mValue;
+    FloatParam mKTValue;
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -382,12 +344,11 @@ struct FrequencyParamValue // : SerializableDictionary
         ret.AndRequires(mValue.SerializableObject_Deserialize(obj["val"]), "val");
         ret.AndRequires(mKTValue.SerializableObject_Deserialize(obj["kt"]), "kt");
         return ret;
-    }    
+    }
 
-    FrequencyParamValue(const char *fieldName, float initialValue, float initialKTValue)
-        :                            // SerializableDictionary(fieldName, mSerializableChildObjects), //
-          mValue("v", initialValue), //
-          mKTValue("kt", initialKTValue)
+    FrequencyParamValue(float initialValue, float initialKTValue)
+        : mValue(initialValue), //
+          mKTValue(initialKTValue)
     {
     }
 
@@ -458,7 +419,7 @@ struct EnvTimeParamValue
     float mValue;
 
   public:
-    EnvTimeParamValue(float initialValue) : mValue(initialValue)
+    explicit EnvTimeParamValue(float initialValue) : mValue(initialValue)
     {
     }
 
@@ -502,7 +463,7 @@ struct CurveLUTParamValue
     float mValueN11;
 
   public:
-    CurveLUTParamValue(float initialValueN11) : mValueN11(initialValueN11)
+    explicit CurveLUTParamValue(float initialValueN11) : mValueN11(initialValueN11)
     {
     }
 
@@ -548,8 +509,8 @@ enum class TimeBasis : uint8_t
 };
 
 EnumItemInfo<TimeBasis> gTimeBasisItems[15] = {
-    {TimeBasis::Milliseconds, "Milliseconds", "MS"},
-    {TimeBasis::Hertz, "Hertz", "HZ"},
+    {TimeBasis::Milliseconds, "Milliseconds", "ms"},
+    {TimeBasis::Hertz, "Hertz", "hz"},
     //
     {TimeBasis::Half, "Half", "2"},
     {TimeBasis::Quarter, "Quarter", "4"},
@@ -570,34 +531,6 @@ EnumItemInfo<TimeBasis> gTimeBasisItems[15] = {
 
 EnumInfo<TimeBasis> gTimeBasisInfo("TimeBasis", gTimeBasisItems);
 
-struct HarmVoiceNoteSequenceSerializer // : SerializableObject
-{
-    std::array<int8_t, HARM_SEQUENCE_LEN> &mSequence;
-    uint8_t &mSequenceLength;
-
-    HarmVoiceNoteSequenceSerializer(const char *fieldName,
-                                    std::array<int8_t, HARM_SEQUENCE_LEN> &sequence,
-                                    uint8_t &sequenceLength)
-        :                      // SerializableObject(fieldName), //
-          mSequence(sequence), //
-          mSequenceLength(sequenceLength)
-    {
-    }
-
-    // virtual bool SerializableObject_ToJSON(JsonVariant rhs) override
-    // {
-    //     rhs.to<JsonArray>();
-    //     for (size_t i = 0; i < mSequenceLength; ++ i) {
-    //         rhs.add(mSequence[i]);
-    //     }
-    //     return true;
-    // }
-    // virtual bool SerializableObject_FromJSON(JsonVariant rhs) override
-    // {
-    //     // todo
-    //     return false;
-    // }
-};
 
 bool SerializeHarmVoiceNoteSequence(const std::array<int8_t, HARM_SEQUENCE_LEN> &sequence,
                                     const uint8_t &sequenceLength,
@@ -616,6 +549,33 @@ bool SerializeHarmVoiceNoteSequence(const std::array<int8_t, HARM_SEQUENCE_LEN> 
     return ret;
 }
 
+Result DeserializeHarmVoiceNoteSequence(JsonVariant obj,
+                                        std::array<int8_t, HARM_SEQUENCE_LEN> &mSequence,
+                                        uint8_t &mSequenceLength)
+{
+    if (!obj.is<JsonArray>())
+    {
+        return Result::Failure("expected array");
+    }
+    JsonArray arr = obj.as<JsonArray>();
+    Result ret = Result::Success();
+    // sanity
+    if (arr.size() > HARM_SEQUENCE_LEN)
+    {
+        ret.AddWarning(String("seq truncated:") + arr.size() + ">" + HARM_SEQUENCE_LEN);
+    }
+    mSequenceLength = std::min(HARM_SEQUENCE_LEN, arr.size());
+    for (size_t i = 0; i < mSequenceLength; ++i)
+    {
+        if (!arr[i].is<int>())
+        {
+            return Result::Failure("expected int");
+        }
+        mSequence[i] = (uint8_t)arr[i].as<int>();
+    }
+    return ret;
+}
+
 bool SerializeMidiNoteRange(const MidiNote &minValue, const MidiNote &maxValue, JsonVariant rhs)
 {
     rhs.to<JsonArray>();
@@ -624,54 +584,34 @@ bool SerializeMidiNoteRange(const MidiNote &minValue, const MidiNote &maxValue, 
     ret = ret && rhs.add(maxValue.ToString());
     return ret;
 }
-Result DeserializeMidiNoteRange(JsonVariant parent, MidiNote &minValue, MidiNote &maxValue) {
+Result DeserializeMidiNoteRange(JsonVariant parent, MidiNote &minValue, MidiNote &maxValue)
+{
     std::array<StringParam, 2> elements;
     Result ret = DeserializeArray(parent, elements);
-    if (ret.IsFailure()) return ret;
-    ret.AndRequires(MidiNote::FromString(elements[0].GetValue(), minValue), "min");
-    ret.AndRequires(MidiNote::FromString(elements[1].GetValue(), maxValue), "max");
+    if (ret.IsFailure())
+        return ret.AddWarning("noterange:array");
+    ret.AndRequires(MidiNote::FromString(elements[0].GetValue(), minValue), "noterange:min");
+    ret.AndRequires(MidiNote::FromString(elements[1].GetValue(), maxValue), "noterange:max");
     return ret;
 }
 
-struct MidiNoteRangeSerializer // : SerializableObject
-{
-    MidiNote &mMinValue;
-    MidiNote &mMaxValue;
+// struct MidiNoteRangeSerializer // : SerializableObject
+// {
+//     MidiNote &mMinValue;
+//     MidiNote &mMaxValue;
 
-    MidiNoteRangeSerializer(const char *fieldName, MidiNote &minValue, MidiNote &maxValue)
-        : // SerializableObject(fieldName), //
-          mMinValue(minValue), mMaxValue(maxValue)
-    {
-    }
-
-    // virtual bool SerializableObject_ToJSON(JsonVariant rhs) override
-    // {
-    //     rhs.set(mMinValue.ToString() + "," + mMaxValue.ToString());
-    //     return true;
-    // }
-    // virtual bool SerializableObject_FromJSON(JsonVariant rhs) override
-    // {
-    //     // todo
-
-    //     // String s = rhs.as<String>();
-    //     // s.indexOf(',');
-    //     // mValue = rhs.as<T>();
-    //     return false;
-    // }
-};
+//     MidiNoteRangeSerializer(MidiNote &minValue, MidiNote &maxValue)
+//         : // SerializableObject(fieldName), //
+//           mMinValue(minValue), mMaxValue(maxValue)
+//     {
+//     }
+// };
 
 // this is necessary to allow "rich" beat/frequency settings to beat-sync LFO for example
-struct TimeWithBasisParam //: SerializableDictionary
+struct TimeWithBasisParam 
 {
-    EnumParam<TimeBasis> mBasis = {"Basis", gTimeBasisInfo, TimeBasis::Milliseconds};
-    FloatParam mParamValue = {"Value", 100};
-    // float mHz = 6;
-    // float mTimeBeats = 1;
-
-    // SerializableObject *mSerializableChildObjects[2] = {
-    //     &mBasis,
-    //     &mParamValue,
-    // };
+    EnumParam<TimeBasis> mBasis {gTimeBasisInfo, TimeBasis::Milliseconds};
+    FloatParam mParamValue {100};
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
@@ -694,17 +634,15 @@ struct TimeWithBasisParam //: SerializableDictionary
         return ret;
     }
 
-    TimeWithBasisParam(const char *fieldName, TimeBasis basis, float initialValue)
-    //: SerializableDictionary(fieldName, mSerializableChildObjects)
+    TimeWithBasisParam(TimeBasis basis, float initialValue)
     {
         mBasis.SetValue(basis);
         mParamValue.SetValue(initialValue);
     }
 
-    static TimeWithBasisParam FromMilliseconds(const char *fieldName, float timeMS)
+    static TimeWithBasisParam FromMilliseconds(float timeMS)
     {
-        TimeWithBasisParam ret{fieldName, TimeBasis::Milliseconds, timeMS};
-        // ret.SetMilliseconds(timeMS);
+        TimeWithBasisParam ret{TimeBasis::Milliseconds, timeMS};
         return ret;
     }
 

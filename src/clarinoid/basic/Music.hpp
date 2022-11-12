@@ -81,16 +81,16 @@ enum class Note : uint8_t
 
 EnumItemInfo<Note> gNoteItems[12] = {
     {Note::C, "C"},
-    {Note::Db, "Db"},
+    {Note::Db, "C#"},
     {Note::D, "D"},
-    {Note::Eb, "Eb"},
+    {Note::Eb, "D#"},
     {Note::E, "E"},
-    {Note::F_, "F_"},
-    {Note::Gb, "Gb"},
+    {Note::F_, "F"},
+    {Note::Gb, "F#"},
     {Note::G, "G"},
-    {Note::Ab, "Ab"},
+    {Note::Ab, "G#"},
     {Note::A, "A"},
-    {Note::Bb, "Bb"},
+    {Note::Bb, "A#"},
     {Note::B, "B"},
 };
 
@@ -100,8 +100,8 @@ EnumInfo<Note> gNoteInfo("Note", gNoteItems);
 class MidiNote
 {
     uint8_t mValue = 0;     // 0-127 midi note value
-    uint8_t mNoteIndex = 0; // 0-11 gNote index
-    uint8_t mOctave = 0;
+    // uint8_t mNoteIndex = 0; // 0-11 gNote index
+    // uint8_t mOctave = 0;
 
   public:
     MidiNote() = default;
@@ -113,7 +113,22 @@ class MidiNote
         // which makens C0 = 12
         // so... what's below that???
         // for mathematical simplicity
-        DivRem<uint8_t, 12>(midiValue, mOctave, mNoteIndex);
+    }
+
+    uint8_t GetNoteIndex() const {
+        return mValue % 12;
+    // remainder = val % divisor;
+
+    //     uint8_t noteIndex, octave;
+    //     DivRem<uint8_t, 12>(mValue, octave, noteIndex);
+    //     return noteIndex;
+    }
+
+    uint8_t GetOctave() const {
+        return mValue / 12;
+        // uint8_t noteIndex, octave;
+        // DivRem<uint8_t, 12>(mValue, octave, noteIndex);
+        // return octave;
     }
 
     static MidiNote MinimumValue()
@@ -130,7 +145,7 @@ class MidiNote
     // {
     // }
 
-    MidiNote(uint8_t oct, Note note) : mValue(oct * 12 + (uint8_t)note), mNoteIndex((uint8_t)note), mOctave(oct)
+    MidiNote(uint8_t oct, Note note) : mValue(oct * 12 + (uint8_t)note)//, mNoteIndex((uint8_t)note), mOctave(oct)
     {
     }
 
@@ -162,7 +177,7 @@ class MidiNote
     MidiNote &operator+=(int8_t t)
     {
         mValue += t;
-        DivRem<uint8_t, 12>(mValue, mOctave, mNoteIndex);
+        //DivRem<uint8_t, 12>(mValue, mOctave, mNoteIndex);
         return *this;
     }
 
@@ -176,7 +191,10 @@ class MidiNote
     {
         // C#8
         // force last char to be a single digit octave #.
-        return String(gNotes[mNoteIndex].mName) + std::min((uint8_t)9, mOctave);
+        auto noteIndex = GetNoteIndex();
+        auto octave = GetOctave();
+        //return String(gNotes[noteIndex].mName) + std::min((uint8_t)9, octave);
+        return String(gNoteInfo.GetValueShortName(gNoteInfo.ToValue(noteIndex))) + std::min((uint8_t)9, octave);
     }
 
     static Result FromString(const String &s, MidiNote &out)
@@ -187,8 +205,8 @@ class MidiNote
         if (oct < '0' || oct > '9')
             return Result::Failure("bad octave");
         uint8_t nOct = oct - '0';
-        Note note;
-        Result ret = gNoteInfo.ValueForShortName(s.substring(s.length() - 1), note);
+        Note note = Note::C;
+        Result ret = gNoteInfo.ValueForShortName(s.substring(0, s.length() - 1), note);
         if (ret.IsFailure())
             return ret;
         out = MidiNote{nOct, note};
@@ -197,25 +215,27 @@ class MidiNote
 
     String ToStringWithCustomGlyphs() const
     {
-        return String(gNotes[mNoteIndex].mNameWithCustomGlyphs) + mOctave;
+        auto noteIndex = GetNoteIndex();
+        auto octave = GetOctave();
+        return String(gNotes[noteIndex].mNameWithCustomGlyphs) + octave;
     }
 
     uint8_t GetMidiValue() const
     {
         return mValue;
     }
-    uint8_t GetNoteIndex() const
-    {
-        return mNoteIndex;
-    }
+    // uint8_t GetNoteIndex() const
+    // {
+    //     return mNoteIndex;
+    // }
     const NoteDesc &GetNoteDesc() const
     {
-        return gNotes[mNoteIndex];
+        return gNotes[GetNoteIndex()];
     }
-    uint8_t GetOctave() const
-    {
-        return mOctave;
-    }
+    // uint8_t GetOctave() const
+    // {
+    //     return mOctave;
+    // }
 };
 
 ////////////////////////////////////////////////////

@@ -245,12 +245,12 @@ struct SynthPatchOscillatorMenuStuff
 {
   private:
     SynthOscillatorSettings *mpBinding = nullptr;
-    SynthPreset *mpPresetBinding = nullptr;
+    SynthPatch *mpPresetBinding = nullptr;
     int mOscillatorIndex = -1;
     IDisplay *mpDisplay;
 
   public:
-    void SetBindings(SynthPreset *patch, int oscIndex, IDisplay *pdisplay)
+    void SetBindings(SynthPatch *patch, int oscIndex, IDisplay *pdisplay)
     {
         mOscillatorIndex = oscIndex;
         mpPresetBinding = patch;
@@ -595,7 +595,7 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     }
 
     // int16_t mBindingID = 0;
-    SynthPreset &GetBinding()
+    SynthPatch &GetBinding()
     {
         return GetAppSettings()->FindSynthPreset(GetBindingID());
     }
@@ -901,11 +901,11 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         SYNTH_PRESET_COUNT,
         [](void *cap, size_t i) { // itemNameGetter,
             auto *pThis = (SynthPatchMenuApp *)cap;
-            return pThis->GetAppSettings()->mSynthSettings.mPresets[i].ToString(i);
+            return pThis->GetAppSettings()->mSynthSettings.mPatches[i].ToString();
         },
         [](void *cap, size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (SynthPatchMenuApp *)cap;
-            pThis->GetAppSettings()->mSynthSettings.mPresets[i].CopyFrom(pThis->GetBinding());
+            pThis->GetAppSettings()->mSynthSettings.mPatches[i].CopyFrom(pThis->GetBinding());
 
             auto fromName = pThis->GetAppSettings()->GetSynthPatchName(pThis->GetBindingID());
             auto toName = pThis->GetAppSettings()->GetSynthPatchName(i);

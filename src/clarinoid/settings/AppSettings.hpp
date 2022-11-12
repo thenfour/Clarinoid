@@ -24,12 +24,13 @@ EnumItemInfo<GlobalScaleRefType> gGlobalScaleRefTypeItems[2] = {
 
 EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo("GlobalScaleRefType", gGlobalScaleRefTypeItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////
 struct ReverbSettings //: SerializableDictionary
 {
-    BoolParam mEnabled = {"Enabled", true};
-    FloatParam mGain = {"Gain", DecibelsToLinear(-3.0f)};
-    FloatParam mDamping = {"Damping", 0.6f};
-    FloatParam mSize = {"Size", 0.6f};
+    BoolParam mEnabled{true};
+    FloatParam mGain{DecibelsToLinear(-3.0f)};
+    FloatParam mDamping{0.6f};
+    FloatParam mSize{0.6f};
 
     ReverbSettings() //: SerializableDictionary("Reverb", mSerializableChildObjects)
     {
@@ -52,7 +53,6 @@ struct ReverbSettings //: SerializableDictionary
         return r;
     }
 
-
     Result SerializableObject_Deserialize(JsonVariant obj)
     {
         if (!obj.is<JsonObject>())
@@ -67,17 +67,17 @@ struct ReverbSettings //: SerializableDictionary
         ret.AndRequires(mSize.SerializableObject_Deserialize(obj["size"]), "size");
         return ret;
     }
-
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////
 struct DelaySettings // : SerializableDictionary
 {
-    BoolParam mEnabled = {"Enabled", true};
-    FloatParam mGain = {"Gain", DecibelsToLinear(-3.0f)};
-    TimeWithBasisParam mTime = {"Time", TimeBasis::Milliseconds, 250};
-    FloatParam mStereoSeparationDelayMS = {"StereoSeparationDelayMS", 40};
-    FloatParam mFeedbackGain = {"FeedbackGain", 0.3f};
-    FilterSettings mFilter = {"Filter"};
+    BoolParam mEnabled{true};
+    FloatParam mGain{DecibelsToLinear(-3.0f)};
+    TimeWithBasisParam mTime{TimeBasis::Milliseconds, 250};
+    FloatParam mStereoSeparationDelayMS{40};
+    FloatParam mFeedbackGain{0.3f};
+    FilterSettings mFilter; // = {"Filter"};
     // ClarinoidFilterType mDelayFilterType = ClarinoidFilterType::BP_Moog2;
     // SerializableFloat mDelayCutoffFrequency = 1000;
     // SerializableFloat mDelaySaturation = 0.2f;
@@ -126,49 +126,56 @@ struct DelaySettings // : SerializableDictionary
     }
 };
 
-struct PerformancePatch // : SerializableDictionary
+////////////////////////////////////////////////////////////////////////////////////////////////
+struct PerformancePatch
 {
-    StringParam mName = {"Name", "--"};
+  private:
+    PerformancePatch &operator=(const PerformancePatch &rhs) = default;
 
-    FloatParam mBPM = {"BPM", 104.0f};
+  public:
+    StringParam mName{"--"};
 
-    IntParam<int8_t> mTranspose = {"Transpose", DEFAULT_TRANSPOSE};
+    FloatParam mBPM{104.0f};
 
-    EnumParam<GlobalScaleRefType> mGlobalScaleRef = {"GlobalScaleRef",
-                                                     gGlobalScaleRefTypeInfo,
-                                                     GlobalScaleRefType::Deduced};
-    ScaleParam mGlobalScale = {"GlobalScale",
-                               Scale{Note::E, ScaleFlavorIndex::MajorPentatonic}}; // you can set this in menus
-    ScaleParam mDeducedScale = {
-        "DeducedScale",
+    IntParam<int8_t> mTranspose{DEFAULT_TRANSPOSE};
+
+    EnumParam<GlobalScaleRefType> mGlobalScaleRef{gGlobalScaleRefTypeInfo, GlobalScaleRefType::Deduced};
+    ScaleParam mGlobalScale{Scale{Note::E, ScaleFlavorIndex::MajorPentatonic}}; // you can set this in menus
+    ScaleParam mDeducedScale{
         Scale{Note::C, ScaleFlavorIndex::MajorPentatonic}}; // this is automatically populated always
 
-    IntParam<int16_t> mSynthPatchA = {"SynthPatchA", 0};
-    BoolParam mSynthAEnabled = {"SynthAEnabled", true};
-    FloatParam mSynthAGain = {"SynthAGain", 1.0f};
+    IntParam<int16_t> mSynthPatchA{0};
+    BoolParam mSynthAEnabled{true};
+    FloatParam mSynthAGain{1.0f};
 
-    IntParam<int16_t> mSynthPatchB = {"SynthPatchB", -1}; // -1 = mute, no patch.
-    BoolParam mSynthBEnabled = {"SynthBEnabled", true};
-    FloatParam mSynthBGain = {"SynthBGain", 1.0f};
+    IntParam<int16_t> mSynthPatchB{-1}; // -1 = mute, no patch.
+    BoolParam mSynthBEnabled{true};
+    FloatParam mSynthBGain{1.0f};
 
-    IntParam<int16_t> mHarmPreset = {"HarmPatch", 0};
-    BoolParam mHarmEnabled = {"HarmEnabled", false};
-    FloatParam mHarmGain = {"HarmGain", 1.0f};
+    IntParam<int16_t> mHarmPreset{0};
+    BoolParam mHarmEnabled{false};
+    FloatParam mHarmGain{1.0f};
 
-    FloatParam mSynthStereoSpread = {"StereoSpread", 0.35f}; // -1 to 1
+    FloatParam mSynthStereoSpread{0.35f}; // -1 to 1
 
-    FloatParam mMasterGain = {"MasterGain", 1.0f};
-    FloatParam mMasterFXGain = {"MasterFXGain", 1.0f};
-    BoolParam mMasterFXEnable = {"MasterFXEnabled", true};
+    FloatParam mMasterGain{1.0f};
+    FloatParam mMasterFXGain{1.0f};
+    BoolParam mMasterFXEnable{true};
     ReverbSettings mReverb;
     DelaySettings mDelay;
 
-    const size_t mMyIndex;
+    size_t mMyIndex;
 
-    PerformancePatch(size_t mIndex)
-        : // SerializableDictionary("PerformancePatch", mSerializableChildObjects), //
-          mMyIndex(mIndex)
+    explicit PerformancePatch(size_t mIndex) : mMyIndex(mIndex)
     {
+    }
+    PerformancePatch(const PerformancePatch &rhs) = default;
+
+    void CopyFrom(const PerformancePatch &rhs)
+    {
+        size_t mSavedIndex = mMyIndex;
+        *this = rhs;
+        mMyIndex = mSavedIndex;
     }
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
@@ -201,7 +208,6 @@ struct PerformancePatch // : SerializableDictionary
         r = r && mDelay.SerializableObject_ToJSON(rhs.createNestedObject("delay"));
         return r;
     }
-
 
     Result SerializableObject_Deserialize(JsonVariant obj)
     {
@@ -236,34 +242,6 @@ struct PerformancePatch // : SerializableDictionary
         return ret;
     }
 
-    // SerializableObject *mSerializableChildObjects[20] = {
-    //     &mName,
-    //     &mBPM,
-    //     &mTranspose,
-    //     &mGlobalScaleRef,
-    //     &mGlobalScale,
-
-    //     &mSynthPatchA,
-    //     &mSynthAEnabled,
-    //     &mSynthAGain,
-
-    //     &mSynthPatchB,
-    //     &mSynthBEnabled,
-    //     &mSynthBGain,
-
-    //     &mHarmPreset,
-    //     &mHarmEnabled,
-    //     &mHarmGain,
-
-    //     &mSynthStereoSpread,
-
-    //     &mMasterGain,
-    //     &mMasterFXGain,
-    //     &mMasterFXEnable,
-    //     &mReverb,
-    //     &mDelay,
-    // };
-
     String ToString() const
     {
         return String("") + mMyIndex + ":" + mName.GetValue();
@@ -272,17 +250,18 @@ struct PerformancePatch // : SerializableDictionary
 
 static constexpr auto aosenuthaoesuth = sizeof(PerformancePatch);
 
+////////////////////////////////////////////////////////////////////////////////////////////////
 struct MetronomeSettings // : SerializableDictionary
 {
     // MetronomeSettings() : SerializableDictionary("Metronome", mSerializableChildObjects)
     // {
     // }
 
-    BoolParam mSoundOn = {"SoundOn", false};
-    BoolParam mLEDOn = {"LedOn", false};
-    FloatParam mGain = {"Gain", 0.34f};
-    IntParam<uint8_t> mMidiNote = {"MidiNote", 80};
-    IntParam<int> mDecayMS = {"DecayMS", 15};
+    BoolParam mSoundOn{false};
+    BoolParam mLEDOn{false};
+    FloatParam mGain{0.34f};
+    IntParam<uint8_t> mMidiNote{80};
+    IntParam<int> mDecayMS{15};
 
     // SerializableInt<int> mMetronomeBrightness = { "", 255};
     // float mMetronomeLEDDecay = 0.1f;
@@ -322,6 +301,7 @@ struct MetronomeSettings // : SerializableDictionary
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////
 struct AppSettings // : SerializableDictionary
 {
     // one day these will be configurable and therefore part of the exported settings JSON.
@@ -334,9 +314,9 @@ struct AppSettings // : SerializableDictionary
     // // the idea here is that the bigger the interval, the bigger the delay required to lock in the note
     // float mNoteChangeSmoothingIntervalFrameFactor = 0.30f;
 
-    BoolParam mSustainPedalPolarity = {"PedalPolarity", true};
+    BoolParam mSustainPedalPolarity { true};
 
-    BoolParam mDisplayDim = {"DisplayDim", false};
+    BoolParam mDisplayDim { false};
 
     MetronomeSettings mMetronome;
 
@@ -349,7 +329,7 @@ struct AppSettings // : SerializableDictionary
     // ArraySerializer<PerformancePatch, PERFORMANCE_PATCH_COUNT> mPerformancePatchSerializer{"PerfPatches",
     //  mPerformancePatches};
 
-    IntParam<uint16_t> mCurrentPerformancePatch{"CurrentPerformancePatch", 0};
+    IntParam<uint16_t> mCurrentPerformancePatch{ 0};
 
     PerformancePatch &GetCurrentPerformancePatch()
     {
@@ -367,7 +347,7 @@ struct AppSettings // : SerializableDictionary
     {
         if (id < 0 || (size_t)id >= SYNTH_PRESET_COUNT)
             return String("<none>");
-        return mSynthSettings.mPresets[id].ToString(id);
+        return mSynthSettings.mPatches[id].ToString();
     }
 
     String GetHarmPatchName(int16_t id)
@@ -390,13 +370,13 @@ struct AppSettings // : SerializableDictionary
         return mHarmSettings.mPatches[id];
     }
 
-    SynthPreset &FindSynthPreset(int16_t id)
+    SynthPatch &FindSynthPreset(int16_t id)
     {
         id = RotateIntoRange(id, SYNTH_PRESET_COUNT);
-        return mSynthSettings.mPresets[id];
+        return mSynthSettings.mPatches[id];
     }
 
-    SynthPreset &GetSynthPresetForHarmonizerLayer(const HarmPatch &harm, size_t voiceId)
+    SynthPatch &GetSynthPresetForHarmonizerLayer(const HarmPatch &harm, size_t voiceId)
     {
         CCASSERT(voiceId < HARM_VOICES);
         auto &perf = GetCurrentPerformancePatch();
@@ -436,6 +416,7 @@ struct AppSettings // : SerializableDictionary
         ret = ret && mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome"));
         ret = ret && SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches);
         ret = ret && mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm"));
+        ret = ret && mSynthSettings.SerializableObject_ToJSON(doc.createNestedObject("synth"));
         // synth settings
 
         // return serializeJson(doc, Serial); // minified
@@ -456,7 +437,8 @@ struct AppSettings // : SerializableDictionary
         ret.AndRequires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
         ret.AndRequires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
         ret.AndRequires(DeserializeArray(obj["perfPatches"], mPerformancePatches), "perfPatches");
-        ret.Requires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
+        ret.AndRequires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
+        ret.AndRequires(mSynthSettings.SerializableObject_Deserialize(obj["synth"]), "synth");
 
         return ret;
     }
