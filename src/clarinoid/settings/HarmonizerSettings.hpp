@@ -189,19 +189,25 @@ struct HarmVoiceSettings //: SerializableDictionary
         ret = ret && mSynthPatch.SerializableObject_ToJSON(rhs.createNestedObject("patch"));
         ret = ret && mScaleRef.SerializableObject_ToJSON(rhs.createNestedObject("sref"));
         ret = ret && mLocalScale.SerializableObject_ToJSON(rhs.createNestedObject("scale"));
-        ret = ret && SerializeMidiNoteRange(mMinOutpNote, mMaxOutpNote, rhs.createNestedObject("range"));
         ret = ret && mNoteOOBBehavior.SerializableObject_ToJSON(rhs.createNestedObject("oob"));
+        ret = ret && SerializeMidiNoteRange(mMinOutpNote, mMaxOutpNote, rhs.createNestedObject("range"));
+        return ret;
+    }
 
-        // ret = ret && mName.SerializableObject_ToJSON(rhs.createNestedObject("name"));
-        // ret = ret && mEmitLiveNote.SerializableObject_ToJSON(rhs.createNestedObject("live"));
-        // ret = ret && mStereoSeparation.SerializableObject_ToJSON(rhs.createNestedObject("stereo"));
-        // ret = ret && mPatchScale.SerializableObject_ToJSON(rhs.createNestedObject("scale"));
-        // ret = ret && SerializeArrayToJSON(rhs.createNestedArray("voices"), mVoiceSettings);
-        // ret = ret && mMinRotationTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("rotmin"));
-        // ret = ret && mSynthPatch1.SerializableObject_ToJSON(rhs.createNestedObject("patch1"));
-        // ret = ret && mSynthPatch2.SerializableObject_ToJSON(rhs.createNestedObject("patch2"));
-        // ret = ret && mSynthPatch3.SerializableObject_ToJSON(rhs.createNestedObject("patch3"));
-        // ret = ret && mSynthPatch4.SerializableObject_ToJSON(rhs.createNestedObject("patch4"));
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
+
+        Result ret = Result::Success();
+        ret.AndRequires(mSynthPatchRef.SerializableObject_Deserialize(obj["pref"]), "pref");
+        ret.AndRequires(mSynthPatch.SerializableObject_Deserialize(obj["patch"]), "patch");
+        ret.AndRequires(mScaleRef.SerializableObject_Deserialize(obj["sref"]), "sref");
+        ret.AndRequires(mLocalScale.SerializableObject_Deserialize(obj["scale"]), "scale");
+        ret.AndRequires(mNoteOOBBehavior.SerializableObject_Deserialize(obj["oob"]), "oob");
+
         return ret;
     }
 
@@ -265,12 +271,34 @@ struct HarmPatch //: SerializableDictionary
         ret = ret && mEmitLiveNote.SerializableObject_ToJSON(rhs.createNestedObject("live"));
         ret = ret && mStereoSeparation.SerializableObject_ToJSON(rhs.createNestedObject("stereo"));
         ret = ret && mPatchScale.SerializableObject_ToJSON(rhs.createNestedObject("scale"));
-        ret = ret && SerializeArrayToJSON(rhs.createNestedArray("voices"), mVoiceSettings);
         ret = ret && mMinRotationTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("rotmin"));
         ret = ret && mSynthPatch1.SerializableObject_ToJSON(rhs.createNestedObject("patch1"));
         ret = ret && mSynthPatch2.SerializableObject_ToJSON(rhs.createNestedObject("patch2"));
         ret = ret && mSynthPatch3.SerializableObject_ToJSON(rhs.createNestedObject("patch3"));
         ret = ret && mSynthPatch4.SerializableObject_ToJSON(rhs.createNestedObject("patch4"));
+        ret = ret && SerializeArrayToJSON(rhs.createNestedArray("voices"), mVoiceSettings);
+
+        return ret;
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
+
+        Result ret = Result::Success();
+        ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
+        ret.AndRequires(mEmitLiveNote.SerializableObject_Deserialize(obj["live"]), "live");
+        ret.AndRequires(mStereoSeparation.SerializableObject_Deserialize(obj["stereo"]), "stereo");
+        ret.AndRequires(mPatchScale.SerializableObject_Deserialize(obj["scale"]), "scale");
+        ret.AndRequires(mMinRotationTimeMS.SerializableObject_Deserialize(obj["rotmin"]), "rotmin");
+        ret.AndRequires(mSynthPatch1.SerializableObject_Deserialize(obj["patch1"]), "patch1");
+        ret.AndRequires(mSynthPatch2.SerializableObject_Deserialize(obj["patch2"]), "patch2");
+        ret.AndRequires(mSynthPatch3.SerializableObject_Deserialize(obj["patch3"]), "patch3");
+        ret.AndRequires(mSynthPatch4.SerializableObject_Deserialize(obj["patch4"]), "patch4");
+        ret.AndRequires(DeserializeArray(obj["voices"], mVoiceSettings), "voices");
 
         return ret;
     }
@@ -711,9 +739,17 @@ struct HarmSettings // : SerializableDictionary
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
-        bool ret = true;
-        ret = ret && SerializeArrayToJSON(rhs.createNestedArray("patches"), mPatches);
-        return ret;
+        return SerializeArrayToJSON(rhs.createNestedArray("patches"), mPatches);
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
+
+        return DeserializeArray(obj["patches"], mPatches);
     }
 
     HarmSettings() // : SerializableDictionary("HarmSettings", mSerializableChildObjects)

@@ -184,8 +184,8 @@ struct Result
     bool mSuccess = false;
     String mMessage{};
     Result() = default;
-    Result (const Result & rhs) = default;
-    Result(bool success, const String &message) :mSuccess(success), mMessage(message)
+    Result(const Result &rhs) = default;
+    Result(bool success, const String &message) : mSuccess(success), mMessage(message)
     {
     }
     Result(bool success) : mSuccess(success)
@@ -229,14 +229,16 @@ struct Result
     // ret.AndRequires(trySomethingElse(), "trySomethingElse failed"));
     // ret.AndRequires(tryAnotherThing(), "tryAnotherThing failed"));
     // if (!ret) return ret; // now contains all the error messages concatenated.
-    bool AndRequires(bool condition, const String& messageIfFailure)
+    bool AndRequires(bool condition, const String &messageIfFailure)
     {
-        if (!condition) {
+        if (!condition)
+        {
             mMessage += messageIfFailure;
         }
         mSuccess = mSuccess && condition;
         return mSuccess;
     }
+    
 
     // when condition is false, we return false after setting the message.
     // clears any existing state.
@@ -245,9 +247,10 @@ struct Result
     // if (!ret.Requires(trySomething(), "trySomething failed"))) return ret;
     // if (!ret.Requires(trySomethingElse(), "trySomethingElse failed"))) return ret;
     // if (!ret.Requires(tryAnotherThing(), "tryAnotherThing failed"))) return ret;
-    bool Requires(bool condition, const String& messageIfFailure)
+    bool Requires(bool condition, const String &messageIfFailure)
     {
-        if (!condition) {
+        if (!condition)
+        {
             mMessage = messageIfFailure;
         }
         mSuccess = condition;
@@ -255,13 +258,33 @@ struct Result
     }
 
     // use when an inner call returns a Result, but you want to add a prefix msg in case of error.
-    bool Requires(const Result& rhs, const String& messagePrefix)
+    bool Requires(const Result &rhs, const String &messagePrefix)
     {
         mSuccess = rhs.mSuccess;
-        if (!mSuccess) {
+        if (!mSuccess)
+        {
             mMessage = messagePrefix + rhs.mMessage;
         }
+        else
+        {
+            mMessage = rhs.mMessage; // propagate messages up.
+        }
         return mSuccess;
+    }
+
+    bool AndRequires(const Result &rhs, const String &messageIfFailure)
+    {
+        if (rhs.IsFailure())
+        {
+            mMessage += messageIfFailure;
+        }
+        mSuccess = mSuccess && rhs.mSuccess;
+        return mSuccess;
+    }
+
+    void AddWarning(const String &rhs)
+    {
+        mMessage = rhs + mMessage;
     }
 };
 

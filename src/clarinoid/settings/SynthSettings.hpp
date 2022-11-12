@@ -756,6 +756,21 @@ struct FilterSettings //: SerializableDictionary
         r = r && mFrequency.SerializableObject_ToJSON(rhs.createNestedObject("freq"));
         return r;
     }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("must be object");
+        }
+
+        Result ret = Result::Success();
+        ret.AndRequires(mType.SerializableObject_Deserialize(obj["type"]), "type");
+        ret.AndRequires(mQ.SerializableObject_Deserialize(obj["q"]), "q");
+        ret.AndRequires(mSaturation.SerializableObject_Deserialize(obj["sat"]), "sat");
+        ret.AndRequires(mFrequency.SerializableObject_Deserialize(obj["freq"]), "freq");
+        return ret;
+    }    
     // SerializableObject *mSerializableChildObjects[4] = {
     //     &mType,
     //     &mQ,

@@ -142,6 +142,33 @@ bool SerializeArrayToJSON(JsonVariant parent, const std::array<T, N> &arr)
     return ret;
 }
 
+template <typename T, size_t N>
+Result DeserializeArray(JsonVariant parent, std::array<T, N> &outp)
+{
+    if (!parent.is<JsonArray>())
+    {
+        return Result::Failure("Expected array");
+    }
+    Result ret = Result::Success();
+    JsonArray parentArray = parent.as<JsonArray>();
+    size_t iout = 0;
+    for (JsonVariant item : parentArray)
+    {
+        if (iout >= N)
+        {
+            ret.AddWarning(String("Warn:items were skipped (") + parentArray.size() + ">" + N + ")");
+            break;
+        }
+        ret.AndRequires(outp[iout].SerializableObject_Deserialize(item), String("item#") + iout);
+        ++iout;
+    }
+    if (iout != N)
+    {
+        ret.AddWarning(String("Warn:fewer input items than expected (") + parentArray.size() + "<" + N + ")");
+    }
+    return ret;
+}
+
 // // attach to a std::array to create a serializer.
 // template <typename T, size_t N>
 // struct ArraySerializer : SerializableObject

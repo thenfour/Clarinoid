@@ -171,9 +171,28 @@ class MidiNote
         return (*this) += (-t);
     }
 
+    // in a serialize/deserializeable form
     String ToString() const
     {
-        return String(gNotes[mNoteIndex].mName) + mOctave;
+        // C#8
+        // force last char to be a single digit octave #.
+        return String(gNotes[mNoteIndex].mName) + std::min((uint8_t)9, mOctave);
+    }
+
+    static Result FromString(const String &s, MidiNote &out)
+    {
+        if (s.length() < 2)
+            return Result::Failure("too short");
+        char oct = s.charAt(s.length() - 1);
+        if (oct < '0' || oct > '9')
+            return Result::Failure("bad octave");
+        uint8_t nOct = oct - '0';
+        Note note;
+        Result ret = gNoteInfo.ValueForShortName(s.substring(s.length() - 1), note);
+        if (ret.IsFailure())
+            return ret;
+        out = MidiNote{nOct, note};
+        return ret;
     }
 
     String ToStringWithCustomGlyphs() const
@@ -539,10 +558,16 @@ struct Scale
                gScaleFlavorIndexInfo.GetValueShortName(mFlavorIndex);
     }
 
-    bool DeserializeFromString(const String &s) const
+    Result DeserializeFromString(const String &s)
     {
-        // todo
-        return false;
+        String copy = s;
+        copy.trim();
+        int sep = copy.indexOf(' ');
+        if (sep == -1)
+            return Result::Failure("Separator not found");
+        Result ret = gNoteInfo.ValueForShortName(copy.substring(0, sep), mRootNoteIndex);
+        ret.AndRequires(gScaleFlavorIndexInfo.ValueForShortName(copy.substring(sep + 1), mFlavorIndex), "flav");
+        return ret;
     }
 
     Scale &operator=(const Scale &rhs)

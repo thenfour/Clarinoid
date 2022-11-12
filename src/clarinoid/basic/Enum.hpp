@@ -104,6 +104,19 @@ struct EnumInfo : /*GenericEnumItemInfo,*/ GenericEnumInfo
         return GetItem(val).mShortName;
     }
 
+    Result ValueForShortName(const String& shortName, T &mValue) const
+    {
+        for (size_t i = 0; i < mItemCount; ++ i)
+        {
+            auto item = mItems[i];
+            if (shortName == item.mShortName) {
+                mValue = item.mValue;
+                return Result::Success();
+            }
+        }
+        return Result::Failure(String("val:") + shortName + " not found in " + mTypeName);
+    }
+
     T AddRotate(const T &val, int n) const
     {
         int y = static_cast<int>(val) + n;

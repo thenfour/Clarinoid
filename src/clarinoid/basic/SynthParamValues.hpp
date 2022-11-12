@@ -37,18 +37,17 @@ struct IntParam // : ParameterBase
 
     Result SerializableObject_Deserialize(JsonVariant obj)
     {
-        Result ret = Result::Success();
-        if (!ret.Requires(obj.is<T>(), "expected integer type"))
-            return ret;
+        if (!obj.is<T>())
+            return Result::Failure("expected integer");
         mValue = obj.as<T>();
-        return ret;
+        return Result::Success();
     }
 
-    bool SerializableObject_FromJSON(JsonVariant rhs)
-    {
-        mValue = rhs.as<T>();
-        return true;
-    }
+    // bool SerializableObject_FromJSON(JsonVariant rhs)
+    // {
+    //     mValue = rhs.as<T>();
+    //     return true;
+    // }
 };
 
 static constexpr size_t arcih = sizeof(IntParam<int>);
@@ -80,11 +79,21 @@ struct FloatParam //: ParameterBase
         rhs.set(mValue);
         return true;
     }
-    bool SerializableObject_FromJSON(JsonVariant rhs)
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
     {
-        mValue = rhs.as<T>();
-        return true;
+        Result ret = Result::Success();
+        if (!ret.Requires(obj.is<T>(), "expected float"))
+            return ret;
+        mValue = obj.as<T>();
+        return ret;
     }
+
+    // bool SerializableObject_FromJSON(JsonVariant rhs)
+    // {
+    //     mValue = rhs.as<T>();
+    //     return true;
+    // }
 };
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
@@ -114,11 +123,22 @@ struct BoolParam //: ParameterBase
         rhs.set(mValue ? 1 : 0);
         return true;
     }
-    bool SerializableObject_FromJSON(JsonVariant rhs)
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
     {
-        mValue = rhs.as<int>() == 1;
-        return true;
+        if (!obj.is<int>())
+            return Result::Failure("expected 1 or 0");
+        int t = obj.as<int>();
+        mValue = (t != 0);
+        return Result::Success();
     }
+
+
+    // bool SerializableObject_FromJSON(JsonVariant rhs)
+    // {
+    //     mValue = rhs.as<int>() == 1;
+    //     return true;
+    // }
 };
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
@@ -144,16 +164,27 @@ struct StringParam // : ParameterBase
     {
     }
 
+    StringParam() = default;
+
     bool SerializableObject_ToJSON(JsonVariant rhs) const
     {
         rhs.set(mValue);
         return true;
     }
-    bool SerializableObject_FromJSON(JsonVariant rhs)
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
     {
-        mValue = rhs.as<T>();
-        return true;
+        if (!obj.is<String>())
+            return Result::Failure("expected string");
+        mValue = obj.as<String>();
+        return Result::Success();
     }
+
+    // bool SerializableObject_FromJSON(JsonVariant rhs)
+    // {
+    //     mValue = rhs.as<T>();
+    //     return true;
+    // }
 };
 
 // use enum values by NAME, so they can be human-readable.
@@ -183,12 +214,22 @@ struct EnumParam // : ParameterBase
     {
         return rhs.set(mEnumInfo.GetValueShortName(mValue));
     }
-    bool SerializableObject_FromJSON(JsonVariant rhs) const
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
     {
-        // const char * valueName = rhs.as<const char *>();
-        //  todo: convert value name to enum value.
-        return true;
+        if (!obj.is<String>())
+            return Result::Failure("expected string(enum)");
+        String shortName = obj.as<String>();
+        return mEnumInfo.ValueForShortName(shortName, mValue);
     }
+
+
+    // bool SerializableObject_FromJSON(JsonVariant rhs) const
+    // {
+    //     // const char * valueName = rhs.as<const char *>();
+    //     //  todo: convert value name to enum value.
+    //     return true;
+    // }
 };
 
 // use enum values by NAME, so they can be human-readable.
@@ -206,10 +247,23 @@ struct ScaleParam //: ParameterBase
     {
         return rhs.set(mValue.ToSerializableString());
     }
-    bool SerializableObject_FromJSON(JsonVariant rhs) const
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
     {
-        return mValue.DeserializeFromString(rhs.as<String>());
+        if (!obj.is<String>())
+        {
+            return Result::Failure("ScaleParam must be string");
+        }
+        String t = obj.as<String>();
+        return mValue.DeserializeFromString(t);
     }
+
+
+
+    // bool SerializableObject_FromJSON(JsonVariant rhs) const
+    // {
+    //     return mValue.DeserializeFromString(rhs.as<String>());
+    // }
 };
 
 // "volume" parameters use a custom scale, so they feel more usable.
@@ -316,6 +370,19 @@ struct FrequencyParamValue // : SerializableDictionary
         r = r && mKTValue.SerializableObject_ToJSON(rhs.createNestedObject("kt"));
         return r;
     }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("must be object");
+        }
+
+        Result ret = Result::Success();
+        ret.AndRequires(mValue.SerializableObject_Deserialize(obj["val"]), "val");
+        ret.AndRequires(mKTValue.SerializableObject_Deserialize(obj["kt"]), "kt");
+        return ret;
+    }    
 
     FrequencyParamValue(const char *fieldName, float initialValue, float initialKTValue)
         :                            // SerializableDictionary(fieldName, mSerializableChildObjects), //
@@ -557,6 +624,14 @@ bool SerializeMidiNoteRange(const MidiNote &minValue, const MidiNote &maxValue, 
     ret = ret && rhs.add(maxValue.ToString());
     return ret;
 }
+Result DeserializeMidiNoteRange(JsonVariant parent, MidiNote &minValue, MidiNote &maxValue) {
+    std::array<StringParam, 2> elements;
+    Result ret = DeserializeArray(parent, elements);
+    if (ret.IsFailure()) return ret;
+    ret.AndRequires(MidiNote::FromString(elements[0].GetValue(), minValue), "min");
+    ret.AndRequires(MidiNote::FromString(elements[1].GetValue(), maxValue), "max");
+    return ret;
+}
 
 struct MidiNoteRangeSerializer // : SerializableObject
 {
@@ -604,6 +679,19 @@ struct TimeWithBasisParam //: SerializableDictionary
         r = r && mBasis.SerializableObject_ToJSON(rhs.createNestedObject("basis"));
         r = r && mParamValue.SerializableObject_ToJSON(rhs.createNestedObject("val"));
         return r;
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("must be object");
+        }
+
+        Result ret = Result::Success();
+        ret.AndRequires(mBasis.SerializableObject_Deserialize(obj["basis"]), "basis");
+        ret.AndRequires(mParamValue.SerializableObject_Deserialize(obj["val"]), "val");
+        return ret;
     }
 
     TimeWithBasisParam(const char *fieldName, TimeBasis basis, float initialValue)

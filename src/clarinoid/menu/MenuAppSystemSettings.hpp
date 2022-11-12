@@ -132,24 +132,27 @@ struct SystemSettingsApp : SettingsMenuApp
                                     [](void *cap, size_t i) {
                                         auto pThis = (SystemSettingsApp *)cap;
 
-                                        //Serial.println("exporting ...");
+                                        // Serial.println("exporting ...");
 
                                         ClarinoidJsonDocument doc;
                                         if (!pThis->mAppSettings->SerializableObject_ToJSON(doc))
                                         {
-                                            Serial.println("mAppSettings->SerializableObject_ToJSON failed");
+                                            // Serial.println("mAppSettings->SerializableObject_ToJSON failed");
                                             return;
                                         }
-                                        //Serial.println("document has been generated. now saving...");
+                                        // Serial.println("document has been generated. now saving...");
                                         auto ret = pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
-                                        if (ret.IsFailure()) {
+                                        if (ret.IsFailure())
+                                        {
                                             pThis->mDisplay.ShowToast(String("Fail: ") + ret.mMessage, 4000);
                                         }
-                                        else {
+                                        else
+                                        {
                                             pThis->mDisplay.ShowToast(String("Success: ") + ret.mMessage, 4000);
                                         }
                                     },
-                                    AlwaysEnabledMulti, this};
+                                    AlwaysEnabledMulti,
+                                    this};
 
     MultiTriggerSettingItem mImport{[](void *) { return gStorageChannelInfo.count(); },
                                     [](void *, size_t i) {
@@ -161,20 +164,23 @@ struct SystemSettingsApp : SettingsMenuApp
 
                                         ClarinoidJsonDocument doc;
                                         auto err = pThis->mpStorage->LoadDocument(StorageChannel(i), doc);
-                                        if (err.code() != DeserializationError::Ok) {
-                                            pThis->mDisplay.ShowToast(err.c_str(), 5000);
+                                        if (err.code() != DeserializationError::Ok)
+                                        {
+                                            pThis->mDisplay.ShowToast(err.c_str(), 4000);
                                             return;
                                         }
 
                                         auto err2 = pThis->mAppSettings->SerializableObject_Deserialize(doc);
-                                        if (err2.IsSuccess()) {
+                                        if (err2.IsSuccess())
+                                        {
                                             pThis->mDisplay.ShowToast(String("Success; ") + err2.mMessage, 4000);
                                             return;
                                         }
 
                                         pThis->mDisplay.ShowToast(String("FAIL: ") + err2.mMessage, 4000);
                                     },
-                                    AlwaysEnabledMulti, this};
+                                    AlwaysEnabledMulti,
+                                    this};
 
     // UnipolarCalibrationSettingItem mBreath = {
     //     "Breath",
