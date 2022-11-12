@@ -190,18 +190,18 @@ struct Voice : IModulationProvider
         float midiNote = mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue();
 
         float userPB = mRunningVoice.mpParamProvider->SynthParamProvider_GetPitchBendN11();
-        float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive : (-osc.mPitchBendRangeNegative));
+        float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive.GetValue() : (-osc.mPitchBendRangeNegative.GetValue()));
 
         float paramSemis = osc.mFreqParam.GetMidiNote(midiNote, krateFreqModN11);
 
-        float idealSemis = paramSemis + osc.mPitchFine + osc.mPitchSemis + detune;
+        float idealSemis = paramSemis + osc.mPitchFine.GetValue() + osc.mPitchSemis.GetValue() + detune;
 
-        float retSemis = portamento.KStep(idealSemis, osc.mPortamentoTimeMS);
+        float retSemis = portamento.KStep(idealSemis, osc.mPortamentoTimeMS.GetValue());
         retSemis += pbSemis; // Pitchbend needs to be after portamento.
 
         float retHz = MIDINoteToFreq(retSemis);
-        retHz *= osc.mFreqMultiplier;
-        retHz += osc.mFreqOffsetHz;
+        retHz *= osc.mFreqMultiplier.GetValue();
+        retHz += osc.mFreqOffsetHz.GetValue();
 
         return Clamp(retHz, 0.0f, 22050.0f);
     };
@@ -209,7 +209,7 @@ struct Voice : IModulationProvider
     void Update()
     {
         auto newRunningVoice = mpMusicalState->GetLiveMusicalVoice(this->mRunningVoice);
-        const auto& perf = this->mAppSettings->GetCurrentPerformancePatch();
+        const auto &perf = this->mAppSettings->GetCurrentPerformancePatch();
 
         if (newRunningVoice.mIsActive)
         {
@@ -236,7 +236,7 @@ struct Voice : IModulationProvider
         }
 
         const auto &patch = *mRunningVoice.mpSynthPatch;
-        //const auto &perf = *mRunningVoice.mpPerf;
+        // const auto &perf = *mRunningVoice.mpPerf;
 
         float externalGain = 1.0f;
         switch (mRunningVoice.mSource.mType)
@@ -321,14 +321,15 @@ struct Voice : IModulationProvider
         // size_t enabledOscIndices[POLYBLEP_OSC_COUNT];
         for (size_t iosc = 0; iosc < POLYBLEP_OSC_COUNT; ++iosc)
         {
-            if (!patch.mOsc[iosc].mEnabled)
+            if (!patch.mOsc[iosc].mEnabled.GetValue())
                 continue;
             // enabledOscIndices[oscEnabledCount] = iosc;
             oscEnabledCount++;
         }
 
-        float detune = patch.mDetune + mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Detune);
-        float spread = patch.mStereoSpread;
+        float detune =
+            patch.mDetune.GetValue() + mModMatrix.GetKRateDestinationValue(KRateModulationDestination::Detune);
+        float spread = patch.mStereoSpread.GetValue();
 
         float detunes[POLYBLEP_OSC_COUNT] = {0};
         float spreads[POLYBLEP_OSC_COUNT] = {0};
@@ -365,26 +366,27 @@ struct Voice : IModulationProvider
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
-            mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled;
+            mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled.GetValue();
 
             mOscMixerPanner.SetInputPanGainAndEnabled(
                 i,
-                patch.mPan + patch.mOsc[i].mPan + spreads[ienabledOsc],
+                patch.mPan.GetValue() + patch.mOsc[i].mPan.GetValue() + spreads[ienabledOsc],
                 patch.mOsc[i]
                     .mVolume
                     .AddParam(mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_Volume))
                     .ToLinearGain(),
                 true);
 
-            if (!patch.mOsc[i].mEnabled)
+            if (!patch.mOsc[i].mEnabled.GetValue())
                 continue;
 
-            mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth);
-            mOsc.mOsc[i].mPMMultiplier = patch.mOverallFMStrength + mModMatrix.GetKRateDestinationValue(
-                                                                        KRateModulationDestination::OverallFMStrength);
+            mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth.GetValue());
+            mOsc.mOsc[i].mPMMultiplier =
+                patch.mOverallFMStrength.GetValue() +
+                mModMatrix.GetKRateDestinationValue(KRateModulationDestination::OverallFMStrength);
 
             mOsc.mOsc[i].mPMFeedbackAmt =
-                patch.mOsc[i].mFMFeedbackGain +
+                patch.mOsc[i].mFMFeedbackGain.GetValue() +
                 mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_FMFeedback);
 
             float freq =
@@ -396,11 +398,11 @@ struct Voice : IModulationProvider
             // sd += String("[o") + i + " det:" + detunes[ienabledOsc] + " freq:" + freq + "]  ";
 
             mOsc.mOsc[i].SetBasicParams(
-                patch.mOsc[i].mWaveform,
+                patch.mOsc[i].mWaveform.GetValue(),
                 freq,
-                patch.mOsc[i].mPhase01,
-                patch.mOsc[i].mPortamentoTimeMS,
-                patch.mOsc[i].mHardSyncEnabled,
+                patch.mOsc[i].mPhase01.GetValue(),
+                patch.mOsc[i].mPortamentoTimeMS.GetValue(),
+                patch.mOsc[i].mHardSyncEnabled.GetValue(),
                 patch.mOsc[i].mSyncFreqParam.GetFrequency(
                     mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(),
                     mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency)));
@@ -415,13 +417,18 @@ struct Voice : IModulationProvider
         float filterFreq = patch.mFilter.mFrequency.GetFrequency(
             MIDINoteToFreq(mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue()),
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FilterCutoff));
-        mFilter.SetParams(patch.mFilter.mType.GetValue(), filterFreq, patch.mFilter.mQ.GetValue(), patch.mFilter.mSaturation.GetValue());
-        mFilter.EnableDCFilter(patch.mDCFilterEnabled, patch.mDCFilterCutoff);
+        mFilter.SetParams(patch.mFilter.mType.GetValue(),
+                          filterFreq,
+                          patch.mFilter.mQ.GetValue(),
+                          patch.mFilter.mSaturation.GetValue());
+
+        mFilter.EnableDCFilter(false, 10.0f);
+        // mFilter.EnableDCFilter(patch.mDCFilterEnabled.GetValue(), patch.mDCFilterCutoff.GetValue());
 
         // for "mix" behavior, we can look to panning. the pan law applies here; you're effectively panning between the
         // dry signal and the various effects. But instead of a -1 to +1 range, it's going to be 0-1.
-        auto verbGains = CalculatePanGain(patch.mDelayMix * 2 - 1);
-        auto delayGains = CalculatePanGain(patch.mVerbMix * 2 - 1);
+        auto verbGains = CalculatePanGain(patch.mDelayMix.GetValue() * 2 - 1);
+        auto delayGains = CalculatePanGain(patch.mVerbMix.GetValue() * 2 - 1);
 
         float masterGain =
             patch.mMasterVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::MasterVolume))
@@ -439,14 +446,8 @@ struct Voice : IModulationProvider
         CCASSERT(v.mIsActive);
 
         bool isLegato = (mRunningVoice.mSource.Equals(v.mSource)) && (mReleaseTimestampMS == 0) &&
-                        (mRunningVoice.mIsActive) && (v.mpSynthPatch->mVoicingMode == VoicingMode::Monophonic);
-
-        // // i don't actually think this is necessary. to be confirmed.
-        // for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
-        // {
-        //     if (!isLegato || (isLegato && mRunningVoice.mSynthPatch->mEnvelopes[i].mLegatoRestart))
-        //         mEnvelopes[i].noteOff();
-        // }
+                        (mRunningVoice.mIsActive) &&
+                        (v.mpSynthPatch->mVoicingMode.GetValue() == VoicingMode::Monophonic);
 
         // adjust running voice.
         mRunningVoice = v;
@@ -454,17 +455,11 @@ struct Voice : IModulationProvider
         // mRunningVoice.mNoteInfo = noteInfo;
         mReleaseTimestampMS = 0; // important so we know the note is playing
 
-        // if (mRunningVoice.mSynthPatch != newSynthPatch)
-        // {
-        //     mRunningVoice.mSynthPatchIndex = synthPatchIndex;
-        //     mRunningVoice.mSynthPatch = newSynthPatch;
-        //     mModMatrix.SetSynthPatch(newSynthPatch, this);
-        // }
         mModMatrix.SetSynthPatch(mRunningVoice.mpSynthPatch, this);
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
-            if (mRunningVoice.mpSynthPatch->mOsc[i].mPhaseRestart)
+            if (mRunningVoice.mpSynthPatch->mOsc[i].mPhaseRestart.GetValue())
             {
                 mOsc.mOsc[i].ResetPhase();
             }
@@ -472,12 +467,11 @@ struct Voice : IModulationProvider
 
         for (size_t i = 0; i < ENVELOPE_COUNT; ++i)
         {
-            if (!isLegato || (isLegato && mRunningVoice.mpSynthPatch->mEnvelopes[i].mLegatoRestart))
+            if (!isLegato || (isLegato && mRunningVoice.mpSynthPatch->mEnvelopes[i].mLegatoRestart.GetValue()))
             {
                 mEnvelopes[i].noteOn();
             }
         }
-
     }
 
     void IncomingMusicalEvents_OnNoteOff()
@@ -495,9 +489,10 @@ struct Voice : IModulationProvider
         }
     }
 
-    void IncomingMusicalEvents_OnNoteKill() {
-        //Serial.println(String("killing voice ") + this->ToString());
-        // for when a hard stop should be done; skip release phase.
+    void IncomingMusicalEvents_OnNoteKill()
+    {
+        // Serial.println(String("killing voice ") + this->ToString());
+        //  for when a hard stop should be done; skip release phase.
         for (auto &e : mEnvelopes)
         {
             e.AdvanceToStage(EnvelopeStage::Idle);
@@ -595,6 +590,6 @@ struct Voice : IModulationProvider
     }
 };
 
-std::array<Voice, MAX_SYNTH_VOICES> gVoices { initialize_array_with_indices<Voice, MAX_SYNTH_VOICES>() };
+std::array<Voice, MAX_SYNTH_VOICES> gVoices{initialize_array_with_indices<Voice, MAX_SYNTH_VOICES>()};
 
 } // namespace clarinoid

@@ -70,7 +70,7 @@ struct PolySynth : IMusicalEventsForSynth
 
         // monophonic wants to reuse the same voice for everything.
         // so find a voice already playing from this source
-        if (mv.mpSynthPatch->mVoicingMode == VoicingMode::Monophonic)
+        if (mv.mpSynthPatch->mVoicingMode.GetValue() == VoicingMode::Monophonic)
         {
             for (size_t i = 0; i < gVoices.size(); ++i)
             {
@@ -98,7 +98,7 @@ struct PolySynth : IMusicalEventsForSynth
         //   find this note
         switch (mv.mSource.mType)
         {
-            default:
+        default:
             CCASSERT(!"unexpected source types");
         case MusicalEventSourceType::LivePlayA:
         case MusicalEventSourceType::LivePlayB:
@@ -123,7 +123,7 @@ struct PolySynth : IMusicalEventsForSynth
                     (v.mRunningVoice.mHarmonizerSourceNoteID == mv.mHarmonizerSourceNoteID))
                 {
                     v.IncomingMusicalEvents_OnNoteOff();
-                    //Serial.println(" -> success");
+                    // Serial.println(" -> success");
                     return;
                 }
             }

@@ -91,7 +91,7 @@ struct HarmonizerDeviceLayer
     void OnNoteOff(const HeldNoteInfo &noteInfo, const HeldNoteInfo *trillNote, const HarmPatch &harmPatch)
     {
         auto& synthPatch = mpAppSettings->GetSynthPresetForHarmonizerLayer(harmPatch, mLayerIndex);
-        if ((synthPatch.mVoicingMode == VoicingMode::Monophonic) && !!trillNote) {
+        if ((synthPatch.mVoicingMode.GetValue() == VoicingMode::Monophonic) && !!trillNote) {
             // monophonic note off with a valid trill note = simple note on of trill note.
             OnNoteOn(*trillNote, harmPatch);
             return;
@@ -115,8 +115,8 @@ struct HarmonizerDeviceLayer
     {
         // if voicing mode changes, all notes off is critical.
         const auto& synthPatch = mpAppSettings->GetSynthPresetForHarmonizerLayer(harmPatch, mLayerIndex);
-        if (mLastKnownVoicingMode != synthPatch.mVoicingMode) {
-            mLastKnownVoicingMode = synthPatch.mVoicingMode;
+        if (mLastKnownVoicingMode != synthPatch.mVoicingMode.GetValue()) {
+            mLastKnownVoicingMode = synthPatch.mVoicingMode.GetValue();
             this->OnAllNotesOff(harmPatch);
         }
 

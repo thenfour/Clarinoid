@@ -27,7 +27,7 @@ struct SynthPresetAMappableFunction : FunctionHandler
         if (old != nv)
         {
             auto &p = mAppSettings->FindSynthPreset(nv);
-            mInputSrc->InputSource_ShowToast(String("Synth patch A: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName);
+            mInputSrc->InputSource_ShowToast(String("Synth patch A: ") + nv + " (" + (nv - old) + ")\r\n" + p.mName.GetValue());
             mAppSettings->GetCurrentPerformancePatch().mSynthPatchA.SetValue(nv);
         }
     }

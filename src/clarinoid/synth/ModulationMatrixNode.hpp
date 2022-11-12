@@ -227,28 +227,28 @@ struct VoiceModulationMatrixNode : public AudioStream
                                const ModulationSourceInfo &sourceInfo,
                                const ModulationDestinationInfo &destInfo)
     {
-        auto polarityMapping =
-            GetPolarityConversion<PolarityConversionKernelFloat>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+        auto polarityMapping = GetPolarityConversion<PolarityConversionKernelFloat>(sourceInfo.mPoleType,
+                                                                                    modSpec.mSourcePolarity.GetValue());
         float ret = polarityMapping.Transfer(kRateSourceValue);
         auto curveState = modSpec.mCurveShape.BeginLookup();
         ret = gModCurveLUT.Transfer32(ret, curveState);
-        ret *= modSpec.mScaleN11;
+        ret *= modSpec.mScaleN11.GetValue();
 
-        const auto &auxInfo = GetModulationSourceInfo(modSpec.mAuxSource);
-        if (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount)
+        const auto &auxInfo = GetModulationSourceInfo(modSpec.mAuxSource.GetValue());
+        if (auxInfo.mIsValidModulation && modSpec.mAuxEnabled.GetValue() && modSpec.mAuxAmount.GetValue())
         {
             // we need to apply aux source.
             auto optAuxVal = GetKRateSourceValueFromAnySource(buffers, auxInfo);
             if (optAuxVal.first)
             {
-                auto auxPolarityMapping =
-                    GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity);
+                auto auxPolarityMapping = GetPolarityConversion<PolarityConversionKernelFloat>(
+                    auxInfo.mPoleType, modSpec.mAuxPolarity.GetValue());
                 float auxVal = auxPolarityMapping.Transfer(optAuxVal.second);
                 auto auxCurveState = modSpec.mAuxCurveShape.BeginLookup();
                 auxVal = gModCurveLUT.Transfer32(auxVal, auxCurveState);
 
-                float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
-                float auxMul = auxBase + auxVal * modSpec.mAuxAmount;
+                float auxBase = 1.0f - modSpec.mAuxAmount.GetValue(); // can be precalculated
+                float auxMul = auxBase + auxVal * modSpec.mAuxAmount.GetValue();
 
                 ret *= auxMul;
             }
@@ -263,9 +263,9 @@ struct VoiceModulationMatrixNode : public AudioStream
                                        const ModulationDestinationInfo &destInfo)
     {
         auto srcCurveState = modSpec.mCurveShape.BeginLookup();
-        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
-        auto srcPolarityConv =
-            GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11.GetValue() * 65536);
+        auto srcPolarityConv = GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType,
+                                                                                    modSpec.mSourcePolarity.GetValue());
 
         uint32_t *bufSrc32 = (uint32_t *)(src->data);
         uint32_t *bufDest32 = (uint32_t *)(dest->data);
@@ -297,23 +297,23 @@ struct VoiceModulationMatrixNode : public AudioStream
                                           const ModulationSourceInfo &auxInfo)
     {
         auto srcCurveState = modSpec.mCurveShape.BeginLookup();
-        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
+        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11.GetValue() * 65536);
 
-        auto srcPolarityConv =
-            GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+        auto srcPolarityConv = GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType,
+                                                                                    modSpec.mSourcePolarity.GetValue());
 
         uint32_t *bufSrc32 = (uint32_t *)(src->data);
         uint32_t *bufDest32 = (uint32_t *)(dest->data);
 
         float auxVal = EnsureKRateSource(buffers, auxInfo);
-        float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
+        float auxBase = 1.0f - modSpec.mAuxAmount.GetValue(); // can be precalculated
         auto auxCurveState = modSpec.mAuxCurveShape.BeginLookup();
         auto auxPolarityConv =
-            GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity);
+            GetPolarityConversion<PolarityConversionKernelFloat>(auxInfo.mPoleType, modSpec.mAuxPolarity.GetValue());
 
         auxVal = auxPolarityConv.Transfer(auxVal);
         auxVal = gModCurveLUT.Transfer32(auxVal, auxCurveState);
-        auxVal = auxBase + auxVal * modSpec.mAuxAmount;
+        auxVal = auxBase + auxVal * modSpec.mAuxAmount.GetValue();
         int32_t auxVal16 = int32_t(auxVal * 65536);
 
         for (size_t i32 = 0; i32 < AUDIO_BLOCK_SAMPLES / 2; ++i32)
@@ -353,18 +353,18 @@ struct VoiceModulationMatrixNode : public AudioStream
         if (!auxBuf)
             return;
 
-        float auxBase = 1.0f - modSpec.mAuxAmount; // can be precalculated
+        float auxBase = 1.0f - modSpec.mAuxAmount.GetValue(); // can be precalculated
         uint32_t auxBase32 = (uint32_t)(auxBase * 65536);
 
         auto srcCurveState = modSpec.mCurveShape.BeginLookup();
         auto auxCurveState = modSpec.mAuxCurveShape.BeginLookup();
-        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11 * 65536);
-        int32_t auxScale16p16 = int32_t(modSpec.mAuxAmount * 65536);
+        int32_t sourceScale16p16 = int32_t(modSpec.mScaleN11.GetValue() * 65536);
+        int32_t auxScale16p16 = int32_t(modSpec.mAuxAmount.GetValue() * 65536);
 
-        auto srcPolarityConv =
-            GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType, modSpec.mSourcePolarity);
+        auto srcPolarityConv = GetPolarityConversion<PolarityConversionKernel15p16>(sourceInfo.mPoleType,
+                                                                                    modSpec.mSourcePolarity.GetValue());
         auto auxPolarityConv =
-            GetPolarityConversion<PolarityConversionKernel15p16>(auxInfo.mPoleType, modSpec.mAuxPolarity);
+            GetPolarityConversion<PolarityConversionKernel15p16>(auxInfo.mPoleType, modSpec.mAuxPolarity.GetValue());
 
         uint32_t *bufSrc32 = (uint32_t *)(src->data);
         uint32_t *bufAux32 = (uint32_t *)(auxBuf->data);
@@ -417,7 +417,8 @@ struct VoiceModulationMatrixNode : public AudioStream
                                  const ModulationDestinationInfo &destInfo,
                                  const ModulationSourceInfo &auxInfo)
     {
-        bool auxEnabled = (auxInfo.mIsValidModulation && modSpec.mAuxEnabled && modSpec.mAuxAmount);
+        bool auxEnabled =
+            (auxInfo.mIsValidModulation && modSpec.mAuxEnabled.GetValue() && modSpec.mAuxAmount.GetValue());
         if (!auxEnabled)
         {
             MapARateToARateAndApply_NoAux(src, dest, modSpec, sourceInfo, destInfo);
@@ -529,16 +530,16 @@ struct VoiceModulationMatrixNode : public AudioStream
         {
             fast::FillBufferWithConstant(0, dest->data);
         }
-        const auto &auxInfo = GetModulationSourceInfo(modulation.mAuxSource);
+        const auto &auxInfo = GetModulationSourceInfo(modulation.mAuxSource.GetValue());
         MapARateToARateAndApply(buffers, source, dest, modulation, sourceInfo, destInfo, auxInfo);
     }
 
     void ProcessModulation(Buffers &buffers, const SynthModulationSpec &modulation)
     {
-        auto sourceInfo = GetModulationSourceInfo(modulation.mSource);
+        auto sourceInfo = GetModulationSourceInfo(modulation.mSource.GetValue());
         if (!sourceInfo.mIsValidModulation)
             return;
-        auto destInfo = GetModulationDestinationInfo(modulation.mDest);
+        auto destInfo = GetModulationDestinationInfo(modulation.mDest.GetValue());
         if (!destInfo.mIsValidModulation)
             return;
 
@@ -571,10 +572,10 @@ struct VoiceModulationMatrixNode : public AudioStream
                              AnyModulationDestination dest)
     {
         SynthModulationSpec m;
-        m.mSource = src;
-        m.mDest = dest;
-        m.mSourcePolarity = ModulationPolarityTreatment::AsBipolar;
-        m.SetScaleN11_Legacy(amount);
+        m.mSource.SetValue(src);
+        m.mDest.SetValue(dest);
+        m.mSourcePolarity.SetValue(ModulationPolarityTreatment::AsBipolar);
+        m.mScaleN11.SetValue(amount);
         ProcessModulation(buffers, m);
     }
 
@@ -616,50 +617,50 @@ struct VoiceModulationMatrixNode : public AudioStream
         float krateFMStrength1To3 = GetKRateDestinationValue(KRateModulationDestination::FMStrength1To3);
         float krateFMStrength2To3 = GetKRateDestinationValue(KRateModulationDestination::FMStrength2To3);
 
-        if (!FloatEquals(mSynthPatch->mFMStrength2To1, 0) || !FloatEquals(krateFMStrength2To1, 0))
+        if (!FloatEquals(mSynthPatch->mFMStrength2To1.GetValue(), 0) || !FloatEquals(krateFMStrength2To1, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength2To1 + krateFMStrength2To1,
+                                mSynthPatch->mFMStrength2To1.GetValue() + krateFMStrength2To1,
                                 mSynthPatch->mOsc[1],
                                 AnyModulationSource::Osc2FB,
                                 AnyModulationDestination::Osc1Phase);
         }
-        if (!FloatEquals(mSynthPatch->mFMStrength3To1, 0) || !FloatEquals(krateFMStrength3To1, 0))
+        if (!FloatEquals(mSynthPatch->mFMStrength3To1.GetValue(), 0) || !FloatEquals(krateFMStrength3To1, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength3To1 + krateFMStrength3To1,
+                                mSynthPatch->mFMStrength3To1.GetValue() + krateFMStrength3To1,
                                 mSynthPatch->mOsc[2],
                                 AnyModulationSource::Osc3FB,
                                 AnyModulationDestination::Osc1Phase);
         }
-        if (!FloatEquals(mSynthPatch->mFMStrength1To2, 0) || !FloatEquals(krateFMStrength1To2, 0))
+        if (!FloatEquals(mSynthPatch->mFMStrength1To2.GetValue(), 0) || !FloatEquals(krateFMStrength1To2, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength1To2 + krateFMStrength1To2,
+                                mSynthPatch->mFMStrength1To2.GetValue() + krateFMStrength1To2,
                                 mSynthPatch->mOsc[0],
                                 AnyModulationSource::Osc1FB,
                                 AnyModulationDestination::Osc2Phase);
         }
-        if (!FloatEquals(mSynthPatch->mFMStrength3To2, 0) || !FloatEquals(krateFMStrength3To2, 0))
+        if (!FloatEquals(mSynthPatch->mFMStrength3To2.GetValue(), 0) || !FloatEquals(krateFMStrength3To2, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength3To2 + krateFMStrength3To2,
+                                mSynthPatch->mFMStrength3To2.GetValue() + krateFMStrength3To2,
                                 mSynthPatch->mOsc[2],
                                 AnyModulationSource::Osc3FB,
                                 AnyModulationDestination::Osc2Phase);
         }
-        if (!FloatEquals(mSynthPatch->mFMStrength1To3, 0) || !FloatEquals(krateFMStrength1To3, 0))
+        if (!FloatEquals(mSynthPatch->mFMStrength1To3.GetValue(), 0) || !FloatEquals(krateFMStrength1To3, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength1To3 + krateFMStrength1To3,
+                                mSynthPatch->mFMStrength1To3.GetValue() + krateFMStrength1To3,
                                 mSynthPatch->mOsc[0],
                                 AnyModulationSource::Osc1FB,
                                 AnyModulationDestination::Osc3Phase);
         }
-        if (!FloatEquals(mSynthPatch->mFMStrength2To3, 0) || !FloatEquals(krateFMStrength2To3, 0))
+        if (!FloatEquals(mSynthPatch->mFMStrength2To3.GetValue(), 0) || !FloatEquals(krateFMStrength2To3, 0))
         {
             ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength2To3 + krateFMStrength2To3,
+                                mSynthPatch->mFMStrength2To3.GetValue() + krateFMStrength2To3,
                                 mSynthPatch->mOsc[1],
                                 AnyModulationSource::Osc2FB,
                                 AnyModulationDestination::Osc3Phase);

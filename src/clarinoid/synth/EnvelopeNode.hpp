@@ -165,14 +165,14 @@ struct EnvelopeNode : public AudioStream
         case EnvelopeStage::Decay: {
             // 0-1 => 1 - sustainlevel
             // curve contained within the stage, not the output 0-1 range.
-            float range = 1.0f - (mSpec.mSustainLevel + mModValues.sustainLevel); // could be precalculated
+            float range = 1.0f - (mSpec.mSustainLevel.GetValue() + mModValues.sustainLevel); // could be precalculated
             ret = 1.0f - gModCurveLUT.Transfer32(1.0f - mStagePos01, mpLutRow);   // 0-1
             ret = 1.0f - range * ret;
             nextStage = EnvelopeStage::Sustain;
             break;
         }
         case EnvelopeStage::Sustain: {
-            return (mSpec.mSustainLevel + mModValues.sustainLevel);
+            return (mSpec.mSustainLevel.GetValue() + mModValues.sustainLevel);
         }
         case EnvelopeStage::Release: {
             // 0-1 => mReleaseFromValue01 - 0

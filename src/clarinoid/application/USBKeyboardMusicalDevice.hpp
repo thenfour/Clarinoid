@@ -113,7 +113,7 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
             mv.mpSynthPatch = &mAppSettings->FindSynthPreset(synthPatchId);
         }
 
-        if (mv.mpSynthPatch->mVoicingMode == VoicingMode::Monophonic && !!trillNote)
+        if (mv.mpSynthPatch->mVoicingMode.GetValue() == VoicingMode::Monophonic && !!trillNote)
         {
             // play trill note instead.
             DoNoteOnForPerfVoice(*trillNote, source, perf, synthPatchId, perfSynthPatchEnabled);
@@ -173,10 +173,10 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
             mv.mpSynthPatch = &mAppSettings->FindSynthPreset(synthPatchId);
 
             // if the voicing mode has changed, send all notes off for this source
-            if (mv.mpSynthPatch->mVoicingMode != cachedVoicingMode)
+            if (mv.mpSynthPatch->mVoicingMode.GetValue() != cachedVoicingMode)
             {
                 mpEventHandler->IMusicalDeviceEvents_OnDeviceAllNotesOff(MusicalEventSource{source}, mpCapture);
-                cachedVoicingMode = mv.mpSynthPatch->mVoicingMode;
+                cachedVoicingMode = mv.mpSynthPatch->mVoicingMode.GetValue();
             }
         }
         mv.mIsActive = perfSynthPatchEnabled && validSynthPatch;

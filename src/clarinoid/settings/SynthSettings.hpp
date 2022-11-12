@@ -9,6 +9,7 @@ static constexpr size_t POLYBLEP_OSC_COUNT = 3;
 static constexpr size_t ENVELOPE_COUNT = 3;
 static constexpr size_t LFO_COUNT = 3;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // some notes about the selection of waveforms:
 // - Sync is available in all oscillators.
 //   - we want it to be prominent in settings.
@@ -37,6 +38,7 @@ EnumItemInfo<OscWaveformShape> gOscWaveformShapeItems[4] = {
 
 EnumInfo<OscWaveformShape> gOscWaveformShapeInfo("OscWaveformShape", gOscWaveformShapeItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class ClarinoidFilterType : uint8_t
 {
     Disabled = 0,
@@ -76,6 +78,7 @@ EnumItemInfo<ClarinoidFilterType> gClarinoidFilterTypeItems[13] = {
 
 EnumInfo<ClarinoidFilterType> gClarinoidFilterTypeInfo("FilterType", gClarinoidFilterTypeItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class ARateModulationSource : uint8_t
 {
     // NB: IF you change something here, keep ModulationMatrixNode in sync. (ModulationSourceInfo)
@@ -106,6 +109,7 @@ static constexpr size_t gARateModulationSourceCount = SizeofStaticArray(gARateMo
 
 EnumInfo<ARateModulationSource> gARateModulationSourceInfo("ARateModSource", gARateModulationSourceItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class KRateModulationSource : uint8_t
 {
     // NB: IF you change something here, keep ModulationMatrixNode in sync. (ModulationSourceInfo)
@@ -140,6 +144,7 @@ static constexpr size_t gKRateModulationSourceCount = SizeofStaticArray(gKRateMo
 
 EnumInfo<KRateModulationSource> gKRateModulationSourceInfo("KRateModSource", gKRateModulationSourceItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class AnyModulationSource : uint8_t
 {
     None = 0,
@@ -194,6 +199,7 @@ static constexpr size_t gAnyModulationSourceCount = SizeofStaticArray(gAnyModula
 
 EnumInfo<AnyModulationSource> gAnyModulationSourceInfo("AnyModSource", gAnyModulationSourceItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class ARateModulationDestination : uint8_t
 {
     // these are INDICES used by synthvoice / modulationmatrix
@@ -220,6 +226,7 @@ static constexpr size_t gARateModulationDestinationCount = SizeofStaticArray(gAR
 
 EnumInfo<ARateModulationDestination> gARateModulationDestinationInfo("ARateModDest", gARateModulationDestinationItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class KRateModulationDestination : uint8_t
 {
     // these are INDICES used by synthvoice / modulationmatrix
@@ -341,6 +348,7 @@ static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKR
 
 EnumInfo<KRateModulationDestination> gKRateModulationDestinationInfo("KRateModDest", gKRateModulationDestinationItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Lets create a way to get modulation enum values by oscillator index
 struct OscillatorModulationInfo
 {
@@ -412,6 +420,7 @@ static EnvelopeModulationInfo gModValuesByEnvelope[ENVELOPE_COUNT] = {
      KRateModulationDestination::Env3ReleaseCurve},
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class AnyModulationDestination : uint8_t
 {
     None = 0,
@@ -553,6 +562,7 @@ static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyM
 
 EnumInfo<AnyModulationDestination> gAnyModulationDestinationInfo("AnyModDest", gAnyModulationDestinationItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class ModulationPolarityTreatment : uint8_t
 {
     AsPositive01,         // force it to 0-1 positive polarity
@@ -584,37 +594,73 @@ static constexpr size_t gModulationAuxPolarityTreatmentCount = SizeofStaticArray
 EnumInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentInfo("ModulationAuxPolarity",
                                                                           gModulationAuxPolarityTreatmentItems);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct SynthModulationSpec
 {
-    AnyModulationSource mSource = AnyModulationSource::None;
-    AnyModulationDestination mDest = AnyModulationDestination::None;
-    ModulationPolarityTreatment mSourcePolarity = ModulationPolarityTreatment::Default;
+    EnumParam<AnyModulationSource> mSource{gAnyModulationSourceInfo, AnyModulationSource::None};
+    EnumParam<AnyModulationDestination> mDest{gAnyModulationDestinationInfo, AnyModulationDestination::None};
+    EnumParam<ModulationPolarityTreatment> mSourcePolarity{gModulationPolarityTreatmentInfo,
+                                                           ModulationPolarityTreatment::Default};
     CurveLUTParamValue mCurveShape{0};
-    float mScaleN11 = 0.5f;
+    FloatParam mScaleN11{0.5f};
 
-    AnyModulationSource mAuxSource = AnyModulationSource::None;
-    ModulationPolarityTreatment mAuxPolarity = ModulationPolarityTreatment::AsPositive01;
-    bool mAuxEnabled = true; // just allows bypassing without removing the aux source
+    EnumParam<AnyModulationSource> mAuxSource{gAnyModulationSourceInfo, AnyModulationSource::None};
+    EnumParam<ModulationPolarityTreatment> mAuxPolarity{gModulationPolarityTreatmentInfo,
+                                                        ModulationPolarityTreatment::AsPositive01};
+    BoolParam mAuxEnabled{true}; // just allows bypassing without removing the aux source
     CurveLUTParamValue mAuxCurveShape{0};
-    float mAuxAmount = 0.0f; // amount of attenuation
-
-    // to mimic old behavior with 0 offset and just a scale.
-    void SetScaleN11_Legacy(float scaleN11)
-    {
-        mScaleN11 = scaleN11;
-    }
+    FloatParam mAuxAmount{0.0f}; // amount of attenuation
 
     String ToDisplayString() const
     {
-        if (mSource == AnyModulationSource::None)
+        if (mSource.GetValue() == AnyModulationSource::None)
             return "--";
-        if (mDest == AnyModulationDestination::None)
+        if (mDest.GetValue() == AnyModulationDestination::None)
             return "--";
-        return String(gAnyModulationSourceInfo.GetValueDisplayName(mSource)) + ">" +
-               gAnyModulationDestinationInfo.GetValueDisplayName(mDest);
+        return String(gAnyModulationSourceInfo.GetValueDisplayName(mSource.GetValue())) + ">" +
+               gAnyModulationDestinationInfo.GetValueDisplayName(mDest.GetValue());
+    }
+
+    bool SerializableObject_ToJSON(JsonVariant doc) const
+    {
+        bool ret = true;
+        ret = ret && mSource.SerializableObject_ToJSON(doc.createNestedObject("src"));
+        ret = ret && mDest.SerializableObject_ToJSON(doc.createNestedObject("dst"));
+        ret = ret && mSourcePolarity.SerializableObject_ToJSON(doc.createNestedObject("pol"));
+        ret = ret && mCurveShape.SerializableObject_ToJSON(doc.createNestedObject("crv"));
+        ret = ret && mScaleN11.SerializableObject_ToJSON(doc.createNestedObject("amt"));
+        ret = ret && mAuxSource.SerializableObject_ToJSON(doc.createNestedObject("Xsrc"));
+        ret = ret && mAuxPolarity.SerializableObject_ToJSON(doc.createNestedObject("Xpol"));
+        ret = ret && mAuxEnabled.SerializableObject_ToJSON(doc.createNestedObject("Xen"));
+        ret = ret && mAuxCurveShape.SerializableObject_ToJSON(doc.createNestedObject("Xcrv"));
+        ret = ret && mAuxAmount.SerializableObject_ToJSON(doc.createNestedObject("Xamt"));
+        return ret;
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
+        Result ret = Result::Success();
+
+        ret.AndRequires(mSource.SerializableObject_Deserialize(obj["src"]), "src");
+        ret.AndRequires(mDest.SerializableObject_Deserialize(obj["dst"]), "dst");
+        ret.AndRequires(mSourcePolarity.SerializableObject_Deserialize(obj["pol"]), "pol");
+        ret.AndRequires(mCurveShape.SerializableObject_Deserialize(obj["crv"]), "crv");
+        ret.AndRequires(mScaleN11.SerializableObject_Deserialize(obj["amt"]), "amt");
+        ret.AndRequires(mAuxSource.SerializableObject_Deserialize(obj["Xsrc"]), "Xsrc");
+        ret.AndRequires(mAuxPolarity.SerializableObject_Deserialize(obj["Xpol"]), "Xpol");
+        ret.AndRequires(mAuxEnabled.SerializableObject_Deserialize(obj["Xen"]), "Xen");
+        ret.AndRequires(mAuxCurveShape.SerializableObject_Deserialize(obj["Xcrv"]), "Xcrv");
+        ret.AndRequires(mAuxAmount.SerializableObject_Deserialize(obj["Xamt"]), "Xamt");
+
+        return ret;
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct EnvelopeSpec
 {
     EnvTimeParamValue mDelayTime{0.0f};
@@ -623,18 +669,51 @@ struct EnvelopeSpec
     EnvTimeParamValue mHoldTime{0.0f};
     EnvTimeParamValue mDecayTime{0.5f};
     CurveLUTParamValue mDecayCurve{0};
-    float mSustainLevel = 0.5f;
+    FloatParam mSustainLevel{0};
     EnvTimeParamValue mReleaseTime{0.6f};
     CurveLUTParamValue mReleaseCurve{0};
-    bool mLegatoRestart = false;
+    BoolParam mLegatoRestart{false};
 
-    // explicit EnvelopeSpec(size_t myIndex)
-    // {
-    // }
+    bool SerializableObject_ToJSON(JsonVariant doc) const
+    {
+        bool ret = true;
+        ret = ret && mDelayTime.SerializableObject_ToJSON(doc.createNestedObject("L"));
+        ret = ret && mAttackTime.SerializableObject_ToJSON(doc.createNestedObject("A"));
+        ret = ret && mAttackCurve.SerializableObject_ToJSON(doc.createNestedObject("Ac"));
+        ret = ret && mHoldTime.SerializableObject_ToJSON(doc.createNestedObject("H"));
+        ret = ret && mDecayTime.SerializableObject_ToJSON(doc.createNestedObject("D"));
+        ret = ret && mDecayCurve.SerializableObject_ToJSON(doc.createNestedObject("Dc"));
+        ret = ret && mSustainLevel.SerializableObject_ToJSON(doc.createNestedObject("S"));
+        ret = ret && mReleaseTime.SerializableObject_ToJSON(doc.createNestedObject("R"));
+        ret = ret && mReleaseCurve.SerializableObject_ToJSON(doc.createNestedObject("Rc"));
+        ret = ret && mLegatoRestart.SerializableObject_ToJSON(doc.createNestedObject("Rst"));
+        return ret;
+    }
 
-    // EnvelopeSpec() = default;
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
+        Result ret = Result::Success();
+
+        ret.AndRequires(mDelayTime.SerializableObject_Deserialize(obj["L"]), "L");
+        ret.AndRequires(mAttackTime.SerializableObject_Deserialize(obj["A"]), "A");
+        ret.AndRequires(mAttackCurve.SerializableObject_Deserialize(obj["Ac"]), "Ac");
+        ret.AndRequires(mHoldTime.SerializableObject_Deserialize(obj["H"]), "H");
+        ret.AndRequires(mDecayTime.SerializableObject_Deserialize(obj["D"]), "D");
+        ret.AndRequires(mDecayCurve.SerializableObject_Deserialize(obj["Dc"]), "Dc");
+        ret.AndRequires(mSustainLevel.SerializableObject_Deserialize(obj["S"]), "S");
+        ret.AndRequires(mReleaseTime.SerializableObject_Deserialize(obj["R"]), "R");
+        ret.AndRequires(mReleaseCurve.SerializableObject_Deserialize(obj["Rc"]), "Rc");
+        ret.AndRequires(mLegatoRestart.SerializableObject_Deserialize(obj["Rst"]), "Rst");
+
+        return ret;
+    }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct SynthOscillatorSettings
 {
     void CopyFrom(const SynthOscillatorSettings &rhs)
@@ -647,8 +726,8 @@ struct SynthOscillatorSettings
     // - it enables quick muting
     // - it helps know how to display things
     // - it helps know how detune / stereo sep will operate.
-    bool mEnabled = true;
-    int mPortamentoTimeMS = 0;
+    BoolParam mEnabled{true};
+    IntParam<int> mPortamentoTimeMS{0};
 
     // for pitch, it's even hard to know which kind of params are needed.
     // 1. for FM, ratio & offset(hz) are absolutely necessary.
@@ -656,45 +735,117 @@ struct SynthOscillatorSettings
     // 3. for transposition & detune, semis & fine.
 
     // these are good for FM
-    float mFreqMultiplier = 1.0f; // midinotefreq * this
-    float mFreqOffsetHz = 0.0f;
+    FloatParam mFreqMultiplier{1.0f}; // midinotefreq * this
+    FloatParam mFreqOffsetHz{0.0f};
 
     // these are good for modulation, and for sync frequency.
     FrequencyParamValue mFreqParam{0.3f, 1.0f}; // param, kt amt
 
-    bool mHardSyncEnabled = false;
+    BoolParam mHardSyncEnabled{false};
     FrequencyParamValue mSyncFreqParam{0.4f, 1.0f}; // param, kt amt
 
     // these are good for musical stuff like transposition.
-    int mPitchSemis = 0;  // semis = integral, transposition. want to keep this integral because the menu system is
-                          // not so great at being very precise.
-    float mPitchFine = 0; // in semitones, just for detuning
+    IntParam<int> mPitchSemis{0}; // semis = integral, transposition. want to keep this integral because the menu system
+                                  // is not so great at being very precise.
+    FloatParam mPitchFine{0}; // in semitones, just for detuning
 
-    float mPitchBendRangePositive = 2.0f;
-    float mPitchBendRangeNegative = -2.0f;
+    FloatParam mPitchBendRangePositive{2.0f};
+    FloatParam mPitchBendRangeNegative{-2.0f};
 
-    float mPan = 0;
+    FloatParam mPan{0};
 
-    bool mPhaseRestart = false;
-    float mPhase01 = 0.0f;
+    BoolParam mPhaseRestart{false};
+    FloatParam mPhase01{0};
 
-    OscWaveformShape mWaveform = OscWaveformShape::VarTriangle;
-    float mPulseWidth = 0.5f;
+    EnumParam<OscWaveformShape> mWaveform{gOscWaveformShapeInfo, OscWaveformShape::VarTriangle};
+    FloatParam mPulseWidth{0.5f};
 
-    float mFMFeedbackGain = 0.0f; // 0 to 1
+    FloatParam mFMFeedbackGain{0.0f}; // 0 to 1
 
-    // size_t mMyIndex;
-    //  explicit SynthOscillatorSettings(size_t myIndex) : mMyIndex(myIndex)
-    //  {
-    //      //
-    //  }
+    bool SerializableObject_ToJSON(JsonVariant rhs) const
+    {
+        bool r = true;
+        r = r && mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on"));
+        r = r && mWaveform.SerializableObject_ToJSON(rhs.createNestedObject("wav"));
+        r = r && mVolume.SerializableObject_ToJSON(rhs.createNestedObject("vol"));
+        r = r && mPortamentoTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("port"));
+        r = r && mFreqMultiplier.SerializableObject_ToJSON(rhs.createNestedObject("Fmul"));
+        r = r && mFreqOffsetHz.SerializableObject_ToJSON(rhs.createNestedObject("Foff"));
+        r = r && mFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("Freq"));
+        r = r && mHardSyncEnabled.SerializableObject_ToJSON(rhs.createNestedObject("sync"));
+        r = r && mSyncFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("syncFreq"));
+        r = r && mPitchSemis.SerializableObject_ToJSON(rhs.createNestedObject("transp"));
+        r = r && mPitchFine.SerializableObject_ToJSON(rhs.createNestedObject("fine"));
+        r = r && mPitchBendRangePositive.SerializableObject_ToJSON(rhs.createNestedObject("pbPos"));
+        r = r && mPitchBendRangeNegative.SerializableObject_ToJSON(rhs.createNestedObject("pbNeg"));
+        r = r && mPan.SerializableObject_ToJSON(rhs.createNestedObject("pan"));
+        r = r && mPhaseRestart.SerializableObject_ToJSON(rhs.createNestedObject("phtrig"));
+        r = r && mPhase01.SerializableObject_ToJSON(rhs.createNestedObject("phOff"));
+        r = r && mPulseWidth.SerializableObject_ToJSON(rhs.createNestedObject("pw"));
+        r = r && mFMFeedbackGain.SerializableObject_ToJSON(rhs.createNestedObject("fb"));
+        return r;
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("must be object");
+        }
+
+        Result ret = Result::Success();
+        ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
+        ret.AndRequires(mWaveform.SerializableObject_Deserialize(obj["wav"]), "wav");
+        ret.AndRequires(mVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
+        ret.AndRequires(mPortamentoTimeMS.SerializableObject_Deserialize(obj["port"]), "port");
+        ret.AndRequires(mFreqMultiplier.SerializableObject_Deserialize(obj["Fmul"]), "Fmul");
+        ret.AndRequires(mFreqOffsetHz.SerializableObject_Deserialize(obj["Foff"]), "Foff");
+        ret.AndRequires(mFreqParam.SerializableObject_Deserialize(obj["Freq"]), "Freq");
+        ret.AndRequires(mHardSyncEnabled.SerializableObject_Deserialize(obj["sync"]), "sync");
+        ret.AndRequires(mSyncFreqParam.SerializableObject_Deserialize(obj["syncFreq"]), "syncFreq");
+        ret.AndRequires(mPitchSemis.SerializableObject_Deserialize(obj["transp"]), "transp");
+        ret.AndRequires(mPitchFine.SerializableObject_Deserialize(obj["fine"]), "fine");
+        ret.AndRequires(mPitchBendRangePositive.SerializableObject_Deserialize(obj["pbPos"]), "pbPos");
+        ret.AndRequires(mPitchBendRangeNegative.SerializableObject_Deserialize(obj["pbNeg"]), "pbNeg");
+        ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
+        ret.AndRequires(mPhaseRestart.SerializableObject_Deserialize(obj["phtrig"]), "phtrig");
+        ret.AndRequires(mPhase01.SerializableObject_Deserialize(obj["phOff"]), "phOff");
+        ret.AndRequires(mPulseWidth.SerializableObject_Deserialize(obj["pw"]), "pw");
+        ret.AndRequires(mFMFeedbackGain.SerializableObject_Deserialize(obj["fb"]), "fb");
+        return ret;
+    }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct LFOSpec //: SerializableDictionary
 {
     EnumParam<OscWaveformShape> mWaveShape{gOscWaveformShapeInfo, OscWaveformShape::Sine};
     FloatParam mPulseWidth{0.5f};
     TimeWithBasisParam mSpeed{TimeBasis::Hertz, 1.0f};
+
+    bool SerializableObject_ToJSON(JsonVariant doc) const
+    {
+        bool ret = true;
+        ret = ret && mWaveShape.SerializableObject_ToJSON(doc.createNestedObject("wav"));
+        ret = ret && mPulseWidth.SerializableObject_ToJSON(doc.createNestedObject("PW"));
+        ret = ret && mSpeed.SerializableObject_ToJSON(doc.createNestedObject("speed"));
+        return ret;
+    }
+
+    Result SerializableObject_Deserialize(JsonVariant obj)
+    {
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
+        Result ret = Result::Success();
+
+        ret.AndRequires(mWaveShape.SerializableObject_Deserialize(obj["wav"]), "wav");
+        ret.AndRequires(mPulseWidth.SerializableObject_Deserialize(obj["PW"]), "PW");
+        ret.AndRequires(mSpeed.SerializableObject_Deserialize(obj["speed"]), "speed");
+
+        return ret;
+    }
 
     // BoolParam mPhaseRestart = {"PhaseRestart", false};
 
@@ -722,6 +873,7 @@ struct LFOSpec //: SerializableDictionary
     // float mRandomSeed01 = 0; // due to float precision, actual seed will snap this so there are only like 100 values.
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class VoicingMode : uint8_t
 {
     Monophonic,
@@ -735,9 +887,10 @@ EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
 
 EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
 
-struct FilterSettings 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct FilterSettings
 {
-    EnumParam<ClarinoidFilterType> mType {gClarinoidFilterTypeInfo, ClarinoidFilterType::LP_Moog4};
+    EnumParam<ClarinoidFilterType> mType{gClarinoidFilterTypeInfo, ClarinoidFilterType::LP_Moog4};
     FloatParam mQ{0.02f};
     FloatParam mSaturation{0.2f};
     FrequencyParamValue mFrequency{0.3f, 0.0f}; // param, kt amt
@@ -768,14 +921,13 @@ struct FilterSettings
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct SynthPatch
 {
   private:
     SynthPatch &operator=(const SynthPatch &rhs) = default;
 
   public:
-    std::array<SynthOscillatorSettings, POLYBLEP_OSC_COUNT> mOsc;
-
     void CopyFrom(const SynthPatch &rhs)
     {
         size_t myIndex = mMyIndex;
@@ -783,44 +935,40 @@ struct SynthPatch
         mMyIndex = myIndex;
     }
 
-    String mName = "--";
+    std::array<SynthOscillatorSettings, POLYBLEP_OSC_COUNT> mOsc;
+
+    StringParam mName{"--"};
     VolumeParamValue mMasterVolume;
-    float mPan = 0;
-    float mDelayMix = 0.08f;
-    float mVerbMix = 0.08f;
-    float mStereoSpread = 0.15f;
+    FloatParam mPan{0};
+    FloatParam mDelayMix{0.08f};
+    FloatParam mVerbMix{0.08f};
+    FloatParam mStereoSpread{0.15f};
 
     std::array<EnvelopeSpec, ENVELOPE_COUNT>
         mEnvelopes; //{initialize_array_with_indices<EnvelopeSpec, ENVELOPE_COUNT>()};
 
-    VoicingMode mVoicingMode = VoicingMode::Polyphonic;
+    EnumParam<VoicingMode> mVoicingMode{gVoicingModeInfo, VoicingMode::Polyphonic};
 
     std::array<LFOSpec, LFO_COUNT> mLFOs; //{initialize_array_with_indices<LFOSpec, LFO_COUNT>()};
 
-    float mDetune = 0;
+    FloatParam mDetune{0};
 
-    // bool mSync = true;
+    // BoolParam mDCFilterEnabled{true};
+    // FloatParam mDCFilterCutoff{10.0f};
 
-    bool mDCFilterEnabled = true;
-    float mDCFilterCutoff = 10.0f;
-
-    FilterSettings mFilter; // = {"Filter1"};
-    // ClarinoidFilterType mFilterType = ClarinoidFilterType::LP_Moog4;
-    // float mFilterQ = 0.02f;
-    // float mFilterSaturation = 0.2f;
-    // FrequencyParamValue mFilterFreqParam = {0.3f, 0.0f}; // param, kt amt
+    FilterSettings mFilter;
 
     // for FM modulation matrix.
-    float mFMStrength2To1 = 0;
-    float mFMStrength3To1 = 0;
-    float mFMStrength1To2 = 0;
-    float mFMStrength3To2 = 0;
-    float mFMStrength1To3 = 0;
-    float mFMStrength2To3 = 0;
+    FloatParam mFMStrength2To1{0};
+    FloatParam mFMStrength3To1{0};
+    FloatParam mFMStrength1To2{0};
+    FloatParam mFMStrength3To2{0};
+    FloatParam mFMStrength1To3{0};
+    FloatParam mFMStrength2To3{0};
 
-    float mOverallFMStrength = 1.00f;
+    FloatParam mOverallFMStrength{1.00f};
 
-    SynthModulationSpec mModulations[SYNTH_MODULATIONS_MAX];
+    std::array<SynthModulationSpec, SYNTH_MODULATIONS_MAX> mModulations;
 
     size_t mMyIndex;
     explicit SynthPatch(size_t myIndex) : mMyIndex(myIndex)
@@ -828,18 +976,18 @@ struct SynthPatch
         mLFOs[0].mSpeed.SetFrequency(1.1f);
         mLFOs[1].mSpeed.SetFrequency(3.5f);
 
-        mOsc[0].mVolume.SetValue(0.4f);
-        mOsc[1].mVolume.SetValue(0);
-        mOsc[2].mVolume.SetValue(0);
+        // mOsc[0].mVolume.SetValue(0.4f);
+        // mOsc[1].mVolume.SetValue(0);
+        // mOsc[2].mVolume.SetValue(0);
 
-        mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
-        mOsc[1].mWaveform = OscWaveformShape::SawSync;
-        mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
+        // mOsc[0].mWaveform = OscWaveformShape::VarTriangle;
+        // mOsc[1].mWaveform = OscWaveformShape::SawSync;
+        // mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
     }
 
     String ToString() const
     {
-        return String(mMyIndex) + ":" + mName;
+        return String(mMyIndex) + ":" + mName.GetValue();
     }
 
     String OscillatorToString(size_t i) const
@@ -854,9 +1002,9 @@ struct SynthPatch
             };
 
             auto dest = oscGainMods[i];
-            if (!Any(this->mModulations, [&](const SynthModulationSpec &m) { return m.mDest == dest; }))
+            if (!Any(this->mModulations, [&](const SynthModulationSpec &m) { return m.mDest.GetValue() == dest; }))
             {
-                if (!mOsc[i].mEnabled) // hm kinda ugly logic; maybe one day this whole fn will be improved?
+                if (!mOsc[i].mEnabled.GetValue()) // hm kinda ugly logic; maybe one day this whole fn will be improved?
                 {
                     return "<mute>";
                 }
@@ -865,8 +1013,8 @@ struct SynthPatch
         }
         // not silent / disabled / whatever. show some info.
         // TRI <mute>
-        String ret = gOscWaveformShapeInfo.GetValueDisplayName(mOsc[i].mWaveform);
-        if (!mOsc[i].mEnabled)
+        String ret = gOscWaveformShapeInfo.GetValueDisplayName(mOsc[i].mWaveform.GetValue());
+        if (!mOsc[i].mEnabled.GetValue())
         {
             ret += " <mute>";
         }
@@ -876,32 +1024,60 @@ struct SynthPatch
     bool SerializableObject_ToJSON(JsonVariant doc) const
     {
         bool ret = true;
-        // ret = ret && mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch"));
-        // ret = ret && mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome"));
-        // ret = ret && SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches);
-        // ret = ret && mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm"));
-        // ret = ret && mSynthSettings.SerializableObject_ToJSON(doc.createNestedObject("synth"));
+        ret = ret && mName.SerializableObject_ToJSON(doc.createNestedObject("name"));
+        ret = ret && mMasterVolume.SerializableObject_ToJSON(doc.createNestedObject("vol"));
+        ret = ret && mPan.SerializableObject_ToJSON(doc.createNestedObject("pan"));
+        ret = ret && mDelayMix.SerializableObject_ToJSON(doc.createNestedObject("dly"));
+        ret = ret && mVerbMix.SerializableObject_ToJSON(doc.createNestedObject("verb"));
+        ret = ret && mStereoSpread.SerializableObject_ToJSON(doc.createNestedObject("spread"));
+        ret = ret && mDetune.SerializableObject_ToJSON(doc.createNestedObject("det"));
+        ret = ret && mFilter.SerializableObject_ToJSON(doc.createNestedObject("flt"));
+        ret = ret && mFMStrength2To1.SerializableObject_ToJSON(doc.createNestedObject("fm21"));
+        ret = ret && mFMStrength3To1.SerializableObject_ToJSON(doc.createNestedObject("fm31"));
+        ret = ret && mFMStrength1To2.SerializableObject_ToJSON(doc.createNestedObject("fm12"));
+        ret = ret && mFMStrength3To2.SerializableObject_ToJSON(doc.createNestedObject("fm32"));
+        ret = ret && mFMStrength1To3.SerializableObject_ToJSON(doc.createNestedObject("fm13"));
+        ret = ret && mFMStrength2To3.SerializableObject_ToJSON(doc.createNestedObject("fm23"));
+        ret = ret && mOverallFMStrength.SerializableObject_ToJSON(doc.createNestedObject("fmAll"));
+        ret = ret && mVoicingMode.SerializableObject_ToJSON(doc.createNestedObject("vm"));
+        ret = ret && SerializeArrayToJSON(doc.createNestedObject("mod"), mModulations);
+        ret = ret && SerializeArrayToJSON(doc.createNestedObject("osc"), mOsc);
+        ret = ret && SerializeArrayToJSON(doc.createNestedObject("env"), mEnvelopes);
+        ret = ret && SerializeArrayToJSON(doc.createNestedObject("lfo"), mLFOs);
         return ret;
     }
 
     Result SerializableObject_Deserialize(JsonVariant obj)
     {
-        // if (!obj.is<JsonObject>())
-        // {
-        //     return Result::Failure("AppSettings is not a json object");
-        // }
+        if (!obj.is<JsonObject>())
+        {
+            return Result::Failure("expected object");
+        }
         Result ret = Result::Success();
-        // ret.AndRequires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
-        // ret.AndRequires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
-        // ret.AndRequires(DeserializeArray(obj["perfPatches"], mPerformancePatches), "perfPatches");
-        // ret.AndRequires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
-        // ret.AndRequires(mSynthSettings.SerializableObject_Deserialize(obj["synth"]), "synth");
+
+        ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
+        ret.AndRequires(mMasterVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
+        ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
+        ret.AndRequires(mDelayMix.SerializableObject_Deserialize(obj["dly"]), "dly");
+        ret.AndRequires(mVerbMix.SerializableObject_Deserialize(obj["verb"]), "verb");
+        ret.AndRequires(mStereoSpread.SerializableObject_Deserialize(obj["spread"]), "spread");
+        ret.AndRequires(mDetune.SerializableObject_Deserialize(obj["det"]), "det");
+        ret.AndRequires(mFilter.SerializableObject_Deserialize(obj["flt"]), "flt");
+        ret.AndRequires(mFMStrength2To1.SerializableObject_Deserialize(obj["fm21"]), "fm21");
+        ret.AndRequires(mFMStrength3To1.SerializableObject_Deserialize(obj["fm31"]), "fm31");
+        ret.AndRequires(mFMStrength1To2.SerializableObject_Deserialize(obj["fm12"]), "fm12");
+        ret.AndRequires(mFMStrength3To2.SerializableObject_Deserialize(obj["fm32"]), "fm32");
+        ret.AndRequires(mFMStrength1To3.SerializableObject_Deserialize(obj["fm13"]), "fm13");
+        ret.AndRequires(mFMStrength2To3.SerializableObject_Deserialize(obj["fm23"]), "fm23");
+        ret.AndRequires(mOverallFMStrength.SerializableObject_Deserialize(obj["fmAll"]), "fmAll");
+        ret.AndRequires(mVoicingMode.SerializableObject_Deserialize(obj["vm"]), "vm");
         return ret;
     }
 };
 
 static constexpr auto synthpatchsize = sizeof(SynthPatch);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct SynthSettings
 {
     std::array<SynthPatch, SYNTH_PRESET_COUNT> mPatches{
@@ -909,20 +1085,18 @@ struct SynthSettings
 
     static void InitBommanoidPreset(SynthPatch &p, const char *name)
     {
-        p.mName = name;
-        p.mDetune = 0.0f;
-        p.mStereoSpread = 0;
+        p.mName.SetValue(name);
         p.mFilter.mType.SetValue(ClarinoidFilterType::Disabled);
 
-        p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[0].mWaveform.SetValue(OscWaveformShape::SawSync);
 
         p.mFilter.mFrequency.SetParamValue(0);
         p.mFilter.mFrequency.SetKTParamValue(1.0f);
 
-        p.mModulations[0].mDest = AnyModulationDestination::MasterVolume;
-        p.mModulations[0].mSource = AnyModulationSource::ENV1;
-        p.mModulations[0].mAuxEnabled = false;
-        p.mModulations[0].mScaleN11 = 1.0f;
+        p.mModulations[0].mDest.SetValue(AnyModulationDestination::MasterVolume);
+        p.mModulations[0].mSource.SetValue(AnyModulationSource::ENV1);
+        p.mModulations[0].mAuxEnabled.SetValue(false);
+        p.mModulations[0].mScaleN11.SetValue(1.0f);
     };
 
     bool SerializableObject_ToJSON(JsonVariant rhs) const
