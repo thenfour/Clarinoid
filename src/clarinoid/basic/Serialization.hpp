@@ -1974,11 +1974,11 @@ SerializationMapping CreateSerializationMapping(Tparam &param, const char *key)
 {
     return {&param,
             key,
-            [](JsonVariantWriter &myval, void *pparam) {
+            [](JsonVariantWriter &myval, void *pparam) FLASHMEM {
                 Tparam &param{*((Tparam *)pparam)};
                 return Serialize(myval, param);
             },
-            [](JsonVariantReader &myval, void *pparam) {
+            [](JsonVariantReader &myval, void *pparam)FLASHMEM {
                 Tparam &param{*((Tparam *)pparam)};
                 // std::cout << myval.ToString().mStr << std::endl;
                 return Deserialize(myval, param);

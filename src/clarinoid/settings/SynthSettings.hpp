@@ -911,12 +911,22 @@ EnumItemInfo<VoicingMode> gVoicingModeItems[2] = {
 EnumInfo<VoicingMode> gVoicingModeInfo("VoicingMode", gVoicingModeItems);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct FilterSettings
+struct FilterSettings : ISerializationObjectMap<4>
 {
     EnumParam<ClarinoidFilterType> mType{gClarinoidFilterTypeInfo, ClarinoidFilterType::LP_Moog4};
     FloatParam mQ{0.02f};
     FloatParam mSaturation{0.2f};
     FrequencyParamValue mFrequency{0.3f, 0.0f}; // param, kt amt
+
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mType, "Type"),
+            CreateSerializationMapping(mQ, "Q"),
+            CreateSerializationMapping(mSaturation, "Saturation"),
+            CreateSerializationMapping(mFrequency, "Frequency"),
+        }};
+    }
 
     // Result SerializableObject_ToJSON(JsonVariant rhs) const
     // {
