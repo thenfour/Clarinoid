@@ -3,7 +3,7 @@
 namespace clarinoid
 {
 
-template <typename T>
+template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
 struct IntParam
 {
     T mValue;
@@ -20,8 +20,8 @@ struct IntParam
     explicit IntParam(T defaultValue) : mValue(defaultValue)
     {
     }
-    IntParam(const IntParam<T> &rhs) = default;
-    IntParam<T> &operator=(const IntParam<T> &rhs) = default;
+    // IntParam(const IntParam<T> &rhs) = default;
+    // IntParam<T> &operator=(const IntParam<T> &rhs) = default;
 
     // Result SerializableObject_ToJSON(JsonVariant rhs) const
     // {
@@ -36,6 +36,24 @@ struct IntParam
     //     return Result::Success();
     // }
 };
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
+Result Serialize(JsonVariantWriter &myval, IntParam<T> &param)
+{
+    return myval.WriteNumberValue(param.mValue);
+}
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
+Result Deserialize(JsonVariantReader &myval, IntParam<T> &param)
+{
+    if (myval.mType != JsonDataType::Number)
+    {
+        return Result::Failure("expected number");
+    }
+    param.mValue = myval.mNumericValue.Get<T>();
+    return Result::Success();
+}
+
 
 static constexpr size_t arcih = sizeof(IntParam<int>);
 
@@ -76,19 +94,20 @@ struct FloatParam
     // }
 };
 
-Result Serialize(JsonVariantWriter& myval, FloatParam& param) {
-	return myval.WriteNumberValue(param.mValue);
+Result Serialize(JsonVariantWriter &myval, FloatParam &param)
+{
+    return myval.WriteNumberValue(param.mValue);
 }
 
-Result Deserialize(JsonVariantReader& myval, FloatParam& param) {
-	if (myval.mType != JsonDataType::Number) {
-		return Result::Failure("expected number");
-	}
-	param.mValue = myval.mNumericValue.Get<float>();
-	return Result::Success();
+Result Deserialize(JsonVariantReader &myval, FloatParam &param)
+{
+    if (myval.mType != JsonDataType::Number)
+    {
+        return Result::Failure("expected number");
+    }
+    param.mValue = myval.mNumericValue.Get<float>();
+    return Result::Success();
 }
-
-
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
 // on the other hand i want it to be human-readable.
@@ -127,19 +146,23 @@ struct BoolParam //: ParameterBase
     // }
 };
 
-Result Serialize(JsonVariantWriter& myval, BoolParam& param) {
-	return myval.WriteBoolean(param.mValue);
+Result Serialize(JsonVariantWriter &myval, BoolParam &param)
+{
+    return myval.WriteNumberValue(param.mValue ? 1 : 0);
 }
 
-Result Deserialize(JsonVariantReader& myval, BoolParam& param) {
-	if (myval.mType != JsonDataType::Boolean) {
-		return Result::Failure("expected boolean");
-	}
-	param.mValue = myval.mBooleanValue;
-	return Result::Success();
+Result Deserialize(JsonVariantReader &myval, BoolParam &param)
+{
+    if (myval.mType == JsonDataType::Boolean)
+    {
+        param.mValue = myval.mBooleanValue;
+        return Result::Success();
+    }
+    if (myval.mType == JsonDataType::Number) {
+        param.mValue = (myval.mNumericValue.Get<int>() == 1);
+    }
+    return Result::Failure("expected boolean");
 }
-
-
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
 // on the other hand i want it to be human-readable.
@@ -180,6 +203,21 @@ struct StringParam // : ParameterBase
     // }
 };
 
+Result Serialize(JsonVariantWriter &myval, StringParam &param)
+{
+    return myval.WriteStringValue(param.mValue);
+}
+
+Result Deserialize(JsonVariantReader &myval, StringParam &param)
+{
+    if (myval.mType != JsonDataType::String)
+    {
+        return Result::Failure("expected string");
+    }
+    param.mValue = myval.mStringValue;
+    return Result::Success();
+}
+
 // use enum values by NAME, so they can be human-readable.
 template <typename TEnum>
 struct EnumParam // : ParameterBase
@@ -207,8 +245,8 @@ struct EnumParam // : ParameterBase
     // Result SerializableObject_ToJSON(JsonVariant rhs) const
     // {
     //     const char *s = mpEnumInfo->GetValueShortName(mValue);
-    //     Serial.println(String("serializing enum value: ") + (int)mValue + " -> " + PointerToString(s) + " <" + mpEnumInfo->mTypeName +  "> = " + s);
-    //     return {rhs.set(s)};
+    //     Serial.println(String("serializing enum value: ") + (int)mValue + " -> " + PointerToString(s) + " <" +
+    //     mpEnumInfo->mTypeName +  "> = " + s); return {rhs.set(s)};
     // }
 
     // Result SerializableObject_Deserialize(JsonVariant obj)
@@ -219,6 +257,21 @@ struct EnumParam // : ParameterBase
     //     return mpEnumInfo->ValueForShortName(shortName, mValue);
     // }
 };
+
+template <typename TEnum>
+Result Serialize(JsonVariantWriter &myval, EnumParam<TEnum> &param)
+{
+    const char *s = param.mpEnumInfo->GetValueShortName(param.mValue);
+    return myval.WriteStringValue(s);
+}
+
+template <typename TEnum>
+Result Deserialize(JsonVariantReader &myval, EnumParam<TEnum> &param)
+{
+    if (myval.mType != JsonDataType::String)
+        return Result::Failure("expected string");
+    return param.mpEnumInfo->ValueForShortName(myval.mStringValue, param.mValue);
+}
 
 // use enum values by NAME, so they can be human-readable.
 struct ScaleParam //: ParameterBase
@@ -244,6 +297,18 @@ struct ScaleParam //: ParameterBase
     //     return mValue.DeserializeFromString(t);
     // }
 };
+
+Result Serialize(JsonVariantWriter &myval, ScaleParam &param)
+{
+    return myval.WriteStringValue(param.mValue.ToSerializableString());
+}
+
+Result Deserialize(JsonVariantReader &myval, ScaleParam &param)
+{
+    if (myval.mType != JsonDataType::String)
+        return Result::Failure("expected string");
+    return param.mValue.DeserializeFromString(myval.mStringValue);
+}
 
 // "volume" parameters use a custom scale, so they feel more usable.
 // linear (0% to 100%) feels too extreme; massive uses a square curve, and a -inf db to +1 db range.
@@ -274,21 +339,6 @@ struct VolumeParamValue
     }
 
   public:
-    // Result SerializableObject_ToJSON(JsonVariant obj) const
-    // {
-    //     return {obj.set(mParamValue)};
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<float>())
-    //     {
-    //         return Result::Failure("expected float");
-    //     }
-    //     mParamValue = obj.as<float>();
-    //     return Result::Success();
-    // }
-
     float ToLinearGain() const
     {
         return ParamToLinear(mParamValue);
@@ -345,33 +395,40 @@ struct VolumeParamValue
     }
 };
 
+// Result SerializableObject_ToJSON(JsonVariant obj) const
+// {
+//     return {obj.set(mParamValue)};
+// }
+
+// Result SerializableObject_Deserialize(JsonVariant obj)
+// {
+//     if (!obj.is<float>())
+//     {
+//         return Result::Failure("expected float");
+//     }
+//     mParamValue = obj.as<float>();
+//     return Result::Success();
+// }
+
+Result Serialize(JsonVariantWriter &myval, VolumeParamValue &param)
+{
+    return myval.WriteNumberValue(param.GetParamValue());
+}
+
+Result Deserialize(JsonVariantReader &myval, VolumeParamValue &param)
+{
+    if (myval.mType != JsonDataType::Number)
+        return Result::Failure("expected number");
+    param.SetValue(myval.mNumericValue.Get<float>());
+    return Result::Success();
+}
+
 // value 0.3 = unity, and each 0.1 param value = 1 octave transposition, when KT = 1.
 // when KT = 0, 0.5 = 1khz, and each 0.1 param value = +/- octave.
 struct FrequencyParamValue // : SerializableDictionary
 {
     FloatParam mValue;
     FloatParam mKTValue;
-
-    // Result SerializableObject_ToJSON(JsonVariant rhs) const
-    // {
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mValue.SerializableObject_ToJSON(rhs.createNestedObject("val")), "val");
-    //     ret.AndRequires(mKTValue.SerializableObject_ToJSON(rhs.createNestedObject("kt")), "kt");
-    //     return ret;
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("must be object");
-    //     }
-
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mValue.SerializableObject_Deserialize(obj["val"]), "val");
-    //     ret.AndRequires(mKTValue.SerializableObject_Deserialize(obj["kt"]), "kt");
-    //     return ret;
-    // }
 
     FrequencyParamValue(float initialValue, float initialKTValue)
         : mValue(initialValue), //
@@ -440,6 +497,56 @@ struct FrequencyParamValue // : SerializableDictionary
     }
 };
 
+// Result SerializableObject_ToJSON(JsonVariant rhs) const
+// {
+//     Result ret = Result::Success();
+//     ret.AndRequires(mValue.SerializableObject_ToJSON(rhs.createNestedObject("val")), "val");
+//     ret.AndRequires(mKTValue.SerializableObject_ToJSON(rhs.createNestedObject("kt")), "kt");
+//     return ret;
+// }
+
+// Result SerializableObject_Deserialize(JsonVariant obj)
+// {
+//     if (!obj.is<JsonObject>())
+//     {
+//         return Result::Failure("must be object");
+//     }
+
+//     Result ret = Result::Success();
+//     ret.AndRequires(mValue.SerializableObject_Deserialize(obj["val"]), "val");
+//     ret.AndRequires(mKTValue.SerializableObject_Deserialize(obj["kt"]), "kt");
+//     return ret;
+// }
+
+Result Serialize(JsonVariantWriter &myval, FrequencyParamValue &param)
+{
+    float paramVal = param.GetParamValue();
+    float ktVal = param.GetKTParamValue();
+    SerializationObjectMap<2> map{{
+        CreateSerializationMapping(paramVal, "val"),
+        CreateSerializationMapping(ktVal, "kt"),
+    }};
+    return Serialize(myval, map);
+}
+
+// todo: there needs to be a way to utilize object key mapping for this.
+Result Deserialize(JsonVariantReader &myval, FrequencyParamValue &param)
+{
+    float paramVal = 0;
+    float ktVal = 0;
+    SerializationObjectMap<2> map{{
+        CreateSerializationMapping(paramVal, "val"),
+        CreateSerializationMapping(ktVal, "kt"),
+    }};
+    auto ret = Deserialize(myval, map);
+    if (ret.IsSuccess())
+    {
+        param.SetParamValue(paramVal);
+        param.SetKTParamValue(ktVal);
+    }
+    return ret;
+}
+
 struct EnvTimeParamValue
 {
   private:
@@ -495,6 +602,19 @@ struct EnvTimeParamValue
     // }
 };
 
+Result Serialize(JsonVariantWriter &myval, EnvTimeParamValue &param)
+{
+    return myval.WriteNumberValue(param.GetValue());
+}
+
+Result Deserialize(JsonVariantReader &myval, EnvTimeParamValue &param)
+{
+    if (myval.mType != JsonDataType::Number)
+        return Result::Failure("expected number");
+    param.SetValue(myval.mNumericValue.Get<float>());
+    return Result::Success();
+}
+
 struct CurveLUTParamValue
 {
   private:
@@ -541,6 +661,19 @@ struct CurveLUTParamValue
     //     return Result::Success();
     // }
 };
+
+Result Serialize(JsonVariantWriter &myval, CurveLUTParamValue &param)
+{
+    return myval.WriteNumberValue(param.GetParamValue());
+}
+
+Result Deserialize(JsonVariantReader &myval, CurveLUTParamValue &param)
+{
+    if (myval.mType != JsonDataType::Number)
+        return Result::Failure("expected number");
+    param.SetParamValue(myval.mNumericValue.Get<float>());
+    return Result::Success();
+}
 
 enum class TimeBasis : uint8_t
 {
@@ -787,5 +920,24 @@ struct TimeWithBasisParam
         }
     }
 };
+
+Result Serialize(JsonVariantWriter &myval, TimeWithBasisParam &param)
+{
+    SerializationObjectMap<2> map{{
+        CreateSerializationMapping(param.mBasis, "u"),
+        CreateSerializationMapping(param.mParamValue, "val"),
+    }};
+    return Serialize(myval, map);
+}
+
+// todo: there needs to be a way to utilize object key mapping for this.
+Result Deserialize(JsonVariantReader &myval, TimeWithBasisParam &param)
+{
+    SerializationObjectMap<2> map{{
+        CreateSerializationMapping(param.mBasis, "u"),
+        CreateSerializationMapping(param.mParamValue, "val"),
+    }};
+    return Deserialize(myval, map);
+}
 
 } // namespace clarinoid

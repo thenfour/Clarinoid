@@ -244,8 +244,18 @@ struct PerformancePatch
 static constexpr auto aosenuthaoesuth = sizeof(PerformancePatch);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-struct MetronomeSettings 
+struct MetronomeSettings  : ISerializationObjectMap<5>
 {
+	virtual SerializationObjectMapArray GetSerializationObjectMap() override
+	{
+		return { {
+				CreateSerializationMapping(mSoundOn, "on"),
+				CreateSerializationMapping(mLEDOn, "led"),
+				CreateSerializationMapping(mGain, "vol"),
+				CreateSerializationMapping(mMidiNote, "note"),
+				CreateSerializationMapping(mDecayMS, "decay"),
+			} };
+	}
 
     BoolParam mSoundOn{false};
     BoolParam mLEDOn{false};
@@ -282,15 +292,45 @@ struct MetronomeSettings
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-struct AppSettings : ISerializationObjectMap<2> // : SerializableDictionary
+struct AppSettings : ISerializationObjectMap<2>
 {
 	virtual SerializationObjectMapArray GetSerializationObjectMap() override
 	{
 		return { {
-				CreateSerializationMapping(mSustainPedalPolarity, "mSustainPedalPolarity"),
-				CreateSerializationMapping(mDisplayDim, "mDisplayDim"),
+				CreateSerializationMapping(mCurrentPerformancePatch, "perfPatch"),
+				CreateSerializationMapping(mMetronome, "metronome"),
 			} };
 	}
+
+    // Result SerializableObject_ToJSON(JsonVariant doc) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch")), "perfPatch");
+    //     ret.AndRequires(mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome")), "metronome");
+    //     //ret.AndRequires(SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches), "perfPatches");
+    //     //ret.AndRequires(mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm")), "harm");
+    //     ret.AndRequires(mSynthSettings.SerializableObject_ToJSON(doc.createNestedObject("synth")), "synth");
+    //     return ret;
+    // }
+
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("AppSettings is not a json object");
+    //     }
+
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
+    //     ret.AndRequires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
+    //     //ret.AndRequires(DeserializeArray(obj["perfPatches"], mPerformancePatches), "perfPatches");
+    //     //ret.AndRequires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
+    //     ret.AndRequires(mSynthSettings.SerializableObject_Deserialize(obj["synth"]), "synth");
+
+    //     return ret;
+    // }
+
+
 
     // one day these will be configurable and therefore part of the exported settings JSON.
     // until then, leave it out.
@@ -390,33 +430,6 @@ struct AppSettings : ISerializationObjectMap<2> // : SerializableDictionary
         return FindSynthPreset(perf.mSynthPatchA.GetValue());
     }
 
-    // Result SerializableObject_ToJSON(JsonVariant doc) const
-    // {
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch")), "perfPatch");
-    //     ret.AndRequires(mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome")), "metronome");
-    //     //ret.AndRequires(SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches), "perfPatches");
-    //     //ret.AndRequires(mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm")), "harm");
-    //     ret.AndRequires(mSynthSettings.SerializableObject_ToJSON(doc.createNestedObject("synth")), "synth");
-    //     return ret;
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("AppSettings is not a json object");
-    //     }
-
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
-    //     ret.AndRequires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
-    //     //ret.AndRequires(DeserializeArray(obj["perfPatches"], mPerformancePatches), "perfPatches");
-    //     //ret.AndRequires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
-    //     ret.AndRequires(mSynthSettings.SerializableObject_Deserialize(obj["synth"]), "synth");
-
-    //     return ret;
-    // }
 };
 
 static constexpr auto appsettingssize = sizeof(AppSettings);

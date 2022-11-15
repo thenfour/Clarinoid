@@ -1,12 +1,8 @@
+// TODO: maximum string size and possibly other sanity checks
 
 #pragma once
 
 #include <type_traits>
-//#include <math.h>  // isnan, et al
-
-// istream is for raw binary reading/writing; can be adapted to anything.
-// buffered stream is the same but buffered, adds flush, peek
-// text stream adds writing strings.
 
 namespace clarinoid
 {
@@ -19,45 +15,11 @@ struct IStream
     virtual size_t flushWrite() = 0;
 };
 
-// struct SerialStream : IStream
-// {
-//     //int mCursor = 0; // cursor points to the next byte to read.
-
-//     virtual size_t write(const uint8_t *buf, size_t bytes) override
-//     {
-//         auto b = Serial.write(buf, bytes);
-//         //mCursor += b;
-//         return b;
-//     }
-
-//     virtual size_t read(uint8_t *buf, size_t bytes) override
-//     {
-//         return Serial.readBytes((char *)buf, bytes);
-//         // if (bytes == 0)
-//         //     return 0; // knowing we're reading at least 1 byte helps simplify
-//         // int newCursor = std::min(mCursor + bytes, mStr.length()); // maximum cursor is end().
-//         // size_t ret = newCursor - mCursor;
-//         // memcpy(buf, mStr.data() + mCursor, ret);
-//         // mCursor = newCursor;
-//         //return ret;
-//     }
-
-//     virtual int readByte() override
-//     {
-//         uint8_t ret;
-//         return !!read(&ret, 1) ? (int)ret : (int)-1;
-//     }
-//     virtual size_t flushWrite() override
-//     {
-//         return 0;
-//     }
-// };
-
 struct StreamStream : IStream
 {
     ::Stream &mStream;
-    StreamStream(::Stream& s) : mStream(s){
-
+    StreamStream(::Stream &s) : mStream(s)
+    {
     }
     virtual size_t write(const uint8_t *buf, size_t bytes) override
     {
@@ -251,8 +213,6 @@ T alias_cast(F raw_data)
         T data;
     } z;
     z.raw = raw_data;
-    // alias_cast_t<T, F> ac;
-    // ac.raw = raw_data;
     return z.data;
 }
 
@@ -318,7 +278,6 @@ struct EscapeSequence
     {
         // groups of 2 chars; 1st char is the incoming char after an escape char ('\')
         // 2nd char is the actual char to output.
-        //""\\bbffnnrrtt
         return &"//\"\"\\\\b\bf\fn\nr\rt\t"[excludeSolidus ? 2 : 0];
     }
 };
@@ -1005,8 +964,6 @@ struct JsonParentChildHelper
             CCASSERT(mCurrentChild->mIsLocked); // changing children; make sure that the previous children finished.
         }
 
-        // std::cout << std::hex << "[" << mNodeID << ":" << uintptr_t(this) << "] setting child to -> [" <<
-        // child->mNodeID << ":" << uintptr_t(child) << "]" << std::endl;
         mCurrentChild = child;
         mExpectingChild = false;
     }
@@ -1021,7 +978,6 @@ struct JsonParentChildHelper
         {
             mCurrentChild->mIsLocked = true;
         }
-        // std::cout << std::hex << "[" << mNodeID << ":" << uintptr_t(this) << "] expecting new child" << std::endl;
         mCurrentChild = nullptr;
         mExpectingChild = true;
     }
@@ -1066,6 +1022,11 @@ struct JsonVariantWriter : JsonParentChildHelper
     void FinishWriting()
     {
         EnsureClosed();
+        // trailing new line is typical text file convention
+        if (mStream.mColumn > 1)
+        {
+            WriteRaw("\n");
+        }
         mStream.flushWrite();
     }
 
@@ -1197,7 +1158,8 @@ struct JsonVariantWriter : JsonParentChildHelper
             return Result::Failure("jsonvariant can only be used once");
         this->OnStreamAccess();
         mType = JsonDataType::Number;
-        auto ret = RawWriteSignedInteger(s);
+        String str = CCJSON::SignedIntegerToString(s);
+        auto ret = WriteRaw(str.c_str());
         mIsLocked = true;
         return ret;
     }
@@ -1209,7 +1171,8 @@ struct JsonVariantWriter : JsonParentChildHelper
             return Result::Failure("jsonvariant can only be used once");
         this->OnStreamAccess();
         mType = JsonDataType::Number;
-        auto ret = RawWriteUnsignedInteger(s);
+        String str = CCJSON::UnsignedIntegerToString(s);
+        auto ret = WriteRaw(str.c_str());
         mIsLocked = true;
         return ret;
     }
@@ -1287,7 +1250,7 @@ struct JsonVariantWriter : JsonParentChildHelper
 
         WriteRaw(CCJSON::UnsignedIntegerToString(parts.integral).c_str());
 
-        //ret.AndRequires(RawWriteUnsignedInteger(parts.integral), "writing integral part");
+        // ret.AndRequires(RawWriteUnsignedInteger(parts.integral), "writing integral part");
         if (parts.decimalPlaces)
         {
             ret.AndRequires(RawWriteDecimals(parts.decimal, parts.decimalPlaces), "writing decimals");
@@ -1923,8 +1886,6 @@ struct SerializationObjectMap
 {
     std::array<SerializationMapping, N> mMap;
 
-    // constexpr SerializationObjectMap(std::initializer_list<SerializationMapping> map) : mMap{
-    // array_from_initializer_list<SerializationMapping, N>(map) } {}
     constexpr SerializationObjectMap(std::array<SerializationMapping, N> &&map) : mMap{map}
     {
     }
@@ -2022,6 +1983,26 @@ SerializationMapping CreateSerializationMapping(Tparam &param, const char *key)
                 // std::cout << myval.ToString().mStr << std::endl;
                 return Deserialize(myval, param);
             }};
+}
+
+// allows quick object mapping like,
+// float a = 1.12f;
+// int b = 42;
+// SerializationObjectMap<2> map{{
+//   CreateSerializationMapping(a, "a"),
+//   CreateSerializationMapping(b, "b"),
+// }};
+// auto r = Serialize(doc, map);
+template <size_t N>
+Result Serialize(JsonVariantWriter &myval, SerializationObjectMap<N> &map)
+{
+    return map.Serialize(myval);
+}
+
+template <size_t N>
+Result Deserialize(JsonVariantReader &myval, SerializationObjectMap<N> &map)
+{
+    return map.Deserialize(myval);
 }
 
 // allows auto-serializing keyed objects like
