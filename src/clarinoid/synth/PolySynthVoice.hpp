@@ -190,7 +190,8 @@ struct Voice : IModulationProvider
         float midiNote = mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue();
 
         float userPB = mRunningVoice.mpParamProvider->SynthParamProvider_GetPitchBendN11();
-        float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive.GetValue() : (-osc.mPitchBendRangeNegative.GetValue()));
+        float pbSemis = userPB * ((userPB > 0) ? osc.mPitchBendRangePositive.GetValue()
+                                               : (-osc.mPitchBendRangeNegative.GetValue()));
 
         float paramSemis = osc.mFreqParam.GetMidiNote(midiNote, krateFreqModN11);
 
@@ -405,7 +406,10 @@ struct Voice : IModulationProvider
                 patch.mOsc[i].mHardSyncEnabled.GetValue(),
                 patch.mOsc[i].mSyncFreqParam.GetFrequency(
                     mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(),
-                    mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency)));
+                    mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency)),
+                patch.mOsc[i].mRingModOtherOsc[0].mValue,
+                patch.mOsc[i].mRingModOtherOsc[1].mValue, 
+                ClampN11(patch.mOsc[i].mRingModStrengthN11 + mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_RingModAmt)));
 
             ienabledOsc++;
         }

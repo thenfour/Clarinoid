@@ -501,6 +501,44 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         //  ModulationPoleType::Positive01},
     },
 
+
+
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc1RingModAmt, // index overall
+        AnyModulationDestination::Osc1RingModAmt,
+        (size_t)KRateModulationDestination::Osc1RingModAmt, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc1RingModAmt,
+        (ARateModulationDestination)0,
+    },
+
+
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc2RingModAmt, // index overall
+        AnyModulationDestination::Osc2RingModAmt,
+        (size_t)KRateModulationDestination::Osc2RingModAmt, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc2RingModAmt,
+        (ARateModulationDestination)0,
+    },
+
+
+    {
+        true,
+        (size_t)AnyModulationDestination::Osc3RingModAmt, // index overall
+        AnyModulationDestination::Osc3RingModAmt,
+        (size_t)KRateModulationDestination::Osc3RingModAmt, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::Osc3RingModAmt,
+        (ARateModulationDestination)0,
+    },
+
+
+
+
+
     {
         true,                                             // is a modulation
         (size_t)AnyModulationDestination::Osc1FMFeedback, // index overall

@@ -54,7 +54,6 @@ Result Deserialize(JsonVariantReader &myval, IntParam<T> &param)
     return Result::Success();
 }
 
-
 static constexpr size_t arcih = sizeof(IntParam<int>);
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
@@ -114,7 +113,7 @@ Result Deserialize(JsonVariantReader &myval, FloatParam &param)
 struct BoolParam //: ParameterBase
 {
     using T = bool;
-    T mValue; // making public, in case you need a reference. (see GuiPerformanceApp.hpp)
+    T mValue = false; // making public, in case you need a reference. (see GuiPerformanceApp.hpp)
 
     T GetValue() const
     {
@@ -125,11 +124,11 @@ struct BoolParam //: ParameterBase
         mValue = v;
     }
 
+    BoolParam() = default;
+
     explicit BoolParam(bool initialValue) : mValue(initialValue)
     {
     }
-    BoolParam(const BoolParam &rhs) = default;
-    BoolParam &operator=(const BoolParam &rhs) = default;
 
     // Result SerializableObject_ToJSON(JsonVariant rhs) const
     // {
@@ -158,7 +157,8 @@ Result Deserialize(JsonVariantReader &myval, BoolParam &param)
         param.mValue = myval.mBooleanValue;
         return Result::Success();
     }
-    if (myval.mType == JsonDataType::Number) {
+    if (myval.mType == JsonDataType::Number)
+    {
         param.mValue = (myval.mNumericValue.Get<int>() == 1);
     }
     return Result::Failure("expected boolean");

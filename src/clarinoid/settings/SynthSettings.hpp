@@ -238,6 +238,10 @@ enum class KRateModulationDestination : uint8_t
     Osc2Volume, // k-rate
     Osc3Volume, // k-rate
 
+    Osc1RingModAmt, // k-rate
+    Osc2RingModAmt, // k-rate
+    Osc3RingModAmt, // k-rate
+
     Osc1FMFeedback, // k-rate
     Osc2FMFeedback, // k-rate
     Osc3FMFeedback, // k-rate
@@ -289,13 +293,16 @@ enum class KRateModulationDestination : uint8_t
     Env3ReleaseCurve, // k-rate
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[49] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[52] = {
     {KRateModulationDestination::FilterCutoff, "FilterCutoff"},
     {KRateModulationDestination::MasterVolume, "MasterVolume"},
     {KRateModulationDestination::Detune, "Detune"},
     {KRateModulationDestination::Osc1Volume, "Osc1Volume"},
     {KRateModulationDestination::Osc2Volume, "Osc2Volume"},
     {KRateModulationDestination::Osc3Volume, "Osc3Volume"},
+    {KRateModulationDestination::Osc1RingModAmt, "Osc1RingModAmt"},
+    {KRateModulationDestination::Osc2RingModAmt, "Osc2RingModAmt"},
+    {KRateModulationDestination::Osc3RingModAmt, "Osc3RingModAmt"},
     {KRateModulationDestination::Osc1FMFeedback, "Osc1FMFeedback"},
     {KRateModulationDestination::Osc2FMFeedback, "Osc2FMFeedback"},
     {KRateModulationDestination::Osc3FMFeedback, "Osc3FMFeedback"},
@@ -356,23 +363,30 @@ struct OscillatorModulationInfo
     KRateModulationDestination KRateDestination_Frequency;
     KRateModulationDestination KRateDestination_SyncFrequency;
     KRateModulationDestination KRateDestination_Volume;
+    KRateModulationDestination KRateDestination_RingModAmt;
 };
 
 static OscillatorModulationInfo gModValuesByOscillator[POLYBLEP_OSC_COUNT] = {
     {KRateModulationDestination::Osc1FMFeedback,
      KRateModulationDestination::Osc1FrequencyParam,
      KRateModulationDestination::Osc1SyncFrequencyParam,
-     KRateModulationDestination::Osc1Volume},
+     KRateModulationDestination::Osc1Volume,
+     KRateModulationDestination::Osc1RingModAmt,
+     },
 
     {KRateModulationDestination::Osc2FMFeedback,
      KRateModulationDestination::Osc2FrequencyParam,
      KRateModulationDestination::Osc1SyncFrequencyParam,
-     KRateModulationDestination::Osc2Volume},
+     KRateModulationDestination::Osc2Volume,
+     KRateModulationDestination::Osc2RingModAmt,
+     },
 
     {KRateModulationDestination::Osc3FMFeedback,
      KRateModulationDestination::Osc3FrequencyParam,
      KRateModulationDestination::Osc1SyncFrequencyParam,
-     KRateModulationDestination::Osc3Volume},
+     KRateModulationDestination::Osc3Volume,
+     KRateModulationDestination::Osc3RingModAmt,
+     },
 };
 
 struct EnvelopeModulationInfo
@@ -437,6 +451,9 @@ enum class AnyModulationDestination : uint8_t
     Osc1Volume,         // k-rate
     Osc2Volume,         // k-rate
     Osc3Volume,         // k-rate
+    Osc1RingModAmt, // k-rate
+    Osc2RingModAmt, // k-rate
+    Osc3RingModAmt, // k-rate
     Osc1FMFeedback,     // k-rate
     Osc2FMFeedback,     // k-rate
     Osc3FMFeedback,     // k-rate
@@ -508,6 +525,9 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none 
     {AnyModulationDestination::Osc1Volume, "Osc1Volume"},
     {AnyModulationDestination::Osc2Volume, "Osc2Volume"},
     {AnyModulationDestination::Osc3Volume, "Osc3Volume"},
+    {AnyModulationDestination::Osc1RingModAmt, "Osc1RingModAmt"},
+    {AnyModulationDestination::Osc2RingModAmt, "Osc2RingModAmt"},
+    {AnyModulationDestination::Osc3RingModAmt, "Osc3RingModAmt"},
     {AnyModulationDestination::Osc1FMFeedback, "Osc1FMFeedback"},
     {AnyModulationDestination::Osc2FMFeedback, "Osc2FMFeedback"},
     {AnyModulationDestination::Osc3FMFeedback, "Osc3FMFeedback"},
@@ -669,8 +689,8 @@ struct EnvelopeSpec
     EnvTimeParamValue mHoldTime{0.0f};
     EnvTimeParamValue mDecayTime{0.5f};
     CurveLUTParamValue mDecayCurve{0};
-    FloatParam mSustainLevel{0};
-    EnvTimeParamValue mReleaseTime{0.6f};
+    FloatParam mSustainLevel{0.4f};
+    EnvTimeParamValue mReleaseTime{0.2f};
     CurveLUTParamValue mReleaseCurve{0};
     BoolParam mLegatoRestart{false};
 
@@ -721,7 +741,7 @@ struct SynthOscillatorSettings
         *this = rhs;
     }
 
-    VolumeParamValue mVolume = VolumeParamValue::FromParamValue(0.4f);
+    VolumeParamValue mVolume = VolumeParamValue::FromParamValue(0.0f);
     // this is not redundant with volume, because
     // - it enables quick muting
     // - it helps know how to display things
@@ -737,6 +757,9 @@ struct SynthOscillatorSettings
     // these are good for FM
     FloatParam mFreqMultiplier{1.0f}; // midinotefreq * this
     FloatParam mFreqOffsetHz{0.0f};
+
+    float mRingModStrengthN11 = 1.0f;
+    std::array<BoolParam, POLYBLEP_OSC_COUNT - 1> mRingModOtherOsc;
 
     // these are good for modulation, and for sync frequency.
     FrequencyParamValue mFreqParam{0.3f, 1.0f}; // param, kt amt
@@ -1095,6 +1118,7 @@ struct SynthSettings
         p.mFilter.mType.SetValue(ClarinoidFilterType::Disabled);
 
         p.mOsc[0].mWaveform.SetValue(OscWaveformShape::SawSync);
+        p.mOsc[0].mVolume.SetValue(0.4f);
 
         p.mFilter.mFrequency.SetParamValue(0);
         p.mFilter.mFrequency.SetKTParamValue(1.0f);

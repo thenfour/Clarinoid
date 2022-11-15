@@ -305,6 +305,42 @@ struct SynthPatchOscillatorMenuStuff
                                               this},
                               AlwaysEnabled};
 
+    FloatSettingItem mRingModStrength = {"RingModAmt",
+                              StandardRangeSpecs::gFloat_N1_1,
+                              Property<float>{[](void *cap) FLASHMEM {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  return pThis->GetBinding().mRingModStrengthN11;
+                                              },
+                                              [](void *cap, const float &v) FLASHMEM {
+                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                  pThis->GetBinding().mRingModStrengthN11 = v;
+                                              },
+                                              this},
+                              AlwaysEnabled};
+
+
+
+    MultiBoolSettingItem mRingMod{[](void *cap) FLASHMEM -> size_t { // get item count
+                                      auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                      return pThis->GetBinding().mRingModOtherOsc.size();
+                                  },
+                                  [](void *cap, size_t multiIndex) FLASHMEM -> String { // label getter
+                                      auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                      return String("ring<") + pThis->GetOtherOscillatorIndex(multiIndex);
+                                  },
+                                  "on",                                               // true val
+                                  "off",                                              // false val
+                                  [](void *cap, size_t multiIndex) FLASHMEM -> bool { // value getter
+                                      auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                      return pThis->GetBinding().mRingModOtherOsc[multiIndex].mValue;
+                                  },
+                                  [](void *cap, size_t multiIndex, const bool &val) FLASHMEM { // value setter
+                                      auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                      pThis->GetBinding().mRingModOtherOsc[multiIndex].mValue = val;
+                                  },
+                                  AlwaysEnabledMulti,
+                                  this};
+
     FloatSettingItem mFMFeedback = {"FM Feedback",
                                     StandardRangeSpecs::gFloat_0_1,
                                     Property<float>{[](void *cap) FLASHMEM {
@@ -549,7 +585,7 @@ struct SynthPatchOscillatorMenuStuff
         AlwaysEnabled,
         this};
 
-    ISettingItem *mArray[19] = {
+    ISettingItem *mArray[21] = {
         &mEnabled, //
         &mGain,    //
         &mPan,
@@ -564,7 +600,8 @@ struct SynthPatchOscillatorMenuStuff
         &mFreqMul,
         &mFreqOffset,
         &mPortamentoTimeMS,
-
+&mRingModStrength,
+&mRingMod,
         &mFMFeedback,
 
         &mHardSyncEnabled,

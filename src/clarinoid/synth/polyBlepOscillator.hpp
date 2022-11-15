@@ -158,7 +158,7 @@ struct SineWaveformProvider // : public WaveformProviderBase
         caller.mPulseStage = false;
     }
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
+    static void Step(size_t i, TOscillator &caller, float &fboutput, float phaseShift, const float *otherOscBuffer0, const float *otherOscBuffer1)
     {
         caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
         caller.mOutput = fast::sin((caller.mMainPhase.mT + phaseShift + fboutput * caller.mPMFeedbackAmt) * TWO_PI);
@@ -176,7 +176,7 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
     }
 
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
+    static void Step(size_t i, TOscillator &caller, float &fboutput, float phaseShift, const float *otherOscBuffer0, const float *otherOscBuffer1)
     {
         // TODO: use phase shift
         while (true)
@@ -242,7 +242,7 @@ struct PulseWaveformProvider
         caller.mPulseStage = false;
     }
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
+    static void Step(size_t i, TOscillator &caller, float &fboutput, float phaseShift, const float *otherOscBuffer0, const float *otherOscBuffer1)
     {
         // TODO: use phase shift
         while (true)
@@ -329,7 +329,7 @@ struct SawWaveformProvider
     }
 
     template <typename TOscillator>
-    static void Step(TOscillator &caller, float &fboutput, float phaseShift)
+    static void Step(size_t i, TOscillator &caller, float &fboutput, float phaseShift, const float *otherOscBuffer0, const float *otherOscBuffer1)
     {
         // TODO: use phase shift
         caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
@@ -370,6 +370,13 @@ struct Oscillator
     float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
     float mPMFeedbackAmt = 0.0f;
 
+    bool mRingMod0 = false;
+    bool mRingMod1 = false;
+    float mRingModStrengthN11 = 1.0f;
+
+    // save this so it can be used for efficient a-rate modulation
+    float mBuffer[AUDIO_BLOCK_SAMPLES] = {0};
+
     //  Use this for phase-retrigger everytime you send a noteOn, if you want a consistent sound.
     //  Don't use this for hard-sync, it will cause aliasing.
     //  You can also set the phases of the oscillators to different starting points.
@@ -378,10 +385,13 @@ struct Oscillator
         mMainPhase.ResetPhase();
     }
 
-    void SetBasicParams(OscWaveformShape wform, float freq, float phaseOffset01, int portamentoMS, bool hardSyncEnabled, float syncFreq)
+    void SetBasicParams(OscWaveformShape wform, float freq, float phaseOffset01, int portamentoMS, bool hardSyncEnabled, float syncFreq, bool ringMod0, bool ringMod1, float ringModStrengthN11)
     {
         mWaveformShape = wform;
         mHardSyncEnabled = hardSyncEnabled;
+        mRingMod0 = ringMod0;
+        mRingMod1 = ringMod1;
+        mRingModStrengthN11 = ringModStrengthN11;
         if (mHardSyncEnabled)
         {
             mSyncPhase.SetParams(freq, phaseOffset01);
@@ -400,7 +410,7 @@ struct Oscillator
     }
 
     template <typename TWaveformProvider>
-    inline void Step(size_t i, bool doPWM, float *pwm32, bool doPM, float *pm32, float *out)
+    inline void Step(size_t i, bool doPWM, float *pwm32, bool doPM, float *pm32, float *out, const float *otherOscBuffer0, const float *otherOscBuffer1)
     {
         if (!mEnabled)
         {
@@ -427,7 +437,7 @@ struct Oscillator
         mOutput = mBlepDelay;
         mBlepDelay = 0;
 
-        TWaveformProvider::Step(*this, fboutput, phaseShift);
+        TWaveformProvider::Step(i, *this, fboutput, phaseShift, otherOscBuffer0, otherOscBuffer1);
 
         float x;
         if (mHardSyncEnabled && mSyncPhase.StepWithFrac(x))
@@ -435,14 +445,21 @@ struct Oscillator
             TWaveformProvider::ResetPhaseDueToSync(*this, x);
         }
 
-        out[i] = mOutput; // * mAmplitude;
-    }                     // void Step() {
+        out[i] = mOutput;
 
-    void ProcessBlock(audio_block_t *pwm, audio_block_t *pm, audio_block_t *pOut)
+        // probably can be optimized by processing in whole blocks
+        if (mRingMod0) {
+            out[i] *= 1.0 - mRingModStrengthN11 * otherOscBuffer0[i];
+        }
+        if (mRingMod1) {
+            out[i] *= 1.0 - mRingModStrengthN11 * otherOscBuffer1[i];
+        }
+    }
+
+    void ProcessBlock(audio_block_t *pwm, audio_block_t *pm, audio_block_t *pOut, const float *otherOscBuffer0, const float *otherOscBuffer1)
     {
         float pwm32[AUDIO_BLOCK_SAMPLES];
         float pm32[AUDIO_BLOCK_SAMPLES];
-        float out32[AUDIO_BLOCK_SAMPLES];
         if (pwm)
         {
             fast::Sample16To32Buffer(pwm->data, pwm32);
@@ -458,32 +475,32 @@ struct Oscillator
         case OscWaveformShape::VarTriangle:
             for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
             {
-                this->Step<VarTriangleWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+                this->Step<VarTriangleWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, mBuffer, otherOscBuffer0, otherOscBuffer1);
             }
             break;
         case OscWaveformShape::Pulse:
             for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
             {
-                this->Step<PulseWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+                this->Step<PulseWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, mBuffer, otherOscBuffer0, otherOscBuffer1);
             }
             break;
         case OscWaveformShape::SawSync:
             for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
             {
-                this->Step<SawWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+                this->Step<SawWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, mBuffer, otherOscBuffer0, otherOscBuffer1);
             }
             break;
         case OscWaveformShape::Sine:
             for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
             {
-                this->Step<SineWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, out32);
+                this->Step<SineWaveformProvider>(i, !!pwm, pwm32, !!pm, pm32, mBuffer, otherOscBuffer0, otherOscBuffer1);
             }
             break;
         default:
             CCASSERT(!"unsupported waveform in processblock");
             break;
         }
-        fast::Sample32To16Buffer(out32, pOut->data);
+        fast::Sample32To16Buffer(mBuffer, pOut->data);
     }
 }; // struct Oscillator
 
@@ -511,14 +528,14 @@ struct AudioBandlimitedOsci : public AudioStream
 
     Oscillator mOsc[3];
 
-    void ProcessOsc(Oscillator &osc, int pwmId, int pmId, int outId)
+    void ProcessOsc(Oscillator &osc, int pwmId, int pmId, int outId, Oscillator& otherOscillator0, Oscillator& otherOscillator1)
     {
         audio_block_t *out = allocate();
         if (!out)
             return;
         audio_block_t *pwm = receiveReadOnly(pwmId);
         audio_block_t *pm = receiveReadOnly(pmId);
-        osc.ProcessBlock(pwm, pm, out);
+        osc.ProcessBlock(pwm, pm, out, otherOscillator0.mBuffer, otherOscillator1.mBuffer);
         transmit(out, outId);
         release(out);
 
@@ -532,9 +549,9 @@ struct AudioBandlimitedOsci : public AudioStream
     {
         if (!mIsPlaying)
             return;
-        ProcessOsc(mOsc[0], (int)INPUT_INDEX::pwm1, (int)INPUT_INDEX::pm1, 0);
-        ProcessOsc(mOsc[1], (int)INPUT_INDEX::pwm2, (int)INPUT_INDEX::pm2, 1);
-        ProcessOsc(mOsc[2], (int)INPUT_INDEX::pwm3, (int)INPUT_INDEX::pm3, 2);
+        ProcessOsc(mOsc[0], (int)INPUT_INDEX::pwm1, (int)INPUT_INDEX::pm1, 0, mOsc[1], mOsc[2]);
+        ProcessOsc(mOsc[1], (int)INPUT_INDEX::pwm2, (int)INPUT_INDEX::pm2, 1, mOsc[0], mOsc[2]);
+        ProcessOsc(mOsc[2], (int)INPUT_INDEX::pwm3, (int)INPUT_INDEX::pm3, 2, mOsc[0], mOsc[1]);
     }
 
 }; // class AudioBandlimitedOsci

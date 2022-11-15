@@ -301,7 +301,6 @@ inline bool FloatIsAbove(float lhs, float rhs, float eps = FloatEpsilon)
     return lhs > (rhs + eps);
 }
 
-
 template <typename T>
 inline bool NumberEquals(T lhs, T rhs)
 {
@@ -325,6 +324,14 @@ static float Clamp(float x, float low, float hi)
     if (x >= hi)
         return hi;
     return x;
+}
+static float Clamp01(float x)
+{
+    return Clamp(x, 0.0f, 1.0f);
+}
+static float ClampN11(float x)
+{
+    return Clamp(x, -1.0f, 1.0f);
 }
 
 template <typename T>
@@ -533,14 +540,10 @@ inline std::pair<float, float> CalculatePanGain(float panN11)
     return std::make_pair(leftChannel, rightChannel);
 }
 
-
 static float CalculateInc01PerSampleForMS(float ms)
 {
     return Clamp(1000.0f / (std::max(0.01f, ms) * AUDIO_SAMPLE_RATE), 0.0f, 1.0f);
 }
-
-
-
 
 // this is all utilities for shaping curves using this style:
 // https://www.desmos.com/calculator/3zhzwbfrxd
