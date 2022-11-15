@@ -25,48 +25,41 @@ EnumItemInfo<GlobalScaleRefType> gGlobalScaleRefTypeItems[2] = {
 EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo("GlobalScaleRefType", gGlobalScaleRefTypeItems);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-struct ReverbSettings //: SerializableDictionary
+struct ReverbSettings
 {
     BoolParam mEnabled{true};
     FloatParam mGain{DecibelsToLinear(-3.0f)};
     FloatParam mDamping{0.6f};
     FloatParam mSize{0.6f};
 
-    ReverbSettings() //: SerializableDictionary("Reverb", mSerializableChildObjects)
+    ReverbSettings() 
     {
     }
 
-    // SerializableObject *mSerializableChildObjects[4] = {
-    //     &mEnabled,
-    //     &mGain,
-    //     &mDamping,
-    //     &mSize,
-    // };
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on")), "on");
+    //     ret.AndRequires(mGain.SerializableObject_ToJSON(rhs.createNestedObject("gain")), "gain");
+    //     ret.AndRequires(mDamping.SerializableObject_ToJSON(rhs.createNestedObject("damp")), "damp");
+    //     ret.AndRequires(mSize.SerializableObject_ToJSON(rhs.createNestedObject("size")), "size");
+    //     return ret;
+    // }
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool r = true;
-        r = r && mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on"));
-        r = r && mGain.SerializableObject_ToJSON(rhs.createNestedObject("gain"));
-        r = r && mDamping.SerializableObject_ToJSON(rhs.createNestedObject("damp"));
-        r = r && mSize.SerializableObject_ToJSON(rhs.createNestedObject("size"));
-        return r;
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("must be object");
+    //     }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("must be object");
-        }
-
-        Result ret = Result::Success();
-        ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
-        ret.AndRequires(mGain.SerializableObject_Deserialize(obj["gain"]), "gain");
-        ret.AndRequires(mDamping.SerializableObject_Deserialize(obj["damp"]), "damp");
-        ret.AndRequires(mSize.SerializableObject_Deserialize(obj["size"]), "size");
-        return ret;
-    }
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
+    //     ret.AndRequires(mGain.SerializableObject_Deserialize(obj["gain"]), "gain");
+    //     ret.AndRequires(mDamping.SerializableObject_Deserialize(obj["damp"]), "damp");
+    //     ret.AndRequires(mSize.SerializableObject_Deserialize(obj["size"]), "size");
+    //     return ret;
+    // }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,34 +89,34 @@ struct DelaySettings // : SerializableDictionary
     //     &mFilter,
     // };
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool r = true;
-        r = r && mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on"));
-        r = r && mGain.SerializableObject_ToJSON(rhs.createNestedObject("gain"));
-        r = r && mTime.SerializableObject_ToJSON(rhs.createNestedObject("time"));
-        r = r && mStereoSeparationDelayMS.SerializableObject_ToJSON(rhs.createNestedObject("sep"));
-        r = r && mFeedbackGain.SerializableObject_ToJSON(rhs.createNestedObject("fb"));
-        r = r && mFilter.SerializableObject_ToJSON(rhs.createNestedObject("filt"));
-        return r;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on")), "on");
+    //     ret.AndRequires(mGain.SerializableObject_ToJSON(rhs.createNestedObject("gain")), "gain");
+    //     ret.AndRequires(mTime.SerializableObject_ToJSON(rhs.createNestedObject("time")), "time");
+    //     ret.AndRequires(mStereoSeparationDelayMS.SerializableObject_ToJSON(rhs.createNestedObject("sep")), "sep");
+    //     ret.AndRequires(mFeedbackGain.SerializableObject_ToJSON(rhs.createNestedObject("fb")), "fb");
+    //     ret.AndRequires(mFilter.SerializableObject_ToJSON(rhs.createNestedObject("filt")), "filt");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("must be object");
-        }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("must be object");
+    //     }
 
-        Result ret = Result::Success();
-        ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
-        ret.AndRequires(mGain.SerializableObject_Deserialize(obj["gain"]), "gain");
-        ret.AndRequires(mTime.SerializableObject_Deserialize(obj["time"]), "time");
-        ret.AndRequires(mStereoSeparationDelayMS.SerializableObject_Deserialize(obj["sep"]), "sep");
-        ret.AndRequires(mFeedbackGain.SerializableObject_Deserialize(obj["fb"]), "fb");
-        ret.AndRequires(mFilter.SerializableObject_Deserialize(obj["filt"]), "filt");
-        return ret;
-    }
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
+    //     ret.AndRequires(mGain.SerializableObject_Deserialize(obj["gain"]), "gain");
+    //     ret.AndRequires(mTime.SerializableObject_Deserialize(obj["time"]), "time");
+    //     ret.AndRequires(mStereoSeparationDelayMS.SerializableObject_Deserialize(obj["sep"]), "sep");
+    //     ret.AndRequires(mFeedbackGain.SerializableObject_Deserialize(obj["fb"]), "fb");
+    //     ret.AndRequires(mFilter.SerializableObject_Deserialize(obj["filt"]), "filt");
+    //     return ret;
+    // }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -178,69 +171,69 @@ struct PerformancePatch
         mMyIndex = mSavedIndex;
     }
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool r = true;
-        r = r && mName.SerializableObject_ToJSON(rhs.createNestedObject("name"));
-        r = r && mBPM.SerializableObject_ToJSON(rhs.createNestedObject("bpm"));
-        r = r && mTranspose.SerializableObject_ToJSON(rhs.createNestedObject("trans"));
-        r = r && mGlobalScaleRef.SerializableObject_ToJSON(rhs.createNestedObject("ScaleRef"));
-        r = r && mGlobalScale.SerializableObject_ToJSON(rhs.createNestedObject("Scale"));
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mName.SerializableObject_ToJSON(rhs.createNestedObject("name")), "name");
+    //     ret.AndRequires(mBPM.SerializableObject_ToJSON(rhs.createNestedObject("bpm")), "bpm");
+    //     ret.AndRequires(mTranspose.SerializableObject_ToJSON(rhs.createNestedObject("trans")), "trans");
+    //     ret.AndRequires(mGlobalScaleRef.SerializableObject_ToJSON(rhs.createNestedObject("ScaleRef")), "ScaleRef");
+    //     ret.AndRequires(mGlobalScale.SerializableObject_ToJSON(rhs.createNestedObject("Scale")), "Scale");
 
-        r = r && mSynthPatchA.SerializableObject_ToJSON(rhs.createNestedObject("Apatch"));
-        r = r && mSynthAEnabled.SerializableObject_ToJSON(rhs.createNestedObject("Aon"));
-        r = r && mSynthAGain.SerializableObject_ToJSON(rhs.createNestedObject("Again"));
+    //     ret.AndRequires(mSynthPatchA.SerializableObject_ToJSON(rhs.createNestedObject("Apatch")), "Apatch");
+    //     ret.AndRequires(mSynthAEnabled.SerializableObject_ToJSON(rhs.createNestedObject("Aon")), "Aon");
+    //     ret.AndRequires(mSynthAGain.SerializableObject_ToJSON(rhs.createNestedObject("Again")), "Again");
 
-        r = r && mSynthPatchB.SerializableObject_ToJSON(rhs.createNestedObject("Bpatch"));
-        r = r && mSynthBEnabled.SerializableObject_ToJSON(rhs.createNestedObject("Bon"));
-        r = r && mSynthBGain.SerializableObject_ToJSON(rhs.createNestedObject("Bgain"));
+    //     ret.AndRequires(mSynthPatchB.SerializableObject_ToJSON(rhs.createNestedObject("Bpatch")), "Bpatch");
+    //     ret.AndRequires(mSynthBEnabled.SerializableObject_ToJSON(rhs.createNestedObject("Bon")), "Bon");
+    //     ret.AndRequires(mSynthBGain.SerializableObject_ToJSON(rhs.createNestedObject("Bgain")), "Bgain");
 
-        r = r && mHarmPreset.SerializableObject_ToJSON(rhs.createNestedObject("Hpatch"));
-        r = r && mHarmEnabled.SerializableObject_ToJSON(rhs.createNestedObject("Hon"));
-        r = r && mHarmGain.SerializableObject_ToJSON(rhs.createNestedObject("Hgain"));
+    //     ret.AndRequires(mHarmPreset.SerializableObject_ToJSON(rhs.createNestedObject("Hpatch")), "Hpatch");
+    //     ret.AndRequires(mHarmEnabled.SerializableObject_ToJSON(rhs.createNestedObject("Hon")), "Hon");
+    //     ret.AndRequires(mHarmGain.SerializableObject_ToJSON(rhs.createNestedObject("Hgain")), "Hgain");
 
-        r = r && mSynthStereoSpread.SerializableObject_ToJSON(rhs.createNestedObject("spread"));
+    //     ret.AndRequires(mSynthStereoSpread.SerializableObject_ToJSON(rhs.createNestedObject("spread")), "spread");
 
-        r = r && mMasterGain.SerializableObject_ToJSON(rhs.createNestedObject("mstGain"));
-        r = r && mMasterFXGain.SerializableObject_ToJSON(rhs.createNestedObject("fxgain"));
-        r = r && mMasterFXEnable.SerializableObject_ToJSON(rhs.createNestedObject("fxon"));
-        r = r && mReverb.SerializableObject_ToJSON(rhs.createNestedObject("verb"));
-        r = r && mDelay.SerializableObject_ToJSON(rhs.createNestedObject("delay"));
-        return r;
-    }
+    //     ret.AndRequires(mMasterGain.SerializableObject_ToJSON(rhs.createNestedObject("mstGain")), "mstGain");
+    //     ret.AndRequires(mMasterFXGain.SerializableObject_ToJSON(rhs.createNestedObject("fxgain")), "fxgain");
+    //     ret.AndRequires(mMasterFXEnable.SerializableObject_ToJSON(rhs.createNestedObject("fxon")), "fxon");
+    //     ret.AndRequires(mReverb.SerializableObject_ToJSON(rhs.createNestedObject("verb")), "verb");
+    //     ret.AndRequires(mDelay.SerializableObject_ToJSON(rhs.createNestedObject("delay")), "delay");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("must be object");
-        }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("must be object");
+    //     }
 
-        Result ret = Result::Success();
+    //     Result ret = Result::Success();
 
-        ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
-        ret.AndRequires(mBPM.SerializableObject_Deserialize(obj["bpm"]), "bpm");
-        ret.AndRequires(mTranspose.SerializableObject_Deserialize(obj["trans"]), "trans");
-        ret.AndRequires(mGlobalScaleRef.SerializableObject_Deserialize(obj["ScaleRef"]), "ScaleRef");
-        ret.AndRequires(mGlobalScale.SerializableObject_Deserialize(obj["Scale"]), "Scale");
-        ret.AndRequires(mSynthPatchA.SerializableObject_Deserialize(obj["Apatch"]), "Apatch");
-        ret.AndRequires(mSynthAEnabled.SerializableObject_Deserialize(obj["Aon"]), "Aon");
-        ret.AndRequires(mSynthAGain.SerializableObject_Deserialize(obj["Again"]), "Again");
-        ret.AndRequires(mSynthPatchB.SerializableObject_Deserialize(obj["Bpatch"]), "Bpatch");
-        ret.AndRequires(mSynthBEnabled.SerializableObject_Deserialize(obj["Bon"]), "Bon");
-        ret.AndRequires(mSynthBGain.SerializableObject_Deserialize(obj["Bgain"]), "Bgain");
-        ret.AndRequires(mHarmPreset.SerializableObject_Deserialize(obj["Hpatch"]), "Hpatch");
-        ret.AndRequires(mHarmEnabled.SerializableObject_Deserialize(obj["Hon"]), "Hon");
-        ret.AndRequires(mHarmGain.SerializableObject_Deserialize(obj["Hgain"]), "Hgain");
-        ret.AndRequires(mSynthStereoSpread.SerializableObject_Deserialize(obj["spread"]), "spread");
-        ret.AndRequires(mMasterGain.SerializableObject_Deserialize(obj["mstGain"]), "mstGain");
-        ret.AndRequires(mMasterFXGain.SerializableObject_Deserialize(obj["fxgain"]), "fxgain");
-        ret.AndRequires(mMasterFXEnable.SerializableObject_Deserialize(obj["fxon"]), "fxon");
-        ret.AndRequires(mReverb.SerializableObject_Deserialize(obj["verb"]), "verb");
-        ret.AndRequires(mDelay.SerializableObject_Deserialize(obj["delay"]), "delay");
+    //     ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
+    //     ret.AndRequires(mBPM.SerializableObject_Deserialize(obj["bpm"]), "bpm");
+    //     ret.AndRequires(mTranspose.SerializableObject_Deserialize(obj["trans"]), "trans");
+    //     ret.AndRequires(mGlobalScaleRef.SerializableObject_Deserialize(obj["ScaleRef"]), "ScaleRef");
+    //     ret.AndRequires(mGlobalScale.SerializableObject_Deserialize(obj["Scale"]), "Scale");
+    //     ret.AndRequires(mSynthPatchA.SerializableObject_Deserialize(obj["Apatch"]), "Apatch");
+    //     ret.AndRequires(mSynthAEnabled.SerializableObject_Deserialize(obj["Aon"]), "Aon");
+    //     ret.AndRequires(mSynthAGain.SerializableObject_Deserialize(obj["Again"]), "Again");
+    //     ret.AndRequires(mSynthPatchB.SerializableObject_Deserialize(obj["Bpatch"]), "Bpatch");
+    //     ret.AndRequires(mSynthBEnabled.SerializableObject_Deserialize(obj["Bon"]), "Bon");
+    //     ret.AndRequires(mSynthBGain.SerializableObject_Deserialize(obj["Bgain"]), "Bgain");
+    //     ret.AndRequires(mHarmPreset.SerializableObject_Deserialize(obj["Hpatch"]), "Hpatch");
+    //     ret.AndRequires(mHarmEnabled.SerializableObject_Deserialize(obj["Hon"]), "Hon");
+    //     ret.AndRequires(mHarmGain.SerializableObject_Deserialize(obj["Hgain"]), "Hgain");
+    //     ret.AndRequires(mSynthStereoSpread.SerializableObject_Deserialize(obj["spread"]), "spread");
+    //     ret.AndRequires(mMasterGain.SerializableObject_Deserialize(obj["mstGain"]), "mstGain");
+    //     ret.AndRequires(mMasterFXGain.SerializableObject_Deserialize(obj["fxgain"]), "fxgain");
+    //     ret.AndRequires(mMasterFXEnable.SerializableObject_Deserialize(obj["fxon"]), "fxon");
+    //     ret.AndRequires(mReverb.SerializableObject_Deserialize(obj["verb"]), "verb");
+    //     ret.AndRequires(mDelay.SerializableObject_Deserialize(obj["delay"]), "delay");
 
-        return ret;
-    }
+    //     return ret;
+    // }
 
     String ToString() const
     {
@@ -251,11 +244,8 @@ struct PerformancePatch
 static constexpr auto aosenuthaoesuth = sizeof(PerformancePatch);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-struct MetronomeSettings // : SerializableDictionary
+struct MetronomeSettings 
 {
-    // MetronomeSettings() : SerializableDictionary("Metronome", mSerializableChildObjects)
-    // {
-    // }
 
     BoolParam mSoundOn{false};
     BoolParam mLEDOn{false};
@@ -263,47 +253,45 @@ struct MetronomeSettings // : SerializableDictionary
     IntParam<uint8_t> mMidiNote{80};
     IntParam<int> mDecayMS{15};
 
-    // SerializableInt<int> mMetronomeBrightness = { "", 255};
-    // float mMetronomeLEDDecay = 0.1f;
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mSoundOn.SerializableObject_ToJSON(rhs.createNestedObject("snd")), "snd");
+    //     ret.AndRequires(mLEDOn.SerializableObject_ToJSON(rhs.createNestedObject("led")), "led");
+    //     ret.AndRequires(mGain.SerializableObject_ToJSON(rhs.createNestedObject("gain")), "gain");
+    //     ret.AndRequires(mMidiNote.SerializableObject_ToJSON(rhs.createNestedObject("note")), "note");
+    //     ret.AndRequires(mDecayMS.SerializableObject_ToJSON(rhs.createNestedObject("decay")), "decay");
+    //     return ret;
+    // }
 
-    // SerializableObject *mSerializableChildObjects[5] = {
-    //     &mSoundOn,
-    //     &mLEDOn,
-    //     &mGain,
-    //     &mMidiNote,
-    //     &mDecayMS,
-    // };
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool ret = true;
-        ret = ret && mSoundOn.SerializableObject_ToJSON(rhs.createNestedObject("snd"));
-        ret = ret && mLEDOn.SerializableObject_ToJSON(rhs.createNestedObject("led"));
-        ret = ret && mGain.SerializableObject_ToJSON(rhs.createNestedObject("gain"));
-        ret = ret && mMidiNote.SerializableObject_ToJSON(rhs.createNestedObject("note"));
-        ret = ret && mDecayMS.SerializableObject_ToJSON(rhs.createNestedObject("decay"));
-        return ret;
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("metronome must be object");
+    //     }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("metronome must be object");
-        }
-
-        Result ret = Result::Success();
-        ret.AndRequires(mSoundOn.SerializableObject_Deserialize(obj["snd"]), "snd");
-        ret.AndRequires(mLEDOn.SerializableObject_Deserialize(obj["led"]), "led");
-        ret.AndRequires(mGain.SerializableObject_Deserialize(obj["gain"]), "gain");
-        ret.AndRequires(mMidiNote.SerializableObject_Deserialize(obj["note"]), "note");
-        ret.AndRequires(mDecayMS.SerializableObject_Deserialize(obj["decay"]), "decay");
-        return ret;
-    }
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mSoundOn.SerializableObject_Deserialize(obj["snd"]), "snd");
+    //     ret.AndRequires(mLEDOn.SerializableObject_Deserialize(obj["led"]), "led");
+    //     ret.AndRequires(mGain.SerializableObject_Deserialize(obj["gain"]), "gain");
+    //     ret.AndRequires(mMidiNote.SerializableObject_Deserialize(obj["note"]), "note");
+    //     ret.AndRequires(mDecayMS.SerializableObject_Deserialize(obj["decay"]), "decay");
+    //     return ret;
+    // }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-struct AppSettings // : SerializableDictionary
+struct AppSettings : ISerializationObjectMap<2> // : SerializableDictionary
 {
+	virtual SerializationObjectMapArray GetSerializationObjectMap() override
+	{
+		return { {
+				CreateSerializationMapping(mSustainPedalPolarity, "mSustainPedalPolarity"),
+				CreateSerializationMapping(mDisplayDim, "mDisplayDim"),
+			} };
+	}
+
     // one day these will be configurable and therefore part of the exported settings JSON.
     // until then, leave it out.
     ControlMapping mControlMappings[MAX_CONTROL_MAPPINGS];
@@ -402,46 +390,33 @@ struct AppSettings // : SerializableDictionary
         return FindSynthPreset(perf.mSynthPatchA.GetValue());
     }
 
-    // AppSettings() : SerializableDictionary("AppSettings", mSerializableChildObjects)
+    // Result SerializableObject_ToJSON(JsonVariant doc) const
     // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch")), "perfPatch");
+    //     ret.AndRequires(mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome")), "metronome");
+    //     //ret.AndRequires(SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches), "perfPatches");
+    //     //ret.AndRequires(mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm")), "harm");
+    //     ret.AndRequires(mSynthSettings.SerializableObject_ToJSON(doc.createNestedObject("synth")), "synth");
+    //     return ret;
     // }
 
-    bool SerializableObject_ToJSON(JsonVariant doc) const
-    {
-        // SerializableObject_ToJSON(doc);
-        //  String ret;
-        bool ret = true;
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("AppSettings is not a json object");
+    //     }
 
-        ret = ret && mCurrentPerformancePatch.SerializableObject_ToJSON(doc.createNestedObject("perfPatch"));
-        ret = ret && mMetronome.SerializableObject_ToJSON(doc.createNestedObject("metronome"));
-        ret = ret && SerializeArrayToJSON(doc.createNestedArray("perfPatches"), mPerformancePatches);
-        ret = ret && mHarmSettings.SerializableObject_ToJSON(doc.createNestedObject("harm"));
-        ret = ret && mSynthSettings.SerializableObject_ToJSON(doc.createNestedObject("synth"));
-        // synth settings
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
+    //     ret.AndRequires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
+    //     //ret.AndRequires(DeserializeArray(obj["perfPatches"], mPerformancePatches), "perfPatches");
+    //     //ret.AndRequires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
+    //     ret.AndRequires(mSynthSettings.SerializableObject_Deserialize(obj["synth"]), "synth");
 
-        // return serializeJson(doc, Serial); // minified
-        // size_t ret = serializeMsgPack(doc, *pOut); // minified
-        // serializeJsonPretty(doc, ret); // pretty
-        // return "";
-        return ret;
-    }
-
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("AppSettings is not a json object");
-        }
-
-        Result ret = Result::Success();
-        ret.AndRequires(mCurrentPerformancePatch.SerializableObject_Deserialize(obj["perfPatch"]), "perfPatch");
-        ret.AndRequires(mMetronome.SerializableObject_Deserialize(obj["metronome"]), "metronome");
-        ret.AndRequires(DeserializeArray(obj["perfPatches"], mPerformancePatches), "perfPatches");
-        ret.AndRequires(mHarmSettings.SerializableObject_Deserialize(obj["harm"]), "harm");
-        ret.AndRequires(mSynthSettings.SerializableObject_Deserialize(obj["synth"]), "synth");
-
-        return ret;
-    }
+    //     return ret;
+    // }
 };
 
 static constexpr auto appsettingssize = sizeof(AppSettings);

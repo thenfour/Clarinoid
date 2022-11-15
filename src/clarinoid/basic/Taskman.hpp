@@ -60,7 +60,7 @@ struct TaskPlanner
 
         uint32_t mExecutionCount = 0;
         SimpleMovingAverage<15> mExecutionTimeMicros;
-        CircularArray<TaskExecutionData, 128> mExecutionHistory;
+        //CircularArray<TaskExecutionData, 128> mExecutionHistory;
 
         void Run(TimeSpan ttd /* the ttd calculated by the task planner */)
         {
@@ -72,9 +72,13 @@ struct TaskPlanner
             TaskExecutionData d;
             d.mDuration = duration;
             d.mTTD = ttd;
-            mExecutionHistory.Push(d);
+            //mExecutionHistory.Push(d);
         }
     };
+
+    static constexpr auto iaichp = sizeof(TaskInfo);
+    static constexpr auto iaic7hp = sizeof(SimpleMovingAverage<15>);
+    static constexpr auto iaic798hp = sizeof(CircularArray<TaskExecutionData, 128>);
 
     struct TaskDeadline
     {

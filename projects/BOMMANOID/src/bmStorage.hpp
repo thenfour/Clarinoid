@@ -41,7 +41,7 @@ void printDirectory(File dir, int indent = 0)
         else
         {
             // files have sizes, directories do not
-            printSpaces(gMaxSize - indent * gIndentSize - strlen(entry.name()));
+            printSpaces(gMaxSize - indent * gIndentSize - StringLength(entry.name()));
             Serial.print("  ");
             Serial.println(entry.size(), DEC);
         }
@@ -57,96 +57,140 @@ struct BommanoidStorage : IStorage
         REQUIRE(gUsbFileSystem1.begin(&gUsbDrive));
     }
 
-    static String GetUsbMassStorageFilename(size_t slot)
-    {
-        return String("/ClarinoidSettingsSlot") + slot + ".json";
-    }
-
-    Result SaveUsbMassStorage(size_t slot, ClarinoidJsonDocument &doc)
-    {
-        Serial.println("SaveUsbMassStorage");
-        auto fileName = GetUsbMassStorageFilename(slot);
-        Serial.println(String("SaveUsbMassStorage fileName: ") + fileName);
-        File f = gUsbFileSystem1.open(fileName.c_str(), FILE_WRITE_BEGIN);
-        Serial.println(String("file opened; size=") + (int)f.size());
-        size_t ret = serializeJsonPretty(doc, f);
-        Serial.println(String("SaveUsbMassStorage::serializeJsonPretty complete"));
-        f.close();
-        if (ret == 0)
-        {
-            Serial.println(String("SaveUsbMassStorage error"));
-            return Result::Failure(String("Error saving to slot ") + slot);
-        }
-            Serial.println(String("SaveUsbMassStorage success"));
-        return Result::Success(String(ret) + " bytes");
-    }
-
-    // returns 0 if error.
-    virtual Result SaveDocument(StorageChannel ch, ClarinoidJsonDocument &doc) override
-    {
-        switch (ch)
-        {
-        case StorageChannel::UsbMassStorage0:
-            return SaveUsbMassStorage(0, doc);
-        case StorageChannel::UsbMassStorage1:
-            return SaveUsbMassStorage(1, doc);
-        case StorageChannel::UsbMassStorage2:
-            return SaveUsbMassStorage(2, doc);
-        case StorageChannel::UsbMassStorage3:
-            return SaveUsbMassStorage(3, doc);
-        default:
-        case StorageChannel::SerialStream:
-            return serializeJsonPretty(doc, Serial);
-        case StorageChannel::USBMidiSysex:
-            Serial.println("USBMidiSysex not supported yet");
-            return 0;
-        case StorageChannel::TRSMidiSysex:
-            Serial.println("TRSMidiSysex not supported yet");
-            return 0;
-        }
-    }
-
-    DeserializationError LoadUsbMassStorage(size_t slot, ClarinoidJsonDocument &doc)
-    {
-        auto fileName = GetUsbMassStorageFilename(slot);
-        Serial.println(String("LoadUsbMassStorage filename: ") + fileName);
-        File f = gUsbFileSystem1.open(fileName.c_str(), FILE_READ);
-        Serial.println(String("file size: ") + (int)f.size());
-        auto ret = deserializeJson(doc, f);
-        Serial.println(String("deserializeJson: ") + ret.c_str() + ", code " + (int)ret.code());
-        f.close();
-        return ret;
-    }
-
-    virtual DeserializationError LoadDocument(StorageChannel ch, ClarinoidJsonDocument &doc) override
-    {
-        switch (ch)
-        {
-        case StorageChannel::UsbMassStorage0:
-            return LoadUsbMassStorage(0, doc);
-        case StorageChannel::UsbMassStorage1:
-            return LoadUsbMassStorage(1, doc);
-        case StorageChannel::UsbMassStorage2:
-            return LoadUsbMassStorage(2, doc);
-        case StorageChannel::UsbMassStorage3:
-            return LoadUsbMassStorage(3, doc);
-        default:
-        case StorageChannel::SerialStream:
-            return deserializeJson(doc, Serial);
-        case StorageChannel::USBMidiSysex:
-            Serial.println("USBMidiSysex not supported yet");
-            return DeserializationError{DeserializationError::Code::InvalidInput};
-        case StorageChannel::TRSMidiSysex:
-            Serial.println("TRSMidiSysex not supported yet");
-            return DeserializationError{DeserializationError::Code::InvalidInput};
-        }
-    }
-
     virtual void Dir(StorageChannel ch) override
     {
         File root = gUsbFileSystem1.open("/");
         printDirectory(root);
     }
+    
+    static String GetUsbMassStorageFilename(size_t slot)
+    {
+        return String("/ClarinoidSettingsSlot") + slot + ".json";
+    }
+
+    virtual Result SaveSettings(StorageChannel ch, AppSettings& val)
+    {
+        switch (ch)
+        {
+        case StorageChannel::UsbMassStorage0:
+            //return SaveUsbMassStorage(0, val);
+        case StorageChannel::UsbMassStorage1:
+           // return SaveUsbMassStorage(1, val);
+        case StorageChannel::UsbMassStorage2:
+           // return SaveUsbMassStorage(2, val);
+        case StorageChannel::UsbMassStorage3:
+           // return SaveUsbMassStorage(3, val);
+        default:
+        case StorageChannel::SerialStream:
+            return SaveSerial(val);
+        case StorageChannel::USBMidiSysex:
+            Serial.println("USBMidiSysex not supported yet");
+            Result::Failure();
+        case StorageChannel::TRSMidiSysex:
+            Serial.println("TRSMidiSysex not supported yet");
+            Result::Failure();
+        }
+        return Result::Failure();
+    }
+
+    virtual Result LoadSettings(StorageChannel ch, AppSettings&doc)
+    {
+        return Result::Failure();
+    }
+
+    template<typename T>
+    Result SaveSerial(T &val)
+    {
+        StreamStream serialStream { Serial };
+        BufferedStream buffering { serialStream };
+        TextStream textStream { buffering};
+        JsonVariantWriter doc { textStream };
+        Result ret = Serialize(doc, val);
+        doc.FinishWriting(); // flush & write closing characters.
+        return ret;
+    }
+
+
+    // Result SaveUsbMassStorage(size_t slot, ClarinoidJsonDocument &doc)
+    // {
+    //     Serial.println("SaveUsbMassStorage");
+    //     auto fileName = GetUsbMassStorageFilename(slot);
+    //     Serial.println(String("SaveUsbMassStorage fileName: ") + fileName);
+    //     File f = gUsbFileSystem1.open(fileName.c_str(), FILE_WRITE_BEGIN);
+    //     Serial.println(String("file opened; size=") + (int)f.size());
+    //     size_t ret = serializeJsonPretty(doc, f);
+    //     Serial.println(String("SaveUsbMassStorage::serializeJsonPretty complete"));
+    //     f.close();
+    //     if (ret == 0)
+    //     {
+    //         Serial.println(String("SaveUsbMassStorage error"));
+    //         return Result::Failure(String("Error saving to slot ") + slot);
+    //     }
+    //         Serial.println(String("SaveUsbMassStorage success"));
+    //     return Result::Success(String(ret) + " bytes");
+    // }
+
+    // // returns 0 if error.
+    // virtual Result SaveDocument(StorageChannel ch, ClarinoidJsonDocument &doc) override
+    // {
+    //     switch (ch)
+    //     {
+    //     case StorageChannel::UsbMassStorage0:
+    //         return SaveUsbMassStorage(0, doc);
+    //     case StorageChannel::UsbMassStorage1:
+    //         return SaveUsbMassStorage(1, doc);
+    //     case StorageChannel::UsbMassStorage2:
+    //         return SaveUsbMassStorage(2, doc);
+    //     case StorageChannel::UsbMassStorage3:
+    //         return SaveUsbMassStorage(3, doc);
+    //     default:
+    //     case StorageChannel::SerialStream:
+    //         return serializeJsonPretty(doc, Serial);
+    //     case StorageChannel::USBMidiSysex:
+    //         Serial.println("USBMidiSysex not supported yet");
+    //         return 0;
+    //     case StorageChannel::TRSMidiSysex:
+    //         Serial.println("TRSMidiSysex not supported yet");
+    //         return 0;
+    //     }
+    // }
+
+    // DeserializationError LoadUsbMassStorage(size_t slot, ClarinoidJsonDocument &doc)
+    // {
+    //     auto fileName = GetUsbMassStorageFilename(slot);
+    //     Serial.println(String("LoadUsbMassStorage filename: ") + fileName);
+    //     File f = gUsbFileSystem1.open(fileName.c_str(), FILE_READ);
+    //     Serial.println(String("file size: ") + (int)f.size());
+    //     auto ret = deserializeJson(doc, f);
+    //     Serial.println(String("deserializeJson: ") + ret.c_str() + ", code " + (int)ret.code());
+    //     f.close();
+    //     return ret;
+    // }
+
+    // virtual DeserializationError LoadDocument(StorageChannel ch, ClarinoidJsonDocument &doc) override
+    // {
+    //     switch (ch)
+    //     {
+    //     case StorageChannel::UsbMassStorage0:
+    //         return LoadUsbMassStorage(0, doc);
+    //     case StorageChannel::UsbMassStorage1:
+    //         return LoadUsbMassStorage(1, doc);
+    //     case StorageChannel::UsbMassStorage2:
+    //         return LoadUsbMassStorage(2, doc);
+    //     case StorageChannel::UsbMassStorage3:
+    //         return LoadUsbMassStorage(3, doc);
+    //     default:
+    //     case StorageChannel::SerialStream:
+    //         return deserializeJson(doc, Serial);
+    //     case StorageChannel::USBMidiSysex:
+    //         Serial.println("USBMidiSysex not supported yet");
+    //         return DeserializationError{DeserializationError::Code::InvalidInput};
+    //     case StorageChannel::TRSMidiSysex:
+    //         Serial.println("TRSMidiSysex not supported yet");
+    //         return DeserializationError{DeserializationError::Code::InvalidInput};
+    //     }
+    // }
+
 };
 
 // #define FILE_READ  0

@@ -35,12 +35,6 @@ struct FunctionListEditor : ISettingItemEditor
     ListProxy mList;
 
     int mListSelectedItem = 0;
-    // Property<int> mListSelectedItem = {
-    //   [](void* capture) { EnumEditor<T>* pthis = (EnumEditor<T>*)capture; return (int)pthis->mBinding.GetValue(); },
-    //   [](void* capture, const int& val) { EnumEditor<T>* pthis = (EnumEditor<T>*)capture;
-    //   pthis->mBinding.SetValue((T)val); }, this
-    // };
-
     ListControl mListControl;
 
     // cc::function<String(void*,size_t)>::ptr_t mItemNameGetter;

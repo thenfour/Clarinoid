@@ -4,7 +4,7 @@ namespace clarinoid
 {
 
 template <typename T>
-struct IntParam // : ParameterBase
+struct IntParam
 {
     T mValue;
 
@@ -23,18 +23,18 @@ struct IntParam // : ParameterBase
     IntParam(const IntParam<T> &rhs) = default;
     IntParam<T> &operator=(const IntParam<T> &rhs) = default;
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        return rhs.set(mValue);
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return {rhs.set(mValue)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<T>())
-            return Result::Failure("expected integer");
-        mValue = obj.as<T>();
-        return Result::Success();
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<T>())
+    //         return Result::Failure("expected integer");
+    //     mValue = obj.as<T>();
+    //     return Result::Success();
+    // }
 };
 
 static constexpr size_t arcih = sizeof(IntParam<int>);
@@ -61,21 +61,34 @@ struct FloatParam
     FloatParam(const FloatParam &rhs) = default;
     FloatParam &operator=(const FloatParam &rhs) = default;
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        rhs.set(mValue);
-        return true;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return {rhs.set(mValue)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        Result ret = Result::Success();
-        if (!ret.Requires(obj.is<T>(), "expected float"))
-            return ret;
-        mValue = obj.as<T>();
-        return ret;
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     Result ret = Result::Success();
+    //     if (!ret.Requires(obj.is<T>(), "expected float"))
+    //         return ret;
+    //     mValue = obj.as<T>();
+    //     return ret;
+    // }
 };
+
+Result Serialize(JsonVariantWriter& myval, FloatParam& param) {
+	return myval.WriteNumberValue(param.mValue);
+}
+
+Result Deserialize(JsonVariantReader& myval, FloatParam& param) {
+	if (myval.mType != JsonDataType::Number) {
+		return Result::Failure("expected number");
+	}
+	param.mValue = myval.mNumericValue.Get<float>();
+	return Result::Success();
+}
+
+
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
 // on the other hand i want it to be human-readable.
@@ -99,21 +112,34 @@ struct BoolParam //: ParameterBase
     BoolParam(const BoolParam &rhs) = default;
     BoolParam &operator=(const BoolParam &rhs) = default;
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        rhs.set(mValue ? 1 : 0);
-        return true;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return {rhs.set(mValue ? 1 : 0)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<int>())
-            return Result::Failure("expected 1 or 0");
-        int t = obj.as<int>();
-        mValue = (t != 0);
-        return Result::Success();
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<int>())
+    //         return Result::Failure("expected 1 or 0");
+    //     int t = obj.as<int>();
+    //     mValue = (t != 0);
+    //     return Result::Success();
+    // }
 };
+
+Result Serialize(JsonVariantWriter& myval, BoolParam& param) {
+	return myval.WriteBoolean(param.mValue);
+}
+
+Result Deserialize(JsonVariantReader& myval, BoolParam& param) {
+	if (myval.mType != JsonDataType::Boolean) {
+		return Result::Failure("expected boolean");
+	}
+	param.mValue = myval.mBooleanValue;
+	return Result::Success();
+}
+
+
 
 // serializing floats is fun. on one hand, using the decimal representation is terrible,
 // on the other hand i want it to be human-readable.
@@ -140,19 +166,18 @@ struct StringParam // : ParameterBase
     StringParam(const StringParam &rhs) = default;
     StringParam &operator=(const StringParam &rhs) = default;
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        rhs.set(mValue);
-        return true;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return {rhs.set(mValue)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<String>())
-            return Result::Failure("expected string");
-        mValue = obj.as<String>();
-        return Result::Success();
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<String>())
+    //         return Result::Failure("expected string");
+    //     mValue = obj.as<String>();
+    //     return Result::Success();
+    // }
 };
 
 // use enum values by NAME, so they can be human-readable.
@@ -179,18 +204,20 @@ struct EnumParam // : ParameterBase
     EnumParam(const EnumParam<TEnum> &rhs) = default;
     EnumParam<TEnum> &operator=(const EnumParam<TEnum> &rhs) = default;
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        return rhs.set(mpEnumInfo->GetValueShortName(mValue));
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     const char *s = mpEnumInfo->GetValueShortName(mValue);
+    //     Serial.println(String("serializing enum value: ") + (int)mValue + " -> " + PointerToString(s) + " <" + mpEnumInfo->mTypeName +  "> = " + s);
+    //     return {rhs.set(s)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<String>())
-            return Result::Failure("expected string(enum)");
-        String shortName = obj.as<String>();
-        return mpEnumInfo->ValueForShortName(shortName, mValue);
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<String>())
+    //         return Result::Failure("expected string(enum)");
+    //     String shortName = obj.as<String>();
+    //     return mpEnumInfo->ValueForShortName(shortName, mValue);
+    // }
 };
 
 // use enum values by NAME, so they can be human-readable.
@@ -202,20 +229,20 @@ struct ScaleParam //: ParameterBase
     {
     }
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        return rhs.set(mValue.ToSerializableString());
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return {rhs.set(mValue.ToSerializableString())};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<String>())
-        {
-            return Result::Failure("ScaleParam must be string");
-        }
-        String t = obj.as<String>();
-        return mValue.DeserializeFromString(t);
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<String>())
+    //     {
+    //         return Result::Failure("ScaleParam must be string");
+    //     }
+    //     String t = obj.as<String>();
+    //     return mValue.DeserializeFromString(t);
+    // }
 };
 
 // "volume" parameters use a custom scale, so they feel more usable.
@@ -247,20 +274,20 @@ struct VolumeParamValue
     }
 
   public:
-    bool SerializableObject_ToJSON(JsonVariant obj) const
-    {
-        return obj.set(mParamValue);
-    }
+    // Result SerializableObject_ToJSON(JsonVariant obj) const
+    // {
+    //     return {obj.set(mParamValue)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<float>())
-        {
-            return Result::Failure("expected float");
-        }
-        mParamValue = obj.as<float>();
-        return Result::Success();
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<float>())
+    //     {
+    //         return Result::Failure("expected float");
+    //     }
+    //     mParamValue = obj.as<float>();
+    //     return Result::Success();
+    // }
 
     float ToLinearGain() const
     {
@@ -325,26 +352,26 @@ struct FrequencyParamValue // : SerializableDictionary
     FloatParam mValue;
     FloatParam mKTValue;
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool r = true;
-        r = r && mValue.SerializableObject_ToJSON(rhs.createNestedObject("val"));
-        r = r && mKTValue.SerializableObject_ToJSON(rhs.createNestedObject("kt"));
-        return r;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mValue.SerializableObject_ToJSON(rhs.createNestedObject("val")), "val");
+    //     ret.AndRequires(mKTValue.SerializableObject_ToJSON(rhs.createNestedObject("kt")), "kt");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("must be object");
-        }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("must be object");
+    //     }
 
-        Result ret = Result::Success();
-        ret.AndRequires(mValue.SerializableObject_Deserialize(obj["val"]), "val");
-        ret.AndRequires(mKTValue.SerializableObject_Deserialize(obj["kt"]), "kt");
-        return ret;
-    }
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mValue.SerializableObject_Deserialize(obj["val"]), "val");
+    //     ret.AndRequires(mKTValue.SerializableObject_Deserialize(obj["kt"]), "kt");
+    //     return ret;
+    // }
 
     FrequencyParamValue(float initialValue, float initialKTValue)
         : mValue(initialValue), //
@@ -454,18 +481,18 @@ struct EnvTimeParamValue
         return Clamp(param, gMinRealVal, gMaxRealVal);
     }
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        return rhs.set(mValue);
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return {rhs.set(mValue)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<float>())
-            return Result::Failure("expected float");
-        mValue = obj.as<float>();
-        return Result::Success();
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<float>())
+    //         return Result::Failure("expected float");
+    //     mValue = obj.as<float>();
+    //     return Result::Success();
+    // }
 };
 
 struct CurveLUTParamValue
@@ -501,18 +528,18 @@ struct CurveLUTParamValue
         return gModCurveLUT.BeginLookupF(p);
     }
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        return rhs.set(mValueN11);
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return {rhs.set(mValueN11)};
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<float>())
-            return Result::Failure("expected float");
-        mValueN11 = obj.as<float>();
-        return Result::Success();
-    }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<float>())
+    //         return Result::Failure("expected float");
+    //     mValueN11 = obj.as<float>();
+    //     return Result::Success();
+    // }
 };
 
 enum class TimeBasis : uint8_t
@@ -544,81 +571,81 @@ EnumItemInfo<TimeBasis> gTimeBasisItems[15] = {
     {TimeBasis::Sixteenth, "Sixteenth", "16th"},
     {TimeBasis::ThirtySecond, "ThirtySecond", "32nd"},
     //
-    {TimeBasis::DottedHalf, "DottedHalf", "2."},
-    {TimeBasis::DottedQuarter, "DottedQuarter", "4."},
-    {TimeBasis::DottedEighth, "DottedEighth", "8."},
-    {TimeBasis::DottedSixteenth, "DottedSixteenth", "16."},
+    {TimeBasis::DottedHalf, "DottedHalf", "2d"},
+    {TimeBasis::DottedQuarter, "DottedQuarter", "4d"},
+    {TimeBasis::DottedEighth, "DottedEighth", "8d"},
+    {TimeBasis::DottedSixteenth, "DottedSixteenth", "16d"},
     //
-    {TimeBasis::TripletHalf, "TripletHalf", "2/3"},
-    {TimeBasis::TripletQuarter, "TripletQuarter", "4/3"},
-    {TimeBasis::TripletEighth, "TripletEighth", "8/3"},
-    {TimeBasis::TripletSixteenth, "TripletSixteenth", "16/3"},
+    {TimeBasis::TripletHalf, "TripletHalf", "2-3"},
+    {TimeBasis::TripletQuarter, "TripletQuarter", "4-3"},
+    {TimeBasis::TripletEighth, "TripletEighth", "8-3"},
+    {TimeBasis::TripletSixteenth, "TripletSixteenth", "16-3"},
 };
 
 EnumInfo<TimeBasis> gTimeBasisInfo("TimeBasis", gTimeBasisItems);
 
-bool SerializeHarmVoiceNoteSequence(const std::array<int8_t, HARM_SEQUENCE_LEN> &sequence,
-                                    const uint8_t &sequenceLength,
-                                    JsonVariant rhs)
-{
-    rhs.to<JsonArray>();
-    bool ret = true;
-    for (size_t i = 0; i < sequenceLength; ++i)
-    {
-        ret = ret && rhs.add(sequence[i]);
-        if (!ret)
-        {
-            break;
-        }
-    }
-    return ret;
-}
+// bool SerializeHarmVoiceNoteSequence(const std::array<int8_t, HARM_SEQUENCE_LEN> &sequence,
+//                                     const uint8_t &sequenceLength,
+//                                     JsonVariant rhs)
+// {
+//     rhs.to<JsonArray>();
+//     bool ret = true;
+//     for (size_t i = 0; i < sequenceLength; ++i)
+//     {
+//         ret = ret && rhs.add(sequence[i]);
+//         if (!ret)
+//         {
+//             break;
+//         }
+//     }
+//     return ret;
+// }
 
-Result DeserializeHarmVoiceNoteSequence(JsonVariant obj,
-                                        std::array<int8_t, HARM_SEQUENCE_LEN> &mSequence,
-                                        uint8_t &mSequenceLength)
-{
-    if (!obj.is<JsonArray>())
-    {
-        return Result::Failure("expected array");
-    }
-    JsonArray arr = obj.as<JsonArray>();
-    Result ret = Result::Success();
-    // sanity
-    if (arr.size() > HARM_SEQUENCE_LEN)
-    {
-        ret.AddWarning(String("seq truncated:") + arr.size() + ">" + HARM_SEQUENCE_LEN);
-    }
-    mSequenceLength = std::min(HARM_SEQUENCE_LEN, arr.size());
-    for (size_t i = 0; i < mSequenceLength; ++i)
-    {
-        if (!arr[i].is<int>())
-        {
-            return Result::Failure("expected int");
-        }
-        mSequence[i] = (uint8_t)arr[i].as<int>();
-    }
-    return ret;
-}
+// Result DeserializeHarmVoiceNoteSequence(JsonVariant obj,
+//                                         std::array<int8_t, HARM_SEQUENCE_LEN> &mSequence,
+//                                         uint8_t &mSequenceLength)
+// {
+//     if (!obj.is<JsonArray>())
+//     {
+//         return Result::Failure("expected array");
+//     }
+//     JsonArray arr = obj.as<JsonArray>();
+//     Result ret = Result::Success();
+//     // sanity
+//     if (arr.size() > HARM_SEQUENCE_LEN)
+//     {
+//         ret.AddWarning(String("seq truncated:") + arr.size() + ">" + HARM_SEQUENCE_LEN);
+//     }
+//     mSequenceLength = std::min(HARM_SEQUENCE_LEN, arr.size());
+//     for (size_t i = 0; i < mSequenceLength; ++i)
+//     {
+//         if (!arr[i].is<int>())
+//         {
+//             return Result::Failure("expected int");
+//         }
+//         mSequence[i] = (uint8_t)arr[i].as<int>();
+//     }
+//     return ret;
+// // }
 
-bool SerializeMidiNoteRange(const MidiNote &minValue, const MidiNote &maxValue, JsonVariant rhs)
-{
-    rhs.to<JsonArray>();
-    bool ret = true;
-    ret = ret && rhs.add(minValue.ToString());
-    ret = ret && rhs.add(maxValue.ToString());
-    return ret;
-}
-Result DeserializeMidiNoteRange(JsonVariant parent, MidiNote &minValue, MidiNote &maxValue)
-{
-    std::array<StringParam, 2> elements;
-    Result ret = DeserializeArray(parent, elements);
-    if (ret.IsFailure())
-        return ret.AddWarning("noterange:array");
-    ret.AndRequires(MidiNote::FromString(elements[0].GetValue(), minValue), "noterange:min");
-    ret.AndRequires(MidiNote::FromString(elements[1].GetValue(), maxValue), "noterange:max");
-    return ret;
-}
+// bool SerializeMidiNoteRange(const MidiNote &minValue, const MidiNote &maxValue, JsonVariant rhs)
+// {
+//     rhs.to<JsonArray>();
+//     bool ret = true;
+//     ret = ret && rhs.add(minValue.ToString());
+//     ret = ret && rhs.add(maxValue.ToString());
+//     return ret;
+// }
+// Result DeserializeMidiNoteRange(JsonVariant parent, MidiNote &minValue, MidiNote &maxValue)
+// {
+//     std::array<StringParam, 2> elements;
+//     Result ret = DeserializeArray(parent, elements);
+//     if (ret.IsFailure())
+//         return ret.AddWarning("noterange:array");
+//     ret.AndRequires(MidiNote::FromString(elements[0].GetValue(), minValue), "noterange:min");
+//     ret.AndRequires(MidiNote::FromString(elements[1].GetValue(), maxValue), "noterange:max");
+//     return ret;
+// }
 
 // struct MidiNoteRangeSerializer // : SerializableObject
 // {
@@ -638,26 +665,26 @@ struct TimeWithBasisParam
     EnumParam<TimeBasis> mBasis{gTimeBasisInfo, TimeBasis::Milliseconds};
     FloatParam mParamValue{100};
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool r = true;
-        r = r && mBasis.SerializableObject_ToJSON(rhs.createNestedObject("basis"));
-        r = r && mParamValue.SerializableObject_ToJSON(rhs.createNestedObject("val"));
-        return r;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mBasis.SerializableObject_ToJSON(rhs.createNestedObject("basis")), "basis");
+    //     ret.AndRequires(mParamValue.SerializableObject_ToJSON(rhs.createNestedObject("val")), "val");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("must be object");
-        }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("must be object");
+    //     }
 
-        Result ret = Result::Success();
-        ret.AndRequires(mBasis.SerializableObject_Deserialize(obj["basis"]), "basis");
-        ret.AndRequires(mParamValue.SerializableObject_Deserialize(obj["val"]), "val");
-        return ret;
-    }
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mBasis.SerializableObject_Deserialize(obj["basis"]), "basis");
+    //     ret.AndRequires(mParamValue.SerializableObject_Deserialize(obj["val"]), "val");
+    //     return ret;
+    // }
 
     TimeWithBasisParam(TimeBasis basis, float initialValue)
     {

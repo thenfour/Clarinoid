@@ -9,7 +9,7 @@
 
 #include "bmBaseSystemSettings.hpp"
 
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h>
 
 #include <clarinoid/basic/Basic.hpp>
 
@@ -84,17 +84,6 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, mAppSettings, mInputDelegator), //
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask, mAppSettings, mInputDelegator),
           mSystemSettingsApp(mDisplay,
-                             //   -1,
-                             //   -1,
-                             //   -1,
-                             //   [](void *cap) FLASHMEM { // raw breath value getter
-                             //       // BommanoidApp *pThis = (BommanoidApp *)cap;
-                             //       return 0.0f; // pThis->mControlMapper.mBreath.CurrentValue01();
-                             //   },
-                             //   [](void *cap) FLASHMEM { // raw joy pitchbend value getter
-                             //       // BommanoidApp *pThis = (BommanoidApp *)cap;
-                             //       return 0.0f; // pThis->mControlMapper.mJoyY.CurrentValue01();
-                             //   },
                              this,
                              &mMusicalStateTask.mMetronome,
                              mAppSettings,
@@ -288,5 +277,10 @@ struct BommanoidApp : ILEDDataProvider, ISysInfoProvider
 // static constexpr auto a3oeu = sizeof(HarmSettingsApp);
 static constexpr auto ao4eu = sizeof(SynthPatchMenuApp);
 static constexpr auto aoe5u = sizeof(TaskPlanner::TaskDeadline);
+static constexpr auto aoe895u = sizeof(BommanoidApp);
+static constexpr auto gh87aoe895u = sizeof(InputDelegator);
+static constexpr auto gh87aoe7895u = sizeof(SimpleMovingAverage<30>);
+static constexpr auto gh87a7oe895u = sizeof(PeakMeterUtility<2000, 300>);
+
 
 } // namespace clarinoid

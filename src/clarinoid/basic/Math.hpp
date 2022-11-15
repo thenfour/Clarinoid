@@ -301,6 +301,7 @@ inline bool FloatIsAbove(float lhs, float rhs, float eps = FloatEpsilon)
     return lhs > (rhs + eps);
 }
 
+
 template <typename T>
 inline bool NumberEquals(T lhs, T rhs)
 {
@@ -501,7 +502,7 @@ inline String DecibelsToIntString(float aDecibels, float aNegInfDecibels = MIN_D
     {
         return CHARSTR_NARROWMINUS CHARSTR_INFINITY CHARSTR_DB; // -oodb
     }
-    int iDecibels = (int)std::round(aDecibels);
+    int iDecibels = FloatRoundToInt(aDecibels);
     String ret = GetSignStr(iDecibels);
     if (abs(iDecibels) < 10)
     {

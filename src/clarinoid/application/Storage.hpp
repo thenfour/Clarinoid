@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <clarinoid/basic/Basic.hpp>
+
 namespace clarinoid
 {
 
@@ -9,8 +11,8 @@ namespace clarinoid
 
 struct IStorage
 {
-    virtual Result SaveDocument(StorageChannel ch, ClarinoidJsonDocument& doc) = 0;
-    virtual DeserializationError LoadDocument(StorageChannel ch, ClarinoidJsonDocument &doc) = 0;
+    virtual Result SaveSettings(StorageChannel ch, AppSettings& val) = 0;
+    virtual Result LoadSettings(StorageChannel ch, AppSettings&doc) = 0;
     virtual void Dir(StorageChannel ch) = 0;
 };
 

@@ -33,6 +33,13 @@ constexpr size_t SizeofStaticArray(const T (&x)[N])
     return N;
 }
 
+constexpr size_t StringLength(const char *s)
+{
+    const char *end = s;
+    while(*end) ++ end;
+    return end - s;
+}
+
 // template <typename T, size_t N>
 // void CopyPODArray(const T (&from)[N], T (&to)[N])
 // {
@@ -181,7 +188,7 @@ struct BitmapSpec
 // effectively just a tuple<bool, string>
 struct Result
 {
-    bool mSuccess = false;
+    bool mSuccess = true;
     String mMessage{};
     Result() = default;
     Result(const Result &rhs) = default;
@@ -235,10 +242,39 @@ struct Result
     {
         if (!condition)
         {
-            mMessage += messageIfFailure;
-            Serial.println(String("AndRequires FAIL: ") + mMessage);
+            AddPrefix(messageIfFailure);
+            // Serial.println(String("AndRequires FAIL: ") + mMessage);
         }
         mSuccess = mSuccess && condition;
+        return mSuccess;
+    }
+
+    bool AndRequires(const Result &rhs, const String &messageIfFailure)
+    {
+        if (rhs.IsFailure())
+        {
+            if (rhs.mMessage.length())
+            {
+                AddPrefix(messageIfFailure + " > " + rhs.mMessage);
+            }
+            else
+            {
+                AddPrefix(messageIfFailure);
+            }
+            // Serial.println(String("AndRequires FAIL: ") + mMessage);
+        }
+        mSuccess = mSuccess && rhs.mSuccess;
+        return mSuccess;
+    }
+
+    bool AndRequires(const Result &rhs)
+    {
+        if (rhs.IsFailure())
+        {
+            AddPrefix(rhs.mMessage);
+            // Serial.println(String("AndRequires FAIL: ") + mMessage);
+        }
+        mSuccess = mSuccess && rhs.mSuccess;
         return mSuccess;
     }
 
@@ -249,50 +285,52 @@ struct Result
     // if (!ret.Requires(trySomething(), "trySomething failed"))) return ret;
     // if (!ret.Requires(trySomethingElse(), "trySomethingElse failed"))) return ret;
     // if (!ret.Requires(tryAnotherThing(), "tryAnotherThing failed"))) return ret;
-    bool Requires(bool condition, const String &messageIfFailure)
+    static Result Requires(bool condition, const String &messageIfFailure)
     {
+        Result ret;
         if (!condition)
         {
-            mMessage = messageIfFailure;
-            Serial.println(String("Requires FAIL: ") + mMessage);
+            ret.mMessage = messageIfFailure;
+            // Serial.println(String("Requires FAIL: ") + mMessage);
         }
-        mSuccess = condition;
-        return mSuccess;
+        ret.mSuccess = condition;
+        return ret;
     }
 
-    // use when an inner call returns a Result, but you want to add a prefix msg in case of error.
-    bool Requires(const Result &rhs, const String &messagePrefix)
-    {
-        mSuccess = rhs.mSuccess;
-        if (!mSuccess)
-        {
-            mMessage = messagePrefix + rhs.mMessage;
-            Serial.println(String("Requires FAIL: ") + mMessage);
-        }
-        else
-        {
-            mMessage = rhs.mMessage; // propagate messages up.
-        }
-        return mSuccess;
-    }
+    // // use when an inner call returns a Result, but you want to add a prefix msg in case of error.
+    // bool Requires(const Result &rhs, const String &messagePrefix)
+    // {
+    //     mSuccess = rhs.mSuccess;
+    //     if (!mSuccess)
+    //     {
+    //         mMessage = messagePrefix + ">" + rhs.mMessage;
+    //         Serial.println(String("Requires FAIL: ") + mMessage);
+    //     }
+    //     else
+    //     {
+    //         mMessage = rhs.mMessage; // propagate messages up.
+    //     }
+    //     return mSuccess;
+    // }
 
-    bool AndRequires(const Result &rhs, const String &messageIfFailure)
+    Result &AddPrefix(const String &rhs)
     {
-        if (rhs.IsFailure())
-        {
-            mMessage += messageIfFailure;
-            Serial.println(String("AndRequires FAIL: ") + mMessage);
-        }
-        mSuccess = mSuccess && rhs.mSuccess;
-        return mSuccess;
-    }
-
-    Result& AddWarning(const String &rhs)
-    {
-        mMessage = rhs + mMessage;
-        Serial.println(String("AddWarning: ") + mMessage);
+        mMessage = rhs + " > " + mMessage;
+        // Serial.println(mMessage);
         return *this;
     }
+
+    Result &AddSuffix(const String &rhs)
+    {
+        mMessage = mMessage + " > " + rhs;
+        return *this;
+    }
+
+    String ToString() const {
+        if (mSuccess) return String("SUCCESS ") + this->mMessage;
+        return String("FAIL ") + this->mMessage;
+    }
+
 };
 
 // https://stackoverflow.com/a/74351185/402169

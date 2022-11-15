@@ -42,3 +42,13 @@ make -j6
 ./bloaty bloaty
 ```
 
+## C++17
+
+  * https://forum.pjrc.com/threads/58695-c-17
+  * https://forum.pjrc.com/threads/60944-C-STL-on-the-Teensy-4-0-not-possible
+
+Unfortunately, even with `-std=c++17`, we only get C++14 support. This is dictated by the platform toolchain, `- toolchain-gccarmnoneeabi @ 1.50401.190816 (5.4.1)`.
+
+It's possible to specify a newer framework in the `platformio.ini`; search for `gccarmnoneeabi` on the registry. https://registry.platformio.org/tools/platformio/toolchain-gccarmnoneeabi
+
+But if you do that, you'll get build & link errors, unable to use many features we require.

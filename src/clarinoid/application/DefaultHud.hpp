@@ -60,7 +60,7 @@ struct DefaultHud : IHudProvider
         mDisplay.print(String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " + icpu + "% " + dbpeak + " " +
                        mpInfo->ISysInfoProvider_GetNote().ToString());
 
-        String bpmStr = String(CHARSTR_QEQ) + (int)std::round(mpInfo->ISysInfoProvider_GetTempo());
+        String bpmStr = String(CHARSTR_QEQ) + FloatRoundToInt(mpInfo->ISysInfoProvider_GetTempo());
         auto rcbpm = mDisplay.GetTextBounds(bpmStr);
 
         mDisplay.setCursor(mDisplay.width() - rcbpm.width, mDisplay.getCursorY());

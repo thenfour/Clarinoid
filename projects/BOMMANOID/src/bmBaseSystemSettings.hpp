@@ -8,7 +8,9 @@ namespace clarinoid
 
 static constexpr uint32_t gWireDataRate = 400000;
 
-static constexpr size_t gJSONExportSize = 40000;
+static constexpr size_t gBufferedStreamBufferSize = 64;
+
+//static constexpr size_t gJSONExportSize = 100000;
 
 // for breath controllers, this is true to enable a specialized filter controlled by breath.
 // that filter is a temporary thing in the design and should be replaced by a proper modulation in the graph,
@@ -30,7 +32,7 @@ static constexpr size_t LOOPER_TEMP_BUFFER_BYTES = 128; // a smaller buffer that
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
-static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 1000;
+static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 15 + 700;
 static constexpr float MAX_DELAY_MS = 300;
 
 static constexpr size_t MUSICALSTATE_TIMESLICE_PERIOD_MICROS = 1400;
@@ -109,7 +111,7 @@ EnumInfo<StorageChannel> gStorageChannelInfo("StorageChannel", gStorageChannelIt
 // one cheap solution is to just put all our DMAMEM stuff in 1 struct like this.
 struct DMAClarinoidMemory
 {
-    uint8_t gJSONBuffer[gJSONExportSize];
+    //uint8_t gJSONBuffer[gJSONExportSize];
     uint8_t gLoopStationBuffer[LOOPER_MEMORY_TOTAL_BYTES];
     uint8_t gLoopStationTempBuffer[LOOPER_TEMP_BUFFER_BYTES];
 #ifndef CLARINOID_MODULE_TEST
@@ -117,6 +119,9 @@ struct DMAClarinoidMemory
 #endif // CLARINOID_MODULE_TEST
 };
 static DMAMEM DMAClarinoidMemory gClarinoidDmaMem;
+
+static constexpr auto urpich = sizeof(gClarinoidDmaMem);
+static constexpr auto urpi9ch = sizeof(gClarinoidDmaMem.gAudioMemory);
 
 // #define LOOPSTATION_BUFFER (gLoopStationBuffer)
 // #define LOOPSTATION_TEMP_BUFFER (gLoopStationTempBuffer)

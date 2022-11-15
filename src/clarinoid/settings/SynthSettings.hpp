@@ -128,17 +128,17 @@ enum class KRateModulationSource : uint8_t
 };
 
 EnumItemInfo<KRateModulationSource> gKRateModulationSourceItems[11] = {
-    {KRateModulationSource::Breath, "Breath"},
-    {KRateModulationSource::PitchStrip, "PitchBend"},
-    {KRateModulationSource::Velocity, "Velocity"},
-    {KRateModulationSource::NoteValue, "NoteValue"},
-    {KRateModulationSource::RandomTrigger, "RandomTrigger"},
-    {KRateModulationSource::ModWheel, "ModWheel"},
-    {KRateModulationSource::Macro1, "Macro1"},
-    {KRateModulationSource::Macro2, "Macro2"},
-    {KRateModulationSource::Macro3, "Macro3"},
-    {KRateModulationSource::Macro4, "Macro4"},
-    {KRateModulationSource::Pedal, "Pedal"},
+    {KRateModulationSource::Breath, "Breath", "br"},
+    {KRateModulationSource::PitchStrip, "PitchBend", "pb"},
+    {KRateModulationSource::Velocity, "Velocity", "vel"},
+    {KRateModulationSource::NoteValue, "NoteValue", "note"},
+    {KRateModulationSource::RandomTrigger, "RandomTrigger", "rng"},
+    {KRateModulationSource::ModWheel, "ModWheel", "mod"},
+    {KRateModulationSource::Macro1, "Macro1", "M1"},
+    {KRateModulationSource::Macro2, "Macro2", "M2"},
+    {KRateModulationSource::Macro3, "Macro3", "M3"},
+    {KRateModulationSource::Macro4, "Macro4", "M4"},
+    {KRateModulationSource::Pedal, "Pedal", "ped"},
 };
 static constexpr size_t gKRateModulationSourceCount = SizeofStaticArray(gKRateModulationSourceItems);
 
@@ -573,11 +573,11 @@ enum class ModulationPolarityTreatment : uint8_t
 };
 
 EnumItemInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentItems[5] = {
-    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]"},
-    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]"},
-    {ModulationPolarityTreatment::AsBipolar, "Map to [-1,1]"},
-    {ModulationPolarityTreatment::AsBipolarInverted, "Map to [1,-1]"},
-    {ModulationPolarityTreatment::Default, "Default"},
+    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]", "to01"},
+    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]", "to10"},
+    {ModulationPolarityTreatment::AsBipolar, "Map to [-1,1]", "toN11"},
+    {ModulationPolarityTreatment::AsBipolarInverted, "Map to [1,-1]", "to1N1"},
+    {ModulationPolarityTreatment::Default, "Default", "-"},
 };
 static constexpr size_t gModulationPolarityTreatmentCount = SizeofStaticArray(gAnyModulationDestinationItems);
 
@@ -585,8 +585,8 @@ EnumInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentInfo("Modulati
                                                                        gModulationPolarityTreatmentItems);
 
 EnumItemInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentItems[2] = {
-    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]"},
-    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]"},
+    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]", "to01"},
+    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]", "to10"},
 };
 
 static constexpr size_t gModulationAuxPolarityTreatmentCount = SizeofStaticArray(gModulationAuxPolarityTreatmentItems);
@@ -621,43 +621,43 @@ struct SynthModulationSpec
                gAnyModulationDestinationInfo.GetValueDisplayName(mDest.GetValue());
     }
 
-    bool SerializableObject_ToJSON(JsonVariant doc) const
-    {
-        bool ret = true;
-        ret = ret && mSource.SerializableObject_ToJSON(doc.createNestedObject("src"));
-        ret = ret && mDest.SerializableObject_ToJSON(doc.createNestedObject("dst"));
-        ret = ret && mSourcePolarity.SerializableObject_ToJSON(doc.createNestedObject("pol"));
-        ret = ret && mCurveShape.SerializableObject_ToJSON(doc.createNestedObject("crv"));
-        ret = ret && mScaleN11.SerializableObject_ToJSON(doc.createNestedObject("amt"));
-        ret = ret && mAuxSource.SerializableObject_ToJSON(doc.createNestedObject("Xsrc"));
-        ret = ret && mAuxPolarity.SerializableObject_ToJSON(doc.createNestedObject("Xpol"));
-        ret = ret && mAuxEnabled.SerializableObject_ToJSON(doc.createNestedObject("Xen"));
-        ret = ret && mAuxCurveShape.SerializableObject_ToJSON(doc.createNestedObject("Xcrv"));
-        ret = ret && mAuxAmount.SerializableObject_ToJSON(doc.createNestedObject("Xamt"));
-        return ret;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant doc) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mSource.SerializableObject_ToJSON(doc.createNestedObject("src")), "src");
+    //     ret.AndRequires(mDest.SerializableObject_ToJSON(doc.createNestedObject("dst")), "dst");
+    //     ret.AndRequires(mSourcePolarity.SerializableObject_ToJSON(doc.createNestedObject("pol")), "pol");
+    //     ret.AndRequires(mCurveShape.SerializableObject_ToJSON(doc.createNestedObject("crv")), "crv");
+    //     ret.AndRequires(mScaleN11.SerializableObject_ToJSON(doc.createNestedObject("amt")), "amt");
+    //     ret.AndRequires(mAuxSource.SerializableObject_ToJSON(doc.createNestedObject("Xsrc")), "Xsrc");
+    //     ret.AndRequires(mAuxPolarity.SerializableObject_ToJSON(doc.createNestedObject("Xpol")), "Xpol");
+    //     ret.AndRequires(mAuxEnabled.SerializableObject_ToJSON(doc.createNestedObject("Xen")), "Xen");
+    //     ret.AndRequires(mAuxCurveShape.SerializableObject_ToJSON(doc.createNestedObject("Xcrv")), "Xcrv");
+    //     ret.AndRequires(mAuxAmount.SerializableObject_ToJSON(doc.createNestedObject("Xamt")), "Xamt");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("expected object");
-        }
-        Result ret = Result::Success();
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("expected object");
+    //     }
+    //     Result ret = Result::Success();
 
-        ret.AndRequires(mSource.SerializableObject_Deserialize(obj["src"]), "src");
-        ret.AndRequires(mDest.SerializableObject_Deserialize(obj["dst"]), "dst");
-        ret.AndRequires(mSourcePolarity.SerializableObject_Deserialize(obj["pol"]), "pol");
-        ret.AndRequires(mCurveShape.SerializableObject_Deserialize(obj["crv"]), "crv");
-        ret.AndRequires(mScaleN11.SerializableObject_Deserialize(obj["amt"]), "amt");
-        ret.AndRequires(mAuxSource.SerializableObject_Deserialize(obj["Xsrc"]), "Xsrc");
-        ret.AndRequires(mAuxPolarity.SerializableObject_Deserialize(obj["Xpol"]), "Xpol");
-        ret.AndRequires(mAuxEnabled.SerializableObject_Deserialize(obj["Xen"]), "Xen");
-        ret.AndRequires(mAuxCurveShape.SerializableObject_Deserialize(obj["Xcrv"]), "Xcrv");
-        ret.AndRequires(mAuxAmount.SerializableObject_Deserialize(obj["Xamt"]), "Xamt");
+    //     ret.AndRequires(mSource.SerializableObject_Deserialize(obj["src"]), "src");
+    //     ret.AndRequires(mDest.SerializableObject_Deserialize(obj["dst"]), "dst");
+    //     ret.AndRequires(mSourcePolarity.SerializableObject_Deserialize(obj["pol"]), "pol");
+    //     ret.AndRequires(mCurveShape.SerializableObject_Deserialize(obj["crv"]), "crv");
+    //     ret.AndRequires(mScaleN11.SerializableObject_Deserialize(obj["amt"]), "amt");
+    //     ret.AndRequires(mAuxSource.SerializableObject_Deserialize(obj["Xsrc"]), "Xsrc");
+    //     ret.AndRequires(mAuxPolarity.SerializableObject_Deserialize(obj["Xpol"]), "Xpol");
+    //     ret.AndRequires(mAuxEnabled.SerializableObject_Deserialize(obj["Xen"]), "Xen");
+    //     ret.AndRequires(mAuxCurveShape.SerializableObject_Deserialize(obj["Xcrv"]), "Xcrv");
+    //     ret.AndRequires(mAuxAmount.SerializableObject_Deserialize(obj["Xamt"]), "Xamt");
 
-        return ret;
-    }
+    //     return ret;
+    // }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -674,43 +674,43 @@ struct EnvelopeSpec
     CurveLUTParamValue mReleaseCurve{0};
     BoolParam mLegatoRestart{false};
 
-    bool SerializableObject_ToJSON(JsonVariant doc) const
-    {
-        bool ret = true;
-        ret = ret && mDelayTime.SerializableObject_ToJSON(doc.createNestedObject("L"));
-        ret = ret && mAttackTime.SerializableObject_ToJSON(doc.createNestedObject("A"));
-        ret = ret && mAttackCurve.SerializableObject_ToJSON(doc.createNestedObject("Ac"));
-        ret = ret && mHoldTime.SerializableObject_ToJSON(doc.createNestedObject("H"));
-        ret = ret && mDecayTime.SerializableObject_ToJSON(doc.createNestedObject("D"));
-        ret = ret && mDecayCurve.SerializableObject_ToJSON(doc.createNestedObject("Dc"));
-        ret = ret && mSustainLevel.SerializableObject_ToJSON(doc.createNestedObject("S"));
-        ret = ret && mReleaseTime.SerializableObject_ToJSON(doc.createNestedObject("R"));
-        ret = ret && mReleaseCurve.SerializableObject_ToJSON(doc.createNestedObject("Rc"));
-        ret = ret && mLegatoRestart.SerializableObject_ToJSON(doc.createNestedObject("Rst"));
-        return ret;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant doc) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mDelayTime.SerializableObject_ToJSON(doc.createNestedObject("L")), "L");
+    //     ret.AndRequires(mAttackTime.SerializableObject_ToJSON(doc.createNestedObject("A")), "A");
+    //     ret.AndRequires(mAttackCurve.SerializableObject_ToJSON(doc.createNestedObject("Ac")), "Ac");
+    //     ret.AndRequires(mHoldTime.SerializableObject_ToJSON(doc.createNestedObject("H")), "H");
+    //     ret.AndRequires(mDecayTime.SerializableObject_ToJSON(doc.createNestedObject("D")), "D");
+    //     ret.AndRequires(mDecayCurve.SerializableObject_ToJSON(doc.createNestedObject("Dc")), "Dc");
+    //     ret.AndRequires(mSustainLevel.SerializableObject_ToJSON(doc.createNestedObject("S")), "S");
+    //     ret.AndRequires(mReleaseTime.SerializableObject_ToJSON(doc.createNestedObject("R")), "R");
+    //     ret.AndRequires(mReleaseCurve.SerializableObject_ToJSON(doc.createNestedObject("Rc")), "Rc");
+    //     ret.AndRequires(mLegatoRestart.SerializableObject_ToJSON(doc.createNestedObject("Rst")), "Rst");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("expected object");
-        }
-        Result ret = Result::Success();
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("expected object");
+    //     }
+    //     Result ret = Result::Success();
 
-        ret.AndRequires(mDelayTime.SerializableObject_Deserialize(obj["L"]), "L");
-        ret.AndRequires(mAttackTime.SerializableObject_Deserialize(obj["A"]), "A");
-        ret.AndRequires(mAttackCurve.SerializableObject_Deserialize(obj["Ac"]), "Ac");
-        ret.AndRequires(mHoldTime.SerializableObject_Deserialize(obj["H"]), "H");
-        ret.AndRequires(mDecayTime.SerializableObject_Deserialize(obj["D"]), "D");
-        ret.AndRequires(mDecayCurve.SerializableObject_Deserialize(obj["Dc"]), "Dc");
-        ret.AndRequires(mSustainLevel.SerializableObject_Deserialize(obj["S"]), "S");
-        ret.AndRequires(mReleaseTime.SerializableObject_Deserialize(obj["R"]), "R");
-        ret.AndRequires(mReleaseCurve.SerializableObject_Deserialize(obj["Rc"]), "Rc");
-        ret.AndRequires(mLegatoRestart.SerializableObject_Deserialize(obj["Rst"]), "Rst");
+    //     ret.AndRequires(mDelayTime.SerializableObject_Deserialize(obj["L"]), "L");
+    //     ret.AndRequires(mAttackTime.SerializableObject_Deserialize(obj["A"]), "A");
+    //     ret.AndRequires(mAttackCurve.SerializableObject_Deserialize(obj["Ac"]), "Ac");
+    //     ret.AndRequires(mHoldTime.SerializableObject_Deserialize(obj["H"]), "H");
+    //     ret.AndRequires(mDecayTime.SerializableObject_Deserialize(obj["D"]), "D");
+    //     ret.AndRequires(mDecayCurve.SerializableObject_Deserialize(obj["Dc"]), "Dc");
+    //     ret.AndRequires(mSustainLevel.SerializableObject_Deserialize(obj["S"]), "S");
+    //     ret.AndRequires(mReleaseTime.SerializableObject_Deserialize(obj["R"]), "R");
+    //     ret.AndRequires(mReleaseCurve.SerializableObject_Deserialize(obj["Rc"]), "Rc");
+    //     ret.AndRequires(mLegatoRestart.SerializableObject_Deserialize(obj["Rst"]), "Rst");
 
-        return ret;
-    }
+    //     return ret;
+    // }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -747,7 +747,7 @@ struct SynthOscillatorSettings
     // these are good for musical stuff like transposition.
     IntParam<int> mPitchSemis{0}; // semis = integral, transposition. want to keep this integral because the menu system
                                   // is not so great at being very precise.
-    FloatParam mPitchFine{0}; // in semitones, just for detuning
+    FloatParam mPitchFine{0};     // in semitones, just for detuning
 
     FloatParam mPitchBendRangePositive{2.0f};
     FloatParam mPitchBendRangeNegative{-2.0f};
@@ -762,58 +762,58 @@ struct SynthOscillatorSettings
 
     FloatParam mFMFeedbackGain{0.0f}; // 0 to 1
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool r = true;
-        r = r && mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on"));
-        r = r && mWaveform.SerializableObject_ToJSON(rhs.createNestedObject("wav"));
-        r = r && mVolume.SerializableObject_ToJSON(rhs.createNestedObject("vol"));
-        r = r && mPortamentoTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("port"));
-        r = r && mFreqMultiplier.SerializableObject_ToJSON(rhs.createNestedObject("Fmul"));
-        r = r && mFreqOffsetHz.SerializableObject_ToJSON(rhs.createNestedObject("Foff"));
-        r = r && mFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("Freq"));
-        r = r && mHardSyncEnabled.SerializableObject_ToJSON(rhs.createNestedObject("sync"));
-        r = r && mSyncFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("syncFreq"));
-        r = r && mPitchSemis.SerializableObject_ToJSON(rhs.createNestedObject("transp"));
-        r = r && mPitchFine.SerializableObject_ToJSON(rhs.createNestedObject("fine"));
-        r = r && mPitchBendRangePositive.SerializableObject_ToJSON(rhs.createNestedObject("pbPos"));
-        r = r && mPitchBendRangeNegative.SerializableObject_ToJSON(rhs.createNestedObject("pbNeg"));
-        r = r && mPan.SerializableObject_ToJSON(rhs.createNestedObject("pan"));
-        r = r && mPhaseRestart.SerializableObject_ToJSON(rhs.createNestedObject("phtrig"));
-        r = r && mPhase01.SerializableObject_ToJSON(rhs.createNestedObject("phOff"));
-        r = r && mPulseWidth.SerializableObject_ToJSON(rhs.createNestedObject("pw"));
-        r = r && mFMFeedbackGain.SerializableObject_ToJSON(rhs.createNestedObject("fb"));
-        return r;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on")), "on");
+    //     ret.AndRequires(mWaveform.SerializableObject_ToJSON(rhs.createNestedObject("wav")), "wav");
+    //     ret.AndRequires(mVolume.SerializableObject_ToJSON(rhs.createNestedObject("vol")), "vol");
+    //     ret.AndRequires(mPortamentoTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("port")), "port");
+    //     ret.AndRequires(mFreqMultiplier.SerializableObject_ToJSON(rhs.createNestedObject("Fmul")), "Fmul");
+    //     ret.AndRequires(mFreqOffsetHz.SerializableObject_ToJSON(rhs.createNestedObject("Foff")), "Foff");
+    //     ret.AndRequires(mFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("Freq")), "Freq");
+    //     ret.AndRequires(mHardSyncEnabled.SerializableObject_ToJSON(rhs.createNestedObject("sync")), "sync");
+    //     ret.AndRequires(mSyncFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("syncFreq")), "syncFreq");
+    //     ret.AndRequires(mPitchSemis.SerializableObject_ToJSON(rhs.createNestedObject("transp")), "transp");
+    //     ret.AndRequires(mPitchFine.SerializableObject_ToJSON(rhs.createNestedObject("fine")), "fine");
+    //     ret.AndRequires(mPitchBendRangePositive.SerializableObject_ToJSON(rhs.createNestedObject("pbPos")), "pbPos");
+    //     ret.AndRequires(mPitchBendRangeNegative.SerializableObject_ToJSON(rhs.createNestedObject("pbNeg")), "pbNeg");
+    //     ret.AndRequires(mPan.SerializableObject_ToJSON(rhs.createNestedObject("pan")), "pan");
+    //     ret.AndRequires(mPhaseRestart.SerializableObject_ToJSON(rhs.createNestedObject("phtrig")), "phtrig");
+    //     ret.AndRequires(mPhase01.SerializableObject_ToJSON(rhs.createNestedObject("phOff")), "phOff");
+    //     ret.AndRequires(mPulseWidth.SerializableObject_ToJSON(rhs.createNestedObject("pw")), "pw");
+    //     ret.AndRequires(mFMFeedbackGain.SerializableObject_ToJSON(rhs.createNestedObject("fb")), "fb");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("must be object");
-        }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("must be object");
+    //     }
 
-        Result ret = Result::Success();
-        ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
-        ret.AndRequires(mWaveform.SerializableObject_Deserialize(obj["wav"]), "wav");
-        ret.AndRequires(mVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
-        ret.AndRequires(mPortamentoTimeMS.SerializableObject_Deserialize(obj["port"]), "port");
-        ret.AndRequires(mFreqMultiplier.SerializableObject_Deserialize(obj["Fmul"]), "Fmul");
-        ret.AndRequires(mFreqOffsetHz.SerializableObject_Deserialize(obj["Foff"]), "Foff");
-        ret.AndRequires(mFreqParam.SerializableObject_Deserialize(obj["Freq"]), "Freq");
-        ret.AndRequires(mHardSyncEnabled.SerializableObject_Deserialize(obj["sync"]), "sync");
-        ret.AndRequires(mSyncFreqParam.SerializableObject_Deserialize(obj["syncFreq"]), "syncFreq");
-        ret.AndRequires(mPitchSemis.SerializableObject_Deserialize(obj["transp"]), "transp");
-        ret.AndRequires(mPitchFine.SerializableObject_Deserialize(obj["fine"]), "fine");
-        ret.AndRequires(mPitchBendRangePositive.SerializableObject_Deserialize(obj["pbPos"]), "pbPos");
-        ret.AndRequires(mPitchBendRangeNegative.SerializableObject_Deserialize(obj["pbNeg"]), "pbNeg");
-        ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
-        ret.AndRequires(mPhaseRestart.SerializableObject_Deserialize(obj["phtrig"]), "phtrig");
-        ret.AndRequires(mPhase01.SerializableObject_Deserialize(obj["phOff"]), "phOff");
-        ret.AndRequires(mPulseWidth.SerializableObject_Deserialize(obj["pw"]), "pw");
-        ret.AndRequires(mFMFeedbackGain.SerializableObject_Deserialize(obj["fb"]), "fb");
-        return ret;
-    }
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
+    //     ret.AndRequires(mWaveform.SerializableObject_Deserialize(obj["wav"]), "wav");
+    //     ret.AndRequires(mVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
+    //     ret.AndRequires(mPortamentoTimeMS.SerializableObject_Deserialize(obj["port"]), "port");
+    //     ret.AndRequires(mFreqMultiplier.SerializableObject_Deserialize(obj["Fmul"]), "Fmul");
+    //     ret.AndRequires(mFreqOffsetHz.SerializableObject_Deserialize(obj["Foff"]), "Foff");
+    //     ret.AndRequires(mFreqParam.SerializableObject_Deserialize(obj["Freq"]), "Freq");
+    //     ret.AndRequires(mHardSyncEnabled.SerializableObject_Deserialize(obj["sync"]), "sync");
+    //     ret.AndRequires(mSyncFreqParam.SerializableObject_Deserialize(obj["syncFreq"]), "syncFreq");
+    //     ret.AndRequires(mPitchSemis.SerializableObject_Deserialize(obj["transp"]), "transp");
+    //     ret.AndRequires(mPitchFine.SerializableObject_Deserialize(obj["fine"]), "fine");
+    //     ret.AndRequires(mPitchBendRangePositive.SerializableObject_Deserialize(obj["pbPos"]), "pbPos");
+    //     ret.AndRequires(mPitchBendRangeNegative.SerializableObject_Deserialize(obj["pbNeg"]), "pbNeg");
+    //     ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
+    //     ret.AndRequires(mPhaseRestart.SerializableObject_Deserialize(obj["phtrig"]), "phtrig");
+    //     ret.AndRequires(mPhase01.SerializableObject_Deserialize(obj["phOff"]), "phOff");
+    //     ret.AndRequires(mPulseWidth.SerializableObject_Deserialize(obj["pw"]), "pw");
+    //     ret.AndRequires(mFMFeedbackGain.SerializableObject_Deserialize(obj["fb"]), "fb");
+    //     return ret;
+    // }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -823,29 +823,29 @@ struct LFOSpec //: SerializableDictionary
     FloatParam mPulseWidth{0.5f};
     TimeWithBasisParam mSpeed{TimeBasis::Hertz, 1.0f};
 
-    bool SerializableObject_ToJSON(JsonVariant doc) const
-    {
-        bool ret = true;
-        ret = ret && mWaveShape.SerializableObject_ToJSON(doc.createNestedObject("wav"));
-        ret = ret && mPulseWidth.SerializableObject_ToJSON(doc.createNestedObject("PW"));
-        ret = ret && mSpeed.SerializableObject_ToJSON(doc.createNestedObject("speed"));
-        return ret;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant doc) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mWaveShape.SerializableObject_ToJSON(doc.createNestedObject("wav")), "wav");
+    //     ret.AndRequires(mPulseWidth.SerializableObject_ToJSON(doc.createNestedObject("PW")), "PW");
+    //     ret.AndRequires(mSpeed.SerializableObject_ToJSON(doc.createNestedObject("speed")), "speed");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("expected object");
-        }
-        Result ret = Result::Success();
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("expected object");
+    //     }
+    //     Result ret = Result::Success();
 
-        ret.AndRequires(mWaveShape.SerializableObject_Deserialize(obj["wav"]), "wav");
-        ret.AndRequires(mPulseWidth.SerializableObject_Deserialize(obj["PW"]), "PW");
-        ret.AndRequires(mSpeed.SerializableObject_Deserialize(obj["speed"]), "speed");
+    //     ret.AndRequires(mWaveShape.SerializableObject_Deserialize(obj["wav"]), "wav");
+    //     ret.AndRequires(mPulseWidth.SerializableObject_Deserialize(obj["PW"]), "PW");
+    //     ret.AndRequires(mSpeed.SerializableObject_Deserialize(obj["speed"]), "speed");
 
-        return ret;
-    }
+    //     return ret;
+    // }
 
     // BoolParam mPhaseRestart = {"PhaseRestart", false};
 
@@ -895,30 +895,30 @@ struct FilterSettings
     FloatParam mSaturation{0.2f};
     FrequencyParamValue mFrequency{0.3f, 0.0f}; // param, kt amt
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        bool r = true;
-        r = r && mType.SerializableObject_ToJSON(rhs.createNestedObject("type"));
-        r = r && mQ.SerializableObject_ToJSON(rhs.createNestedObject("q"));
-        r = r && mSaturation.SerializableObject_ToJSON(rhs.createNestedObject("sat"));
-        r = r && mFrequency.SerializableObject_ToJSON(rhs.createNestedObject("freq"));
-        return r;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mType.SerializableObject_ToJSON(rhs.createNestedObject("type")), "type");
+    //     ret.AndRequires(mQ.SerializableObject_ToJSON(rhs.createNestedObject("q")), "q");
+    //     ret.AndRequires(mSaturation.SerializableObject_ToJSON(rhs.createNestedObject("sat")), "sat");
+    //     ret.AndRequires(mFrequency.SerializableObject_ToJSON(rhs.createNestedObject("freq")), "freq");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("must be object");
-        }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("must be object");
+    //     }
 
-        Result ret = Result::Success();
-        ret.AndRequires(mType.SerializableObject_Deserialize(obj["type"]), "type");
-        ret.AndRequires(mQ.SerializableObject_Deserialize(obj["q"]), "q");
-        ret.AndRequires(mSaturation.SerializableObject_Deserialize(obj["sat"]), "sat");
-        ret.AndRequires(mFrequency.SerializableObject_Deserialize(obj["freq"]), "freq");
-        return ret;
-    }
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mType.SerializableObject_Deserialize(obj["type"]), "type");
+    //     ret.AndRequires(mQ.SerializableObject_Deserialize(obj["q"]), "q");
+    //     ret.AndRequires(mSaturation.SerializableObject_Deserialize(obj["sat"]), "sat");
+    //     ret.AndRequires(mFrequency.SerializableObject_Deserialize(obj["freq"]), "freq");
+    //     return ret;
+    // }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1021,58 +1021,64 @@ struct SynthPatch
         return ret;
     }
 
-    bool SerializableObject_ToJSON(JsonVariant doc) const
-    {
-        bool ret = true;
-        ret = ret && mName.SerializableObject_ToJSON(doc.createNestedObject("name"));
-        ret = ret && mMasterVolume.SerializableObject_ToJSON(doc.createNestedObject("vol"));
-        ret = ret && mPan.SerializableObject_ToJSON(doc.createNestedObject("pan"));
-        ret = ret && mDelayMix.SerializableObject_ToJSON(doc.createNestedObject("dly"));
-        ret = ret && mVerbMix.SerializableObject_ToJSON(doc.createNestedObject("verb"));
-        ret = ret && mStereoSpread.SerializableObject_ToJSON(doc.createNestedObject("spread"));
-        ret = ret && mDetune.SerializableObject_ToJSON(doc.createNestedObject("det"));
-        ret = ret && mFilter.SerializableObject_ToJSON(doc.createNestedObject("flt"));
-        ret = ret && mFMStrength2To1.SerializableObject_ToJSON(doc.createNestedObject("fm21"));
-        ret = ret && mFMStrength3To1.SerializableObject_ToJSON(doc.createNestedObject("fm31"));
-        ret = ret && mFMStrength1To2.SerializableObject_ToJSON(doc.createNestedObject("fm12"));
-        ret = ret && mFMStrength3To2.SerializableObject_ToJSON(doc.createNestedObject("fm32"));
-        ret = ret && mFMStrength1To3.SerializableObject_ToJSON(doc.createNestedObject("fm13"));
-        ret = ret && mFMStrength2To3.SerializableObject_ToJSON(doc.createNestedObject("fm23"));
-        ret = ret && mOverallFMStrength.SerializableObject_ToJSON(doc.createNestedObject("fmAll"));
-        ret = ret && mVoicingMode.SerializableObject_ToJSON(doc.createNestedObject("vm"));
-        ret = ret && SerializeArrayToJSON(doc.createNestedObject("mod"), mModulations);
-        ret = ret && SerializeArrayToJSON(doc.createNestedObject("osc"), mOsc);
-        ret = ret && SerializeArrayToJSON(doc.createNestedObject("env"), mEnvelopes);
-        ret = ret && SerializeArrayToJSON(doc.createNestedObject("lfo"), mLFOs);
-        return ret;
-    }
+    // Result SerializableObject_ToJSON(JsonVariant doc) const
+    // {
+    //     Result ret = Result::Success();
+    //     ret.AndRequires(mName.SerializableObject_ToJSON(doc.createNestedObject("name")), "name");
+    //     ret.AndRequires(mMasterVolume.SerializableObject_ToJSON(doc.createNestedObject("vol")), "vol");
+    //     ret.AndRequires(mPan.SerializableObject_ToJSON(doc.createNestedObject("pan")), "pan");
+    //     ret.AndRequires(mDelayMix.SerializableObject_ToJSON(doc.createNestedObject("dly")), "dly");
+    //     ret.AndRequires(mVerbMix.SerializableObject_ToJSON(doc.createNestedObject("verb")), "verb");
+    //     ret.AndRequires(mStereoSpread.SerializableObject_ToJSON(doc.createNestedObject("spread")), "spread");
+    //     ret.AndRequires(mDetune.SerializableObject_ToJSON(doc.createNestedObject("det")), "det");
+    //     ret.AndRequires(mFilter.SerializableObject_ToJSON(doc.createNestedObject("flt")), "flt");
+    //     ret.AndRequires(mFMStrength2To1.SerializableObject_ToJSON(doc.createNestedObject("fm21")), "fm21");
+    //     ret.AndRequires(mFMStrength3To1.SerializableObject_ToJSON(doc.createNestedObject("fm31")), "fm31");
+    //     ret.AndRequires(mFMStrength1To2.SerializableObject_ToJSON(doc.createNestedObject("fm12")), "fm12");
+    //     ret.AndRequires(mFMStrength3To2.SerializableObject_ToJSON(doc.createNestedObject("fm32")), "fm32");
+    //     ret.AndRequires(mFMStrength1To3.SerializableObject_ToJSON(doc.createNestedObject("fm13")), "fm13");
+    //     ret.AndRequires(mFMStrength2To3.SerializableObject_ToJSON(doc.createNestedObject("fm23")), "fm23");
+    //     ret.AndRequires(mOverallFMStrength.SerializableObject_ToJSON(doc.createNestedObject("fmAll")), "fmAll");
+    //     ret.AndRequires(mVoicingMode.SerializableObject_ToJSON(doc.createNestedObject("vm")), "vm");
+    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("mod"), mModulations), "mod");
+    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("osc"), mOsc), "osc");
+    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("env"), mEnvelopes), "env");
+    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("lfo"), mLFOs), "lfo");
+    //     return ret;
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("expected object");
-        }
-        Result ret = Result::Success();
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("expected object");
+    //     }
+    //     Result ret = Result::Success();
 
-        ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
-        ret.AndRequires(mMasterVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
-        ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
-        ret.AndRequires(mDelayMix.SerializableObject_Deserialize(obj["dly"]), "dly");
-        ret.AndRequires(mVerbMix.SerializableObject_Deserialize(obj["verb"]), "verb");
-        ret.AndRequires(mStereoSpread.SerializableObject_Deserialize(obj["spread"]), "spread");
-        ret.AndRequires(mDetune.SerializableObject_Deserialize(obj["det"]), "det");
-        ret.AndRequires(mFilter.SerializableObject_Deserialize(obj["flt"]), "flt");
-        ret.AndRequires(mFMStrength2To1.SerializableObject_Deserialize(obj["fm21"]), "fm21");
-        ret.AndRequires(mFMStrength3To1.SerializableObject_Deserialize(obj["fm31"]), "fm31");
-        ret.AndRequires(mFMStrength1To2.SerializableObject_Deserialize(obj["fm12"]), "fm12");
-        ret.AndRequires(mFMStrength3To2.SerializableObject_Deserialize(obj["fm32"]), "fm32");
-        ret.AndRequires(mFMStrength1To3.SerializableObject_Deserialize(obj["fm13"]), "fm13");
-        ret.AndRequires(mFMStrength2To3.SerializableObject_Deserialize(obj["fm23"]), "fm23");
-        ret.AndRequires(mOverallFMStrength.SerializableObject_Deserialize(obj["fmAll"]), "fmAll");
-        ret.AndRequires(mVoicingMode.SerializableObject_Deserialize(obj["vm"]), "vm");
-        return ret;
-    }
+    //     ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
+    //     ret.AndRequires(mMasterVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
+    //     ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
+    //     ret.AndRequires(mDelayMix.SerializableObject_Deserialize(obj["dly"]), "dly");
+    //     ret.AndRequires(mVerbMix.SerializableObject_Deserialize(obj["verb"]), "verb");
+    //     ret.AndRequires(mStereoSpread.SerializableObject_Deserialize(obj["spread"]), "spread");
+    //     ret.AndRequires(mDetune.SerializableObject_Deserialize(obj["det"]), "det");
+    //     ret.AndRequires(mFilter.SerializableObject_Deserialize(obj["flt"]), "flt");
+    //     ret.AndRequires(mFMStrength2To1.SerializableObject_Deserialize(obj["fm21"]), "fm21");
+    //     ret.AndRequires(mFMStrength3To1.SerializableObject_Deserialize(obj["fm31"]), "fm31");
+    //     ret.AndRequires(mFMStrength1To2.SerializableObject_Deserialize(obj["fm12"]), "fm12");
+    //     ret.AndRequires(mFMStrength3To2.SerializableObject_Deserialize(obj["fm32"]), "fm32");
+    //     ret.AndRequires(mFMStrength1To3.SerializableObject_Deserialize(obj["fm13"]), "fm13");
+    //     ret.AndRequires(mFMStrength2To3.SerializableObject_Deserialize(obj["fm23"]), "fm23");
+    //     ret.AndRequires(mOverallFMStrength.SerializableObject_Deserialize(obj["fmAll"]), "fmAll");
+    //     ret.AndRequires(mVoicingMode.SerializableObject_Deserialize(obj["vm"]), "vm");
+
+    //     ret.AndRequires(DeserializeArray(obj["mod"], mModulations), "mod");
+    //     ret.AndRequires(DeserializeArray(obj["osc"], mOsc), "osc");
+    //     ret.AndRequires(DeserializeArray(obj["env"], mEnvelopes), "env");
+    //     ret.AndRequires(DeserializeArray(obj["lfo"], mLFOs), "lfo");
+
+    //     return ret;
+    // }
 };
 
 static constexpr auto synthpatchsize = sizeof(SynthPatch);
@@ -1099,20 +1105,20 @@ struct SynthSettings
         p.mModulations[0].mScaleN11.SetValue(1.0f);
     };
 
-    bool SerializableObject_ToJSON(JsonVariant rhs) const
-    {
-        return SerializeArrayToJSON(rhs.createNestedArray("patches"), mPatches);
-    }
+    // Result SerializableObject_ToJSON(JsonVariant rhs) const
+    // {
+    //     return SerializeArrayToJSON(rhs.createNestedArray("patches"), mPatches);
+    // }
 
-    Result SerializableObject_Deserialize(JsonVariant obj)
-    {
-        if (!obj.is<JsonObject>())
-        {
-            return Result::Failure("expected object");
-        }
+    // Result SerializableObject_Deserialize(JsonVariant obj)
+    // {
+    //     if (!obj.is<JsonObject>())
+    //     {
+    //         return Result::Failure("expected object");
+    //     }
 
-        return DeserializeArray(obj["patches"], mPatches);
-    }
+    //     return DeserializeArray(obj["patches"], mPatches);
+    // }
 
     SynthSettings()
     {

@@ -50,9 +50,9 @@ struct GuiTempoControl : GuiCompositeControl<float>
         : GuiCompositeControl<T>(page, bounds, binding, dblBinding, &mRenderer, &mEditor, isSelectable),
           mTooltipRenderer(
               tooltipCaption,
-              [](void *cap, const float &bpm) { return String(String(CHARSTR_QEQ) + (int)std::round(bpm)); },
+              [](void *cap, const float &bpm) { return String(String(CHARSTR_QEQ) + FloatRoundToInt(bpm)); },
               this), //
-          mValueRenderer([](void *cap, const float &bpm) { return String(String(CHARSTR_QEQ) + (int)std::round(bpm)); },
+          mValueRenderer([](void *cap, const float &bpm) { return String(String(CHARSTR_QEQ) + FloatRoundToInt(bpm)); },
                          this),                          //
           mRenderer(&mValueRenderer, &mTooltipRenderer), //
           mEditor(range)

@@ -38,6 +38,7 @@
 #pragma once
 
 #include <clarinoid/application/Metronome.hpp>
+#include <clarinoid/application/Storage.hpp>
 
 #include "MenuAppBase.hpp"
 #include "MenuSettings.hpp"
@@ -132,24 +133,33 @@ struct SystemSettingsApp : SettingsMenuApp
                                     [](void *cap, size_t i) {
                                         auto pThis = (SystemSettingsApp *)cap;
 
-                                        // Serial.println("exporting ...");
+                                        auto ret = pThis->mpStorage->SaveSettings(StorageChannel(i), *pThis->mAppSettings);
+                                        pThis->mDisplay.ShowToast(ret.ToString(), 4000);
 
-                                        ClarinoidJsonDocument doc;
-                                        if (!pThis->mAppSettings->SerializableObject_ToJSON(doc))
-                                        {
-                                            // Serial.println("mAppSettings->SerializableObject_ToJSON failed");
-                                            return;
-                                        }
-                                        // Serial.println("document has been generated. now saving...");
-                                        auto ret = pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
-                                        if (ret.IsFailure())
-                                        {
-                                            pThis->mDisplay.ShowToast(String("Fail: ") + ret.mMessage, 4000);
-                                        }
-                                        else
-                                        {
-                                            pThis->mDisplay.ShowToast(String("Success: ") + ret.mMessage, 4000);
-                                        }
+                                        // ClarinoidJsonDocument doc;
+                                        // auto serializeRet = pThis->mAppSettings->SerializableObject_ToJSON(doc);
+                                        // serializeRet.AndRequires(!doc.overflowed(), "OVERFLOW");
+                                        // Serial.println(String("Serialization memory usage: ") + doc.memoryUsage());
+                                        // Serial.println(String("Serialization nesting: ") + doc.nesting());
+                                        // Serial.println(String("Serialization overflowed: ") + doc.overflowed());
+
+                                        // if (serializeRet.IsFailure  ())
+                                        // {
+                                        //     pThis->mDisplay.ShowToast(String("Fail: ") + serializeRet.mMessage, 4000);
+                                        //     return;
+                                        // }
+                                        // // Serial.println("document has been generated. now saving...");
+                                        // auto ret = pThis->mpStorage->SaveDocument((StorageChannel)i, doc);
+                                        // if (ret.IsFailure())
+                                        // {
+                                        //     pThis->mDisplay.ShowToast(String("Fail: ") + ret.mMessage, 4000);
+                                        //     return;
+                                        // }
+                                        // else
+                                        // {
+                                        //     pThis->mDisplay.ShowToast(String("Success: ") + ret.mMessage, 4000);
+                                        //     return;
+                                        // }
                                     },
                                     AlwaysEnabledMulti,
                                     this};
@@ -162,22 +172,25 @@ struct SystemSettingsApp : SettingsMenuApp
                                     [](void *cap, size_t i) {
                                         auto pThis = (SystemSettingsApp *)cap;
 
-                                        ClarinoidJsonDocument doc;
-                                        auto err = pThis->mpStorage->LoadDocument(StorageChannel(i), doc);
-                                        if (err.code() != DeserializationError::Ok)
-                                        {
-                                            pThis->mDisplay.ShowToast(err.c_str(), 4000);
-                                            return;
-                                        }
+                                        auto ret = pThis->mpStorage->LoadSettings(StorageChannel(i), *pThis->mAppSettings);
+                                        pThis->mDisplay.ShowToast(ret.ToString(), 4000);
 
-                                        auto err2 = pThis->mAppSettings->SerializableObject_Deserialize(doc);
-                                        if (err2.IsSuccess())
-                                        {
-                                            pThis->mDisplay.ShowToast(String("Success; ") + err2.mMessage, 4000);
-                                            return;
-                                        }
+                                        // ClarinoidJsonDocument doc;
+                                        // auto err = pThis->mpStorage->LoadDocument(StorageChannel(i), doc);
+                                        // if (err.code() != DeserializationError::Ok)
+                                        // {
+                                        //     pThis->mDisplay.ShowToast(err.c_str(), 4000);
+                                        //     return;
+                                        // }
 
-                                        pThis->mDisplay.ShowToast(String("FAIL: ") + err2.mMessage, 4000);
+                                        // auto err2 = pThis->mAppSettings->SerializableObject_Deserialize(doc);
+                                        // if (err2.IsSuccess())
+                                        // {
+                                        //     pThis->mDisplay.ShowToast(String("Success; ") + err2.mMessage, 4000);
+                                        //     return;
+                                        // }
+
+                                        // pThis->mDisplay.ShowToast(String("FAIL: ") + err2.mMessage, 4000);
                                     },
                                     AlwaysEnabledMulti,
                                     this};
