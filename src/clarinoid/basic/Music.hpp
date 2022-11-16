@@ -105,7 +105,7 @@ class MidiNote
 
   public:
     MidiNote() = default;
-    MidiNote(uint8_t midiValue) : mValue(midiValue)
+    explicit MidiNote(int midiValue) : mValue((uint8_t)midiValue)
     {
         // for reference, 36 = C2
         // but MIDI "octaves" are like, not very handy because A0 is val 21.
@@ -133,11 +133,11 @@ class MidiNote
 
     static MidiNote MinimumValue()
     {
-        return {0};
+        return MidiNote{0};
     }
     static MidiNote MaximumValue()
     {
-        return {128};
+        return MidiNote{127};
     }
 
     // avoid ambiguity
@@ -145,7 +145,7 @@ class MidiNote
     // {
     // }
 
-    MidiNote(uint8_t oct, Note note) : mValue(oct * 12 + (uint8_t)note)//, mNoteIndex((uint8_t)note), mOctave(oct)
+    MidiNote(int oct, Note note) : mValue(oct * 12 + (uint8_t)note)//, mNoteIndex((uint8_t)note), mOctave(oct)
     {
     }
 
@@ -201,12 +201,12 @@ class MidiNote
     {
         if (s.length() < 2)
             return Result::Failure("too short");
-        char oct = s.charAt(s.length() - 1);
+        char oct = s[s.length() - 1];
         if (oct < '0' || oct > '9')
             return Result::Failure("bad octave");
         uint8_t nOct = oct - '0';
         Note note = Note::C;
-        Result ret = gNoteInfo.ValueForShortName(s.substring(0, s.length() - 1), note);
+        Result ret = gNoteInfo.ValueForShortName(s.substring(0, (unsigned int)(s.length() - 1)), note);
         if (ret.IsFailure())
             return ret;
         out = MidiNote{nOct, note};
@@ -419,7 +419,7 @@ struct ScaleFlavor
             mNoteToScaleDegreeLUT_Flats[ich % 12].mScaleDegree = iScaleDeg_flats;
             mNoteToScaleDegreeLUT_Flats[ich % 12].mEnharmonic = -enh_flats;
             enh_flats++;
-            uint8_t intMinus1 = RotateIntoRange(iScaleDeg_flats - 1, mIntervalCount);
+            uint8_t intMinus1 = RotateIntoRange((int)(iScaleDeg_flats - 1), (int)mIntervalCount);
             if (enh_flats >= mIntervals[intMinus1])
             {
                 enh_flats = 0;
@@ -616,7 +616,8 @@ struct Scale
                                                    EnharmonicDirection ed) const
     {
         CCASSERT(midiNote <= 127);
-        MidiNote chromaticRelToRoot = (int8_t)midiNote - (uint8_t)mRootNoteIndex; // make relative to the root.
+        MidiNote chromaticRelToRoot =
+            MidiNote{(int)midiNote - (int)mRootNoteIndex}; // make relative to the root.
 
         midiNoteOffset = (chromaticRelToRoot.GetOctave() * 12) + (uint8_t)mRootNoteIndex;
         // now convert note to scale degree & enharmonic.

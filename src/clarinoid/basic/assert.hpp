@@ -5,6 +5,7 @@
 
 namespace clarinoid
 {
+#ifndef CLARINOID_PLATFORM_X86
 
 struct IClarinoidCrashReportOutput
 {
@@ -106,6 +107,8 @@ inline void BlinkyDeath(int n)
     }
 }
 
+#endif // #ifndef CLARINOID_PLATFORM_X86
+
 #if defined(CLARINOID_MODULE_MAIN)
 
 // a sort of exception display mechanism.
@@ -153,7 +156,7 @@ static inline void Die(const String &msg)
 
 static inline void Die(const String &msg)
 {
-    log(msg.mStr.str().c_str());
+    log(msg.c_str());
     DebugBreak();
 }
 

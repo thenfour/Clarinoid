@@ -3,6 +3,7 @@
 #pragma once
 
 #include <type_traits>
+#include "BaseDefs.hpp"
 
 namespace clarinoid
 {
@@ -75,7 +76,7 @@ struct BufferedStream : IPeekableStream
                 if (written != BufferSize)
                 {
                     // something went wrong with underlying stream. likely unusable past this state.
-                    int bytesFailed = (int)BufferSize - written;
+                    int bytesFailed = (int)BufferSize - (int)written;
                     return ret - bytesFailed;
                 }
             }
@@ -205,11 +206,11 @@ struct TextStream : IPeekableStream
 
 namespace CCJSON
 {
-template <typename T, typename F>
-T alias_cast(F raw_data)
+template <typename T, typename F_>
+T alias_cast(F_ raw_data)
 {
     union {
-        F raw;
+        F_ raw;
         T data;
     } z;
     z.raw = raw_data;
@@ -1030,6 +1031,18 @@ struct JsonVariantWriter : JsonParentChildHelper
         mStream.flushWrite();
     }
 
+    // this is necessary because if your array is 0-length, this is the only way to know to output "[]"
+    void BeginObject()
+    {
+        CCASSERT(mType == JsonDataType::Undefined);
+        CCASSERT(!mIsLocked);
+        this->OnStreamAccess();
+        mType = JsonDataType::Object;
+        CCASSERT(mElementCount == 0);
+        mStream.write("{");
+        mIndentLevel++;
+    }
+
     // create a key, and return the value context
     JsonVariantWriter Object_MakeKey(const String &s)
     {
@@ -1041,14 +1054,8 @@ struct JsonVariantWriter : JsonParentChildHelper
         {
             EnsureChildrenClosed();
             mStream.write(",");
-            WriteNewLine();
         }
-        else
-        {
-            mStream.write("{");
-            mIndentLevel++;
-            WriteNewLine();
-        }
+        WriteNewLine();
         mElementCount++;
         Result ret = RawWriteQuotedString(s.c_str());
         ret.AndRequires(this->WriteRaw(":"), "key colon");
@@ -1056,25 +1063,30 @@ struct JsonVariantWriter : JsonParentChildHelper
         return {this, mIndentLevel};
     }
 
-    // create a key, and return the value context
-    JsonVariantWriter Array_MakeValue()
+    // this is necessary because if your array is 0-length, this is the only way to know to output "[]"
+    void BeginArray()
     {
-        CCASSERT(mType == JsonDataType::Undefined || mType == JsonDataType::Array);
+        CCASSERT(mType == JsonDataType::Undefined);
         CCASSERT(!mIsLocked);
         this->OnStreamAccess();
         mType = JsonDataType::Array;
+        CCASSERT(mElementCount == 0);
+        mStream.write("[");
+        mIndentLevel++;
+    }
+
+    // create a key, and return the value context
+    JsonVariantWriter Array_MakeValue()
+    {
+        CCASSERT(mType == JsonDataType::Array);
+        CCASSERT(!mIsLocked);
+        this->OnStreamAccess();
         if (mElementCount > 0)
         {
             EnsureChildrenClosed();
             mStream.write(",");
-            WriteNewLine();
         }
-        else
-        {
-            mStream.write("[");
-            mIndentLevel++;
-            WriteNewLine();
-        }
+        WriteNewLine();
         mElementCount++;
         ExpectChildStreamAccess();
         return {this, mIndentLevel};
@@ -1250,7 +1262,6 @@ struct JsonVariantWriter : JsonParentChildHelper
 
         WriteRaw(CCJSON::UnsignedIntegerToString(parts.integral).c_str());
 
-        // ret.AndRequires(RawWriteUnsignedInteger(parts.integral), "writing integral part");
         if (parts.decimalPlaces)
         {
             ret.AndRequires(RawWriteDecimals(parts.decimal, parts.decimalPlaces), "writing decimals");
@@ -1305,17 +1316,12 @@ struct JsonVariantWriter : JsonParentChildHelper
 
     Result Object_Close()
     {
-        if (mType == JsonDataType::Undefined)
-        {
-            // empty object
-            mStream.write("{}");
-            WriteNewLine();
-            return Result::Success();
-        }
-        if (mType != JsonDataType::Object)
-            return Result::Failure("Object_Close can only be called on objects");
+        CCASSERT(mType == JsonDataType::Object);
         mIndentLevel--;
-        WriteNewLine();
+        if (mElementCount)
+        {
+            WriteNewLine();
+        }
         mStream.write("}");
         mIsLocked = true;
         return Result::Success();
@@ -1323,17 +1329,12 @@ struct JsonVariantWriter : JsonParentChildHelper
 
     Result Array_Close()
     {
-        if (mType == JsonDataType::Undefined)
-        {
-            // unused; no biggie; 0 item array.
-            mStream.write("[]");
-            WriteNewLine();
-            return Result::Success();
-        }
-        if (mType != JsonDataType::Array)
-            return Result::Failure("Array_Close can only be called on arrays");
+        CCASSERT(mType == JsonDataType::Array);
         mIndentLevel--;
-        WriteNewLine();
+        if (mElementCount)
+        {
+            WriteNewLine();
+        }
         mStream.write("]");
         mIsLocked = true;
         return Result::Success();
@@ -1903,6 +1904,7 @@ struct SerializationObjectMap
     Result Serialize(JsonVariantWriter &myval)
     {
         Result ret = Result::Success();
+        myval.BeginObject();
         for (auto &mapping : mMap)
         {
             auto ch = myval.Object_MakeKey(mapping.mKey);
@@ -1969,6 +1971,7 @@ struct SerializationObjectMap
     }
 };
 
+// todo: SFINAE check for param having a Serialize() and Deserialize() function.
 template <typename Tparam>
 SerializationMapping CreateSerializationMapping(Tparam &param, const char *key)
 {
@@ -2037,6 +2040,7 @@ template <typename T, size_t N>
 Result Serialize(JsonVariantWriter &myval, std::array<T, N> &param)
 {
     Result ret = Result::Success();
+    myval.BeginArray();
     for (auto &i : param)
     {
         auto v = myval.Array_MakeValue();

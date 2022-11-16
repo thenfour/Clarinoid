@@ -930,7 +930,6 @@ Result Serialize(JsonVariantWriter &myval, TimeWithBasisParam &param)
     return Serialize(myval, map);
 }
 
-// todo: there needs to be a way to utilize object key mapping for this.
 Result Deserialize(JsonVariantReader &myval, TimeWithBasisParam &param)
 {
     SerializationObjectMap<2> map{{
@@ -939,5 +938,72 @@ Result Deserialize(JsonVariantReader &myval, TimeWithBasisParam &param)
     }};
     return Deserialize(myval, map);
 }
+
+// std::array<int8_t, HARM_SEQUENCE_LEN> mSequence{};
+// uint8_t mSequenceLength = 0;
+
+////////////////////////////////////////////////////
+struct HarmSequence
+{
+    std::array<int8_t, HARM_SEQUENCE_LEN> mItems{};
+    uint8_t mLength = 0;
+
+    int8_t & operator [] (size_t i) {
+        CCASSERT(i < HARM_SEQUENCE_LEN);
+        return mItems[i];
+    }
+
+    int8_t operator [] (size_t i) const {
+        CCASSERT(i < HARM_SEQUENCE_LEN);
+        return mItems[i];
+    }
+};
+
+Result Serialize(JsonVariantWriter &myval, HarmSequence &param)
+{
+    Result ret = Result::Success();
+    myval.BeginArray();
+    for (size_t i = 0; i < param.mLength; ++i)
+    {
+        ret.AndRequires(myval.Array_MakeValue().WriteNumberValue(param.mItems[i]));
+    }
+    return ret;
+}
+
+Result Deserialize(JsonVariantReader &myval, HarmSequence &param)
+{
+    param.mLength = 0;
+    while (true)
+    {
+        if (param.mLength >= param.mItems.size())
+            return Result::Failure("too many sequence items");
+        auto ch = myval.GetNextArrayItem();
+        if (ch.IsEOF())
+            return Result::Success();
+        if (ch.mParseResult.IsFailure())
+            return ch.mParseResult;
+        if (ch.mType != JsonDataType::Number)
+            return Result::Failure("expected number");
+        param.mItems[param.mLength] = ch.mNumericValue.Get<int8_t>();
+        param.mLength++;
+    }
+}
+
+
+
+Result Serialize(JsonVariantWriter &myval, MidiNote &param)
+{
+    return myval.WriteStringValue(param.ToString());
+}
+
+Result Deserialize(JsonVariantReader &myval, MidiNote &param)
+{
+    if (myval.mType != JsonDataType::String)
+    {
+        return Result::Failure("expected string");
+    }
+    return MidiNote::FromString(myval.mStringValue, param);
+}
+
 
 } // namespace clarinoid

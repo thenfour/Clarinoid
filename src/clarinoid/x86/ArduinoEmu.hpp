@@ -7,6 +7,7 @@
 
 #define PROGMEM
 #define EXTMEM
+#define FLASHMEM
 
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -22,8 +23,11 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <vector>
 
 #ifdef CLARINOID_MODULE_TEST
+
+#define AUDIO_SAMPLE_RATE 44100
 
 static uint64_t gTestClockMicros = 0;
 
@@ -75,25 +79,39 @@ void yield()
 
 struct String
 {
-    std::stringstream mStr;
+    std::string mStr;
+    // std::stringstream mStr;
     String()
     {
     }
     String(const char *s) : mStr(s)
     {
     }
-    String(const String &rhs)
+    String(const String &rhs) : mStr(rhs.mStr)
     {
-        mStr << rhs.mStr.str();
     }
     template <typename T>
     String(const T &rhs)
     {
-        mStr << rhs;
+        std::stringstream ss;
+        ss << rhs;
+        mStr = ss.str();
     }
     size_t length() const
     {
-        return mStr.str().length();
+        return mStr.length();
+    }
+    char &operator[](size_t i)
+    {
+        return mStr[i];
+    }
+    char operator[](size_t i) const
+    {
+        return mStr[i];
+    }
+    const char *c_str() const
+    {
+        return mStr.c_str();
     }
     template <typename T>
     String &operator+=(const T &rhs)
@@ -101,8 +119,41 @@ struct String
         append(rhs);
         return *this;
     }
+
+    String &trim(void)
+    {
+        if (mStr.length() == 0)
+            return *this;
+        const char *buffer = mStr.c_str();
+        const char *begin = buffer;
+        while (isspace(*begin))
+            begin++;
+        const char *end = buffer + mStr.length() - 1;
+        while (isspace(*end) && end >= begin)
+            end--;
+
+        mStr = std::string{begin, end};
+        // len = end + 1 - begin;
+        // if (begin > buffer)
+        //     memcpy(buffer, begin, len);
+        // buffer[len] = 0;
+        return *this;
+    }
+
+    int indexOf(char ch, unsigned int fromIndex = 0) const
+    {
+        size_t x = mStr.find(ch, fromIndex);
+        return x == std::string::npos ? (int)-1 : (int)x;
+        // if (fromIndex >= len)
+        //     return -1;
+        // const char *temp = strchr(buffer + fromIndex, ch);
+        // if (temp == NULL)
+        //     return -1;
+        // return temp - buffer;
+    }
+
     template <typename T>
-    String operator+(const T &rhs)
+    String operator+(const T &rhs) const
     {
         String ret(*this);
         ret += rhs;
@@ -111,19 +162,35 @@ struct String
     template <typename T>
     String &append(const T &n)
     {
-        mStr << n;
+        std::stringstream ss;
+        ss << mStr << n;
+        mStr = ss.str();
         return *this;
     }
     String &append(const String &n)
     {
-        mStr << n.mStr.str();
+        mStr.append(n.mStr);
         return *this;
     }
     String &operator=(const String &s)
     {
-        mStr.str(std::string());
-        mStr << s.mStr.str();
+        mStr = s.mStr;
         return *this;
+    }
+
+    bool operator==(const char *rhs) const
+    {
+        return mStr == rhs;
+    }
+
+    String substring(unsigned int left, unsigned int right) const
+    {
+        return mStr.substr(left, right - left);
+    }
+
+    String substring(unsigned int left) const
+    {
+        return mStr.substr(left);
     }
 };
 
@@ -136,7 +203,8 @@ struct
     }
     void print(const String &str)
     {
-        ::OutputDebugStringA(str.mStr.str().c_str());
+        std::cout << str.mStr;
+        ::OutputDebugStringA(str.mStr.c_str());
     }
     void begin(uint32_t baud)
     {
@@ -283,3 +351,102 @@ struct AudioStream
 
     virtual void update() = 0;
 };
+
+class Stream // : public Print
+{
+  public:
+    constexpr Stream() : _timeout(1000), read_error(0)
+    {
+    }
+    virtual int available() = 0;
+    virtual int read() = 0;
+    virtual int peek() = 0;
+
+    virtual size_t write(const uint8_t *buf, size_t bytes) = 0;
+    virtual size_t read(uint8_t *buf, size_t bytes) = 0;
+
+    void setTimeout(unsigned long timeout);
+    bool find(const char *target);
+    bool find(const uint8_t *target)
+    {
+        return find((const char *)target);
+    }
+    bool find(const String &target)
+    {
+        return find(target.c_str());
+    }
+    bool find(const char *target, size_t length);
+    bool find(const uint8_t *target, size_t length)
+    {
+        return find((const char *)target, length);
+    }
+    bool find(const String &target, size_t length)
+    {
+        return find(target.c_str(), length);
+    }
+    bool findUntil(const char *target, const char *terminator);
+    bool findUntil(const uint8_t *target, const char *terminator)
+    {
+        return findUntil((const char *)target, terminator);
+    }
+    bool findUntil(const String &target, const char *terminator)
+    {
+        return findUntil(target.c_str(), terminator);
+    }
+    bool findUntil(const char *target, const String &terminator)
+    {
+        return findUntil(target, terminator.c_str());
+    }
+    bool findUntil(const String &target, const String &terminator)
+    {
+        return findUntil(target.c_str(), terminator.c_str());
+    }
+    bool findUntil(const char *target, size_t targetLen, const char *terminate, size_t termLen);
+    bool findUntil(const uint8_t *target, size_t targetLen, const char *terminate, size_t termLen)
+    {
+        return findUntil((const char *)target, targetLen, terminate, termLen);
+    }
+    bool findUntil(const String &target, size_t targetLen, const char *terminate, size_t termLen);
+    bool findUntil(const char *target, size_t targetLen, const String &terminate, size_t termLen);
+    bool findUntil(const String &target, size_t targetLen, const String &terminate, size_t termLen);
+    long parseInt();
+    long parseInt(char skipChar);
+    float parseFloat();
+    float parseFloat(char skipChar);
+    size_t readBytes(char *buffer, size_t length);
+    size_t readBytes(uint8_t *buffer, size_t length)
+    {
+        return readBytes((char *)buffer, length);
+    }
+    size_t readBytesUntil(char terminator, char *buffer, size_t length);
+    size_t readBytesUntil(char terminator, uint8_t *buffer, size_t length)
+    {
+        return readBytesUntil(terminator, (char *)buffer, length);
+    }
+    String readString(size_t max = 120);
+    String readStringUntil(char terminator, size_t max = 120);
+    int getReadError()
+    {
+        return read_error;
+    }
+    void clearReadError()
+    {
+        setReadError(0);
+    }
+
+  protected:
+    void setReadError(int err = 1)
+    {
+        read_error = err;
+    }
+    int timedRead();
+    int timedPeek();
+    int peekNextDigit();
+
+    unsigned long _timeout;
+
+  private:
+    char read_error;
+};
+
+

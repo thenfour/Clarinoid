@@ -180,7 +180,7 @@ struct ModulationCurveLUT
 
     inline const q15_t *BeginLookupF(float kN11)
     {
-        int32_t lutY = (kN11 * .5 + .5) * LutSizeY;
+        int32_t lutY = int32_t ((kN11 * .5f + .5f) * LutSizeY);
         return BeginLookupI(lutY);
     }
 

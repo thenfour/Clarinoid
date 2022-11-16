@@ -6,6 +6,10 @@
 #include "fastonebigheader.hpp"
 
 #ifdef CLARINOID_PLATFORM_X86
+using q15_t = int16_t;
+using q31_t = int32_t;
+using q63_t = int64_t;
+
 inline float arm_sin_f32(float x)
 {
     return ::sinf(x);
@@ -70,6 +74,39 @@ void arm_scale_q15(int16_t *pSrc, int16_t scaleFract, int8_t shift, int16_t *pDs
         pDst[i] = (int16_t)(pSrc[i] * (scaleFract / 32767.0f));
     }
 }
+
+  /**
+ * @brief Multiplies a floating-point vector by a scalar.
+ * @param[in]  pSrc       points to the input vector
+ * @param[in]  scale      scale factor to be applied
+ * @param[out] pDst       points to the output vector
+ * @param[in]  blockSize  number of samples in the vector
+ */
+void arm_scale_f32(float *pSrc, float scale, float *pDst, uint32_t blockSize)
+{
+    for (size_t i = 0; i < blockSize; ++i)
+    {
+        pDst[i] = pSrc[i] * scale;
+    }
+}
+
+
+  /**
+ * @brief  Adds a constant offset to a floating-point vector.
+ * @param[in]  pSrc       points to the input vector
+ * @param[in]  offset     is the offset to be added
+ * @param[out] pDst       points to the output vector
+ * @param[in]  blockSize  number of samples in the vector
+ */
+void arm_offset_f32(float *pSrc, float offset, float *pDst, uint32_t blockSize)
+{
+    for (size_t i = 0; i < blockSize; ++i)
+    {
+        pDst[i] = pSrc[i] + offset;
+    }
+}
+
+
 
 // computes ((a[15:0] << 16) | b[15:0])
 static inline uint32_t pack_16b_16b(int32_t a, int32_t b)

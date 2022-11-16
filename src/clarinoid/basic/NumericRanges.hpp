@@ -197,7 +197,7 @@ static const NumericEditRangeSpec<float> gDelayStereoSpread = NumericEditRangeSp
 static const NumericEditRangeSpec<float> gFilterFreqRange = NumericEditRangeSpec<float>{0.0f, 20000.0f};
 
 static const NumericEditRangeSpec<float> gFreqMulRange = NumericEditRangeSpec<float>{0, 24, 1.0f, 0.05f, 0.002f};
-static const NumericEditRangeSpec<float> gFreqOffsetRange = NumericEditRangeSpec<float>{-5000, 5000, 500, 10, 0.2};
+static const NumericEditRangeSpec<float> gFreqOffsetRange = NumericEditRangeSpec<float>{-5000, 5000, 500, 10, 0.2f};
 
 static const NumericEditRangeSpec<float> gOverallFMStrengthRange = NumericEditRangeSpec<float>{0.0f, 1.0f, 0.1f, 0.01f, 0.001f};
 

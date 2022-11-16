@@ -130,39 +130,49 @@ EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo("HarmSynthPresetRef
 
 // EnumInfo<PitchBendParticipation> gPitchBendParticipationInfo("PitchBendParticipation", gPitchBendParticipationItems);
 
-////////////////////////////////////////////////////
-struct HarmVoiceSettings //: SerializableDictionary
+struct MidiNoteRangeParam : ISerializationObjectMap<2>
 {
-    // const size_t mMyIndex;
-    std::array<int8_t, HARM_SEQUENCE_LEN> mSequence{};
-    uint8_t mSequenceLength = 0;
+    MidiNote mMin = MidiNote::MinimumValue();
+    MidiNote mMax = MidiNote::MaximumValue();
 
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mMin, "Min"),
+            CreateSerializationMapping(mMax, "Max"),
+        }};
+    }
+};
+
+
+////////////////////////////////////////////////////
+struct HarmVoiceSettings : ISerializationObjectMap<7>
+{
+    HarmSequence mSequence;
     EnumParam<HarmSynthPresetRefType> mSynthPatchRef{gHarmSynthPresetRefTypeInfo, HarmSynthPresetRefType::GlobalA};
     IntParam<uint16_t> mSynthPatch{0};
 
     EnumParam<HarmScaleRefType> mScaleRef{gHarmScaleRefTypeInfo, HarmScaleRefType::Global};
     ScaleParam mLocalScale{{0, ScaleFlavorIndex::Chromatic}};
-    MidiNote mMinOutpNote = MidiNote::MinimumValue();
-    MidiNote mMaxOutpNote = MidiNote::MaximumValue();
+    MidiNoteRangeParam mOutpRange;
 
     EnumParam<NoteOOBBehavior> mNoteOOBBehavior{gNoteOOBBehaviorInfo, NoteOOBBehavior::TransposeOctave};
+
     // EnumParam<NonDiatonicBehavior> mNonDiatonicBehavior = {"NonDiatonicBehavior", gNonDiatonicBehaviorInfo,
     // NonDiatonicBehavior::NextDiatonicNote }; EnumParam<PitchBendParticipation> mPitchBendParticipation =
     // {"PitchBendParticipation", gPitchBendParticipationInfo, PitchBendParticipation::Same };
 
-    String GetMenuDetailString() const
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
-        if (mSequenceLength < 1)
-            return "<off>";
-        String ret = "[";
-        for (size_t i = 0; i < (size_t)mSequenceLength - 1; ++i)
-        {
-            ret += mSequence[i];
-            ret += ",";
-        }
-        ret += mSequence[mSequenceLength - 1];
-        ret += "]";
-        return ret;
+        return {{
+            CreateSerializationMapping(mSynthPatchRef, "SynthPatchRef"),
+            CreateSerializationMapping(mSynthPatch, "SynthPatch"),
+            CreateSerializationMapping(mScaleRef, "ScaleRef"),
+            CreateSerializationMapping(mLocalScale, "LocalScale"),
+            CreateSerializationMapping(mNoteOOBBehavior, "NoteOOBBehavior"),
+            CreateSerializationMapping(mOutpRange, "OutpRange"),
+            CreateSerializationMapping(mSequence, "Sequence"),
+        }};
     }
 
     // Result SerializableObject_ToJSON(JsonVariant rhs) const
@@ -173,85 +183,40 @@ struct HarmVoiceSettings //: SerializableDictionary
     //     ret.AndRequires(mScaleRef.SerializableObject_ToJSON(rhs.createNestedObject("sref")), "sref");
     //     ret.AndRequires(mLocalScale.SerializableObject_ToJSON(rhs.createNestedObject("scale")), "scale");
     //     ret.AndRequires(mNoteOOBBehavior.SerializableObject_ToJSON(rhs.createNestedObject("oob")), "oob");
-    //     ret.AndRequires(SerializeMidiNoteRange(mMinOutpNote, mMaxOutpNote, rhs.createNestedObject("range")), "range");
-    //     ret.AndRequires(SerializeHarmVoiceNoteSequence(mSequence, mSequenceLength, rhs.createNestedObject("seq")), "seq");
-    //     return ret;
+    //     ret.AndRequires(SerializeMidiNoteRange(mMinOutpNote, mMaxOutpNote, rhs.createNestedObject("range")),
+    //     "range"); ret.AndRequires(SerializeHarmVoiceNoteSequence(mSequence, mSequenceLength,
+    //     rhs.createNestedObject("seq")), "seq"); return ret;
     // }
 
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("expected object");
-    //     }
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mSynthPatchRef.SerializableObject_Deserialize(obj["pref"]), "pref");
-    //     ret.AndRequires(mSynthPatch.SerializableObject_Deserialize(obj["patch"]), "patch");
-    //     ret.AndRequires(mScaleRef.SerializableObject_Deserialize(obj["sref"]), "sref");
-    //     ret.AndRequires(mLocalScale.SerializableObject_Deserialize(obj["scale"]), "scale");
-    //     ret.AndRequires(mNoteOOBBehavior.SerializableObject_Deserialize(obj["oob"]), "oob");
-    //     ret.AndRequires(DeserializeMidiNoteRange(obj["range"], mMinOutpNote, mMaxOutpNote), "range");
-    //     ret.AndRequires(DeserializeHarmVoiceNoteSequence(obj["seq"], mSequence, mSequenceLength), "seq");
-    //     return ret;
-    // }
-
-    // COPIES mMyIndex
-    HarmVoiceSettings(const HarmVoiceSettings &rhs) = default;
-    //     :
-    //      mMyIndex (rhs.mMyIndex),
-    //       mSequence(rhs.mSequence),              //
-    //       mSequenceLength(rhs.mSequenceLength),  //
-    //       mSynthPatchRef(rhs.mSynthPatchRef),    //
-    //       mSynthPatch(rhs.mSynthPatch),          //
-    //       mScaleRef(rhs.mScaleRef),              //
-    //       mLocalScale(rhs.mLocalScale),          //
-    //       mMinOutpNote(rhs.mMinOutpNote),        //
-    //       mMaxOutpNote(rhs.mMaxOutpNote),        //
-    //       mNoteOOBBehavior(rhs.mNoteOOBBehavior) //
-    // {
-    // }
-    HarmVoiceSettings &operator=(const HarmVoiceSettings &rhs) = default;
-
-    // // RETAINS OWN mMyIndex
-    // HarmVoiceSettings &operator=(const HarmVoiceSettings &rhs)
-    // {
-    //     mSequence = rhs.mSequence;
-    //     mSequenceLength = rhs.mSequenceLength;
-    //     mSynthPatchRef = rhs.mSynthPatchRef;
-    //     mSynthPatch = rhs.mSynthPatch;
-    //     mScaleRef = rhs.mScaleRef;
-    //     mLocalScale = rhs.mLocalScale;
-    //     mMinOutpNote = rhs.mMinOutpNote;
-    //     mMaxOutpNote = rhs.mMaxOutpNote;
-    //     mNoteOOBBehavior = rhs.mNoteOOBBehavior;
-    //     return *this;
-    // }
-
-    explicit HarmVoiceSettings() // : mMyIndex(myIndex)
+    String GetMenuDetailString() const
     {
+        if (mSequence.mLength < 1)
+            return "<off>";
+        String ret = "[";
+        for (size_t i = 0; i < (size_t)mSequence.mLength - 1; ++i)
+        {
+            ret += mSequence[i];
+            ret += ",";
+        }
+        ret += mSequence[mSequence.mLength - 1];
+        ret += "]";
+        return ret;
     }
 };
 
-struct HarmPatch //: SerializableDictionary
+struct HarmPatch : ISerializationObjectMap<10>
 {
-    //   private:
-    //     HarmPatch &operator=(const HarmPatch &rhs) = default;
-
-    //   public:
-    StringParam mName { "--"};
-    BoolParam mEmitLiveNote { true};
-    FloatParam mStereoSeparation { 0.1f}; // spreads stereo signal of the voices.
+    StringParam mName{"--"};
+    BoolParam mEmitLiveNote{true};
+    FloatParam mStereoSeparation{0.1f}; // spreads stereo signal of the voices.
     ScaleParam mPatchScale{{0, ScaleFlavorIndex::Chromatic}};
-    std::array<HarmVoiceSettings, HARM_VOICES>
-        mVoiceSettings; //{
-                        // initialize_array_with_indices<HarmVoiceSettings, HARM_VOICES>()};
-    // ArraySerializer<HarmVoiceSettings, HARM_VOICES> mVoiceSerializer{"Voices", mVoiceSettings};
+    std::array<HarmVoiceSettings, HARM_VOICES> mVoiceSettings;
 
-    IntParam<uint32_t> mMinRotationTimeMS { 70};
-    IntParam<uint16_t> mSynthPatch1 { SynthPresetID_Bommanoid};
-    IntParam<uint16_t> mSynthPatch2 { SynthPresetID_Bommanoid};
-    IntParam<uint16_t> mSynthPatch3 { SynthPresetID_Bommanoid};
-    IntParam<uint16_t> mSynthPatch4 { SynthPresetID_Bommanoid};
+    IntParam<uint32_t> mMinRotationTimeMS{70};
+    IntParam<uint16_t> mSynthPatch1{(uint16_t)SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch2{(uint16_t)SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch3{(uint16_t)SynthPresetID_Bommanoid};
+    IntParam<uint16_t> mSynthPatch4{(uint16_t)SynthPresetID_Bommanoid};
 
     String ToString(int index) const
     {
@@ -263,57 +228,33 @@ struct HarmPatch //: SerializableDictionary
         *this = rhs;
     }
 
-    // Result SerializableObject_ToJSON(JsonVariant rhs) const
-    // {
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mName.SerializableObject_ToJSON(rhs.createNestedObject("name")), "name");
-    //     ret.AndRequires(mEmitLiveNote.SerializableObject_ToJSON(rhs.createNestedObject("live")), "live");
-    //     ret.AndRequires(mStereoSeparation.SerializableObject_ToJSON(rhs.createNestedObject("stereo")), "stereo");
-    //     ret.AndRequires(mPatchScale.SerializableObject_ToJSON(rhs.createNestedObject("scale")), "scale");
-    //     ret.AndRequires(mMinRotationTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("rotmin")), "rotmin");
-    //     ret.AndRequires(mSynthPatch1.SerializableObject_ToJSON(rhs.createNestedObject("patch1")), "patch1");
-    //     ret.AndRequires(mSynthPatch2.SerializableObject_ToJSON(rhs.createNestedObject("patch2")), "patch2");
-    //     ret.AndRequires(mSynthPatch3.SerializableObject_ToJSON(rhs.createNestedObject("patch3")), "patch3");
-    //     ret.AndRequires(mSynthPatch4.SerializableObject_ToJSON(rhs.createNestedObject("patch4")), "patch4");
-    //     ret.AndRequires(SerializeArrayToJSON(rhs.createNestedArray("voices"), mVoiceSettings), "voices");
-    //     return ret;
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("expected object");
-    //     }
-
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
-    //     ret.AndRequires(mEmitLiveNote.SerializableObject_Deserialize(obj["live"]), "live");
-    //     ret.AndRequires(mStereoSeparation.SerializableObject_Deserialize(obj["stereo"]), "stereo");
-    //     ret.AndRequires(mPatchScale.SerializableObject_Deserialize(obj["scale"]), "scale");
-    //     ret.AndRequires(mMinRotationTimeMS.SerializableObject_Deserialize(obj["rotmin"]), "rotmin");
-    //     ret.AndRequires(mSynthPatch1.SerializableObject_Deserialize(obj["patch1"]), "patch1");
-    //     ret.AndRequires(mSynthPatch2.SerializableObject_Deserialize(obj["patch2"]), "patch2");
-    //     ret.AndRequires(mSynthPatch3.SerializableObject_Deserialize(obj["patch3"]), "patch3");
-    //     ret.AndRequires(mSynthPatch4.SerializableObject_Deserialize(obj["patch4"]), "patch4");
-    //     ret.AndRequires(DeserializeArray(obj["voices"], mVoiceSettings), "voices");
-
-    //     return ret;
-    // }
-
-    // explicit HarmPatch(size_t myIndex)
-    //     : //
-    //       // SerializableDictionary("HarmPatch", mSerializableChildObjects), //
-    //       mMyIndex(myIndex)
-    // {
-    // }
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mName, "Name"),
+            CreateSerializationMapping(mEmitLiveNote, "EmitLiveNote"),
+            CreateSerializationMapping(mStereoSeparation, "StereoSeparation"),
+            CreateSerializationMapping(mPatchScale, "PatchScale"),
+            CreateSerializationMapping(mMinRotationTimeMS, "MinRotationTimeMS"),
+            CreateSerializationMapping(mSynthPatch1, "SynthPatch1"),
+            CreateSerializationMapping(mSynthPatch2, "SynthPatch2"),
+            CreateSerializationMapping(mSynthPatch3, "SynthPatch3"),
+            CreateSerializationMapping(mSynthPatch4, "SynthPatch4"),
+            CreateSerializationMapping(mVoiceSettings, "VoiceSettings"),
+        }};
+    }
 };
 
-struct HarmSettings // : SerializableDictionary
+struct HarmSettings : ISerializationObjectMap<1>
 {
-    std::array<HarmPatch, HARM_PRESET_COUNT>
-        mPatches; //{initialize_array_with_indices<HarmPatch, HARM_PRESET_COUNT>()};
-    // ArraySerializer<HarmPatch, HARM_PRESET_COUNT> mPatchSerializer{"Patches", mPatches};
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mPatches, "Patches"),
+        }};
+    }
+
+    std::array<HarmPatch, HARM_PRESET_COUNT> mPatches;
 
     // static void InitSlumsHarmPreset(HarmPreset &p)
     // {
@@ -476,21 +417,21 @@ struct HarmSettings // : SerializableDictionary
 
         p.mVoiceSettings[0].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[0].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset1);
-        p.mVoiceSettings[0].mSequenceLength = 3;
+        p.mVoiceSettings[0].mSequence.mLength = 3;
         p.mVoiceSettings[0].mSequence[0] = -16; // Ab
         p.mVoiceSettings[0].mSequence[1] = -15; // A
         p.mVoiceSettings[0].mSequence[2] = -14; // Bb
 
         p.mVoiceSettings[1].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[1].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset1);
-        p.mVoiceSettings[1].mSequenceLength = 3;
+        p.mVoiceSettings[1].mSequence.mLength = 3;
         p.mVoiceSettings[1].mSequence[0] = -11; // Db
         p.mVoiceSettings[1].mSequence[1] = -10; // D
         p.mVoiceSettings[1].mSequence[2] = -9;  // Eb
 
         p.mVoiceSettings[2].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[2].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset1);
-        p.mVoiceSettings[2].mSequenceLength = 3;
+        p.mVoiceSettings[2].mSequence.mLength = 3;
         p.mVoiceSettings[2].mSequence[0] = -6; // Gb
         p.mVoiceSettings[2].mSequence[1] = -5; // G
         p.mVoiceSettings[2].mSequence[2] = -4; // Ab
@@ -643,24 +584,24 @@ struct HarmSettings // : SerializableDictionary
 
         p.mVoiceSettings[0].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[0].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset2);
-        p.mVoiceSettings[0].mSequenceLength = 2;
+        p.mVoiceSettings[0].mSequence.mLength = 2;
         p.mVoiceSettings[0].mSequence[0] = -1; // Bb
         p.mVoiceSettings[0].mSequence[1] = -2; // G
 
         p.mVoiceSettings[1].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[1].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset3);
-        p.mVoiceSettings[1].mSequenceLength = 2;
+        p.mVoiceSettings[1].mSequence.mLength = 2;
         p.mVoiceSettings[1].mSequence[0] = -2; // G
         p.mVoiceSettings[1].mSequence[1] = -3; // F
 
         p.mVoiceSettings[2].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[2].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset2);
-        p.mVoiceSettings[2].mSequenceLength = 1;
+        p.mVoiceSettings[2].mSequence.mLength = 1;
         p.mVoiceSettings[2].mSequence[0] = -4; // Eb
 
         p.mVoiceSettings[3].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[3].mSynthPatchRef.SetValue(HarmSynthPresetRefType::Preset4);
-        p.mVoiceSettings[3].mSequenceLength = 2;
+        p.mVoiceSettings[3].mSequence.mLength = 2;
         p.mVoiceSettings[3].mSequence[0] = -5; // D
         p.mVoiceSettings[3].mSequence[1] = -7; // Bb
     }
@@ -702,12 +643,12 @@ struct HarmSettings // : SerializableDictionary
     {
         p.mName.SetValue("Col Bass");
         p.mPatchScale.mValue.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-        p.mVoiceSettings[0].mMaxOutpNote = 36;
-        p.mVoiceSettings[0].mMaxOutpNote = 50;
+        p.mVoiceSettings[0].mOutpRange.mMin = MidiNote{36};
+        p.mVoiceSettings[0].mOutpRange.mMax = MidiNote{50};
         p.mVoiceSettings[0].mScaleRef.SetValue(HarmScaleRefType::Preset);
         p.mVoiceSettings[0].mSynthPatchRef.SetValue(HarmSynthPresetRefType::GlobalA);
         // p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_MoogBass;
-        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence.mLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -12;
     }
 
@@ -751,7 +692,7 @@ struct HarmSettings // : SerializableDictionary
     //     return DeserializeArray(obj["patches"], mPatches);
     // }
 
-    HarmSettings() // : SerializableDictionary("HarmSettings", mSerializableChildObjects)
+    HarmSettings()
     {
         size_t iPreset = 1;
 

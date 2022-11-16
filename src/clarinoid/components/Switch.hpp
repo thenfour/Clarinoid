@@ -9,6 +9,10 @@
 namespace clarinoid
 {
 
+
+#ifdef CLARINOID_PLATFORM_X86
+#else  // CLARINOID_UNIT_TESTS
+
 struct NullSwitch : ISwitch
 {
     NullSwitch()
@@ -91,5 +95,6 @@ struct DebouncedDigitalPinSwitchT : ISwitch
         return (int)mBounce.read() == 0;
     }
 };
+#endif // CLARINOID_UNIT_TESTS
 
 } // namespace clarinoid

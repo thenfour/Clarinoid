@@ -79,11 +79,11 @@ struct HarmVoiceSettingsApp
                                       Property<int>{
                                           [](void *cap) FLASHMEM {
                                               auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                              return (int)pThis->EditingVoice().mSequenceLength;
+                                              return (int)pThis->EditingVoice().mSequence.mLength;
                                           }, // getter
                                           [](void *cap, const int &val) {
                                               auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                              pThis->EditingVoice().mSequenceLength = val;
+                                              pThis->EditingVoice().mSequence.mLength = val;
                                           },   // setter
                                           this // capture val
                                       },
@@ -109,7 +109,7 @@ struct HarmVoiceSettingsApp
         },
         [](void *cap, size_t multiIndex) { // is enabled
             auto *pThis = (HarmVoiceSettingsApp *)cap;
-            return (multiIndex + 1) <= pThis->EditingVoice().mSequenceLength;
+            return (multiIndex + 1) <= pThis->EditingVoice().mSequence.mLength;
         },
         this // capture
     };
@@ -119,11 +119,11 @@ struct HarmVoiceSettingsApp
                                    Property<int>{
                                        [](void *cap) FLASHMEM {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           return (int)pThis->EditingVoice().mMinOutpNote.GetMidiValue();
+                                           return (int)pThis->EditingVoice().mOutpRange.mMin.GetMidiValue();
                                        }, // getter
                                        [](void *cap, const int &val) {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           pThis->EditingVoice().mMinOutpNote = MidiNote{(uint8_t)val};
+                                           pThis->EditingVoice().mOutpRange.mMin = MidiNote{(uint8_t)val};
                                        },   // setter
                                        this // capture val
                                    },
@@ -134,11 +134,11 @@ struct HarmVoiceSettingsApp
                                    Property<int>{
                                        [](void *cap) FLASHMEM {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           return (int)pThis->EditingVoice().mMaxOutpNote.GetMidiValue();
+                                           return (int)pThis->EditingVoice().mOutpRange.mMax.GetMidiValue();
                                        }, // getter
                                        [](void *cap, const int &val) {
                                            auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           pThis->EditingVoice().mMaxOutpNote = MidiNote{(uint8_t)val};
+                                           pThis->EditingVoice().mOutpRange.mMax = MidiNote{(uint8_t)val};
                                        },   // setter
                                        this // capture val
                                    },

@@ -48,7 +48,7 @@ struct GenericEnumInfo : IList
 
     int List_GetItemCount() const
     {
-        return mItemCount;
+        return (int)mItemCount;
     }
 
     String List_GetItemDisplayName(int n) const

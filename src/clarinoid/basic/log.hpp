@@ -47,7 +47,7 @@ static void log(const std::string &format, Args &&... args)
                   std::string(gLogIndent * 2, ' ').c_str(),
                   std::forward<Args>(args)...);
     // OutputDebugStringA(output.c_str());
-    Serial.print(output.c_str());
+    Serial.println(output.c_str());
 }
 
 struct ScopeLog
@@ -57,13 +57,13 @@ struct ScopeLog
     {
         // Serial.print("{ ");
         // Serial.println(msg);
-        log("{ %s", msg.mStr.str().c_str());
+        log("{ %s", msg.c_str());
         gLogIndent++;
     }
     ~ScopeLog()
     {
         gLogIndent--;
-        log("} %s", mMsg.mStr.str().c_str());
+        log("} %s", mMsg.c_str());
         // Serial.print("} ");
         // Serial.println(mMsg);
     }

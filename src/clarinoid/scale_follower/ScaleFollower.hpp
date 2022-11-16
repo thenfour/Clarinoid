@@ -2,10 +2,10 @@
 #pragma once
 
 //#include <optional> // not available!
-#include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/basic/Music.hpp>
-#include <clarinoid/settings/AppSettings.hpp>
-#include <clarinoid/harmonizer/harmonizer.hpp>
+//#include <clarinoid/basic/Basic.hpp>
+//#include <clarinoid/basic/Music.hpp>
+//#include <clarinoid/settings/AppSettings.hpp>
+//#include <clarinoid/harmonizer/harmonizer.hpp>
 
 // namespace clarinoid
 // {

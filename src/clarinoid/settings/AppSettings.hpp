@@ -175,7 +175,7 @@ struct MetronomeSettings : ISerializationObjectMap<5>
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-struct AppSettings : ISerializationObjectMap<3>
+struct AppSettings : ISerializationObjectMap<4>
 {
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
@@ -183,7 +183,7 @@ struct AppSettings : ISerializationObjectMap<3>
             CreateSerializationMapping(mCurrentPerformancePatch, "currentPerformancePatch"),
             CreateSerializationMapping(mMetronome, "metronome"),
             CreateSerializationMapping(mPerformancePatches, "performancePatches"),
-            // CreateSerializationMapping(mHarmSettings, "harmSettings"),
+            CreateSerializationMapping(mHarmSettings, "harmSettings"),
             // CreateSerializationMapping(mSynthSettings, "synthSettings"),
         }};
     }
@@ -217,7 +217,7 @@ struct AppSettings : ISerializationObjectMap<3>
 
     PerformancePatch &GetCurrentPerformancePatch()
     {
-        return mPerformancePatches[RotateIntoRange(mCurrentPerformancePatch.GetValue(), mPerformancePatches.size())];
+        return mPerformancePatches[RotateIntoRange(mCurrentPerformancePatch.GetValue(), (int)mPerformancePatches.size())];
     }
 
     bool IsValidSynthPatchId(int16_t id)

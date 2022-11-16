@@ -59,7 +59,7 @@ struct HarmonizerLayer
                            ", id:" + ret.mNoteInfo.mLiveNoteSequenceID);
         }
 
-        if (harmLayer.mSequenceLength == 0)
+        if (harmLayer.mSequence.mLength == 0)
         {
             if (noteOn && log)
             {
@@ -97,7 +97,7 @@ struct HarmonizerLayer
         // todo: voice gain, panning, spreading
         // todo: use hv.mNonDiatonicBehavior
         auto newNote = scale.AdjustNoteByInterval(ret.mNoteInfo.mMidiNote.GetMidiValue(),
-                                                  harmLayer.mSequence[mSequencePos % harmLayer.mSequenceLength],
+                                                  harmLayer.mSequence[mSequencePos % harmLayer.mSequence.mLength],
                                                   EnharmonicDirection::Sharp);
         if (!newNote)
         {
@@ -108,23 +108,23 @@ struct HarmonizerLayer
             return ret;
         }
 
-        ret.mNoteInfo.mMidiNote = newNote;
+        ret.mNoteInfo.mMidiNote = MidiNote { newNote };
 
         // corrective settings...
         switch (harmLayer.mNoteOOBBehavior.GetValue())
         {
         case NoteOOBBehavior::TransposeOctave:
-            while (ret.mNoteInfo.mMidiNote < harmLayer.mMinOutpNote)
+            while (ret.mNoteInfo.mMidiNote < harmLayer.mOutpRange.mMin)
                 ret.mNoteInfo.mMidiNote += 12;
-            while (ret.mNoteInfo.mMidiNote > harmLayer.mMaxOutpNote)
+            while (ret.mNoteInfo.mMidiNote > harmLayer.mOutpRange.mMax)
                 ret.mNoteInfo.mMidiNote -= 12;
             break;
         case NoteOOBBehavior::Mute:
             break;
         }
 
-        if ((ret.mNoteInfo.mMidiNote < harmLayer.mMinOutpNote) ||
-            (ret.mNoteInfo.mMidiNote > harmLayer.mMaxOutpNote))
+        if ((ret.mNoteInfo.mMidiNote < harmLayer.mOutpRange.mMin) ||
+            (ret.mNoteInfo.mMidiNote > harmLayer.mOutpRange.mMax))
         {
             if (noteOn && log)
             {

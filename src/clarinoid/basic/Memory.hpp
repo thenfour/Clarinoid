@@ -192,7 +192,7 @@ static void OrderedMemcpy(Ptr dest, Ptr src, size_t bytes)
         }
         return;
     }
-    src.AdvanceBytes(bytes - 1);
+    src.AdvanceBytes((int)bytes - 1);
     for (Ptr d = dest.PlusBytes(bytes - 1); d >= dest; d.AdvanceBytes(-1), src.AdvanceBytes(-1))
     {
         d.WriteInPlace(src.Peek<uint8_t>());

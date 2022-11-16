@@ -216,7 +216,7 @@ struct ControlMapping
                 mCursor--;
             }
             CCASSERT(mValueCount > 0);
-            out = ControlValue::FloatValue(mValueArray[RotateIntoRange(mCursor, mValueCount)]);
+            out = ControlValue::FloatValue(mValueArray[RotateIntoRange((int)mCursor, (int)mValueCount)]);
             return true;
         }
     }
