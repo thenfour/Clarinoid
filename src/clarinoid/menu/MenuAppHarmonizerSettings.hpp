@@ -447,19 +447,19 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
 
     MultiSubmenuSettingItem mVoiceSubmenu = {
         [](void *cap) FLASHMEM { return clarinoid::HARM_VOICES; },
-        [](void *cap, size_t mi) { // name
+        [](void *cap, size_t mi) FLASHMEM { // name
             auto *pThis = (HarmPatchSettingsApp *)cap;
             // like
             // Voice 5 [-2,2]
             return (String)(String("Voice ") + mi + "" +
                             pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
         },                         // return string name
-        [](void *cap, size_t mi) { // get submenu for item
+        [](void *cap, size_t mi) FLASHMEM { // get submenu for item
             auto *pThis = (HarmPatchSettingsApp *)cap;
             pThis->mHarmVoiceSettingsApp.mEditingHarmVoice = mi;
             return &pThis->mHarmVoiceSettingsApp.mRootList;
         },                                         // return submenu
-        [](void *cap, size_t mi) { return true; }, // is enabled
+        AlwaysEnabledMulti, // is enabled
         this};                                     // capture
 
     FunctionListSettingItem mCopyPreset = {

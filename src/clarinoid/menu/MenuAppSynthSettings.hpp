@@ -5,6 +5,7 @@
 #include "NumericSettingItem.hpp"
 #include "EnumSettingItem.hpp"
 #include "FunctionListSettingItem.hpp"
+#include "BoolSettingItem.hpp"
 #include "GainSettingItem.hpp"
 
 namespace clarinoid
@@ -306,19 +307,17 @@ struct SynthPatchOscillatorMenuStuff
                               AlwaysEnabled};
 
     FloatSettingItem mRingModStrength = {"RingModAmt",
-                              StandardRangeSpecs::gFloat_N1_1,
-                              Property<float>{[](void *cap) FLASHMEM {
-                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                  return pThis->GetBinding().mRingModStrengthN11;
-                                              },
-                                              [](void *cap, const float &v) FLASHMEM {
-                                                  auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                  pThis->GetBinding().mRingModStrengthN11 = v;
-                                              },
-                                              this},
-                              AlwaysEnabled};
-
-
+                                         StandardRangeSpecs::gFloat_N1_1,
+                                         Property<float>{[](void *cap) FLASHMEM {
+                                                             auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                             return pThis->GetBinding().mRingModStrengthN11;
+                                                         },
+                                                         [](void *cap, const float &v) FLASHMEM {
+                                                             auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                             pThis->GetBinding().mRingModStrengthN11 = v;
+                                                         },
+                                                         this},
+                                         AlwaysEnabled};
 
     MultiBoolSettingItem mRingMod{[](void *cap) FLASHMEM -> size_t { // get item count
                                       auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
@@ -600,8 +599,8 @@ struct SynthPatchOscillatorMenuStuff
         &mFreqMul,
         &mFreqOffset,
         &mPortamentoTimeMS,
-&mRingModStrength,
-&mRingMod,
+        &mRingModStrength,
+        &mRingMod,
         &mFMFeedback,
 
         &mHardSyncEnabled,
@@ -940,18 +939,18 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     FunctionListSettingItem mCopyPreset = {
         "Copy to ...",
         SYNTH_PRESET_COUNT,
-        [](void *cap, size_t i) { // itemNameGetter,
+        [](void *cap, size_t i) FLASHMEM -> String { // itemNameGetter,
             auto *pThis = (SynthPatchMenuApp *)cap;
             return pThis->GetAppSettings()->mSynthSettings.mPatches[i].ToString();
         },
-        [](void *cap, size_t i) { // cc::function<void(void*,size_t)>::ptr_t onClick,
+        [](void *cap, size_t i) FLASHMEM { // cc::function<void(void*,size_t)>::ptr_t onClick,
             auto *pThis = (SynthPatchMenuApp *)cap;
             pThis->GetAppSettings()->mSynthSettings.mPatches[i].CopyFrom(pThis->GetBinding());
 
-            auto fromName = pThis->GetAppSettings()->GetSynthPatchName(pThis->GetBindingID());
-            auto toName = pThis->GetAppSettings()->GetSynthPatchName(i);
+            auto fromName = pThis->GetAppSettings()->GetSynthPatchName((int16_t)pThis->GetBindingID());
+            auto toName = pThis->GetAppSettings()->GetSynthPatchName((int16_t)i);
 
-            pThis->mDisplay.ShowToast(String("Copied ") + fromName + "\nto\n" + toName);
+            //pThis->mDisplay.ShowToast(String("Copied ") + fromName + "\nto\n" + toName);
         },
         AlwaysEnabled,
         this};
@@ -961,6 +960,20 @@ struct SynthPatchMenuApp : public SettingsMenuApp
     {
         return GetBinding().mModulations[mEditingModulationIndex];
     }
+
+    BoolSettingItem mEnable = {"Enable",
+                                     "On",
+                                     "Off",
+                                     Property<bool>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (SynthPatchMenuApp *)cap;
+                                                        return pThis->GetModulationBinding().mEnabled.GetValue();
+                                                    },
+                                                    [](void *cap, const bool &v) {
+                                                        auto *pThis = (SynthPatchMenuApp *)cap;
+                                                        pThis->GetModulationBinding().mEnabled.SetValue(v);
+                                                    },
+                                                    this},
+                                     AlwaysEnabled};
 
     EnumSettingItem<AnyModulationSource> mModSource = {
         "Source",
@@ -1133,7 +1146,8 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         AlwaysEnabled,
         this};
 
-    ISettingItem *mModulationSubmenu[11] = {
+    ISettingItem *mModulationSubmenu[12] = {
+        &mEnable,
         &mModSource,
         &mModDest,
         &mModScale,

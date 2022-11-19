@@ -240,7 +240,7 @@ struct ControlMapping
         case ControlMapping::Operator::Multiply:
             return ControlValue::FloatValue(lhs->AsFloat01() * rhs.AsFloat01());
         default:
-            CCDIE("unsupported operator");
+            CCASSERT(!"bad operator");
         }
         return {};
     }

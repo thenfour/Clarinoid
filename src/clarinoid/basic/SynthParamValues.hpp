@@ -160,6 +160,7 @@ Result Deserialize(JsonVariantReader &myval, BoolParam &param)
     if (myval.mType == JsonDataType::Number)
     {
         param.mValue = (myval.mNumericValue.Get<int>() == 1);
+        return Result::Success();
     }
     return Result::Failure("expected boolean");
 }
@@ -262,7 +263,7 @@ template <typename TEnum>
 Result Serialize(JsonVariantWriter &myval, EnumParam<TEnum> &param)
 {
     const char *s = param.mpEnumInfo->GetValueShortName(param.mValue);
-    return myval.WriteStringValue(s);
+    return myval.WriteEnumStringValue(s);
 }
 
 template <typename TEnum>
@@ -523,7 +524,7 @@ Result Serialize(JsonVariantWriter &myval, FrequencyParamValue &param)
     float paramVal = param.GetParamValue();
     float ktVal = param.GetKTParamValue();
     SerializationObjectMap<2> map{{
-        CreateSerializationMapping(paramVal, "val"),
+        CreateSerializationMapping(paramVal, "f"),
         CreateSerializationMapping(ktVal, "kt"),
     }};
     return Serialize(myval, map);
@@ -535,7 +536,7 @@ Result Deserialize(JsonVariantReader &myval, FrequencyParamValue &param)
     float paramVal = 0;
     float ktVal = 0;
     SerializationObjectMap<2> map{{
-        CreateSerializationMapping(paramVal, "val"),
+        CreateSerializationMapping(paramVal, "f"),
         CreateSerializationMapping(ktVal, "kt"),
     }};
     auto ret = Deserialize(myval, map);
@@ -948,12 +949,14 @@ struct HarmSequence
     std::array<int8_t, HARM_SEQUENCE_LEN> mItems{};
     uint8_t mLength = 0;
 
-    int8_t & operator [] (size_t i) {
+    int8_t &operator[](size_t i)
+    {
         CCASSERT(i < HARM_SEQUENCE_LEN);
         return mItems[i];
     }
 
-    int8_t operator [] (size_t i) const {
+    int8_t operator[](size_t i) const
+    {
         CCASSERT(i < HARM_SEQUENCE_LEN);
         return mItems[i];
     }
@@ -991,6 +994,26 @@ Result Deserialize(JsonVariantReader &myval, HarmSequence &param)
 
 
 
+////////////////////////////////////////////////////
+struct MidiNoteRangeParam : ISerializationObjectMap<2>
+{
+    MidiNote mMin = MidiNote::MinimumValue();
+    MidiNote mMax = MidiNote::MaximumValue();
+
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mMin, "Min"),
+            CreateSerializationMapping(mMax, "Max"),
+        }};
+    }
+};
+
+
+
+
+
+////////////////////////////////////////////////////
 Result Serialize(JsonVariantWriter &myval, MidiNote &param)
 {
     return myval.WriteStringValue(param.ToString());
@@ -1005,5 +1028,82 @@ Result Deserialize(JsonVariantReader &myval, MidiNote &param)
     return MidiNote::FromString(myval.mStringValue, param);
 }
 
+#if defined(CLARINOID_MODULE_TEST)
+void TestEquals(const float &a, const float &b)
+{
+    TestFloatEq(a, b);
+}
+void TestEquals(const FloatParam &a, const FloatParam &b)
+{
+    TestEq(a.mValue, b.mValue);
+}
+void TestEquals(const MidiNote &a, const MidiNote &b)
+{
+    TestEq(a.GetMidiValue(), b.GetMidiValue());
+}
+void TestEquals(const StringParam &a, const StringParam &b)
+{
+    TestEq(a.mValue, b.mValue);
+}
+void TestEquals(const BoolParam &a, const BoolParam &b)
+{
+    TestEq(a.mValue, b.mValue);
+}
+template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
+void TestEquals(const IntParam<T> &a, const IntParam<T> &b)
+{
+    TestEq(a.mValue, b.mValue);
+}
+
+template <typename T>
+void TestEquals(const EnumParam<T> &a, const EnumParam<T> &b)
+{
+    TestEq(a.mValue, b.mValue);
+}
+void TestEquals(const VolumeParamValue &a, const VolumeParamValue &b)
+{
+    TestEq(a.GetParamValue(), b.GetParamValue());
+}
+void TestEquals(const FrequencyParamValue &a, const FrequencyParamValue &b)
+{
+    TestEquals(a.mValue, b.mValue);
+    TestEquals(a.mKTValue, b.mKTValue);
+}
+
+void TestEquals(const MidiNoteRangeParam &a, const MidiNoteRangeParam &b)
+{
+    TestEquals(a.mMin, b.mMin);
+    TestEquals(a.mMax, b.mMax);
+}
+void TestEquals(const ScaleParam &a, const ScaleParam &b)
+{
+    TestEq(a.mValue.mRootNoteIndex, b.mValue.mRootNoteIndex);
+    TestEq(a.mValue.mFlavorIndex, b.mValue.mFlavorIndex);
+}
+void TestEquals(const CurveLUTParamValue &a, const CurveLUTParamValue &b)
+{
+    TestEq(a.GetParamValue(), b.GetParamValue());
+}
+void TestEquals(const EnvTimeParamValue &a, const EnvTimeParamValue &b)
+{
+    TestEq(a.GetValue(), b.GetValue());
+}
+void TestEquals(const TimeWithBasisParam &a, const TimeWithBasisParam &b)
+{
+    TestEquals(a.mBasis, b.mBasis);
+    TestEquals(a.mParamValue, b.mParamValue);
+}
+void TestEquals(const HarmSequence &a, const HarmSequence &b)
+{
+    TestEq(a.mLength, b.mLength);
+    Test(a.mLength < a.mItems.size());
+    for (size_t i = 0; i < a.mLength; ++i)
+    {
+        TestEq(a.mItems[i], b.mItems[i]);
+    }
+}
+
+
+#endif // defined(CLARINOID_MODULE_TEST)
 
 } // namespace clarinoid

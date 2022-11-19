@@ -54,7 +54,7 @@ namespace clarinoid
 
     virtual void InputSource_ShowToast(const String& s) override
     {
-      log("TOAST : %s", s.mStr.str().c_str());
+      log("TOAST : %s", s.c_str());
     }
 
     TestEncoder mEncoder1;

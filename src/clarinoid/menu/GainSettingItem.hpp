@@ -40,7 +40,7 @@ struct GainEditor : ISettingItemEditor
         {
             this->mpApi->GetDisplay()->println(String("") + newDB + " db");
         }
-        int deltaDb = newDB - oldDB;
+        int deltaDb = (int)(newDB - oldDB);
         this->mpApi->GetDisplay()->println(String(" (") + (deltaDb >= 0 ? "+" : "") + deltaDb + " db)");
 
         this->mpApi->GetDisplay()->println("");

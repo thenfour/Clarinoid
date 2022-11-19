@@ -489,7 +489,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
 
         size_t lineHeight = mDisplay.GetLineHeight();
         size_t maxItemsToRender = (mDisplay.GetClientHeight() + lineHeight) / lineHeight;
-        size_t itemsToRender = min(maxItemsToRender, state.pList->Count());
+        size_t itemsToRender = std::min(maxItemsToRender, state.pList->Count());
         int focusedItemScreenPos = maxItemsToRender / 3; // estimated... whatever.
 
         size_t itemToRender = AddConstrained(state.focusedItem, -focusedItemScreenPos, 0, state.pList->Count() - 1);

@@ -5,6 +5,10 @@
 #include <type_traits>
 #include "BaseDefs.hpp"
 
+#ifdef CLARINOID_PLATFORM_X86
+#include <map>
+#endif
+
 namespace clarinoid
 {
 
@@ -140,17 +144,32 @@ struct BufferedStream : IPeekableStream
     }
 };
 
+enum class TokenType
+{
+    Syntax,
+    Whitespace,
+    Keyname,
+    StringVal,
+    EnumStringVal,
+    NumberVal,
+    Null,
+    BoolValue,
+};
+
 struct TextStream : IPeekableStream
 {
     IPeekableStream &mStream;
     // 1-based per convention
     uint32_t mLine = 1;
     uint32_t mColumn = 1;
+    
+    bool mMinified = true;
 
     TextStream(IPeekableStream &stream) : mStream(stream)
     {
     }
 
+  private:
     virtual size_t write(const uint8_t *buf, size_t bytes) override
     {
         return mStream.write(buf, bytes);
@@ -161,8 +180,133 @@ struct TextStream : IPeekableStream
         return mStream.read(buf, bytes);
     }
 
-    size_t write(const String &s)
+  public:
+#ifdef CLARINOID_PLATFORM_X86
+
+    static const char *TokenTypeToString(TokenType t)
     {
+        switch (t)
+        {
+        case TokenType::Keyname:
+            return "keyname";
+        case TokenType::EnumStringVal:
+            return "enum   ";
+        case TokenType::NumberVal:
+            return "number ";
+        case TokenType::StringVal:
+            return "string ";
+        case TokenType::Syntax:
+            return "syntax ";
+        case TokenType::Whitespace:
+            return "whites ";
+        case TokenType::Null:
+            return "null   ";
+        case TokenType::BoolValue:
+            return "boolval";
+        }
+    }
+
+    struct SpecificTokenInfo
+    {
+        std::string mToken;
+        int mBytes;
+    };
+
+    struct TokenInfo
+    {
+        std::map<std::string, SpecificTokenInfo> mWrites;
+        int mBytes = 0;
+    };
+
+    std::map<TokenType, TokenInfo> mStats;
+
+    void DumpStats()
+    {
+        std::cout << std::endl;
+        int total = 0;
+        for (auto &kv : mStats)
+        {
+            std::cout << TokenTypeToString(kv.first) << ": " << kv.second.mBytes << " bytes" << std::endl;
+
+            std::vector<TextStream::SpecificTokenInfo> writes;
+            for (auto &tokinfo : kv.second.mWrites)
+            {
+                writes.push_back(tokinfo.second);
+            }
+
+            auto sortFn = [](const TextStream::SpecificTokenInfo &a, const TextStream::SpecificTokenInfo &b) -> bool {
+                return a.mBytes > b.mBytes;
+            };
+
+            std::sort(writes.begin(), writes.end(), sortFn);
+
+            for (size_t i = 0; i < std::min((size_t)20, writes.size()); ++i)
+            {
+                std::cout << "    "  << writes[i].mBytes << ": " << writes[i].mToken << std::endl;
+            }
+
+            total += kv.second.mBytes;
+        }
+        std::cout << total << " total bytes " << std::endl;
+
+
+
+    }
+
+    std::string mIncompleteStringToken;
+    bool mIsCollectingString = false;
+    TokenType mCollectingType = TokenType::StringVal; // doesn't matter.
+
+    void BeginToken(TokenType type)
+    {
+        CCASSERT(!mIsCollectingString);
+        mIncompleteStringToken.clear();
+        mIsCollectingString = true;
+        mCollectingType = type;
+    }
+    void EndToken()
+    {
+        CCASSERT(mIsCollectingString);
+        mIsCollectingString = false;
+        CollectStat(mIncompleteStringToken.c_str(), mCollectingType);
+        mIncompleteStringToken.clear();
+    }
+
+    void CollectStat(const String &s, TokenType type)
+    {
+        if (mIsCollectingString)
+        {
+            mIncompleteStringToken += s.c_str();
+        }
+        else
+        {
+            auto &info = mStats[type];
+            info.mBytes += (int)s.length();
+            auto &sinfo = info.mWrites[s.c_str()];
+            sinfo.mBytes += (int)s.length();
+            sinfo.mToken = s.c_str();
+        }
+    }
+
+#else
+    void BeginToken(TokenType type)
+    {
+    }
+    void EndToken()
+    {
+    }
+
+#endif
+
+    size_t write(const String &s, TokenType type)
+    {
+        if ((type == TokenType::Whitespace) && mMinified)
+            return s.length();
+
+#ifdef CLARINOID_PLATFORM_X86
+        CollectStat(s, type);
+#endif
+
         size_t ret = mStream.write((const uint8_t *)s.c_str(), s.length());
         for (size_t i = 0; i < ret; ++i)
         {
@@ -206,6 +350,9 @@ struct TextStream : IPeekableStream
 
 namespace CCJSON
 {
+
+    bool gQuoteKeyNames = false;
+
 template <typename T, typename F_>
 T alias_cast(F_ raw_data)
 {
@@ -850,6 +997,11 @@ inline bool parseNumber(const char *s, NumberData &result)
 
     return true;
 }
+
+static char gUnquotedTokenChars[] = "0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static char gUnquotedTokenStartChars[] = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+
 } // namespace CCJSON
 
 enum class JsonDataType : uint8_t
@@ -1026,7 +1178,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         // trailing new line is typical text file convention
         if (mStream.mColumn > 1)
         {
-            WriteRaw("\n");
+            RawWrite("\n", TokenType::Whitespace);
         }
         mStream.flushWrite();
     }
@@ -1039,7 +1191,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         this->OnStreamAccess();
         mType = JsonDataType::Object;
         CCASSERT(mElementCount == 0);
-        mStream.write("{");
+        mStream.write("{", TokenType::Syntax);
         mIndentLevel++;
     }
 
@@ -1053,12 +1205,32 @@ struct JsonVariantWriter : JsonParentChildHelper
         if (mElementCount > 0)
         {
             EnsureChildrenClosed();
-            mStream.write(",");
+            mStream.write(",", TokenType::Syntax);
         }
         WriteNewLine();
         mElementCount++;
-        Result ret = RawWriteQuotedString(s.c_str());
-        ret.AndRequires(this->WriteRaw(":"), "key colon");
+        Result ret = Result::Success();
+        if (CCJSON::gQuoteKeyNames)
+            ret = RawWriteQuotedString(s.c_str(), TokenType::Keyname);
+        else
+        {
+            CCASSERT(s.length() > 0);
+            bool first = true;
+            for (char c : s)
+            {
+                if (first)
+                {
+                    CCASSERT(ArrayContains(CCJSON::gUnquotedTokenStartChars, c));
+                }
+                else
+                {
+                    CCASSERT(ArrayContains(CCJSON::gUnquotedTokenChars, c));
+                }
+                first = false;
+            }
+            ret = RawWrite(s.c_str(), TokenType::Keyname);
+        }
+        ret.AndRequires(this->RawWrite(":", TokenType::Syntax), "key colon");
         ExpectChildStreamAccess();
         return {this, mIndentLevel};
     }
@@ -1071,7 +1243,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         this->OnStreamAccess();
         mType = JsonDataType::Array;
         CCASSERT(mElementCount == 0);
-        mStream.write("[");
+        mStream.write("[", TokenType::Syntax);
         mIndentLevel++;
     }
 
@@ -1084,7 +1256,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         if (mElementCount > 0)
         {
             EnsureChildrenClosed();
-            mStream.write(",");
+            mStream.write(",", TokenType::Syntax);
         }
         WriteNewLine();
         mElementCount++;
@@ -1098,7 +1270,18 @@ struct JsonVariantWriter : JsonParentChildHelper
             return Result::Failure("jsonvariant can only be used once");
         this->OnStreamAccess();
         mType = JsonDataType::String;
-        auto ret = RawWriteQuotedString(s.c_str());
+        auto ret = RawWriteQuotedString(s.c_str(), TokenType::StringVal);
+        mIsLocked = true;
+        return ret;
+    }
+
+    Result WriteEnumStringValue(const String &s)
+    {
+        if ((mType != JsonDataType::Undefined) || mIsLocked)
+            return Result::Failure("jsonvariant can only be used once");
+        this->OnStreamAccess();
+        mType = JsonDataType::String;
+        auto ret = RawWriteQuotedString(s.c_str(), TokenType::EnumStringVal);
         mIsLocked = true;
         return ret;
     }
@@ -1109,7 +1292,7 @@ struct JsonVariantWriter : JsonParentChildHelper
             return Result::Failure("jsonvariant can only be used once");
         this->OnStreamAccess();
         mType = JsonDataType::Null;
-        mStream.write((const uint8_t *)"null", 4);
+        mStream.write("null", TokenType::Null);
         mIsLocked = true;
         return Result::Success();
     }
@@ -1122,11 +1305,11 @@ struct JsonVariantWriter : JsonParentChildHelper
         mType = JsonDataType::Boolean;
         if (b)
         {
-            mStream.write((const uint8_t *)"true", 4);
+            mStream.write("true", TokenType::BoolValue);
         }
         else
         {
-            mStream.write((const uint8_t *)"false", 5);
+            mStream.write("false", TokenType::BoolValue);
         }
         mIsLocked = true;
         return Result::Success();
@@ -1171,7 +1354,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         this->OnStreamAccess();
         mType = JsonDataType::Number;
         String str = CCJSON::SignedIntegerToString(s);
-        auto ret = WriteRaw(str.c_str());
+        auto ret = RawWrite(str.c_str(), TokenType::NumberVal);
         mIsLocked = true;
         return ret;
     }
@@ -1184,7 +1367,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         this->OnStreamAccess();
         mType = JsonDataType::Number;
         String str = CCJSON::UnsignedIntegerToString(s);
-        auto ret = WriteRaw(str.c_str());
+        auto ret = RawWrite(str.c_str(), TokenType::NumberVal);
         mIsLocked = true;
         return ret;
     }
@@ -1197,70 +1380,73 @@ struct JsonVariantWriter : JsonParentChildHelper
   private:
     void WriteNewLine()
     {
-        mStream.write("\r\n");
+        mStream.write("\r\n", TokenType::Whitespace);
         for (int i = 0; i < mIndentLevel; ++i)
         {
-            mStream.write("  ");
+            mStream.write("  ", TokenType::Whitespace);
         }
     }
 
-    Result RawWriteQuotedString(const char *value)
+    Result RawWriteQuotedString(const char *value, TokenType tokenType)
     {
-        Result ret = WriteRaw("\"");
+        Result ret = RawWrite("\"", TokenType::Syntax);
+        mStream.BeginToken(tokenType);
         while (*value)
-            ret.AndRequires(RawWriteEscapedChar(*value++));
-        ret.AndRequires(WriteRaw("\""));
+            ret.AndRequires(RawWriteEscapedChar(*value++, tokenType));
+        mStream.EndToken();
+        ret.AndRequires(RawWrite("\"", TokenType::Syntax));
         return ret;
     }
 
-    Result RawWriteEscapedChar(char c)
+    Result RawWriteEscapedChar(char c, TokenType tokenType)
     {
         char specialChar = CCJSON::EscapeSequence::escapeChar(c);
         Result ret = Result::Success();
         if (specialChar)
         {
-            ret.AndRequires(RawWriteChar('\\'));
-            ret.AndRequires(RawWriteChar(specialChar));
+            ret.AndRequires(RawWriteCharOfString('\\', tokenType));
+            ret.AndRequires(RawWriteCharOfString(specialChar, tokenType));
             return ret;
         }
 
         // todo: text encoding.
         if (c)
         {
-            ret.AndRequires(RawWriteChar(c));
+            ret.AndRequires(RawWriteCharOfString(c, tokenType));
         }
         else
         {
-            ret.AndRequires(this->WriteRaw("\\u0000"));
+            ret.AndRequires(RawWrite("\\u0000", tokenType));
         }
         return ret;
     }
 
-    Result RawWriteChar(char ch)
+    Result RawWriteCharOfString(char ch, TokenType tokenType)
     {
-        return Result::Requires(1 == mStream.write((const uint8_t *)&ch, 1), "stream error");
+        char s[2] = {ch, 0};
+        return Result::Requires(1 == mStream.write(s, tokenType), "stream error");
     }
 
     template <typename T>
     Result RawWriteFloat(T value)
     {
         if (std::isnan(value))
-            return WriteRaw("null");
+            return RawWrite("null", TokenType::Null);
 
         if (std::isinf(value))
-            return WriteRaw("null");
+            return RawWrite("null", TokenType::Null);
 
         Result ret = Result::Success();
 
         if (value < 0.0)
         {
-            ret.AndRequires(WriteRaw("-"), "writing neg sign");
+            ret.AndRequires(RawWrite("-", TokenType::NumberVal), "writing neg sign");
             value = -value;
         }
 
         CCJSON::FloatParts<T> parts(value);
 
-        WriteRaw(CCJSON::UnsignedIntegerToString(parts.integral).c_str());
+        RawWrite(CCJSON::UnsignedIntegerToString(parts.integral).c_str(), TokenType::NumberVal);
 
         if (parts.decimalPlaces)
         {
@@ -1269,8 +1455,8 @@ struct JsonVariantWriter : JsonParentChildHelper
 
         if (parts.exponent)
         {
-            ret.AndRequires(WriteRaw("e"), "writing exp char");
-            WriteRaw(CCJSON::SignedIntegerToString(parts.exponent).c_str());
+            ret.AndRequires(RawWrite("e", TokenType::NumberVal), "writing exp char");
+            RawWrite(CCJSON::SignedIntegerToString(parts.exponent).c_str(), TokenType::NumberVal);
         }
         return ret;
     }
@@ -1278,9 +1464,8 @@ struct JsonVariantWriter : JsonParentChildHelper
     Result RawWriteDecimals(uint32_t value, int8_t width)
     {
         // buffer should be big enough for all digits and the dot
-        char buffer[16];
-        char *end = buffer + sizeof(buffer);
-        char *begin = end;
+        char buffer[20] = {0};
+        char *begin = buffer + sizeof(buffer) - 1;
 
         // write the string in reverse order
         while (width--)
@@ -1290,24 +1475,13 @@ struct JsonVariantWriter : JsonParentChildHelper
         }
         *--begin = '.';
 
-        return WriteRaw(begin, end);
+        return RawWrite(begin, TokenType::NumberVal);
     }
 
-    Result WriteRaw(const char *begin, const char *end)
-    {
-        CCASSERT(end > begin);
-        size_t toWrite = end - begin;
-        if (toWrite != mStream.write((const uint8_t *)begin, toWrite))
-        {
-            return Result::Failure("stream write error");
-        }
-        return Result::Success();
-    }
-
-    Result WriteRaw(const char *str)
+    Result RawWrite(const char *str, TokenType tokenType)
     {
         size_t toWrite = StringLength(str);
-        if (toWrite != mStream.write((const uint8_t *)str, toWrite))
+        if (toWrite != mStream.write(str, tokenType))
         {
             return Result::Failure("stream write error");
         }
@@ -1322,7 +1496,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         {
             WriteNewLine();
         }
-        mStream.write("}");
+        mStream.write("}", TokenType::Syntax);
         mIsLocked = true;
         return Result::Success();
     }
@@ -1335,7 +1509,7 @@ struct JsonVariantWriter : JsonParentChildHelper
         {
             WriteNewLine();
         }
-        mStream.write("]");
+        mStream.write("]", TokenType::Syntax);
         mIsLocked = true;
         return Result::Success();
     }
@@ -1513,9 +1687,13 @@ struct JsonVariantReader : JsonParentChildHelper
         return false;
     }
 
-    String ReadUntilNotOf(const char *chars)
+    String ReadUntilNotOf(const char *chars, char startChar = 0)
     {
         String ret;
+        if (startChar)
+        {
+            ret.append(startChar);
+        }
         while (true)
         {
             int ch = mStream->peekByte();
@@ -1688,7 +1866,7 @@ struct JsonVariantReader : JsonParentChildHelper
 
         // read name
         String keyName;
-        Result ret = RequireQuotedString(keyName);
+        Result ret = RequireQuotedOrUnquotedString(keyName);
         if (ret.IsFailure())
         {
             return {this, ret};
@@ -1736,13 +1914,31 @@ struct JsonVariantReader : JsonParentChildHelper
         mIsLocked = true;
     }
 
-    Result RequireQuotedString(String &outp)
+    Result RequireQuotedOrUnquotedString(String &outp)
     {
         int ch = mStream->readByte();
         if (ch <= 0)
             return Result::Failure("EOF expecting quoted string");
         if (ch == '\"')
             return ParseQuotedString(outp);
+
+        // support for unquoted keys
+        if (ArrayContains(CCJSON::gUnquotedTokenStartChars, (char)ch))
+        {
+            outp = "";
+            outp.append((char)ch);
+            while (true)
+            {
+                ch = mStream->peekByte();
+                if (ch <= 0)
+                    return Result::Success(); // EOF is end of unquoted string. Actually this will eventually lead to an error but it's OK for this function.
+                if (!ArrayContains(CCJSON::gUnquotedTokenChars, (char)ch))
+                    return Result::Success();
+                outp.append((char)ch);
+                mStream->readByte();
+            }
+        }
+
         return Result::Failure(String("unexpected char; expected quote @ ") + GetFilePosInfoString());
     }
 
@@ -1864,14 +2060,28 @@ struct SerializationMapping
 
     // these are required to be stored here because the serializer doesn't know which types it's serializing;
     // they are only known to the caller when constructing this object.
-    cc::function<Result(JsonVariantWriter &myval, void *pparam)>::ptr_t const mSerializeFn;
-    cc::function<Result(JsonVariantReader &myval, void *pparam)>::ptr_t const mDeserializeFn;
+    typename cc::function<Result(JsonVariantWriter &myval, void *pparam)>::ptr_t const mSerializeFn;
+    typename cc::function<Result(JsonVariantReader &myval, void *pparam)>::ptr_t const mDeserializeFn;
+
+#if defined(CLARINOID_MODULE_TEST)
+    // not const, because GetSerializationMapping() cannot be const, and making params const would cause havoc with that as a hierarchy is traversed.
+    typename cc::function<void(void *pMyParam, void *mOther)>::ptr_t const mTestEqualsFn;
+#endif // defined(CLARINOID_MODULE_TEST)
 
     constexpr SerializationMapping(void *pparam,
                                    const char *key,
                                    cc::function<Result(JsonVariantWriter &, void *pparam)>::ptr_t serializeFn,
-                                   cc::function<Result(JsonVariantReader &, void *pparam)>::ptr_t deserializeFn)
+                                   cc::function<Result(JsonVariantReader &, void *pparam)>::ptr_t deserializeFn
+#if defined(CLARINOID_MODULE_TEST)
+                                   ,
+        typename cc::function<void(void *pMyParam, void *mOther)>::ptr_t testEqualsFn
+#endif // defined(CLARINOID_MODULE_TEST)
+                                   )
         : mpvParam(pparam), mKey(key), mSerializeFn(serializeFn), mDeserializeFn(deserializeFn)
+#if defined(CLARINOID_MODULE_TEST)
+          ,
+          mTestEqualsFn(testEqualsFn)
+#endif // defined(CLARINOID_MODULE_TEST)
     {
     }
 
@@ -1881,6 +2091,78 @@ struct SerializationMapping
         return *((T *)mpvParam);
     }
 };
+
+// size-optimizing
+Result Deserialize(JsonVariantReader &myval, SerializationMapping *begin, SerializationMapping *end)
+{
+    if (myval.mType != JsonDataType::Object)
+    {
+        return Result::Failure("expected object type");
+    }
+    Result ret = Result::Success();
+    for (auto i = begin; i != end; ++i)
+    {
+        auto &mapping = *i;
+        mapping.mVisited = false;
+    }
+    while (true)
+    {
+        auto ch = myval.GetNextObjectItem();
+        if (ch.IsEOF())
+            break;
+        if (ch.mParseResult.IsFailure())
+        {
+            return ch.mParseResult;
+        }
+        // find the mapping corresponding to this object key.
+        bool wasParsed = false;
+        for (auto i = begin; i != end; ++i)
+        {
+            auto &mapping = *i;
+            if (ch.mKeyName == mapping.mKey)
+            {
+                // if (mapping.mVisited)
+                //{
+                //     ret.AddPrefix(String("Duplicate key in input: ") + ch.mKeyName + " @ " +
+                //                   myval.GetFilePosInfoString());
+                // }
+                Result chret = mapping.mDeserializeFn(ch, mapping.mpvParam);
+                if (chret.IsFailure())
+                    return chret;
+                wasParsed = true;
+                mapping.mVisited = true;
+                break;
+            }
+        }
+        if (!wasParsed)
+        {
+            ret.AddPrefix(String(ch.mKeyName) + " Input key was ignored @ " + myval.GetFilePosInfoString());
+        }
+    }
+    for (auto i = begin; i != end; ++i)
+    {
+        auto &mapping = *i;
+        if (!mapping.mVisited)
+        {
+            ret.AddPrefix(String(mapping.mKey) + " Key not found in input @ " + myval.GetFilePosInfoString());
+        }
+    }
+    return ret;
+}
+
+// size-optimizing
+Result Serialize(JsonVariantWriter &myval, SerializationMapping *begin, SerializationMapping *end)
+{
+    Result ret = Result::Success();
+    myval.BeginObject();
+    for (auto i = begin; i != end; ++i)
+    {
+        auto &mapping = *i;
+        auto ch = myval.Object_MakeKey(mapping.mKey);
+        ret.AndRequires(mapping.mSerializeFn(ch, mapping.mpvParam), String("error @ ") + myval.GetFilePosInfoString());
+    }
+    return ret;
+}
 
 template <size_t N> // sad.
 struct SerializationObjectMap
@@ -1903,71 +2185,16 @@ struct SerializationObjectMap
 
     Result Serialize(JsonVariantWriter &myval)
     {
-        Result ret = Result::Success();
-        myval.BeginObject();
-        for (auto &mapping : mMap)
-        {
-            auto ch = myval.Object_MakeKey(mapping.mKey);
-            ret.AndRequires(mapping.mSerializeFn(ch, mapping.mpvParam),
-                            String("error @ ") + myval.GetFilePosInfoString());
-        }
-        return ret;
+        // size-optimizing
+        auto *begin = &*mMap.begin();
+        return ::clarinoid::Serialize(myval, begin, begin + mMap.size());
     }
 
     Result Deserialize(JsonVariantReader &myval)
     {
-        if (myval.mType != JsonDataType::Object)
-        {
-            return Result::Failure(String("expected object type @ ") + myval.GetFilePosInfoString());
-        }
-        // std::cout << myval.ToString().mStr << std::endl;
-        Result ret = Result::Success();
-        for (auto &mapping : mMap)
-        {
-            mapping.mVisited = false;
-        }
-        // for (auto ch = myval.GetNextObjectItem(); !ch.IsEOF(); ch = myval.GetNextObjectItem())
-        while (true)
-        {
-            auto ch = myval.GetNextObjectItem();
-            if (ch.IsEOF())
-                break;
-            if (ch.mParseResult.IsFailure())
-            {
-                return ch.mParseResult;
-            }
-            // find the mapping corresponding to this object key.
-            bool wasParsed = false;
-            for (auto &mapping : mMap)
-            {
-                if (ch.mKeyName == mapping.mKey)
-                {
-                    if (mapping.mVisited)
-                    {
-                        ret.AddPrefix(String("Duplicate key in input: ") + ch.mKeyName + " @ " +
-                                      myval.GetFilePosInfoString());
-                    }
-                    Result chret = mapping.mDeserializeFn(ch, mapping.mpvParam);
-                    if (chret.IsFailure())
-                        return chret;
-                    wasParsed = true;
-                    mapping.mVisited = true;
-                    break;
-                }
-            }
-            if (!wasParsed)
-            {
-                ret.AddPrefix(String("Input key was ignored: ") + ch.mKeyName + " @ " + myval.GetFilePosInfoString());
-            }
-        }
-        for (auto &mapping : mMap)
-        {
-            if (!mapping.mVisited)
-            {
-                ret.AddPrefix(String("Key not found in input: ") + mapping.mKey + " @ " + myval.GetFilePosInfoString());
-            }
-        }
-        return ret;
+        // size-optimizing
+        auto *begin = &*mMap.begin();
+        return ::clarinoid::Deserialize(myval, begin, begin + mMap.size());
     }
 };
 
@@ -1975,17 +2202,27 @@ struct SerializationObjectMap
 template <typename Tparam>
 SerializationMapping CreateSerializationMapping(Tparam &param, const char *key)
 {
-    return {&param,
-            key,
+    return
+    {
+        &param,
+            key, // SerializeVoid<Tparam>, DeserializeVoid<Tparam>,
             [](JsonVariantWriter &myval, void *pparam) FLASHMEM {
                 Tparam &param{*((Tparam *)pparam)};
                 return Serialize(myval, param);
             },
-            [](JsonVariantReader &myval, void *pparam)FLASHMEM {
+            [](JsonVariantReader &myval, void *pparam) FLASHMEM {
                 Tparam &param{*((Tparam *)pparam)};
-                // std::cout << myval.ToString().mStr << std::endl;
                 return Deserialize(myval, param);
-            }};
+            }
+#if defined(CLARINOID_MODULE_TEST)
+        ,
+            [](void *pMyParam, void *pOtherParam) FLASHMEM {
+                Tparam &myparam{*((Tparam *)pMyParam)};
+                Tparam &otherparam{*((Tparam *)pOtherParam)};
+                TestEquals(myparam, otherparam);
+            }
+#endif // defined(CLARINOID_MODULE_TEST)
+    };
 }
 
 // allows quick object mapping like,
@@ -2021,6 +2258,23 @@ struct ISerializationObjectMap
 {
     using SerializationObjectMapArray = SerializationObjectMap<N>;
     virtual SerializationObjectMapArray GetSerializationObjectMap() = 0;
+
+#if defined(CLARINOID_MODULE_TEST)
+    void SerializationTest_Equals(ISerializationObjectMap<N> &rhs)
+    {
+        auto map = GetSerializationObjectMap();
+        auto otherMap = rhs.GetSerializationObjectMap();
+        auto myMapping = map.begin();
+        auto otherMapping = otherMap.begin();
+        while (myMapping != map.end())
+        {
+            Test(0 == strcmp(myMapping->mKey, otherMapping->mKey));
+            myMapping->mTestEqualsFn(myMapping->mpvParam, otherMapping->mpvParam);
+            ++myMapping;
+            ++otherMapping;
+        }
+    }
+#endif // defined(CLARINOID_MODULE_TEST)
 };
 
 template <size_t N>
@@ -2036,30 +2290,57 @@ static Result Deserialize(JsonVariantReader &myval, ISerializationObjectMap<N> &
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename T, size_t N>
-Result Serialize(JsonVariantWriter &myval, std::array<T, N> &param)
+Result Serialize(JsonVariantWriter &myval,
+                 intptr_t begin,
+                 intptr_t end,
+                 size_t tsize,
+                 typename cc::function<Result(JsonVariantWriter &, void *)>::ptr_t realSerializeFn)
+
 {
     Result ret = Result::Success();
     myval.BeginArray();
-    for (auto &i : param)
+    for (auto it = begin; it != end; it += tsize)
     {
         auto v = myval.Array_MakeValue();
-        Serialize(v, i);
+        realSerializeFn(v, (void *)it);
     }
-    // myval.Array_Close();
     return ret;
 }
 
 template <typename T, size_t N>
-Result Deserialize(JsonVariantReader &myval, std::array<T, N> &param)
+Result Serialize(JsonVariantWriter &myval, std::array<T, N> &param)
+{
+    auto *begin = &*param.begin();
+    return Serialize(myval,
+                     (intptr_t)begin,
+                     (intptr_t)(begin + param.size()),
+                     sizeof(T), //
+                     [](JsonVariantWriter &myval, void *pparam) FLASHMEM {
+                         T &param{*((T *)pparam)};
+                         return Serialize(myval, param);
+                     });
+    // Result ret = Result::Success();
+    // myval.BeginArray();
+    // for (auto &i : param)
+    //{
+    //     auto v = myval.Array_MakeValue();
+    //     Serialize(v, i);
+    // }
+    // return ret;
+}
+
+Result Deserialize(JsonVariantReader &myval,
+                   intptr_t begin,
+                   intptr_t end,
+                   size_t tsize,
+                   typename cc::function<Result(JsonVariantReader &, void *)>::ptr_t realDeserializeFn)
 {
     if (myval.mType != JsonDataType::Array)
     {
-        return Result::Failure(String("expected array") + myval.GetFilePosInfoString());
+        return Result::Failure();
+        // return Result::Failure(String("expected array") + myval.GetFilePosInfoString());
     }
-    // std::cout << myval.ToString().mStr << std::endl;
-    size_t arrayIndex = 0;
-    // for (auto ch = myval.GetNextArrayItem(); !ch.IsEOF(); ch = myval.GetNextArrayItem())
+    intptr_t it = begin;
     while (true)
     {
         auto ch = myval.GetNextArrayItem();
@@ -2067,18 +2348,36 @@ Result Deserialize(JsonVariantReader &myval, std::array<T, N> &param)
         {
             break;
         }
-        if (arrayIndex >= N)
+        if (it == end)
         {
-            return Result::Success(String("More items than expected in input @ ") + myval.GetFilePosInfoString());
+            return Result::Success();
+            // return Result::Success(String("More items than expected in input @ ") + myval.GetFilePosInfoString());
         }
-        Result chret = Deserialize(ch, param[arrayIndex]);
-        arrayIndex++;
+        Result chret = realDeserializeFn(ch, (void *)it);
+
+        it += tsize;
     }
-    if (arrayIndex < N)
+    if (it != end)
     {
-        return Result::Success(String("Too few array items in input @ ") + myval.GetFilePosInfoString());
+        return Result::Success();
+        // return Result::Success(String("Too few array items in input @ ") + myval.GetFilePosInfoString());
     }
     return Result::Success();
+}
+
+template <typename T, size_t N>
+Result Deserialize(JsonVariantReader &myval, std::array<T, N> &param)
+{
+    // because of template expansion this function is very bloaty. call a non-templated version for size optimization.
+    auto *begin = &*param.begin();
+    return Deserialize(myval,
+                       (intptr_t)  begin,
+                       (intptr_t) (begin + param.size()),
+                       sizeof(T),
+                       [](JsonVariantReader &myval, void *pparam) FLASHMEM {
+                           T &param{*((T *)pparam)};
+                           return Deserialize(myval, param);
+                       });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2116,6 +2415,28 @@ Result Deserialize(JsonVariantReader &myval, T &param)
     param = myval.mNumericValue.Get<T>();
     return Result::Success();
 }
+
+
+
+#if defined(CLARINOID_MODULE_TEST)
+
+template<size_t N>
+void TestEquals(ISerializationObjectMap<N> &a, ISerializationObjectMap<N> &b)
+{
+    return a.SerializationTest_Equals(b);
+}
+
+template <typename T, size_t N>
+void TestEquals(std::array<T, N> &a, std::array<T, N> &b)
+{
+    for (size_t i = 0; i < N; ++i)
+    {
+        TestEquals(a[i], b[i]);
+    }
+}
+
+#endif // defined(CLARINOID_MODULE_TEST)
+
 
 static constexpr auto aoeue = sizeof(JsonVariantReader);
 

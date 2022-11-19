@@ -18,8 +18,8 @@ enum class GlobalScaleRefType : uint8_t
 };
 
 EnumItemInfo<GlobalScaleRefType> gGlobalScaleRefTypeItems[2] = {
-    {GlobalScaleRefType::Chosen, "Chosen"},
-    {GlobalScaleRefType::Deduced, "Deduced"},
+    {GlobalScaleRefType::Chosen, "Chosen", "sel"},
+    {GlobalScaleRefType::Deduced, "Deduced", "ded"},
 };
 
 EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo("GlobalScaleRefType", gGlobalScaleRefTypeItems);
@@ -35,10 +35,10 @@ struct ReverbSettings : ISerializationObjectMap<4>
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
         return {{
-            CreateSerializationMapping(mEnabled, "Enabled"),
-            CreateSerializationMapping(mGain, "Gain"),
-            CreateSerializationMapping(mDamping, "Damping"),
-            CreateSerializationMapping(mSize, "Size"),
+            CreateSerializationMapping(mEnabled, "on"),
+            CreateSerializationMapping(mGain, "vol"),
+            CreateSerializationMapping(mDamping, "damp"),
+            CreateSerializationMapping(mSize, "sz"),
         }};
     }
 };
@@ -49,12 +49,12 @@ struct DelaySettings : ISerializationObjectMap<6>
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
         return {{
-            CreateSerializationMapping(mEnabled, "Enabled"),
-            CreateSerializationMapping(mGain, "Gain"),
-            CreateSerializationMapping(mTime, "Time"),
-            CreateSerializationMapping(mStereoSeparationDelayMS, "StereoSeparationDelayMS"),
-            CreateSerializationMapping(mFeedbackGain, "FeedbackGain"),
-            CreateSerializationMapping(mFilter, "Filter"),
+            CreateSerializationMapping(mEnabled, "on"),
+            CreateSerializationMapping(mGain, "g"),
+            CreateSerializationMapping(mTime, "t"),
+            CreateSerializationMapping(mStereoSeparationDelayMS, "st"),
+            CreateSerializationMapping(mFeedbackGain, "fb"),
+            CreateSerializationMapping(mFilter, "flt"),
         }};
     }
 
@@ -78,24 +78,24 @@ struct PerformancePatch : ISerializationObjectMap<20>
         return {{
             CreateSerializationMapping(mName, "Name"),
             CreateSerializationMapping(mBPM, "BPM"),
-            CreateSerializationMapping(mTranspose, "Transpose"),
-            CreateSerializationMapping(mGlobalScaleRef, "GlobalScaleRef"),
-            CreateSerializationMapping(mGlobalScale, "GlobalScale"),
-            CreateSerializationMapping(mSynthPatchA, "SynthPatchA"),
-            CreateSerializationMapping(mSynthAEnabled, "SynthAEnabled"),
-            CreateSerializationMapping(mSynthAGain, "SynthAGain"),
-            CreateSerializationMapping(mSynthPatchB, "SynthPatchB"),
-            CreateSerializationMapping(mSynthBEnabled, "SynthBEnabled"),
-            CreateSerializationMapping(mSynthBGain, "SynthBGain"),
-            CreateSerializationMapping(mHarmPreset, "HarmPreset"),
-            CreateSerializationMapping(mHarmEnabled, "HarmEnabled"),
-            CreateSerializationMapping(mHarmGain, "HarmGain"),
-            CreateSerializationMapping(mSynthStereoSpread, "SynthStereoSpread"),
-            CreateSerializationMapping(mMasterGain, "MasterGain"),
-            CreateSerializationMapping(mMasterFXGain, "MasterFXGain"),
-            CreateSerializationMapping(mMasterFXEnable, "MasterFXEnable"),
-            CreateSerializationMapping(mReverb, "Reverb"),
-            CreateSerializationMapping(mDelay, "Delay"),
+            CreateSerializationMapping(mTranspose, "t"),
+            CreateSerializationMapping(mGlobalScaleRef, "gsr"),
+            CreateSerializationMapping(mGlobalScale, "gs"),
+            CreateSerializationMapping(mSynthPatchA, "sAp"),
+            CreateSerializationMapping(mSynthAEnabled, "sAon"),
+            CreateSerializationMapping(mSynthAGain, "sAg"),
+            CreateSerializationMapping(mSynthPatchB, "sBp"),
+            CreateSerializationMapping(mSynthBEnabled, "sBon"),
+            CreateSerializationMapping(mSynthBGain, "sBg"),
+            CreateSerializationMapping(mHarmPreset, "hp"),
+            CreateSerializationMapping(mHarmEnabled, "he"),
+            CreateSerializationMapping(mHarmGain, "hg"),
+            CreateSerializationMapping(mSynthStereoSpread, "st"),
+            CreateSerializationMapping(mMasterGain, "vol"),
+            CreateSerializationMapping(mMasterFXGain, "fxvol"),
+            CreateSerializationMapping(mMasterFXEnable, "fxE"),
+            CreateSerializationMapping(mReverb, "v"),
+            CreateSerializationMapping(mDelay, "dly"),
         }};
     }
 
@@ -175,16 +175,16 @@ struct MetronomeSettings : ISerializationObjectMap<5>
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-struct AppSettings : ISerializationObjectMap<4>
+struct AppSettings : ISerializationObjectMap<5>
 {
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
         return {{
-            CreateSerializationMapping(mCurrentPerformancePatch, "currentPerformancePatch"),
-            CreateSerializationMapping(mMetronome, "metronome"),
-            CreateSerializationMapping(mPerformancePatches, "performancePatches"),
-            CreateSerializationMapping(mHarmSettings, "harmSettings"),
-            // CreateSerializationMapping(mSynthSettings, "synthSettings"),
+            CreateSerializationMapping(mCurrentPerformancePatch, "perf"),
+            CreateSerializationMapping(mMetronome, "met"),
+            CreateSerializationMapping(mPerformancePatches, "patches"),
+            CreateSerializationMapping(mHarmSettings, "harm"),
+            CreateSerializationMapping(mSynthSettings, "synth"),
         }};
     }
 

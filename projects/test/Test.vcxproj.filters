@@ -15,8 +15,6 @@
     <ClInclude Include="TestTaskManager.hpp" />
     <ClInclude Include="..\..\src\clarinoid\synth\MockSynthVoice.hpp" />
     <ClInclude Include="..\..\src\clarinoid\synth\Patch.hpp" />
-    <ClInclude Include="..\..\src\clarinoid\synth\Synth.hpp" />
-    <ClInclude Include="..\..\src\clarinoid\synth\SynthVoice.hpp" />
     <ClInclude Include="..\..\src\clarinoid\synth\filters\filterbase.hpp">
       <Filter>filters</Filter>
     </ClInclude>
@@ -38,8 +36,8 @@
     <ClInclude Include="..\..\src\clarinoid\synth\filters\K35Filter.hpp">
       <Filter>filters</Filter>
     </ClInclude>
-    <ClInclude Include="testBaseSettings.hpp" />
     <ClInclude Include="TestModulation.hpp" />
+    <ClInclude Include="TestJSON.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="filters">

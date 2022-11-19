@@ -514,13 +514,17 @@ struct _CCDisplay : IDisplay
         }
         if (angleSweep >= 0)
         {
-            drawLine(origin.x, origin.y, origin.x + pd.p0.x, origin.y + pd.p0.y, [&](int x, int y, bool) {
+            drawLine(int(origin.x), int(origin.y), int(origin.x + pd.p0.x), (int)(origin.y + pd.p0.y), [&](int x, int y, bool) {
                 mDisplay.drawPixel(x, y, SSD1306_WHITE);
             });
         }
         else
         {
-            drawLine(origin.x, origin.y, origin.x + pd.p1.x, origin.y + pd.p1.y, [&](int x, int y, bool) {
+            drawLine(int(origin.x),
+                     int(origin.y),
+                     int(origin.x + pd.p1.x),
+                     int(origin.y + pd.p1.y),
+                     [&](int x, int y, bool) {
                 mDisplay.drawPixel(x, y, SSD1306_WHITE);
             });
         }

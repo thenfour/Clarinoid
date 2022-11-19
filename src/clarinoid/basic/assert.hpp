@@ -5,7 +5,6 @@
 
 namespace clarinoid
 {
-#ifndef CLARINOID_PLATFORM_X86
 
 struct IClarinoidCrashReportOutput
 {
@@ -33,6 +32,32 @@ struct SerialCrashHandler : IClarinoidCrashReportOutput
 
 SerialCrashHandler gSerialCrashHandler;
 
+#ifdef CLARINOID_PLATFORM_X86
+struct PrintToString
+{
+    std::string acc;
+    size_t write(uint8_t b)
+    {
+        acc.append(1, b);
+        return 1;
+    }
+};
+
+struct
+{
+    operator bool() const
+    {
+        return false;
+    }
+    template<typename T>
+    void printTo(const T &s)
+    {
+
+    }
+} CrashReport;
+
+
+#else
 struct PrintToString : Print
 {
     String acc;
@@ -42,6 +67,8 @@ struct PrintToString : Print
         return 1;
     }
 };
+#endif // #ifndef CLARINOID_PLATFORM_X86
+
 
 inline void CheckCrashReport()
 {
@@ -107,7 +134,8 @@ inline void BlinkyDeath(int n)
     }
 }
 
-#endif // #ifndef CLARINOID_PLATFORM_X86
+//#ifndef CLARINOID_PLATFORM_X86
+//#endif // #ifndef CLARINOID_PLATFORM_X86
 
 #if defined(CLARINOID_MODULE_MAIN)
 
@@ -166,21 +194,30 @@ static inline void Die(const String &msg)
 
 #endif
 
+// #define CCASSERT(x)                                                                                                    \
+//     if (!(x))                                                                                                          \
+//     {                                                                                                                  \
+//         ::clarinoid::Die(String(__COUNTER__) + #x + __FILE__ + ":" + (int)__LINE__);                       \
+//     }
+
+// // an assert which is intended to stay in release build
+// #define REQUIRE(x) \
+//     if (!(x)) \
+//     { \
+//         ::clarinoid::Die(String(__COUNTER__) + #x + __FILE__ + ":" + (int)__LINE__);                       \
+//     }
+
 #define CCASSERT(x)                                                                                                    \
     if (!(x))                                                                                                          \
     {                                                                                                                  \
-        ::clarinoid::Die(String("E") + __COUNTER__ + (":" #x) + __FILE__ + ":" + (int)__LINE__);                       \
+        ::clarinoid::Die(__COUNTER__);                                                                                 \
     }
 
 // an assert which is intended to stay in release build
-#define REQUIRE(x)                                                                                                      \
+#define REQUIRE(x)                                                                                                     \
     if (!(x))                                                                                                          \
     {                                                                                                                  \
-        ::clarinoid::Die(String("E") + __COUNTER__ + (":" #x) + __FILE__ + ":" + (int)__LINE__);                       \
-    }
-#define CCDIE(msg)                                                                                                     \
-    {                                                                                                                  \
-        Die(String("E") + __COUNTER__ + ":" + msg + __FILE__ + ":" + (int)__LINE__);                                   \
+        ::clarinoid::Die(__COUNTER__);                                                                                 \
     }
 
 } // namespace clarinoid

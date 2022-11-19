@@ -208,7 +208,7 @@ struct Result
     }
     static Result Failure(const String &message)
     {
-        Serial.println(String("FAIL: ") + message);
+        //Serial.println(String("FAIL: ") + message);
         return {false, message};
     }
     static Result Failure()
@@ -217,7 +217,7 @@ struct Result
     }
     static Result Success(const String &message)
     {
-        Serial.println(String("Success: ") + message);
+        //Serial.println(String("Success: ") + message);
         return {true, message};
     }
     static Result Success()

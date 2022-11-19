@@ -28,7 +28,7 @@ struct ListControl
             return;
         mDisplay->setTextWrap(false);
         int itemToRender = RotateIntoRange(mSelectedItem.GetValue() - 1, count);
-        const int itemsToRender = min(mVisibleItems, count);
+        const int itemsToRender = std::min(mVisibleItems, count);
         for (int i = 0; i < itemsToRender; ++i)
         {
             mDisplay->PrintInvertedLine(mpList->List_GetItemDisplayName(itemToRender),
@@ -81,7 +81,7 @@ struct ListControl2
 
         int itemToRender = RotateIntoRange(selectedItem.GetValue() - 1, itemCount);
         mDisplay->ClearState();
-        const int itemsToRender = min(mVisibleItems, itemCount);
+        const int itemsToRender = std::min(mVisibleItems, itemCount);
         mDisplay->SetClipRect(rc.x, rc.y, rc.right(), rc.bottom());
         mDisplay->setCursor(rc.x, rc.y);
         mDisplay->SetTextLeftMargin(rc.x);

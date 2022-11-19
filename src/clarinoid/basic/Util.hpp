@@ -29,34 +29,36 @@ struct StaticInit
 template <typename T>
 struct array_view
 {
-	size_t mSize = 0;
-	T* mData = nullptr;
+    size_t mSize = 0;
+    T *mData = nullptr;
 
-	array_view() = default;
-	size_t size() const
-	{
-		return mSize;
-	}
+    array_view() = default;
+    size_t size() const
+    {
+        return mSize;
+    }
 
-	template <size_t N>
-	array_view(T(&a)[N]) : mSize(N), mData(a)
-	{
-	}
+    template <size_t N>
+    array_view(T (&a)[N]) : mSize(N), mData(a)
+    {
+    }
 
-	using iterator = T*;
+    using iterator = T *;
 
-	iterator begin() {
-		return mData;
-	}
-	iterator end() {
-		return mData + mSize;
-	}
+    iterator begin()
+    {
+        return mData;
+    }
+    iterator end()
+    {
+        return mData + mSize;
+    }
 
-	T& operator[](size_t i)
-	{
-		CCASSERT(i < mSize);
-		return mData[i];
-	}
+    T &operator[](size_t i)
+    {
+        CCASSERT(i < mSize);
+        return mData[i];
+    }
 };
 
 template <typename T, size_t N>
@@ -88,13 +90,26 @@ bool Any(const Tit &begin, const Tit &end, Tfn pred)
 template <typename Tcontainer, typename Tfn>
 bool Any(const Tcontainer &container, Tfn pred)
 {
-    for (auto x : container)
+    for (auto &x : container)
     {
         if (pred(x))
             return true;
     }
     return false;
 }
+
+template <typename T, size_t N>
+bool ArrayContains(const T (&arr)[N], const T& val)
+{
+    for (auto &x : arr)
+    {
+        if (x == val)
+            return true;
+    }
+    return false;
+}
+
+
 
 struct NoInterrupts
 {

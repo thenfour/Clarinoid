@@ -172,7 +172,7 @@ enum class AnyModulationSource : uint8_t
 };
 
 EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[21] = {
-    {AnyModulationSource::None, "None"},
+    {AnyModulationSource::None, "None", "-"},
     {AnyModulationSource::LFO1, "LFO1"},
     {AnyModulationSource::LFO2, "LFO2"},
     {AnyModulationSource::LFO3, "LFO3"},
@@ -182,16 +182,16 @@ EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[21] = {
     {AnyModulationSource::Osc1FB, "Osc1FB"},
     {AnyModulationSource::Osc2FB, "Osc2FB"},
     {AnyModulationSource::Osc3FB, "Osc3FB"},
-    {AnyModulationSource::Breath, "Breath"},
-    {AnyModulationSource::PitchStrip, "PitchBend"},
-    {AnyModulationSource::Velocity, "Velocity"},
-    {AnyModulationSource::NoteValue, "NoteValue"},
-    {AnyModulationSource::RandomTrigger, "RandomTrigger"},
-    {AnyModulationSource::ModWheel, "ModWheel"},
-    {AnyModulationSource::Macro1, "Macro1"},
-    {AnyModulationSource::Macro2, "Macro2"},
-    {AnyModulationSource::Macro3, "Macro3"},
-    {AnyModulationSource::Macro4, "Macro4"},
+    {AnyModulationSource::Breath, "Breath", "br"},
+    {AnyModulationSource::PitchStrip, "PitchBend", "pb"},
+    {AnyModulationSource::Velocity, "Velocity", "vel"},
+    {AnyModulationSource::NoteValue, "NoteValue", "note"},
+    {AnyModulationSource::RandomTrigger, "RandomTrigger", "rnd"}, // todo: random voice, random etc
+    {AnyModulationSource::ModWheel, "ModWheel", "mod"},
+    {AnyModulationSource::Macro1, "Macro1", "m1"},
+    {AnyModulationSource::Macro2, "Macro2", "m2"},
+    {AnyModulationSource::Macro3, "Macro3", "m3"},
+    {AnyModulationSource::Macro4, "Macro4", "m4"},
     {AnyModulationSource::Pedal, "Pedal"},
 };
 
@@ -212,14 +212,12 @@ enum class ARateModulationDestination : uint8_t
 };
 
 EnumItemInfo<ARateModulationDestination> gARateModulationDestinationItems[6] = {
-    {ARateModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
-    {ARateModulationDestination::Osc1Phase, "Osc1Phase"},
-
-    {ARateModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
-    {ARateModulationDestination::Osc2Phase, "Osc2Phase"},
-
-    {ARateModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
-    {ARateModulationDestination::Osc3Phase, "Osc3Phase"},
+    {ARateModulationDestination::Osc1PulseWidth, "Osc1PulseWidth", "osc1pw"},
+    {ARateModulationDestination::Osc1Phase, "Osc1Phase", "osc1ph"},
+    {ARateModulationDestination::Osc2PulseWidth, "Osc2PulseWidth", "osc2pw"},
+    {ARateModulationDestination::Osc2Phase, "Osc2Phase", "osc2ph"},
+    {ARateModulationDestination::Osc3PulseWidth, "Osc3PulseWidth", "osc3pw"},
+    {ARateModulationDestination::Osc3Phase, "Osc3Phase", "osc3ph"},
 };
 
 static constexpr size_t gARateModulationDestinationCount = SizeofStaticArray(gARateModulationDestinationItems);
@@ -294,61 +292,61 @@ enum class KRateModulationDestination : uint8_t
 };
 
 EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[52] = {
-    {KRateModulationDestination::FilterCutoff, "FilterCutoff"},
-    {KRateModulationDestination::MasterVolume, "MasterVolume"},
-    {KRateModulationDestination::Detune, "Detune"},
-    {KRateModulationDestination::Osc1Volume, "Osc1Volume"},
-    {KRateModulationDestination::Osc2Volume, "Osc2Volume"},
-    {KRateModulationDestination::Osc3Volume, "Osc3Volume"},
-    {KRateModulationDestination::Osc1RingModAmt, "Osc1RingModAmt"},
-    {KRateModulationDestination::Osc2RingModAmt, "Osc2RingModAmt"},
-    {KRateModulationDestination::Osc3RingModAmt, "Osc3RingModAmt"},
-    {KRateModulationDestination::Osc1FMFeedback, "Osc1FMFeedback"},
-    {KRateModulationDestination::Osc2FMFeedback, "Osc2FMFeedback"},
-    {KRateModulationDestination::Osc3FMFeedback, "Osc3FMFeedback"},
-    {KRateModulationDestination::OverallFMStrength, "OverallFMStrength"},
-    {KRateModulationDestination::FMStrength2To1, "FMStrength2To1"},
-    {KRateModulationDestination::FMStrength3To1, "FMStrength3To1"},
-    {KRateModulationDestination::FMStrength1To2, "FMStrength1To2"},
-    {KRateModulationDestination::FMStrength3To2, "FMStrength3To2"},
-    {KRateModulationDestination::FMStrength1To3, "FMStrength1To3"},
-    {KRateModulationDestination::FMStrength2To3, "FMStrength2To3"},
-    {KRateModulationDestination::Osc1FrequencyParam, "Osc1FrequencyP"},
-    {KRateModulationDestination::Osc2FrequencyParam, "Osc2FrequencyP"},
-    {KRateModulationDestination::Osc3FrequencyParam, "Osc3FrequencyP"},
-    {KRateModulationDestination::Osc1SyncFrequencyParam, "Osc1SyncFrequency"},
-    {KRateModulationDestination::Osc2SyncFrequencyParam, "Osc2SyncFrequency"},
-    {KRateModulationDestination::Osc3SyncFrequencyParam, "Osc3SyncFrequency"},
+    {KRateModulationDestination::FilterCutoff, "FilterCutoff", "flt"},
+    {KRateModulationDestination::MasterVolume, "MasterVolume", "mstvol"},
+    {KRateModulationDestination::Detune, "Detune", "det"},
+    {KRateModulationDestination::Osc1Volume, "Osc1Volume", "osc1vol"},
+    {KRateModulationDestination::Osc2Volume, "Osc2Volume", "osc2vol"},
+    {KRateModulationDestination::Osc3Volume, "Osc3Volume", "osc3vol"},
+    {KRateModulationDestination::Osc1RingModAmt, "Osc1RingModAmt", "Osc1ring"},
+    {KRateModulationDestination::Osc2RingModAmt, "Osc2RingModAmt", "Osc2ring"},
+    {KRateModulationDestination::Osc3RingModAmt, "Osc3RingModAmt", "Osc3ring"},
+    {KRateModulationDestination::Osc1FMFeedback, "Osc1FMFeedback", "Osc1fb"},
+    {KRateModulationDestination::Osc2FMFeedback, "Osc2FMFeedback", "Osc2fb"},
+    {KRateModulationDestination::Osc3FMFeedback, "Osc3FMFeedback", "Osc3fb"},
+    {KRateModulationDestination::OverallFMStrength, "OverallFMStrength", "fmstr"},
+    {KRateModulationDestination::FMStrength2To1, "FMStrength2To1", "FM21"},
+    {KRateModulationDestination::FMStrength3To1, "FMStrength3To1", "FM31"},
+    {KRateModulationDestination::FMStrength1To2, "FMStrength1To2", "FM12"},
+    {KRateModulationDestination::FMStrength3To2, "FMStrength3To2", "FM32"},
+    {KRateModulationDestination::FMStrength1To3, "FMStrength1To3", "FM13"},
+    {KRateModulationDestination::FMStrength2To3, "FMStrength2To3", "FM23"},
+    {KRateModulationDestination::Osc1FrequencyParam, "Osc1FrequencyP", "Osc1Freq"},
+    {KRateModulationDestination::Osc2FrequencyParam, "Osc2FrequencyP", "Osc2Freq"},
+    {KRateModulationDestination::Osc3FrequencyParam, "Osc3FrequencyP", "Osc3Freq"},
+    {KRateModulationDestination::Osc1SyncFrequencyParam, "Osc1SyncFrequency", "Osc1SyncFreq"},
+    {KRateModulationDestination::Osc2SyncFrequencyParam, "Osc2SyncFrequency", "Osc2SyncFreq"},
+    {KRateModulationDestination::Osc3SyncFrequencyParam, "Osc3SyncFrequency", "Osc3SyncFreq"},
 
-    {KRateModulationDestination::Env1DelayTime, "Env1DelayTime"},
-    {KRateModulationDestination::Env1AttackTime, "Env1AttackTime"},
-    {KRateModulationDestination::Env1AttackCurve, "Env1AttackCurve"},
-    {KRateModulationDestination::Env1HoldTime, "Env1HoldTime"},
-    {KRateModulationDestination::Env1DecayTime, "Env1DecayTime"},
-    {KRateModulationDestination::Env1DecayCurve, "Env1DecayCurve"},
-    {KRateModulationDestination::Env1SustainLevel, "Env1SustainLevel"},
-    {KRateModulationDestination::Env1ReleaseTime, "Env1ReleaseTime"},
-    {KRateModulationDestination::Env1ReleaseCurve, "Env1ReleaseCurve"},
+    {KRateModulationDestination::Env1DelayTime, "Env1DelayTime", "Env1Dly"},
+    {KRateModulationDestination::Env1AttackTime, "Env1AttackTime", "Env1At"},
+    {KRateModulationDestination::Env1AttackCurve, "Env1AttackCurve", "Env1Ac"},
+    {KRateModulationDestination::Env1HoldTime, "Env1HoldTime", "Env1Ht"},
+    {KRateModulationDestination::Env1DecayTime, "Env1DecayTime", "Env1Dt"},
+    {KRateModulationDestination::Env1DecayCurve, "Env1DecayCurve", "Env1Dc"},
+    {KRateModulationDestination::Env1SustainLevel, "Env1SustainLevel", "Env1S"},
+    {KRateModulationDestination::Env1ReleaseTime, "Env1ReleaseTime", "Env1Rt"},
+    {KRateModulationDestination::Env1ReleaseCurve, "Env1ReleaseCurve", "Env1Rc"},
 
-    {KRateModulationDestination::Env2DelayTime, "Env2DelayTime"},
-    {KRateModulationDestination::Env2AttackTime, "Env2AttackTime"},
-    {KRateModulationDestination::Env2AttackCurve, "Env2AttackCurve"},
-    {KRateModulationDestination::Env2HoldTime, "Env2HoldTime"},
-    {KRateModulationDestination::Env2DecayTime, "Env2DecayTime"},
-    {KRateModulationDestination::Env2DecayCurve, "Env2DecayCurve"},
-    {KRateModulationDestination::Env2SustainLevel, "Env2SustainLevel"},
-    {KRateModulationDestination::Env2ReleaseTime, "Env2ReleaseTime"},
-    {KRateModulationDestination::Env2ReleaseCurve, "Env2ReleaseCurve"},
+    {KRateModulationDestination::Env2DelayTime, "Env2DelayTime", "Env2Dly"},
+    {KRateModulationDestination::Env2AttackTime, "Env2AttackTime", "Env2At"},
+    {KRateModulationDestination::Env2AttackCurve, "Env2AttackCurve", "Env2Ac"},
+    {KRateModulationDestination::Env2HoldTime, "Env2HoldTime", "Env2Ht"},
+    {KRateModulationDestination::Env2DecayTime, "Env2DecayTime", "Env2Dt"},
+    {KRateModulationDestination::Env2DecayCurve, "Env2DecayCurve", "Env2Dc"},
+    {KRateModulationDestination::Env2SustainLevel, "Env2SustainLevel", "Env2S"},
+    {KRateModulationDestination::Env2ReleaseTime, "Env2ReleaseTime", "Env2Rt"},
+    {KRateModulationDestination::Env2ReleaseCurve, "Env2ReleaseCurve", "Env2Rc"},
 
-    {KRateModulationDestination::Env3DelayTime, "Env3DelayTime"},
-    {KRateModulationDestination::Env3AttackTime, "Env3AttackTime"},
-    {KRateModulationDestination::Env3AttackCurve, "Env3AttackCurve"},
-    {KRateModulationDestination::Env3HoldTime, "Env3HoldTime"},
-    {KRateModulationDestination::Env3DecayTime, "Env3DecayTime"},
-    {KRateModulationDestination::Env3DecayCurve, "Env3DecayCurve"},
-    {KRateModulationDestination::Env3SustainLevel, "Env3SustainLevel"},
-    {KRateModulationDestination::Env3ReleaseTime, "Env3ReleaseTime"},
-    {KRateModulationDestination::Env3ReleaseCurve, "Env3ReleaseCurve"},
+    {KRateModulationDestination::Env3DelayTime, "Env3DelayTime", "Env3Dly"},
+    {KRateModulationDestination::Env3AttackTime, "Env3AttackTime", "En31At"},
+    {KRateModulationDestination::Env3AttackCurve, "Env3AttackCurve", "En31Ac"},
+    {KRateModulationDestination::Env3HoldTime, "Env3HoldTime", "En31Ht"},
+    {KRateModulationDestination::Env3DecayTime, "Env3DecayTime", "En31Dt"},
+    {KRateModulationDestination::Env3DecayCurve, "Env3DecayCurve", "En31Dc"},
+    {KRateModulationDestination::Env3SustainLevel, "Env3SustainLevel", "E3v1S"},
+    {KRateModulationDestination::Env3ReleaseTime, "Env3ReleaseTime", "En31Rt"},
+    {KRateModulationDestination::Env3ReleaseCurve, "Env3ReleaseCurve", "En31Rc"},
 };
 
 static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKRateModulationDestinationItems);
@@ -367,26 +365,29 @@ struct OscillatorModulationInfo
 };
 
 static OscillatorModulationInfo gModValuesByOscillator[POLYBLEP_OSC_COUNT] = {
-    {KRateModulationDestination::Osc1FMFeedback,
-     KRateModulationDestination::Osc1FrequencyParam,
-     KRateModulationDestination::Osc1SyncFrequencyParam,
-     KRateModulationDestination::Osc1Volume,
-     KRateModulationDestination::Osc1RingModAmt,
-     },
+    {
+        KRateModulationDestination::Osc1FMFeedback,
+        KRateModulationDestination::Osc1FrequencyParam,
+        KRateModulationDestination::Osc1SyncFrequencyParam,
+        KRateModulationDestination::Osc1Volume,
+        KRateModulationDestination::Osc1RingModAmt,
+    },
 
-    {KRateModulationDestination::Osc2FMFeedback,
-     KRateModulationDestination::Osc2FrequencyParam,
-     KRateModulationDestination::Osc1SyncFrequencyParam,
-     KRateModulationDestination::Osc2Volume,
-     KRateModulationDestination::Osc2RingModAmt,
-     },
+    {
+        KRateModulationDestination::Osc2FMFeedback,
+        KRateModulationDestination::Osc2FrequencyParam,
+        KRateModulationDestination::Osc1SyncFrequencyParam,
+        KRateModulationDestination::Osc2Volume,
+        KRateModulationDestination::Osc2RingModAmt,
+    },
 
-    {KRateModulationDestination::Osc3FMFeedback,
-     KRateModulationDestination::Osc3FrequencyParam,
-     KRateModulationDestination::Osc1SyncFrequencyParam,
-     KRateModulationDestination::Osc3Volume,
-     KRateModulationDestination::Osc3RingModAmt,
-     },
+    {
+        KRateModulationDestination::Osc3FMFeedback,
+        KRateModulationDestination::Osc3FrequencyParam,
+        KRateModulationDestination::Osc1SyncFrequencyParam,
+        KRateModulationDestination::Osc3Volume,
+        KRateModulationDestination::Osc3RingModAmt,
+    },
 };
 
 struct EnvelopeModulationInfo
@@ -451,9 +452,9 @@ enum class AnyModulationDestination : uint8_t
     Osc1Volume,         // k-rate
     Osc2Volume,         // k-rate
     Osc3Volume,         // k-rate
-    Osc1RingModAmt, // k-rate
-    Osc2RingModAmt, // k-rate
-    Osc3RingModAmt, // k-rate
+    Osc1RingModAmt,     // k-rate
+    Osc2RingModAmt,     // k-rate
+    Osc3RingModAmt,     // k-rate
     Osc1FMFeedback,     // k-rate
     Osc2FMFeedback,     // k-rate
     Osc3FMFeedback,     // k-rate
@@ -510,70 +511,70 @@ enum class AnyModulationDestination : uint8_t
 
 EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none */ + gARateModulationDestinationCount +
                                                                       gKRateModulationDestinationCount] = {
-    {AnyModulationDestination::None, "None"},
-    {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
-    {AnyModulationDestination::Osc1Phase, "Osc1Phase"},
-    {AnyModulationDestination::Osc2PulseWidth, "Osc2PulseWidth"},
-    {AnyModulationDestination::Osc2Phase, "Osc2Phase"},
-    {AnyModulationDestination::Osc3PulseWidth, "Osc3PulseWidth"},
-    {AnyModulationDestination::Osc3Phase, "Osc3Phase"}, // A-rate
+    {AnyModulationDestination::None, "None", "-"},
+    {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth", "osc1pw"},
+    {AnyModulationDestination::Osc1Phase, "Osc1Phase", "osc1ph"},
+    {AnyModulationDestination::Osc2PulseWidth, "Osc2PulseWidth", "osc2pw"},
+    {AnyModulationDestination::Osc2Phase, "Osc2Phase", "osc2ph"},
+    {AnyModulationDestination::Osc3PulseWidth, "Osc3PulseWidth", "osc3pw"},
+    {AnyModulationDestination::Osc3Phase, "Osc3Phase", "osc3ph"}, // A-rate
 
     // K-rates:
-    {AnyModulationDestination::FilterCutoff, "FilterCutoff"},
-    {AnyModulationDestination::MasterVolume, "MasterVolume"},
-    {AnyModulationDestination::Detune, "Detune"},
-    {AnyModulationDestination::Osc1Volume, "Osc1Volume"},
-    {AnyModulationDestination::Osc2Volume, "Osc2Volume"},
-    {AnyModulationDestination::Osc3Volume, "Osc3Volume"},
-    {AnyModulationDestination::Osc1RingModAmt, "Osc1RingModAmt"},
-    {AnyModulationDestination::Osc2RingModAmt, "Osc2RingModAmt"},
-    {AnyModulationDestination::Osc3RingModAmt, "Osc3RingModAmt"},
-    {AnyModulationDestination::Osc1FMFeedback, "Osc1FMFeedback"},
-    {AnyModulationDestination::Osc2FMFeedback, "Osc2FMFeedback"},
-    {AnyModulationDestination::Osc3FMFeedback, "Osc3FMFeedback"},
-    {AnyModulationDestination::OverallFMStrength, "OverallFMStrength"},
-    {AnyModulationDestination::FMStrength2To1, "FMStrength2To1"},
-    {AnyModulationDestination::FMStrength3To1, "FMStrength3To1"},
-    {AnyModulationDestination::FMStrength1To2, "FMStrength1To2"},
-    {AnyModulationDestination::FMStrength3To2, "FMStrength3To2"},
-    {AnyModulationDestination::FMStrength1To3, "FMStrength1To3"},
-    {AnyModulationDestination::FMStrength2To3, "FMStrength2To3"},
-    {AnyModulationDestination::Osc1FrequencyParam, "Osc1Frequency"},
-    {AnyModulationDestination::Osc2FrequencyParam, "Osc2Frequency"},
-    {AnyModulationDestination::Osc3FrequencyParam, "Osc3Frequency"},
-    {AnyModulationDestination::Osc1SyncFrequencyParam, "Osc1SyncFrequency"},
-    {AnyModulationDestination::Osc2SyncFrequencyParam, "Osc2SyncFrequency"},
-    {AnyModulationDestination::Osc3SyncFrequencyParam, "Osc3SyncFrequency"},
+    {AnyModulationDestination::FilterCutoff, "FilterCutoff", "flt"},
+    {AnyModulationDestination::MasterVolume, "MasterVolume", "mstvol"},
+    {AnyModulationDestination::Detune, "Detune", "det"},
+    {AnyModulationDestination::Osc1Volume, "Osc1Volume", "osc1vol"},
+    {AnyModulationDestination::Osc2Volume, "Osc2Volume", "osc2vol"},
+    {AnyModulationDestination::Osc3Volume, "Osc3Volume", "osc3vol"},
+    {AnyModulationDestination::Osc1RingModAmt, "Osc1RingModAmt", "Osc1ring"},
+    {AnyModulationDestination::Osc2RingModAmt, "Osc2RingModAmt", "Osc2ring"},
+    {AnyModulationDestination::Osc3RingModAmt, "Osc3RingModAmt", "Osc3ring"},
+    {AnyModulationDestination::Osc1FMFeedback, "Osc1FMFeedback", "Osc1fb"},
+    {AnyModulationDestination::Osc2FMFeedback, "Osc2FMFeedback", "Osc2fb"},
+    {AnyModulationDestination::Osc3FMFeedback, "Osc3FMFeedback", "Osc3fb"},
+    {AnyModulationDestination::OverallFMStrength, "OverallFMStrength", "fmstr"},
+    {AnyModulationDestination::FMStrength2To1, "FMStrength2To1", "FM21"},
+    {AnyModulationDestination::FMStrength3To1, "FMStrength3To1", "FM31"},
+    {AnyModulationDestination::FMStrength1To2, "FMStrength1To2", "FM12"},
+    {AnyModulationDestination::FMStrength3To2, "FMStrength3To2", "FM32"},
+    {AnyModulationDestination::FMStrength1To3, "FMStrength1To3", "FM13"},
+    {AnyModulationDestination::FMStrength2To3, "FMStrength2To3", "FM23"},
+    {AnyModulationDestination::Osc1FrequencyParam, "Osc1Frequency", "Osc1Freq"},
+    {AnyModulationDestination::Osc2FrequencyParam, "Osc2Frequency", "Osc2Freq"},
+    {AnyModulationDestination::Osc3FrequencyParam, "Osc3Frequency", "Osc3Freq"},
+    {AnyModulationDestination::Osc1SyncFrequencyParam, "Osc1SyncFrequency", "Osc1SyncFreq"},
+    {AnyModulationDestination::Osc2SyncFrequencyParam, "Osc2SyncFrequency", "Osc2SyncFreq"},
+    {AnyModulationDestination::Osc3SyncFrequencyParam, "Osc3SyncFrequency", "Osc3SyncFreq"},
 
-    {AnyModulationDestination::Env1DelayTime, "Env1DelayTime"},
-    {AnyModulationDestination::Env1AttackTime, "Env1AttackTime"},
-    {AnyModulationDestination::Env1AttackCurve, "Env1AttackCurve"},
-    {AnyModulationDestination::Env1HoldTime, "Env1HoldTime"},
-    {AnyModulationDestination::Env1DecayTime, "Env1DecayTime"},
-    {AnyModulationDestination::Env1DecayCurve, "Env1DecayCurve"},
-    {AnyModulationDestination::Env1SustainLevel, "Env1SustainLevel"},
-    {AnyModulationDestination::Env1ReleaseTime, "Env1ReleaseTime"},
-    {AnyModulationDestination::Env1ReleaseCurve, "Env1ReleaseCurve"},
+    {AnyModulationDestination::Env1DelayTime, "Env1DelayTime", "Env1Dly"},
+    {AnyModulationDestination::Env1AttackTime, "Env1AttackTime", "Env1At"},
+    {AnyModulationDestination::Env1AttackCurve, "Env1AttackCurve", "Env1Ac"},
+    {AnyModulationDestination::Env1HoldTime, "Env1HoldTime", "Env1Ht"},
+    {AnyModulationDestination::Env1DecayTime, "Env1DecayTime", "Env1Dt"},
+    {AnyModulationDestination::Env1DecayCurve, "Env1DecayCurve", "Env1Dc"},
+    {AnyModulationDestination::Env1SustainLevel, "Env1SustainLevel", "Env1S"},
+    {AnyModulationDestination::Env1ReleaseTime, "Env1ReleaseTime", "Env1Rt"},
+    {AnyModulationDestination::Env1ReleaseCurve, "Env1ReleaseCurve", "Env1Rc"},
 
-    {AnyModulationDestination::Env2DelayTime, "Env2DelayTime"},
-    {AnyModulationDestination::Env2AttackTime, "Env2AttackTime"},
-    {AnyModulationDestination::Env2AttackCurve, "Env2AttackCurve"},
-    {AnyModulationDestination::Env2HoldTime, "Env2HoldTime"},
-    {AnyModulationDestination::Env2DecayTime, "Env2DecayTime"},
-    {AnyModulationDestination::Env2DecayCurve, "Env2DecayCurve"},
-    {AnyModulationDestination::Env2SustainLevel, "Env2SustainLevel"},
-    {AnyModulationDestination::Env2ReleaseTime, "Env2ReleaseTime"},
-    {AnyModulationDestination::Env2ReleaseCurve, "Env2ReleaseCurve"},
+    {AnyModulationDestination::Env2DelayTime, "Env2DelayTime", "Env2Dly"},
+    {AnyModulationDestination::Env2AttackTime, "Env2AttackTime", "Env2At"},
+    {AnyModulationDestination::Env2AttackCurve, "Env2AttackCurve", "Env2Ac"},
+    {AnyModulationDestination::Env2HoldTime, "Env2HoldTime", "Env2Ht"},
+    {AnyModulationDestination::Env2DecayTime, "Env2DecayTime", "Env2Dt"},
+    {AnyModulationDestination::Env2DecayCurve, "Env2DecayCurve", "Env2Dc"},
+    {AnyModulationDestination::Env2SustainLevel, "Env2SustainLevel", "Env2S"},
+    {AnyModulationDestination::Env2ReleaseTime, "Env2ReleaseTime", "Env2Rt"},
+    {AnyModulationDestination::Env2ReleaseCurve, "Env2ReleaseCurve", "Env2Rc"},
 
-    {AnyModulationDestination::Env3DelayTime, "Env3DelayTime"},
-    {AnyModulationDestination::Env3AttackTime, "Env3AttackTime"},
-    {AnyModulationDestination::Env3AttackCurve, "Env3AttackCurve"},
-    {AnyModulationDestination::Env3HoldTime, "Env3HoldTime"},
-    {AnyModulationDestination::Env3DecayTime, "Env3DecayTime"},
-    {AnyModulationDestination::Env3DecayCurve, "Env3DecayCurve"},
-    {AnyModulationDestination::Env3SustainLevel, "Env3SustainLevel"},
-    {AnyModulationDestination::Env3ReleaseTime, "Env3ReleaseTime"},
-    {AnyModulationDestination::Env3ReleaseCurve, "Env3ReleaseCurve"},
+    {AnyModulationDestination::Env3DelayTime, "Env3DelayTime", "Env3Dly"},
+    {AnyModulationDestination::Env3AttackTime, "Env3AttackTime", "En31At"},
+    {AnyModulationDestination::Env3AttackCurve, "Env3AttackCurve", "En31Ac"},
+    {AnyModulationDestination::Env3HoldTime, "Env3HoldTime", "En31Ht"},
+    {AnyModulationDestination::Env3DecayTime, "Env3DecayTime", "En31Dt"},
+    {AnyModulationDestination::Env3DecayCurve, "Env3DecayCurve", "En31Dc"},
+    {AnyModulationDestination::Env3SustainLevel, "Env3SustainLevel", "E3v1S"},
+    {AnyModulationDestination::Env3ReleaseTime, "Env3ReleaseTime", "En31Rt"},
+    {AnyModulationDestination::Env3ReleaseCurve, "Env3ReleaseCurve", "En31Rc"},
 
     // LFO
 };
@@ -593,10 +594,10 @@ enum class ModulationPolarityTreatment : uint8_t
 };
 
 EnumItemInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentItems[5] = {
-    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]", "to01"},
-    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]", "to10"},
-    {ModulationPolarityTreatment::AsBipolar, "Map to [-1,1]", "toN11"},
-    {ModulationPolarityTreatment::AsBipolarInverted, "Map to [1,-1]", "to1N1"},
+    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]", "01"},
+    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]", "10"},
+    {ModulationPolarityTreatment::AsBipolar, "Map to [-1,1]", "N11"},
+    {ModulationPolarityTreatment::AsBipolarInverted, "Map to [1,-1]", "1N1"},
     {ModulationPolarityTreatment::Default, "Default", "-"},
 };
 static constexpr size_t gModulationPolarityTreatmentCount = SizeofStaticArray(gAnyModulationDestinationItems);
@@ -605,8 +606,8 @@ EnumInfo<ModulationPolarityTreatment> gModulationPolarityTreatmentInfo("Modulati
                                                                        gModulationPolarityTreatmentItems);
 
 EnumItemInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentItems[2] = {
-    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]", "to01"},
-    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]", "to10"},
+    {ModulationPolarityTreatment::AsPositive01, "Map to [0,1]", "01"},
+    {ModulationPolarityTreatment::AsPositive01Inverted, "Map to [1,0]", "10"},
 };
 
 static constexpr size_t gModulationAuxPolarityTreatmentCount = SizeofStaticArray(gModulationAuxPolarityTreatmentItems);
@@ -615,8 +616,9 @@ EnumInfo<ModulationPolarityTreatment> gModulationAuxPolarityTreatmentInfo("Modul
                                                                           gModulationAuxPolarityTreatmentItems);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct SynthModulationSpec
+struct SynthModulationSpec : ISerializationObjectMap<11>
 {
+    BoolParam mEnabled{true}; // allows bypassing
     EnumParam<AnyModulationSource> mSource{gAnyModulationSourceInfo, AnyModulationSource::None};
     EnumParam<AnyModulationDestination> mDest{gAnyModulationDestinationInfo, AnyModulationDestination::None};
     EnumParam<ModulationPolarityTreatment> mSourcePolarity{gModulationPolarityTreatmentInfo,
@@ -637,51 +639,34 @@ struct SynthModulationSpec
             return "--";
         if (mDest.GetValue() == AnyModulationDestination::None)
             return "--";
-        return String(gAnyModulationSourceInfo.GetValueDisplayName(mSource.GetValue())) + ">" +
+        String ret;
+        if (!mEnabled.GetValue()) {
+            ret = "<mute>";
+        }
+        return ret + String(gAnyModulationSourceInfo.GetValueDisplayName(mSource.GetValue())) + ">" +
                gAnyModulationDestinationInfo.GetValueDisplayName(mDest.GetValue());
     }
 
-    // Result SerializableObject_ToJSON(JsonVariant doc) const
-    // {
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mSource.SerializableObject_ToJSON(doc.createNestedObject("src")), "src");
-    //     ret.AndRequires(mDest.SerializableObject_ToJSON(doc.createNestedObject("dst")), "dst");
-    //     ret.AndRequires(mSourcePolarity.SerializableObject_ToJSON(doc.createNestedObject("pol")), "pol");
-    //     ret.AndRequires(mCurveShape.SerializableObject_ToJSON(doc.createNestedObject("crv")), "crv");
-    //     ret.AndRequires(mScaleN11.SerializableObject_ToJSON(doc.createNestedObject("amt")), "amt");
-    //     ret.AndRequires(mAuxSource.SerializableObject_ToJSON(doc.createNestedObject("Xsrc")), "Xsrc");
-    //     ret.AndRequires(mAuxPolarity.SerializableObject_ToJSON(doc.createNestedObject("Xpol")), "Xpol");
-    //     ret.AndRequires(mAuxEnabled.SerializableObject_ToJSON(doc.createNestedObject("Xen")), "Xen");
-    //     ret.AndRequires(mAuxCurveShape.SerializableObject_ToJSON(doc.createNestedObject("Xcrv")), "Xcrv");
-    //     ret.AndRequires(mAuxAmount.SerializableObject_ToJSON(doc.createNestedObject("Xamt")), "Xamt");
-    //     return ret;
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("expected object");
-    //     }
-    //     Result ret = Result::Success();
-
-    //     ret.AndRequires(mSource.SerializableObject_Deserialize(obj["src"]), "src");
-    //     ret.AndRequires(mDest.SerializableObject_Deserialize(obj["dst"]), "dst");
-    //     ret.AndRequires(mSourcePolarity.SerializableObject_Deserialize(obj["pol"]), "pol");
-    //     ret.AndRequires(mCurveShape.SerializableObject_Deserialize(obj["crv"]), "crv");
-    //     ret.AndRequires(mScaleN11.SerializableObject_Deserialize(obj["amt"]), "amt");
-    //     ret.AndRequires(mAuxSource.SerializableObject_Deserialize(obj["Xsrc"]), "Xsrc");
-    //     ret.AndRequires(mAuxPolarity.SerializableObject_Deserialize(obj["Xpol"]), "Xpol");
-    //     ret.AndRequires(mAuxEnabled.SerializableObject_Deserialize(obj["Xen"]), "Xen");
-    //     ret.AndRequires(mAuxCurveShape.SerializableObject_Deserialize(obj["Xcrv"]), "Xcrv");
-    //     ret.AndRequires(mAuxAmount.SerializableObject_Deserialize(obj["Xamt"]), "Xamt");
-
-    //     return ret;
-    // }
+    virtual SerializationObjectMapArray GetSerializationObjectMap()  override
+    {
+        return {{
+            CreateSerializationMapping(mEnabled, "E"),
+            CreateSerializationMapping(mSource, "S"),
+            CreateSerializationMapping(mDest, "D"),
+            CreateSerializationMapping(mSourcePolarity, "P"),
+            CreateSerializationMapping(mCurveShape, "C"),
+            CreateSerializationMapping(mScaleN11, "A"),
+            CreateSerializationMapping(mAuxSource, "s"),
+            CreateSerializationMapping(mAuxPolarity, "p"),
+            CreateSerializationMapping(mAuxEnabled, "e"),
+            CreateSerializationMapping(mAuxCurveShape, "c"),
+            CreateSerializationMapping(mAuxAmount, "a"),
+        }};
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct EnvelopeSpec
+struct EnvelopeSpec : ISerializationObjectMap<10>
 {
     EnvTimeParamValue mDelayTime{0.0f};
     EnvTimeParamValue mAttackTime{0.0f};
@@ -694,47 +679,25 @@ struct EnvelopeSpec
     CurveLUTParamValue mReleaseCurve{0};
     BoolParam mLegatoRestart{false};
 
-    // Result SerializableObject_ToJSON(JsonVariant doc) const
-    // {
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mDelayTime.SerializableObject_ToJSON(doc.createNestedObject("L")), "L");
-    //     ret.AndRequires(mAttackTime.SerializableObject_ToJSON(doc.createNestedObject("A")), "A");
-    //     ret.AndRequires(mAttackCurve.SerializableObject_ToJSON(doc.createNestedObject("Ac")), "Ac");
-    //     ret.AndRequires(mHoldTime.SerializableObject_ToJSON(doc.createNestedObject("H")), "H");
-    //     ret.AndRequires(mDecayTime.SerializableObject_ToJSON(doc.createNestedObject("D")), "D");
-    //     ret.AndRequires(mDecayCurve.SerializableObject_ToJSON(doc.createNestedObject("Dc")), "Dc");
-    //     ret.AndRequires(mSustainLevel.SerializableObject_ToJSON(doc.createNestedObject("S")), "S");
-    //     ret.AndRequires(mReleaseTime.SerializableObject_ToJSON(doc.createNestedObject("R")), "R");
-    //     ret.AndRequires(mReleaseCurve.SerializableObject_ToJSON(doc.createNestedObject("Rc")), "Rc");
-    //     ret.AndRequires(mLegatoRestart.SerializableObject_ToJSON(doc.createNestedObject("Rst")), "Rst");
-    //     return ret;
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("expected object");
-    //     }
-    //     Result ret = Result::Success();
-
-    //     ret.AndRequires(mDelayTime.SerializableObject_Deserialize(obj["L"]), "L");
-    //     ret.AndRequires(mAttackTime.SerializableObject_Deserialize(obj["A"]), "A");
-    //     ret.AndRequires(mAttackCurve.SerializableObject_Deserialize(obj["Ac"]), "Ac");
-    //     ret.AndRequires(mHoldTime.SerializableObject_Deserialize(obj["H"]), "H");
-    //     ret.AndRequires(mDecayTime.SerializableObject_Deserialize(obj["D"]), "D");
-    //     ret.AndRequires(mDecayCurve.SerializableObject_Deserialize(obj["Dc"]), "Dc");
-    //     ret.AndRequires(mSustainLevel.SerializableObject_Deserialize(obj["S"]), "S");
-    //     ret.AndRequires(mReleaseTime.SerializableObject_Deserialize(obj["R"]), "R");
-    //     ret.AndRequires(mReleaseCurve.SerializableObject_Deserialize(obj["Rc"]), "Rc");
-    //     ret.AndRequires(mLegatoRestart.SerializableObject_Deserialize(obj["Rst"]), "Rst");
-
-    //     return ret;
-    // }
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mDelayTime, "Dly"),
+            CreateSerializationMapping(mAttackTime, "A"),
+            CreateSerializationMapping(mAttackCurve, "Ac"),
+            CreateSerializationMapping(mHoldTime, "H"),
+            CreateSerializationMapping(mDecayTime, "D"),
+            CreateSerializationMapping(mDecayCurve, "Dc"),
+            CreateSerializationMapping(mSustainLevel, "S"),
+            CreateSerializationMapping(mReleaseTime, "R"),
+            CreateSerializationMapping(mReleaseCurve, "Rc"),
+            CreateSerializationMapping(mLegatoRestart, "LR"),
+        }};
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct SynthOscillatorSettings
+struct SynthOscillatorSettings : ISerializationObjectMap<18>
 {
     void CopyFrom(const SynthOscillatorSettings &rhs)
     {
@@ -785,66 +748,46 @@ struct SynthOscillatorSettings
 
     FloatParam mFMFeedbackGain{0.0f}; // 0 to 1
 
-    // Result SerializableObject_ToJSON(JsonVariant rhs) const
-    // {
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mEnabled.SerializableObject_ToJSON(rhs.createNestedObject("on")), "on");
-    //     ret.AndRequires(mWaveform.SerializableObject_ToJSON(rhs.createNestedObject("wav")), "wav");
-    //     ret.AndRequires(mVolume.SerializableObject_ToJSON(rhs.createNestedObject("vol")), "vol");
-    //     ret.AndRequires(mPortamentoTimeMS.SerializableObject_ToJSON(rhs.createNestedObject("port")), "port");
-    //     ret.AndRequires(mFreqMultiplier.SerializableObject_ToJSON(rhs.createNestedObject("Fmul")), "Fmul");
-    //     ret.AndRequires(mFreqOffsetHz.SerializableObject_ToJSON(rhs.createNestedObject("Foff")), "Foff");
-    //     ret.AndRequires(mFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("Freq")), "Freq");
-    //     ret.AndRequires(mHardSyncEnabled.SerializableObject_ToJSON(rhs.createNestedObject("sync")), "sync");
-    //     ret.AndRequires(mSyncFreqParam.SerializableObject_ToJSON(rhs.createNestedObject("syncFreq")), "syncFreq");
-    //     ret.AndRequires(mPitchSemis.SerializableObject_ToJSON(rhs.createNestedObject("transp")), "transp");
-    //     ret.AndRequires(mPitchFine.SerializableObject_ToJSON(rhs.createNestedObject("fine")), "fine");
-    //     ret.AndRequires(mPitchBendRangePositive.SerializableObject_ToJSON(rhs.createNestedObject("pbPos")), "pbPos");
-    //     ret.AndRequires(mPitchBendRangeNegative.SerializableObject_ToJSON(rhs.createNestedObject("pbNeg")), "pbNeg");
-    //     ret.AndRequires(mPan.SerializableObject_ToJSON(rhs.createNestedObject("pan")), "pan");
-    //     ret.AndRequires(mPhaseRestart.SerializableObject_ToJSON(rhs.createNestedObject("phtrig")), "phtrig");
-    //     ret.AndRequires(mPhase01.SerializableObject_ToJSON(rhs.createNestedObject("phOff")), "phOff");
-    //     ret.AndRequires(mPulseWidth.SerializableObject_ToJSON(rhs.createNestedObject("pw")), "pw");
-    //     ret.AndRequires(mFMFeedbackGain.SerializableObject_ToJSON(rhs.createNestedObject("fb")), "fb");
-    //     return ret;
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("must be object");
-    //     }
-
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mEnabled.SerializableObject_Deserialize(obj["on"]), "on");
-    //     ret.AndRequires(mWaveform.SerializableObject_Deserialize(obj["wav"]), "wav");
-    //     ret.AndRequires(mVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
-    //     ret.AndRequires(mPortamentoTimeMS.SerializableObject_Deserialize(obj["port"]), "port");
-    //     ret.AndRequires(mFreqMultiplier.SerializableObject_Deserialize(obj["Fmul"]), "Fmul");
-    //     ret.AndRequires(mFreqOffsetHz.SerializableObject_Deserialize(obj["Foff"]), "Foff");
-    //     ret.AndRequires(mFreqParam.SerializableObject_Deserialize(obj["Freq"]), "Freq");
-    //     ret.AndRequires(mHardSyncEnabled.SerializableObject_Deserialize(obj["sync"]), "sync");
-    //     ret.AndRequires(mSyncFreqParam.SerializableObject_Deserialize(obj["syncFreq"]), "syncFreq");
-    //     ret.AndRequires(mPitchSemis.SerializableObject_Deserialize(obj["transp"]), "transp");
-    //     ret.AndRequires(mPitchFine.SerializableObject_Deserialize(obj["fine"]), "fine");
-    //     ret.AndRequires(mPitchBendRangePositive.SerializableObject_Deserialize(obj["pbPos"]), "pbPos");
-    //     ret.AndRequires(mPitchBendRangeNegative.SerializableObject_Deserialize(obj["pbNeg"]), "pbNeg");
-    //     ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
-    //     ret.AndRequires(mPhaseRestart.SerializableObject_Deserialize(obj["phtrig"]), "phtrig");
-    //     ret.AndRequires(mPhase01.SerializableObject_Deserialize(obj["phOff"]), "phOff");
-    //     ret.AndRequires(mPulseWidth.SerializableObject_Deserialize(obj["pw"]), "pw");
-    //     ret.AndRequires(mFMFeedbackGain.SerializableObject_Deserialize(obj["fb"]), "fb");
-    //     return ret;
-    // }
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mEnabled, "on"),
+            CreateSerializationMapping(mWaveform, "w"),
+            CreateSerializationMapping(mVolume, "v"),
+            CreateSerializationMapping(mPortamentoTimeMS, "p"),
+            CreateSerializationMapping(mFreqMultiplier, "fM"),
+            CreateSerializationMapping(mFreqOffsetHz, "fO"),
+            CreateSerializationMapping(mFreqParam, "fP"),
+            CreateSerializationMapping(mHardSyncEnabled, "sE"),
+            CreateSerializationMapping(mSyncFreqParam, "sF"),
+            CreateSerializationMapping(mPitchSemis, "tS"),
+            CreateSerializationMapping(mPitchFine, "tF"),
+            CreateSerializationMapping(mPitchBendRangePositive, "pbP"),
+            CreateSerializationMapping(mPitchBendRangeNegative, "pbN"),
+            CreateSerializationMapping(mPan, "Pan"),
+            CreateSerializationMapping(mPhaseRestart, "rst"),
+            CreateSerializationMapping(mPhase01, "Ph"),
+            CreateSerializationMapping(mPulseWidth, "PW"),
+            CreateSerializationMapping(mFMFeedbackGain, "Fb"),
+        }};
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct LFOSpec //: SerializableDictionary
+struct LFOSpec : ISerializationObjectMap<3>
 {
     EnumParam<OscWaveformShape> mWaveShape{gOscWaveformShapeInfo, OscWaveformShape::Sine};
     FloatParam mPulseWidth{0.5f};
     TimeWithBasisParam mSpeed{TimeBasis::Hertz, 1.0f};
+
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mWaveShape, "w"),
+            CreateSerializationMapping(mPulseWidth, "pw"),
+            CreateSerializationMapping(mSpeed, "s"),
+        }};
+    }
 
     // Result SerializableObject_ToJSON(JsonVariant doc) const
     // {
@@ -921,10 +864,10 @@ struct FilterSettings : ISerializationObjectMap<4>
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
         return {{
-            CreateSerializationMapping(mType, "Type"),
+            CreateSerializationMapping(mType, "t"),
             CreateSerializationMapping(mQ, "Q"),
-            CreateSerializationMapping(mSaturation, "Saturation"),
-            CreateSerializationMapping(mFrequency, "Frequency"),
+            CreateSerializationMapping(mSaturation, "S"),
+            CreateSerializationMapping(mFrequency, "F"),
         }};
     }
 
@@ -955,7 +898,7 @@ struct FilterSettings : ISerializationObjectMap<4>
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct SynthPatch
+struct SynthPatch : ISerializationObjectMap<20>
 {
   private:
     SynthPatch &operator=(const SynthPatch &rhs) = default;
@@ -1054,6 +997,32 @@ struct SynthPatch
         return ret;
     }
 
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mName, "Name"),
+            CreateSerializationMapping(mMasterVolume, "vol"),
+            CreateSerializationMapping(mPan, "p"),
+            CreateSerializationMapping(mDelayMix, "dX"),
+            CreateSerializationMapping(mVerbMix, "vX"),
+            CreateSerializationMapping(mStereoSpread, "st"),
+            CreateSerializationMapping(mDetune, "det"),
+            CreateSerializationMapping(mFilter, "flt"),
+            CreateSerializationMapping(mFMStrength2To1, "FM21"),
+            CreateSerializationMapping(mFMStrength3To1, "FM31"),
+            CreateSerializationMapping(mFMStrength1To2, "FM12"),
+            CreateSerializationMapping(mFMStrength3To2, "FM32"),
+            CreateSerializationMapping(mFMStrength1To3, "FM13"),
+            CreateSerializationMapping(mFMStrength2To3, "FM23"),
+            CreateSerializationMapping(mOverallFMStrength, "fmstr"),
+            CreateSerializationMapping(mVoicingMode, "voxx"),
+            CreateSerializationMapping(mModulations, "mod"),
+            CreateSerializationMapping(mOsc, "Osc"),
+            CreateSerializationMapping(mEnvelopes, "Env"),
+            CreateSerializationMapping(mLFOs, "LFOs"),
+        }};
+    }
+
     // Result SerializableObject_ToJSON(JsonVariant doc) const
     // {
     //     Result ret = Result::Success();
@@ -1117,10 +1086,17 @@ struct SynthPatch
 static constexpr auto synthpatchsize = sizeof(SynthPatch);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct SynthSettings
+struct SynthSettings : ISerializationObjectMap<1>
 {
     std::array<SynthPatch, SYNTH_PRESET_COUNT> mPatches{
         initialize_array_with_indices<SynthPatch, SYNTH_PRESET_COUNT>()};
+
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
+    {
+        return {{
+            CreateSerializationMapping(mPatches, "Patches"),
+        }};
+    }
 
     static void InitBommanoidPreset(SynthPatch &p, const char *name)
     {

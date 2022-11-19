@@ -536,6 +536,8 @@ struct VoiceModulationMatrixNode : public AudioStream
 
     void ProcessModulation(Buffers &buffers, const SynthModulationSpec &modulation)
     {
+        if (!modulation.mEnabled.GetValue())
+            return;
         auto sourceInfo = GetModulationSourceInfo(modulation.mSource.GetValue());
         if (!sourceInfo.mIsValidModulation)
             return;

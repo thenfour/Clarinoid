@@ -130,20 +130,6 @@ EnumInfo<HarmSynthPresetRefType> gHarmSynthPresetRefTypeInfo("HarmSynthPresetRef
 
 // EnumInfo<PitchBendParticipation> gPitchBendParticipationInfo("PitchBendParticipation", gPitchBendParticipationItems);
 
-struct MidiNoteRangeParam : ISerializationObjectMap<2>
-{
-    MidiNote mMin = MidiNote::MinimumValue();
-    MidiNote mMax = MidiNote::MaximumValue();
-
-    virtual SerializationObjectMapArray GetSerializationObjectMap() override
-    {
-        return {{
-            CreateSerializationMapping(mMin, "Min"),
-            CreateSerializationMapping(mMax, "Max"),
-        }};
-    }
-};
-
 
 ////////////////////////////////////////////////////
 struct HarmVoiceSettings : ISerializationObjectMap<7>
@@ -165,13 +151,13 @@ struct HarmVoiceSettings : ISerializationObjectMap<7>
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
         return {{
-            CreateSerializationMapping(mSynthPatchRef, "SynthPatchRef"),
-            CreateSerializationMapping(mSynthPatch, "SynthPatch"),
-            CreateSerializationMapping(mScaleRef, "ScaleRef"),
-            CreateSerializationMapping(mLocalScale, "LocalScale"),
-            CreateSerializationMapping(mNoteOOBBehavior, "NoteOOBBehavior"),
-            CreateSerializationMapping(mOutpRange, "OutpRange"),
-            CreateSerializationMapping(mSequence, "Sequence"),
+            CreateSerializationMapping(mSynthPatchRef, "pR"),
+            CreateSerializationMapping(mSynthPatch, "p"),
+            CreateSerializationMapping(mScaleRef, "scR"),
+            CreateSerializationMapping(mLocalScale, "lS"),
+            CreateSerializationMapping(mNoteOOBBehavior, "oob"),
+            CreateSerializationMapping(mOutpRange, "rng"),
+            CreateSerializationMapping(mSequence, "seq"),
         }};
     }
 
@@ -232,15 +218,15 @@ struct HarmPatch : ISerializationObjectMap<10>
     {
         return {{
             CreateSerializationMapping(mName, "Name"),
-            CreateSerializationMapping(mEmitLiveNote, "EmitLiveNote"),
-            CreateSerializationMapping(mStereoSeparation, "StereoSeparation"),
-            CreateSerializationMapping(mPatchScale, "PatchScale"),
-            CreateSerializationMapping(mMinRotationTimeMS, "MinRotationTimeMS"),
-            CreateSerializationMapping(mSynthPatch1, "SynthPatch1"),
-            CreateSerializationMapping(mSynthPatch2, "SynthPatch2"),
-            CreateSerializationMapping(mSynthPatch3, "SynthPatch3"),
-            CreateSerializationMapping(mSynthPatch4, "SynthPatch4"),
-            CreateSerializationMapping(mVoiceSettings, "VoiceSettings"),
+            CreateSerializationMapping(mEmitLiveNote, "el"),
+            CreateSerializationMapping(mStereoSeparation, "ster"),
+            CreateSerializationMapping(mPatchScale, "psc"),
+            CreateSerializationMapping(mMinRotationTimeMS, "minrot"),
+            CreateSerializationMapping(mSynthPatch1, "p1"),
+            CreateSerializationMapping(mSynthPatch2, "p2"),
+            CreateSerializationMapping(mSynthPatch3, "p3"),
+            CreateSerializationMapping(mSynthPatch4, "p4"),
+            CreateSerializationMapping(mVoiceSettings, "vox"),
         }};
     }
 };

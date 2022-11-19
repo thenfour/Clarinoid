@@ -46,6 +46,7 @@ uint32_t micros()
 #endif
 
 #include "../basic/Uptime.hpp"
+#include "String.hpp"
 
 #ifdef CLARINOID_MODULE_TEST
 
@@ -77,123 +78,123 @@ void yield()
 #error huh
 #endif
 
-struct String
-{
-    std::string mStr;
-    // std::stringstream mStr;
-    String()
-    {
-    }
-    String(const char *s) : mStr(s)
-    {
-    }
-    String(const String &rhs) : mStr(rhs.mStr)
-    {
-    }
-    template <typename T>
-    String(const T &rhs)
-    {
-        std::stringstream ss;
-        ss << rhs;
-        mStr = ss.str();
-    }
-    size_t length() const
-    {
-        return mStr.length();
-    }
-    char &operator[](size_t i)
-    {
-        return mStr[i];
-    }
-    char operator[](size_t i) const
-    {
-        return mStr[i];
-    }
-    const char *c_str() const
-    {
-        return mStr.c_str();
-    }
-    template <typename T>
-    String &operator+=(const T &rhs)
-    {
-        append(rhs);
-        return *this;
-    }
-
-    String &trim(void)
-    {
-        if (mStr.length() == 0)
-            return *this;
-        const char *buffer = mStr.c_str();
-        const char *begin = buffer;
-        while (isspace(*begin))
-            begin++;
-        const char *end = buffer + mStr.length() - 1;
-        while (isspace(*end) && end >= begin)
-            end--;
-
-        mStr = std::string{begin, end};
-        // len = end + 1 - begin;
-        // if (begin > buffer)
-        //     memcpy(buffer, begin, len);
-        // buffer[len] = 0;
-        return *this;
-    }
-
-    int indexOf(char ch, unsigned int fromIndex = 0) const
-    {
-        size_t x = mStr.find(ch, fromIndex);
-        return x == std::string::npos ? (int)-1 : (int)x;
-        // if (fromIndex >= len)
-        //     return -1;
-        // const char *temp = strchr(buffer + fromIndex, ch);
-        // if (temp == NULL)
-        //     return -1;
-        // return temp - buffer;
-    }
-
-    template <typename T>
-    String operator+(const T &rhs) const
-    {
-        String ret(*this);
-        ret += rhs;
-        return ret;
-    }
-    template <typename T>
-    String &append(const T &n)
-    {
-        std::stringstream ss;
-        ss << mStr << n;
-        mStr = ss.str();
-        return *this;
-    }
-    String &append(const String &n)
-    {
-        mStr.append(n.mStr);
-        return *this;
-    }
-    String &operator=(const String &s)
-    {
-        mStr = s.mStr;
-        return *this;
-    }
-
-    bool operator==(const char *rhs) const
-    {
-        return mStr == rhs;
-    }
-
-    String substring(unsigned int left, unsigned int right) const
-    {
-        return mStr.substr(left, right - left);
-    }
-
-    String substring(unsigned int left) const
-    {
-        return mStr.substr(left);
-    }
-};
-
+//struct String
+//{
+//    std::string mStr;
+//    // std::stringstream mStr;
+//    String()
+//    {
+//    }
+//    String(const char *s) : mStr(s)
+//    {
+//    }
+//    String(const String &rhs) : mStr(rhs.mStr)
+//    {
+//    }
+//    template <typename T>
+//    String(const T &rhs)
+//    {
+//        std::stringstream ss;
+//        ss << rhs;
+//        mStr = ss.str();
+//    }
+//    size_t length() const
+//    {
+//        return mStr.length();
+//    }
+//    char &operator[](size_t i)
+//    {
+//        return mStr[i];
+//    }
+//    char operator[](size_t i) const
+//    {
+//        return mStr[i];
+//    }
+//    const char *c_str() const
+//    {
+//        return mStr.c_str();
+//    }
+//    template <typename T>
+//    String &operator+=(const T &rhs)
+//    {
+//        append(rhs);
+//        return *this;
+//    }
+//
+//    String &trim(void)
+//    {
+//        if (mStr.length() == 0)
+//            return *this;
+//        const char *buffer = mStr.c_str();
+//        const char *begin = buffer;
+//        while (isspace(*begin))
+//            begin++;
+//        const char *end = buffer + mStr.length() - 1;
+//        while (isspace(*end) && end >= begin)
+//            end--;
+//
+//        mStr = std::string{begin, end};
+//        // len = end + 1 - begin;
+//        // if (begin > buffer)
+//        //     memcpy(buffer, begin, len);
+//        // buffer[len] = 0;
+//        return *this;
+//    }
+//
+//    int indexOf(char ch, unsigned int fromIndex = 0) const
+//    {
+//        size_t x = mStr.find(ch, fromIndex);
+//        return x == std::string::npos ? (int)-1 : (int)x;
+//        // if (fromIndex >= len)
+//        //     return -1;
+//        // const char *temp = strchr(buffer + fromIndex, ch);
+//        // if (temp == NULL)
+//        //     return -1;
+//        // return temp - buffer;
+//    }
+//
+//    template <typename T>
+//    String operator+(const T &rhs) const
+//    {
+//        String ret(*this);
+//        ret += rhs;
+//        return ret;
+//    }
+//    template <typename T>
+//    String &append(const T &n)
+//    {
+//        std::stringstream ss;
+//        ss << mStr << n;
+//        mStr = ss.str();
+//        return *this;
+//    }
+//    String &append(const String &n)
+//    {
+//        mStr.append(n.mStr);
+//        return *this;
+//    }
+//    String &operator=(const String &s)
+//    {
+//        mStr = s.mStr;
+//        return *this;
+//    }
+//
+//    bool operator==(const char *rhs) const
+//    {
+//        return mStr == rhs;
+//    }
+//
+//    String substring(unsigned int left, unsigned int right) const
+//    {
+//        return mStr.substr(left, right - left);
+//    }
+//
+//    String substring(unsigned int left) const
+//    {
+//        return mStr.substr(left);
+//    }
+//};
+//
 struct
 {
     void println(const String &str)
@@ -203,8 +204,8 @@ struct
     }
     void print(const String &str)
     {
-        std::cout << str.mStr;
-        ::OutputDebugStringA(str.mStr.c_str());
+        std::cout << str.c_str();
+        ::OutputDebugStringA(str.c_str());
     }
     void begin(uint32_t baud)
     {
@@ -270,7 +271,7 @@ bool digitalReadFast(uint8_t pin)
 }
 
 #define DMAMEM
-#define F
+//#define F
 
 struct Encoder
 {

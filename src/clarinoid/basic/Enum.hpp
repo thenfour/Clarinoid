@@ -78,7 +78,7 @@ struct EnumInfo : /*GenericEnumItemInfo,*/ GenericEnumInfo
         {
             if (static_cast<size_t>(mItems[i].mValue) != i)
             {
-                CCDIE(String("enum<") + typeName + "> bad item value");
+                CCASSERT(!"> bad item value");
             }
         }
     }
@@ -86,11 +86,12 @@ struct EnumInfo : /*GenericEnumItemInfo,*/ GenericEnumInfo
     const EnumItemInfo<T> &GetItem(T tn) const
     {
         size_t n = (size_t)tn;
-        if (n >= this->mItemCount)
-        {
-            CCDIE(String("EnumItemInfo::GetItem where n(") + n + ") >= itemCount(" + this->mItemCount + ")");
-            CCASSERT(n > 0 && n < this->mItemCount);
-        }
+        // this is bloaty.
+        //if (n >= this->mItemCount)
+        //{
+        //    CCDIE(String("EnumItemInfo::GetItem where n(") + n + ") >= itemCount(" + this->mItemCount + ")");
+        //    CCASSERT(n > 0 && n < this->mItemCount);
+        //}
         return mItems[n];
     }
 

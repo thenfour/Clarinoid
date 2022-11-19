@@ -99,9 +99,9 @@ EnumInfo<Note> gNoteInfo("Note", gNoteItems);
 ////////////////////////////////////////////////////
 class MidiNote
 {
-    uint8_t mValue = 0;     // 0-127 midi note value
-    // uint8_t mNoteIndex = 0; // 0-11 gNote index
-    // uint8_t mOctave = 0;
+    uint8_t mValue = 0; // 0-127 midi note value
+                        // uint8_t mNoteIndex = 0; // 0-11 gNote index
+                        // uint8_t mOctave = 0;
 
   public:
     MidiNote() = default;
@@ -115,16 +115,18 @@ class MidiNote
         // for mathematical simplicity
     }
 
-    uint8_t GetNoteIndex() const {
+    uint8_t GetNoteIndex() const
+    {
         return mValue % 12;
-    // remainder = val % divisor;
+        // remainder = val % divisor;
 
-    //     uint8_t noteIndex, octave;
-    //     DivRem<uint8_t, 12>(mValue, octave, noteIndex);
-    //     return noteIndex;
+        //     uint8_t noteIndex, octave;
+        //     DivRem<uint8_t, 12>(mValue, octave, noteIndex);
+        //     return noteIndex;
     }
 
-    uint8_t GetOctave() const {
+    uint8_t GetOctave() const
+    {
         return mValue / 12;
         // uint8_t noteIndex, octave;
         // DivRem<uint8_t, 12>(mValue, octave, noteIndex);
@@ -145,7 +147,7 @@ class MidiNote
     // {
     // }
 
-    MidiNote(int oct, Note note) : mValue(oct * 12 + (uint8_t)note)//, mNoteIndex((uint8_t)note), mOctave(oct)
+    MidiNote(int oct, Note note) : mValue(oct * 12 + (uint8_t)note) //, mNoteIndex((uint8_t)note), mOctave(oct)
     {
     }
 
@@ -177,7 +179,7 @@ class MidiNote
     MidiNote &operator+=(int8_t t)
     {
         mValue += t;
-        //DivRem<uint8_t, 12>(mValue, mOctave, mNoteIndex);
+        // DivRem<uint8_t, 12>(mValue, mOctave, mNoteIndex);
         return *this;
     }
 
@@ -193,7 +195,7 @@ class MidiNote
         // force last char to be a single digit octave #.
         auto noteIndex = GetNoteIndex();
         auto octave = GetOctave();
-        //return String(gNotes[noteIndex].mName) + std::min((uint8_t)9, octave);
+        // return String(gNotes[noteIndex].mName) + std::min((uint8_t)9, octave);
         return String(gNoteInfo.GetValueShortName(gNoteInfo.ToValue(noteIndex))) + std::min((uint8_t)9, octave);
     }
 
@@ -266,7 +268,7 @@ static constexpr size_t ScaleFlavorCount = (size_t)ScaleFlavorIndex::ScaleFlavor
 
 // abbreviated.
 EnumItemInfo<ScaleFlavorIndex> gScaleFlavorIndexItems[ScaleFlavorCount] = {
-    {ScaleFlavorIndex::Chromatic, "Chrom"},
+    {ScaleFlavorIndex::Chromatic, "Chr"},
     {ScaleFlavorIndex::Major, "Maj"},
     {ScaleFlavorIndex::Minor, "Min"},
     {ScaleFlavorIndex::MelodicMinor, "MelMin"},
@@ -466,21 +468,21 @@ struct ScaleFlavor
 // !! NB: match indices to ScaleFlavorIndex!
 const ScaleFlavor gScaleFlavors[14] = {
     {ScaleFlavorIndex::Chromatic,
-     "Chrom",
+     "Chr",
      "Chromatic",
      ScaleFlavorOptions::AllowInMenus,
      1,
      {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
      {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
     {ScaleFlavorIndex::Major,
-     "Major",
+     "Maj",
      "Major",
      ScaleFlavorOptions::AllowEverywhere,
      12,
      {2, 2, 1, 2, 2, 2, 1},
      {2, 1, 3, 1, 2, 1, 1}},
     {ScaleFlavorIndex::Minor,
-     "Minor",
+     "Min",
      "Minor",
      ScaleFlavorOptions::AllowInMenus,
      12,
@@ -515,21 +517,21 @@ const ScaleFlavor gScaleFlavors[14] = {
      {3, 2, 2, 3, 2},
      {2, 3, 1, 1, 1}},
     {ScaleFlavorIndex::WholeTone,
-     "WholeTone",
+     "Whole",
      "WholeTone",
      ScaleFlavorOptions::AllowInMenus,
      2,
      {2, 2, 2, 2, 2, 2},
      {1, 1, 1, 1, 1, 1}},
     {ScaleFlavorIndex::HalfWholeDiminished,
-     "HalfWhDim",
+     "HWDim",
      "Half-Whole Dim",
      ScaleFlavorOptions::AllowEverywhere,
      3,
      {1, 2, 1, 2, 1, 2, 1, 2},
      {1, 1, 1, 1, 1, 1, 1, 1}},
     {ScaleFlavorIndex::WholeHalfDiminished,
-     "WhHalfDim",
+     "WHDim",
      "Whole-Half Dim",
      ScaleFlavorOptions::AllowInMenus,
      3,
@@ -616,8 +618,7 @@ struct Scale
                                                    EnharmonicDirection ed) const
     {
         CCASSERT(midiNote <= 127);
-        MidiNote chromaticRelToRoot =
-            MidiNote{(int)midiNote - (int)mRootNoteIndex}; // make relative to the root.
+        MidiNote chromaticRelToRoot = MidiNote{(int)midiNote - (int)mRootNoteIndex}; // make relative to the root.
 
         midiNoteOffset = (chromaticRelToRoot.GetOctave() * 12) + (uint8_t)mRootNoteIndex;
         // now convert note to scale degree & enharmonic.
