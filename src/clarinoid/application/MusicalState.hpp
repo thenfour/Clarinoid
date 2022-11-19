@@ -18,26 +18,29 @@
 #include <clarinoid/synth/MusicalDevice.hpp>
 #include "USBKeyboardMusicalDevice.hpp"
 #include "HarmonizerMusicalDevice.hpp"
+#include "USBMidiIO.hpp"
 
 namespace clarinoid
 {
 
 // orchestrates propagation of musical events from physical device to synthesizer
 // some musical state depends directly on hardware, like sustain pedal and analog controls; those are also handled here
-struct MusicalState : IMusicalDeviceEvents // for receiving musical event data from various devices
+struct MusicalState : IMusicalDeviceEvents  // for receiving musical event data from various devices
 {
     AppSettings &mAppSettings;
     InputDelegator &mInput;
 
-    USBKeyboardMusicalDevice mUsbKeyboard;
+    USBKeyboardMusicalDevice mUsbKeyboard; // USB Host (korg)
     HarmonizerMusicalDevice mLiveHarmonizer;
+    USBMidiOutput mUSBMidiOut;
+    USBMidiInput mUSBMidiIn;
 
     IMusicalEventsForSynth *mpSynth = nullptr;
 
     MusicalState(AppSettings &appSettings, InputDelegator &input, IMusicalEventsForSynth *pSynth)
         : mAppSettings(appSettings),                                           //
           mInput(input),                                                       //
-          mUsbKeyboard(&appSettings, this, &mUsbKeyboard),                     //
+          mUsbKeyboard(&appSettings, this, &mUSBMidiOut, &mUsbKeyboard),                     //
           mLiveHarmonizer(appSettings, &mUsbKeyboard, this, &mLiveHarmonizer), //
           mpSynth(pSynth)
     {
@@ -74,7 +77,9 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
         CCASSERT(cap == &mUsbKeyboard);
         // forward to things that care about physical musical events
         mLiveHarmonizer.OnSourceNoteOff(
-            noteInfo, trillNote, mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset.GetValue()));
+            noteInfo,
+            trillNote,
+            mAppSettings.FindHarmPreset(mAppSettings.GetCurrentPerformancePatch().mHarmPreset.GetValue()));
     }
     virtual void IMusicalDeviceEvents_OnPhysicalAllNotesOff(void *cap) override
     {
@@ -120,20 +125,26 @@ struct MusicalState : IMusicalDeviceEvents // for receiving musical event data f
         // update physical devices
         mUsbKeyboard.Update();
 
-        // maybe a "better" design is if THIS class is a param source, and for certain params we get from the inputdelegator.
-        // or we can keep the USB Keyboard as the param provider, and just tell it some stuff.
-        for (size_t i = 0; i < 4; ++ i) {
+        // maybe a "better" design is if THIS class is a param source, and for certain params we get from the
+        // inputdelegator. or we can keep the USB Keyboard as the param provider, and just tell it some stuff.
+        for (size_t i = 0; i < 4; ++i)
+        {
             mUsbKeyboard.mMacroValues[i] = mInput.mMacroPots[i].CurrentValue01();
         }
 
         bool pedalState = mInput.mSustainPedal.CurrentValue01() > 0.5f;
-        if (mAppSettings.mSustainPedalPolarity.GetValue()) {
+        if (mAppSettings.mSustainPedalPolarity.GetValue())
+        {
             pedalState = !pedalState;
         }
-        
-        //Serial.println(String("PEDAL raw:") + mInput.mSustainPedal.CurrentValue01() + ", pedalState:" + pedalState + ", existingpedalstate:" + mUsbKeyboard.mHeldNotes.IsPedalUp());
-        
+
+        // Serial.println(String("PEDAL raw:") + mInput.mSustainPedal.CurrentValue01() + ", pedalState:" + pedalState +
+        // ", existingpedalstate:" + mUsbKeyboard.mHeldNotes.IsPedalUp());
+
         mUsbKeyboard.UpdateExternalSustainPedalState(pedalState);
+
+        mUSBMidiIn.Update();
+        mUSBMidiOut.Update();
 
         // update harmonizer, loopstation
     }

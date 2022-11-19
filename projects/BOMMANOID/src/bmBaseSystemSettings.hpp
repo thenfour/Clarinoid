@@ -82,6 +82,7 @@ enum class PhysicalControl : uint8_t
 // that's tricky 1) to actually implement in a reasonable way, especially on a device with
 // no keyboard for typing filenames, and 2) to make generic across clarinoid-style devices.
 enum class StorageChannel : uint8_t{
+    AutoLoad,
     UsbMassStorage0,
     UsbMassStorage1,
     UsbMassStorage2,
@@ -92,7 +93,8 @@ enum class StorageChannel : uint8_t{
 };
 
 
-EnumItemInfo<StorageChannel> gStorageChannelItems[7] = {
+EnumItemInfo<StorageChannel> gStorageChannelItems[8] = {
+    {StorageChannel::AutoLoad, "Default autoload"},
     {StorageChannel::UsbMassStorage0, "Internal slot #1"},
     {StorageChannel::UsbMassStorage1, "Internal slot #2"},
     {StorageChannel::UsbMassStorage2, "Internal slot #3"},

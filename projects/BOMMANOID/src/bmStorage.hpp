@@ -62,24 +62,25 @@ struct BommanoidStorage : IStorage
         File root = gUsbFileSystem1.open("/");
         printDirectory(root);
     }
-    
+
     static String GetUsbMassStorageFilename(size_t slot)
     {
         return String("/ClarinoidSettingsSlot") + slot + ".json";
     }
 
-    virtual Result SaveSettings(StorageChannel ch, AppSettings& val)
+    virtual Result SaveSettings(StorageChannel ch, AppSettings &val)
     {
         switch (ch)
         {
+        case StorageChannel::AutoLoad:
         case StorageChannel::UsbMassStorage0:
-            //return SaveUsbMassStorage(0, val);
+            // return SaveUsbMassStorage(0, val);
         case StorageChannel::UsbMassStorage1:
-           // return SaveUsbMassStorage(1, val);
+            // return SaveUsbMassStorage(1, val);
         case StorageChannel::UsbMassStorage2:
-           // return SaveUsbMassStorage(2, val);
+            // return SaveUsbMassStorage(2, val);
         case StorageChannel::UsbMassStorage3:
-           // return SaveUsbMassStorage(3, val);
+            // return SaveUsbMassStorage(3, val);
         default:
         case StorageChannel::SerialStream:
             return SaveSerial(val);
@@ -93,23 +94,22 @@ struct BommanoidStorage : IStorage
         return Result::Failure();
     }
 
-    virtual Result LoadSettings(StorageChannel ch, AppSettings&doc)
+    virtual Result LoadSettings(StorageChannel ch, AppSettings &doc)
     {
         return Result::Failure();
     }
 
-    template<typename T>
+    template <typename T>
     Result SaveSerial(T &val)
     {
-        StreamStream serialStream { Serial };
-        BufferedStream buffering { serialStream };
-        TextStream textStream { buffering};
-        JsonVariantWriter doc { textStream };
+        StreamStream serialStream{Serial};
+        BufferedStream buffering{serialStream};
+        TextStream textStream{buffering};
+        JsonVariantWriter doc{textStream};
         Result ret = Serialize(doc, val);
         doc.FinishWriting(); // flush & write closing characters.
         return ret;
     }
-
 
     // Result SaveUsbMassStorage(size_t slot, ClarinoidJsonDocument &doc)
     // {
@@ -190,7 +190,6 @@ struct BommanoidStorage : IStorage
     //         return DeserializationError{DeserializationError::Code::InvalidInput};
     //     }
     // }
-
 };
 
 // #define FILE_READ  0

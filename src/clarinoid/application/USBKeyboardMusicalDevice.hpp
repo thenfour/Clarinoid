@@ -30,14 +30,19 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
     static USBKeyboardMusicalDevice *gInstance;
     AppSettings *mAppSettings;
     IMusicalDeviceEvents *mpEventHandler;
+    IMidiEventHandler *mRawEventHandler;
     void *mpCapture = nullptr;
 
     // when voicing mode changes we should send note offs.
     VoicingMode mLastVoicingModeA = VoicingMode::Polyphonic;
     VoicingMode mLastVoicingModeB = VoicingMode::Polyphonic;
 
-    USBKeyboardMusicalDevice(AppSettings *appSettings, IMusicalDeviceEvents *eventHandler, void *cap)
-        : mHeldNotes(this), mAppSettings(appSettings), mpEventHandler(eventHandler), mpCapture(cap)
+    USBKeyboardMusicalDevice(AppSettings *appSettings,
+                             IMusicalDeviceEvents *eventHandler,
+                             IMidiEventHandler *otherEventHandler,
+                             void *cap)
+        : mHeldNotes(this), mAppSettings(appSettings), mpEventHandler(eventHandler),
+          mRawEventHandler(otherEventHandler), mpCapture(cap)
     {
         // singleton bacause handling events in static methods
         CCASSERT(!gInstance);
@@ -46,6 +51,7 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         gUsbMidi.setHandleNoteOn(HandleNoteOn);
         gUsbMidi.setHandleControlChange(HandleControlChange);
         gUsbMidi.setHandlePitchChange(HandlePitchChange);
+        gUsbMidi.setHandleSysEx(HandleSysEx);
     }
 
     // events coming from held note tracker
@@ -56,10 +62,16 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
 
         // EMIT live notes to synth.
         const auto &perf = mAppSettings->GetCurrentPerformancePatch();
-        DoNoteOnForPerfVoice(
-            noteInfo, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPatchA.GetValue(), perf.mSynthAEnabled.GetValue());
-        DoNoteOnForPerfVoice(
-            noteInfo, MusicalEventSourceType::LivePlayB, perf, perf.mSynthPatchB.GetValue(), perf.mSynthBEnabled.GetValue());
+        DoNoteOnForPerfVoice(noteInfo,
+                             MusicalEventSourceType::LivePlayA,
+                             perf,
+                             perf.mSynthPatchA.GetValue(),
+                             perf.mSynthAEnabled.GetValue());
+        DoNoteOnForPerfVoice(noteInfo,
+                             MusicalEventSourceType::LivePlayB,
+                             perf,
+                             perf.mSynthPatchB.GetValue(),
+                             perf.mSynthBEnabled.GetValue());
     }
 
     void DoNoteOnForPerfVoice(const HeldNoteInfo &noteInfo,
@@ -93,10 +105,18 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         mpEventHandler->IMusicalDeviceEvents_OnPhysicalNoteOff(noteInfo, trillNote, mpCapture);
 
         const auto &perf = mAppSettings->GetCurrentPerformancePatch();
-        DoNoteOffForPerfVoice(
-            noteInfo, trillNote, MusicalEventSourceType::LivePlayA, perf, perf.mSynthPatchA.GetValue(), perf.mSynthAEnabled.GetValue());
-        DoNoteOffForPerfVoice(
-            noteInfo, trillNote, MusicalEventSourceType::LivePlayB, perf, perf.mSynthPatchB.GetValue(), perf.mSynthBEnabled.GetValue());
+        DoNoteOffForPerfVoice(noteInfo,
+                              trillNote,
+                              MusicalEventSourceType::LivePlayA,
+                              perf,
+                              perf.mSynthPatchA.GetValue(),
+                              perf.mSynthAEnabled.GetValue());
+        DoNoteOffForPerfVoice(noteInfo,
+                              trillNote,
+                              MusicalEventSourceType::LivePlayB,
+                              perf,
+                              perf.mSynthPatchB.GetValue(),
+                              perf.mSynthBEnabled.GetValue());
     }
 
     void DoNoteOffForPerfVoice(const HeldNoteInfo &noteInfo,
@@ -249,6 +269,7 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
             return;
         }
         // Serial.println(String("midi device HandleNoteOff: ") + note);
+        gInstance->mRawEventHandler->IMidiEvents_OnNoteOff(channel, note, velocity);
         gInstance->mHeldNotes.NoteOff(MidiNote(note));
     }
 
@@ -259,6 +280,9 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         {
             return;
         }
+
+        gInstance->mRawEventHandler->IMidiEvents_OnNoteOn(channel, note, velocity);
+
         // Serial.println(String("midi device note on: ") + note);
         float velocity01 = float(velocity) / 127.0f;
         // Serial.println("USBKeyboardMusicalDevice::HandleNoteOn");
@@ -272,6 +296,9 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         {
             return;
         }
+
+        gInstance->mRawEventHandler->IMidiEvents_OnControlChange(channel, control, value);
+
         // Serial.println(String("midi device HandleControlChange : ") + control + " -> " + value);
         //      https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
         //      64	Damper Pedal on/off	≤63 off, ≥64 on	On/off switch that controls sustain pedal. Nearly every synth
@@ -320,6 +347,9 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         {
             return;
         }
+
+        gInstance->mRawEventHandler->IMidiEvents_OnPitchBend(channel, pitch);
+
         // Serial.println(String("pb: ") + pitch);
         if (pitch >= 8191)
         {
@@ -329,6 +359,11 @@ struct USBKeyboardMusicalDevice : ISynthParamProvider, IHeldNoteTrackerEvents<He
         {
             gInstance->mCurrentPitchBendN11 = float(pitch) / 8192.0f;
         }
+    }
+
+    static void HandleSysEx(const uint8_t *data, uint16_t length, bool complete)
+    {
+        gInstance->mRawEventHandler->IMidiEvents_OnSysEx(length, data, complete);
     }
 
     void Update()
