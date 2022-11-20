@@ -70,12 +70,12 @@ struct Voice : IModulationProvider
             return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm2};
         case ARateModulationDestination::Osc3PulseWidth:
             return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pwm3};
-        case ARateModulationDestination::Osc1Phase:
-            return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm1};
-        case ARateModulationDestination::Osc2Phase:
-            return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm2};
-        case ARateModulationDestination::Osc3Phase:
-            return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm3};
+        // case ARateModulationDestination::Osc1Phase:
+        //     return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm1};
+        // case ARateModulationDestination::Osc2Phase:
+        //     return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm2};
+        // case ARateModulationDestination::Osc3Phase:
+        //     return {&mOsc, (uint8_t)AudioBandlimitedOsci::INPUT_INDEX::pm3};
         }
         CCASSERT(!"arate dest port incorrect"); // probably enum set up incorrectly.
         return {nullptr, 0};

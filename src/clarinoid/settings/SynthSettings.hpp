@@ -204,20 +204,20 @@ enum class ARateModulationDestination : uint8_t
 {
     // these are INDICES used by synthvoice / modulationmatrix
     Osc1PulseWidth = 0, // a-rate
-    Osc1Phase,          // a-rate
+    //Osc1Phase,          // a-rate
     Osc2PulseWidth,     // a-rate
-    Osc2Phase,          // a-rate
+    //Osc2Phase,          // a-rate
     Osc3PulseWidth,     // a-rate
-    Osc3Phase,          // a-rate
+    //Osc3Phase,          // a-rate
 };
 
-EnumItemInfo<ARateModulationDestination> gARateModulationDestinationItems[6] = {
+EnumItemInfo<ARateModulationDestination> gARateModulationDestinationItems[3] = {
     {ARateModulationDestination::Osc1PulseWidth, "Osc1PulseWidth", "osc1pw"},
-    {ARateModulationDestination::Osc1Phase, "Osc1Phase", "osc1ph"},
+    //{ARateModulationDestination::Osc1Phase, "Osc1Phase", "osc1ph"},
     {ARateModulationDestination::Osc2PulseWidth, "Osc2PulseWidth", "osc2pw"},
-    {ARateModulationDestination::Osc2Phase, "Osc2Phase", "osc2ph"},
+    //{ARateModulationDestination::Osc2Phase, "Osc2Phase", "osc2ph"},
     {ARateModulationDestination::Osc3PulseWidth, "Osc3PulseWidth", "osc3pw"},
-    {ARateModulationDestination::Osc3Phase, "Osc3Phase", "osc3ph"},
+    //{ARateModulationDestination::Osc3Phase, "Osc3Phase", "osc3ph"},
 };
 
 static constexpr size_t gARateModulationDestinationCount = SizeofStaticArray(gARateModulationDestinationItems);
@@ -440,11 +440,11 @@ enum class AnyModulationDestination : uint8_t
 {
     None = 0,
     Osc1PulseWidth, // a-rate
-    Osc1Phase,      // a-rate
+    //Osc1Phase,      // a-rate
     Osc2PulseWidth, // a-rate
-    Osc2Phase,      // a-rate
+    //Osc2Phase,      // a-rate
     Osc3PulseWidth, // a-rate
-    Osc3Phase,      // a-rate
+    //Osc3Phase,      // a-rate
 
     FilterCutoff,       // k-rate
     MasterVolume,       // k-rate
@@ -513,11 +513,11 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none 
                                                                       gKRateModulationDestinationCount] = {
     {AnyModulationDestination::None, "None", "-"},
     {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth", "osc1pw"},
-    {AnyModulationDestination::Osc1Phase, "Osc1Phase", "osc1ph"},
+    //{AnyModulationDestination::Osc1Phase, "Osc1Phase", "osc1ph"},
     {AnyModulationDestination::Osc2PulseWidth, "Osc2PulseWidth", "osc2pw"},
-    {AnyModulationDestination::Osc2Phase, "Osc2Phase", "osc2ph"},
+    //{AnyModulationDestination::Osc2Phase, "Osc2Phase", "osc2ph"},
     {AnyModulationDestination::Osc3PulseWidth, "Osc3PulseWidth", "osc3pw"},
-    {AnyModulationDestination::Osc3Phase, "Osc3Phase", "osc3ph"}, // A-rate
+    //{AnyModulationDestination::Osc3Phase, "Osc3Phase", "osc3ph"}, // A-rate
 
     // K-rates:
     {AnyModulationDestination::FilterCutoff, "FilterCutoff", "flt"},

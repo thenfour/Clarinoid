@@ -365,18 +365,18 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         //  1,  // range max
         //  ModulationPoleType::N11},
     },
-    {
-        true,
-        (size_t)AnyModulationDestination::Osc1Phase, // index overall
-        AnyModulationDestination::Osc1Phase,
-        (size_t)ARateModulationDestination::Osc1Phase, // index for rate
-        ModulationRate::ARate,
-        (KRateModulationDestination)0,
-        ARateModulationDestination::Osc1Phase,
-        //  -1, // range min
-        //  1,  // range max
-        //  ModulationPoleType::N11},
-    },
+    // {
+    //     true,
+    //     (size_t)AnyModulationDestination::Osc1Phase, // index overall
+    //     AnyModulationDestination::Osc1Phase,
+    //     (size_t)ARateModulationDestination::Osc1Phase, // index for rate
+    //     ModulationRate::ARate,
+    //     (KRateModulationDestination)0,
+    //     ARateModulationDestination::Osc1Phase,
+    //     //  -1, // range min
+    //     //  1,  // range max
+    //     //  ModulationPoleType::N11},
+    // },
     {
         true,
         (size_t)AnyModulationDestination::Osc2PulseWidth, // index overall
@@ -389,18 +389,18 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         //  1,  // range max
         //  ModulationPoleType::N11},
     },
-    {
-        true,
-        (size_t)AnyModulationDestination::Osc2Phase, // index overall
-        AnyModulationDestination::Osc2Phase,
-        (size_t)ARateModulationDestination::Osc2Phase, // index for rate
-        ModulationRate::ARate,
-        (KRateModulationDestination)0,
-        ARateModulationDestination::Osc2Phase,
-        //  -1, // range min
-        //  1,  // range max
-        //  ModulationPoleType::N11},
-    },
+    // {
+    //     true,
+    //     (size_t)AnyModulationDestination::Osc2Phase, // index overall
+    //     AnyModulationDestination::Osc2Phase,
+    //     (size_t)ARateModulationDestination::Osc2Phase, // index for rate
+    //     ModulationRate::ARate,
+    //     (KRateModulationDestination)0,
+    //     ARateModulationDestination::Osc2Phase,
+    //     //  -1, // range min
+    //     //  1,  // range max
+    //     //  ModulationPoleType::N11},
+    // },
     {
         true,
         (size_t)AnyModulationDestination::Osc3PulseWidth, // index overall
@@ -413,18 +413,18 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         //  1,  // range max
         //  ModulationPoleType::N11},
     },
-    {
-        true,
-        (size_t)AnyModulationDestination::Osc3Phase, // index overall
-        AnyModulationDestination::Osc3Phase,
-        (size_t)ARateModulationDestination::Osc3Phase, // index for rate
-        ModulationRate::ARate,
-        (KRateModulationDestination)0,
-        ARateModulationDestination::Osc3Phase,
-        //  -1, // range min
-        //  1,  // range max
-        //  ModulationPoleType::N11},
-    },
+    // {
+    //     true,
+    //     (size_t)AnyModulationDestination::Osc3Phase, // index overall
+    //     AnyModulationDestination::Osc3Phase,
+    //     (size_t)ARateModulationDestination::Osc3Phase, // index for rate
+    //     ModulationRate::ARate,
+    //     (KRateModulationDestination)0,
+    //     ARateModulationDestination::Osc3Phase,
+    //     //  -1, // range min
+    //     //  1,  // range max
+    //     //  ModulationPoleType::N11},
+    // },
 
     {
         true,

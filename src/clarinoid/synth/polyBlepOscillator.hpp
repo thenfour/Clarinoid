@@ -196,16 +196,17 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
                      float otherOsc1Sample)
     {
         // TODO: use phase shift
+        float pulseWidth = Clamp(pulseWidthShift + caller.mPulseWidth, 0.001f, 0.999f);
         while (true)
         {
             if (!caller.mPulseStage)
             {
-                if (caller.mMainPhase.mT < caller.mPulseWidth)
+                if (caller.mMainPhase.mT < pulseWidth)
                     break;
 
-                float x = (caller.mMainPhase.mT - caller.mPulseWidth) /
-                          (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
-                float scale = caller.mMainPhase.mDt / (caller.mPulseWidth - caller.mPulseWidth * caller.mPulseWidth);
+                float x = (caller.mMainPhase.mT - pulseWidth) /
+                          (caller.mWidthDelay - pulseWidth + caller.mMainPhase.mDt);
+                float scale = caller.mMainPhase.mDt / (pulseWidth - pulseWidth * pulseWidth);
 
                 caller.mOutput -= scale * blamp0(x);
                 caller.mBlepDelay -= scale * blamp1(x);
@@ -224,7 +225,7 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
                 // time, this is always 0-1.
                 float x = caller.mMainPhase.mT / caller.mMainPhase.mDt;
 
-                float scale = caller.mMainPhase.mDt / (caller.mPulseWidth - caller.mPulseWidth * caller.mPulseWidth);
+                float scale = caller.mMainPhase.mDt / (pulseWidth - pulseWidth * pulseWidth);
 
                 caller.mOutput += scale * blamp0(x);
                 caller.mBlepDelay += scale * blamp1(x);
@@ -235,18 +236,18 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
 
         float naiveWave;
 
-        if (caller.mMainPhase.mT <= caller.mPulseWidth)
+        if (caller.mMainPhase.mT <= pulseWidth)
         {
-            naiveWave = 2 * caller.mMainPhase.mT / caller.mPulseWidth - 1;
+            naiveWave = 2 * caller.mMainPhase.mT / pulseWidth - 1;
         }
         else
         {
-            naiveWave = -2 * (caller.mMainPhase.mT - caller.mPulseWidth) / (1 - caller.mPulseWidth) + 1;
+            naiveWave = -2 * (caller.mMainPhase.mT - pulseWidth) / (1 - pulseWidth) + 1;
         }
 
         caller.mBlepDelay += naiveWave;
 
-        caller.mWidthDelay = caller.mPulseWidth;
+        caller.mWidthDelay = pulseWidth;
     }
 };
 
@@ -267,15 +268,16 @@ struct PulseWaveformProvider
                      float otherOsc1Sample)
     {
         // TODO: use phase shift
+        float pulseWidth = Clamp(pulseWidthShift + caller.mPulseWidth, 0.001f, 0.999f);
         while (true)
         {
             if (!caller.mPulseStage)
             {
-                if (caller.mMainPhase.mT < caller.mPulseWidth)
+                if (caller.mMainPhase.mT < pulseWidth)
                     break;
 
-                float x = (caller.mMainPhase.mT - caller.mPulseWidth) /
-                          (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
+                float x = (caller.mMainPhase.mT - pulseWidth) /
+                          (caller.mWidthDelay - pulseWidth + caller.mMainPhase.mDt);
 
                 caller.mOutput -= blep0(x);
                 caller.mBlepDelay -= blep1(x);
@@ -304,7 +306,7 @@ struct PulseWaveformProvider
 
         caller.mBlepDelay += naiveWave;
 
-        caller.mWidthDelay = caller.mPulseWidth;
+        caller.mWidthDelay = pulseWidth;
     }
 };
 
@@ -523,11 +525,11 @@ struct AudioBandlimitedOsci : public AudioStream
     enum class INPUT_INDEX
     {
         pwm1 = 0,
-        pm1,
+        //pm1,
         pwm2,
-        pm2,
+        //pm2,
         pwm3,
-        pm3,
+        //pm3,
     };
     static constexpr size_t INPUT_CONNECTION_COUNT = 6;
 
