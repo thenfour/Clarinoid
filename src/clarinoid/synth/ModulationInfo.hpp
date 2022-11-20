@@ -118,38 +118,38 @@ ModulationSourceInfo gModulationSourceInfo[gAnyModulationSourceCount] = {
      1, // range max
      ModulationPoleType::Positive01},
 
-    {true,
-     (size_t)AnyModulationSource::Osc1FB, // index overall
-     AnyModulationSource::Osc1FB,
-     (size_t)ARateModulationSource::Osc1FB, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationSource)0,
-     ARateModulationSource::Osc1FB,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
+    // {true,
+    //  (size_t)AnyModulationSource::Osc1FB, // index overall
+    //  AnyModulationSource::Osc1FB,
+    //  (size_t)ARateModulationSource::Osc1FB, // index for rate
+    //  ModulationRate::ARate,
+    //  (KRateModulationSource)0,
+    //  ARateModulationSource::Osc1FB,
+    //  -1, // range min
+    //  1,  // range max
+    //  ModulationPoleType::N11},
 
-    {true,
-     (size_t)AnyModulationSource::Osc2FB, // index overall
-     AnyModulationSource::Osc2FB,
-     (size_t)ARateModulationSource::Osc2FB, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationSource)0,
-     ARateModulationSource::Osc2FB,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
+    // {true,
+    //  (size_t)AnyModulationSource::Osc2FB, // index overall
+    //  AnyModulationSource::Osc2FB,
+    //  (size_t)ARateModulationSource::Osc2FB, // index for rate
+    //  ModulationRate::ARate,
+    //  (KRateModulationSource)0,
+    //  ARateModulationSource::Osc2FB,
+    //  -1, // range min
+    //  1,  // range max
+    //  ModulationPoleType::N11},
 
-    {true,
-     (size_t)AnyModulationSource::Osc3FB, // index overall
-     AnyModulationSource::Osc3FB,
-     (size_t)ARateModulationSource::Osc3FB, // index for rate
-     ModulationRate::ARate,
-     (KRateModulationSource)0,
-     ARateModulationSource::Osc3FB,
-     -1, // range min
-     1,  // range max
-     ModulationPoleType::N11},
+    // {true,
+    //  (size_t)AnyModulationSource::Osc3FB, // index overall
+    //  AnyModulationSource::Osc3FB,
+    //  (size_t)ARateModulationSource::Osc3FB, // index for rate
+    //  ModulationRate::ARate,
+    //  (KRateModulationSource)0,
+    //  ARateModulationSource::Osc3FB,
+    //  -1, // range min
+    //  1,  // range max
+    //  ModulationPoleType::N11},
 
     {true,
      (size_t)AnyModulationSource::Breath, // index overall

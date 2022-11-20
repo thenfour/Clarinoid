@@ -48,12 +48,12 @@ struct Voice : IModulationProvider
             return {&mLfos[1], 0};
         case ARateModulationSource::LFO3:
             return {&mLfos[2], 0};
-        case ARateModulationSource::Osc1FB:
-            return {&mOsc, 0};
-        case ARateModulationSource::Osc2FB:
-            return {&mOsc, 1};
-        case ARateModulationSource::Osc3FB:
-            return {&mOsc, 2};
+        // case ARateModulationSource::Osc1FB:
+        //     return {&mOsc, 0};
+        // case ARateModulationSource::Osc2FB:
+        //     return {&mOsc, 1};
+        // case ARateModulationSource::Osc3FB:
+        //     return {&mOsc, 2};
         }
         CCASSERT(!"arate src port incorrect"); // probably enum set up incorrectly.
         return {nullptr, 0};
@@ -365,6 +365,31 @@ struct Voice : IModulationProvider
 
         // String sd = String("v") + mVoiceIndex + ": ";
 
+        // static constexpr int otherOscIndices[POLYBLEP_OSC_COUNT][2] = {
+
+        // };
+
+        mOsc.mOsc[0].mPMAmt0 = // 2->1
+            patch.mFMStrength2To1.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength2To1);
+        mOsc.mOsc[0].mPMAmt1 = // 3->1
+            patch.mFMStrength3To1.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength3To1);
+
+        mOsc.mOsc[1].mPMAmt0 = // 1->2
+            patch.mFMStrength1To2.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength1To2);
+        mOsc.mOsc[1].mPMAmt1 = // 3->2
+            patch.mFMStrength3To2.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength3To2);
+
+        mOsc.mOsc[2].mPMAmt0 = // 1->3
+            patch.mFMStrength1To3.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength1To3);
+        mOsc.mOsc[2].mPMAmt1 = // 2->3
+            patch.mFMStrength2To3.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength2To3);
+
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
             mOsc.mOsc[i].mEnabled = patch.mOsc[i].mEnabled.GetValue();
@@ -408,8 +433,9 @@ struct Voice : IModulationProvider
                     mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(),
                     mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency)),
                 patch.mOsc[i].mRingModOtherOsc[0].mValue,
-                patch.mOsc[i].mRingModOtherOsc[1].mValue, 
-                ClampN11(patch.mOsc[i].mRingModStrengthN11 + mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_RingModAmt)));
+                patch.mOsc[i].mRingModOtherOsc[1].mValue,
+                ClampN11(patch.mOsc[i].mRingModStrengthN11 +
+                         mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_RingModAmt)));
 
             ienabledOsc++;
         }

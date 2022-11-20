@@ -567,20 +567,6 @@ struct VoiceModulationMatrixNode : public AudioStream
         return;
     };
 
-    void ProcessFMModulation(Buffers &buffers,
-                             float amount,
-                             const SynthOscillatorSettings &osc,
-                             AnyModulationSource src,
-                             AnyModulationDestination dest)
-    {
-        SynthModulationSpec m;
-        m.mSource.SetValue(src);
-        m.mDest.SetValue(dest);
-        m.mSourcePolarity.SetValue(ModulationPolarityTreatment::AsBipolar);
-        m.mScaleN11.SetValue(amount);
-        ProcessModulation(buffers, m);
-    }
-
     std::array<CCPatch, gARateModulationSourceCount> mARateSourcePatches;
     std::array<CCPatch, gARateModulationDestinationCount> mARateDestinationPatches;
 
@@ -610,62 +596,6 @@ struct VoiceModulationMatrixNode : public AudioStream
         for (auto &modulation : mSynthPatch->mModulations)
         {
             ProcessModulation(buffers, modulation);
-        }
-
-        float krateFMStrength2To1 = GetKRateDestinationValue(KRateModulationDestination::FMStrength2To1);
-        float krateFMStrength3To1 = GetKRateDestinationValue(KRateModulationDestination::FMStrength3To1);
-        float krateFMStrength1To2 = GetKRateDestinationValue(KRateModulationDestination::FMStrength1To2);
-        float krateFMStrength3To2 = GetKRateDestinationValue(KRateModulationDestination::FMStrength3To2);
-        float krateFMStrength1To3 = GetKRateDestinationValue(KRateModulationDestination::FMStrength1To3);
-        float krateFMStrength2To3 = GetKRateDestinationValue(KRateModulationDestination::FMStrength2To3);
-
-        if (!FloatEquals(mSynthPatch->mFMStrength2To1.GetValue(), 0) || !FloatEquals(krateFMStrength2To1, 0))
-        {
-            ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength2To1.GetValue() + krateFMStrength2To1,
-                                mSynthPatch->mOsc[1],
-                                AnyModulationSource::Osc2FB,
-                                AnyModulationDestination::Osc1Phase);
-        }
-        if (!FloatEquals(mSynthPatch->mFMStrength3To1.GetValue(), 0) || !FloatEquals(krateFMStrength3To1, 0))
-        {
-            ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength3To1.GetValue() + krateFMStrength3To1,
-                                mSynthPatch->mOsc[2],
-                                AnyModulationSource::Osc3FB,
-                                AnyModulationDestination::Osc1Phase);
-        }
-        if (!FloatEquals(mSynthPatch->mFMStrength1To2.GetValue(), 0) || !FloatEquals(krateFMStrength1To2, 0))
-        {
-            ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength1To2.GetValue() + krateFMStrength1To2,
-                                mSynthPatch->mOsc[0],
-                                AnyModulationSource::Osc1FB,
-                                AnyModulationDestination::Osc2Phase);
-        }
-        if (!FloatEquals(mSynthPatch->mFMStrength3To2.GetValue(), 0) || !FloatEquals(krateFMStrength3To2, 0))
-        {
-            ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength3To2.GetValue() + krateFMStrength3To2,
-                                mSynthPatch->mOsc[2],
-                                AnyModulationSource::Osc3FB,
-                                AnyModulationDestination::Osc2Phase);
-        }
-        if (!FloatEquals(mSynthPatch->mFMStrength1To3.GetValue(), 0) || !FloatEquals(krateFMStrength1To3, 0))
-        {
-            ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength1To3.GetValue() + krateFMStrength1To3,
-                                mSynthPatch->mOsc[0],
-                                AnyModulationSource::Osc1FB,
-                                AnyModulationDestination::Osc3Phase);
-        }
-        if (!FloatEquals(mSynthPatch->mFMStrength2To3.GetValue(), 0) || !FloatEquals(krateFMStrength2To3, 0))
-        {
-            ProcessFMModulation(buffers,
-                                mSynthPatch->mFMStrength2To3.GetValue() + krateFMStrength2To3,
-                                mSynthPatch->mOsc[1],
-                                AnyModulationSource::Osc2FB,
-                                AnyModulationDestination::Osc3Phase);
         }
 
         for (auto *src : buffers.aRateSsources)

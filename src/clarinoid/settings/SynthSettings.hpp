@@ -89,21 +89,21 @@ enum class ARateModulationSource : uint8_t
     ENV1,     // a-rate
     ENV2,     // a-rate
     ENV3,     // a-rate
-    Osc1FB,   // a-rate
-    Osc2FB,   // a-rate
-    Osc3FB,   // a-rate
+    // Osc1FB,   // a-rate
+    // Osc2FB,   // a-rate
+    // Osc3FB,   // a-rate
 };
 
-EnumItemInfo<ARateModulationSource> gARateModulationSourceItems[9] = {
+EnumItemInfo<ARateModulationSource> gARateModulationSourceItems[6] = {
     {ARateModulationSource::LFO1, "LFO1"},
     {ARateModulationSource::LFO2, "LFO2"},
     {ARateModulationSource::LFO3, "LFO3"},
     {ARateModulationSource::ENV1, "ENV1"},
     {ARateModulationSource::ENV2, "ENV2"},
     {ARateModulationSource::ENV3, "ENV3"},
-    {ARateModulationSource::Osc1FB, "Osc1FB"},
-    {ARateModulationSource::Osc2FB, "Osc2FB"},
-    {ARateModulationSource::Osc3FB, "Osc3FB"},
+    // {ARateModulationSource::Osc1FB, "Osc1FB"},
+    // {ARateModulationSource::Osc2FB, "Osc2FB"},
+    // {ARateModulationSource::Osc3FB, "Osc3FB"},
 };
 static constexpr size_t gARateModulationSourceCount = SizeofStaticArray(gARateModulationSourceItems);
 
@@ -148,15 +148,15 @@ EnumInfo<KRateModulationSource> gKRateModulationSourceInfo("KRateModSource", gKR
 enum class AnyModulationSource : uint8_t
 {
     None = 0,
-    LFO1,   // a-rate
-    LFO2,   // a-rate
-    LFO3,   // a-rate
-    ENV1,   // a-rate
-    ENV2,   // a-rate
-    ENV3,   // a-rate
-    Osc1FB, // a-rate
-    Osc2FB, // a-rate
-    Osc3FB, // a-rate
+    LFO1, // a-rate
+    LFO2, // a-rate
+    LFO3, // a-rate
+    ENV1, // a-rate
+    ENV2, // a-rate
+    ENV3, // a-rate
+    // Osc1FB, // a-rate
+    // Osc2FB, // a-rate
+    // Osc3FB, // a-rate
 
     Breath,        // K-rate
     PitchStrip,    // K-rate
@@ -171,7 +171,7 @@ enum class AnyModulationSource : uint8_t
     Pedal,         // K-rate
 };
 
-EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[21] = {
+EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[18] = {
     {AnyModulationSource::None, "None", "-"},
     {AnyModulationSource::LFO1, "LFO1"},
     {AnyModulationSource::LFO2, "LFO2"},
@@ -179,9 +179,9 @@ EnumItemInfo<AnyModulationSource> gAnyModulationSourceItems[21] = {
     {AnyModulationSource::ENV1, "ENV1"},
     {AnyModulationSource::ENV2, "ENV2"},
     {AnyModulationSource::ENV3, "ENV3"},
-    {AnyModulationSource::Osc1FB, "Osc1FB"},
-    {AnyModulationSource::Osc2FB, "Osc2FB"},
-    {AnyModulationSource::Osc3FB, "Osc3FB"},
+    // {AnyModulationSource::Osc1FB, "Osc1FB"},
+    // {AnyModulationSource::Osc2FB, "Osc2FB"},
+    // {AnyModulationSource::Osc3FB, "Osc3FB"},
     {AnyModulationSource::Breath, "Breath", "br"},
     {AnyModulationSource::PitchStrip, "PitchBend", "pb"},
     {AnyModulationSource::Velocity, "Velocity", "vel"},
@@ -640,14 +640,15 @@ struct SynthModulationSpec : ISerializationObjectMap<11>
         if (mDest.GetValue() == AnyModulationDestination::None)
             return "--";
         String ret;
-        if (!mEnabled.GetValue()) {
+        if (!mEnabled.GetValue())
+        {
             ret = "<mute>";
         }
         return ret + String(gAnyModulationSourceInfo.GetValueDisplayName(mSource.GetValue())) + ">" +
                gAnyModulationDestinationInfo.GetValueDisplayName(mDest.GetValue());
     }
 
-    virtual SerializationObjectMapArray GetSerializationObjectMap()  override
+    virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
         return {{
             CreateSerializationMapping(mEnabled, "E"),
@@ -983,6 +984,23 @@ struct SynthPatch : ISerializationObjectMap<20>
                 if (!mOsc[i].mEnabled.GetValue()) // hm kinda ugly logic; maybe one day this whole fn will be improved?
                 {
                     return "<mute>";
+                }
+                switch (i)
+                {
+                case 0:
+                    if (FloatIsAbove(this->mFMStrength1To2.GetValue(), 0)) return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength1To3.GetValue(), 0)) return "<FM src>";
+                    break;
+                case 1:
+                    if (FloatIsAbove(this->mFMStrength2To1.GetValue(), 0)) return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength2To3.GetValue(), 0)) return "<FM src>";
+                    break;
+                case 2:
+                    if (FloatIsAbove(this->mFMStrength3To1.GetValue(), 0)) return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength3To2.GetValue(), 0)) return "<FM src>";
+                    break;
+                default:
+                    CCASSERT(!"hard-coded osc count alert");
                 }
                 return "<silent>";
             }
