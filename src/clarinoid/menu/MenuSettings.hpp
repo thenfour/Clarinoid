@@ -505,20 +505,20 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
             switch (item->GetType(multiIndex))
             {
             case SettingItemType::Trigger:
-                line += item->GetName(multiIndex);
+                line = item->GetName(multiIndex);
                 break;
             case SettingItemType::Submenu:
-                line += item->GetName(multiIndex) + " -->";
+                line = String(" >") + item->GetName(multiIndex);
                 break;
             default:
                 auto eq = item->GetValueString(multiIndex);
                 if (eq.length() > 0)
                 {
-                    line += item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex);
+                    line = item->GetName(multiIndex) + " = " + item->GetValueString(multiIndex);
                 }
                 else
                 {
-                    line += item->GetName(multiIndex);
+                    line = item->GetName(multiIndex);
                 }
                 break;
             }

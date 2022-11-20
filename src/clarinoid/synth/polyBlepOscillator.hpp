@@ -6,15 +6,6 @@
 namespace clarinoid
 {
 /*
-   Following waveforms are available:
-
-   osc1: sine(0), variable triangle(1), pulse(2)
-   osc2: sine(0), variable triangle(1), pulse(2), hard-synced sawtooth(3)
-   osc3: sine(0), variable triangle(1), pulse(2), hard-synced sawtooth(3)
-
-   When choosing the synced saw for oscillator 2 or 3, oscillator 1 is always the master
-   The hard-synced sawtooth does not have PWM
-
     NOTE: VARTRI @ pulsewidth 0 = "leaning to left", so you get a saw wave
     |`.        |`.        |`.        |`.
     |  `.      |  `.      |  `.      |  `.
@@ -84,21 +75,14 @@ struct PortamentoCalc
     }
 };
 
-// https://gitlab.com/flojawi/teensy-polyblep-oscillator
-
 /*
-   Written by Florian Wirth, August 2020
-
-   This is a module for the Teensy Audio Library which contains 3 independent
-   oscillators with bandlimited basic waveforms, frequency modulation, PWM and hard-sync.
-
-   The oscillators are based on two pieces of code from users at the kvraudio forum, namely:
+   Adapted from https://gitlab.com/flojawi/teensy-polyblep-oscillator
+   by Florian Wirth
 
    - The PolyBLEP algorithm is from the user "mystran" (https://www.kvraudio.com/forum/viewtopic.php?t=398553)
+    also see relevant papers regarding BLAMP and BLEP band limiting:
+   https://www.dafx.de/paper-archive/2016/dafxpapers/18-DAFx-16_paper_33-PN.pdf
    - The hard-sync sawtooth is from the user "Tale" (https://www.kvraudio.com/forum/viewtopic.php?t=425054)
-
-    The handling of portamento is from "Chip Audette's" OpenAudio_ArduinoLibrary
-    (https://github.com/chipaudette/OpenAudio_ArduinoLibrary/blob/master/synth_waveform_F32.h)
 */
 
 // tracks phase and frequency supporting portamento
@@ -149,7 +133,7 @@ struct PhaseAccumulator
     }
 };
 
-struct SineWaveformProvider // : public WaveformProviderBase
+struct SineWaveformProvider
 {
     template <typename TOscillator>
     static void ResetPhaseDueToSync(TOscillator &caller, float x)
@@ -159,19 +143,21 @@ struct SineWaveformProvider // : public WaveformProviderBase
     }
 
     template <typename TOscillator>
-    static void Step(int i,
-                     TOscillator &caller,
-                     float pulseWidthShift,
-                     float myLastSample,
-                     float otherOsc0Sample,
-                     float otherOsc1Sample)
+    static float Step(int i,
+                      TOscillator &caller,
+                      float pulseWidthShift,
+                      float myLastSample,
+                      float otherOsc0Sample,
+                      float otherOsc1Sample)
     {
         caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
-        caller.mOutput = fast::sin((caller.mMainPhase.mT + caller.mMainPhase.mPhaseOffset +    //
-                                    myLastSample * caller.mPMAmt0 * caller.mPMMultiplier +     // fm feedback
-                                    otherOsc0Sample * caller.mPMAmt1 * caller.mPMMultiplier +  // fm input 1
-                                    otherOsc1Sample * caller.mPMAmt2 * caller.mPMMultiplier) * // fm input 2
-                                   TWO_PI);
+        float ret = fast::sin((caller.mMainPhase.mT + caller.mMainPhase.mPhaseOffset + //
+                               myLastSample * caller.mPrecalc.mPMAmt0 +                // fm feedback
+                               otherOsc0Sample * caller.mPrecalc.mPMAmt1 +             // fm input 1
+                               otherOsc1Sample * caller.mPrecalc.mPMAmt2) *            // fm input 2
+                              TWO_PI);
+        caller.mOutput = ret;
+        return ret;
     }
 };
 
@@ -185,12 +171,12 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
     }
 
     template <typename TOscillator>
-    static void Step(int i,
-                     TOscillator &caller,
-                     float pulseWidthShift,
-                     float myLastSample,
-                     float otherOsc0Sample,
-                     float otherOsc1Sample)
+    static float Step(int i,
+                      TOscillator &caller,
+                      float pulseWidthShift,
+                      float myLastSample,
+                      float otherOsc0Sample,
+                      float otherOsc1Sample)
     {
         // TODO: use phase shift
         float pulseWidth = Clamp(pulseWidthShift + caller.mPulseWidth, 0.001f, 0.999f);
@@ -245,6 +231,7 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
         caller.mBlepDelay += naiveWave;
 
         caller.mWidthDelay = pulseWidth;
+        return caller.mOutput;
     }
 };
 
@@ -257,12 +244,12 @@ struct PulseWaveformProvider
         caller.mPulseStage = false;
     }
     template <typename TOscillator>
-    static void Step(int i,
-                     TOscillator &caller,
-                     float pulseWidthShift,
-                     float myLastSample,
-                     float otherOsc0Sample,
-                     float otherOsc1Sample)
+    static float Step(int i,
+                      TOscillator &caller,
+                      float pulseWidthShift,
+                      float myLastSample,
+                      float otherOsc0Sample,
+                      float otherOsc1Sample)
     {
         // TODO: use phase shift
         float pulseWidth = Clamp(pulseWidthShift + caller.mPulseWidth, 0.001f, 0.999f);
@@ -304,6 +291,8 @@ struct PulseWaveformProvider
         caller.mBlepDelay += naiveWave;
 
         caller.mWidthDelay = pulseWidth;
+
+        return caller.mOutput;
     }
 };
 
@@ -350,12 +339,12 @@ struct SawWaveformProvider
     }
 
     template <typename TOscillator>
-    static void Step(int i,
-                     TOscillator &caller,
-                     float pulseWidthShift,
-                     float myLastSample,
-                     float otherOsc0Sample,
-                     float otherOsc1Sample)
+    static float Step(int i,
+                      TOscillator &caller,
+                      float pulseWidthShift,
+                      float myLastSample,
+                      float otherOsc0Sample,
+                      float otherOsc1Sample)
     {
         // TODO: use phase shift
         caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
@@ -370,6 +359,7 @@ struct SawWaveformProvider
         caller.mBlepDelay += caller.mMainPhase.mT;
 
         caller.mOutput = caller.mOutput * 2 - 1;
+        return caller.mOutput;
     }
 };
 
@@ -410,9 +400,18 @@ struct Oscillator
     float mRMAmt1 = 0;
     float mRMAmt2 = 0;
 
-    // float mPremultipliedFMfeedbackAmt = 0;
-    // float mPremultipliedFMAmt0 = 0;
-    // float mPremultipliedFMAmt1 = 0;
+    struct
+    {
+        float mPMAmt0 = 0;
+        float mPMAmt1 = 0;
+        float mPMAmt2 = 0;
+        float mRMAmt0 = 0;
+        float mRMAmt1 = 0;
+        float mRMAmt2 = 0;
+        float mRMAmt0Inv = 0; // 1-mRMAmtN
+        float mRMAmt1Inv = 0; // 1-mRMAmtN
+        float mRMAmt2Inv = 0; // 1-mRMAmtN
+    } mPrecalc;
 
     //  Use this for phase-retrigger everytime you send a noteOn, if you want a consistent sound.
     //  Don't use this for hard-sync, it will cause aliasing.
@@ -433,8 +432,6 @@ struct Oscillator
     {
         mWaveformShape = wform;
         mHardSyncEnabled = hardSyncEnabled;
-        // mRingMod0 = ringMod0;
-        // mRingMod1 = ringMod1;
         mPMMultiplier = pmMultiplier;
         mRingModStrengthN11 = ringModStrengthN11;
         if (mHardSyncEnabled)
@@ -455,12 +452,12 @@ struct Oscillator
     }
 
     template <typename TWaveformProvider>
-    inline void Step(size_t i, float *pwm32, float *out, float otherOsc0Sample, float otherOsc1Sample)
+    inline float Step(size_t i, float *pwm32, float *out, float otherOsc0Sample, float otherOsc1Sample)
     {
         if (!mEnabled)
         {
             out[i] = 0;
-            return;
+            return mOutput;
         }
 
         float pulseWidthShift = 0;
@@ -483,35 +480,30 @@ struct Oscillator
             TWaveformProvider::ResetPhaseDueToSync(*this, x);
         }
 
-        out[i] = mOutput;
+        mOutput = mOutput * mOutput * mPrecalc.mRMAmt0 + mOutput * mPrecalc.mRMAmt0Inv;
+        mOutput = mOutput * otherOsc0Sample * mPrecalc.mRMAmt1 + mOutput * mPrecalc.mRMAmt1Inv;
+        mOutput = mOutput * otherOsc1Sample * mPrecalc.mRMAmt2 + mOutput * mPrecalc.mRMAmt2Inv;
 
-        // hm you can't really continuously mix this in a straightforward way; the moment the mod crosses from positive
-        // to negative, the whole thing instantly flips around.
-        out[i] *= 1.0f - mRMAmt0 * mRingModStrengthN11 * fboutput;
-        out[i] *= 1.0f - mRMAmt1 * mRingModStrengthN11 * otherOsc0Sample;
-        out[i] *= 1.0f - mRMAmt2 * mRingModStrengthN11 * otherOsc1Sample;
+        out[i] = mOutput;
+        return mOutput;
     }
 
-    void ProcessSample(int i, float *pwm, float otherOsc0Sample, float otherOsc1Sample)
+    float ProcessSample(int i, float *pwm, float otherOsc0Sample, float otherOsc1Sample)
     {
         switch (mWaveformShape)
         {
         case OscWaveformShape::VarTriangle:
-            this->Step<VarTriangleWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
-            break;
+            return this->Step<VarTriangleWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
         case OscWaveformShape::Pulse:
-            this->Step<PulseWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
-            break;
+            return this->Step<PulseWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
         case OscWaveformShape::SawSync:
-            this->Step<SawWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
-            break;
+            return this->Step<SawWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
         case OscWaveformShape::Sine:
-            this->Step<SineWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
-            break;
+            return this->Step<SineWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
         default:
-            CCASSERT(!"unsupported waveform in processblock");
             break;
         }
+        CCASSERT(!"unsupported waveform in processblock");
     }
 
 }; // struct Oscillator
@@ -553,21 +545,34 @@ struct AudioBandlimitedOsci : public AudioStream
         float *pwmInputPtrs[POLYBLEP_OSC_COUNT] = {nullptr};
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
-            if (pwmInputs[i] == nullptr)
-                continue;
-            fast::Sample16To32Buffer(pwmInputs[i]->data, pwmInputsF[i]);
-            pwmInputPtrs[i] = pwmInputsF[i];
+            mOsc[i].mPrecalc.mPMAmt0 = mOsc[i].mPMAmt0 * mOsc[i].mPMMultiplier;
+            mOsc[i].mPrecalc.mPMAmt1 = mOsc[i].mPMAmt1 * mOsc[i].mPMMultiplier;
+            mOsc[i].mPrecalc.mPMAmt2 = mOsc[i].mPMAmt2 * mOsc[i].mPMMultiplier;
 
-            // mOsc[i].mPremultipliedFMfeedbackAmt = mOsc[i].mPMFeedbackAmt * mOsc[i].mPMMultiplier;
-            // mOsc[i].mPremultipliedFMAmt0 = mOsc[i].mPMAmt0 * mOsc[i].mPMMultiplier;
-            // mOsc[i].mPremultipliedFMAmt1 = mOsc[i].mPMAmt1 * mOsc[i].mPMMultiplier;
+            mOsc[i].mPrecalc.mRMAmt0 = mOsc[i].mRMAmt0 * mOsc[i].mRingModStrengthN11;
+            mOsc[i].mPrecalc.mRMAmt1 = mOsc[i].mRMAmt1 * mOsc[i].mRingModStrengthN11;
+            mOsc[i].mPrecalc.mRMAmt2 = mOsc[i].mRMAmt2 * mOsc[i].mRingModStrengthN11;
+
+            mOsc[i].mPrecalc.mRMAmt0Inv = 1.0f - mOsc[i].mPrecalc.mRMAmt0;
+            mOsc[i].mPrecalc.mRMAmt1Inv = 1.0f - mOsc[i].mPrecalc.mRMAmt1;
+            mOsc[i].mPrecalc.mRMAmt2Inv = 1.0f - mOsc[i].mPrecalc.mRMAmt2;
+
+            if (pwmInputs[i] != nullptr)
+            {
+                fast::Sample16To32Buffer(pwmInputs[i]->data, pwmInputsF[i]);
+                pwmInputPtrs[i] = pwmInputsF[i];
+            }
         }
+
+        float s0 = mOsc[0].mOutput;
+        float s1 = mOsc[1].mOutput;
+        float s2 = mOsc[2].mOutput;
 
         for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
         {
-            mOsc[0].ProcessSample(i, pwmInputPtrs[0], mOsc[1].mOutput, mOsc[2].mOutput);
-            mOsc[1].ProcessSample(i, pwmInputPtrs[1], mOsc[0].mOutput, mOsc[2].mOutput);
-            mOsc[2].ProcessSample(i, pwmInputPtrs[2], mOsc[0].mOutput, mOsc[1].mOutput);
+            s0 = mOsc[0].ProcessSample(i, pwmInputPtrs[0], s1, s2);
+            s1 = mOsc[1].ProcessSample(i, pwmInputPtrs[1], s0, s2);
+            s2 = mOsc[2].ProcessSample(i, pwmInputPtrs[2], s0, s1);
         }
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)

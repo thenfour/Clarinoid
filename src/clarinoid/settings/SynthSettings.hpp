@@ -467,26 +467,26 @@ enum class AnyModulationDestination : uint8_t
     Osc3Volume,   // k-rate
 
     OverallRingmodStrength, // k-rate
-    RingmodStrength1To1, // k-rate
-    RingmodStrength2To1, // k-rate
-    RingmodStrength3To1, // k-rate
-    RingmodStrength1To2, // k-rate
-    RingmodStrength2To2, // k-rate
-    RingmodStrength3To2, // k-rate
-    RingmodStrength1To3, // k-rate
-    RingmodStrength2To3, // k-rate
-    RingmodStrength3To3, // k-rate
+    RingmodStrength1To1,    // k-rate
+    RingmodStrength2To1,    // k-rate
+    RingmodStrength3To1,    // k-rate
+    RingmodStrength1To2,    // k-rate
+    RingmodStrength2To2,    // k-rate
+    RingmodStrength3To2,    // k-rate
+    RingmodStrength1To3,    // k-rate
+    RingmodStrength2To3,    // k-rate
+    RingmodStrength3To3,    // k-rate
 
-    OverallFMStrength,  // k-rate
-    FMStrength1To1,     // k-rate
-    FMStrength2To1,     // k-rate
-    FMStrength3To1,     // k-rate
-    FMStrength1To2,     // k-rate
-    FMStrength2To2,     // k-rate
-    FMStrength3To2,     // k-rate
-    FMStrength1To3,     // k-rate
-    FMStrength2To3,     // k-rate
-    FMStrength3To3,     // k-rate
+    OverallFMStrength, // k-rate
+    FMStrength1To1,    // k-rate
+    FMStrength2To1,    // k-rate
+    FMStrength3To1,    // k-rate
+    FMStrength1To2,    // k-rate
+    FMStrength2To2,    // k-rate
+    FMStrength3To2,    // k-rate
+    FMStrength1To3,    // k-rate
+    FMStrength2To3,    // k-rate
+    FMStrength3To3,    // k-rate
 
     Osc1FrequencyParam, // k-rate
     Osc2FrequencyParam, // k-rate
@@ -771,7 +771,7 @@ struct SynthOscillatorSettings : ISerializationObjectMap<17>
     BoolParam mPhaseRestart{false};
     FloatParam mPhase01{0};
 
-    EnumParam<OscWaveformShape> mWaveform{gOscWaveformShapeInfo, OscWaveformShape::VarTriangle};
+    EnumParam<OscWaveformShape> mWaveform{gOscWaveformShapeInfo, OscWaveformShape::Sine};
     FloatParam mPulseWidth{0.5f};
 
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
@@ -884,7 +884,7 @@ struct FilterSettings : ISerializationObjectMap<4>
     EnumParam<ClarinoidFilterType> mType{gClarinoidFilterTypeInfo, ClarinoidFilterType::LP_Moog4};
     FloatParam mQ{0.02f};
     FloatParam mSaturation{0.2f};
-    FrequencyParamValue mFrequency{0.3f, 0.0f}; // param, kt amt
+    FrequencyParamValue mFrequency{0.3f, 1.0f}; // param, kt amt
 
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
@@ -1007,6 +1007,44 @@ struct SynthPatch : ISerializationObjectMap<33>
 
     String OscillatorToString(size_t i) const
     {
+        bool isFMSrc = false;
+        bool isRMSrc = false;
+        switch (i)
+        {
+        case 0:
+            if (FloatIsAbove(this->mFMStrength1To2.GetValue(), 0))
+                isFMSrc = true;
+            if (FloatIsAbove(this->mFMStrength1To3.GetValue(), 0))
+                isFMSrc = true;
+            if (FloatIsAbove(this->mRingmodStrength1To2.GetValue(), 0))
+                isRMSrc = true;
+            if (FloatIsAbove(this->mRingmodStrength1To3.GetValue(), 0))
+                isRMSrc = true;
+            break;
+        case 1:
+            if (FloatIsAbove(this->mFMStrength2To1.GetValue(), 0))
+                isFMSrc = true;
+            if (FloatIsAbove(this->mFMStrength2To3.GetValue(), 0))
+                isFMSrc = true;
+            if (FloatIsAbove(this->mRingmodStrength2To1.GetValue(), 0))
+                isRMSrc = true;
+            if (FloatIsAbove(this->mRingmodStrength2To3.GetValue(), 0))
+                isRMSrc = true;
+            break;
+        case 2:
+            if (FloatIsAbove(this->mFMStrength3To1.GetValue(), 0))
+                isFMSrc = true;
+            if (FloatIsAbove(this->mFMStrength3To2.GetValue(), 0))
+                isFMSrc = true;
+            if (FloatIsAbove(this->mRingmodStrength3To1.GetValue(), 0))
+                isRMSrc = true;
+            if (FloatIsAbove(this->mRingmodStrength3To2.GetValue(), 0))
+                isRMSrc = true;
+            break;
+        default:
+            CCASSERT(!"hard-coded osc count alert");
+        }
+
         if (mOsc[i].mVolume.IsSilent())
         {
             // any modulations on gain?
@@ -1019,34 +1057,20 @@ struct SynthPatch : ISerializationObjectMap<33>
             auto dest = oscGainMods[i];
             if (!Any(this->mModulations, [&](const SynthModulationSpec &m) { return m.mDest.GetValue() == dest; }))
             {
-                if (!mOsc[i].mEnabled.GetValue()) // hm kinda ugly logic; maybe one day this whole fn will be improved?
+                if (!mOsc[i].mEnabled.GetValue())
                 {
-                    return "<mute>";
+                    return "<OFF>";
                 }
-                switch (i)
-                {
-                case 0:
-                    if (FloatIsAbove(this->mFMStrength1To2.GetValue(), 0))
-                        return "<FM src>";
-                    if (FloatIsAbove(this->mFMStrength1To3.GetValue(), 0))
-                        return "<FM src>";
-                    break;
-                case 1:
-                    if (FloatIsAbove(this->mFMStrength2To1.GetValue(), 0))
-                        return "<FM src>";
-                    if (FloatIsAbove(this->mFMStrength2To3.GetValue(), 0))
-                        return "<FM src>";
-                    break;
-                case 2:
-                    if (FloatIsAbove(this->mFMStrength3To1.GetValue(), 0))
-                        return "<FM src>";
-                    if (FloatIsAbove(this->mFMStrength3To2.GetValue(), 0))
-                        return "<FM src>";
-                    break;
-                default:
-                    CCASSERT(!"hard-coded osc count alert");
+                if (isFMSrc && isRMSrc) {
+                    return "<FM & RM src>";
                 }
-                return "<silent>";
+                if (isFMSrc) {
+                    return "<FM src>";
+                }
+                if (isRMSrc) {
+                    return "<RM src>";
+                }
+                return "<silence>";
             }
         }
         // not silent / disabled / whatever. show some info.
@@ -1054,7 +1078,7 @@ struct SynthPatch : ISerializationObjectMap<33>
         String ret = gOscWaveformShapeInfo.GetValueDisplayName(mOsc[i].mWaveform.GetValue());
         if (!mOsc[i].mEnabled.GetValue())
         {
-            ret += " <mute>";
+            ret = String("<OFF>") + ret;
         }
         return ret;
     }
@@ -1121,11 +1145,11 @@ struct SynthSettings : ISerializationObjectMap<1>
         p.mName.SetValue(name);
         p.mFilter.mType.SetValue(ClarinoidFilterType::Disabled);
 
-        p.mOsc[0].mWaveform.SetValue(OscWaveformShape::SawSync);
+        p.mOsc[0].mWaveform.SetValue(OscWaveformShape::Sine);
         p.mOsc[0].mVolume.SetValue(0.4f);
 
-        p.mFilter.mFrequency.SetParamValue(0);
-        p.mFilter.mFrequency.SetKTParamValue(1.0f);
+        // p.mFilter.mFrequency.SetParamValue(0);
+        // p.mFilter.mFrequency.SetKTParamValue(1.0f);
 
         p.mModulations[0].mDest.SetValue(AnyModulationDestination::MasterVolume);
         p.mModulations[0].mSource.SetValue(AnyModulationSource::ENV1);

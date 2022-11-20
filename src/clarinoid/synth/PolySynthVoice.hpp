@@ -395,7 +395,7 @@ struct Voice : IModulationProvider
 
 
         mOsc.mOsc[0].mRMAmt0 = // 1->1
-            patch.mRingmodStrength1To2.GetValue() +
+            patch.mRingmodStrength1To1.GetValue() +
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength1To1);
         mOsc.mOsc[0].mRMAmt1 = // 2->1
             patch.mRingmodStrength2To1.GetValue() +
