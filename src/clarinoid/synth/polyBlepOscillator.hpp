@@ -150,11 +150,11 @@ struct SineWaveformProvider
                       float otherOsc0Sample,
                       float otherOsc1Sample)
     {
-        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
+        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT); // keep within 0-1 range to help float precision.
         float ret = fast::sin((caller.mMainPhase.mT + caller.mMainPhase.mPhaseOffset + //
-                               myLastSample * caller.mPrecalc.mPMAmt0 +                // fm feedback
-                               otherOsc0Sample * caller.mPrecalc.mPMAmt1 +             // fm input 1
-                               otherOsc1Sample * caller.mPrecalc.mPMAmt2) *            // fm input 2
+                               myLastSample * caller.mPrecalc.mPMAmt0 * 0.5f + // fm feedback - too strong at full level
+                               otherOsc0Sample * caller.mPrecalc.mPMAmt1 +     // fm input 1
+                               otherOsc1Sample * caller.mPrecalc.mPMAmt2) *    // fm input 2
                               TWO_PI);
         caller.mOutput = ret;
         return ret;
@@ -501,9 +501,10 @@ struct Oscillator
         case OscWaveformShape::Sine:
             return this->Step<SineWaveformProvider>(i, pwm, mBuffer, otherOsc0Sample, otherOsc1Sample);
         default:
+            CCASSERT(!"unsupported waveform in processblock");
             break;
         }
-        CCASSERT(!"unsupported waveform in processblock");
+        return 0;
     }
 
 }; // struct Oscillator
@@ -545,13 +546,13 @@ struct AudioBandlimitedOsci : public AudioStream
         float *pwmInputPtrs[POLYBLEP_OSC_COUNT] = {nullptr};
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
-            mOsc[i].mPrecalc.mPMAmt0 = mOsc[i].mPMAmt0 * mOsc[i].mPMMultiplier;
-            mOsc[i].mPrecalc.mPMAmt1 = mOsc[i].mPMAmt1 * mOsc[i].mPMMultiplier;
-            mOsc[i].mPrecalc.mPMAmt2 = mOsc[i].mPMAmt2 * mOsc[i].mPMMultiplier;
+            mOsc[i].mPrecalc.mPMAmt0 = mOsc[i].mPMAmt0 * mOsc[i].mPMMultiplier * 3.0f;
+            mOsc[i].mPrecalc.mPMAmt1 = mOsc[i].mPMAmt1 * mOsc[i].mPMMultiplier * 3.0f;
+            mOsc[i].mPrecalc.mPMAmt2 = mOsc[i].mPMAmt2 * mOsc[i].mPMMultiplier * 3.0f;
 
-            mOsc[i].mPrecalc.mRMAmt0 = mOsc[i].mRMAmt0 * mOsc[i].mRingModStrengthN11;
-            mOsc[i].mPrecalc.mRMAmt1 = mOsc[i].mRMAmt1 * mOsc[i].mRingModStrengthN11;
-            mOsc[i].mPrecalc.mRMAmt2 = mOsc[i].mRMAmt2 * mOsc[i].mRingModStrengthN11;
+            mOsc[i].mPrecalc.mRMAmt0 = mOsc[i].mRMAmt0 * mOsc[i].mRingModStrengthN11 * 2.0f;
+            mOsc[i].mPrecalc.mRMAmt1 = mOsc[i].mRMAmt1 * mOsc[i].mRingModStrengthN11 * 2.0f;
+            mOsc[i].mPrecalc.mRMAmt2 = mOsc[i].mRMAmt2 * mOsc[i].mRingModStrengthN11 * 2.0f;
 
             mOsc[i].mPrecalc.mRMAmt0Inv = 1.0f - mOsc[i].mPrecalc.mRMAmt0;
             mOsc[i].mPrecalc.mRMAmt1Inv = 1.0f - mOsc[i].mPrecalc.mRMAmt1;
