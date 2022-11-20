@@ -484,17 +484,17 @@ struct Voice : IModulationProvider
 
         // for "mix" behavior, we can look to panning. the pan law applies here; you're effectively panning between the
         // dry signal and the various effects. But instead of a -1 to +1 range, it's going to be 0-1.
-        auto verbGains = CalculatePanGain(patch.mDelayMix.GetValue() * 2 - 1);
-        auto delayGains = CalculatePanGain(patch.mVerbMix.GetValue() * 2 - 1);
+        auto verbGains = CalculatePanGain(patch.mVerbMix.GetValue() * 2 - 1);
+        auto delayGains = CalculatePanGain(patch.mDelayMix.GetValue() * 2 - 1);
 
         float masterGain =
             patch.mMasterVolume.AddParam(mModMatrix.GetKRateDestinationValue(KRateModulationDestination::MasterVolume))
                 .ToLinearGain();
         masterGain = std::max(0.0f, masterGain * externalGain);
 
-        mSplitter.SetOutputGain(0, masterGain * std::get<0>(verbGains) * std::get<0>(delayGains));
-        mSplitter.SetOutputGain(1, masterGain * std::get<1>(delayGains));
-        mSplitter.SetOutputGain(2, masterGain * std::get<1>(verbGains));
+        mSplitter.SetOutputGain(0, masterGain * std::get<0/*dry amt*/>(verbGains) * std::get<0>(delayGains));
+        mSplitter.SetOutputGain(1, masterGain * std::get<1/*wet amt*/>(delayGains));
+        mSplitter.SetOutputGain(2, masterGain * std::get<1/*wet amt*/>(verbGains));
     }
 
     // if there's already a note playing, it gets cut off

@@ -58,12 +58,18 @@ struct DelaySettings : ISerializationObjectMap<6>
         }};
     }
 
+    DelaySettings() {
+        mFilter.mFrequency.SetParamValue(0.6f);
+    }
+
     BoolParam mEnabled{true};
     FloatParam mGain{DecibelsToLinear(-3.0f)};
-    TimeWithBasisParam mTime{TimeBasis::Milliseconds, 250};
+    TimeWithBasisParam mTime{TimeBasis::Milliseconds, 300};
     FloatParam mStereoSeparationDelayMS{40};
     FloatParam mFeedbackGain{0.3f};
     FilterSettings mFilter; // = {"Filter"};
+    // vibrato depth
+    // vibrato speed
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,6 +135,12 @@ struct PerformancePatch : ISerializationObjectMap<20>
     BoolParam mMasterFXEnable{true};
     ReverbSettings mReverb;
     DelaySettings mDelay;
+
+
+    // BoolParam mDCFilterEnabled{true};
+    // FloatParam mDCFilterCutoff{10.0f};
+    // EQ
+    // some kind of modulation like phaser / flanger
 
     size_t mMyIndex;
 

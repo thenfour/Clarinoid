@@ -399,7 +399,7 @@ struct GuiPerformanceApp : GuiApp
     GuiKnobControl mDelayFeedbackHz = {
         2,
         PointI::Construct(70, 33),
-        StandardRangeSpecs::gFilterFreqRange,
+        StandardRangeSpecs::gFloat_0_1,
         "Cutoff Hz",
         {[](void *cap) -> float & { //
              return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mFilter.mFrequency.mValue.mValue;
@@ -416,7 +416,9 @@ struct GuiPerformanceApp : GuiApp
         StandardRangeSpecs::gFloat_0_1,
         "Saturation",
         {[](void *cap) -> float & { //
-             return ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch().mDelay.mFilter.mSaturation.mValue;
+            auto& patch = ((GuiPerformanceApp *)cap)->mAppSettings->GetCurrentPerformancePatch();
+            //Serial.println(String("freq hz: ") + patch.mDelay.mFilter.mFrequency.GetFrequency(64, 0));
+             return patch.mDelay.mFilter.mSaturation.mValue;
          },
          this},
         NullBoolBinding,

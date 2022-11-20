@@ -144,6 +144,7 @@ struct SynthGraphControl
         gpSynthGraph->delayLeft.delay(0, perf.mDelay.mTime.ToMS(perf.mBPM.GetValue()) - perf.mDelay.mStereoSeparationDelayMS.GetValue() * .5f);
         gpSynthGraph->delayRight.delay(0, perf.mDelay.mTime.ToMS(perf.mBPM.GetValue()) + perf.mDelay.mStereoSeparationDelayMS.GetValue() * .5f);
 
+        perf.mDelay.mFilter.mFrequency.mKTValue.SetValue(0); // KT not supported for master filter
         gpSynthGraph->delayFilterLeft.SetParams(
             perf.mDelay.mFilter.mType.GetValue(), perf.mDelay.mFilter.mFrequency.GetFrequency(64, 0), perf.mDelay.mFilter.mQ.GetValue(), perf.mDelay.mFilter.mSaturation.GetValue());
         gpSynthGraph->delayFilterRight.SetParams(

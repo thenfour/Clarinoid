@@ -884,7 +884,7 @@ struct FilterSettings : ISerializationObjectMap<4>
     EnumParam<ClarinoidFilterType> mType{gClarinoidFilterTypeInfo, ClarinoidFilterType::LP_Moog4};
     FloatParam mQ{0.02f};
     FloatParam mSaturation{0.2f};
-    FrequencyParamValue mFrequency{0.3f, 1.0f}; // param, kt amt
+    FrequencyParamValue mFrequency{0.3f, 1.0f}; // param, kt amt. KT is NOT USED; meaningless for a global effect
 
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
@@ -941,8 +941,8 @@ struct SynthPatch : ISerializationObjectMap<33>
     StringParam mName{"--"};
     VolumeParamValue mMasterVolume;
     FloatParam mPan{0};
-    FloatParam mDelayMix{0.08f};
-    FloatParam mVerbMix{0.08f};
+    FloatParam mDelayMix{0.07f};
+    FloatParam mVerbMix{0.07f};
     FloatParam mStereoSpread{0.15f};
 
     std::array<EnvelopeSpec, ENVELOPE_COUNT>
@@ -953,9 +953,6 @@ struct SynthPatch : ISerializationObjectMap<33>
     std::array<LFOSpec, LFO_COUNT> mLFOs; //{initialize_array_with_indices<LFOSpec, LFO_COUNT>()};
 
     FloatParam mDetune{0};
-
-    // BoolParam mDCFilterEnabled{true};
-    // FloatParam mDCFilterCutoff{10.0f};
 
     FilterSettings mFilter;
 

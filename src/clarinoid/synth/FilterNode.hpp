@@ -21,9 +21,9 @@ class FilterNode : public AudioStream
 
     filters::IFilter *mSelectedFilter = &mK35;
 
-    bool mDCEnabled = false;
-    float mDCCutoff = 0;
-    filters::DCFilter mDC;
+    // bool mDCEnabled = false;
+    // float mDCCutoff = 0;
+    // filters::DCFilter mDC;
 
   public:
     FilterNode() : AudioStream(1, inputQueueArray)
@@ -40,10 +40,10 @@ class FilterNode : public AudioStream
         float tempBufferSource[AUDIO_BLOCK_SAMPLES];
         fast::Sample16To32Buffer(p, tempBufferSource);
         mSelectedFilter->ProcessInPlace(tempBufferSource, AUDIO_BLOCK_SAMPLES);
-        if (mDCEnabled)
-        {
-            mDC.ProcessInPlace(tempBufferSource, AUDIO_BLOCK_SAMPLES);
-        }
+        // if (mDCEnabled)
+        // {
+        //     mDC.ProcessInPlace(tempBufferSource, AUDIO_BLOCK_SAMPLES);
+        // }
 
         fast::Sample32To16Buffer(tempBufferSource, p);
 
@@ -51,18 +51,18 @@ class FilterNode : public AudioStream
         release(block);
     }
 
-    void EnableDCFilter(bool enabled, float cutoffHZ)
-    {
-        if (!enabled && !mDCEnabled)
-            return;
-        if (enabled && mDCEnabled && FloatEquals(cutoffHZ, mDCCutoff))
-            return;
-        mDCEnabled = enabled;
-        if (enabled)
-        {
-            mDC.SetMinus3DBFreq(cutoffHZ);
-        }
-    }
+    // void EnableDCFilter(bool enabled, float cutoffHZ)
+    // {
+    //     if (!enabled && !mDCEnabled)
+    //         return;
+    //     if (enabled && mDCEnabled && FloatEquals(cutoffHZ, mDCCutoff))
+    //         return;
+    //     mDCEnabled = enabled;
+    //     if (enabled)
+    //     {
+    //         mDC.SetMinus3DBFreq(cutoffHZ);
+    //     }
+    // }
 
     void SetParams(ClarinoidFilterType ctype, float cutoffHz, float reso, float saturation)
     {
