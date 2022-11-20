@@ -501,82 +501,111 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         //  ModulationPoleType::Positive01},
     },
 
-
-
     {
-        true,
-        (size_t)AnyModulationDestination::Osc1RingModAmt, // index overall
-        AnyModulationDestination::Osc1RingModAmt,
-        (size_t)KRateModulationDestination::Osc1RingModAmt, // index for rate
+        true,                                                // is a modulation
+        (size_t)AnyModulationDestination::OverallRingmodStrength, // index overall
+        AnyModulationDestination::OverallRingmodStrength,
+        (size_t)KRateModulationDestination::OverallRingmodStrength, // index for rate
         ModulationRate::KRate,
-        KRateModulationDestination::Osc1RingModAmt,
+        KRateModulationDestination::OverallRingmodStrength,
         (ARateModulationDestination)0,
     },
 
-
     {
-        true,
-        (size_t)AnyModulationDestination::Osc2RingModAmt, // index overall
-        AnyModulationDestination::Osc2RingModAmt,
-        (size_t)KRateModulationDestination::Osc2RingModAmt, // index for rate
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength1To1, // index overall
+        AnyModulationDestination::RingmodStrength1To1,
+        (size_t)KRateModulationDestination::RingmodStrength1To1, // index for rate
         ModulationRate::KRate,
-        KRateModulationDestination::Osc2RingModAmt,
+        KRateModulationDestination::RingmodStrength1To1,
         (ARateModulationDestination)0,
     },
 
-
     {
-        true,
-        (size_t)AnyModulationDestination::Osc3RingModAmt, // index overall
-        AnyModulationDestination::Osc3RingModAmt,
-        (size_t)KRateModulationDestination::Osc3RingModAmt, // index for rate
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength2To1, // index overall
+        AnyModulationDestination::RingmodStrength2To1,
+        (size_t)KRateModulationDestination::RingmodStrength2To1, // index for rate
         ModulationRate::KRate,
-        KRateModulationDestination::Osc3RingModAmt,
+        KRateModulationDestination::RingmodStrength2To1,
         (ARateModulationDestination)0,
     },
 
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength3To1, // index overall
+        AnyModulationDestination::RingmodStrength3To1,
+        (size_t)KRateModulationDestination::RingmodStrength3To1, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::RingmodStrength3To1,
+        (ARateModulationDestination)0,
+    },
 
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength1To2, // index overall
+        AnyModulationDestination::RingmodStrength1To2,
+        (size_t)KRateModulationDestination::RingmodStrength1To2, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::RingmodStrength1To2,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength2To2, // index overall
+        AnyModulationDestination::RingmodStrength2To2,
+        (size_t)KRateModulationDestination::RingmodStrength2To2, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::RingmodStrength2To2,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength3To2, // index overall
+        AnyModulationDestination::RingmodStrength3To2,
+        (size_t)KRateModulationDestination::RingmodStrength3To2, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::RingmodStrength3To2,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength1To3, // index overall
+        AnyModulationDestination::RingmodStrength1To3,
+        (size_t)KRateModulationDestination::RingmodStrength1To3, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::RingmodStrength1To3,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::RingmodStrength2To3, // index overall
+        AnyModulationDestination::RingmodStrength2To3,
+        (size_t)KRateModulationDestination::RingmodStrength2To3, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::RingmodStrength2To3,
+        (ARateModulationDestination)0,
+    },
 
 
 
     {
         true,                                             // is a modulation
-        (size_t)AnyModulationDestination::Osc1FMFeedback, // index overall
-        AnyModulationDestination::Osc1FMFeedback,
-        (size_t)KRateModulationDestination::Osc1FMFeedback, // index for rate
+        (size_t)AnyModulationDestination::RingmodStrength3To3, // index overall
+        AnyModulationDestination::RingmodStrength3To3,
+        (size_t)KRateModulationDestination::RingmodStrength3To3, // index for rate
         ModulationRate::KRate,
-        KRateModulationDestination::Osc1FMFeedback,
+        KRateModulationDestination::RingmodStrength3To3,
         (ARateModulationDestination)0,
-        //  0, // range min
-        //  1, // range max
-        //  ModulationPoleType::Positive01},
     },
 
-    {
-        true,                                             // is a modulation
-        (size_t)AnyModulationDestination::Osc2FMFeedback, // index overall
-        AnyModulationDestination::Osc2FMFeedback,
-        (size_t)KRateModulationDestination::Osc2FMFeedback, // index for rate
-        ModulationRate::KRate,
-        KRateModulationDestination::Osc2FMFeedback,
-        (ARateModulationDestination)0,
-        //  0, // range min
-        //  1, // range max
-        //  ModulationPoleType::Positive01},
-    },
 
-    {
-        true,                                             // is a modulation
-        (size_t)AnyModulationDestination::Osc3FMFeedback, // index overall
-        AnyModulationDestination::Osc3FMFeedback,
-        (size_t)KRateModulationDestination::Osc3FMFeedback, // index for rate
-        ModulationRate::KRate,
-        KRateModulationDestination::Osc3FMFeedback,
-        (ARateModulationDestination)0,
-        //  0, // range min
-        //  1, // range max
-        //  ModulationPoleType::Positive01},
-    },
+
+
 
     {
         true,                                                // is a modulation
@@ -585,6 +614,19 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         (size_t)KRateModulationDestination::OverallFMStrength, // index for rate
         ModulationRate::KRate,
         KRateModulationDestination::OverallFMStrength,
+        (ARateModulationDestination)0,
+        //  0, // range min
+        //  1, // range max
+        //  ModulationPoleType::Positive01},
+    },
+
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength1To1, // index overall
+        AnyModulationDestination::FMStrength1To1,
+        (size_t)KRateModulationDestination::FMStrength1To1, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength1To1,
         (ARateModulationDestination)0,
         //  0, // range min
         //  1, // range max
@@ -632,6 +674,16 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
 
     {
         true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength2To2, // index overall
+        AnyModulationDestination::FMStrength2To2,
+        (size_t)KRateModulationDestination::FMStrength2To2, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength2To2,
+        (ARateModulationDestination)0,
+    },
+
+    {
+        true,                                             // is a modulation
         (size_t)AnyModulationDestination::FMStrength3To2, // index overall
         AnyModulationDestination::FMStrength3To2,
         (size_t)KRateModulationDestination::FMStrength3To2, // index for rate
@@ -667,6 +719,16 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
         //  0, // range min
         //  1, // range max
         //  ModulationPoleType::Positive01},
+    },
+
+    {
+        true,                                             // is a modulation
+        (size_t)AnyModulationDestination::FMStrength3To3, // index overall
+        AnyModulationDestination::FMStrength3To3,
+        (size_t)KRateModulationDestination::FMStrength3To3, // index for rate
+        ModulationRate::KRate,
+        KRateModulationDestination::FMStrength3To3,
+        (ARateModulationDestination)0,
     },
 
     {

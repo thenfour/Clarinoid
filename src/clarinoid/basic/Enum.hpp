@@ -78,7 +78,7 @@ struct EnumInfo : /*GenericEnumItemInfo,*/ GenericEnumInfo
         {
             if (static_cast<size_t>(mItems[i].mValue) != i)
             {
-                CCASSERT(!"> bad item value");
+                CCASSERT2(!"bad item value", typeName);
             }
         }
     }

@@ -369,9 +369,10 @@ static T Clamp01(T x)
     return Clamp(x, T(0), T(1));
 }
 
-static float ClampN11(float x)
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
+static float ClampN11(T x)
 {
-    return Clamp(x, float(-1), float(1));
+    return Clamp(x, T(-1), T(1));
 }
 
 template <typename T>

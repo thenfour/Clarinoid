@@ -363,23 +363,23 @@ struct Voice : IModulationProvider
 
         size_t ienabledOsc = 0;
 
-        // String sd = String("v") + mVoiceIndex + ": ";
-
-        // static constexpr int otherOscIndices[POLYBLEP_OSC_COUNT][2] = {
-
-        // };
-
-        mOsc.mOsc[0].mPMAmt0 = // 2->1
+        mOsc.mOsc[0].mPMAmt0 = // 1->1
+            patch.mFMStrength1To1.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength1To1);
+        mOsc.mOsc[0].mPMAmt1 = // 2->1
             patch.mFMStrength2To1.GetValue() +
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength2To1);
-        mOsc.mOsc[0].mPMAmt1 = // 3->1
+        mOsc.mOsc[0].mPMAmt2 = // 3->1
             patch.mFMStrength3To1.GetValue() +
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength3To1);
 
         mOsc.mOsc[1].mPMAmt0 = // 1->2
             patch.mFMStrength1To2.GetValue() +
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength1To2);
-        mOsc.mOsc[1].mPMAmt1 = // 3->2
+        mOsc.mOsc[1].mPMAmt1 = // 2->2
+            patch.mFMStrength2To2.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength2To2);
+        mOsc.mOsc[1].mPMAmt2 = // 3->2
             patch.mFMStrength3To2.GetValue() +
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength3To2);
 
@@ -389,6 +389,41 @@ struct Voice : IModulationProvider
         mOsc.mOsc[2].mPMAmt1 = // 2->3
             patch.mFMStrength2To3.GetValue() +
             mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength2To3);
+        mOsc.mOsc[2].mPMAmt2 = // 3->3
+            patch.mFMStrength3To3.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::FMStrength3To3);
+
+
+        mOsc.mOsc[0].mRMAmt0 = // 1->1
+            patch.mRingmodStrength1To2.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength1To1);
+        mOsc.mOsc[0].mRMAmt1 = // 2->1
+            patch.mRingmodStrength2To1.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength2To1);
+        mOsc.mOsc[0].mRMAmt2 = // 3->1
+            patch.mRingmodStrength3To1.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength3To1);
+
+        mOsc.mOsc[1].mRMAmt0 = // 1->2
+            patch.mRingmodStrength1To2.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength1To2);
+        mOsc.mOsc[1].mRMAmt1 = // 2->2
+            patch.mRingmodStrength2To2.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength2To2);
+        mOsc.mOsc[1].mRMAmt2 = // 3->2
+            patch.mRingmodStrength3To2.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength3To2);
+
+        mOsc.mOsc[2].mRMAmt0 = // 1->3
+            patch.mRingmodStrength1To3.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength1To3);
+        mOsc.mOsc[2].mRMAmt1 = // 2->3
+            patch.mRingmodStrength2To3.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength2To3);
+        mOsc.mOsc[2].mRMAmt2 = // 3->3
+            patch.mRingmodStrength3To3.GetValue() +
+            mModMatrix.GetKRateDestinationValue(KRateModulationDestination::RingmodStrength3To3);
+
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
@@ -407,13 +442,6 @@ struct Voice : IModulationProvider
                 continue;
 
             mOsc.mOsc[i].pulseWidth(patch.mOsc[i].mPulseWidth.GetValue());
-            mOsc.mOsc[i].mPMMultiplier =
-                patch.mOverallFMStrength.GetValue() +
-                mModMatrix.GetKRateDestinationValue(KRateModulationDestination::OverallFMStrength);
-
-            mOsc.mOsc[i].mPMFeedbackAmt =
-                patch.mOsc[i].mFMFeedbackGain.GetValue() +
-                mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_FMFeedback);
 
             float freq =
                 CalcFreq(patch.mOsc[i],
@@ -432,10 +460,9 @@ struct Voice : IModulationProvider
                 patch.mOsc[i].mSyncFreqParam.GetFrequency(
                     mRunningVoice.mNoteInfo.mMidiNote.GetMidiValue(),
                     mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_SyncFrequency)),
-                patch.mOsc[i].mRingModOtherOsc[0].mValue,
-                patch.mOsc[i].mRingModOtherOsc[1].mValue,
-                ClampN11(patch.mOsc[i].mRingModStrengthN11 +
-                         mModMatrix.GetKRateDestinationValue(gModValuesByOscillator[i].KRateDestination_RingModAmt)));
+                patch.mOverallRingmodStrength.GetValue() + mModMatrix.GetKRateDestinationValue(KRateModulationDestination::OverallRingmodStrength),
+                patch.mOverallFMStrength.GetValue() + mModMatrix.GetKRateDestinationValue(KRateModulationDestination::OverallFMStrength)
+                  );
 
             ienabledOsc++;
         }

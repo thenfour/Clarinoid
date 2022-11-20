@@ -197,7 +197,13 @@ static inline void Die(const String &msg)
 #define CCASSERT(x)                                                                                                    \
     if (!(x))                                                                                                          \
     {                                                                                                                  \
-        ::clarinoid::Die(__COUNTER__);                                                                                 \
+        ::clarinoid::Die(String(__COUNTER__) + (#x));                                                                                 \
+    }
+
+#define CCASSERT2(x, msg)                                                                                                    \
+    if (!(x))                                                                                                          \
+    {                                                                                                                  \
+        ::clarinoid::Die(String(__COUNTER__) + (msg) + (#x));                                                                                 \
     }
 
 // an assert which is intended to stay in release build

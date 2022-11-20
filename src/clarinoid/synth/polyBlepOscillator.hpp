@@ -167,13 +167,10 @@ struct SineWaveformProvider // : public WaveformProviderBase
                      float otherOsc1Sample)
     {
         caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
-        caller.mOutput = fast::sin((caller.mMainPhase.mT + caller.mMainPhase.mPhaseOffset +       //
-                                    myLastSample * caller.mPMFeedbackAmt * caller.mPMMultiplier + // fm feedback
-                                    otherOsc0Sample * caller.mPMAmt0 * caller.mPMMultiplier +     // fm input 1
-                                    otherOsc1Sample * caller.mPMAmt1 * caller.mPMMultiplier) *    // fm input 2
-                                   // myLastSample * caller.mPremultipliedFMfeedbackAmt + // fm feedback
-                                   // otherOsc0Sample * caller.mPremultipliedFMAmt0 +     // fm input 1
-                                   // otherOsc1Sample * caller.mPremultipliedFMAmt1) *    // fm input 2
+        caller.mOutput = fast::sin((caller.mMainPhase.mT + caller.mMainPhase.mPhaseOffset +    //
+                                    myLastSample * caller.mPMAmt0 * caller.mPMMultiplier +     // fm feedback
+                                    otherOsc0Sample * caller.mPMAmt1 * caller.mPMMultiplier +  // fm input 1
+                                    otherOsc1Sample * caller.mPMAmt2 * caller.mPMMultiplier) * // fm input 2
                                    TWO_PI);
     }
 };
@@ -204,8 +201,8 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
                 if (caller.mMainPhase.mT < pulseWidth)
                     break;
 
-                float x = (caller.mMainPhase.mT - pulseWidth) /
-                          (caller.mWidthDelay - pulseWidth + caller.mMainPhase.mDt);
+                float x =
+                    (caller.mMainPhase.mT - pulseWidth) / (caller.mWidthDelay - pulseWidth + caller.mMainPhase.mDt);
                 float scale = caller.mMainPhase.mDt / (pulseWidth - pulseWidth * pulseWidth);
 
                 caller.mOutput -= scale * blamp0(x);
@@ -276,8 +273,8 @@ struct PulseWaveformProvider
                 if (caller.mMainPhase.mT < pulseWidth)
                     break;
 
-                float x = (caller.mMainPhase.mT - pulseWidth) /
-                          (caller.mWidthDelay - pulseWidth + caller.mMainPhase.mDt);
+                float x =
+                    (caller.mMainPhase.mT - pulseWidth) / (caller.mWidthDelay - pulseWidth + caller.mMainPhase.mDt);
 
                 caller.mOutput -= blep0(x);
                 caller.mBlepDelay -= blep1(x);
@@ -397,10 +394,9 @@ struct Oscillator
 
     float mOutput = 0;           // osc1_output
     float mPMMultiplier = 0.01f; // scaling PM input 0-1 phase is EXTREME, so we need a reasonable maximum.
-    float mPMFeedbackAmt = 0.0f;
-
-    bool mRingMod0 = false;
-    bool mRingMod1 = false;
+    // float mPMFeedbackAmt = 0.0f;
+    // bool mRingMod0 = false;
+    // bool mRingMod1 = false;
     float mRingModStrengthN11 = 1.0f;
 
     // save this so it can be used for efficient a-rate modulation
@@ -408,6 +404,11 @@ struct Oscillator
 
     float mPMAmt0 = 0;
     float mPMAmt1 = 0;
+    float mPMAmt2 = 0;
+
+    float mRMAmt0 = 0;
+    float mRMAmt1 = 0;
+    float mRMAmt2 = 0;
 
     // float mPremultipliedFMfeedbackAmt = 0;
     // float mPremultipliedFMAmt0 = 0;
@@ -427,14 +428,14 @@ struct Oscillator
                         int portamentoMS,
                         bool hardSyncEnabled,
                         float syncFreq,
-                        bool ringMod0,
-                        bool ringMod1,
-                        float ringModStrengthN11)
+                        float ringModStrengthN11,
+                        float pmMultiplier)
     {
         mWaveformShape = wform;
         mHardSyncEnabled = hardSyncEnabled;
-        mRingMod0 = ringMod0;
-        mRingMod1 = ringMod1;
+        // mRingMod0 = ringMod0;
+        // mRingMod1 = ringMod1;
+        mPMMultiplier = pmMultiplier;
         mRingModStrengthN11 = ringModStrengthN11;
         if (mHardSyncEnabled)
         {
@@ -484,15 +485,11 @@ struct Oscillator
 
         out[i] = mOutput;
 
-        // probably can be optimized by processing in whole blocks
-        if (mRingMod0)
-        {
-            out[i] *= 1.0 - mRingModStrengthN11 * otherOsc0Sample;
-        }
-        if (mRingMod1)
-        {
-            out[i] *= 1.0 - mRingModStrengthN11 * otherOsc1Sample;
-        }
+        // hm you can't really continuously mix this in a straightforward way; the moment the mod crosses from positive
+        // to negative, the whole thing instantly flips around.
+        out[i] *= 1.0f - mRMAmt0 * mRingModStrengthN11 * fboutput;
+        out[i] *= 1.0f - mRMAmt1 * mRingModStrengthN11 * otherOsc0Sample;
+        out[i] *= 1.0f - mRMAmt2 * mRingModStrengthN11 * otherOsc1Sample;
     }
 
     void ProcessSample(int i, float *pwm, float otherOsc0Sample, float otherOsc1Sample)
@@ -525,13 +522,10 @@ struct AudioBandlimitedOsci : public AudioStream
     enum class INPUT_INDEX
     {
         pwm1 = 0,
-        //pm1,
         pwm2,
-        //pm2,
         pwm3,
-        //pm3,
     };
-    static constexpr size_t INPUT_CONNECTION_COUNT = 6;
+    static constexpr size_t INPUT_CONNECTION_COUNT = 3;
 
     AudioBandlimitedOsci() : AudioStream(INPUT_CONNECTION_COUNT, inputQueueArray)
     {

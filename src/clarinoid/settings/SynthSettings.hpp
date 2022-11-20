@@ -204,11 +204,11 @@ enum class ARateModulationDestination : uint8_t
 {
     // these are INDICES used by synthvoice / modulationmatrix
     Osc1PulseWidth = 0, // a-rate
-    //Osc1Phase,          // a-rate
-    Osc2PulseWidth,     // a-rate
-    //Osc2Phase,          // a-rate
-    Osc3PulseWidth,     // a-rate
-    //Osc3Phase,          // a-rate
+    // Osc1Phase,          // a-rate
+    Osc2PulseWidth, // a-rate
+    // Osc2Phase,          // a-rate
+    Osc3PulseWidth, // a-rate
+    // Osc3Phase,          // a-rate
 };
 
 EnumItemInfo<ARateModulationDestination> gARateModulationDestinationItems[3] = {
@@ -236,21 +236,27 @@ enum class KRateModulationDestination : uint8_t
     Osc2Volume, // k-rate
     Osc3Volume, // k-rate
 
-    Osc1RingModAmt, // k-rate
-    Osc2RingModAmt, // k-rate
-    Osc3RingModAmt, // k-rate
-
-    Osc1FMFeedback, // k-rate
-    Osc2FMFeedback, // k-rate
-    Osc3FMFeedback, // k-rate
+    OverallRingmodStrength, // k-rate
+    RingmodStrength1To1,    // k-rate
+    RingmodStrength2To1,    // k-rate
+    RingmodStrength3To1,    // k-rate
+    RingmodStrength1To2,    // k-rate
+    RingmodStrength2To2,    // k-rate
+    RingmodStrength3To2,    // k-rate
+    RingmodStrength1To3,    // k-rate
+    RingmodStrength2To3,    // k-rate
+    RingmodStrength3To3,    // k-rate
 
     OverallFMStrength, // k-rate
+    FMStrength1To1,    // k-rate
     FMStrength2To1,    // k-rate
     FMStrength3To1,    // k-rate
     FMStrength1To2,    // k-rate
+    FMStrength2To2,    // k-rate
     FMStrength3To2,    // k-rate
     FMStrength1To3,    // k-rate
     FMStrength2To3,    // k-rate
+    FMStrength3To3,    // k-rate
 
     Osc1FrequencyParam, // k-rate
     Osc2FrequencyParam, // k-rate
@@ -291,26 +297,36 @@ enum class KRateModulationDestination : uint8_t
     Env3ReleaseCurve, // k-rate
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[52] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[59] = {
     {KRateModulationDestination::FilterCutoff, "FilterCutoff", "flt"},
     {KRateModulationDestination::MasterVolume, "MasterVolume", "mstvol"},
     {KRateModulationDestination::Detune, "Detune", "det"},
     {KRateModulationDestination::Osc1Volume, "Osc1Volume", "osc1vol"},
     {KRateModulationDestination::Osc2Volume, "Osc2Volume", "osc2vol"},
     {KRateModulationDestination::Osc3Volume, "Osc3Volume", "osc3vol"},
-    {KRateModulationDestination::Osc1RingModAmt, "Osc1RingModAmt", "Osc1ring"},
-    {KRateModulationDestination::Osc2RingModAmt, "Osc2RingModAmt", "Osc2ring"},
-    {KRateModulationDestination::Osc3RingModAmt, "Osc3RingModAmt", "Osc3ring"},
-    {KRateModulationDestination::Osc1FMFeedback, "Osc1FMFeedback", "Osc1fb"},
-    {KRateModulationDestination::Osc2FMFeedback, "Osc2FMFeedback", "Osc2fb"},
-    {KRateModulationDestination::Osc3FMFeedback, "Osc3FMFeedback", "Osc3fb"},
+    {KRateModulationDestination::OverallRingmodStrength, "OverallRingmodStrength", "rmstr"},
+    {KRateModulationDestination::RingmodStrength1To1, "RingmodStrength1To1", "RM11"},
+    {KRateModulationDestination::RingmodStrength2To1, "RingmodStrength2To1", "RM21"},
+    {KRateModulationDestination::RingmodStrength3To1, "RingmodStrength3To1", "RM31"},
+    {KRateModulationDestination::RingmodStrength1To2, "RingmodStrength1To2", "RM12"},
+    {KRateModulationDestination::RingmodStrength2To2, "RingmodStrength2To2", "RM22"},
+    {KRateModulationDestination::RingmodStrength3To2, "RingmodStrength3To2", "RM32"},
+    {KRateModulationDestination::RingmodStrength1To3, "RingmodStrength1To3", "RM13"},
+    {KRateModulationDestination::RingmodStrength2To3, "RingmodStrength2To3", "RM23"},
+    {KRateModulationDestination::RingmodStrength3To3, "RingmodStrength3To3", "RM33"},
+    // {KRateModulationDestination::Osc1FMFeedback, "Osc1FMFeedback", "Osc1fb"},
+    // {KRateModulationDestination::Osc2FMFeedback, "Osc2FMFeedback", "Osc2fb"},
+    // {KRateModulationDestination::Osc3FMFeedback, "Osc3FMFeedback", "Osc3fb"},
     {KRateModulationDestination::OverallFMStrength, "OverallFMStrength", "fmstr"},
+    {KRateModulationDestination::FMStrength1To1, "FMStrength1To1", "FM11"},
     {KRateModulationDestination::FMStrength2To1, "FMStrength2To1", "FM21"},
     {KRateModulationDestination::FMStrength3To1, "FMStrength3To1", "FM31"},
     {KRateModulationDestination::FMStrength1To2, "FMStrength1To2", "FM12"},
+    {KRateModulationDestination::FMStrength2To2, "FMStrength2To2", "FM22"},
     {KRateModulationDestination::FMStrength3To2, "FMStrength3To2", "FM32"},
     {KRateModulationDestination::FMStrength1To3, "FMStrength1To3", "FM13"},
     {KRateModulationDestination::FMStrength2To3, "FMStrength2To3", "FM23"},
+    {KRateModulationDestination::FMStrength3To3, "FMStrength3To3", "FM33"},
     {KRateModulationDestination::Osc1FrequencyParam, "Osc1FrequencyP", "Osc1Freq"},
     {KRateModulationDestination::Osc2FrequencyParam, "Osc2FrequencyP", "Osc2Freq"},
     {KRateModulationDestination::Osc3FrequencyParam, "Osc3FrequencyP", "Osc3Freq"},
@@ -357,36 +373,36 @@ EnumInfo<KRateModulationDestination> gKRateModulationDestinationInfo("KRateModDe
 // Lets create a way to get modulation enum values by oscillator index
 struct OscillatorModulationInfo
 {
-    KRateModulationDestination KRateDestination_FMFeedback;
+    // KRateModulationDestination KRateDestination_FMFeedback;
     KRateModulationDestination KRateDestination_Frequency;
     KRateModulationDestination KRateDestination_SyncFrequency;
     KRateModulationDestination KRateDestination_Volume;
-    KRateModulationDestination KRateDestination_RingModAmt;
+    // KRateModulationDestination KRateDestination_RingModAmt;
 };
 
 static OscillatorModulationInfo gModValuesByOscillator[POLYBLEP_OSC_COUNT] = {
     {
-        KRateModulationDestination::Osc1FMFeedback,
+        // KRateModulationDestination::Osc1FMFeedback,
         KRateModulationDestination::Osc1FrequencyParam,
         KRateModulationDestination::Osc1SyncFrequencyParam,
         KRateModulationDestination::Osc1Volume,
-        KRateModulationDestination::Osc1RingModAmt,
+        // KRateModulationDestination::Osc1RingmodFeedback,
     },
 
     {
-        KRateModulationDestination::Osc2FMFeedback,
+        // KRateModulationDestination::Osc2FMFeedback,
         KRateModulationDestination::Osc2FrequencyParam,
-        KRateModulationDestination::Osc1SyncFrequencyParam,
+        KRateModulationDestination::Osc2SyncFrequencyParam,
         KRateModulationDestination::Osc2Volume,
-        KRateModulationDestination::Osc2RingModAmt,
+        // KRateModulationDestination::Osc2RingmodFeedback,
     },
 
     {
-        KRateModulationDestination::Osc3FMFeedback,
+        // KRateModulationDestination::Osc3FMFeedback,
         KRateModulationDestination::Osc3FrequencyParam,
-        KRateModulationDestination::Osc1SyncFrequencyParam,
+        KRateModulationDestination::Osc3SyncFrequencyParam,
         KRateModulationDestination::Osc3Volume,
-        KRateModulationDestination::Osc3RingModAmt,
+        // KRateModulationDestination::Osc3RingmodFeedback,
     },
 };
 
@@ -440,31 +456,38 @@ enum class AnyModulationDestination : uint8_t
 {
     None = 0,
     Osc1PulseWidth, // a-rate
-    //Osc1Phase,      // a-rate
     Osc2PulseWidth, // a-rate
-    //Osc2Phase,      // a-rate
     Osc3PulseWidth, // a-rate
-    //Osc3Phase,      // a-rate
 
-    FilterCutoff,       // k-rate
-    MasterVolume,       // k-rate
-    Detune,             // k-rate
-    Osc1Volume,         // k-rate
-    Osc2Volume,         // k-rate
-    Osc3Volume,         // k-rate
-    Osc1RingModAmt,     // k-rate
-    Osc2RingModAmt,     // k-rate
-    Osc3RingModAmt,     // k-rate
-    Osc1FMFeedback,     // k-rate
-    Osc2FMFeedback,     // k-rate
-    Osc3FMFeedback,     // k-rate
+    FilterCutoff, // k-rate
+    MasterVolume, // k-rate
+    Detune,       // k-rate
+    Osc1Volume,   // k-rate
+    Osc2Volume,   // k-rate
+    Osc3Volume,   // k-rate
+
+    OverallRingmodStrength, // k-rate
+    RingmodStrength1To1, // k-rate
+    RingmodStrength2To1, // k-rate
+    RingmodStrength3To1, // k-rate
+    RingmodStrength1To2, // k-rate
+    RingmodStrength2To2, // k-rate
+    RingmodStrength3To2, // k-rate
+    RingmodStrength1To3, // k-rate
+    RingmodStrength2To3, // k-rate
+    RingmodStrength3To3, // k-rate
+
     OverallFMStrength,  // k-rate
+    FMStrength1To1,     // k-rate
     FMStrength2To1,     // k-rate
     FMStrength3To1,     // k-rate
     FMStrength1To2,     // k-rate
+    FMStrength2To2,     // k-rate
     FMStrength3To2,     // k-rate
     FMStrength1To3,     // k-rate
     FMStrength2To3,     // k-rate
+    FMStrength3To3,     // k-rate
+
     Osc1FrequencyParam, // k-rate
     Osc2FrequencyParam, // k-rate
     Osc3FrequencyParam, // k-rate
@@ -526,19 +549,26 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[1 /* none 
     {AnyModulationDestination::Osc1Volume, "Osc1Volume", "osc1vol"},
     {AnyModulationDestination::Osc2Volume, "Osc2Volume", "osc2vol"},
     {AnyModulationDestination::Osc3Volume, "Osc3Volume", "osc3vol"},
-    {AnyModulationDestination::Osc1RingModAmt, "Osc1RingModAmt", "Osc1ring"},
-    {AnyModulationDestination::Osc2RingModAmt, "Osc2RingModAmt", "Osc2ring"},
-    {AnyModulationDestination::Osc3RingModAmt, "Osc3RingModAmt", "Osc3ring"},
-    {AnyModulationDestination::Osc1FMFeedback, "Osc1FMFeedback", "Osc1fb"},
-    {AnyModulationDestination::Osc2FMFeedback, "Osc2FMFeedback", "Osc2fb"},
-    {AnyModulationDestination::Osc3FMFeedback, "Osc3FMFeedback", "Osc3fb"},
+    {AnyModulationDestination::OverallRingmodStrength, "OverallRingmodStrength", "rmstr"},
+    {AnyModulationDestination::RingmodStrength1To1, "RingmodStrength1To1", "RM11"},
+    {AnyModulationDestination::RingmodStrength2To1, "RingmodStrength2To1", "RM21"},
+    {AnyModulationDestination::RingmodStrength3To1, "RingmodStrength3To1", "RM31"},
+    {AnyModulationDestination::RingmodStrength1To2, "RingmodStrength1To2", "RM12"},
+    {AnyModulationDestination::RingmodStrength2To2, "RingmodStrength2To2", "RM22"},
+    {AnyModulationDestination::RingmodStrength3To2, "RingmodStrength3To2", "RM32"},
+    {AnyModulationDestination::RingmodStrength1To3, "RingmodStrength1To3", "RM13"},
+    {AnyModulationDestination::RingmodStrength2To3, "RingmodStrength2To3", "RM23"},
+    {AnyModulationDestination::RingmodStrength3To3, "RingmodStrength3To3", "RM33"},
     {AnyModulationDestination::OverallFMStrength, "OverallFMStrength", "fmstr"},
+    {AnyModulationDestination::FMStrength1To1, "FMStrength1To1", "FM11"},
     {AnyModulationDestination::FMStrength2To1, "FMStrength2To1", "FM21"},
     {AnyModulationDestination::FMStrength3To1, "FMStrength3To1", "FM31"},
     {AnyModulationDestination::FMStrength1To2, "FMStrength1To2", "FM12"},
+    {AnyModulationDestination::FMStrength2To2, "FMStrength2To2", "FM22"},
     {AnyModulationDestination::FMStrength3To2, "FMStrength3To2", "FM32"},
     {AnyModulationDestination::FMStrength1To3, "FMStrength1To3", "FM13"},
     {AnyModulationDestination::FMStrength2To3, "FMStrength2To3", "FM23"},
+    {AnyModulationDestination::FMStrength3To3, "FMStrength3To3", "FM33"},
     {AnyModulationDestination::Osc1FrequencyParam, "Osc1Frequency", "Osc1Freq"},
     {AnyModulationDestination::Osc2FrequencyParam, "Osc2Frequency", "Osc2Freq"},
     {AnyModulationDestination::Osc3FrequencyParam, "Osc3Frequency", "Osc3Freq"},
@@ -698,7 +728,7 @@ struct EnvelopeSpec : ISerializationObjectMap<10>
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct SynthOscillatorSettings : ISerializationObjectMap<18>
+struct SynthOscillatorSettings : ISerializationObjectMap<17>
 {
     void CopyFrom(const SynthOscillatorSettings &rhs)
     {
@@ -722,9 +752,6 @@ struct SynthOscillatorSettings : ISerializationObjectMap<18>
     FloatParam mFreqMultiplier{1.0f}; // midinotefreq * this
     FloatParam mFreqOffsetHz{0.0f};
 
-    float mRingModStrengthN11 = 1.0f;
-    std::array<BoolParam, POLYBLEP_OSC_COUNT - 1> mRingModOtherOsc;
-
     // these are good for modulation, and for sync frequency.
     FrequencyParamValue mFreqParam{0.3f, 1.0f}; // param, kt amt
 
@@ -747,8 +774,6 @@ struct SynthOscillatorSettings : ISerializationObjectMap<18>
     EnumParam<OscWaveformShape> mWaveform{gOscWaveformShapeInfo, OscWaveformShape::VarTriangle};
     FloatParam mPulseWidth{0.5f};
 
-    FloatParam mFMFeedbackGain{0.0f}; // 0 to 1
-
     virtual SerializationObjectMapArray GetSerializationObjectMap() override
     {
         return {{
@@ -769,7 +794,6 @@ struct SynthOscillatorSettings : ISerializationObjectMap<18>
             CreateSerializationMapping(mPhaseRestart, "rst"),
             CreateSerializationMapping(mPhase01, "Ph"),
             CreateSerializationMapping(mPulseWidth, "PW"),
-            CreateSerializationMapping(mFMFeedbackGain, "Fb"),
         }};
     }
 };
@@ -899,7 +923,7 @@ struct FilterSettings : ISerializationObjectMap<4>
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct SynthPatch : ISerializationObjectMap<20>
+struct SynthPatch : ISerializationObjectMap<33>
 {
   private:
     SynthPatch &operator=(const SynthPatch &rhs) = default;
@@ -935,15 +959,29 @@ struct SynthPatch : ISerializationObjectMap<20>
 
     FilterSettings mFilter;
 
-    // for FM modulation matrix.
+    // Ring modulation matrix.
+    FloatParam mOverallRingmodStrength{1.00f};
+    FloatParam mRingmodStrength1To1{0};
+    FloatParam mRingmodStrength2To1{0};
+    FloatParam mRingmodStrength3To1{0};
+    FloatParam mRingmodStrength1To2{0};
+    FloatParam mRingmodStrength2To2{0};
+    FloatParam mRingmodStrength3To2{0};
+    FloatParam mRingmodStrength1To3{0};
+    FloatParam mRingmodStrength2To3{0};
+    FloatParam mRingmodStrength3To3{0};
+
+    // FM modulation matrix.
+    FloatParam mOverallFMStrength{1.00f};
+    FloatParam mFMStrength1To1{0};
     FloatParam mFMStrength2To1{0};
     FloatParam mFMStrength3To1{0};
     FloatParam mFMStrength1To2{0};
+    FloatParam mFMStrength2To2{0};
     FloatParam mFMStrength3To2{0};
     FloatParam mFMStrength1To3{0};
     FloatParam mFMStrength2To3{0};
-
-    FloatParam mOverallFMStrength{1.00f};
+    FloatParam mFMStrength3To3{0};
 
     std::array<SynthModulationSpec, SYNTH_MODULATIONS_MAX> mModulations;
 
@@ -988,16 +1026,22 @@ struct SynthPatch : ISerializationObjectMap<20>
                 switch (i)
                 {
                 case 0:
-                    if (FloatIsAbove(this->mFMStrength1To2.GetValue(), 0)) return "<FM src>";
-                    if (FloatIsAbove(this->mFMStrength1To3.GetValue(), 0)) return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength1To2.GetValue(), 0))
+                        return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength1To3.GetValue(), 0))
+                        return "<FM src>";
                     break;
                 case 1:
-                    if (FloatIsAbove(this->mFMStrength2To1.GetValue(), 0)) return "<FM src>";
-                    if (FloatIsAbove(this->mFMStrength2To3.GetValue(), 0)) return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength2To1.GetValue(), 0))
+                        return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength2To3.GetValue(), 0))
+                        return "<FM src>";
                     break;
                 case 2:
-                    if (FloatIsAbove(this->mFMStrength3To1.GetValue(), 0)) return "<FM src>";
-                    if (FloatIsAbove(this->mFMStrength3To2.GetValue(), 0)) return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength3To1.GetValue(), 0))
+                        return "<FM src>";
+                    if (FloatIsAbove(this->mFMStrength3To2.GetValue(), 0))
+                        return "<FM src>";
                     break;
                 default:
                     CCASSERT(!"hard-coded osc count alert");
@@ -1026,13 +1070,28 @@ struct SynthPatch : ISerializationObjectMap<20>
             CreateSerializationMapping(mStereoSpread, "st"),
             CreateSerializationMapping(mDetune, "det"),
             CreateSerializationMapping(mFilter, "flt"),
+
+            CreateSerializationMapping(mOverallRingmodStrength, "rmstr"),
+            CreateSerializationMapping(mRingmodStrength1To1, "RM11"),
+            CreateSerializationMapping(mRingmodStrength2To1, "RM21"),
+            CreateSerializationMapping(mRingmodStrength3To1, "RM31"),
+            CreateSerializationMapping(mRingmodStrength1To2, "RM12"),
+            CreateSerializationMapping(mRingmodStrength2To2, "RM22"),
+            CreateSerializationMapping(mRingmodStrength3To2, "RM32"),
+            CreateSerializationMapping(mRingmodStrength1To3, "RM13"),
+            CreateSerializationMapping(mRingmodStrength2To3, "RM23"),
+            CreateSerializationMapping(mRingmodStrength3To3, "RM33"),
+
+            CreateSerializationMapping(mOverallFMStrength, "fmstr"),
+            CreateSerializationMapping(mFMStrength1To1, "FM11"),
             CreateSerializationMapping(mFMStrength2To1, "FM21"),
             CreateSerializationMapping(mFMStrength3To1, "FM31"),
             CreateSerializationMapping(mFMStrength1To2, "FM12"),
+            CreateSerializationMapping(mFMStrength2To2, "FM22"),
             CreateSerializationMapping(mFMStrength3To2, "FM32"),
             CreateSerializationMapping(mFMStrength1To3, "FM13"),
             CreateSerializationMapping(mFMStrength2To3, "FM23"),
-            CreateSerializationMapping(mOverallFMStrength, "fmstr"),
+            CreateSerializationMapping(mFMStrength3To3, "FM33"),
             CreateSerializationMapping(mVoicingMode, "voxx"),
             CreateSerializationMapping(mModulations, "mod"),
             CreateSerializationMapping(mOsc, "Osc"),
@@ -1040,65 +1099,6 @@ struct SynthPatch : ISerializationObjectMap<20>
             CreateSerializationMapping(mLFOs, "LFOs"),
         }};
     }
-
-    // Result SerializableObject_ToJSON(JsonVariant doc) const
-    // {
-    //     Result ret = Result::Success();
-    //     ret.AndRequires(mName.SerializableObject_ToJSON(doc.createNestedObject("name")), "name");
-    //     ret.AndRequires(mMasterVolume.SerializableObject_ToJSON(doc.createNestedObject("vol")), "vol");
-    //     ret.AndRequires(mPan.SerializableObject_ToJSON(doc.createNestedObject("pan")), "pan");
-    //     ret.AndRequires(mDelayMix.SerializableObject_ToJSON(doc.createNestedObject("dly")), "dly");
-    //     ret.AndRequires(mVerbMix.SerializableObject_ToJSON(doc.createNestedObject("verb")), "verb");
-    //     ret.AndRequires(mStereoSpread.SerializableObject_ToJSON(doc.createNestedObject("spread")), "spread");
-    //     ret.AndRequires(mDetune.SerializableObject_ToJSON(doc.createNestedObject("det")), "det");
-    //     ret.AndRequires(mFilter.SerializableObject_ToJSON(doc.createNestedObject("flt")), "flt");
-    //     ret.AndRequires(mFMStrength2To1.SerializableObject_ToJSON(doc.createNestedObject("fm21")), "fm21");
-    //     ret.AndRequires(mFMStrength3To1.SerializableObject_ToJSON(doc.createNestedObject("fm31")), "fm31");
-    //     ret.AndRequires(mFMStrength1To2.SerializableObject_ToJSON(doc.createNestedObject("fm12")), "fm12");
-    //     ret.AndRequires(mFMStrength3To2.SerializableObject_ToJSON(doc.createNestedObject("fm32")), "fm32");
-    //     ret.AndRequires(mFMStrength1To3.SerializableObject_ToJSON(doc.createNestedObject("fm13")), "fm13");
-    //     ret.AndRequires(mFMStrength2To3.SerializableObject_ToJSON(doc.createNestedObject("fm23")), "fm23");
-    //     ret.AndRequires(mOverallFMStrength.SerializableObject_ToJSON(doc.createNestedObject("fmAll")), "fmAll");
-    //     ret.AndRequires(mVoicingMode.SerializableObject_ToJSON(doc.createNestedObject("vm")), "vm");
-    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("mod"), mModulations), "mod");
-    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("osc"), mOsc), "osc");
-    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("env"), mEnvelopes), "env");
-    //     ret.AndRequires(SerializeArrayToJSON(doc.createNestedObject("lfo"), mLFOs), "lfo");
-    //     return ret;
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("expected object");
-    //     }
-    //     Result ret = Result::Success();
-
-    //     ret.AndRequires(mName.SerializableObject_Deserialize(obj["name"]), "name");
-    //     ret.AndRequires(mMasterVolume.SerializableObject_Deserialize(obj["vol"]), "vol");
-    //     ret.AndRequires(mPan.SerializableObject_Deserialize(obj["pan"]), "pan");
-    //     ret.AndRequires(mDelayMix.SerializableObject_Deserialize(obj["dly"]), "dly");
-    //     ret.AndRequires(mVerbMix.SerializableObject_Deserialize(obj["verb"]), "verb");
-    //     ret.AndRequires(mStereoSpread.SerializableObject_Deserialize(obj["spread"]), "spread");
-    //     ret.AndRequires(mDetune.SerializableObject_Deserialize(obj["det"]), "det");
-    //     ret.AndRequires(mFilter.SerializableObject_Deserialize(obj["flt"]), "flt");
-    //     ret.AndRequires(mFMStrength2To1.SerializableObject_Deserialize(obj["fm21"]), "fm21");
-    //     ret.AndRequires(mFMStrength3To1.SerializableObject_Deserialize(obj["fm31"]), "fm31");
-    //     ret.AndRequires(mFMStrength1To2.SerializableObject_Deserialize(obj["fm12"]), "fm12");
-    //     ret.AndRequires(mFMStrength3To2.SerializableObject_Deserialize(obj["fm32"]), "fm32");
-    //     ret.AndRequires(mFMStrength1To3.SerializableObject_Deserialize(obj["fm13"]), "fm13");
-    //     ret.AndRequires(mFMStrength2To3.SerializableObject_Deserialize(obj["fm23"]), "fm23");
-    //     ret.AndRequires(mOverallFMStrength.SerializableObject_Deserialize(obj["fmAll"]), "fmAll");
-    //     ret.AndRequires(mVoicingMode.SerializableObject_Deserialize(obj["vm"]), "vm");
-
-    //     ret.AndRequires(DeserializeArray(obj["mod"], mModulations), "mod");
-    //     ret.AndRequires(DeserializeArray(obj["osc"], mOsc), "osc");
-    //     ret.AndRequires(DeserializeArray(obj["env"], mEnvelopes), "env");
-    //     ret.AndRequires(DeserializeArray(obj["lfo"], mLFOs), "lfo");
-
-    //     return ret;
-    // }
 };
 
 static constexpr auto synthpatchsize = sizeof(SynthPatch);
@@ -1132,21 +1132,6 @@ struct SynthSettings : ISerializationObjectMap<1>
         p.mModulations[0].mAuxEnabled.SetValue(false);
         p.mModulations[0].mScaleN11.SetValue(1.0f);
     };
-
-    // Result SerializableObject_ToJSON(JsonVariant rhs) const
-    // {
-    //     return SerializeArrayToJSON(rhs.createNestedArray("patches"), mPatches);
-    // }
-
-    // Result SerializableObject_Deserialize(JsonVariant obj)
-    // {
-    //     if (!obj.is<JsonObject>())
-    //     {
-    //         return Result::Failure("expected object");
-    //     }
-
-    //     return DeserializeArray(obj["patches"], mPatches);
-    // }
 
     SynthSettings()
     {
