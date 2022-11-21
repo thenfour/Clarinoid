@@ -49,6 +49,7 @@ struct MultiMixerNode : public AudioStream
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // takes N inputs, applies pan and mixes them all together to create a single pair of L R output
+// buffers visited: N*2
 template <size_t NInputs>
 struct MultiMixerPannerNode : public AudioStream
 {
@@ -102,7 +103,8 @@ struct MultiMixerPannerNode : public AudioStream
             panN11 = -1;
         if (panN11 > 1)
             panN11 = 1;
-        if ((mEnabled[inputChannel] == enabled) && FloatEquals(panN11, mInputPanN11[inputChannel]) && FloatEquals(gain01, mInputGain01[inputChannel]))
+        if ((mEnabled[inputChannel] == enabled) && FloatEquals(panN11, mInputPanN11[inputChannel]) &&
+            FloatEquals(gain01, mInputGain01[inputChannel]))
         {
             return;
         }
@@ -195,6 +197,7 @@ struct MultiMixerPannerNode : public AudioStream
 };
 
 // takes 2 inputs, outputs 2*NSplits, with gain applied to each output channel
+// buffers visited: N*2
 template <size_t NSplits>
 struct StereoGainerSplitterNode : public AudioStream
 {
@@ -295,5 +298,89 @@ struct StereoGainerSplitterNode : public AudioStream
         }
     }
 };
+
+// takes N inputs and distributes to M outputs. Gains are a matrix, each input-output permutation gets a gainer.
+// buffers visited: Ninputs * Noutputs (yikes)
+template <size_t Ninputs, size_t Noutputs>
+struct DistributorNode : public AudioStream
+{
+    audio_block_t *inputQueueArray[Ninputs];
+
+    float mGain01[Ninputs][Noutputs];
+    int32_t mMultipliers[Ninputs][Noutputs];
+
+    DistributorNode() : AudioStream(Ninputs, inputQueueArray)
+    {
+        for (size_t iInput = 0; iInput < Ninputs; ++iInput)
+        {
+            for (size_t iOutput = 0; iOutput < Noutputs; ++iOutput)
+            {
+                SetOutputGainUnchecked(iInput, iOutput, 0);
+            }
+        }
+    }
+
+    void SetOutputGainUnchecked(size_t inputChannel, size_t outputChannel, float gain01)
+    {
+        CCASSERT(inputChannel < Ninputs);
+        CCASSERT(outputChannel < Noutputs);
+        mGain01[inputChannel][outputChannel] = gain01;
+        mMultipliers[inputChannel][outputChannel] = gainToSignedMultiply32x16(gain01);
+    }
+
+    void SetGain(size_t inputChannel, size_t outputChannel, float gain01)
+    {
+        if (gain01 < 0)
+            gain01 = 0;
+        if (FloatEquals(gain01, mGain01[chan]))
+        {
+            return;
+        }
+        SetOutputGainUnchecked(inputChannel, outputChannel, gain01);
+    }
+
+    virtual void update() override
+    {
+        audio_block_t *outputBuffers[Noutputs] = {nullptr};
+        for (size_t i = 0; i < SizeofStaticArray(outputBuffers); ++i)
+        {
+            outputBuffers[i] = allocate();
+            if (outputBuffers[i])
+            {
+                audioBufferZero(outputBuffers[i]->data);
+            }
+        }
+
+        // process one input at a time
+        for (size_t iInput = 0; iInput < Ninputs; ++iInput)
+        {
+            audio_block_t *inputBuf = receiveReadOnly(0);
+            if (!inputBuf)
+                continue;
+
+            for (size_t iOutput = 0; iOutput < Noutputs; ++iOutput)
+            {
+                audio_block_t *outputBuf = outputBuffers[iOutput];
+                if (!outputBuf)
+                    continue;
+
+                audioBufferMixInPlaceWithGain(outputBuf->data, inputBuf->data, mMultipliers[iInput][iOutput]);
+            }
+            release(inputBuf);
+        }
+
+        for (size_t i = 0; i < SizeofStaticArray(outputBuffers); ++i)
+        {
+            if (!outputBuffers[i])
+                continue;
+            transmit(outputBuffers[i], i);
+            release(outputBuffers[i]);
+        }
+
+    }
+};
+
+
+
 
 } // namespace clarinoid
