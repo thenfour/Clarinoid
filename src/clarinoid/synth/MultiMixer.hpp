@@ -332,7 +332,7 @@ struct DistributorNode : public AudioStream
     {
         if (gain01 < 0)
             gain01 = 0;
-        if (FloatEquals(gain01, mGain01[chan]))
+        if (FloatEquals(gain01, mGain01[inputChannel][outputChannel]))
         {
             return;
         }
