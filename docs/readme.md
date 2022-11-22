@@ -5,6 +5,7 @@
 
 * [Development notes, including how to reduce static memory bloat](development.md)
 * [Modulation specification](modulation.md)
+* [Notes about oscillator dev](oscillators.md)
 
 ## Projects
 

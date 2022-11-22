@@ -768,7 +768,7 @@ struct SynthOscillatorSettings : ISerializationObjectMap<17>
 
     FloatParam mPan{0};
 
-    BoolParam mPhaseRestart{false};
+    BoolParam mPhaseRestart{true};
     FloatParam mPhase01{0};
 
     EnumParam<OscWaveformShape> mWaveform{gOscWaveformShapeInfo, OscWaveformShape::Sine};
