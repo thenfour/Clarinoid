@@ -132,6 +132,8 @@ AudioConnection patchCord2(wfmod1, 0, gOscilloscope, 0);
 AudioConnection patchCordaeu2(wfmod1, 0, gFFT, 0);
 AudioConnection patchCord3(wfmod1, 0, i2s1, 1);
 
+int16_t arbitraryWave[256] = {0};
+
 void setup()
 {
     Serial.begin(9600);
@@ -149,6 +151,16 @@ void setup()
 
     display.begin(SSD1306_SWITCHCAPVCC);
     AudioMemory(10);
+
+    for (size_t i = 0; i < 256; ++ i) {
+        float f = arm_cos_f32(float(i) / 256 * pi2);
+        float s = f >= 0 ? 1 : -1;
+        f = sqrtf(sqrtf(fabs(f)));
+        f *= s;
+        arbitraryWave[i] = Sample32To16(f);
+    }
+    wfmod1.arbitraryWaveform(arbitraryWave);
+    wfmod2.arbitraryWaveform(arbitraryWave);
 
     mPCA9554.begin();
     gFFT.averageTogether(8);
