@@ -382,3 +382,16 @@ OnScopeExitHelper<T> OnScopeExit(T &&fn)
 {
     return OnScopeExitHelper<T>{std::move(fn)};
 }
+
+inline void CheckCrashReport()
+{
+    if (CrashReport)
+    {
+        while (!Serial);
+        while (true)
+        {
+            CrashReport.printTo(Serial);
+            delay(2500);
+        }
+    }
+}

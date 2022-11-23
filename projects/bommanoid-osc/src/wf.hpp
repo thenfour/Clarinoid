@@ -1,8 +1,9 @@
 // todo:
-// - combine 3 into 1, and process <=1 modulation sample delay
 // - portamento
 // - unfortunately, sync has artifacting, probably requires adaptation of the bandlimiting code. in many cases we might
 // be able to use a BLEP
+
+// with N oscillators, it means N*N modulation matrix
 
 #pragma once
 
@@ -11,6 +12,9 @@
 #include <synth_waveform.h>
 #include <dspinst.h>
 #include <arm_math.h>
+#include <array>
+
+static const int16_t gZeroAudioBuffer[AUDIO_BLOCK_SAMPLES] = {0}; // sentinel buffer when no modulation data exists.
 
 struct PhaseAccumulator32
 {
@@ -45,78 +49,76 @@ struct PhaseAccumulator32
     }
 };
 
-struct AudioSynthWaveformModulated2 : public AudioStream
+template <size_t OscillatorCount>
+struct Oscillator
 {
-    AudioSynthWaveformModulated2(void)
-        : AudioStream(2, inputQueueArray), //
-                                           // phase_accumulator(0),            //
-                                           // phase_increment(0),              //
-          modulation_factor(32768),        //
-          magnitude(0),                    //
-          arbdata(NULL),                   //
-          // sample(0),                       //
-          tone_type(WAVEFORM_SINE)
-    {
-    }
+    using MyT = Oscillator<OscillatorCount>;
 
     void SetParams(float mainFreq, float syncFreq, bool syncEnable, short waveformType)
     {
         mHardSyncEnabled = syncEnable;
+        uint32_t blincrement = 0;
         if (syncEnable)
         {
             mMainPhase.frequency(syncFreq);
             mSyncPhase.frequency(mainFreq);
-
-            if (waveformType != tone_type)
-            {
-                if (waveformType == WAVEFORM_BANDLIMIT_SQUARE)
-                    band_limit_waveform.init_square(mSyncPhase.mIncrement);
-                else if (waveformType == WAVEFORM_BANDLIMIT_PULSE)
-                    band_limit_waveform.init_pulse(mSyncPhase.mIncrement, 0x80000000u);
-                else if (waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH ||
-                         waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE)
-                    band_limit_waveform.init_sawtooth(mSyncPhase.mIncrement);
-            }
+            blincrement = mSyncPhase.mIncrement;
         }
         else
         {
             mMainPhase.frequency(mainFreq);
+            blincrement = mMainPhase.mIncrement;
+        }
 
-            if (waveformType != tone_type)
-            {
-                if (waveformType == WAVEFORM_BANDLIMIT_SQUARE)
-                    band_limit_waveform.init_square(mMainPhase.mIncrement);
-                else if (waveformType == WAVEFORM_BANDLIMIT_PULSE)
-                    band_limit_waveform.init_pulse(mMainPhase.mIncrement, 0x80000000u);
-                else if (waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH ||
-                         waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE)
-                    band_limit_waveform.init_sawtooth(mMainPhase.mIncrement);
-            }
+        if (waveformType != tone_type)
+        {
+            if (waveformType == WAVEFORM_BANDLIMIT_SQUARE)
+                band_limit_waveform.init_square(blincrement);
+            else if (waveformType == WAVEFORM_BANDLIMIT_PULSE)
+                band_limit_waveform.init_pulse(blincrement, 0x80000000u);
+            else if (waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH || waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE)
+                band_limit_waveform.init_sawtooth(blincrement);
         }
         tone_type = waveformType;
-    }
 
-    // 0 to 1.0, but be careful of gibbs phenomenon + whatever other artifacting. I'd say max 0.5.
-    void amplitude(float n)
-    {
-        n = Clamp(n, 0, 1);
-        magnitude = n * 65536.0f; // saturate unsigned 16-bits
-    }
-
-    void arbitraryWaveform(const int16_t *data /* 256-element cycle */)
-    {
-        arbdata = data;
-    }
-
-    void phaseModulation(float degrees)
-    {
-        degrees = Clamp(degrees, 0, 9000); // why 9000? why was 30 the lower bound before?
-        modulation_factor = degrees * (float)(65536.0 / 180.0);
-    }
-
-    void phaseModulationFeedback(float degrees)
-    {
-        mPhaseModFeedbackAmt = degrees * (float)(65536.0 / 180.0);
+        switch (tone_type)
+        {
+        case WAVEFORM_SINE:
+            mCurrentSampleProc = &MyT::SampleSine;
+            break;
+        case WAVEFORM_ARBITRARY:
+            mCurrentSampleProc = &MyT::SampleArbitrary;
+            break;
+        case WAVEFORM_PULSE:
+        case WAVEFORM_SQUARE:
+            mCurrentSampleProc = &MyT::SamplePulse;
+            break;
+        case WAVEFORM_BANDLIMIT_PULSE:
+        case WAVEFORM_BANDLIMIT_SQUARE:
+            mCurrentSampleProc = &MyT::SampleBandlimitPulse;
+            break;
+        case WAVEFORM_SAWTOOTH:
+            mCurrentSampleProc = &MyT::SampleSawtooth;
+            break;
+        case WAVEFORM_SAWTOOTH_REVERSE:
+            mCurrentSampleProc = &MyT::SampleSawtoothReverse;
+            break;
+        case WAVEFORM_BANDLIMIT_SAWTOOTH:
+            mCurrentSampleProc = &MyT::SampleBandlimitSawtooth;
+            break;
+        case WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE:
+            mCurrentSampleProc = &MyT::SampleBandlimitSawtoothReverse;
+            break;
+        case WAVEFORM_TRIANGLE_VARIABLE:
+        case WAVEFORM_TRIANGLE:
+            mCurrentSampleProc = &MyT::SampleVarTriangle;
+            break;
+        case WAVEFORM_SAMPLE_HOLD:
+            mCurrentSampleProc = &MyT::SampleSH;
+            break;
+        default:
+            return;
+        }
     }
 
     bool IsHardSyncEnabled() const
@@ -124,9 +126,66 @@ struct AudioSynthWaveformModulated2 : public AudioStream
         return mHardSyncEnabled;
     }
 
-    virtual void update(void);
+    void arbitraryWaveform(const int16_t *data /* 256-element cycle */)
+    {
+        arbdata = data;
+    }
 
-    int16_t SampleSine(int i, uint32_t ph, uint16_t shapeMod)
+    // void phaseModulation(float degrees)
+    // {
+    //     degrees = Clamp(degrees, 0, 9000); // why 9000? why was 30 the lower bound before?
+    //     modulation_factor = degrees * (float)(65536.0 / 180.0);
+    // }
+
+    // void phaseModulationFeedback(float degrees)
+    // {
+    //     mPhaseModFeedbackAmt = degrees * (float)(65536.0 / 180.0);
+    // }
+
+    std::array<uint32_t, OscillatorCount> mRMMatrix;
+    std::array<uint32_t, OscillatorCount> mFMMatrix;
+
+    void SetRMMatrix(size_t iFromOsc, float degrees)
+    {
+        mRMMatrix[iFromOsc] = degrees * 65536.0;
+    }
+
+    void SetFMMatrix(size_t iFromOsc, float degrees)
+    {
+        degrees = Clamp(degrees, 0, 9000); // why 9000? why was 30 the lower bound before?
+        mFMMatrix[iFromOsc] = degrees * (float)(65536.0 / 180.0);
+    }
+
+    int16_t ProcessSample(int iOsc, int iSample, const int16_t (&currentOscSamples)[OscillatorCount])
+    {
+        if (!mCurrentSampleProc)
+            return 0;
+
+        uint32_t phase = mMainPhase.mAccumulator;
+        uint32_t rmFact = 0;
+        for (size_t i = 0; i < OscillatorCount; ++i)
+        {
+            phase += currentOscSamples[i] * mFMMatrix[i];
+            rmFact += currentOscSamples[i] * mRMMatrix[i];
+        }
+
+        mMainPhase.OnSample();
+        if (mHardSyncEnabled && mSyncPhase.OnSample())
+        {
+            mMainPhase.mAccumulator = mSyncPhase.mAccumulator;
+        }
+
+        mFBN1 = (this->*mCurrentSampleProc)(iSample, phase, 0);
+        priorphase = phase;
+        return mFBN1;
+    }
+
+    int16_t GetLastSample() const
+    {
+        return mFBN1;
+    }
+
+    int16_t SampleSine(int i, uint32_t ph, int16_t shapeMod)
     {
         // TODO: band-limit phase discontinuity, probably via blep
         int32_t val1, val2;
@@ -140,7 +199,7 @@ struct AudioSynthWaveformModulated2 : public AudioStream
         return multiply_32x32_rshift32(val1 + val2, magnitude);
     }
 
-    int16_t SampleArbitrary(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleArbitrary(int i, uint32_t ph, int16_t shapeMod)
     {
         if (!arbdata)
         {
@@ -160,7 +219,7 @@ struct AudioSynthWaveformModulated2 : public AudioStream
         return multiply_32x32_rshift32(val1 + val2, magnitude);
     }
 
-    int16_t SamplePulse(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SamplePulse(int i, uint32_t ph, int16_t shapeMod)
     {
         int16_t magnitude15 = signed_saturate_rshift(magnitude, 16, 1);
         uint32_t width = ((shapeMod + 0x8000) & 0xFFFF) << 16;
@@ -174,35 +233,35 @@ struct AudioSynthWaveformModulated2 : public AudioStream
         }
     }
 
-    int16_t SampleBandlimitPulse(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleBandlimitPulse(int i, uint32_t ph, int16_t shapeMod)
     {
         uint32_t width = ((shapeMod + 0x8000) & 0xFFFF) << 16;
         int32_t val = band_limit_waveform.generate_pulse(ph, width, i);
         return (int16_t)((val * magnitude) >> 16);
     }
 
-    int16_t SampleSawtooth(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleSawtooth(int i, uint32_t ph, int16_t shapeMod)
     {
         return signed_multiply_32x16t(magnitude, ph);
     }
 
-    int16_t SampleSawtoothReverse(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleSawtoothReverse(int i, uint32_t ph, int16_t shapeMod)
     {
         return signed_multiply_32x16t(0xFFFFFFFFu - magnitude, ph);
     }
 
-    int16_t SampleBandlimitSawtooth(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleBandlimitSawtooth(int i, uint32_t ph, int16_t shapeMod)
     {
         int16_t val = band_limit_waveform.generate_sawtooth(ph, i);
         return (int16_t)((val * magnitude) >> 16);
     }
 
-    int16_t SampleBandlimitSawtoothReverse(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleBandlimitSawtoothReverse(int i, uint32_t ph, int16_t shapeMod)
     {
         return -SampleBandlimitSawtooth(i, ph, shapeMod);
     }
 
-    int16_t SampleVarTriangle(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleVarTriangle(int i, uint32_t ph, int16_t shapeMod)
     {
         uint32_t width = (shapeMod + 0x8000) & 0xFFFF;
         uint32_t rise = 0xFFFFFFFF / width;
@@ -225,7 +284,7 @@ struct AudioSynthWaveformModulated2 : public AudioStream
         return (((int32_t)n >> 16) * magnitude) >> 16;
     }
 
-    int16_t SampleSH(int i, uint32_t ph, uint16_t shapeMod)
+    int16_t SampleSH(int i, uint32_t ph, int16_t shapeMod)
     {
         if (ph < priorphase)
         {
@@ -234,8 +293,8 @@ struct AudioSynthWaveformModulated2 : public AudioStream
         return mSHSample;
     }
 
-  private:
-    audio_block_t *inputQueueArray[2];
+    using SampleProcT = decltype(&MyT::SampleSine);
+    SampleProcT mCurrentSampleProc = nullptr;
 
     PhaseAccumulator32 mMainPhase;
     PhaseAccumulator32 mSyncPhase;
@@ -245,109 +304,51 @@ struct AudioSynthWaveformModulated2 : public AudioStream
     uint32_t priorphase = 0;    // phase of previous sample
 
     uint32_t mPhaseModFeedbackAmt;
-    int32_t magnitude;      // output gain
-    const int16_t *arbdata; // 256-element waveform
-    int16_t mSHSample = 0;  // for WAVEFORM_SAMPLE_HOLD
+    static constexpr int32_t magnitude = 0.5f * 65536.0f; // 0.5 amplitude | saturate unsigned 16-bits
+    const int16_t *arbdata;                               // 256-element waveform
+    int16_t mSHSample = 0;                                // for WAVEFORM_SAMPLE_HOLD
     uint8_t tone_type;
-    BandLimitedWaveform band_limit_waveform;        // helper for generating band-limited versions of various waves.
-    int16_t mZeroBuffer[AUDIO_BLOCK_SAMPLES] = {0}; // sentinel buffer when no modulation data exists.
+    BandLimitedWaveform band_limit_waveform; // helper for generating band-limited versions of various waves.
 };
 
-void AudioSynthWaveformModulated2::update(void)
+template <size_t OscillatorCount>
+struct AudioSynthWaveformModulated2 : public AudioStream
 {
-    using ThisT = AudioSynthWaveformModulated2;
-    int16_t *bp;
-    uint32_t i, ph;
+    Oscillator<OscillatorCount> mOscillators[OscillatorCount];
 
-    auto phaseModData = receiveReadOnly(0);
-    const int16_t *phaseModBuf = mZeroBuffer;
-    if (phaseModData)
+    AudioSynthWaveformModulated2(void) : AudioStream(0, nullptr)
     {
-        phaseModBuf = phaseModData->data;
     }
-    auto releasePhaseModData = OnScopeExit([&]() {
-        if (phaseModData && phaseModBuf != mZeroBuffer)
+
+    void update(void)
+    {
+        audio_block_t *outputBlocks[OscillatorCount] = {nullptr};
+        int16_t fbSamples[OscillatorCount] = {0};
+
+        for (size_t iosc = 0; iosc < OscillatorCount; ++iosc)
         {
-            release(phaseModData);
-        }
-    });
-
-    auto shapeModData = receiveReadOnly(1);
-    const int16_t *shapeModBuf = mZeroBuffer;
-    if (shapeModData)
-    {
-        shapeModBuf = shapeModData->data;
-    }
-    auto releaseShapeModData = OnScopeExit([&]() {
-        if (shapeModData)
-        {
-            release(shapeModData);
-        }
-    });
-
-    decltype(&ThisT::SampleSine) proc = nullptr;
-
-    switch (tone_type)
-    {
-    case WAVEFORM_SINE:
-        proc = &ThisT::SampleSine;
-        break;
-    case WAVEFORM_ARBITRARY:
-        proc = &ThisT::SampleArbitrary;
-        break;
-    case WAVEFORM_PULSE:
-    case WAVEFORM_SQUARE:
-        proc = &ThisT::SamplePulse;
-        break;
-    case WAVEFORM_BANDLIMIT_PULSE:
-    case WAVEFORM_BANDLIMIT_SQUARE:
-        proc = &ThisT::SampleBandlimitPulse;
-        break;
-    case WAVEFORM_SAWTOOTH:
-        proc = &ThisT::SampleSawtooth;
-        break;
-    case WAVEFORM_SAWTOOTH_REVERSE:
-        proc = &ThisT::SampleSawtoothReverse;
-        break;
-    case WAVEFORM_BANDLIMIT_SAWTOOTH:
-        proc = &ThisT::SampleBandlimitSawtooth;
-        break;
-    case WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE:
-        proc = &ThisT::SampleBandlimitSawtoothReverse;
-        break;
-    case WAVEFORM_TRIANGLE_VARIABLE:
-    case WAVEFORM_TRIANGLE:
-        proc = &ThisT::SampleVarTriangle;
-        break;
-    case WAVEFORM_SAMPLE_HOLD:
-        proc = &ThisT::SampleSH;
-        break;
-    default:
-        return;
-    }
-
-    auto block = allocate();
-    if (!block)
-    {
-        return;
-    }
-    auto releaseBlock = OnScopeExit([&]() { release(block); });
-
-    bp = block->data;
-
-    for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-    {
-        mMainPhase.OnSample();
-        ph = mMainPhase.mAccumulator + (mFBN1 * mPhaseModFeedbackAmt) + (uint32_t(*phaseModBuf++) * modulation_factor);
-        if (mHardSyncEnabled && mSyncPhase.OnSample())
-        {
-            mMainPhase.mAccumulator = mSyncPhase.mAccumulator;
+            outputBlocks[iosc] = allocate();
+            fbSamples[iosc] = mOscillators[iosc].GetLastSample();
         }
 
-        *bp = (this->*proc)(i, ph, shapeModBuf[i]);
-        priorphase = ph;
-        mFBN1 = *bp;
-        ++bp;
+        for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+        {
+            for (size_t iosc = 0; iosc < OscillatorCount; ++iosc)
+            {
+                if (!outputBlocks[iosc])
+                    continue;
+                int16_t outp = mOscillators[iosc].ProcessSample(iosc, i, fbSamples);
+                outputBlocks[iosc]->data[i] = outp;
+                fbSamples[iosc] = outp;
+            }
+        }
+
+        for (size_t iosc = 0; iosc < OscillatorCount; ++iosc)
+        {
+            if (!outputBlocks[iosc])
+                continue;
+            transmit(outputBlocks[iosc], iosc);
+            release(outputBlocks[iosc]);
+        }
     }
-    transmit(block, 0);
-}
+};
