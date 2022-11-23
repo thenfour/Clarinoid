@@ -7,6 +7,8 @@
 #include <Adafruit_SSD1306.h>
 #include <algorithm>
 
+#include "boiler.hpp"
+
 using Real = float;
 
 static constexpr Real pi2 = Real(2.0) * Real(3.1415926535897932385);
@@ -237,7 +239,6 @@ struct PCA9554
     }
 };
 
-
 static inline int16_t Sample32To16(Real s)
 {
     return saturate16(int32_t(s * Real(32767)));
@@ -325,19 +326,37 @@ struct Oscilloscope : public AudioStream
 };
 
 const String gWaveformNames[] = {
-"SINE",
-"SAW",
-"SQUARE",
-"TRIANGLE",
-"ARB",
-"PULSE",
-"SAW_REV",
-"SH",
-"vartri",
-"BL_SAW",
-"BL_SAW_REV",
-"BL_SQUARE",
-"BL_PULSE",
+    "SINE",
+    "SAW",
+    "SQUARE", // not needed; just use pulse
+    "TRIANGLE",
+    "ARB", // not yet needed
+    "PULSE",
+    "SAW_REV",
+    "SH",
+    "vartri",
+    "BL_SAW",
+    "BL_SAW_REV",
+    "BL_SQUARE", // not needed; use pulse
+    "BL_PULSE",
+};
+
+// add 2 bools: bandlimited, and reverse
+const int AvailableWaveforms[]{
+    WAVEFORM_SINE,
+
+    WAVEFORM_SAWTOOTH,
+    // WAVEFORM_SAWTOOTH_REVERSE,
+    // WAVEFORM_BANDLIMIT_SAWTOOTH,
+    // WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE,
+
+    WAVEFORM_TRIANGLE,
+    // WAVEFORM_TRIANGLE_VARIABLE,
+
+    WAVEFORM_PULSE,
+    // WAVEFORM_BANDLIMIT_PULSE,
+
+    WAVEFORM_SAMPLE_HOLD,
 };
 
 int ToggleWaveform(int n)
@@ -345,6 +364,21 @@ int ToggleWaveform(int n)
     return (n + 1) % 13;
 }
 
+template <typename T>
+struct OnScopeExitHelper
+{
+    T mRoutine;
+    explicit OnScopeExitHelper(T &&fn) : mRoutine(std::move(fn))
+    {
+    }
+    ~OnScopeExitHelper()
+    {
+        mRoutine();
+    }
+};
 
-
-
+template <typename T>
+OnScopeExitHelper<T> OnScopeExit(T &&fn)
+{
+    return OnScopeExitHelper<T>{std::move(fn)};
+}

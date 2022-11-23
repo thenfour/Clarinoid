@@ -16,6 +16,8 @@ triggers:
 - osc1 hard sync enable
 */
 
+bool gSyncEnable = false;
+
 // SET 1
 Real gOscScale = 0;        // slider1
 Real gOutpGain = 0;        // slider2
@@ -142,8 +144,8 @@ void setup()
     //  waveform1.amplitude(.3f);
     //  waveform1.frequency(440.0f);
 
-    wfmod1.begin(WAVEFORM_SINE);
-    wfmod2.begin(WAVEFORM_SINE);
+    // wfmod1.begin(WAVEFORM_SINE);
+    // wfmod2.begin(WAVEFORM_SINE);
 
     display.begin(SSD1306_SWITCHCAPVCC);
     AudioMemory(10);
@@ -162,13 +164,20 @@ void loop()
     if (mPCA9554.IsTriggered(0))
     {
         gOsc1Waveform = ToggleWaveform(gOsc1Waveform);
-        wfmod1.begin(gOsc1Waveform);
+        //wfmod1.begin(gOsc1Waveform);
     }
 
     if (mPCA9554.IsTriggered(1))
     {
         gOsc2Waveform = ToggleWaveform(gOsc2Waveform);
-        wfmod2.begin(gOsc2Waveform);
+        //wfmod2.begin(gOsc2Waveform);
+    }
+
+
+    if (mPCA9554.IsTriggered(2))
+    {
+        gSyncEnable = !gSyncEnable;
+        //wfmod1.SetHardSyncEnable(!wfmod1.IsHardSyncEnabled());
     }
 
     if (mPCA9554.IsTriggered(5))
@@ -193,15 +202,26 @@ void loop()
     gOsc2PMFeedbackAmt = 0;
     gOsc1PMModAmount = mADS1115.mAnalogControls[1].mMyVal;
 
-    wfmod1.phaseModulationFeedback(gOsc1PMFeedbackAmt * 540.0f);
-    wfmod1.phaseModulation(gOsc1PMModAmount * 360 * 8.0f);
+    wfmod1.phaseModulationFeedback(gOsc1PMFeedbackAmt * 360.0f * 2.0f);
+    wfmod1.phaseModulation(gOsc1PMModAmount * 360 * 10.0f);
     // slider3 = mADS1115.mAnalogControls[2].mMyVal;
     gOscilloscope.oscScale = mADS1115.mAnalogControls[2].mMyVal * 8.0f + 1.0f;
     // slider4 = mADS1115.mAnalogControls[3].mMyVal;
-    wfmod1.frequency(10.0 + 5000 * slider3);
-    wfmod2.frequency(10.0 + 5000 * slider3);
-    wfmod1.amplitude(Clamp(slider4, 0, 1));
-    wfmod2.amplitude(0.5f);
+
+    Real mainFreq = 2500 * slider3;
+    mainFreq = floorf(mainFreq/30)*30; // stabilize?
+    mainFreq += 20;
+    Real syncFreq = mainFreq * (1 + slider4 * 8);
+    wfmod1.SetParams(mainFreq, syncFreq, gSyncEnable, gOsc1Waveform);
+    wfmod2.SetParams(mainFreq, 0, false, gOsc2Waveform);
+    //wfmod2.frequency(freq);
+    //wfmod1.SetHardSyncFreq();
+
+    // wfmod1.amplitude(Clamp(slider4, 0, 1));
+    // wfmod2.amplitude(0.5f);
+
+    wfmod1.amplitude(0.25f); // account for gibbs
+    wfmod2.amplitude(0.25f); // account for gibbs
 
     display.clearDisplay();
 
@@ -243,9 +263,9 @@ void loop()
     display.setTextColor(WHITE);
     display.println(String("") + slider1 + " " + slider2 + " " + slider3 + " " + slider4);
     display.setCursor(0, 56);
-    display.println(gWaveformNames[gOsc1Waveform] + " - " + gWaveformNames[gOsc2Waveform]);
+    display.println(gWaveformNames[gOsc1Waveform] + (wfmod1.IsHardSyncEnabled() ? "SYNC" : "") + " - " + gWaveformNames[gOsc2Waveform]);
 
     display.display();
 
-    delay(8);
+    delay(5);
 }
