@@ -324,3 +324,27 @@ struct Oscilloscope : public AudioStream
     }
 };
 
+const String gWaveformNames[] = {
+"SINE",
+"SAW",
+"SQUARE",
+"TRIANGLE",
+"ARB",
+"PULSE",
+"SAW_REV",
+"SH",
+"vartri",
+"BL_SAW",
+"BL_SAW_REV",
+"BL_SQUARE",
+"BL_PULSE",
+};
+
+int ToggleWaveform(int n)
+{
+    return (n + 1) % 13;
+}
+
+
+
+
