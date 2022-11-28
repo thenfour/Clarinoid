@@ -5,7 +5,9 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+
 #include <algorithm>
+#include <array>
 
 #include "boiler.hpp"
 
@@ -50,6 +52,94 @@ static Real Clamp(Real x, Real low, Real hi)
         return hi;
     return x;
 }
+
+template <typename T>
+struct OnScopeExitHelper
+{
+    T mRoutine;
+    explicit OnScopeExitHelper(T &&fn) : mRoutine(std::move(fn))
+    {
+    }
+    ~OnScopeExitHelper()
+    {
+        mRoutine();
+    }
+};
+
+template <typename T>
+OnScopeExitHelper<T> OnScopeExit(T &&fn)
+{
+    return OnScopeExitHelper<T>{std::move(fn)};
+}
+
+inline void CheckCrashReport()
+{
+    if (CrashReport)
+    {
+        while (!Serial)
+            ;
+        while (true)
+        {
+            CrashReport.printTo(Serial);
+            delay(2500);
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+template <uint32_t TperiodMS>
+class CCThrottlerT
+{
+    uint32_t mPeriodStartMS;
+    uint32_t mFirstPeriodStartMS;
+
+  public:
+    CCThrottlerT()
+    {
+        mPeriodStartMS = mFirstPeriodStartMS = millis();
+    }
+
+    void Reset()
+    {
+        mPeriodStartMS = mFirstPeriodStartMS = millis();
+    }
+
+    bool IsReady()
+    {
+        return IsReady(TperiodMS);
+    }
+
+    float GetBeatFloat(uint32_t periodMS) const
+    {
+        auto now = millis(); // minus is more theoretically accurate but this serves the purpose just as well.
+        float f = abs(float(now - mFirstPeriodStartMS) / periodMS);
+        return f;
+    }
+    // returns 0-1 the time since the last "beat".
+    float GetBeatFrac(uint32_t periodMS) const
+    {
+        float f = GetBeatFloat(periodMS);
+        return f - floor(f); // fractional part only.
+    }
+    int GetBeatInt(uint32_t periodMS) const
+    {
+        float f = GetBeatFloat(periodMS);
+        return (int)floor(f);
+    }
+
+    bool IsReady(uint32_t periodMS)
+    {
+        auto now = millis(); // minus is more theoretically accurate but this serves the purpose just as well.
+        if (now - mPeriodStartMS < periodMS)
+        {
+            return false;
+        }
+        mPeriodStartMS +=
+            periodMS * ((now - mPeriodStartMS) /
+                        periodMS); // this potentially advances multiple periods if needed so we don't get backed up.
+        return true;
+    }
+};
 
 struct ADS1115Device
 {
@@ -251,6 +341,12 @@ static inline void Sample32To16Buffer(const Real *in, int16_t *out)
         out[i] = Sample32To16(in[i]);
     }
 }
+static inline float Sample16To32(int16_t s)
+{
+    if (s == -32768)
+        return -1.0f;
+    return s / 32767.0f;
+}
 
 struct Oscilloscope : public AudioStream
 {
@@ -325,6 +421,127 @@ struct Oscilloscope : public AudioStream
     }
 };
 
+struct SyncedOscilloscope : public AudioStream
+{
+    audio_block_t *inputQueueArray[1];
+
+    SyncedOscilloscope() : AudioStream(1, inputQueueArray)
+    {
+        SetFrequency(100);
+    }
+    Real osc[129] = {0}; // pixels
+
+    Real GetPeak() const
+    {
+        return oldPeak;
+    }
+
+    void GetNormalizedData(std::array<Real, 129> &outp)
+    {
+        Real peak = GetPeak();
+        peak = std::max(0.05f, peak);
+        Real mul = 1.0f / peak;
+        for (size_t i = 0; i < 129; ++i)
+        {
+            outp[i] = 1.0f - (osc[i] * mul);
+        }
+    }
+
+    Real peak = 0;
+    Real oldPeak = 0;
+
+    Real mFrequency = 0;
+    int mSamplesPerCycle = 0;
+    int mSamplesPerPixel = 0;
+    bool lookForTrigger = false;
+
+    Real fbN1 = 0;
+    uint32_t mSampleCount = 0;
+
+    static constexpr Real gMinCyclesPerDisplay = 1.2f;
+
+    void SetFrequency(float hz)
+    {
+        hz /= gMinCyclesPerDisplay;
+
+        if (FloatEquals(hz, mFrequency, 0.01f))
+        {
+            return;
+        }
+        mFrequency = hz;
+        Real samplesPerCycle = AUDIO_SAMPLE_RATE / hz; // nyquist=2, 30hz = 1470, 17.5. 20hz = 2205
+        mSamplesPerCycle = ceilf((128.0f / samplesPerCycle) + 0.5f) * samplesPerCycle; // 2205
+        // ensure cycle is long enough to cover a window
+        mSamplesPerPixel = std::max(1, mSamplesPerCycle / 128); // 20hz = 17
+        // make samples per cycle be longer than a window full
+        Real t = mSamplesPerPixel * 128;
+        // round up to a multiple of hz
+        mSamplesPerCycle = ceilf((t / mSamplesPerCycle) + 0.5f) * mSamplesPerCycle;
+    }
+
+    CCThrottlerT<1000> mth;
+
+    void Trigger()
+    {
+        if (mth.IsReady())
+        {
+            int oscCursor = mSampleCount / mSamplesPerPixel;
+            // Serial.println(String("trigger @ sample ") + mSampleCount + " .. oscCursor = " + oscCursor + "
+            // mSamplesPerCycle=" +mSamplesPerCycle + " mSamplesPerPixel=" + mSamplesPerPixel + " mFrequency=" +
+            // mFrequency);
+        }
+        oldPeak = peak;
+        // mOscCursor = 0;
+        peak = 0;
+        // mSubCursor = 0;
+        mSampleCount = 0;
+        lookForTrigger = false;
+        // mSamplesUntilTrigger = mSamplesPerCycle;
+    }
+
+    virtual void update() override
+    {
+        audio_block_t *inputBuf = receiveReadOnly(0);
+        if (!inputBuf)
+            return;
+
+        for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; ++i)
+        {
+            Real s = Real(inputBuf->data[i]) / 32767;
+
+            if ((mSampleCount % mSamplesPerCycle) == 0)
+            {
+                lookForTrigger = true;
+            }
+
+            if (lookForTrigger && (fbN1 < 0 && s >= 0))
+            {
+                Trigger();
+            }
+
+            int oscCursor = mSampleCount / mSamplesPerPixel;
+
+            if (oscCursor < 129)
+            {
+                osc[oscCursor] = s;
+            }
+
+            peak = std::max(peak, fabsf(s));
+            fbN1 = s;
+
+            // mSubCursor++;
+            // if (mSubCursor >= mSamplesPerPixel)
+            // {
+            //     mSubCursor = 0;
+            //     mOscCursor++;
+            // }
+            mSampleCount++;
+        }
+
+        release(inputBuf);
+    }
+};
+
 const String gWaveformNames[] = {
     "SINE",
     "SAW",
@@ -362,36 +579,4 @@ const int AvailableWaveforms[]{
 int ToggleWaveform(int n)
 {
     return (n + 1) % 13;
-}
-
-template <typename T>
-struct OnScopeExitHelper
-{
-    T mRoutine;
-    explicit OnScopeExitHelper(T &&fn) : mRoutine(std::move(fn))
-    {
-    }
-    ~OnScopeExitHelper()
-    {
-        mRoutine();
-    }
-};
-
-template <typename T>
-OnScopeExitHelper<T> OnScopeExit(T &&fn)
-{
-    return OnScopeExitHelper<T>{std::move(fn)};
-}
-
-inline void CheckCrashReport()
-{
-    if (CrashReport)
-    {
-        while (!Serial);
-        while (true)
-        {
-            CrashReport.printTo(Serial);
-            delay(2500);
-        }
-    }
 }

@@ -1,9 +1,6 @@
-// todo:
-// - portamento
+// - consider smoothing k-rate params across the buffer; especially mod amounts
 // - unfortunately, sync has artifacting, probably requires adaptation of the bandlimiting code. in many cases we might
 // be able to use a BLEP
-
-// with N oscillators, it means N*N modulation matrix
 
 #pragma once
 
@@ -14,7 +11,72 @@
 #include <arm_math.h>
 #include <array>
 
+// 16-bit PCM gaining is done by multiplying using signed_multiply_32x16b, which requires the multiplier to be saturated
+// to 32-bits. this does this.
+static inline int32_t gainToSignedMultiply32x16(float n)
+{
+    if (n > 32767.0f)
+        n = 32767.0f;
+    else if (n < -32767.0f)
+        n = -32767.0f;
+    return (int32_t)(n * 65536.0f);
+}
+
 static const int16_t gZeroAudioBuffer[AUDIO_BLOCK_SAMPLES] = {0}; // sentinel buffer when no modulation data exists.
+
+// Fixed-point per-sample transitioning of a value.
+// T can be signed or unsigned.
+template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
+struct PortamentoCalcFP
+{
+    using Tvalue = T;
+    using Tdelta = typename std::make_signed<T>::type; // to support negatives
+
+    // caller params
+    T mTargetValue = 0;
+    float mDurationMS = 0;
+
+    // precalcs
+    uint32_t mDurationSamples = 0;
+    Tdelta mValueDeltaPerSample = 0;
+
+    // state
+    T mCurrentValue = 0;
+
+    static constexpr float gMaxDurationMS =
+        std::numeric_limits<T>::max() / AUDIO_SAMPLE_RATE; // because of how stuff is calculated there's a max.
+
+    void SetParams(T targetValue, float durationMS)
+    {
+        if (targetValue == mTargetValue && mDurationSamples == durationMS)
+            return;
+        mTargetValue = targetValue;
+        mDurationMS = std::min(gMaxDurationMS, durationMS);
+
+        mDurationSamples = mDurationMS * AUDIO_SAMPLE_RATE_EXACT / 1000;
+        if (mDurationSamples < 1)
+        {
+            mValueDeltaPerSample = 0;
+            return;
+        }
+        mValueDeltaPerSample = (targetValue - mCurrentValue) / mDurationSamples;
+    }
+
+    T SampleStep()
+    {
+        if (mDurationSamples <= 0)
+        {
+            return mCurrentValue; // reach target
+        }
+
+        // slide it
+        mCurrentValue += mValueDeltaPerSample;
+        mDurationSamples--;
+        return mCurrentValue;
+    }
+};
+
+using PortamentoCalcU32 = PortamentoCalcFP<uint32_t>;
 
 struct PhaseAccumulator32
 {
@@ -31,6 +93,7 @@ struct PhaseAccumulator32
         {
             freq = AUDIO_SAMPLE_RATE_EXACT / 2.0f;
         }
+
         mIncrement = freq * (4294967296.0f / AUDIO_SAMPLE_RATE_EXACT);
         if (mIncrement > 0x7FFE0000u)
             mIncrement = 0x7FFE0000;
@@ -53,6 +116,15 @@ template <size_t OscillatorCount>
 struct Oscillator
 {
     using MyT = Oscillator<OscillatorCount>;
+    size_t mMyIndex;
+
+    Oscillator()
+    {
+        for (size_t i = 0; i < OscillatorCount; ++i)
+        {
+            SetRMMatrix(i, 0);
+        }
+    }
 
     void SetParams(float mainFreq, float syncFreq, bool syncEnable, short waveformType)
     {
@@ -131,23 +203,23 @@ struct Oscillator
         arbdata = data;
     }
 
-    // void phaseModulation(float degrees)
-    // {
-    //     degrees = Clamp(degrees, 0, 9000); // why 9000? why was 30 the lower bound before?
-    //     modulation_factor = degrees * (float)(65536.0 / 180.0);
-    // }
-
-    // void phaseModulationFeedback(float degrees)
-    // {
-    //     mPhaseModFeedbackAmt = degrees * (float)(65536.0 / 180.0);
-    // }
-
+    //  low16bits = wet = factor (unsigned)
+    // high16bits = dry = 1-factor;
     std::array<uint32_t, OscillatorCount> mRMMatrix;
     std::array<uint32_t, OscillatorCount> mFMMatrix;
 
-    void SetRMMatrix(size_t iFromOsc, float degrees)
+    void SetRMMatrix(size_t iFromOsc, float amt)
     {
-        mRMMatrix[iFromOsc] = degrees * 65536.0;
+        amt = Clamp(amt, 0, 1);
+        int32_t iamt = amt * 32767;
+        auto val = pack_16b_16b(32767 - iamt, iamt);
+        if (val == mRMMatrix[iFromOsc])
+            return;
+        mRMMatrix[iFromOsc] = val;
+
+        // Serial.println(String("Setting matrix [") + iFromOsc + ("] to ") + String(mRMMatrix[iFromOsc], 16));
+        // Serial.println(String(" -> dry = ") + Sample32To16(1.0f - amt));
+        // Serial.println(String(" -> wet = ") + Sample32To16(amt));
     }
 
     void SetFMMatrix(size_t iFromOsc, float degrees)
@@ -162,11 +234,20 @@ struct Oscillator
             return 0;
 
         uint32_t phase = mMainPhase.mAccumulator;
-        uint32_t rmFact = 0;
+        int32_t rmFact = 65536; // p16 value
+
         for (size_t i = 0; i < OscillatorCount; ++i)
         {
             phase += currentOscSamples[i] * mFMMatrix[i];
-            rmFact += currentOscSamples[i] * mRMMatrix[i];
+
+            if (i == mMyIndex)
+                continue; // RM feedback doesn't make sense because the FB signal will just lead to quickly 0.
+
+            // rmFact = (rmFact * mRMWetMatrix[i] * currentOscSamples[i]) + (rmFact * mRMDryMatrix[i])
+            uint32_t matrixFactor = mRMMatrix[i];
+            int32_t dry = signed_multiply_32x16t(rmFact, matrixFactor);                      // 32x16 >> 16 (u=32767)
+            int32_t wet = signed_multiply_32x16b(rmFact, matrixFactor);                      // 32x16 >> 16 (u=32767)
+            rmFact = signed_multiply_accumulate_32x16b(dry, wet, currentOscSamples[i]) << 1; // 32x16 >> 16
         }
 
         mMainPhase.OnSample();
@@ -175,9 +256,20 @@ struct Oscillator
             mMainPhase.mAccumulator = mSyncPhase.mAccumulator;
         }
 
-        mFBN1 = (this->*mCurrentSampleProc)(iSample, phase, 0);
+        int32_t sample = (this->*mCurrentSampleProc)(iSample, phase, 0);
+
+        // ring mod, first do "feedback" which is not actually feedback.
+        // sample = (sample * sample * wetfact) + (sample * dryfact)
+        uint32_t matrixFactor = mRMMatrix[mMyIndex];
+        int32_t dry = signed_multiply_32x16t(sample, matrixFactor);        // 32x16 >> 16 (u=32767)
+        int32_t wet = signed_multiply_32x16b(sample, matrixFactor);        // 32x16 >> 16 (u=32767)
+        sample = signed_multiply_accumulate_32x16b(dry, wet, sample) << 1; // 32x16 >> 16
+        sample = signed_multiply_32x16b(rmFact, sample);
+        sample = saturate16(sample); // signed_saturate_rshift(sample, 16, 0);
+
+        mFBN1 = sample;
         priorphase = phase;
-        return mFBN1;
+        return sample;
     }
 
     int16_t GetLastSample() const
@@ -190,8 +282,8 @@ struct Oscillator
         // TODO: band-limit phase discontinuity, probably via blep
         int32_t val1, val2;
         uint32_t index, scale;
-        index = ph >> 24;
-        val1 = AudioWaveformSine[index];
+        index = ph >> 24;                // 8 top bits = index to LUT
+        val1 = AudioWaveformSine[index]; // -32768...32767
         val2 = AudioWaveformSine[index + 1];
         scale = (ph >> 8) & 0xFFFF;
         val2 *= scale;
@@ -304,9 +396,10 @@ struct Oscillator
     uint32_t priorphase = 0;    // phase of previous sample
 
     uint32_t mPhaseModFeedbackAmt;
-    static constexpr int32_t magnitude = 0.5f * 65536.0f; // 0.5 amplitude | saturate unsigned 16-bits
-    const int16_t *arbdata;                               // 256-element waveform
-    int16_t mSHSample = 0;                                // for WAVEFORM_SAMPLE_HOLD
+    static constexpr int32_t magnitude =
+        0.4f * 65536.0f;    // amplitude (account for gibbs and other) | saturate unsigned 16-bits
+    const int16_t *arbdata; // 256-element waveform
+    int16_t mSHSample = 0;  // for WAVEFORM_SAMPLE_HOLD
     uint8_t tone_type;
     BandLimitedWaveform band_limit_waveform; // helper for generating band-limited versions of various waves.
 };
@@ -318,6 +411,10 @@ struct AudioSynthWaveformModulated2 : public AudioStream
 
     AudioSynthWaveformModulated2(void) : AudioStream(0, nullptr)
     {
+        for (size_t i = 0; i < OscillatorCount; ++i)
+        {
+            mOscillators[i].mMyIndex = i;
+        }
     }
 
     void update(void)
