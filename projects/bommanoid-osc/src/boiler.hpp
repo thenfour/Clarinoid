@@ -443,7 +443,7 @@ struct SyncedOscilloscope : public AudioStream
         Real mul = 1.0f / peak;
         for (size_t i = 0; i < 129; ++i)
         {
-            outp[i] = 1.0f - (osc[i] * mul);
+            outp[i] = -(osc[i] * mul);
         }
     }
 
@@ -479,17 +479,17 @@ struct SyncedOscilloscope : public AudioStream
         mSamplesPerCycle = ceilf((t / mSamplesPerCycle) + 0.5f) * mSamplesPerCycle;
     }
 
-    CCThrottlerT<1000> mth;
+    // CCThrottlerT<1000> mth;
 
     void Trigger()
     {
-        if (mth.IsReady())
-        {
-            int oscCursor = mSampleCount / mSamplesPerPixel;
-            // Serial.println(String("trigger @ sample ") + mSampleCount + " .. oscCursor = " + oscCursor + "
-            // mSamplesPerCycle=" +mSamplesPerCycle + " mSamplesPerPixel=" + mSamplesPerPixel + " mFrequency=" +
-            // mFrequency);
-        }
+        // if (mth.IsReady())
+        // {
+        //     //int oscCursor = mSampleCount / mSamplesPerPixel;
+        //     // Serial.println(String("trigger @ sample ") + mSampleCount + " .. oscCursor = " + oscCursor + "
+        //     // mSamplesPerCycle=" +mSamplesPerCycle + " mSamplesPerPixel=" + mSamplesPerPixel + " mFrequency=" +
+        //     // mFrequency);
+        // }
         oldPeak = peak;
         // mOscCursor = 0;
         peak = 0;
@@ -542,41 +542,87 @@ struct SyncedOscilloscope : public AudioStream
     }
 };
 
-const String gWaveformNames[] = {
-    "SINE",
-    "SAW",
-    "SQUARE", // not needed; just use pulse
-    "TRIANGLE",
-    "ARB", // not yet needed
-    "PULSE",
-    "SAW_REV",
-    "SH",
-    "vartri",
-    "BL_SAW",
-    "BL_SAW_REV",
-    "BL_SQUARE", // not needed; use pulse
-    "BL_PULSE",
-};
+// const String gWaveformNames[] = {
+//     "SINE",
+//     "SAW",
+//     "SQUARE", // not needed; just use pulse
+//     "TRIANGLE",
+//     "ARB", // not yet needed
+//     "PULSE",
+//     "SAW_REV",
+//     "SH",
+//     "vartri",
+//     "BL_SAW",
+//     "BL_SAW_REV",
+//     "BL_SQUARE", // not needed; use pulse
+//     "BL_PULSE",
+// };
 
-// add 2 bools: bandlimited, and reverse
-const int AvailableWaveforms[]{
-    WAVEFORM_SINE,
+// // add 2 bools: bandlimited, and reverse
+// const int AvailableWaveforms[]{
+//     WAVEFORM_SINE,
 
-    WAVEFORM_SAWTOOTH,
-    // WAVEFORM_SAWTOOTH_REVERSE,
-    // WAVEFORM_BANDLIMIT_SAWTOOTH,
-    // WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE,
+//     WAVEFORM_SAWTOOTH,
+//     // WAVEFORM_SAWTOOTH_REVERSE,
+//     // WAVEFORM_BANDLIMIT_SAWTOOTH,
+//     // WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE,
 
-    WAVEFORM_TRIANGLE,
-    // WAVEFORM_TRIANGLE_VARIABLE,
+//     WAVEFORM_TRIANGLE,
+//     // WAVEFORM_TRIANGLE_VARIABLE,
 
-    WAVEFORM_PULSE,
-    // WAVEFORM_BANDLIMIT_PULSE,
+//     WAVEFORM_PULSE,
+//     // WAVEFORM_BANDLIMIT_PULSE,
 
-    WAVEFORM_SAMPLE_HOLD,
-};
+//     WAVEFORM_SAMPLE_HOLD,
+// };
 
-int ToggleWaveform(int n)
+enum class OscWaveformShape : uint8_t
 {
-    return (n + 1) % 13;
+    Sine,        // WAVEFORM_SINE              0
+    VarTriangle, // WAVEFORM_TRIANGLE          3, WAVEFORM_TRIANGLE_VARIABLE 8
+    Pulse,       // WAVEFORM_PULSE             5,  WAVEFORM_SQUARE            2
+    Saw,         // WAVEFORM_SAWTOOTH          1
+    SawRev,      // WAVEFORM_SAWTOOTH_REVERSE  6
+    Noise,       // WAVEFORM_SAMPLE_HOLD       7
+    Arbitrary,   // not really supported: WAVEFORM_ARBITRARY         4
+    SmoothSquare,
+
+    Pulse_Bandlimited,  // WAVEFORM_BANDLIMIT_PULSE  12, WAVEFORM_BANDLIMIT_SQUARE 11
+    Saw_Bandlimited,    //  WAVEFORM_BANDLIMIT_SAWTOOTH  9
+    SawRev_Bandlimited, // WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE 10,
+};
+
+OscWaveformShape CycleWaveform(OscWaveformShape n)
+{
+    return OscWaveformShape((int(n) + 1) % 11);
+}
+
+String GetWaveformName(OscWaveformShape w)
+{
+    switch (w)
+    {
+    case OscWaveformShape::Sine: // WAVEFORM_SINE              0
+        return "Sin";
+    case OscWaveformShape::VarTriangle: // WAVEFORM_TRIANGLE          3, WAVEFORM_TRIANGLE_VARIABLE 8
+        return "Tri";
+    case OscWaveformShape::Pulse: // WAVEFORM_PULSE             5,  WAVEFORM_SQUARE            2
+        return "Sqr";
+    case OscWaveformShape::Saw: // WAVEFORM_SAWTOOTH          1
+        return "Saw";
+    case OscWaveformShape::SawRev: // WAVEFORM_SAWTOOTH_REVERSE  6
+        return "RSaw";
+    case OscWaveformShape::Noise: // WAVEFORM_SAMPLE_HOLD       7
+        return "SH";
+    case OscWaveformShape::Arbitrary: // not really supported: WAVEFORM_ARBITRARY         4
+        return "Arb";
+    case OscWaveformShape::SmoothSquare:
+        return "SSqr";
+    case OscWaveformShape::Pulse_Bandlimited: // WAVEFORM_BANDLIMIT_PULSE  12, WAVEFORM_BANDLIMIT_SQUARE 11
+        return "BLSq";
+    case OscWaveformShape::Saw_Bandlimited: //  WAVEFORM_BANDLIMIT_SAWTOOTH  9
+        return "BLs";
+    case OscWaveformShape::SawRev_Bandlimited: // WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE 10,
+        return "BLrs";
+    }
+    return "<?>";
 }

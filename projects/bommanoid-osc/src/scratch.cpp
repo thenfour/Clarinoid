@@ -1,6 +1,8 @@
 
 #include "boiler.hpp"
 #include "wf.hpp"
+#include <string>
+#include <sstream>
 
 Adafruit_SSD1306 display(128, 64, &SPI, 40 /*DC*/, 41 /*RST*/, 10 /*CS*/, 88 * 1000000UL);
 ADS1115Device mADS1115{Wire, 0x48};
@@ -38,8 +40,8 @@ Real gOsc1PMModAmount = 0; // slider3
 // Real gOsc1Shape = 0; // slider4
 // Real gOsc2Shape = 0; // slider3
 
-int gOsc1Waveform = WAVEFORM_SINE;
-int gOsc2Waveform = WAVEFORM_SINE;
+OscWaveformShape gOsc1Waveform = OscWaveformShape::Sine;
+OscWaveformShape gOsc2Waveform = OscWaveformShape::Sine;
 bool gOsc1SyncEnabled = false;
 
 float FFTMultiplier = 6.0f;
@@ -52,7 +54,7 @@ enum class VisType
 VisType gVisType = VisType::FFT;
 
 AudioAnalyzeFFT256 gFFT;
-AudioSynthWaveformModulated2<2> wfmod1;
+AudioSynthWaveformModulated2<3> wfmod1;
 SyncedOscilloscope gOscilloscope;
 AudioOutputI2S i2s1; // xy=360,98
 AudioConnection patchCord2(wfmod1, 0, gOscilloscope, 0);
@@ -92,52 +94,43 @@ void setup()
     // while (!Serial)
     //     ;
 
-    // // auto n = multiply_32x32_rshift32(65536, 65536);
+    union {
+        struct
+        {
+            int16_t h;
+            int16_t l;
+        } i;
+        uint32_t ui32;
+    } a, b;
+    a.i.h = -2;
+    a.i.l = 3;
+    b.i.h = 5;
+    b.i.l = -7;
+    int64_t sum = -1;
 
-    // //            32           16                16                   32          16
-    // // rmFact = (rmFact * mRMWetMatrix[i] * currentOscSamples[i]) + (rmFact * mRMDryMatrix[i])
-    // int32_t rmFact = gainToSignedMultiply32x16(1); // unity = 65536 (p16)
-    // union {
-    //     struct
-    //     {
-    //         // warning: depends on processor arch
-    //         int16_t l;
-    //         int16_t h;
-    //     } e16;
-    //     uint32_t ui32;
-    // } mDry, mWet, samp;
+    // computes sum += ((a[15:0] * b[15:0]) + (a[31:16] * b[31:16]))
+    // -1 + (3 * -7) + (-2 * 5) = -1 + -21 + -10 = -1 + (-21 - 10) = -1 - 31 = -32.
+    // all signed.
+    // phase + 
+    int64_t r = multiply_accumulate_16tx16t_add_16bx16b(sum, a.ui32, b.ui32);
+    Serial.println(String(""));
 
-    // mDry.e16.l = 32767;
-    // mWet.ui32 = 0;
-    // samp.e16.l = -32767;
-    // float amt = 0.99f;
-    // uint32_t matrixFactor = pack_16b_16b(Sample32To16(1.0f - amt), Sample32To16(amt));
-    // int32_t dry = signed_multiply_32x16t(rmFact, matrixFactor); // 32x16 >> 16 (u=32767)
-    // int32_t wet = signed_multiply_32x16b(rmFact, matrixFactor); // 32x16 >> 16 (u=32767)
+    Serial.println(String("a.i.h = ") + a.i.h);
+    Serial.println(String("a.i.l = ") + a.i.l);
+    Serial.println(String("a.ui32 = ") + String(a.ui32, 16));
+    Serial.println(String("b.i.h = ") + b.i.h);
+    Serial.println(String("b.i.l = ") + b.i.l);
+    Serial.println(String("b.ui32 = ") + String(b.ui32, 16));
 
-    // int32_t dry = signed_multiply_32x16b(rmFact, mDry.ui32);         // 32x16 >> 16 (u=32767)  -- this works
-    // correctly when mDry.h is negative int32_t wet = signed_multiply_32x16b(rmFact, mWet.ui32);         // 32x16 >> 16
-    // (u=32767)
-    //rmFact = multiply_accumulate_32x32_rshift32_rounded(dry, wet, samp.ui32); // 32x16 >> 16
-    // rmFact = multiply_accumulate_32x32_rshift32_rounded(dry, wet, samp.e16.l); // 32x16 >> 16
+    std::stringstream ss;
+    ss << sum;
+    std::string ssum = ss.str();
+    std::stringstream ss2;
+    ss2 << r;
+    std::string sr = ss2.str();
 
-
-    //     int32_t sample = signed_multiply_32x16b(rmFact, 32000);
-    //     int32_t sample2 = signed_saturate_rshift(sample, 16, 0);
-
-
-    //int32_t currentSamp = samp.ui32;
-    //rmFact = multiply_accumulate_32x32_rshift32_rounded(dry, wet, currentSamp); // 32x16 >> 16
-
-    // Serial.println(String("mDry.ui32=0x") + String(mDry.ui32, 16) + ", e16.l=" + mDry.e16.l + ", e16.h=" + mDry.e16.h);
-    // Serial.println(String("mWet.ui32=0x") + String(mWet.ui32, 16) + ", e16.l=" + mWet.e16.l + ", e16.h=" + mWet.e16.h);
-    // Serial.println(String("samp.ui32=0x") + String(samp.ui32, 16) + ", e16.l=" + samp.e16.l + ", e16.h=" + samp.e16.h);
-    // Serial.println(String("dry =") + dry);
-    // Serial.println(String("matrixFactor =") + matrixFactor);
-    // Serial.println(String("wet = ") + wet);
-    // Serial.println(String("rmfact = ") + rmFact);
-    // Serial.println(String("sample = ") + sample);
-    // Serial.println(String("sample2 = ") + sample2);
+    Serial.println(String("sum = ") + ssum.c_str());
+    Serial.println(String("r = ") + sr.c_str());
 }
 
 void loop()
@@ -149,12 +142,12 @@ void loop()
 
     if (mPCA9554.IsTriggered(0))
     {
-        gOsc1Waveform = ToggleWaveform(gOsc1Waveform);
+        gOsc1Waveform = CycleWaveform(gOsc1Waveform);
     }
 
     if (mPCA9554.IsTriggered(1))
     {
-        gOsc2Waveform = ToggleWaveform(gOsc2Waveform);
+        gOsc2Waveform = CycleWaveform(gOsc2Waveform);
     }
 
     if (mPCA9554.IsTriggered(2))
@@ -184,15 +177,15 @@ void loop()
     gOsc2PMFeedbackAmt = 0;
     gOsc1PMModAmount = mADS1115.mAnalogControls[1].mMyVal;
 
-    // wfmod1.mOscillators[0].SetFMMatrix(0, gOsc1PMFeedbackAmt * 360.0f * 2.0f);
-    // wfmod1.mOscillators[0].SetFMMatrix(1, gOsc1PMModAmount * 360 * 10.0f);
+    wfmod1.mOscillators[0].SetFMMatrix(0, gOsc1PMFeedbackAmt);
+    wfmod1.mOscillators[0].SetFMMatrix(1, gOsc1PMModAmount);
 
-    wfmod1.mOscillators[0].SetRMMatrix(0, int(slider1 * 256) / 256.0f);
-    wfmod1.mOscillators[0].SetRMMatrix(1, int(slider4 * 256) / 256.0f);
-    wfmod1.mOscillators[1].SetRMMatrix(0, 0);
-    wfmod1.mOscillators[1].SetRMMatrix(1, 0);
+    // wfmod1.mOscillators[0].SetRMMatrix(0, 0);
+    // wfmod1.mOscillators[0].SetRMMatrix(1, int(slider4 * 256) / 256.0f);
+    // wfmod1.mOscillators[1].SetRMMatrix(0, 0);
+    // wfmod1.mOscillators[1].SetRMMatrix(1, 0);
 
-    //gOscilloscope.oscScale = mADS1115.mAnalogControls[2].mMyVal * 8.0f + 1.0f;
+    // gOscilloscope.oscScale = mADS1115.mAnalogControls[2].mMyVal * 8.0f + 1.0f;
 
     Real mainFreq = 2500 * slider3;
     mainFreq = floorf(mainFreq / 30) * 30; // stabilize?
@@ -200,7 +193,8 @@ void loop()
     Real syncFreq = mainFreq * (1 + slider4 * 8);
     gOscilloscope.SetFrequency(mainFreq);
     wfmod1.mOscillators[0].SetParams(mainFreq, syncFreq, gSyncEnable, gOsc1Waveform);
-    wfmod1.mOscillators[1].SetParams(mainFreq * (slider2 + 1), 0, false, gOsc2Waveform);
+    wfmod1.mOscillators[1].SetParams(mainFreq * (1.5f), 0, false, gOsc2Waveform);
+    wfmod1.mOscillators[2].SetParams(mainFreq * (2.5f), 0, false, gOsc2Waveform);
 
     display.clearDisplay();
 
@@ -238,7 +232,7 @@ void loop()
     }
     }
 
-    float peak = gOscilloscope.GetPeak();// std::max(fabsf(gOscilloscope.lbound), fabsf(gOscilloscope.ubound));
+    float peak = gOscilloscope.GetPeak(); // std::max(fabsf(gOscilloscope.lbound), fabsf(gOscilloscope.ubound));
 
     AudioInterrupts();
 
@@ -246,9 +240,8 @@ void loop()
     display.setTextColor(WHITE);
     display.println(String("") + slider1 + " " + slider2 + " " + slider3 + " " + slider4);
     display.setCursor(0, 56);
-    display.println(gWaveformNames[gOsc1Waveform] + (wfmod1.mOscillators[0].IsHardSyncEnabled() ? "SYNC" : "") + " - " +
-                    gWaveformNames[gOsc2Waveform] +
-                    " pk:" + peak);
+    display.println(GetWaveformName(gOsc1Waveform) + (wfmod1.mOscillators[0].IsHardSyncEnabled() ? "*" : "") + "-" +
+                    GetWaveformName(gOsc2Waveform) + " pk:" + peak + " " + wfmod1.mUpdateTime + "us");
 
     display.display();
 

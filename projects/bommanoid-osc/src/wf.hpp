@@ -1,3 +1,5 @@
+// smooth square
+
 // - consider smoothing k-rate params across the buffer; especially mod amounts
 // - unfortunately, sync has artifacting, probably requires adaptation of the bandlimiting code. in many cases we might
 // be able to use a BLEP
@@ -10,6 +12,8 @@
 #include <dspinst.h>
 #include <arm_math.h>
 #include <array>
+
+#include "boiler.hpp"
 
 // 16-bit PCM gaining is done by multiplying using signed_multiply_32x16b, which requires the multiplier to be saturated
 // to 32-bits. this does this.
@@ -118,15 +122,7 @@ struct Oscillator
     using MyT = Oscillator<OscillatorCount>;
     size_t mMyIndex;
 
-    Oscillator()
-    {
-        for (size_t i = 0; i < OscillatorCount; ++i)
-        {
-            SetRMMatrix(i, 0);
-        }
-    }
-
-    void SetParams(float mainFreq, float syncFreq, bool syncEnable, short waveformType)
+    void SetParams(float mainFreq, float syncFreq, bool syncEnable, OscWaveformShape waveformType)
     {
         mHardSyncEnabled = syncEnable;
         uint32_t blincrement = 0;
@@ -144,48 +140,44 @@ struct Oscillator
 
         if (waveformType != tone_type)
         {
-            if (waveformType == WAVEFORM_BANDLIMIT_SQUARE)
-                band_limit_waveform.init_square(blincrement);
-            else if (waveformType == WAVEFORM_BANDLIMIT_PULSE)
+            if (waveformType == OscWaveformShape::Pulse_Bandlimited)
                 band_limit_waveform.init_pulse(blincrement, 0x80000000u);
-            else if (waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH || waveformType == WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE)
+            else if (waveformType == OscWaveformShape::Saw_Bandlimited ||
+                     waveformType == OscWaveformShape::SawRev_Bandlimited)
                 band_limit_waveform.init_sawtooth(blincrement);
         }
         tone_type = waveformType;
 
         switch (tone_type)
         {
-        case WAVEFORM_SINE:
+        case OscWaveformShape::Sine:
             mCurrentSampleProc = &MyT::SampleSine;
             break;
-        case WAVEFORM_ARBITRARY:
+        case OscWaveformShape::Arbitrary:
             mCurrentSampleProc = &MyT::SampleArbitrary;
             break;
-        case WAVEFORM_PULSE:
-        case WAVEFORM_SQUARE:
+        case OscWaveformShape::Pulse:
             mCurrentSampleProc = &MyT::SamplePulse;
             break;
-        case WAVEFORM_BANDLIMIT_PULSE:
-        case WAVEFORM_BANDLIMIT_SQUARE:
+        case OscWaveformShape::Pulse_Bandlimited:
             mCurrentSampleProc = &MyT::SampleBandlimitPulse;
             break;
-        case WAVEFORM_SAWTOOTH:
+        case OscWaveformShape::Saw:
             mCurrentSampleProc = &MyT::SampleSawtooth;
             break;
-        case WAVEFORM_SAWTOOTH_REVERSE:
+        case OscWaveformShape::SawRev:
             mCurrentSampleProc = &MyT::SampleSawtoothReverse;
             break;
-        case WAVEFORM_BANDLIMIT_SAWTOOTH:
+        case OscWaveformShape::Saw_Bandlimited:
             mCurrentSampleProc = &MyT::SampleBandlimitSawtooth;
             break;
-        case WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE:
+        case OscWaveformShape::SawRev_Bandlimited:
             mCurrentSampleProc = &MyT::SampleBandlimitSawtoothReverse;
             break;
-        case WAVEFORM_TRIANGLE_VARIABLE:
-        case WAVEFORM_TRIANGLE:
+        case OscWaveformShape::VarTriangle:
             mCurrentSampleProc = &MyT::SampleVarTriangle;
             break;
-        case WAVEFORM_SAMPLE_HOLD:
+        case OscWaveformShape::Noise:
             mCurrentSampleProc = &MyT::SampleSH;
             break;
         default:
@@ -203,52 +195,52 @@ struct Oscillator
         arbdata = data;
     }
 
-    //  low16bits = wet = factor (unsigned)
-    // high16bits = dry = 1-factor;
-    std::array<uint32_t, OscillatorCount> mRMMatrix;
-    std::array<uint32_t, OscillatorCount> mFMMatrix;
+    std::array<int16_t, OscillatorCount + 1> mFMMatrix; // 0-32767 (yes i don't use 1 bit; it goes to signed operation)
 
-    void SetRMMatrix(size_t iFromOsc, float amt)
+    void SetFMMatrix(size_t iFromOsc, float amt)
     {
+        if (iFromOsc == mMyIndex)
+        {
+            // FM feedback is a very different effect than from other oscillators.
+            // its scale needs to be treated.
+            amt *= 0.25;
+        }
         amt = Clamp(amt, 0, 1);
-        int32_t iamt = amt * 32767;
-        auto val = pack_16b_16b(32767 - iamt, iamt);
-        if (val == mRMMatrix[iFromOsc])
-            return;
-        mRMMatrix[iFromOsc] = val;
-
-        // Serial.println(String("Setting matrix [") + iFromOsc + ("] to ") + String(mRMMatrix[iFromOsc], 16));
-        // Serial.println(String(" -> dry = ") + Sample32To16(1.0f - amt));
-        // Serial.println(String(" -> wet = ") + Sample32To16(amt));
+        uint16_t iamt = amt * 32767;
+        mFMMatrix[iFromOsc] = iamt;
     }
 
-    void SetFMMatrix(size_t iFromOsc, float degrees)
-    {
-        degrees = Clamp(degrees, 0, 9000); // why 9000? why was 30 the lower bound before?
-        mFMMatrix[iFromOsc] = degrees * (float)(65536.0 / 180.0);
-    }
-
-    int16_t ProcessSample(int iOsc, int iSample, const int16_t (&currentOscSamples)[OscillatorCount])
+    // currentOscSamples holds all oscillator previous samples. It always holds an even # of samples (last one can be 0
+    // in the case of odd # of oscillators)
+    int16_t ProcessSample(int iOsc, int iSample, const int16_t *currentOscSamples)
     {
         if (!mCurrentSampleProc)
             return 0;
 
-        uint32_t phase = mMainPhase.mAccumulator;
-        int32_t rmFact = 65536; // p16 value
+        const uint32_t *currentOscSamples32 = (const uint32_t *)currentOscSamples;
+        const uint32_t *fmMatrix32 = (const uint32_t *)&mFMMatrix[0];
 
-        for (size_t i = 0; i < OscillatorCount; ++i)
+        // because we're doing a bunch of ops in 1 optimized (multiply_accumulate_16tx16t_add_16bx16b),
+        // we can't control the scaling of PM so much. By default, 1:1, the effect is too subtle
+        // so we will shift phase, apply the PM, then shift it back. That effectively multiplies the
+        // effect of PM.
+        static constexpr int gPhaseBitShift = 4;
+        uint64_t phase = mMainPhase.mAccumulator >> gPhaseBitShift;
+
+        // process 2 oscillators at a time. actually this would be optimized for a 4-op FM synth but
+        // i just don't want to deal with 4 ops.
+        for (size_t i = 0; i < OscillatorCount / 2; ++i)
         {
-            phase += currentOscSamples[i] * mFMMatrix[i];
-
-            if (i == mMyIndex)
-                continue; // RM feedback doesn't make sense because the FB signal will just lead to quickly 0.
-
-            // rmFact = (rmFact * mRMWetMatrix[i] * currentOscSamples[i]) + (rmFact * mRMDryMatrix[i])
-            uint32_t matrixFactor = mRMMatrix[i];
-            int32_t dry = signed_multiply_32x16t(rmFact, matrixFactor);                      // 32x16 >> 16 (u=32767)
-            int32_t wet = signed_multiply_32x16b(rmFact, matrixFactor);                      // 32x16 >> 16 (u=32767)
-            rmFact = signed_multiply_accumulate_32x16b(dry, wet, currentOscSamples[i]) << 1; // 32x16 >> 16
+            // phase += currentOscSamples[i] * mFMMatrix[i];
+            phase = multiply_accumulate_16tx16t_add_16bx16b(phase, currentOscSamples32[i], fmMatrix32[i]);
         }
+        if (OscillatorCount % 1 == 1)
+        {
+            // for odd # of oscillators; do phase mod for the remaining one.
+            phase += currentOscSamples[OscillatorCount - 1] * mFMMatrix[OscillatorCount - 1];
+        }
+
+        phase <<= gPhaseBitShift; // see above.
 
         mMainPhase.OnSample();
         if (mHardSyncEnabled && mSyncPhase.OnSample())
@@ -256,30 +248,17 @@ struct Oscillator
             mMainPhase.mAccumulator = mSyncPhase.mAccumulator;
         }
 
-        int32_t sample = (this->*mCurrentSampleProc)(iSample, phase, 0);
+        uint32_t phase32 = phase & 0xffffffff;
 
-        // ring mod, first do "feedback" which is not actually feedback.
-        // sample = (sample * sample * wetfact) + (sample * dryfact)
-        uint32_t matrixFactor = mRMMatrix[mMyIndex];
-        int32_t dry = signed_multiply_32x16t(sample, matrixFactor);        // 32x16 >> 16 (u=32767)
-        int32_t wet = signed_multiply_32x16b(sample, matrixFactor);        // 32x16 >> 16 (u=32767)
-        sample = signed_multiply_accumulate_32x16b(dry, wet, sample) << 1; // 32x16 >> 16
-        sample = signed_multiply_32x16b(rmFact, sample);
-        sample = saturate16(sample); // signed_saturate_rshift(sample, 16, 0);
-
+        int32_t sample = (this->*mCurrentSampleProc)(iSample, phase32, 0);
         mFBN1 = sample;
-        priorphase = phase;
+        priorphase = phase32;
         return sample;
-    }
-
-    int16_t GetLastSample() const
-    {
-        return mFBN1;
     }
 
     int16_t SampleSine(int i, uint32_t ph, int16_t shapeMod)
     {
-        // TODO: band-limit phase discontinuity, probably via blep
+        // TODO: band-limit phase discontinuity
         int32_t val1, val2;
         uint32_t index, scale;
         index = ph >> 24;                // 8 top bits = index to LUT
@@ -382,6 +361,7 @@ struct Oscillator
         {
             mSHSample = random(magnitude) - (magnitude >> 1); // generate new sample
         }
+        // todo: smooth it via shapemod?
         return mSHSample;
     }
 
@@ -400,7 +380,7 @@ struct Oscillator
         0.4f * 65536.0f;    // amplitude (account for gibbs and other) | saturate unsigned 16-bits
     const int16_t *arbdata; // 256-element waveform
     int16_t mSHSample = 0;  // for WAVEFORM_SAMPLE_HOLD
-    uint8_t tone_type;
+    OscWaveformShape tone_type;
     BandLimitedWaveform band_limit_waveform; // helper for generating band-limited versions of various waves.
 };
 
@@ -417,16 +397,23 @@ struct AudioSynthWaveformModulated2 : public AudioStream
         }
     }
 
+    uint32_t mUpdateTime = 0;
+
+    int16_t mFBSamples[OscillatorCount + 1] = {
+        0}; // +1 because we need to guarantee to wave providers that we have at least an even # of samples in there
+
     void update(void)
     {
+        auto m1 = micros();
         audio_block_t *outputBlocks[OscillatorCount] = {nullptr};
-        int16_t fbSamples[OscillatorCount] = {0};
 
         for (size_t iosc = 0; iosc < OscillatorCount; ++iosc)
         {
             outputBlocks[iosc] = allocate();
-            fbSamples[iosc] = mOscillators[iosc].GetLastSample();
         }
+
+        int16_t fbSamples[OscillatorCount + 1];
+        memcpy(fbSamples, mFBSamples, sizeof(mFBSamples));
 
         for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
         {
@@ -447,5 +434,8 @@ struct AudioSynthWaveformModulated2 : public AudioStream
             transmit(outputBlocks[iosc], iosc);
             release(outputBlocks[iosc]);
         }
+        memcpy(mFBSamples, fbSamples, sizeof(mFBSamples));
+        auto m2 = micros();
+        mUpdateTime = (m2 - m1);
     }
 };
