@@ -8,7 +8,7 @@
 
 #include <Arduino.h>
 #include <AudioStream.h>
-#include <synth_waveform.h>
+//#include <synth_waveform.h>
 #include <dspinst.h>
 #include <arm_math.h>
 #include <array>
@@ -27,6 +27,27 @@ static inline int32_t gainToSignedMultiply32x16(float n)
 }
 
 static const int16_t gZeroAudioBuffer[AUDIO_BLOCK_SAMPLES] = {0}; // sentinel buffer when no modulation data exists.
+
+static constexpr int16_t gAudioWaveformSine[257] = {
+    0,      804,    1608,   2410,   3212,   4011,   4808,   5602,   6393,   7179,   7962,   8739,   9512,   10278,
+    11039,  11793,  12539,  13279,  14010,  14732,  15446,  16151,  16846,  17530,  18204,  18868,  19519,  20159,
+    20787,  21403,  22005,  22594,  23170,  23731,  24279,  24811,  25329,  25832,  26319,  26790,  27245,  27683,
+    28105,  28510,  28898,  29268,  29621,  29956,  30273,  30571,  30852,  31113,  31356,  31580,  31785,  31971,
+    32137,  32285,  32412,  32521,  32609,  32678,  32728,  32757,  32767,  32757,  32728,  32678,  32609,  32521,
+    32412,  32285,  32137,  31971,  31785,  31580,  31356,  31113,  30852,  30571,  30273,  29956,  29621,  29268,
+    28898,  28510,  28105,  27683,  27245,  26790,  26319,  25832,  25329,  24811,  24279,  23731,  23170,  22594,
+    22005,  21403,  20787,  20159,  19519,  18868,  18204,  17530,  16846,  16151,  15446,  14732,  14010,  13279,
+    12539,  11793,  11039,  10278,  9512,   8739,   7962,   7179,   6393,   5602,   4808,   4011,   3212,   2410,
+    1608,   804,    0,      -804,   -1608,  -2410,  -3212,  -4011,  -4808,  -5602,  -6393,  -7179,  -7962,  -8739,
+    -9512,  -10278, -11039, -11793, -12539, -13279, -14010, -14732, -15446, -16151, -16846, -17530, -18204, -18868,
+    -19519, -20159, -20787, -21403, -22005, -22594, -23170, -23731, -24279, -24811, -25329, -25832, -26319, -26790,
+    -27245, -27683, -28105, -28510, -28898, -29268, -29621, -29956, -30273, -30571, -30852, -31113, -31356, -31580,
+    -31785, -31971, -32137, -32285, -32412, -32521, -32609, -32678, -32728, -32757, -32767, -32757, -32728, -32678,
+    -32609, -32521, -32412, -32285, -32137, -31971, -31785, -31580, -31356, -31113, -30852, -30571, -30273, -29956,
+    -29621, -29268, -28898, -28510, -28105, -27683, -27245, -26790, -26319, -25832, -25329, -24811, -24279, -23731,
+    -23170, -22594, -22005, -21403, -20787, -20159, -19519, -18868, -18204, -17530, -16846, -16151, -15446, -14732,
+    -14010, -13279, -12539, -11793, -11039, -10278, -9512,  -8739,  -7962,  -7179,  -6393,  -5602,  -4808,  -4011,
+    -3212,  -2410,  -1608,  -804,   0};
 
 // Fixed-point per-sample transitioning of a value.
 // T can be signed or unsigned.
@@ -153,6 +174,9 @@ struct Oscillator
         case OscWaveformShape::Sine:
             mCurrentSampleProc = &MyT::SampleSine;
             break;
+        case OscWaveformShape::Harmonics:
+            mCurrentSampleProc = &MyT::SampleHarmonics;
+            break;
         case OscWaveformShape::Arbitrary:
             mCurrentSampleProc = &MyT::SampleArbitrary;
             break;
@@ -171,11 +195,20 @@ struct Oscillator
         case OscWaveformShape::Saw_Bandlimited:
             mCurrentSampleProc = &MyT::SampleBandlimitSawtooth;
             break;
+        case OscWaveformShape::Saw_Bandlimited2:
+            mCurrentSampleProc = &MyT::SampleBandlimitSawtooth2;
+            break;
         case OscWaveformShape::SawRev_Bandlimited:
             mCurrentSampleProc = &MyT::SampleBandlimitSawtoothReverse;
             break;
         case OscWaveformShape::VarTriangle:
             mCurrentSampleProc = &MyT::SampleVarTriangle;
+            break;
+        case OscWaveformShape::Tri2_Bandlimited:
+            mCurrentSampleProc = &MyT::SampleBandlimitTriangle2;
+            break;
+        case OscWaveformShape::Tri2:
+            mCurrentSampleProc = &MyT::SampleTriangle2;
             break;
         case OscWaveformShape::Noise:
             mCurrentSampleProc = &MyT::SampleSH;
@@ -258,17 +291,37 @@ struct Oscillator
 
     int16_t SampleSine(int i, uint32_t ph, int16_t shapeMod)
     {
-        // TODO: band-limit phase discontinuity
+        return SineLUT(ph);
+    }
+
+    int16_t SineLUT(uint32_t ph)
+    {
         int32_t val1, val2;
         uint32_t index, scale;
-        index = ph >> 24;                // 8 top bits = index to LUT
-        val1 = AudioWaveformSine[index]; // -32768...32767
-        val2 = AudioWaveformSine[index + 1];
-        scale = (ph >> 8) & 0xFFFF;
+        index = ph >> 24;                 // 8 top bits = index to LUT
+        val1 = gAudioWaveformSine[index]; // -32768...32767
+        val2 = gAudioWaveformSine[index + 1];
+        scale = (ph >> 8) & 0xFFFF; // 16 significant bits of phase
         val2 *= scale;
         val1 *= 0x10000 - scale;
         return multiply_32x32_rshift32(val1 + val2, magnitude);
     }
+
+    int16_t SampleHarmonics(int i, uint32_t ph, int16_t shapeMod)
+    {
+        int16_t acc = SineLUT(ph);
+        uint32_t p2 = ph + ph;
+        int m = 1;
+        for (int h = 0; h < 8; ++ h) { // 8 of these puppies yields only 67 us update(). very cheap.
+            ph += p2;
+            m += 2;
+            acc += SineLUT(ph) / m;
+        }
+        //return SineLUT(ph) + SineLUT(ph + ph + ph)/3 + SineLUT(ph + ph + ph + ph + ph)/5 + SineLUT(ph + ph + ph + ph + ph + ph + ph)/7 + SineLUT(ph + ph + ph + ph + ph + ph + ph+ph+ph)/9;
+        return acc;
+    }
+
+    
 
     int16_t SampleArbitrary(int i, uint32_t ph, int16_t shapeMod)
     {
@@ -325,6 +378,59 @@ struct Oscillator
     {
         int16_t val = band_limit_waveform.generate_sawtooth(ph, i);
         return (int16_t)((val * magnitude) >> 16);
+    }
+
+    int16_t SampleBandlimitSawtooth2(int i, uint32_t ph, int16_t shapeMod)
+    {
+        Fixed<int32_t, 16> s = Fixed<int32_t, 16>{Q32::FromFixed(ph)};
+        static constexpr decltype(s) half{0.5f};
+        s -= half;
+        s -= poly_blepQ32(Q32::FromFixed(ph), Q32::FromFixed(mMainPhase.mIncrement)).NonPromotingMultiply(half);
+        return Q15{s}.mValue;
+    }
+
+    int16_t SampleBandlimitTriangle2(int i, uint32_t ph, int16_t shapeMod)
+    {
+        Fixed<int32_t, 16> s = Fixed<int32_t, 16>{Q32::FromFixed(ph)};
+        static constexpr Fixed<int32_t, 16> half{0.5f};
+        static constexpr Fixed<int32_t, 16> one{1.0f};
+        static constexpr Fixed<int32_t, 16> two{2.0f};
+        static constexpr Fixed<int32_t, 16> four{4.0f};
+
+        // s = abs(ph *4-2)-1;
+        s.mValue <<= 2;
+        s = s - two;
+        s = s.Abs();
+        s = s - one;
+
+        // scale = 4 * dt; // why?
+        // s -= scale * poly_blamp(ph, dt);
+        // s += scale * poly_blamp(fract(ph + 0.5), dt);
+
+        auto qdt = Q32::FromFixed(mMainPhase.mIncrement);
+        auto scale = Fixed<int32_t, 16>{qdt};
+        scale.mValue <<= 2;
+        s -= poly_blampQ32(Q32::FromFixed(ph), qdt).NonPromotingMultiply(scale);
+        s += poly_blampQ32(Q32::FromFixed(ph + 0x80000000), qdt).NonPromotingMultiply(scale);
+
+        return Q15{s.NonPromotingMultiply(half)}.mValue;
+    }
+
+    int16_t SampleTriangle2(int i, uint32_t ph, int16_t shapeMod)
+    {
+        Fixed<int32_t, 16> s = Fixed<int32_t, 16>{Q32::FromFixed(ph)};
+        static constexpr Fixed<int32_t, 16> half{0.5f};
+        static constexpr Fixed<int32_t, 16> one{1.0f};
+        static constexpr Fixed<int32_t, 16> two{2.0f};
+        static constexpr Fixed<int32_t, 16> four{4.0f};
+
+        // s = abs(ph *4-2)-1;
+        s.mValue <<= 2;
+        s = s - two;
+        s = s.Abs();
+        s = s - one;
+
+        return Q15{s.NonPromotingMultiply(half)}.mValue;
     }
 
     int16_t SampleBandlimitSawtoothReverse(int i, uint32_t ph, int16_t shapeMod)

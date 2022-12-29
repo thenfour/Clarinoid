@@ -40,7 +40,7 @@ Real gOsc1PMModAmount = 0; // slider3
 // Real gOsc1Shape = 0; // slider4
 // Real gOsc2Shape = 0; // slider3
 
-OscWaveformShape gOsc1Waveform = OscWaveformShape::Sine;
+OscWaveformShape gOsc1Waveform = OscWaveformShape::Tri2_Bandlimited;
 OscWaveformShape gOsc2Waveform = OscWaveformShape::Sine;
 bool gOsc1SyncEnabled = false;
 
@@ -187,7 +187,7 @@ void loop()
 
     // gOscilloscope.oscScale = mADS1115.mAnalogControls[2].mMyVal * 8.0f + 1.0f;
 
-    Real mainFreq = 2500 * slider3;
+    Real mainFreq = 7500 * slider3;
     mainFreq = floorf(mainFreq / 30) * 30; // stabilize?
     mainFreq += 20;
     Real syncFreq = mainFreq * (1 + slider4 * 8);

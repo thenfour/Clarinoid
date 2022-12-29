@@ -1,0 +1,280 @@
+// - sine truncated., hard-sync, phase offset, and blep & blamp support on the wave & phase restart.
+
+// i like this waveform because adjusting the truncation sounds good, overall it sounds good,
+// and it's reasonably anti-aliased
+
+// but while it FEELS like a sine wave, truncated, would be a good choice for anti-aliasing with BLEP/BLAMP,
+// unfortunately it's not. using BLAMP on a sine wave is a bit more tricky than in "straight-line" waveforms.
+
+// so to prevent major aliasing at high frequencies we should switch to truncated triangle.
+
+// the auto-phase restart idea is kinda cool but ... i can't find a way to make it sweep musically.
+// might just not be viable. as you sweep the freq ratio, it will sorta jump from one phase to another.
+// while it's smooth it's actually very cool and i like that sound a lot. but the jumps make it feel
+// unusable. maybe there's a way to use a different part of the waveform depending.
+
+
+desc:tenfour-saw sync blep
+slider1:2<.1,8,0.001>slave (%)
+slider2:1000<20,20000,0.001>master (Hz)
+slider3:0<-.5,.5,0.001>phase offset
+slider4:.5<0,1,0.001>shape
+slider5:1<0,1,1>enable sync
+slider6:1<0,1,1>enable auto-phase
+
+slider10:1<0,1,1>blep-fullsample
+slider11:1<0,1,1>blep-partial adv
+slider12:1<0,1,1>blep-restart
+slider13:1<0,1,1>blep-remaining samp
+slider20:1<0,1,.5>20.blamp-restart
+
+slider30:1<0,2>30.outputgain
+slider31:0<-1,1,0.001>31.blep scale adj
+
+@init
+
+function Clamp(x, l, h)
+(
+  min(h, max(l, x))
+);
+
+function fract(a)
+(
+  a - floor(a);
+);
+
+function does_encounter(t1, t2, x)
+(
+  (t1 < t2) ? (
+    t1 < x && x <= t2
+  ):(
+    x <= t2 || x > t1
+  )
+);
+
+// AA correction polynomial to be added THIS sample.
+// x is 0-1 samples after the discontinuity.
+function blep_before(x)
+(
+  x*x;
+);
+
+// AA correction polynomial to be added NEXT sample.
+// x is 0-1 samples after the discontinuity.
+function blep_after(x)
+(
+  x = 1 - x;
+  -x*x;
+);
+
+function blamp_before(x)
+(
+    (1.0 / 3.0) * x * x * x;
+);
+
+function blamp_after(x)
+(
+    x = x - 1;
+    (-1.0 / 3.0) * x * x * x;
+);
+
+// returns Y value at specified phase. instance / stateless.
+function OSC_NAIVE_SAMPLE(phase01, shape)
+(
+  phase01 < shape ? (
+    sin(2 * $pi * phase01 / shape)
+  ) : (
+    0
+  );
+);
+
+// returns Y value at specified phase. instance / stateless.
+function OSC_NAIVE_SAMPLE_SLOPE(phase01, shape)
+(
+  phase01 < shape ? (
+    2 * $pi * cos(2 * $pi * phase01 / shape) / shape
+  ) : (
+    0
+  );
+);
+
+
+function OSC_SETPARAMS(freq, _phaseOffset, _shape, _masterFreq)
+(
+  this.freq = freq;
+  this.phaseOffset = fract(_phaseOffset);
+  this.shape = _shape;
+  this.dt = freq / srate; // amount to advance phase each sample
+  this.y0 = 0; // these are really just used as return values.
+  this.y1 = 0;
+  
+  // the phase at which restart happens is consistent; the remainder of the ratio of frequencies.
+  // this describes the amount of waveform that will have passed before requiring sync.
+  this.restartPhase = fract(freq / _masterFreq);
+  
+  // so let's come up with an auto phase offset where the hard sync restart results in a new
+  // value that's the same as the previous. always avoiding discontinuities.
+  // it's not actually easy tbh.
+  // there's a sine wave, so around that, you have (shape/2) opportunity. and you have (1-shape) opportunity
+  // over the zero region. but between that, i don't think there's any way to guarantee.
+  // |----------------|---------------------------|
+  // | shape          | 1-shape                   |
+  // | ,```.
+  //  ,     \
+  // /___|___\____|_______________________________|
+  //     |    \   |  /
+  //           \,___/
+  //           
+  // |---|---|       |-- (1-shape) ---------------|
+  // <shape/2>
+  // but yea the problem with doing this, is that as you sweep around ratios, you'll get glitches
+  // as you switch from one case to another. the natural behavior is more desirable imo,
+  // though we can also attempt to find this point every time the wave restarts.
+  //this.phaseOffset = this.shape * .25 - this.restartPhase * .5;// 5) - this.restartPhase ;
+  
+  // even if you manage to find a way to do this, there are certain shapes that can't work right
+  // so you always get glitchy sections. forget about auto phase.
+ 
+  gEnableAutoPhase ? (
+    // calculate a new phase that doesn't result in a huge discontinuity.
+//    this.restartSample= OSC_NAIVE_SAMPLE(this.restartPhase, this.shape);
+//      this.phaseOffset = fract(asin(sampleBefore)/($pi*2)) * this.shape;// + gPhaseOffset * $pi * 2;
+      this.phaseOffset = fract(this.shape * .25 - this.restartPhase * .5);//this.restartPhase / fract(this.shape);
+  );
+  
+);
+function OSC_ACCUMULATE_BLEP(newPhase, edge, blepScale, samples, samplesFromNewPositionUntilNextSample)
+(
+  does_encounter(this.phase, newPhase, edge) ? (
+    samplesSinceEdge = fract(newPhase - edge) / this.dt;
+    samplesFromEdgeToNextSample = fract(samplesSinceEdge + samplesFromNewPositionUntilNextSample);
+    
+    this.y1 += blepScale * blep_before(samplesFromEdgeToNextSample);
+    this.y0 += blepScale * blep_after(samplesFromEdgeToNextSample);
+  );
+);
+
+function OSC_ACCUMULATE_BLAMP(newPhase, edge, blampScale, samples, samplesFromNewPositionUntilNextSample)
+(
+  does_encounter(this.phase, newPhase, edge) ? (
+    samplesSinceEdge = fract(newPhase - edge) / this.dt;
+    samplesFromEdgeToNextSample = fract(samplesSinceEdge + samplesFromNewPositionUntilNextSample);
+    
+    this.y1 += blampScale * blamp_before(samplesFromEdgeToNextSample);
+    this.y0 += blampScale * blamp_after(samplesFromEdgeToNextSample);
+  );
+);
+
+// instance; advances phase.
+// samples is 0<samples<1
+// assume this.phase is currently 0<t<1
+// this.phase may not be on a sample boundary.
+function OSC_ADVANCE(samples, samplesTillNextSample) local(phaseToAdvance, newPhase)
+(
+  phaseToAdvance = samples * this.dt;
+  newPhase = fract(this.phase + phaseToAdvance); // advance slave; doing it here helps us calculate discontinuity.
+
+  this.y1 = 0;
+  this.y0 = 0;
+  pw = this.shape;
+  
+  scale = $pi * this.dt / this.shape;
+  this.OSC_ACCUMULATE_BLAMP(newPhase, 0/*edge*/, scale, samples, samplesTillNextSample);
+  this.OSC_ACCUMULATE_BLAMP(newPhase, pw/*edge*/, -scale, samples, samplesTillNextSample);
+  
+  this.phase = newPhase;
+);
+
+// process discontinuity due to restarting phase right now.
+// so far this works generically for tri, saw, pulse. yee!
+function OSC_RESTART(samplesBeforeNext) local(blepscale, sampleAfter)
+(
+  sampleBefore = OSC_NAIVE_SAMPLE(this.phase, this.shape);
+  newPhase = fract(this.phaseOffset);
+
+  // fix bleps
+  sampleAfter = OSC_NAIVE_SAMPLE(newPhase, this.shape);
+  blepscale = (sampleAfter - sampleBefore)*.5; // full sample scale is 2; *.5 to bring 0-1
+
+  this.y1 = blepscale * blep_before(samplesBeforeNext); // blep the phase restart.
+  this.y0 = blepscale * blep_after(samplesBeforeNext);
+  
+  // fix blamps.
+  // so the thing is, blamp is not easily calculatable here.
+  // according to gpt-3:
+  // the BLAMP correction is a polynomial that needs to be integrated over the range of the reset to get the
+  // correct correction value. The difference between the slopes only gives you the change in the slope over
+  // that range, but does not account for the shape of the correction curve itself.
+  // To find the correct scale factor for the BLAMP, you would need to integrate the polynomial over the
+  // range of the reset and compare it to the desired change in the waveform. You can then solve for the
+  // scale factor by dividing the desired change by the integral of the polynomial. This can be done
+  // numerically using a method such as the trapezoidal rule or Simpson's rule.
+
+  // but this approximates the result, works sometimes, and other times just "doesn't improve".
+  // sometimes the scale needs to be MUCH higher like 20x.
+  slopeBefore = OSC_NAIVE_SAMPLE_SLOPE(this.phase, this.shape);
+  slopeAfter = OSC_NAIVE_SAMPLE_SLOPE(newPhase, this.shape);
+  aRestartSlopeDiff =  (slopeAfter - slopeBefore);
+  abs(aRestartSlopeDiff) > 0.0001 ? (
+    blampScale = $pi * this.dt / ((slopeAfter - slopeBefore));
+    this.y1 += slider20 * blampScale * blamp_before(samplesBeforeNext);
+    this.y0 += slider20 * blampScale * blamp_after(samplesBeforeNext);
+  );
+  this.phase = newPhase;
+);
+
+
+@slider
+gPhaseOffset = slider3;
+gBlepAmt = slider10;
+f0 = slider2;
+f1 = slider1 * slider2;
+gShape = slider4;
+gEnableSync = slider5;
+gEnableAutoPhase = slider6;
+slave.OSC_SETPARAMS(f1, gPhaseOffset, gShape, f0);
+
+dt0 = f0 / srate;
+
+@sample
+
+y1 = y0; // THIS sample.
+y0 = 0; // a value that gets added to the next sample. we first blep, then sample the sawtooth
+
+// Push master phase forward by full sample.
+t0 = fract(t0 + dt0);
+((t0 >= dt0) || !gEnableSync) ? (
+
+  slave.OSC_ADVANCE(1, 0);
+  y0 += slider10 * slave.y0;
+  y1 += slider10 * slave.y1;
+  
+) : (
+  //                   sync
+  //  prevsample         |    thissample
+  //           |         <=x=>|
+  //           |<==1-x==>     |
+
+  x = t0 / dt0; // master sample remainder, in samples.
+  
+  slave.OSC_ADVANCE(1 - x, x);
+  y0 += slider11 * slave.y0;
+  y1 += slider11 * slave.y1;
+
+  slave.OSC_RESTART(x);
+  y0 += slider12 * slave.y0;
+  y1 += slider12 * slave.y1;
+
+  slave.OSC_ADVANCE(x, 0);
+  y0 += slider13 * slave.y0;
+  y1 += slider13 * slave.y1;
+);
+
+// current sample will be used on next sample (this is the 1-sample delay)
+y0 += OSC_NAIVE_SAMPLE(slave.phase, slave.shape);
+out = y1; // y1 is old y0 plus new bleps
+
+spl0 = spl1 = out * slider30;
+
+
+

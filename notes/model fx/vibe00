@@ -1,0 +1,132 @@
+// todo: smoothly modulateable params
+
+desc:tenfour-vibrato
+
+slider1:.5<0,15>depth
+slider2:.7<0,5>rate hz
+slider3:.75<0,1>gain
+slider4:1<0,1>wetdrymix
+
+@init
+pi = 3.141592653;
+pi2 = 6.28318530718;
+
+memory = 1000; // array.
+memCursor = 0;
+memMax = srate * 2.; // seconds
+
+t = 0;
+dt = 0;
+
+@slider
+depth = slider1;
+rateHZ = slider2;
+gain = slider3;
+wetdrymix = slider4;
+
+dt = rateHZ / srate;
+
+@sample
+
+function fract(a)
+(
+  a - floor(a);
+);
+
+function lerp(v0, v1, t)
+(
+  (1 - t) * v0 + t * v1;
+);
+
+function InterpolateHermite4pt3oX(x0, x1, x2, x3, t)
+(
+  c0 = x1;
+  c1 = .5 * (x2 - x0);
+  c2 = x0 - (2.5 * x1) + (2 * x2) - (.5 * x3);
+  c3 = (.5 * (x3 - x0)) + (1.5 * (x1 - x2));
+  (((((c3 * t) + c2) * t) + c1) * t) + c0;
+);
+
+
+// Optimal 2x (4-point, 3rd-order) (z-form)
+function optimal2_43z(yN1, y0, y1, y2, x)
+(
+  z = x - 1 / 2.0;
+  even1 = y1 + y0;
+  odd1 = y1 - y0;
+  even2 = y2 + yN1;
+  odd2 = y2 - yN1;
+  c0 = even1 * 0.45868970870461956 + even2 * 0.04131401926395584;
+  c1 = odd1 * 0.48068024766578432 + odd2 * 0.17577925564495955;
+  c2 = even1 * -0.246185007019907091 + even2 * 0.24614027139700284;
+  c3 = odd1 * -0.36030925263849456 + odd2 * 0.10174985775982505;
+  ((c3 * z + c2) * z + c1) * z + c0;
+);
+
+function pitchOffsetToFreqFactor(pitchOffset)  
+(
+  pow(2.0, pitchOffset/12.0);
+);
+function readMemRaw(f) // f is index-like and will be corrected.
+(
+  f < 0 ? (f += memMax);
+  f > memMax ? f -= memMax;
+  rci = floor(f);
+  memory[rci];
+);
+function readMemPt(f)
+(
+  f < 0 ? (f += memMax);
+  f > memMax ? f -= memMax;
+  rci = floor(f);
+  memory[rci];
+);
+function readMemCubic2(f)
+(
+  InterpolateHermite4pt3oX(readMemRaw(f-1), readMemRaw(f), readMemRaw(f+1), readMemRaw(f+2), fract(f));
+);
+function readMemoptimal2_43z(f)
+(
+  optimal2_43z(readMemRaw(f-1), readMemRaw(f), readMemRaw(f+1), readMemRaw(f+2), fract(f));
+);
+function readMemLin(f)
+(
+  f < 0 ? (f += memMax);
+  f > memMax ? f -= memMax;
+  rci = floor(f);
+  s1 = memory[rci];
+  s2 = memory[(rci+1)%memMax];
+  lerp(s1,s2,fract(f));
+);
+
+
+t = fract(t + dt);
+
+memory[memCursor] = spl0; // write current sample to memory
+
+// regarding depth & frequency relation, see:
+// https://www.kvraudio.com/forum/viewtopic.php?t=458528
+// https://github.com/dliganov/Chaotic-DAW/blob/master/rosic/effects/rosic_Vibrato.cpp
+// one way to think of what happens: imagine our LFO is a square wave. it would just read
+// old data, then new data, old, then new. there would be no vibrato at all. therefore the
+// depth is related to the integral of the modulator.
+ratio = pitchOffsetToFreqFactor(depth);        // resampling ratio
+depthSamples  = (ratio-1.0)*srate/ (pi2 * rateHZ); // delay modulation depth in samples
+readDist = sin(t * pi2)*.5+.5;
+readDistSamples = depthSamples * readDist;
+readCursor = memCursor - readDistSamples - 2; // -2 to give space to interpolation
+//wet = readMemLin(readCursor);
+//wet = readMemCubic(readCursor);
+//wet = readMemCubic2(readCursor);
+wet = readMemoptimal2_43z(readCursor);
+
+dryCursor = memCursor - depthSamples * .5;
+dry = readMemPt(dryCursor);
+
+memCursor = (memCursor + 1) % memMax;
+
+s = lerp(dry, wet, wetdrymix);
+
+spl0 = spl1 = s * gain;
+
+

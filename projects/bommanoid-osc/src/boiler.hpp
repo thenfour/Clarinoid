@@ -10,6 +10,15 @@
 #include <array>
 
 #include "boiler.hpp"
+#include "fixed.hpp"
+
+
+template <typename T, size_t N>
+constexpr size_t SizeofStaticArray(const T (&x)[N])
+{
+    return N;
+}
+
 
 using Real = float;
 
@@ -579,22 +588,42 @@ struct SyncedOscilloscope : public AudioStream
 enum class OscWaveformShape : uint8_t
 {
     Sine,        // WAVEFORM_SINE              0
+    Harmonics, // custom
     VarTriangle, // WAVEFORM_TRIANGLE          3, WAVEFORM_TRIANGLE_VARIABLE 8
     Pulse,       // WAVEFORM_PULSE             5,  WAVEFORM_SQUARE            2
     Saw,         // WAVEFORM_SAWTOOTH          1
     SawRev,      // WAVEFORM_SAWTOOTH_REVERSE  6
     Noise,       // WAVEFORM_SAMPLE_HOLD       7
     Arbitrary,   // not really supported: WAVEFORM_ARBITRARY         4
-    SmoothSquare,
+//    SmoothSquare,
 
     Pulse_Bandlimited,  // WAVEFORM_BANDLIMIT_PULSE  12, WAVEFORM_BANDLIMIT_SQUARE 11
     Saw_Bandlimited,    //  WAVEFORM_BANDLIMIT_SAWTOOTH  9
+    Saw_Bandlimited2,   //  custom
     SawRev_Bandlimited, // WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE 10,
+    Tri2_Bandlimited,    // custom
+    Tri2,    // custom
+    //OSC_WAVEFORM_COUNT,
 };
 
 OscWaveformShape CycleWaveform(OscWaveformShape n)
 {
-    return OscWaveformShape((int(n) + 1) % 11);
+    static constexpr OscWaveformShape available[] = {
+        OscWaveformShape::Harmonics,
+        OscWaveformShape::Sine,
+        OscWaveformShape::Tri2,
+        OscWaveformShape::Tri2_Bandlimited,
+        OscWaveformShape::VarTriangle,
+    };
+
+    for (int i = 0; i < SizeofStaticArray(available); ++ i) 
+    {
+        if (available[i] == n) {
+            return available[(i + 1) % SizeofStaticArray(available)];
+        }
+    }
+
+    return available[0];
 }
 
 String GetWaveformName(OscWaveformShape w)
@@ -615,14 +644,22 @@ String GetWaveformName(OscWaveformShape w)
         return "SH";
     case OscWaveformShape::Arbitrary: // not really supported: WAVEFORM_ARBITRARY         4
         return "Arb";
-    case OscWaveformShape::SmoothSquare:
-        return "SSqr";
+    // case OscWaveformShape::SmoothSquare:
+    //     return "SSqr";
     case OscWaveformShape::Pulse_Bandlimited: // WAVEFORM_BANDLIMIT_PULSE  12, WAVEFORM_BANDLIMIT_SQUARE 11
         return "BLSq";
     case OscWaveformShape::Saw_Bandlimited: //  WAVEFORM_BANDLIMIT_SAWTOOTH  9
         return "BLs";
+    case OscWaveformShape::Saw_Bandlimited2: //
+        return "BLs2";
     case OscWaveformShape::SawRev_Bandlimited: // WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE 10,
         return "BLrs";
+    case OscWaveformShape::Tri2_Bandlimited:
+        return "T2_bl";
+    case OscWaveformShape::Tri2:
+        return "T2";
+    case OscWaveformShape::Harmonics:
+        return "Hrm";
     }
-    return "<?>";
+    return String("<?") + int(w) + ">";
 }

@@ -1,0 +1,76 @@
+
+desc:tenfour-crossover one pole, for clarinoid
+//tags: equalizer
+// copied from 3x3 crossover/stillwell
+
+slider2:0<-60,24,0.1>Low Gain (dB)
+slider4:0<-60,24,0.1>Mid Gain (dB)
+slider6:0<-60,24,0.1>High Gain (dB)
+slider7:240<60,680,1>Low-Mid Freq (Hz)
+slider8:2400<720,12000,10>Mid-High Freq (Hz)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  log2db = 8.6858896380650365530225783783321; // 20 / ln(10)
+  db2log = 0.11512925464970228420089957273422; // ln(10) / 20 
+  pi = 3.1415926535;
+  halfpi = pi / 2;
+  halfpiscaled = halfpi * 1.41254;
+
+cDenorm = 10^-30;
+
+@slider
+
+
+freqLP = min(min(slider7,srate),freqHP);
+xLP = exp(-2.0*$pi*freqLP/srate);
+a0LP = 1.0-xLP;
+b1LP = -xLP;
+
+freqHP = max(min(slider8,srate),freqLP);
+xHP = exp(-2.0*$pi*freqHP/srate);
+a0HP = 1.0-xHP;
+b1HP = -xHP;
+
+  gainl = exp(slider2 * db2log);
+  gainm = exp(slider4 * db2log);
+  gainh = exp(slider6 * db2log);
+  mixlg = gainl;
+  mixmg = gainm;
+  mixhg = gainh;
+  mixlg1 = gainl;
+  mixmg1 = gainm;
+  mixhg1 = gainh;
+
+
+@sample
+
+  dry0 = spl0;
+  dry1 = spl1;
+
+low_l = (tmplLP = a0LP*dry0 - b1LP*tmplLP);
+low_r = (tmprLP = a0LP*dry1 - b1LP*tmprLP);
+
+high_l = dry0 - (tmplHP = a0HP*dry0 - b1HP*tmplHP);
+high_r = dry1 - (tmprHP = a0HP*dry1 - b1HP*tmprHP);
+
+  mid_l = dry0 - low_l - high_l;
+  mid_r = dry1 - low_r - high_r;
+
+  dry0_l = low_l * mixlg1;
+  dry0_m = mid_l * mixmg1;
+  dry0_h = high_l * mixhg1;
+  dry0 = (dry0_l + dry0_m + dry0_h);
+
+  dry1_l = low_r * mixlg1;
+  dry1_m = mid_r * mixmg1;
+  dry1_h = high_r * mixhg1;
+  dry1 = (dry1_l + dry1_m + dry1_h);
+
+  spl0 = dry0 + wet0;
+  spl1 = dry1 + wet1;
+

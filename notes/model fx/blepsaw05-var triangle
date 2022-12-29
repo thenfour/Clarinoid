@@ -1,0 +1,243 @@
+// - var triangle, hard-sync, phase offset, and blep & blamp support on the wave & phase restart.
+// NOTE: it does not replace a sawtooth exactly, because when the slope is within a single sample, blamp is not
+// appropriate. a blep should be used as it represents a discontinuity.
+
+// this is an interesting wave for sync + phase offset, because the phase restart can cause
+// discontinuities that you might not be expecting. like, the wave can easily flow from mellow to harsh,
+// depending on where the phase restart happens.
+
+// that's no big deal of course, but by automatically restarting phase at the right place, we could
+// maintain the waveform's character. let's try this out.
+
+// so the idea would be that we should restart phase to a phase that matches the Y value of the restart.
+// just find the first place in the waev that does this.
+
+// "just" is an easy word right? it's some function of [restartphase, pulsewidth], but i am not sure how
+// to calculate this. that's getting down the rabbit hole for sure. intriguing though.
+
+desc:tenfour-saw sync blep
+slider1:.5<.1,1,0.001>Master (%)
+slider2:1000<20,20000,0.001>Slave (Hz)
+slider3:0<-.5,.5,0.001>phase offset
+slider4:.5<0,1,0.001>shape
+slider5:1<0,1,1>enable sync
+
+slider10:1<0,1,1>blep-fullsample
+slider11:1<0,1,1>blep-partial adv
+slider12:1<0,1,1>blep-restart
+slider13:1<0,1,1>blep-remaining samp
+slider20:1<0,1,.5>20.blamp-restart
+
+slider30:1<0,2>30.outputgain
+
+@init
+
+function Clamp(x, l, h)
+(
+  min(h, max(l, x))
+);
+
+function fract(a)
+(
+  a - floor(a);
+);
+
+function does_encounter(t1, t2, x)
+(
+  (t1 < t2) ? (
+    t1 < x && x <= t2
+  ):(
+    x <= t2 || x > t1
+  )
+);
+
+// AA correction polynomial to be added THIS sample.
+// x is 0-1 samples after the discontinuity.
+function blep_before(x)
+(
+  x*x;
+);
+
+// AA correction polynomial to be added NEXT sample.
+// x is 0-1 samples after the discontinuity.
+function blep_after(x)
+(
+  x = 1 - x;
+  -x*x;
+);
+
+function blamp_before(x)
+(
+    (1.0 / 3.0) * x * x * x;
+);
+
+function blamp_after(x)
+(
+    x = x - 1;
+    (-1.0 / 3.0) * x * x * x;
+);
+
+function SAW_SETPARAMS(freq, _phaseOffset, _shape, _masterFreq)
+(
+  this.freq = freq;
+  this.phaseOffset = fract(_phaseOffset);
+  this.shape = _shape;
+  this.dt = freq / srate; // amount to advance phase each sample
+  this.y0 = 0; // these are really just used as return values.
+  this.y1 = 0;
+  
+  // the phase at which restart happens is consistent; the remainder of the ratio of frequencies.
+  this.restartPhase = fract(freq / _masterFreq);
+);
+
+// returns Y value at specified phase. instance / stateless.
+function OSC_NAIVE_SAMPLE(phase01, shape)
+(
+  phase01 < shape ? (
+    phase01 / shape * 2 - 1
+  ):(
+    (1-phase01)/(1-shape)*2-1
+  );
+);
+
+// returns Y value at specified phase. instance / stateless.
+function OSC_NAIVE_SAMPLE_SLOPE(phase01, shape)
+(
+  phase01 < shape ? (
+    2*shape
+  ):(
+    -2*(1-shape)
+  );
+);
+
+function OSC_ACCUMULATE_BLEP(newPhase, edge, blepScale, samples, samplesFromNewPositionUntilNextSample)
+(
+  does_encounter(this.phase, newPhase, edge) ? (
+    samplesSinceEdge = fract(newPhase - edge) / this.dt;
+    samplesFromEdgeToNextSample = fract(samplesSinceEdge + samplesFromNewPositionUntilNextSample);
+    
+    this.y1 += blepScale * blep_before(samplesFromEdgeToNextSample);
+    this.y0 += blepScale * blep_after(samplesFromEdgeToNextSample);
+  );
+);
+
+function OSC_ACCUMULATE_BLAMP(newPhase, edge, blampScale, samples, samplesFromNewPositionUntilNextSample)
+(
+  does_encounter(this.phase, newPhase, edge) ? (
+    samplesSinceEdge = fract(newPhase - edge) / this.dt;
+    samplesFromEdgeToNextSample = fract(samplesSinceEdge + samplesFromNewPositionUntilNextSample);
+    
+    this.y1 += blampScale * blamp_before(samplesFromEdgeToNextSample);
+    this.y0 += blampScale * blamp_after(samplesFromEdgeToNextSample);
+  );
+);
+
+// instance; advances phase.
+// samples is 0<samples<1
+// assume this.phase is currently 0<t<1
+// this.phase may not be on a sample boundary.
+function SAW_ADVANCE(samples, samplesTillNextSample) local(phaseToAdvance, newPhase)
+(
+  phaseToAdvance = samples * this.dt;
+  newPhase = fract(this.phase + phaseToAdvance); // advance slave; doing it here helps us calculate discontinuity.
+
+  //       1-|            ,-',        |
+  //         |         ,-'  | ',      |
+  //       0-|      ,-'         ',    |
+  //         |   ,-'        |     ',  |
+  //      -1-|,-'                   ',|
+  // pw       0-------------|---------1
+  // slope:
+  //         |--------------          | = 1/pw
+  //         |                        | = 0
+  //         |              ----------| = -1/(1-pw)
+  
+  this.y1 = 0;
+  this.y0 = 0;
+  pw = this.shape;
+  // this is
+  // dt / (1/pw - 1/(1-pw))
+  scale = this.dt / (pw - pw * pw);
+  this.OSC_ACCUMULATE_BLAMP(newPhase, 0/*edge*/, scale, samples, samplesTillNextSample);
+  this.OSC_ACCUMULATE_BLAMP(newPhase, pw/*edge*/, -scale, samples, samplesTillNextSample);
+  
+  this.phase = newPhase;
+);
+
+// process discontinuity due to restarting phase right now.
+// so far this works generically for tri, saw, pulse. yee!
+function SAW_RESTART(samplesBeforeNext) local(blepscale, sampleBefore, sampleAfter)
+(
+  newPhase = this.phaseOffset;
+
+  sampleBefore = OSC_NAIVE_SAMPLE(this.phase, this.shape);
+  sampleAfter = OSC_NAIVE_SAMPLE(newPhase, this.shape);
+  blepscale = (sampleAfter - sampleBefore)*.5; // full sample scale is 2; *.5 to bring 0-1
+
+  this.y1 = blepscale * blep_before(samplesBeforeNext); // blep the phase restart.
+  this.y0 = blepscale * blep_after(samplesBeforeNext);
+  
+  // fix blamps.
+  slopeBefore = this.dt / OSC_NAIVE_SAMPLE_SLOPE(this.phase, this.shape);
+  slopeAfter = this.dt / OSC_NAIVE_SAMPLE_SLOPE(newPhase, this.shape);
+  blampScale = 2 * (slopeAfter - slopeBefore); 
+  this.y1 += slider20 * blampScale * blamp_before(samplesBeforeNext);
+  this.y0 += slider20 * blampScale * blamp_after(samplesBeforeNext);
+
+  this.phase = newPhase;
+);
+
+
+@slider
+gPhaseOffset = slider3;
+gBlepAmt = slider10;
+f1 = slider2;
+f0 = slider1 * f1;
+gShape = slider4;
+gEnableSync = slider5;
+slave.SAW_SETPARAMS(f1, gPhaseOffset, gShape, f0);
+
+dt0 = f0 / srate;
+
+@sample
+
+y1 = y0; // THIS sample.
+y0 = 0; // a value that gets added to the next sample. we first blep, then sample the sawtooth
+
+// Push master phase forward by full sample.
+t0 = fract(t0 + dt0);
+((t0 >= dt0) || !gEnableSync) ? (
+
+  slave.SAW_ADVANCE(1, 0);
+  y0 += slider10 * slave.y0;
+  y1 += slider10 * slave.y1;
+  
+) : (
+  //                   sync
+  //  prevsample         |    thissample
+  //           |         <=x=>|
+  //           |<==1-x==>     |
+
+  x = t0 / dt0; // master sample remainder, in samples.
+  
+  slave.SAW_ADVANCE(1 - x, x);
+  y0 += slider11 * slave.y0;
+  y1 += slider11 * slave.y1;
+
+  slave.SAW_RESTART(x);
+  y0 += slider12 * slave.y0;
+  y1 += slider12 * slave.y1;
+
+  slave.SAW_ADVANCE(x, 0);
+  y0 += slider13 * slave.y0;
+  y1 += slider13 * slave.y1;
+);
+
+// current sample will be used on next sample (this is the 1-sample delay)
+y0 += OSC_NAIVE_SAMPLE(slave.phase, slave.shape);
+out = y1; // y1 is old y0 plus new bleps
+
+spl0 = spl1 = out * slider30;
+
+
+
