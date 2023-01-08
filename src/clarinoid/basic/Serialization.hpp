@@ -204,6 +204,7 @@ struct TextStream : IPeekableStream
         case TokenType::BoolValue:
             return "boolval";
         }
+        return "?";
     }
 
     struct SpecificTokenInfo

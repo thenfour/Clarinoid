@@ -38,6 +38,7 @@
     </ClInclude>
     <ClInclude Include="TestModulation.hpp" />
     <ClInclude Include="TestJSON.hpp" />
+    <ClInclude Include="TestFixedPoint.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="filters">

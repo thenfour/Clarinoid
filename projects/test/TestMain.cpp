@@ -4,6 +4,10 @@
 #define CLARINOID_PLATFORM_X86
 #define CLARINOID_MODULE_TEST
 
+#ifdef _DEBUG
+#   define FP_CACHE_DOUBLE
+#endif
+
 #include <clarinoid/x86/ArduinoEmu.hpp>
 
 namespace clarinoid
@@ -73,6 +77,7 @@ enum class PhysicalControl : uint8_t
 #include "TestFilter.hpp"
 #include "TestModulation.hpp"
 #include "TestJSON.hpp"
+#include "TestFixedPoint.hpp"
 
 namespace clarinoid
 {
@@ -123,6 +128,8 @@ int main()
     //  TestFilterPerformance();
 
     // TestModulation();
+
+    clarinoid ::TestFixedPoint();
 
     clarinoid::TestMenu();
 

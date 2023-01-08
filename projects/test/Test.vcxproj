@@ -175,6 +175,7 @@
     <ClInclude Include="..\..\src\clarinoid\synth\Patch.hpp" />
     <ClInclude Include="Test.hpp" />
     <ClInclude Include="TestFilter.hpp" />
+    <ClInclude Include="TestFixedPoint.hpp" />
     <ClInclude Include="TestHarmonizer.hpp" />
     <ClInclude Include="TestInputMapping.hpp" />
     <ClInclude Include="TestJSON.hpp" />

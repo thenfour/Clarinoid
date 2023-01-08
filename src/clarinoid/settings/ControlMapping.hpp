@@ -313,7 +313,7 @@ struct ControlMapping
         ret.mFunction = d;
         ret.mStyle = MapStyle::RemapUnipolar;
         ret.mOperator = Operator::Set;
-        ret.mUnipolarMapping = clarinoid::UnipolarMapping{srcMin, srcMax, destMin, destMax, 0.5f, 0.0f};
+        ret.mUnipolarMapping = UnipolarMapping{srcMin, srcMax, destMin, destMax, 0.5f, 0.0f};
         return ret;
     }
 };

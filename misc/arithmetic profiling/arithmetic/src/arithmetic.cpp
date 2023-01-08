@@ -113,6 +113,61 @@ double Div_D(double a, double b)
   return a / b;
 }
 
+
+
+// DIV-F ////////////////////////////////////////////////
+
+int8_t Divf_S8(int8_t a, int8_t b)
+{
+  return float(a) / float(b);
+}
+
+uint8_t Divf_U8(uint8_t a, uint8_t b)
+{
+  return float(a) / float(b);
+}
+
+int16_t Divf_S16(int16_t a, int16_t b)
+{
+  return float(a) / float(b);
+}
+
+uint16_t Divf_U16(uint16_t a, uint16_t b)
+{
+  return float(a) / float(b);
+}
+
+int32_t Divf_S32(int32_t a, int32_t b)
+{
+  return float(a) / float(b);
+}
+
+uint32_t Divf_U32(uint32_t a, uint32_t b)
+{
+  return float(a) / float(b);
+}
+
+int64_t Divf_S64(int64_t a, int64_t b)
+{
+  return float(a) / float(b);
+}
+
+uint64_t Divf_U64(uint64_t a, uint64_t b)
+{
+  return float(a) / float(b);
+}
+
+float Divf_F(float a, float b)
+{
+  return a / b;
+}
+
+double Divf_D(double a, double b)
+{
+  return a / b;
+}
+
+
 // ADD ////////////////////////////////////////////////
 
 int8_t Add_S8(int8_t a, int8_t b)
@@ -322,6 +377,113 @@ uint64_t From32_U64(uint32_t a, uint32_t b)
 }
 
 float From32_F(int32_t a, int32_t b)
+{
+  return float(a);
+}
+
+
+// TO64 ////////////////////////////////////////////////
+
+int64_t To64_S8(int8_t a, int8_t b)
+{
+  return int64_t(a);
+}
+
+uint64_t To64_U8(uint8_t a, uint8_t b)
+{
+  return uint64_t(a);
+}
+
+int64_t To64_S16(int16_t a, int16_t b)
+{
+  return int64_t(a);
+}
+
+uint64_t To64_U16(uint16_t a, uint16_t b)
+{
+  return uint64_t(a);
+}
+
+int64_t To64_S32(int32_t a, int32_t b)
+{
+  return int64_t(a);
+}
+
+uint64_t To64_U32(uint32_t a, uint32_t b)
+{
+  return uint64_t(a);
+}
+
+int64_t To64_D(double a, double b)
+{
+  return int64_t(a);
+}
+
+int64_t To64_S64(int64_t a, int64_t b)
+{
+  return int64_t(a);
+}
+
+uint64_t To64_U64(uint64_t a, uint64_t b)
+{
+  return uint64_t(a);
+}
+
+int64_t To64_F(float a, float b)
+{
+  return int64_t(a);
+}
+
+
+
+// FROM 64 ////////////////////////////////////////////////
+
+int8_t From64_S8(int64_t a, int64_t b)
+{
+  return int8_t(a);
+}
+
+uint8_t From64_U8(uint64_t a, uint64_t b)
+{
+  return uint8_t(a);
+}
+
+int16_t From64_S16(int64_t a, int64_t b)
+{
+  return int16_t(a);
+}
+
+uint16_t From64_U16(uint64_t a, uint64_t b)
+{
+  return uint16_t(a);
+}
+
+int32_t From64_S32(int64_t a, int64_t b)
+{
+  return int32_t(a);
+}
+
+uint32_t From64_U32(uint64_t a, uint64_t b)
+{
+  return uint32_t(a);
+}
+
+double From64_D(int64_t a, int64_t b)
+{
+  return double(a);
+}
+
+int64_t From64_S64(int64_t a, int64_t b)
+{
+  return int64_t(a);
+}
+
+uint64_t From64_U64(uint64_t a, uint64_t b)
+{
+  return uint64_t(a);
+}
+
+float From64_F(int64_t a, int64_t b)
 {
   return float(a);
 }
@@ -626,6 +788,7 @@ void setup()
   Test<uint64_t>("Mul_U64", "Mul", "U64", "i64", "U", &Mul_U64);
   Test<float>("Mul_F", "Mul", "F", "F", "F", &Mul_F);
   Test<double>("Mul_D", "Mul", "D", "F", "D", &Mul_D);
+
   Test<int8_t>("Div_S8", "Div", "S8", "i8", "S", &Div_S8);
   Test<uint8_t>("Div_U8", "Div", "U8", "i8", "U", &Div_U8);
   Test<int16_t>("Div_S16", "Div", "S16", "i16", "S", &Div_S16);
@@ -680,6 +843,30 @@ void setup()
   Test<uint64_t>("From32_U64", "From32", "U64", "i64", "U", &From32_U64);
   Test<float>("From32_F", "From32", "F", "F", "F", &From32_F);
   Test<double>("From32_D", "From32", "D", "D", "D", &From32_D);
+  
+  // to 64
+  Test<int8_t>("To64_S8", "To64", "S8", "i8", "S", &To64_S8);
+  Test<uint8_t>("To64_U8", "To64", "U8", "i8", "U", &To64_U8);
+  Test<int16_t>("To64_S16", "To64", "S16", "i16", "S", &To64_S16);
+  Test<uint16_t>("To64_U16", "To64", "U16", "i16", "U", &To64_U16);
+  Test<int32_t>("To64_S32", "To64", "S32", "i32", "S", &To64_S32);
+  Test<uint32_t>("To64_U32", "To64", "U32", "i32", "U", &To64_U32);
+  Test<int64_t>("To64_S64", "To64", "S64", "i64", "S", &To64_S64);
+  Test<uint64_t>("To64_U64", "To64", "U64", "i64", "U", &To64_U64);
+  Test<float>("To64_F", "To64", "F", "F", "F", &To64_F);
+  Test<double>("To64_D", "To64", "D", "D", "D", &To64_D);
+
+  // from 64
+  Test<int8_t>("From64_S8", "From64", "S8", "i8", "S", &From64_S8);
+  Test<uint8_t>("From64_U8", "From64", "U8", "i8", "U", &From64_U8);
+  Test<int16_t>("From64_S16", "From64", "S16", "i16", "S", &From64_S16);
+  Test<uint16_t>("From64_U16", "From64", "U16", "i16", "U", &From64_U16);
+  Test<int32_t>("From64_S32", "From64", "S32", "i32", "S", &From64_S32);
+  Test<uint32_t>("From64_U32", "From64", "U32", "i32", "U", &From64_U32);
+  Test<int64_t>("From64_S64", "From64", "S64", "i64", "S", &From64_S64);
+  Test<uint64_t>("From64_U64", "From64", "U64", "i64", "U", &From64_U64);
+  Test<float>("From64_F", "From64", "F", "F", "F", &From64_F);
+  Test<double>("From64_D", "From64", "D", "D", "D", &From64_D);
 
   // shl
   Test<int8_t>("Shl_S8", "Shl", "S8", "i8", "S", &Shl_S8);
@@ -733,7 +920,17 @@ void setup()
   Test<float>("Mod_F", "Mod", "F", "F", "F", &Mod_F);
   Test<double>("Mod_D", "Mod", "D", "D", "D", &Mod_D);
 
-
+  // div with float intermediate
+  Test<int8_t>("Divf_S8", "Divf", "S8", "i8", "S", &Divf_S8);
+  Test<uint8_t>("Divf_U8", "Divf", "U8", "i8", "U", &Divf_U8);
+  Test<int16_t>("Divf_S16", "Divf", "S16", "i16", "S", &Divf_S16);
+  Test<uint16_t>("Divf_U16", "Divf", "U16", "i16", "U", &Divf_U16);
+  Test<int32_t>("Divf_S32", "Divf", "S32", "i32", "S", &Divf_S32);
+  Test<uint32_t>("Divf_U32", "Divf", "U32", "i32", "U", &Divf_U32);
+  Test<int64_t>("Divf_S64", "Divf", "S64", "i64", "S", &Divf_S64);
+  Test<uint64_t>("Divf_U64", "Divf", "U64", "i64", "U", &Divf_U64);
+  Test<float>("Divf_F", "Divf", "F", "F", "F", &Divf_F);
+  Test<double>("Divf_D", "Divf", "D", "D", "D", &Divf_D);
 }
 
 void loop() {
