@@ -8,7 +8,7 @@
 //#include "SortedArray.hpp"
 #include "Control.hpp"
 #include "NumericRanges.hpp"
-//#include "fixedPoint.hpp"
+#include "fixedPoint.hpp"
 //#include "AnalogValue.hpp"
 
 #include "Music.hpp"

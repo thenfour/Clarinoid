@@ -6,6 +6,7 @@
 
 #ifdef _DEBUG
 #   define FP_CACHE_DOUBLE
+#   define FP_RUNTIME_CHECKS
 #endif
 
 #include <clarinoid/x86/ArduinoEmu.hpp>
