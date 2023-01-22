@@ -81,6 +81,8 @@
 #pragma once
 
 #include <stdint.h>
+#include "Basic.hpp"
+//#include <intrin.h>
 
 // COMPILE-TIME OPTIONS:
 // FP_CACHE_DOUBLE
@@ -102,20 +104,19 @@ namespace clarinoid
 
 static inline uint32_t CLZ(uint32_t value)
 {
-#if defined(__builtin_clz)
-    // Use __builtin_clz
-    unsigned int count = __builtin_clz(value);
-#elif defined(__lzcnt)
-    // Use __lzcnt
+#ifdef CLARINOID_PLATFORM_X86
     unsigned int count = __lzcnt(value);
 #else
-    // Fallback implementation
-    unsigned int count = 0;
-    while ((value & (1 << (31 - count))) == 0 && count < 32)
-    {
-        count++;
-    }
+    unsigned int count = __builtin_clz(value);
 #endif
+    //#else
+    //    // Fallback implementation
+    //    unsigned int count = 0;
+    //    while ((value & (1 << (31 - count))) == 0 && count < 32)
+    //    {
+    //        count++;
+    //    }
+    //#endif
     return count;
 }
 
@@ -139,21 +140,21 @@ static inline uint32_t sqrt_Q32_to_Q16(uint32_t in)
 template <int32_t i>
 struct StaticAbs
 {
-    static constexpr uint8_t value = i < 0 ? -i : i;
+    static constexpr int32_t value = i < 0 ? -i : i;
 };
 
 template <int32_t i>
 struct StaticValueBitsNeeded
 {
-    static constexpr uint8_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >> 1)>::value_allow_zero;
-    static constexpr uint8_t value = value_allow_zero;
+    static constexpr int32_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >> 1)>::value_allow_zero;
+    static constexpr int32_t value = value_allow_zero;
 };
 
 template <>
 struct StaticValueBitsNeeded<0>
 {
-    static constexpr uint8_t value = 1;
-    static constexpr uint8_t value_allow_zero = 0;
+    static constexpr int32_t value = 1;
+    static constexpr int32_t value_allow_zero = 0;
 };
 
 template <typename T, std::enable_if_t<std::is_signed<T>::value, int> = 0>
@@ -381,16 +382,12 @@ static constexpr auto const_shift(const T &a, ::std::enable_if_t<(B == 0)> * = 0
 // TODO: check that intbits <= 31
 template <uint8_t intbits, typename Tinput> // template Tinput because it may be signed or unsigned and we want
                                             // conversions & full range to work seamlessly.
-static constexpr [[nodiscard]] int32_t SignedSaturate(Tinput val)
+static CL_NODISCARD int32_t SignedSaturate(Tinput val)
 {
     static_assert(intbits <= 31, "ssat does not support 32+ bits");
-#if defined(__ARM_ARCH_7EM__)
-    int32_t tmp;
-    asm volatile("ssat %0, %1, %2" : "=r"(tmp) : "I"(intbits), "r"(val));
-    return tmp;
-#else
-    static constexpr int32_t pos = (1UL << intbits) - 1;
-    static constexpr int32_t neg = -(1L << intbits);
+#ifdef CLARINOID_PLATFORM_X86
+    static constexpr int32_t pos = (1UL << intbits) - 1; // for 15 bits, 32767
+    static constexpr int32_t neg = -(1L << intbits);     // for 15 bits, -32768
     // int32_t xpos = pos;
     // int32_t xneg = neg;
     if (val < neg)
@@ -398,6 +395,10 @@ static constexpr [[nodiscard]] int32_t SignedSaturate(Tinput val)
     if (val > pos)
         return pos;
     return val;
+#else
+    int32_t tmp;
+    asm volatile("ssat %0, %1, %2" : "=r"(tmp) : "I"(intbits), "r"(val));
+    return tmp;
 #endif
 }
 
@@ -406,21 +407,21 @@ static constexpr [[nodiscard]] int32_t SignedSaturate(Tinput val)
 // TODO: check that intbits <= 31
 template <uint8_t intbits, typename Tinput> // template Tinput because it may be signed or unsigned and we want
                                             // conversions & full range to work seamlessly.
-static constexpr [[nodiscard]] uint32_t UnsignedSaturate(Tinput val)
+static CL_NODISCARD uint32_t UnsignedSaturate(Tinput val)
 {
     static_assert(intbits <= 32, "usat does not support >32 bits");
-#if defined(__ARM_ARCH_7EM__)
-    uint32_t tmp;
-    asm volatile("usat %0, %1, %2" : "=r"(tmp) : "I"(intbits), "r"(val));
-    return tmp;
-#else
+#ifdef CLARINOID_PLATFORM_X86
     static constexpr uint32_t pos = (1ULL << intbits) - 1;
-    auto xpos = pos;
+    // auto xpos = pos;
     if (val < 0)
         return 0;
     if (val > pos)
         return pos;
     return val;
+#else
+    uint32_t tmp;
+    asm volatile("usat %0, %1, %2" : "=r"(tmp) : "I"(intbits), "r"(val));
+    return tmp;
 #endif
 }
 
@@ -474,7 +475,7 @@ struct Fixed
 
     static_assert(TIntBits + TFractBits <= TypeInfo::MaxFractBits, "FP format too wide");
 
-    BaseType mValue;
+    const BaseType mValue;
 
     // value to multiply by to convert from floating-point.
     // std::min() is to avoid compiler warning about overflow.
@@ -491,6 +492,8 @@ struct Fixed
     static constexpr float kEpsilonF = 1.99f / float(gUnity);
     static constexpr double kEpsilonD = 1.99 / double(gUnity);
 
+    static constexpr MyT One{mScalingValue};
+
   private:
     explicit constexpr Fixed(BaseType v) : mValue(v)
     {
@@ -504,14 +507,14 @@ struct Fixed
         return MyT{v};
     }
 
-    explicit constexpr Fixed() : mValue(0)
+    constexpr Fixed() : mValue(0)
     {
         cacheDouble();
     }
 
     // construction from floating point types
     template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    explicit constexpr Fixed(const T &v) : mValue(static_cast<BaseType>(v * mScalingValue))
+    constexpr Fixed(const T &v) : mValue(static_cast<BaseType>(v * mScalingValue))
     {
         cacheDouble();
         performRuntimeChecks();
@@ -521,6 +524,9 @@ struct Fixed
     // is important.
 
     // where our type is greater, cast first.
+    // EXPLICIT is important here because truncation occurs easily.
+    // consider for example Sqrt(unit_value); if explicit, then callers wouldn't realize why the result is incorrect.
+    // meanwhile this ctor is invoked and truncates signbit & int part.
     template <uint8_t TOtherIntBits,
               uint8_t TOtherFractBits,
               typename TOtherBaseType,
@@ -568,25 +574,33 @@ struct Fixed
     }
 
     template <uint8_t intbits, typename ResultType = Fixed<intbits, kFractBits, BaseType>>
-    constexpr [[nodiscard]] ResultType SetIntBits() const
+    constexpr CL_NODISCARD ResultType SetIntBits() const
     {
         return ResultType{*this};
     }
 
     template <uint8_t fractbits, typename ResultType = Fixed<kIntBits, fractbits, BaseType>>
-    constexpr [[nodiscard]] ResultType SetFractBits() const
+    constexpr CL_NODISCARD ResultType SetFractBits() const
     {
         return ResultType{*this};
     }
 
-    template <typename TBaseType, typename ResultType = Fixed<kIntBits, kFractBits, TBaseType>>
-    constexpr [[nodiscard]] ResultType SetBaseType() const
+    template <typename TNewBaseType, typename ResultType = Fixed<kIntBits, kFractBits, TNewBaseType>>
+    constexpr CL_NODISCARD ResultType SetBaseType() const
     {
         return ResultType{*this};
+    }
+
+    template <uint8_t TIntBitsB,
+              uint8_t TFractBitsB = FPAutoFractBits3264<TIntBitsB>::value,
+              typename TBaseTypeB = FPAutoBaseType3264<TIntBitsB + TFractBitsB>>
+    constexpr CL_NODISCARD Fixed<TIntBitsB, TFractBitsB, TBaseTypeB> Convert() const
+    {
+        return Fixed<TIntBitsB, TFractBitsB, TBaseTypeB>{*this};
     }
 
     template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    constexpr [[nodiscard]] T ToFloatingPointType() const
+    constexpr CL_NODISCARD T ToFloatingPointType() const
     {
         return static_cast<T>(mValue) / mScalingValue;
     }
@@ -704,7 +718,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = OperandTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType Multiply(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType Multiply(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         typename TypeHelper::ResultBaseType ap = mValue;
         typename TypeHelper::ResultBaseType bp = b.mValue;
@@ -751,7 +765,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DivideOperandTypeHelper<TResultIntBits, TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType DivideSlow(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType DivideSlow(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         // operands are not commutable and the result has a greater range (whereas mul is 0-bitwidth*2, divide can go to
         // infinity). Even if we take a similar approach to multiplication (deducing optimal shift amounts by looking at
@@ -779,9 +793,8 @@ struct Fixed
     template <uint8_t TResultIntBits,
               typename TypeHelper = DivideOperandTypeHelper<TResultIntBits, kIntBits, kFractBits, BaseType>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType ReciprocalSlow() const
+    constexpr CL_NODISCARD ResultType ReciprocalSlow() const
     {
-        static constexpr MyT One{mScalingValue};
         return One.DivideSlow<TResultIntBits>(*this);
     }
 
@@ -790,7 +803,7 @@ struct Fixed
               uint8_t TFractBitsB,
               typename BaseTypeB,
               typename ResultType = Fixed<kIntBits, (TypeInfo::MaxFractBits - kIntBits), BaseType>>
-    constexpr [[nodiscard]] ResultType Modulo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType Modulo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         // this is simpler than divide, because the resulting result range is always less than the input range.
         // for this to work, they must be the same fractbits. so we need to find a unified format that fills the
@@ -822,13 +835,13 @@ struct Fixed
         return ResultType::FromFixed(intermediate);
     }
 
-    constexpr [[nodiscard]] MyT Floor() const
+    constexpr CL_NODISCARD MyT Floor() const
     {
         auto x = mValue & ~mFractMask;
         return MyT::FromFixed(x);
     }
 
-    constexpr [[nodiscard]] MyT Ceil() const
+    constexpr CL_NODISCARD MyT Ceil() const
     {
         BaseType t = mValue & ~mFractMask;
         t += gUnity;
@@ -836,19 +849,19 @@ struct Fixed
     }
 
     template <typename T = TBaseType, std::enable_if_t<std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] MyT Abs() const
+    constexpr CL_NODISCARD MyT Abs() const
     {
         return FromFixed(mValue < 0 ? -mValue : mValue);
     }
 
     template <typename T = TBaseType, std::enable_if_t<!std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] MyT Abs() const
+    constexpr CL_NODISCARD MyT Abs() const
     {
         return *this;
     }
 
     template <typename T = TBaseType, std::enable_if_t<std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] MyT Negate() const
+    constexpr CL_NODISCARD MyT Negate() const
     {
         return FromFixed(-mValue);
     }
@@ -874,7 +887,7 @@ struct Fixed
         static constexpr uint8_t ResultValueWidth = ResultTypeInfo::MaxFractBits;
         static constexpr uint8_t ResultIntBits =
             std::min<uint8_t>(ResultValueWidth - std::min<uint8_t>(ResultFractBits, ResultValueWidth),
-                              (TIntBitsB + kIntBits));
+                              std::max<uint8_t>(1, TIntBitsB) + std::max<uint8_t>(1, kIntBits));
         using ResultType = Fixed<ResultIntBits, ResultFractBits, ResultBaseType>;
     };
 
@@ -892,7 +905,7 @@ struct Fixed
               uint8_t TFractBitsB,
               typename BaseTypeB,
               typename ResultTypeHelper = IntegerDivideHelper<TIntBitsB, TFractBitsB, BaseTypeB>>
-    constexpr [[nodiscard]] typename ResultTypeHelper::ResultType DivideFast(
+    constexpr CL_NODISCARD typename ResultTypeHelper::ResultType DivideFast(
         const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         using ResultType = typename ResultTypeHelper::ResultType;
@@ -929,14 +942,14 @@ struct Fixed
         conditional<std::is_signed<BaseType>::value, MyT, typename UnsignedToSignedHelper::SignedType>::type;
 
   public:
-    constexpr [[nodiscard]] CorrespondingSignedType MakeSigned() const
+    constexpr CL_NODISCARD CorrespondingSignedType MakeSigned() const
     {
         return *this;
     }
 
     // for unsigned, we should make it signed.
     template <typename T = TBaseType, std::enable_if_t<!std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] CorrespondingSignedType Negate() const
+    constexpr CL_NODISCARD CorrespondingSignedType Negate() const
     {
         return MakeSigned().Negate();
     }
@@ -990,7 +1003,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType Subtract(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType Subtract(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         ResultType ta{*this};
         ResultType tb{b};
@@ -1003,7 +1016,7 @@ struct Fixed
               typename T = BaseType,
               bool TIsUnitType = IsUnitType,
               std::enable_if_t<!TIsUnitType, int> = 0>
-    constexpr [[nodiscard]] ResultType Fract() const
+    constexpr CL_NODISCARD ResultType Fract() const
     {
         // this will always be the same base type, just different intbits specification so optimal with elision.
         return ResultType{this->Subtract(Floor())};
@@ -1015,7 +1028,7 @@ struct Fixed
     template <typename T = BaseType,
               bool TIsUnitType = IsUnitType,
               std::enable_if_t<TIsUnitType && std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] MyT Fract() const
+    constexpr CL_NODISCARD MyT Fract() const
     {
         return FromFixed(mValue & mRemoveSignMask);
     }
@@ -1025,20 +1038,20 @@ struct Fixed
     template <typename T = BaseType,
               bool TIsUnitType = IsUnitType,
               std::enable_if_t<TIsUnitType && !std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] MyT Fract() const
+    constexpr CL_NODISCARD MyT Fract() const
     {
         return *this;
     }
 
     // unit types never have integral parts
     template <bool TIsUnitType = IsUnitType, std::enable_if_t<TIsUnitType, int> = 0>
-    constexpr [[nodiscard]] BaseType IntPart() const
+    constexpr CL_NODISCARD BaseType IntPart() const
     {
         return 0;
     }
 
     template <bool TIsUnitType = IsUnitType, std::enable_if_t<!TIsUnitType, int> = 0>
-    constexpr [[nodiscard]] BaseType IntPart() const
+    constexpr CL_NODISCARD BaseType IntPart() const
     {
         return mValue >> kFractBits;
     }
@@ -1051,7 +1064,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType Add(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType Add(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         ResultType ta{*this};
         ResultType tb{b};
@@ -1091,13 +1104,12 @@ struct Fixed
     };
 
   public:
-
     // Fast method (just change intbits & fractbits and use same value)
     template <uint8_t amt,
               typename Helper = ShiftHelper<amt>,
               typename ResultType = typename Helper::ShiftLeftResultType,
               typename std::enable_if<Helper::EnableFastShiftLeft, int>::type = 0>
-    constexpr [[nodiscard]] ResultType ShiftLeft() const
+    constexpr CL_NODISCARD ResultType ShiftLeft() const
     {
         return ResultType::FromFixed(mValue);
     }
@@ -1107,7 +1119,7 @@ struct Fixed
               typename Helper = ShiftHelper<amt>,
               typename ResultType = typename Helper::ShiftLeftResultType,
               typename std::enable_if<!Helper::EnableFastShiftLeft, int>::type = 0>
-    constexpr [[nodiscard]] ResultType ShiftLeft() const
+    constexpr CL_NODISCARD ResultType ShiftLeft() const
     {
         return ResultType::FromFixed(mValue << amt);
     }
@@ -1117,7 +1129,7 @@ struct Fixed
               typename Helper = ShiftHelper<amt>,
               typename ResultType = typename Helper::ShiftRightResultType,
               typename std::enable_if<Helper::EnableFastShiftRight, int>::type = 0>
-    constexpr [[nodiscard]] ResultType ShiftRight() const
+    constexpr CL_NODISCARD ResultType ShiftRight() const
     {
         return ResultType::FromFixed(mValue);
     }
@@ -1127,7 +1139,7 @@ struct Fixed
               typename Helper = ShiftHelper<amt>,
               typename ResultType = typename Helper::ShiftRightResultType,
               typename std::enable_if<!Helper::EnableFastShiftRight, int>::type = 0>
-    constexpr [[nodiscard]] ResultType ShiftRight() const
+    constexpr CL_NODISCARD ResultType ShiftRight() const
     {
         return ResultType::FromFixed(mValue >> amt);
     }
@@ -1142,7 +1154,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool IsGreaterThan(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool IsGreaterThan(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         ResultType ta{*this};
         ResultType tb{b};
@@ -1150,7 +1162,7 @@ struct Fixed
     }
 
     template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsGreaterThan(T b) const
+    constexpr CL_NODISCARD bool IsGreaterThan(T b) const
     {
         // float mul -> conv & int compare
         // conv -> float mul & float compare
@@ -1161,7 +1173,7 @@ struct Fixed
 
     // if you compare against an integral value, much easier. we shift off the fract bits and compare.
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsGreaterThan(T b) const
+    constexpr CL_NODISCARD bool IsGreaterThan(T b) const
     {
         return IntPart() > b;
     }
@@ -1171,7 +1183,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool IsGreaterThanOrEquals(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool IsGreaterThanOrEquals(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         ResultType ta{*this};
         ResultType tb{b};
@@ -1179,13 +1191,13 @@ struct Fixed
     }
 
     template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsGreaterThanOrEquals(T b) const
+    constexpr CL_NODISCARD bool IsGreaterThanOrEquals(T b) const
     {
         return ToFloatingPointType<T>() >= b;
     }
 
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsGreaterThanOrEquals(T b) const
+    constexpr CL_NODISCARD bool IsGreaterThanOrEquals(T b) const
     {
         return IntPart() >= b;
     }
@@ -1195,7 +1207,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool IsLessThan(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool IsLessThan(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         ResultType ta{*this};
         ResultType tb{b};
@@ -1203,13 +1215,13 @@ struct Fixed
     }
 
     template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsLessThan(T b) const
+    constexpr CL_NODISCARD bool IsLessThan(T b) const
     {
         return ToFloatingPointType<T>() < b;
     }
 
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsLessThan(T b) const
+    constexpr CL_NODISCARD bool IsLessThan(T b) const
     {
         return IntPart() < b;
     }
@@ -1219,7 +1231,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool IsLessThanOrEquals(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool IsLessThanOrEquals(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         ResultType ta{*this};
         ResultType tb{b};
@@ -1227,13 +1239,13 @@ struct Fixed
     }
 
     template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsLessThanOrEquals(T b) const
+    constexpr CL_NODISCARD bool IsLessThanOrEquals(T b) const
     {
         return ToFloatingPointType<T>() <= b;
     }
 
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsLessThanOrEquals(T b) const
+    constexpr CL_NODISCARD bool IsLessThanOrEquals(T b) const
     {
         return IntPart() <= b;
     }
@@ -1245,7 +1257,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool IsApproximatelyEqualTo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool IsApproximatelyEqualTo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         ResultType ta{*this};
         ResultType tb{b};
@@ -1255,7 +1267,7 @@ struct Fixed
     // when not specifying epsilon, use built-in epsilon
     // float operand
     template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsApproximatelyEqualTo(T b) const
+    constexpr CL_NODISCARD bool IsApproximatelyEqualTo(T b) const
     {
         auto ta = ToFloatingPointType<T>();
         auto tb = ta - b;            // sub
@@ -1267,7 +1279,7 @@ struct Fixed
     // when not specifying epsilon, use built-in epsilon
     // int operand
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsApproximatelyEqualTo(T b) const
+    constexpr CL_NODISCARD bool IsApproximatelyEqualTo(T b) const
     {
         // having any fractional part means it's not equal to an integer.
         // right-shift one to account for epsilon.
@@ -1289,7 +1301,7 @@ struct Fixed
               typename BaseTypeE,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool IsApproximatelyEqualTo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b,
+    constexpr CL_NODISCARD bool IsApproximatelyEqualTo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b,
                                                         const Fixed<TIntBitsE, TFractBitsE, BaseTypeE> &epsilon) const
     {
         auto t1 = this->Subtract(b);
@@ -1305,7 +1317,7 @@ struct Fixed
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType,
               std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool IsApproximatelyEqualTo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b,
+    constexpr CL_NODISCARD bool IsApproximatelyEqualTo(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b,
                                                         T epsilon) const
     {
         auto t1 = this->Subtract(b);
@@ -1325,8 +1337,9 @@ struct Fixed
               uint8_t TFractBitsC,
               typename BaseTypeC,
               uint8_t TResultIntBits = std::min(kIntBits, std::min(TIntBitsB, TIntBitsC)),
-              typename ResultType = typename Fixed<TResultIntBits, kFractBits, BaseType>>
-    constexpr [[nodiscard]] ResultType Clamp(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &lower,
+              typename ResultType = Fixed<TResultIntBits, kFractBits, BaseType>
+              >
+    constexpr CL_NODISCARD ResultType Clamp(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &lower,
                                              const Fixed<TIntBitsC, TFractBitsC, BaseTypeC> &upper) const
     {
         if (IsGreaterThan(upper))
@@ -1348,7 +1361,7 @@ struct Fixed
               uint8_t TResultFractBits = FPAutoFractBitsAny<TResultIntBits>::value,
               typename TResultBaseType = FPAutoBaseType<TIntBits + TFractBits>,
               typename ResultType = Fixed<TResultIntBits, TResultFractBits, TResultBaseType>>
-    constexpr [[nodiscard]] ResultType SignedSaturate() const
+    constexpr CL_NODISCARD ResultType SignedSaturate() const
     {
         // first shift to dest type.
         BaseType newVal = const_shift<TResultFractBits - kFractBits>(mValue);
@@ -1363,7 +1376,7 @@ struct Fixed
               uint8_t TResultFractBits = FPAutoFractBitsAny<TResultIntBits>::value,
               typename TResultBaseType = FPAutoBaseType<TIntBits + TFractBits>,
               typename ResultType = Fixed<TResultIntBits, TResultFractBits, TResultBaseType>>
-    constexpr [[nodiscard]] ResultType UnsignedSaturate() const
+    constexpr CL_NODISCARD ResultType UnsignedSaturate() const
     {
         // first shift to dest type.
         BaseType newVal = const_shift<TResultFractBits - kFractBits>(mValue);
@@ -1393,7 +1406,7 @@ struct Fixed
         -3212,  -2410,  -1608,  -804,   0};
 
     // calculates sin() with period 0-1 over a fixed point integral value.
-    inline [[nodiscard]] Fixed<0, 23, int32_t> Sine_2pi() const
+    inline CL_NODISCARD Fixed<0, 23, int32_t> Sine_2pi() const
     {
         /*
         *
@@ -1430,6 +1443,18 @@ struct Fixed
         return ResultType::FromFixed(t);
     }
 
+    // Calculates square root of a unit value. In other words, it cannot do sqrt of anything outside of [0,1)
+    // TRUNCATES any integer part.
+    // TRUNCATES sign bit.
+    // i considered only enabling this for unit types, but better to just give a clear name that's not a generic
+    // sqrt.
+    inline constexpr Fixed<0, 16, uint16_t> SqrtUnit() const
+    {
+        auto t = Fixed<0, 32>{*this};
+        using ReturnType = Fixed<0, 16, uint16_t>;
+        return ReturnType::FromFixed(sqrt_Q32_to_Q16(t.mValue));
+    }
+
     // non-mutating operators. only don't support any division operators.
     // *
     template <uint8_t TIntBitsB,
@@ -1437,7 +1462,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = OperandTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType operator*(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType operator*(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return Multiply(b);
     }
@@ -1447,21 +1472,21 @@ struct Fixed
               uint8_t TFractBitsB,
               typename BaseTypeB,
               typename ResultType = Fixed<kIntBits, (TypeInfo::MaxFractBits - kIntBits), BaseType>>
-    constexpr [[nodiscard]] ResultType operator%(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType operator%(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return Modulo(b);
     }
 
     // -
     template <typename T = TBaseType, std::enable_if_t<std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] MyT operator-() const
+    constexpr CL_NODISCARD MyT operator-() const
     {
         return Negate();
     }
 
     // for unsigned, we should make it signed.
     template <typename T = TBaseType, std::enable_if_t<!std::is_signed<T>::value, int> = 0>
-    constexpr [[nodiscard]] CorrespondingSignedType operator-() const
+    constexpr CL_NODISCARD CorrespondingSignedType operator-() const
     {
         return Negate();
     }
@@ -1472,7 +1497,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType operator+(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType operator+(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return Add(b);
     }
@@ -1483,7 +1508,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] ResultType operator-(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD ResultType operator-(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return Subtract(b);
     }
@@ -1494,13 +1519,13 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool operator>(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool operator>(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return IsGreaterThan(b);
     }
 
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool operator>(const T &b) const
+    constexpr CL_NODISCARD bool operator>(const T &b) const
     {
         return IsGreaterThan(b);
     }
@@ -1511,13 +1536,13 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool operator>=(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool operator>=(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return IsGreaterThanOrEquals(b);
     }
 
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool operator>=(const T &b) const
+    constexpr CL_NODISCARD bool operator>=(const T &b) const
     {
         return IsGreaterThanOrEquals(b);
     }
@@ -1527,13 +1552,13 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool operator<(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool operator<(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return IsLessThan(b);
     }
 
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool operator<(const T &b) const
+    constexpr CL_NODISCARD bool operator<(const T &b) const
     {
         return IsLessThan(b);
     }
@@ -1544,13 +1569,13 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool operator<=(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool operator<=(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return IsLessThanOrEquals(b);
     }
 
     template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    constexpr [[nodiscard]] bool operator<=(const T &b) const
+    constexpr CL_NODISCARD bool operator<=(const T &b) const
     {
         return IsLessThanOrEquals(b);
     }
@@ -1561,7 +1586,7 @@ struct Fixed
               typename BaseTypeB,
               typename TypeHelper = DifferenceTypeHelper<TIntBitsB, TFractBitsB, BaseTypeB>,
               typename ResultType = typename TypeHelper::ResultType>
-    constexpr [[nodiscard]] bool operator==(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
+    constexpr CL_NODISCARD bool operator==(const Fixed<TIntBitsB, TFractBitsB, BaseTypeB> &b) const
     {
         return IsApproximatelyEqualTo(b);
     }

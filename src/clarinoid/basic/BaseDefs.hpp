@@ -6,6 +6,17 @@
 namespace clarinoid
 {
 
+
+#ifdef CLARINOID_PLATFORM_X86
+    #define CL_NODISCARD [[nodiscard]]
+#else
+    // gcc handles nodiscard differently than msvc, for the worse.
+    // https://stackoverflow.com/questions/53391788/template-ignores-nodiscard-attribute
+    #define CL_NODISCARD
+#endif
+
+
+
 // clarinoid custom fonts will define these characters
 #define CHARSTR_DB "\x7f"
 #define CHARSTR_QEQ "\x80"

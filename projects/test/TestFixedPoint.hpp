@@ -9,6 +9,93 @@ namespace clarinoid
 
 void TestFixedPoint()
 {
+    {
+        // ValueBitsNeededForValue
+        TestEq(1, ValueBitsNeededForValue(0x0));
+        TestEq(1, ValueBitsNeededForValue(0x1));
+        TestEq(2, ValueBitsNeededForValue(0x2));
+        TestEq(32, ValueBitsNeededForValue(0xffffffff));
+        TestEq(33, ValueBitsNeededForValue(0x100000000));
+        TestEq(63, ValueBitsNeededForValue(0x7fffffffffffffffULL));
+        TestEq(64, ValueBitsNeededForValue(0xffffffffffffffffULL));
+
+        TestEq(1, ValueBitsNeededForValue(0x0));
+        TestEq(1, ValueBitsNeededForValue(-0x1));
+        TestEq(2, ValueBitsNeededForValue(-0x2));
+        TestEq(32, ValueBitsNeededForValue(-0xffffffffLL));
+        TestEq(33, ValueBitsNeededForValue(-0x100000000));
+        TestEq(63, ValueBitsNeededForValue(-0x7fffffffffffffffLL));
+        int __x = 1;
+    }
+
+    {
+        // StaticValueBitsNeeded
+        TestEq(1, StaticValueBitsNeeded<0x0>::value);
+        TestEq(1, StaticValueBitsNeeded<0x1>::value);
+        TestEq(2, StaticValueBitsNeeded<0x2>::value);
+        static constexpr int32_t x = 0x7fffffff;
+        TestEq(31, StaticValueBitsNeeded<x>::value);
+        int __x = 1;
+    }
+
+    {
+        // FillBits
+        TestEq(0, FillBits<0>());
+        TestEq(1, FillBits<1>());
+        TestEq(3, FillBits<2>());
+        TestEq(7, FillBits<3>());
+        TestEq(127, FillBits<7>());
+        TestEq(255, FillBits<8>());
+        TestEq(0x7fff, FillBits<15>());
+        TestEq(0xffff, FillBits<16>());
+        TestEq(0x7fffffff, FillBits<31>());
+        TestEq(0xffffffff, FillBits<32>());
+        TestEq(0x7fffffffffffffffULL, FillBits<63>());
+        TestEq(0xffffffffffffffffULL, FillBits<64>());
+
+        int __x = 1;
+    }
+
+    {
+        // SignedSaturate
+        TestEq(0x0, SignedSaturate<0>(0xffffffff));
+        TestEq(0x1, SignedSaturate<1>(0xffffffff));
+        TestEq(0x7f, SignedSaturate<7>(0xffffffff));
+        TestEq(0xff, SignedSaturate<8>(0xffffffff));
+        TestEq(-0x2, SignedSaturate<1>(-0x7fffffff));
+        TestEq(-0x80, SignedSaturate<7>(-0x7fffffff));
+        TestEq(-0x100, SignedSaturate<8>(-0x7fffffff));
+        TestEq(0x7fffffff, SignedSaturate<31>(0xffffffff));
+        int __x = 1;
+    }
+
+    {
+        // UnsignedSaturate
+        TestEq(0x0, UnsignedSaturate<0>(0xffffffff));
+        TestEq(0x1, UnsignedSaturate<1>(0xffffffff));
+        TestEq(0x7f, UnsignedSaturate<7>(0xffffffff));
+        TestEq(0xff, UnsignedSaturate<8>(0xffffffff));
+        TestEq(0x7fffffff, UnsignedSaturate<31>(0xffffffff));
+        int __x = 1;
+    }
+
+    {
+        // SqrtUnit
+        auto x1 = Fixed<8, 7, int16_t>(.5);
+        auto x2 = x1.SqrtUnit();
+        Test(x2.IsApproximatelyEqualTo(sqrtf(0.5f)));
+
+        auto x11 = Fixed<8, 7, int16_t>(7.5);
+        auto x21 = x11.SqrtUnit();
+        Test(x21.IsApproximatelyEqualTo(sqrtf(0.5f)));
+
+        auto x12 = Fixed<8, 7, int16_t>(-7.5);
+        auto x22 = x12.SqrtUnit();
+        Test(x22.IsApproximatelyEqualTo(sqrtf(0.5f)));
+        int __x = 1;
+    }
+
+
     //{
 
     //    Fixed<4, 12> a{-13.6f};
@@ -129,7 +216,8 @@ void TestFixedPoint()
         auto x31 = x11.DivideFast(x21);
         Test(x31.IsApproximatelyEqualTo(5.4));
 
-        Test(FixedInteger<9>().DivideFast(FixedInteger<2,2>()).IsApproximatelyEqualTo(4.5));
+        Test(FixedInteger<9>().DivideFast(FixedInteger<2, 2>()).IsApproximatelyEqualTo(4.5));
+        Test((Fixed<1,30>(1.25).DivideFast(Fixed<0,28>(.5)).IsApproximatelyEqualTo(2.5)));
         int x__ = 0;
     }
 
