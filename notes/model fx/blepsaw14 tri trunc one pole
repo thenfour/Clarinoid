@@ -1,5 +1,5 @@
 // - tri truncated., hard-sync, phase offset, and blep & blamp support on the wave & phase restart.
-
+// ... so why did i call it " trunc one pole?" no clue. it's more like a clipped triangle.
 
 desc:tenfour-tri sync blep
 slider1:2<.1,8,0.001>slave (%)

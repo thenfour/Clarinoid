@@ -1,4 +1,4 @@
-<REAPER_PROJECT 0.1 "6.69/win64" 1672346356
+<REAPER_PROJECT 0.1 "6.69/win64" 1677419374
   RIPPLE 0
   GROUPOVERRIDE 0 0 0
   AUTOXFADE 129
@@ -243,9 +243,9 @@
     MIDIOUT -1
     MAINSEND 1 0
     <FXCHAIN
-      WNDRECT 168 31 1102 464
-      SHOW 6
-      LASTSEL 5
+      WNDRECT 750 331 735 330
+      SHOW 7
+      LASTSEL 11
       DOCKED 0
       BYPASS 1 0 0
       <JS loser/StereoField ""
@@ -282,7 +282,7 @@
         ICAgICAgPFByZXNldERhdGEgU2V0dXA9IlNFVFVQX0EiPgogICAgICAgICAgICA8UGFyYW1ldGVycyBUeXBlPSJSZWFsV29ybGQiPjIxLjg3OTk5OTk5OTk5OTk5OTAw
         NSAtMTIgMCAqICogKiAqICogMCAwCjAgMSAxIDAgMCAwIDI1MCA8L1BhcmFtZXRlcnM+CiAgICAgICAgPC9QcmVzZXREYXRhPgogICAgICAgIDxQcmVzZXREYXRhIFNl
         dHVwPSJTRVRVUF9CIj4KICAgICAgICAgICAgPFBhcmFtZXRlcnMgVHlwZT0iUmVhbFdvcmxkIj4xIDAgMCAqICogKiAqICogMCAwCjAgMSAxIDAgMCAwIDI1MCA8L1Bh
-        cmFtZXRlcnM+CiAgICAgICAgPC9QcmVzZXREYXRhPgogICAgPC9QcmVzZXQ+CjwvUHJlc2V0Q2h1bmtYTUxUcmVlPgoABQCAPEJ5cGFzcyBWZXJzaW9uPSIxLjAiIEJ5
+        cmFtZXRlcnM+CiAgICAgICAgPC9QcmVzZXREYXRhPgogICAgPC9QcmVzZXQ+CjwvUHJlc2V0Q2h1bmtYTUxUcmVlPgoAAAAAPEJ5cGFzcyBWZXJzaW9uPSIxLjAiIEJ5
         cGFzcz0iMCIvPgoAAAAAAAAAAA==
         AEwxIEZ1bGwgUmVzZXQAEAAAAA==
       >
@@ -290,19 +290,26 @@
       FLOATPOS 0 0 0 0
       FXID {DC8D21C0-9F95-438B-A96E-AEF0F2F7AC86}
       WAK 0 0
-      BYPASS 1 0 0
+      BYPASS 0 0 0
       <JS tenfour/fmtest ""
         0.5 0 0.2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
       >
       FLOATPOS 386 71 756 227
       FXID {8E14664C-FBE8-4F84-9485-779CE06DFDAB}
       WAK 0 0
-      BYPASS 0 0 0
+      BYPASS 1 0 0
       <JS tenfour/pmblep01 ""
-        0.852 336.35 - - - - - - - 0.84 - - - - - - - - - 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        0.445 2120.564 - - - - - - - 0.25 - - - - - - - - - 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
       >
       FLOATPOS 0 0 0 0
       FXID {E0540F0A-F2CC-4996-BFB7-CB47572454AB}
+      WAK 0 0
+      BYPASS 0 0 0
+      <JS tenfour/onepolefilter ""
+        1 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+      >
+      FLOATPOS 0 0 0 0
+      FXID {9F47DE1C-825B-451E-A942-EADCB509EB1C}
       WAK 0 0
       BYPASS 1 0 0
       <JS filters/dc_remove ""
@@ -314,16 +321,16 @@
       BYPASS 0 0 0
       <VST "VST3: MOscilloscope (MeldaProduction)" MOscilloscope.vst3 0 "" 1016140057{4D656C646170726F4D4F73534D4F7353} ""
         GRGRPO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEAIAAAEAAAAAABAA
-        AAEAAAEAAAB42l3OsU4CQRCA4bnSTmpjYkJrQvZyR30DgYoFI0qu3budkI3jzrG7EKQw8SksfRffwYfwCSwhUlhY/8mXH/SorvUito5ZYisdRUrJ+XUE7IPKsK/Nfhpo
+        AAEAAAEAAAB42l3OsU4CQRCA4bnSTmpjYkJrQvZyR30DgYoFI0qu3budkI3jzrG7EKQw8SlsfRbfwYfwCSwhUlhY/8mXH/SorvUito5ZYisdRUrJ+XUE7IPKsK/Nfhpo
         syXfvoD9+LkosehVuKIQnXgoILsEnFiXJCzdgSAOh8VtWeaAY/EpCDOFOPGmYbKgAO94u3b+QYQbE8bCbLr4W46ozX42XYxY2qezpG5wdr/s2KVEZ1uBvQb99Zm9Vf9K
-        Dvbq+P74vVlVOJfwbNgdCBvZkQIFtaZEIeaAfx8weD0BUe5U7wAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAB42l3OsU4CQRCA4bnSTmpj
-        YkJrQvZyR30DgYoFI0qu3budkI3jzrG7EKQw8SksfRffwYfwCSwhUlhY/8mXH/SorvUito5ZYisdRUrJ+XUE7IPKsK/NfhposyXfvoD9+LkosehVuKIQnXgoILsEnFiX
+        Dvbq+P74vVlVOJfwbNgdCBvZkQIFtaZEIeaAfx8weD0BUrlU8AAAAQAAAEMG+HMK9u+/AQDtYjkAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAB42l3OsU4CQRCA4bnSTmpj
+        YkJrQvZyR30DgYoFI0qu3budkI3jzrG7EKQw8SlsfRbfwYfwCSwhUlhY/8mXH/SorvUito5ZYisdRUrJ+XUE7IPKsK/NfhposyXfvoD9+LkosehVuKIQnXgoILsEnFiX
         JCzdgSAOh8VtWeaAY/EpCDOFOPGmYbKgAO94u3b+QYQbE8bCbLr4W46ozX42XYxY2qezpG5wdr/s2KVEZ1uBvQb99Zm9Vf9KDvbq+P74vVlVOJfwbNgdCBvZkQIFtaZE
-        IeaAfx8weD0BUe5U7wAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAA
+        IeaAfx8weD0BUrlU8AAAAQAAAEMG+HMK9u+/AQDtYjkAAAAAAAAAAAAAAAAAAAAA
         ADAAEAAAAA==
       >
       PRESETNAME 0
-      FLOAT 1542 48 686 646
+      FLOAT 1542 48 680 618
       FXID {2F03297C-8D89-4787-8A65-7F97DA1DBB17}
       WAK 0 0
       BYPASS 0 0 0
@@ -385,7 +392,7 @@
         +n6qPgAAAEGfqqo+zcxMPZqZGUAAAAAA
         AAAQAAAA
       >
-      FLOAT 1555 625 1002 714
+      FLOAT 1555 625 996 686
       FXID {6C30B32B-EC7A-4585-8A8A-DB6496FCC4A2}
       WAK 0 0
       BYPASS 0 0 0
@@ -396,7 +403,7 @@
       FLOATPOS 1151 119 868 837
       FXID {4F0B49FD-5047-4DA5-BD57-8F033B61840C}
       WAK 0 0
-      BYPASS 0 0 0
+      BYPASS 1 0 0
       <JS tenfour/mute ""
         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
       >

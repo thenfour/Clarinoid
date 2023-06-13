@@ -95,6 +95,96 @@ void TestFixedPoint()
         int __x = 1;
     }
 
+    {
+        // CLZ (count leading zeros of 32-bit unsigned val)
+        TestEq(CLZ(0), 32);
+        TestEq(CLZ(1), 31);
+        TestEq(CLZ(2), 30);
+        TestEq(CLZ(3), 30);
+        TestEq(CLZ(0x7fffffff), 1);
+        TestEq(CLZ(0xffffffff), 0);
+        TestEq(CLZ(0x80000000), 0);
+        int __x = 1;
+    }
+
+    {
+        // FPAbs
+        TestEq(FPAbs(0), 0);
+        TestEq(FPAbs(-1), 1);
+        TestEq(FPAbs(1), 1);
+        int __x = 1;
+    }
+
+    // staticabs
+
+    {
+        // FPAutoBaseType
+        int __x = 1;
+    }
+
+    {
+        // FPAutoBaseType3264
+        int __x = 1;
+    }
+
+
+    {
+        // FPAutoBaseType32
+        int __x = 1;
+    }
+
+    {
+        // FPAutoFractBitsAny
+        int __x = 1;
+    }
+
+    {
+        // FPAutoFractBits3264
+        int __x = 1;
+    }
+
+   
+    {
+        // construction, bitness, types etc.
+        int __x = 1;
+    }
+
+    /*
+SetIntBits
+SetFractBits
+SetBaseType
+Convert
+Multiply, operator*
+DivideSlow
+ReciprocalSlow
+Modulo, operator%
+Floor
+Ceil
+Abs
+Negate, operator-
+DivideFast
+MakeSigned
+Subtract, operator-
+Fract
+IntPart
+Add, operator+
+ShiftLeft
+ShiftRight
+IsGreaterThan, operator>
+IsGreaterThanOrEquals, operator>=
+IsLessThan, operator<
+IsLessThanOrEquals, operator<=
+IsApproximatelyEqualTo, operator==
+Clamp
+SignedSaturate
+UnsignedSaturate
+Sine_2pi
+SqrtUnit, sqrt()
+Lerp
+FixedInteger
+
+    */
+
 
     //{
 
@@ -133,17 +223,6 @@ void TestFixedPoint()
     //    int x__ = 0;
     //}
 
-    {
-        auto a1 = FixedInteger<1>();
-        auto a2 = FixedInteger<0>();
-        auto a3 = FixedInteger<-1>();
-        auto a4 = FixedInteger<15>();
-        auto a5 = FixedInteger<16>();
-        auto a6 = FixedInteger<-15>();
-        auto a7 = FixedInteger<-16>();
-
-        int x__ = 0;
-    }
 
     // floor
     {
@@ -304,15 +383,6 @@ void TestFixedPoint()
 
     //    auto a3 = Fixed<2>(2.50);
     //    auto a4 = a3.UnsignedSaturate<1, 14>();
-
-    //    int x__ = 0;
-    //}
-
-    //// sqrt
-    //{
-    //    auto a3 = Fixed<0, 32>(.01);
-    //    auto a3r = Fixed<0, 32>(sqrtf(a3.ToFloat()));
-    //    //auto a4 = sqrt(a3);
 
     //    int x__ = 0;
     //}

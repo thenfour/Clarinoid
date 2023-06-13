@@ -105,6 +105,7 @@ struct EnvelopeNode : public AudioStream
 
     void noteOff()
     {
+        if (!IsPlaying()) return;
         AdvanceToStage(EnvelopeStage::Release);
     }
 
@@ -189,6 +190,7 @@ struct EnvelopeNode : public AudioStream
         {
             AdvanceToStage(nextStage);
         }
+        mLastOutputLevel = ret;
         return ret;
     }
 

@@ -492,8 +492,6 @@ struct Fixed
     static constexpr float kEpsilonF = 1.99f / float(gUnity);
     static constexpr double kEpsilonD = 1.99 / double(gUnity);
 
-    static constexpr MyT One{mScalingValue};
-
   private:
     explicit constexpr Fixed(BaseType v) : mValue(v)
     {
@@ -795,6 +793,7 @@ struct Fixed
               typename ResultType = typename TypeHelper::ResultType>
     constexpr CL_NODISCARD ResultType ReciprocalSlow() const
     {
+        MyT One{mScalingValue};
         return One.DivideSlow<TResultIntBits>(*this);
     }
 
