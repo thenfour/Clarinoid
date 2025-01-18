@@ -39,6 +39,30 @@ struct DefaultHud : IHudProvider
                1; // -1 because the bottom line of the font will not really be used.
     }
 
+    virtual String IHudProvider_GetHudTransientIndicator(bool fine, bool course, bool shift) override
+    {
+        String s("");
+        if (fine)
+        {
+            s += "F ";
+        }
+        if (course)
+        {
+            s += "C ";
+        }
+        if (shift)
+        {
+            s += "Sh ";
+        }
+        int pbN100100 = FloatRoundToInt(mpInfo->ISysInfoProvider_GetPitchBendN11() * 100);
+        if (pbN100100 != 0)
+        {
+            s += signbit(pbN100100) ? "-" : "+";
+            s += String(abs(pbN100100));
+        }
+        return s;
+    }
+
     virtual void IHudProvider_RenderHud(int16_t displayWidth, int16_t displayHeight) override
     {
         int16_t hudYStart = displayHeight - IHudProvider_GetHudHeight();

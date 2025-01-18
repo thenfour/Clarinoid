@@ -280,7 +280,7 @@ uint16_t ClampUint32ToUint16(uint32_t a)
 
 inline int FloatRoundToInt(float f)
 {
-    return (int)::floorf(f + 0.5f);
+    return static_cast<int>(std::roundf(f));
 }
 
 static constexpr float FloatEpsilon = 0.000001f;

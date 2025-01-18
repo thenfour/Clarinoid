@@ -18,7 +18,9 @@
 namespace clarinoid
 {
 
-static constexpr int TOAST_DURATION_MILLIS = 1700;
+static constexpr int TOAST_DURATION_MILLIS = 1600;
+
+
 
 //////////////////////////////////////////////////////////////////////
 struct _CCDisplay : IDisplay
@@ -171,21 +173,7 @@ struct _CCDisplay : IDisplay
         ClearState();
         mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
 
-        String s = "";
-
-        if (this->mInput->mModifierFine.CurrentValue())
-        {
-            s += "F ";
-        }
-        if (this->mInput->mModifierCourse.CurrentValue())
-        {
-            s += "C ";
-        }
-        if (this->mInput->mModifierShift.CurrentValue())
-        {
-            s += "Sh ";
-        }
-
+        String s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput->mModifierFine.CurrentValue(), this->mInput->mModifierCourse.CurrentValue(), this->mInput->mModifierShift.CurrentValue());
         if (s.length() > 0)
         {
             ClearState();
