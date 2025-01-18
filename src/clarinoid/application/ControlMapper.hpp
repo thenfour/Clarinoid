@@ -234,6 +234,9 @@ struct InputDelegator
     VirtualSwitch mMetronomeLEDToggle;
     VirtualSwitch mHarmPresetOnOffToggle;
     VirtualSwitch mDisplayFontToggle;
+    VirtualSwitch mEffectEnableToggle;
+
+    VirtualSwitch mSoftResetMpr121;
 
     void Init(AppSettings *appSettings, IInputSource *psrc)
     {
@@ -292,6 +295,9 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::BaseNoteHoldToggle, &mBaseNoteHoldToggle);
         RegisterFunction(ControlMapping::Function::MetronomeLEDToggle, &mMetronomeLEDToggle);
         RegisterFunction(ControlMapping::Function::HarmPresetOnOffToggle, &mHarmPresetOnOffToggle);
+
+        RegisterFunction(ControlMapping::Function::SoftResetMpr121, &mSoftResetMpr121);
+        RegisterFunction(ControlMapping::Function::EffectsEnabledToggle, &mEffectEnableToggle);
 
         RegisterFunction(ControlMapping::Function::DisplayFontToggle, &mDisplayFontToggle);
 

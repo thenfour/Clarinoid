@@ -57,11 +57,13 @@ struct ControlMapping
         HarmPreset,
         Transpose,
         PerfPreset,
+        EffectsEnabledToggle,
         LoopGo,
         LoopStop,
         BaseNoteHoldToggle,
         MetronomeLEDToggle,
         HarmPresetOnOffToggle,
+        SoftResetMpr121,
         COUNT,
     };
 
@@ -226,7 +228,7 @@ struct ControlMapping
         return {};
     }
 
-    static ControlMapping MomentaryMapping(PhysicalControl source, Function d)
+    static ControlMapping MomentaryMapping(PhysicalControl source, Function d, ModifierKey mod = ModifierKey::Any)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -236,6 +238,7 @@ struct ControlMapping
         ret.mValueArray[0] = 1.0f;
         ret.mValueArray[1] = -1.0f;
         ret.mFunction = d;
+        ret.mModifier = mod;
         return ret;
     }
 
@@ -256,7 +259,7 @@ struct ControlMapping
     static ControlMapping ButtonIncrementMapping(PhysicalControl source,
                                                  Function fn,
                                                  float delta,
-                                                 ModifierKey mod = ModifierKey::None)
+                                                 ModifierKey mod = ModifierKey::Any)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -269,7 +272,8 @@ struct ControlMapping
         return ret;
     }
 
-    static ControlMapping TypicalEncoderMapping(PhysicalControl source, Function d)
+    static ControlMapping TypicalEncoderMapping(PhysicalControl source, Function d,
+                                                 ModifierKey mod = ModifierKey::Any)
     {
         ControlMapping ret;
         ret.mSource = source;

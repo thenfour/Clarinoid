@@ -226,7 +226,9 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
         mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::DisplayFontToggle);
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKey::None);
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKey::Shift);
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct1, ControlMapping::Function::Oct1);
@@ -262,49 +264,39 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[++im] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
 
-        // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx2,
-        //     ControlMapping::Function::SynthPreset, 1.0f);
-        // mAppSettings.mControlMappings[++im] =
-        //     ControlMapping::ButtonIncrementMapping(PhysicalControl::LHx3, ControlMapping::Function::SynthPreset,
-        //     -1.0f);
-
-        //  NORMAL     SHIFT
-        // - synth+    synthB+
-        // - synth-    synthB-
-        //
-        // - harm+     perf+
-        // - harm-     perf-
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx1, ControlMapping::Function::SynthPresetA, 1.0f);
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::SynthPresetA, -1.0f);
+        // X Buttons ------------------------
 
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::SynthPresetB, 1.0f, ModifierKey::Shift);
+            PhysicalControl::RHx1, ControlMapping::Function::MenuScrollA, 1.0f);
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::SynthPresetB, -1.0f, ModifierKey::Shift);
+            PhysicalControl::RHx1, ControlMapping::Function::Transpose, 1.0f, ModifierKey::Shift);
 
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::ButtonIncrementMapping(PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::MenuScrollA, -1.0f);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::Transpose, -1.0f, ModifierKey::Shift);
 
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::SynthPresetA, 1.0f);
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
             PhysicalControl::RHx3, ControlMapping::Function::PerfPreset, 1.0f, ModifierKey::Shift);
+
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::SynthPresetA, -1.0f);
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
             PhysicalControl::RHx4, ControlMapping::Function::PerfPreset, -1.0f, ModifierKey::Shift);
 
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHx3, ControlMapping::Function::ModifierCourse);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::LHx3, ControlMapping::Function::HarmPreset, 1.0f);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::LHx3, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Shift);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::LHx2, ControlMapping::Function::HarmPreset, -1.0f);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::LHx2, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Shift);
 
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::ModifierFine);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHx2, ControlMapping::Function::ModifierShift);
-
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::LHx1, ControlMapping::Function::HarmPresetOnOffToggle);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::LHx1, ControlMapping::Function::ModifierShift, ModifierKey::Any);
 
         mDisplay.Init(&mAppSettings, &mInputDelegator, &mHud, allApps);
         mMusicalStateTask.Init();
@@ -322,38 +314,77 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
                                    }};
 
         NopTask nopTask;
-        TaskPlanner::TaskDeadline plan[] = {
-            // NB: run an update task before display tasks in order to initialize things on 1st frame.
-            // let's give musicalstatetask a period of <2900 micros, because that's the length of each audio buffer
-            // size.
-            // and a total plan length that gives the display about 60fps (1667 micros)
 
-            //
-            {TimeSpan::FromMicros(0), &mMusicalStateTask, "Mus1"},
-            {TimeSpan::FromMicros(0), &mLed, "Led1"},
+/*
+{
+  "totalTime": 24000,
+  "tasks": [
+    {
+      "shortName": "enc",
+      "codeSymbol": "mMusicalStateTask.mControlMapper->mEncoderTask",
+      "intervalMicros": 3000,
+      "delayMicros": 0
+    },
+    {
+      "shortName": "mus",
+      "codeSymbol": "mMusicalStateTask",
+      "intervalMicros": 3000,
+      "delayMicros": 0
+    },
+    {
+      "shortName": "dispA",
+      "codeSymbol": "mDisplayTask1",
+      "intervalMicros": 24000,
+      "delayMicros": 3000
+    },
+    {
+      "shortName": "dispB",
+      "codeSymbol": "mDisplayTask2",
+      "intervalMicros": 24000,
+      "delayMicros": 15000
+    },
+    {
+      "shortName": "led",
+      "codeSymbol": "mLed",
+      "intervalMicros": 12000,
+      "delayMicros": 0
+    },
+    {
+      "shortName": "nop",
+      "codeSymbol": "nopTask",
+      "intervalMicros": 24000,
+      "delayMicros": 24000
+    }
+  ]
+}
+*/
 
-            //
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mMusicalStateTask, "Mus2"},
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 1), &mDisplayTask1, "Display1"},
-
-            //
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 2), &mMusicalStateTask, "Mus3"},
-
-            //
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mMusicalStateTask, "Mus4"},
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 3), &mLed, "Led2"},
-
-            //
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 4), &mMusicalStateTask, "Mus5"},
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 4), &mDisplayTask2, "Display2"},
-
-            //
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 5), &mMusicalStateTask, "Mus5"},
-
-            //
-            {TimeSpan::FromMicros(MUSICALSTATE_TIMESLICE_PERIOD_MICROS * 6), &nopTask, "Nop"},
-        };
-
+TaskPlanner::TaskDeadline plan[] = {
+    { TimeSpan::FromMicros(0), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc1" },
+    { TimeSpan::FromMicros(0), &mMusicalStateTask, "mus1" },
+    { TimeSpan::FromMicros(0), &mLed, "led1" },
+    { TimeSpan::FromMicros(3000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc2" },
+    { TimeSpan::FromMicros(3000), &mMusicalStateTask, "mus2" },
+    { TimeSpan::FromMicros(3000), &mDisplayTask1, "dispA1" },
+    { TimeSpan::FromMicros(6000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc3" },
+    { TimeSpan::FromMicros(6000), &mMusicalStateTask, "mus3" },
+    { TimeSpan::FromMicros(9000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc4" },
+    { TimeSpan::FromMicros(9000), &mMusicalStateTask, "mus4" },
+    { TimeSpan::FromMicros(12000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc5" },
+    { TimeSpan::FromMicros(12000), &mMusicalStateTask, "mus5" },
+    { TimeSpan::FromMicros(12000), &mLed, "led2" },
+    { TimeSpan::FromMicros(15000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc6" },
+    { TimeSpan::FromMicros(15000), &mMusicalStateTask, "mus6" },
+    { TimeSpan::FromMicros(15000), &mDisplayTask2, "dispB1" },
+    { TimeSpan::FromMicros(18000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc7" },
+    { TimeSpan::FromMicros(18000), &mMusicalStateTask, "mus7" },
+    { TimeSpan::FromMicros(21000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc8" },
+    { TimeSpan::FromMicros(21000), &mMusicalStateTask, "mus8" },
+    { TimeSpan::FromMicros(24000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc9" },
+    { TimeSpan::FromMicros(24000), &mMusicalStateTask, "mus9" },
+    { TimeSpan::FromMicros(24000), &mLed, "led3" },
+    { TimeSpan::FromMicros(24000), &nopTask, "nop1" },
+};
         TaskPlanner tp = {plan};
 
         mTaskPlanner = &tp;

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Task Scheduler Helper</title>
+    <!-- React + ReactDOM (development builds) -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <!-- Babel for in-browser JSX compilation -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+      }
+      table {
+        border-collapse: collapse;
+        margin-bottom: 1em;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 0.5em;
+      }
+      input[type="text"], input[type="number"], textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        margin: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+      h2, h3 {
+        margin-top: 1.5em;
+        margin-bottom: 0.3em;
+      }
+      .flex-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .column {
+        flex: 1 1 300px;
+        min-width: 300px;
+      }
+      #output {
+        width: 100%;
+        height: 1000px;
+        font-family: monospace;
+      }
+      #configJson {
+        width: 100%;
+        height: 150px;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+      function App() {
+        // State: array of tasks, plus a totalTime used to expand each task's schedule
+        // Each task has: shortName, codeSymbol, intervalMicros, delayMicros
+        const [tasks, setTasks] = React.useState([
+          { shortName: 'Mus', codeSymbol: 'mMusicalStateTask', intervalMicros: 1000, delayMicros: 0 },
+          { shortName: 'Led', codeSymbol: 'mLed', intervalMicros: 2000, delayMicros: 500 },
+          { shortName: 'Enc', codeSymbol: 'mMusicalStateTask.mControlMapper->mEncoderTask', intervalMicros: 3000, delayMicros: 1000 },
+        ]);
+        const [totalTime, setTotalTime] = React.useState(15000); // how far we expand in microseconds
+
+        // This text area lets us copy/paste the entire config (tasks + totalTime)
+        const [configJson, setConfigJson] = React.useState('');
+
+        // Output automatically updated
+        const [output, setOutput] = React.useState('');
+
+        // Build schedule and produce the code string
+        const generateSchedule = (tasks, totalTime) => {
+          // 1. Build a list of occurrences for each task from t = delayMicros up to totalTime
+          //    stepping by the task's interval.
+          let occurrences = [];
+          tasks.forEach((task) => {
+            const { shortName, codeSymbol, intervalMicros, delayMicros } = task;
+            if (intervalMicros > 0) {
+              let time = delayMicros || 0;
+              let occurrenceIndex = 1;
+              while (time <= totalTime) {
+                occurrences.push({
+                  time,
+                  codeSymbol,
+                  label: shortName + occurrenceIndex
+                });
+                time += intervalMicros;
+                occurrenceIndex++;
+              }
+            }
+          });
+
+          // 2. Sort occurrences by time
+          occurrences.sort((a, b) => a.time - b.time);
+
+          // 3. Build the lines of code
+          const lines = occurrences.map(occ => {
+            return `    { TimeSpan::FromMicros(${occ.time}), &${occ.codeSymbol}, "${occ.label}" },`;
+          });
+
+          // 4. Wrap in final array. Also insert the JSON config as a code comment at the top.
+          const configObject = {
+            totalTime,
+            tasks
+          };
+          const configComment = JSON.stringify(configObject, null, 2);
+
+          let result = `/*\n${configComment}\n*/\n\n`;
+          result += `TaskPlanner::TaskDeadline plan[] = {\n`;
+          if (lines.length > 0) {
+            result += lines.join('\n') + '\n};\n';
+          } else {
+            result += '    // No tasks defined!\n};\n';
+          }
+          return result;
+        };
+
+        // Recompute schedule any time tasks or totalTime changes
+        React.useEffect(() => {
+          setOutput(generateSchedule(tasks, totalTime));
+        }, [tasks, totalTime]);
+
+        // -- Handlers: tasks table --
+        const handleAddTask = () => {
+          setTasks([...tasks, { shortName: '', codeSymbol: '', intervalMicros: 1000, delayMicros: 0 }]);
+        };
+
+        // Update a single field in a task row
+        const handleTaskChange = (index, field, value) => {
+          const updated = [...tasks];
+          if (field === 'intervalMicros' || field === 'delayMicros') {
+            updated[index][field] = parseInt(value, 10) || 0;
+          } else {
+            updated[index][field] = value;
+          }
+          setTasks(updated);
+        };
+
+        // Delete a task
+        const handleDeleteTask = (index) => {
+          const updated = tasks.filter((_, i) => i !== index);
+          setTasks(updated);
+        };
+
+        // -- Handlers: saving / loading JSON config --
+        const handleSaveToJson = () => {
+          const data = { totalTime, tasks };
+          setConfigJson(JSON.stringify(data, null, 2));
+        };
+
+        const handleLoadFromJson = () => {
+          try {
+            const obj = JSON.parse(configJson);
+            if (Array.isArray(obj.tasks) && typeof obj.totalTime === 'number') {
+              setTasks(obj.tasks);
+              setTotalTime(obj.totalTime);
+              alert('Config loaded successfully!');
+            } else {
+              alert('Invalid JSON structure. Must contain { totalTime, tasks: [...] }.');
+            }
+          } catch (e) {
+            alert('Error parsing JSON:\n' + e);
+          }
+        };
+
+        return (
+          <div>
+            <h1>React-Based Microcontroller Task Scheduler (Delay + JSON in Code)</h1>
+
+            <h2>1. Define Your Tasks</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Short Name</th>
+                  <th>Code Symbol</th>
+                  <th>Interval (µs)</th>
+                  <th>FPS</th>
+                  <th>X per schedule</th>
+                  <th>Startup Delay (µs)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.map((task, i) => (
+                  <tr key={i}>
+                    <td>
+                      <input
+                        type="text"
+                        value={task.shortName}
+                        onChange={(e) => handleTaskChange(i, 'shortName', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={task.codeSymbol}
+                        onChange={(e) => handleTaskChange(i, 'codeSymbol', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={task.intervalMicros}
+                        onChange={(e) => handleTaskChange(i, 'intervalMicros', e.target.value)}
+                      />
+                    </td>
+                    <td>                      
+                      { task.intervalMicros > 0 ? (1000000 / task.intervalMicros).toFixed(2) : "--"} fps
+                    </td>
+                    <td>
+                        <div>
+                      {
+                        // how many times this task will be executed over the total schedule time.
+                        task.intervalMicros > 0 ? Math.floor(totalTime / task.intervalMicros) : "--"
+                      } x
+                    </div>
+                    <div>
+                        {/* if it's not on an even boundary, what % of the tasks interval will be truncated? */}
+                        { task.intervalMicros > 0 ? `${(totalTime % task.intervalMicros) > 0 ? `⚠️${(totalTime % task.intervalMicros)} µs trunc` : `✅`} ` : "--"}
+                        </div>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={task.delayMicros}
+                        onChange={(e) => handleTaskChange(i, 'delayMicros', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <button onClick={() => handleDeleteTask(i)}>X</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button onClick={handleAddTask}>Add Task</button>
+
+            <div className="flex-row">
+              <div>
+                <h3>2. Set Total Time (µs)</h3>
+                <input
+                  type="number"
+                  value={totalTime}
+                  onChange={(e) => setTotalTime(parseInt(e.target.value, 10) || 0)}
+                />
+              </div>
+
+              <div className="column">
+                <h3>3. Save/Load Config as JSON</h3>
+                <textarea
+                  id="configJson"
+                  value={configJson}
+                  onChange={(e) => setConfigJson(e.target.value)}
+                  placeholder="Paste config JSON here, or generate..."
+                />
+                <div>
+                  <button onClick={handleSaveToJson}>Save to JSON</button>
+                  <button onClick={handleLoadFromJson}>Load from JSON</button>
+                </div>
+              </div>
+            </div>
+
+            <h3>4. Auto-Generated C++ Code</h3>
+            <textarea
+              id="output"
+              readOnly
+              value={output}
+              placeholder="Generated C++ code appears here..."
+            />
+          </div>
+        );
+      }
+
+      ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+  </body>
+</html>

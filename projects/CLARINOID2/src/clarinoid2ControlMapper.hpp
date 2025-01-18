@@ -12,6 +12,16 @@
 namespace clarinoid
 {
 
+    struct EncoderTask : ITask
+    {
+        CCEncoder<4 /* step increment each increment */, 2 /* pin #1 */, 3 /* pin #2 */> mEncoder;
+
+        virtual void TaskRun() override
+        {
+            mEncoder.Update();
+        }
+    };
+
 struct Clarinoid2ControlMapper : IInputSource, ITask
 {
     IDisplay *mDisplay = nullptr;
@@ -23,7 +33,6 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
 
     virtual void TaskRun() override
     {
-        mEncoder.Update();
         mMCP.Update();
         mLHMPR.Update();
         mRHMPR.Update();
@@ -36,7 +45,7 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
         mControlInfo[(size_t)PhysicalControl::Breath] = ControlInfo{"Breath", &mBreath};
         mControlInfo[(size_t)PhysicalControl::Pitch] = ControlInfo{"Pitch", &mPitchStrip};
 
-        mControlInfo[(size_t)PhysicalControl::Enc] = ControlInfo{"ENC", &mEncoder};
+        mControlInfo[(size_t)PhysicalControl::Enc] = ControlInfo{"ENC", &mEncoderTask.mEncoder};
 
         mControlInfo[(size_t)PhysicalControl::Back] = ControlInfo{"CPBack", &mMCP.mButtons[4]};
         mControlInfo[(size_t)PhysicalControl::Ok] = ControlInfo{"CPOk", &mMCP.mButtons[5]};
@@ -84,7 +93,9 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
         mDisplay->ShowToast(s);
     }
 
-    CCEncoder<4 /* step increment each increment */, 2 /* pin #1 */, 3 /* pin #2 */> mEncoder;
+
+    EncoderTask mEncoderTask;
+
     CCMPR121 mLHMPR = CCMPR121{&Wire1, 0x5A, 10};
     CCMPR121 mRHMPR = CCMPR121{&Wire1, 0x5B, 4};
     CCMCP23017 mMCP = CCMCP23017{&Wire1, 0x20};

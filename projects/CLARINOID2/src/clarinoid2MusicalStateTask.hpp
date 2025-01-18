@@ -26,6 +26,9 @@ struct MusicalStateTask : ITask
     SimpleMovingAverage<15> mMusicalStateTiming;
     SimpleMovingAverage<15> mSynthStateTiming;
 
+    SwitchControlReader mSoftResetMpr121Reader;
+    SwitchControlReader mEffectsEnableToggleReader;
+
     MusicalStateTask(IDisplay *pDisplay,
                      AppSettings *appSettings,
                      InputDelegator *input,
@@ -42,6 +45,21 @@ struct MusicalStateTask : ITask
 
     virtual void TaskRun() override
     {
+        mSoftResetMpr121Reader.Update(&mpInput->mSoftResetMpr121);
+        if (mSoftResetMpr121Reader.IsNewlyPressed())
+        {
+            mControlMapper->InputSource_ShowToast(String("Soft reset MPR121"));
+            mControlMapper->mLHMPR.SoftReset();
+            mControlMapper->mRHMPR.SoftReset();
+        }
+
+        mEffectsEnableToggleReader.Update(&mpInput->mEffectEnableToggle);
+        if (mEffectsEnableToggleReader.IsNewlyPressed())
+        {
+            mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable = !mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable;
+            mControlMapper->InputSource_ShowToast(String("Effects: ") + (mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable ? "ON" : "OFF"));
+        }
+
         {
             NoInterrupts ni;
             int m1 = micros();
