@@ -2,7 +2,7 @@
 #pragma once
 
 #define SIX_OCTAVE_SEQ_BUTTONS
-
+#define ENCODER_USE_INTERRUPTS
 #define CLARINOID_MIDI_INTERFACE Serial1
 
 namespace clarinoid
