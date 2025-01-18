@@ -107,6 +107,7 @@ struct CCEWIMusicalState
 
     int mLastPlayedNote = 0; // valid even when mLiveVoice is not.
     int mLiveOctave = 0; // whether or not you're playing a note, indicates the octave # you're fingering. used for LED indication.
+    int mPitchShiftDueToOctaveKeys = 0;
 
     int mDefaultBaseNote = 49; // C#2
     bool mHoldingBaseNote = false;
@@ -214,32 +215,39 @@ struct CCEWIMusicalState
         if (mInput->mKeyOct6.CurrentValue())
         {
             mLiveOctave = 5;
-            relativeNote += 36;
+            mPitchShiftDueToOctaveKeys = 36;
+            //relativeNote += 36;
         }
         else if (mInput->mKeyOct5.CurrentValue())
         {
+            mPitchShiftDueToOctaveKeys = 24;
             mLiveOctave = 4;
-            relativeNote += 24;
+            //relativeNote += 24;
         }
         else if (mInput->mKeyOct4.CurrentValue())
         {
             mLiveOctave = 3;
-            relativeNote += 12;
+            mPitchShiftDueToOctaveKeys = 12;
+            //relativeNote += 12;
         }
         else if (mInput->mKeyOct3.CurrentValue())
         {
             // no change. act like nothing is pressed.
+            mPitchShiftDueToOctaveKeys = 0;
         }
         else if (mInput->mKeyOct2.CurrentValue())
         {
             mLiveOctave = 1;
-            relativeNote -= 12;
+            mPitchShiftDueToOctaveKeys = -12;
+            //relativeNote -= 12;
         }
         else if (mInput->mKeyOct1.CurrentValue())
         {
             mLiveOctave = 0;
-            relativeNote -= 24;
+            mPitchShiftDueToOctaveKeys = -24;
+            //relativeNote -= 24;
         }
+        relativeNote += mPitchShiftDueToOctaveKeys;
 #endif
 
         // transpose
