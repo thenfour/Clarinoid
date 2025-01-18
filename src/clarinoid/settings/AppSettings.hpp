@@ -345,6 +345,11 @@ struct AppSettings
 
         InitChameleon(mPerformancePatches[i++]);
         InitClarinoidSoloPerf(mPerformancePatches[i++]); // 
+
+        // during a performance, FX are always disabled because they come from elsewhere (pedals, house, etc.)
+        // so if a cheeky restart is needed, disable them by default avoiding an extra keypress.
+        // at home, fx are fine so enable them manually.
+        mPerformancePatches[0].mMasterFXEnable = false;
     }
 };
 

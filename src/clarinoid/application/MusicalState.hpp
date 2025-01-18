@@ -17,17 +17,22 @@ int KeyStateToRelativeNote(bool LH1, bool LH2, bool LH3, bool LH4, bool RH1, boo
         relativeNote -= LH1 ? 2 : 1;
     if (LH3)
         relativeNote -= 2;
-    if (LH4)
+    if (LH4) {
+        // in general this is a +1 key, but we need to account for some special cases like trills.
         relativeNote += 1;
+    }
 
     if (RH1)
     {
         // naturally we expect this to be -2 (for G-F trill for example)
         // but we need to support Bb.
-        if (LH1 && !LH2)
+        if (LH1 && !LH2) // x-??|x???
             relativeNote -= 1;
-        else
+        else if (LH1 && LH2) { // ?x??|x???  <-- normal case of G-F for examlpe
             relativeNote -= 2;
+        } else { // enables Bb to C trill
+            relativeNote -= 1;
+        }
     }
     if (RH2)
         relativeNote -= 1;
@@ -43,10 +48,10 @@ int KeyStateToRelativeNote(bool LH1, bool LH2, bool LH3, bool LH4, bool RH1, boo
         // coming from G  1 010 -> 011 this is -1 F   <-- allows rh2 trill between F and F#
         // coming from F# 1 100 -> 101 this is -1 E
         // coming from F  1 110 -> 111 this is -2 D
-        relativeNote --;;
-        if (!LH4 && RH2 && RH1) { 
+        relativeNote --;
+        if (!LH4 && RH2 && RH1) { // no G#, with F and E keys down = -2 = E -> D
             relativeNote --;
-        } else if (LH4) {
+        } else if (LH4) { // enable G# -> F# trill by trilling LH4.
             relativeNote --;
         }
 
