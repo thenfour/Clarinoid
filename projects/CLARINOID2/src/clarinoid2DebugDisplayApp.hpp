@@ -490,9 +490,15 @@ struct MPR121ConfigApp : SettingsMenuApp
 
     Clarinoid2ControlMapper &mControls;
     MusicalStateTask &mMusicalStateTask;
+    ElectrodeStatusQuerier mLHStatusQuerier;
+    ElectrodeStatusQuerier mRHStatusQuerier;
 
-    MPR121ConfigApp(IDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst)
-        : SettingsMenuApp(d), mControls(c), mMusicalStateTask(mst)
+    MPR121ConfigApp(IDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst) :
+        SettingsMenuApp(d),
+        mControls(c),
+        mMusicalStateTask(mst),
+        mLHStatusQuerier(c.mLHMPR),
+        mRHStatusQuerier(c.mRHMPR)
     {
     }
 
@@ -512,63 +518,6 @@ struct MPR121ConfigApp : SettingsMenuApp
                        },
                        this},
         AlwaysEnabled};
-
-    TriggerSettingItem mTameOutliers = {
-        String("Tame outliers"),
-        [](void *cap) FLASHMEM {
-            auto *pThis = (MPR121ConfigApp *)cap;
-            // ASSUME that there's outliers.
-            // get all baselines, determine the biggest gap, and everything above the
-            // gap bring to the highest val below the gap.
-            pThis->InitElectrodeData();
-
-            // find the biggest gap, track the highest value below the gap.
-            electrodeData *modelElectrode = nullptr;
-            int biggestGap = 0;
-            int16_t baselineAtGapTop = 0;
-            for (size_t i = 0; i < SizeofStaticArray(pThis->mElectrodeData) - 1; ++i)
-            {
-                electrodeData &a = pThis->mElectrodeData[i];
-                electrodeData &b = pThis->mElectrodeData[i + 1];
-                auto gap = abs(a.mBaselineValue10bit - b.mBaselineValue10bit);
-                if (gap >= biggestGap)
-                {
-                    biggestGap = gap;
-                    if (a.mBaselineValue10bit < b.mBaselineValue10bit)
-                    {
-                        baselineAtGapTop =
-                            a.mBaselineValue10bit + gap / 2; // because baseline is live-tracking, don't just use b's
-                                                             // baseline val. you have to use something in the middle.
-                        modelElectrode = &a;
-                    }
-                    else
-                    {
-                        baselineAtGapTop = b.mBaselineValue10bit + gap / 2;
-                        modelElectrode = &b;
-                    }
-                }
-            }
-
-            // all electrodes which are above the gap, tame them.
-            for (auto &e : pThis->mElectrodeData)
-            {
-                if (e.mBaselineValue10bit < baselineAtGapTop)
-                    continue;
-                e.mDevice->SetBaseline(e.mElectrodeIndex, modelElectrode->mBaselineValue10bit);
-            }
-        },
-        this,
-        []() { return true; }};
-
-    TriggerSettingItem mCreateOutliers = {String("Create outlir"),
-                                          [](void *cap) FLASHMEM {
-                                              auto *pThis = (MPR121ConfigApp *)cap;
-                                              pThis->mControls.mLHMPR.mMpr121.SetBaseline(1, 880);
-                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(2, 880);
-                                              pThis->mControls.mRHMPR.mMpr121.SetBaseline(3, 1000);
-                                          },
-                                          this,
-                                          []() { return true; }};
 
     TriggerSettingItem mSoftReset = {String("Soft reset"),
                                      [](void *cap) FLASHMEM {
@@ -596,10 +545,10 @@ struct MPR121ConfigApp : SettingsMenuApp
                        this},
         AlwaysEnabled};
 
-    ISettingItem *mArray[5] = {
+    ISettingItem *mArray[3] = {
         &mTrackingEnabled, // does'nt work
-        &mCreateOutliers,
-        &mTameOutliers,     // doesn't work
+        //&mCreateOutliers,
+        //&mTameOutliers,     // doesn't work
         &mSoftReset,        // works well
         &mAutoconfigEnable, // it seems autoconfig is actually the best.
     };
@@ -610,62 +559,112 @@ struct MPR121ConfigApp : SettingsMenuApp
         return &mRootList;
     }
 
-    struct electrodeData
+    struct ElectrodeDisplayData
     {
-        MPR121::MPR121Device *mDevice = nullptr;
-        uint8_t mElectrodeIndex = 0;
-        int16_t mBaselineValue10bit = 0;
-        int16_t mFilteredData10bit = 0;
+        int baselineY;
+        int biggestThresholdYMin; // the Y pixel of the bigger of (release, touch) thresholds.
+        int biggestThresholdYMax;
+        int filteredY;
     };
 
-    electrodeData mElectrodeData[LHelectrodeCount + RHelectrodeCount];
-
-    void InitElectrodeData()
+    static ElectrodeDisplayData GetElectrodeDisplayData(float baselineValue01, float filteredData01, float touchThreshold01, float releaseThreshold01, int displayHeight)
     {
-        // LH
-        for (uint8_t i = 0; i < LHelectrodeCount; ++i)
-        {
-            mElectrodeData[i].mDevice = &mControls.mLHMPR.mMpr121;
-            mElectrodeData[i].mElectrodeIndex = i;
-            mElectrodeData[i].mBaselineValue10bit = mControls.mLHMPR.mMpr121.GetBaselineData(i);
-            mElectrodeData[i].mFilteredData10bit = mControls.mLHMPR.mMpr121.filteredData(i);
+        ElectrodeDisplayData data{};
+
+        // 1) Identify the largest threshold in 0–1 space
+        float maxThreshold = std::max(touchThreshold01, releaseThreshold01);
+        // Safety clamp
+        if (maxThreshold < 1e-6f) {
+            maxThreshold = 1e-6f;
         }
 
-        // RH
-        for (uint8_t i = 0; i < RHelectrodeCount; ++i)
-        {
-            mElectrodeData[LHelectrodeCount + i].mDevice = &mControls.mRHMPR.mMpr121;
-            mElectrodeData[LHelectrodeCount + i].mElectrodeIndex = i;
-            mElectrodeData[LHelectrodeCount + i].mBaselineValue10bit = mControls.mRHMPR.mMpr121.GetBaselineData(i);
-            mElectrodeData[LHelectrodeCount + i].mFilteredData10bit = mControls.mRHMPR.mMpr121.filteredData(i);
+        // 2) Compute initial minVal and maxVal around the baseline ± maxThreshold
+        float baselineVal = baselineValue01;
+        float filteredVal = filteredData01;
+
+        float minVal = baselineVal - maxThreshold * 2;
+        float maxVal = baselineVal + maxThreshold * 2;
+
+        // 3) Ensure the filtered value also fits in our range
+        minVal = std::min(minVal, filteredVal);
+        maxVal = std::max(maxVal, filteredVal);
+
+        // Optionally, you might also consider global clamp to [0..1], if the data 
+        // never meaningfully goes negative or above 1. But that's project-dependent:
+        // minVal = std::max(0.0f, minVal);
+        // maxVal = std::min(1.0f, maxVal);
+
+        // 4) Prevent zero or negative range
+        float range = maxVal - minVal;
+        if (range < 1e-6f) {
+            range = 1e-6f; // avoid divide-by-zero
         }
+
+        // 5) Compute scale so the entire minVal..maxVal maps into [0..displayHeight]
+        // Typically, Y=0 is at the top, Y increases downward, so we do:
+        // Y = displayHeight - (value - minVal)*scale
+        float scale = static_cast<float>(displayHeight) / range;
+
+        // Helper lambda to map our 0–1 values into the display’s Y coords
+        auto valueToY = [&](float val) -> int {
+            float y = static_cast<float>(displayHeight)
+                    - ((val - minVal) * scale);
+            // Round and cast to int
+            return static_cast<int>(std::lround(y));
+        };
+
+        // 6) Calculate each display Y value
+        data.baselineY            = valueToY(baselineVal);
+        data.biggestThresholdYMin = valueToY(baselineVal - maxThreshold);
+        data.biggestThresholdYMax = valueToY(baselineVal + maxThreshold);
+        data.filteredY            = valueToY(filteredVal);
+
+        // 7) Optional: clamp them all to [0, displayHeight-1] to avoid out-of-bounds
+        auto clampY = [&](int y) {
+            return std::max(0, std::min(y, displayHeight - 1));
+        };
+        data.baselineY            = clampY(data.baselineY);
+        data.biggestThresholdYMin = clampY(data.biggestThresholdYMin);
+        data.biggestThresholdYMax = clampY(data.biggestThresholdYMax);
+        data.filteredY            = clampY(data.filteredY);
+
+        return data;
+    }
+
+    static void DrawElectrode(IDisplay &display, int x, const ElectrodeDisplayData &data)
+    {
+        display.drawFastVLine(x+1, data.biggestThresholdYMax, abs(data.biggestThresholdYMax - data.biggestThresholdYMin), WHITE);
+        display.drawFastHLine(x, data.baselineY, 3, WHITE);
+        display.drawFastHLine(x, data.biggestThresholdYMin, 3, WHITE);
+        display.drawFastHLine(x, data.biggestThresholdYMax, 3, WHITE);
+
+        display.FillRect2Pt(x + 3, data.filteredY, x + 6, data.baselineY, WHITE);
     }
 
     virtual void RenderFrontPage()
     {
-        InitElectrodeData();
-        size_t mKeyCount = SizeofStaticArray(mElectrodeData);
+        static constexpr size_t mKeyCount = LHelectrodeCount + RHelectrodeCount;
+        ElectrodeQueryResult electrodeData[mKeyCount];
+        for (int i = 0; i < mLHStatusQuerier.mDevice.mElectrodesInUse; ++i)
+        {
+            electrodeData[i] = mLHStatusQuerier.mElectrodeData[i];
+        }
+        // append rh
+        for (int i = 0; i < mRHStatusQuerier.mDevice.mElectrodesInUse; ++i)
+        {
+            electrodeData[LHelectrodeCount + i] = mRHStatusQuerier.mElectrodeData[i];
+        }
+
+        int width = mDisplay.width() / mKeyCount;
+        int clientHeight = mDisplay.GetClientHeight() - 8;
 
         for (size_t i = 0; i < mKeyCount; ++i)
         {
-            int filteredVal = mElectrodeData[i].mFilteredData10bit; // mDevice.mMpr121.filteredData(i + mKeyIndexBegin);
-            int baselineVal =
-                mElectrodeData[i].mBaselineValue10bit; // mDevice.mMpr121.GetBaselineData(i + mKeyIndexBegin);
-
-            int x = mDisplay.width() * i / mKeyCount;        // 128 * 5 / 10 =
-            int x2 = mDisplay.width() * (i + 1) / mKeyCount; // 128 * 5 / 10 =
-            int width = x2 - x;
-            mDisplay.setCursor(x, 0);
-            mDisplay.print(IndexToChar(i));
-
-            mDisplay.drawFastVLine(x, 0, 4, WHITE);
-            int filteredY = (int)mDisplay.height() * filteredVal / 1024; // 10 bit val scaled to height.
-            int baselineY = (int)mDisplay.height() * baselineVal / 1024; // 10 bit val scaled to height.
-
-            mDisplay.SetTextSolid(false);
-            mDisplay.drawFastHLine(x, baselineY, width, WHITE);
-            mDisplay.SetTextSolid(true);
-            mDisplay.drawFastHLine(x, filteredY, width, WHITE);
+            ElectrodeQueryResult& item = electrodeData[i];
+            ElectrodeDisplayData displayData = GetElectrodeDisplayData(item.mBaselineValue01, item.mFilteredData01, item.mTouchThreshold01, item.mReleaseThreshold01, clientHeight);
+            DrawElectrode(mDisplay, width * i, displayData);
+            mDisplay.setCursor(width * i, clientHeight);
+            mDisplay.print(item.mIsTouched ? "X" : " ");
         }
 
         SettingsMenuApp::RenderFrontPage();

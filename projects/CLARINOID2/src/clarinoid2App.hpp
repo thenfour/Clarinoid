@@ -322,37 +322,49 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     {
       "shortName": "enc",
       "codeSymbol": "mMusicalStateTask.mControlMapper->mEncoderTask",
-      "intervalMicros": 3000,
+      "intervalMicros": 3001,
       "delayMicros": 0
     },
     {
       "shortName": "mus",
       "codeSymbol": "mMusicalStateTask",
-      "intervalMicros": 3000,
+      "intervalMicros": 3001,
       "delayMicros": 0
     },
     {
       "shortName": "dispA",
       "codeSymbol": "mDisplayTask1",
-      "intervalMicros": 24000,
+      "intervalMicros": 24001,
       "delayMicros": 3000
     },
     {
       "shortName": "dispB",
       "codeSymbol": "mDisplayTask2",
-      "intervalMicros": 24000,
+      "intervalMicros": 24001,
       "delayMicros": 15000
     },
     {
       "shortName": "led",
       "codeSymbol": "mLed",
-      "intervalMicros": 12000,
+      "intervalMicros": 12001,
       "delayMicros": 0
+    },
+    {
+      "shortName": "lhq",
+      "codeSymbol": "mMPR121ConfigApp.mLHStatusQuerier",
+      "intervalMicros": 4001,
+      "delayMicros": 0
+    },
+    {
+      "shortName": "rhq",
+      "codeSymbol": "mMPR121ConfigApp.mRHStatusQuerier",
+      "intervalMicros": 4001,
+      "delayMicros": 2000
     },
     {
       "shortName": "nop",
       "codeSymbol": "nopTask",
-      "intervalMicros": 24000,
+      "intervalMicros": 24001,
       "delayMicros": 24000
     }
   ]
@@ -363,28 +375,40 @@ TaskPlanner::TaskDeadline plan[] = {
     { TimeSpan::FromMicros(0), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc1" },
     { TimeSpan::FromMicros(0), &mMusicalStateTask, "mus1" },
     { TimeSpan::FromMicros(0), &mLed, "led1" },
-    { TimeSpan::FromMicros(3000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc2" },
-    { TimeSpan::FromMicros(3000), &mMusicalStateTask, "mus2" },
+    { TimeSpan::FromMicros(0), &mMPR121ConfigApp.mLHStatusQuerier, "lhq1" },
+    { TimeSpan::FromMicros(2000), &mMPR121ConfigApp.mRHStatusQuerier, "rhq1" },
     { TimeSpan::FromMicros(3000), &mDisplayTask1, "dispA1" },
-    { TimeSpan::FromMicros(6000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc3" },
-    { TimeSpan::FromMicros(6000), &mMusicalStateTask, "mus3" },
-    { TimeSpan::FromMicros(9000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc4" },
-    { TimeSpan::FromMicros(9000), &mMusicalStateTask, "mus4" },
-    { TimeSpan::FromMicros(12000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc5" },
-    { TimeSpan::FromMicros(12000), &mMusicalStateTask, "mus5" },
-    { TimeSpan::FromMicros(12000), &mLed, "led2" },
-    { TimeSpan::FromMicros(15000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc6" },
-    { TimeSpan::FromMicros(15000), &mMusicalStateTask, "mus6" },
+    { TimeSpan::FromMicros(3001), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc2" },
+    { TimeSpan::FromMicros(3001), &mMusicalStateTask, "mus2" },
+    { TimeSpan::FromMicros(4001), &mMPR121ConfigApp.mLHStatusQuerier, "lhq2" },
+    { TimeSpan::FromMicros(6001), &mMPR121ConfigApp.mRHStatusQuerier, "rhq2" },
+    { TimeSpan::FromMicros(6002), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc3" },
+    { TimeSpan::FromMicros(6002), &mMusicalStateTask, "mus3" },
+    { TimeSpan::FromMicros(8002), &mMPR121ConfigApp.mLHStatusQuerier, "lhq3" },
+    { TimeSpan::FromMicros(9003), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc4" },
+    { TimeSpan::FromMicros(9003), &mMusicalStateTask, "mus4" },
+    { TimeSpan::FromMicros(10002), &mMPR121ConfigApp.mRHStatusQuerier, "rhq3" },
+    { TimeSpan::FromMicros(12001), &mLed, "led2" },
+    { TimeSpan::FromMicros(12003), &mMPR121ConfigApp.mLHStatusQuerier, "lhq4" },
+    { TimeSpan::FromMicros(12004), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc5" },
+    { TimeSpan::FromMicros(12004), &mMusicalStateTask, "mus5" },
+    { TimeSpan::FromMicros(14003), &mMPR121ConfigApp.mRHStatusQuerier, "rhq4" },
     { TimeSpan::FromMicros(15000), &mDisplayTask2, "dispB1" },
-    { TimeSpan::FromMicros(18000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc7" },
-    { TimeSpan::FromMicros(18000), &mMusicalStateTask, "mus7" },
-    { TimeSpan::FromMicros(21000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc8" },
-    { TimeSpan::FromMicros(21000), &mMusicalStateTask, "mus8" },
-    { TimeSpan::FromMicros(24000), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc9" },
-    { TimeSpan::FromMicros(24000), &mMusicalStateTask, "mus9" },
-    { TimeSpan::FromMicros(24000), &mLed, "led3" },
+    { TimeSpan::FromMicros(15005), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc6" },
+    { TimeSpan::FromMicros(15005), &mMusicalStateTask, "mus6" },
+    { TimeSpan::FromMicros(16004), &mMPR121ConfigApp.mLHStatusQuerier, "lhq5" },
+    { TimeSpan::FromMicros(18004), &mMPR121ConfigApp.mRHStatusQuerier, "rhq5" },
+    { TimeSpan::FromMicros(18006), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc7" },
+    { TimeSpan::FromMicros(18006), &mMusicalStateTask, "mus7" },
+    { TimeSpan::FromMicros(20005), &mMPR121ConfigApp.mLHStatusQuerier, "lhq6" },
+    { TimeSpan::FromMicros(21007), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc8" },
+    { TimeSpan::FromMicros(21007), &mMusicalStateTask, "mus8" },
+    { TimeSpan::FromMicros(22005), &mMPR121ConfigApp.mRHStatusQuerier, "rhq6" },
     { TimeSpan::FromMicros(24000), &nopTask, "nop1" },
 };
+
+
+
         TaskPlanner tp = {plan};
 
         mTaskPlanner = &tp;

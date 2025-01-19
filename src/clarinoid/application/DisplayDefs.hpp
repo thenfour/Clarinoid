@@ -49,6 +49,7 @@ struct IDisplay
     virtual RectI GetClientRect() const = 0;
 
     // CCAdafruitSSD1306
+    virtual void FillRect2Pt(int16_t p1x, int16_t p1y, int16_t p2x, int16_t p2y, uint16_t color) = 0;
     virtual void SetClipRect(int left, int top, int right, int bottom) = 0;
     virtual void SetTextSolid(bool b) = 0;
     virtual bool GetTextSolid() = 0;

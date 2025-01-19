@@ -324,6 +324,10 @@ static float Clamp(float x, float low, float hi)
         return hi;
     return x;
 }
+static float Clamp01(float x)
+{
+    return Clamp(x, 0.0f, 1.0f);
+}
 
 template <typename T>
 static T ClampInclusive(T x, T minInclusive, T maxInclusive)

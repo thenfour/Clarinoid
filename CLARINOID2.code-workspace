@@ -70,7 +70,24 @@
 			"*.tcc": "cpp",
 			"cinttypes": "cpp",
 			"optional": "cpp",
-			"complex": "cpp"
+			"complex": "cpp",
+			"atomic": "cpp",
+			"bit": "cpp",
+			"charconv": "cpp",
+			"compare": "cpp",
+			"concepts": "cpp",
+			"ctime": "cpp",
+			"format": "cpp",
+			"locale": "cpp",
+			"numbers": "cpp",
+			"ranges": "cpp",
+			"span": "cpp",
+			"xlocbuf": "cpp",
+			"xlocmes": "cpp",
+			"xlocmon": "cpp",
+			"xloctime": "cpp",
+			"memory_resource": "cpp",
+			"string_view": "cpp"
 		}
 	}
 }

@@ -390,6 +390,17 @@ struct _CCDisplay : IDisplay
         return ret;
     }
 
+    virtual void FillRect2Pt(int16_t p1x, int16_t p1y, int16_t p2x, int16_t p2y, uint16_t color) override
+    {
+        // account for the fact that p1 and p2 may not be in the correct order.
+        int16_t x1 = min(p1x, p2x);
+        int16_t x2 = max(p1x, p2x);
+        int16_t y1 = min(p1y, p2y);
+        int16_t y2 = max(p1y, p2y);
+        mDisplay.fillRect(x1, y1, x2 - x1, y2 - y1, color);
+    }
+
+
     // required for IDisplay.
     virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override
     {

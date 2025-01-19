@@ -2,7 +2,11 @@
 #pragma once
 
 #define SIX_OCTAVE_SEQ_BUTTONS
+
+// when the encoder is not in use this doesn't cause any perf issues.
+// when the encoder IS in use, it's more important that it's responsive and accurate than the perf of other tasks. so use interrupts.
 #define ENCODER_USE_INTERRUPTS
+
 #define CLARINOID_MIDI_INTERFACE Serial1
 
 namespace clarinoid
