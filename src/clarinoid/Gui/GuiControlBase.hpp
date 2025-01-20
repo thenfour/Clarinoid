@@ -100,10 +100,16 @@ struct GuiLabelControl : IGuiControl
 {
     bool mClip = false;
     String mText;
+    cc::function<String(void*)>::ptr_t mTextFn = nullptr;
+    void* mCapture = nullptr;
+
+    String getText() const
+    {
+        return mTextFn ? mTextFn(mCapture) : mText;
+    }
 
     GuiLabelControl(int page, RectI clipBounds, const String &s)
-        : mClip(true), //
-          mText(s)
+        : mClip(true)
     {
         IGuiControl::mPage = page;
         IGuiControl::mBounds = clipBounds;
@@ -120,6 +126,17 @@ struct GuiLabelControl : IGuiControl
         IGuiControl::mIsSelectable = false;
     }
 
+    GuiLabelControl(int page, PointI pt, cc::function<String(void*)>::ptr_t textGetter, void* capture)
+        : mClip(false), //
+          mTextFn(textGetter),
+            mCapture(capture)
+    {
+        IGuiControl::mPage = page;
+        IGuiControl::mBounds =
+            RectI::Construct(pt, 1, 1); // since we don't clip text, don't require specifying width/height.
+        IGuiControl::mIsSelectable = false;
+    }
+
     virtual void IGuiControl_Render(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
     {
         display.ClearState();
@@ -129,12 +146,13 @@ struct GuiLabelControl : IGuiControl
         {
             display.SetClipRect(mBounds);
         }
-        display.print(mText);
+        display.print(getText());
     }
     virtual void IGuiControl_Update(bool isSelected, bool isEditing, DisplayApp &app, IDisplay &display) override
     {
     }
 };
+
 
 // ---------------------------------------------------------------------------------------
 // for rendering the GUI control, tooltip area, etc, this is a common

@@ -195,7 +195,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mMPR121ConfigApp,
         };
 
-        mInputDelegator.Init(&mAppSettings, &mControlMapper);
+        mInputDelegator.Init(&mAppSettings, &mControlMapper, &mMusicalStateTask.mMetronome);
 
         mAppSettings.mControlMappings[breathMappingIndex] =
             ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.102f, 0.35f);
@@ -225,10 +225,6 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK);
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKey::None);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKey::Shift);
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct1, ControlMapping::Function::Oct1);
@@ -263,40 +259,82 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
         mAppSettings.mControlMappings[++im] =
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA);
+        // 17 base mappings
 
         // X Buttons ------------------------
 
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::MenuScrollA, 1.0f);
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::Transpose, 1.0f, ModifierKey::Shift);
-
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::MenuScrollA, -1.0f);
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::Transpose, -1.0f, ModifierKey::Shift);
-
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx3, ControlMapping::Function::SynthPresetA, 1.0f);
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx3, ControlMapping::Function::PerfPreset, 1.0f, ModifierKey::Shift);
-
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx4, ControlMapping::Function::SynthPresetA, -1.0f);
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx4, ControlMapping::Function::PerfPreset, -1.0f, ModifierKey::Shift);
-
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::LHx3, ControlMapping::Function::HarmPreset, 1.0f);
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
-            PhysicalControl::LHx3, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Shift);
-        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::LHx2, ControlMapping::Function::HarmPreset, -1.0f);
-        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
-            PhysicalControl::LHx2, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Shift);
+            PhysicalControl::Back, ControlMapping::Function::ModifierTranspose);
 
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
             PhysicalControl::LHx1, ControlMapping::Function::ModifierShift, ModifierKey::Any);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::LHx1, ControlMapping::Function::ModifierFine, ModifierKey::Any);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::LHx1, ControlMapping::Function::ModifierHarm, ModifierKey::Any);
+
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::LHx2, ControlMapping::Function::ModifierKey, ModifierKey::Any);
+
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::LHx3, ControlMapping::Function::ModifierTempo, ModifierKey::Any);
+
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKey::None);
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKey::Shift);
+        // 25 so far. + 20 = 45 total mappings.
+
+        // RH buttons
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::SynthPresetA, -1.0f, ModifierKey::None);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::SynthPresetA, 1.0f, ModifierKey::None);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::MenuScrollA, -1.0f, ModifierKey::None);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::MenuScrollA, 1.0f, ModifierKey::None);
+
+        // HARM
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f, ModifierKey::Harm);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f, ModifierKey::Harm);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Harm);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Harm);
+
+        // KEY
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::GlobalKeyRoot, -1.0f, ModifierKey::Key);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::GlobalKeyRoot, 1.0f, ModifierKey::Key);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::GlobalKeyFlavor, -1.0f, ModifierKey::Key);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::GlobalKeyFlavor, 1.0f, ModifierKey::Key);
+
+        // TEMPO
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::GlobalTempo, -3.0f, ModifierKey::Tempo);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::GlobalTempo, 3.0f, ModifierKey::Tempo);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo);
+
+        // TRANSPOSE
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::Transpose, -1.0f, ModifierKey::Transpose);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::Transpose, 1.0f, ModifierKey::Transpose);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::TransposeReset, ModifierKey::Transpose);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::TransposeReset, ModifierKey::Transpose);
+
 
         mDisplay.Init(&mAppSettings, &mInputDelegator, &mHud, allApps);
         mMusicalStateTask.Init();

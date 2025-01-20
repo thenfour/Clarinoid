@@ -99,7 +99,8 @@ struct CCEWIMusicalState
     SwitchControlReader mHoldBasePitchReader;
 
     SwitchControlReader mMetronomeLEDToggleReader;
-
+    SwitchControlReader mTransposeResetReader;
+    SwitchControlReader mMetronomeEnableToggleReader;
     SwitchControlReader mHarmPresetOnOffToggleReader;
 
     int nUpdates = 0;
@@ -342,6 +343,22 @@ struct CCEWIMusicalState
                                              ((mAppSettings->mMetronomeLED) ? "on" : "off"));
         }
 
+        mMetronomeEnableToggleReader.Update(&mInput->mMetronomeToggle);
+        if (mMetronomeEnableToggleReader.IsNewlyPressed())
+        {
+            mAppSettings->mMetronomeSoundOn = !mAppSettings->mMetronomeSoundOn;
+            mAppSettings->mMetronomeLED = !mAppSettings->mMetronomeLED;
+            mInputSrc->InputSource_ShowToast(String("Metronome: ") +
+                                             ((mAppSettings->mMetronomeSoundOn) ? "on" : "off"));
+        }
+
+        mTransposeResetReader.Update(&mInput->mTransposeReset);
+        if (mTransposeResetReader.IsNewlyPressed())
+        {
+            mAppSettings->GetCurrentPerformancePatch().mTranspose = 0;
+            mInputSrc->InputSource_ShowToast(String("Transpose reset"));
+        }
+
         mHarmPresetOnOffToggleReader.Update(&mInput->mHarmPresetOnOffToggle);
         if (mHarmPresetOnOffToggleReader.IsNewlyPressed())
         {
@@ -357,6 +374,8 @@ struct CCEWIMusicalState
                 mpDisplay->ShowToast(String("Harmonizer ON\r\n") + mAppSettings->GetHarmPatchName(perf.mHarmPreset));
             }
         }
+
+
 
         // we have calculated mLiveVoice, converting physical to live musical state.
         // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.

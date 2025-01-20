@@ -6,30 +6,34 @@
 namespace clarinoid
 {
 
-static constexpr size_t SynthPresetID_FunkyCave = SYNTH_PRESET_COUNT - 17;
-static constexpr size_t SynthPresetID_CrystalSync = SYNTH_PRESET_COUNT - 16;
-static constexpr size_t SynthPresetID_CinematicTagAlt = SYNTH_PRESET_COUNT - 15;
-static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 14;
-static constexpr size_t SynthPresetID_PWMMono = SYNTH_PRESET_COUNT - 13;
-static constexpr size_t SynthPresetID_Crystal = SYNTH_PRESET_COUNT - 12;
-static constexpr size_t SynthPresetID_CinematicTag = SYNTH_PRESET_COUNT - 11;
-static constexpr size_t SynthPresetID_Fluvial = SYNTH_PRESET_COUNT - 10;
-static constexpr size_t SynthPresetID_PanFlute = SYNTH_PRESET_COUNT - 9;
-static constexpr size_t SynthPresetID_SynthTrumpetDoubler = SYNTH_PRESET_COUNT - 8;
-static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 7;
-static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 6;
-static constexpr size_t SynthPresetID_HarmSync = SYNTH_PRESET_COUNT - 5;
-static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
-static constexpr size_t SynthPresetID_HarmDetunedSaws = SYNTH_PRESET_COUNT - 3;
-static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
-static constexpr size_t SynthPresetID_HarmTri = SYNTH_PRESET_COUNT - 1;
+//static constexpr size_t SynthPresetID_FunkyCave = SYNTH_PRESET_COUNT - 17;
+//static constexpr size_t SynthPresetID_CrystalSync = SYNTH_PRESET_COUNT - 16;
+//static constexpr size_t SynthPresetID_CinematicTagAlt = SYNTH_PRESET_COUNT - 15;
+//static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 14;
+// static constexpr size_t SynthPresetID_PWMMono = SYNTH_PRESET_COUNT - 13;
+// static constexpr size_t SynthPresetID_Crystal = SYNTH_PRESET_COUNT - 12;
+// static constexpr size_t SynthPresetID_CinematicTag = SYNTH_PRESET_COUNT - 11;
+// static constexpr size_t SynthPresetID_Fluvial = SYNTH_PRESET_COUNT - 10;
+// static constexpr size_t SynthPresetID_PanFlute = SYNTH_PRESET_COUNT - 9;
+// static constexpr size_t SynthPresetID_SynthTrumpetDoubler = SYNTH_PRESET_COUNT - 8;
+// static constexpr size_t SynthPresetID_HarmSync = SYNTH_PRESET_COUNT - 5;
+// static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
+//static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
 
-static constexpr size_t HarmPresetID_WorldPeace_Eb = HARM_PRESET_COUNT - 1;
-static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
-static constexpr size_t HarmPresetID_WorldPeace_F = HARM_PRESET_COUNT - 3;
-static constexpr size_t HarmPresetID_WorldPeace_Db = HARM_PRESET_COUNT - 4;
-static constexpr size_t HarmPresetID_WorldPeace_Gb = HARM_PRESET_COUNT - 5;
-static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 6;
+static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 11;
+static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 10;
+
+static constexpr size_t SynthPresetID_HarmDetunedPWM = SYNTH_PRESET_COUNT - 4;
+static constexpr size_t SynthPresetID_HarmDetunedSaws = SYNTH_PRESET_COUNT - 3;
+static constexpr size_t SynthPresetID_HarmTri = SYNTH_PRESET_COUNT - 2;
+static constexpr size_t SynthPresetID_HarmFMFB = SYNTH_PRESET_COUNT - 1;
+
+//static constexpr size_t HarmPresetID_WorldPeace = HARM_PRESET_COUNT - 1;
+//static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 2;
+// static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
+// static constexpr size_t HarmPresetID_WorldPeace_F = HARM_PRESET_COUNT - 3;
+// static constexpr size_t HarmPresetID_WorldPeace_Db = HARM_PRESET_COUNT - 4;
+// static constexpr size_t HarmPresetID_WorldPeace_Gb = HARM_PRESET_COUNT - 5;
 
 enum class HarmScaleRefType : uint8_t
 {
@@ -170,10 +174,10 @@ struct HarmPreset
     Scale mPresetScale = {0, ScaleFlavorIndex::Chromatic};
     HarmVoiceSettings mVoiceSettings[HARM_VOICES];
     uint32_t mMinRotationTimeMS = 70;
-    uint16_t mSynthPreset1 = SynthPresetID_HarmSync;  // harm-friendly sync
-    uint16_t mSynthPreset2 = SynthPresetID_HarmTri;   // harm-friendly tri
-    uint16_t mSynthPreset3 = SynthPresetID_HarmPulse; // harm-friendly pulse
-    uint16_t mSynthPreset4 = SynthPresetID_HarmSaw;   // harm-friendly saw
+    uint16_t mSynthPreset1 = SynthPresetID_HarmTri;
+    uint16_t mSynthPreset2 = SynthPresetID_HarmFMFB;
+    uint16_t mSynthPreset3 = SynthPresetID_HarmDetunedSaws;
+    uint16_t mSynthPreset4 = SynthPresetID_HarmDetunedPWM;
 
     String ToString(int index) const
     {
@@ -187,18 +191,18 @@ struct HarmSettings
 
     static void InitSlumsHarmPreset(HarmPreset &p)
     {
-        p.mName = "Slums Dm";
-        p.mPresetScale.mRootNoteIndex = Note::D;
-        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Minor;
+        p.mName = "Slums";
+        //p.mPresetScale.mRootNoteIndex = Note::D;
+        //p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Minor;
         p.mStereoSeparation = 0.5f;
 
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -5;
         p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::PrevDiatonicNote;
 
-        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[1].mSequenceLength = 1;
         p.mVoiceSettings[1].mSequence[0] = -3;
@@ -286,26 +290,58 @@ struct HarmSettings
 
     static void InitFunkyHarmPreset(HarmPreset &p)
     {
-        p.mName = "Funky D blues";
+        p.mName = "Funky blues";
         p.mPresetScale.mRootNoteIndex = Note::D;
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Blues;
         p.mSynthPreset1 = SynthPresetID_HarmDetunedSaws;
 
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -3;
 
-        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
         p.mVoiceSettings[1].mSequenceLength = 1;
         p.mVoiceSettings[1].mSequence[0] = -4;
 
-        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
         p.mVoiceSettings[2].mSequenceLength = 2;
         p.mVoiceSettings[2].mSequence[0] = -5;
         p.mVoiceSettings[2].mSequence[1] = -6;
+    }
+
+    static void InitFunky2(HarmPreset &p)
+    {
+        p.mName = "Funky2";
+        p.mSynthPreset1 = SynthPresetID_HarmFMFB;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = 2;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = 6;
+    }
+
+    static void InitFunky3(HarmPreset &p)
+    {
+        p.mName = "Funky3";
+        p.mSynthPreset1 = SynthPresetID_HarmFMFB;
+
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = -1;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = 2;
     }
 
     static void InitQuartalHarmPreset1(HarmPreset &p)
@@ -392,7 +428,7 @@ struct HarmSettings
         p.mVoiceSettings[2].mSequence[0] = -14; // Bb
 
         p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[3].mVoiceSynthPreset = SynthPresetID_HarmSaw;
+        p.mVoiceSettings[3].mVoiceSynthPreset = SynthPresetID_HarmDetunedSaws;
         p.mVoiceSettings[3].mSequenceLength = 7;
 
         p.mVoiceSettings[3].mMaxOutpNote = 40;
@@ -440,6 +476,12 @@ struct HarmSettings
     static void InitBigPreset(HarmPreset &p)
     {
         p.mName = "Big";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -7;
@@ -504,64 +546,64 @@ struct HarmSettings
         p.mVoiceSettings[3].mSequence[2] = -9; // C
     }
 
-    static void InitBigBandPreset(HarmPreset &p, const char *name, Note scaleRoot)
+    static void InitBigBandPreset(HarmPreset &p, const char *name)
     {
-        p.mName = name;//"World Peace Eb";
-        p.mPresetScale.mRootNoteIndex = scaleRoot;//Note::Eb;
-        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
+        p.mName = name;//"World Peace";
+        //p.mPresetScale.mRootNoteIndex = scaleRoot;//Note::Eb;
+        //p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
         p.mStereoSeparation = 0.7f;
 
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[0].mSequenceLength = 2;
         p.mVoiceSettings[0].mSequence[0] = -1; // Bb
         p.mVoiceSettings[0].mSequence[1] = -2; // G
 
-        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
         p.mVoiceSettings[1].mSequenceLength = 2;
         p.mVoiceSettings[1].mSequence[0] = -2; // G
         p.mVoiceSettings[1].mSequence[1] = -3; // F
 
-        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[2].mSequenceLength = 1;
         p.mVoiceSettings[2].mSequence[0] = -4; // Eb
 
-        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
         p.mVoiceSettings[3].mSequenceLength = 2;
         p.mVoiceSettings[3].mSequence[0] = -5; // D
         p.mVoiceSettings[3].mSequence[1] = -7; // Bb
     }
 
-    static void InitRoadPreset(HarmPreset &p)
-    {
-        p.mName = "Road Ephryg";
-        p.mPresetScale.mRootNoteIndex = Note::F_;
-        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
-        p.mStereoSeparation = 0.7f;
+    // static void InitRoadPreset(HarmPreset &p)
+    // {
+    //     p.mName = "Road Ephryg";
+    //     p.mPresetScale.mRootNoteIndex = Note::F_;
+    //     p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
+    //     p.mStereoSeparation = 0.7f;
 
-        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        p.mVoiceSettings[0].mSequenceLength = 1;
-        p.mVoiceSettings[0].mSequence[0] = -1; // A
+    //     p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+    //     p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+    //     p.mVoiceSettings[0].mSequenceLength = 1;
+    //     p.mVoiceSettings[0].mSequence[0] = -1; // A
 
-        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
-        p.mVoiceSettings[1].mSequenceLength = 1;
-        p.mVoiceSettings[1].mSequence[0] = -3; // F
+    //     p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
+    //     p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+    //     p.mVoiceSettings[1].mSequenceLength = 1;
+    //     p.mVoiceSettings[1].mSequence[0] = -3; // F
 
-        p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
-        p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
-        p.mVoiceSettings[2].mSequenceLength = 1;
-        p.mVoiceSettings[2].mSequence[0] = -4; // E
+    //     p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Preset;
+    //     p.mVoiceSettings[2].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
+    //     p.mVoiceSettings[2].mSequenceLength = 1;
+    //     p.mVoiceSettings[2].mSequence[0] = -4; // E
 
-        // p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
-        // p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
-        // p.mVoiceSettings[3].mSequenceLength = 1;
-        // p.mVoiceSettings[3].mSequence[0] = -5; // D
-    }
+    //     // p.mVoiceSettings[3].mScaleRef = HarmScaleRefType::Preset;
+    //     // p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset4;
+    //     // p.mVoiceSettings[3].mSequenceLength = 1;
+    //     // p.mVoiceSettings[3].mSequence[0] = -5; // D
+    // }
 
     void InitOctDownPreset(HarmPreset &p)
     {
@@ -602,7 +644,7 @@ struct HarmSettings
     {
         p.mName = "Spicy";
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-        p.mSynthPreset4 = SynthPresetID_HarmSync;
+        p.mSynthPreset4 = SynthPresetID_HarmDetunedPWM;
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
         p.mVoiceSettings[0].mSequenceLength = 1;
@@ -623,8 +665,12 @@ struct HarmSettings
     {
         size_t iPreset = 1;
 
-        InitBigBandPreset(mPresets[iPreset++], "World Peace Eb", Note::Eb);
+        InitBigBandPreset(mPresets[iPreset++], "World Peace");
+        InitFunkyHarmPreset(mPresets[iPreset++]);
+        InitFunky2(mPresets[iPreset++]);
+        InitFunky3(mPresets[iPreset++]);
         InitColBassPreset(mPresets[iPreset++]);
+
         InitQuartalHarmPreset2(mPresets[iPreset++]);
         InitFuzionPreset(mPresets[iPreset++]);
 
@@ -635,10 +681,9 @@ struct HarmSettings
 
         // InitOctDownPreset(mPresets[iPreset++]);
         // InitColDetSawsPreset(mPresets[iPreset++]);
-        // InitSpicePreset(mPresets[iPreset++]);
+        InitSpicePreset(mPresets[iPreset++]);
         // Init5thPreset(mPresets[iPreset++]);
 
-        InitFunkyHarmPreset(mPresets[iPreset++]);
         InitMajInv2Preset(mPresets[iPreset++]);
         InitBigPreset(mPresets[iPreset++]);
 
@@ -646,12 +691,12 @@ struct HarmSettings
         InitQuartQuintHarmPreset(mPresets[iPreset++]);
         // InitQuartalHarmPreset1(mPresets[iPreset++]); <-- it's nice, but too similar to the other quartal
 
-        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Db], "World Peace Db", Note::Db);
-        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_F], "World Peace F", Note::F_);
-        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Bb], "World Peace Bb", Note::Bb);
-        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Eb], "World Peace Eb", Note::Eb);
-        InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Gb], "World Peace Gb", Note::Gb);
-        InitRoadPreset(mPresets[HarmPresetID_Road]);
+        //InitBigBandPreset(mPresets[HarmPresetID_WorldPeace], "World Peace");
+        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_F], "World Peace F", Note::F_);
+        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Bb], "World Peace Bb", Note::Bb);
+        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Eb], "World Peace Eb", Note::Eb);
+        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Gb], "World Peace Gb", Note::Gb);
+        //InitRoadPreset(mPresets[HarmPresetID_Road]);
     }
 };
 

@@ -7,7 +7,7 @@ struct IHudProvider
 {
     virtual int16_t IHudProvider_GetHudHeight() = 0;
     virtual void IHudProvider_RenderHud(int16_t displayWidth, int16_t displayHeight) = 0;
-    virtual String IHudProvider_GetHudTransientIndicator(bool fine, bool course, bool shift) = 0;
+    virtual String IHudProvider_GetHudTransientIndicator(bool fine, bool course, bool shift, bool transpose, bool tempo, bool key, bool harm) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////

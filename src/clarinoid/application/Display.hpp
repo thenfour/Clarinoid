@@ -173,7 +173,15 @@ struct _CCDisplay : IDisplay
         ClearState();
         mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
 
-        String s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput->mModifierFine.CurrentValue(), this->mInput->mModifierCourse.CurrentValue(), this->mInput->mModifierShift.CurrentValue());
+        String s = mHudProvider->IHudProvider_GetHudTransientIndicator(
+            this->mInput->mModifierFine.CurrentValue(),
+            this->mInput->mModifierCourse.CurrentValue(),
+            this->mInput->mModifierShift.CurrentValue(),
+            this->mInput->mModifierTranspose.CurrentValue(),
+            this->mInput->mModifierTempo.CurrentValue(),
+            this->mInput->mModifierKey.CurrentValue(),
+            this->mInput->mModifierHarm.CurrentValue()
+            );
         if (s.length() > 0)
         {
             ClearState();

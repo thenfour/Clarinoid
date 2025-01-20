@@ -9,7 +9,7 @@ namespace clarinoid
 
 // from 7jam
 // https://github.com/thenfour/digifujam/blob/988608a35682dda7a5b8266bb9ccd48769d59382/clientsrc/quantizer.js#L20
-struct Metronome
+struct Metronome : IMetronome
 {
     AppSettings &mAppSettings;
     TimeSpan mRootTime;
@@ -21,7 +21,7 @@ struct Metronome
         mRootTime = Uptime();
     }
 
-    void OnBPMChanged()
+    void OnBPMChanged() override
     {
         // make it smoothly modulated; "now" should finish out the current beat.
         // so, make the new root time (now - current beat fraction * new bpm)
@@ -32,17 +32,17 @@ struct Metronome
         mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM;
     }
 
-    uint32_t GetBeatInt() const
+    uint32_t GetBeatInt() const override
     {
         return (uint32_t)floorf(GetBeatFloat());
     }
 
-    float GetBeatFrac() const
+    float GetBeatFrac() const override
     {
         return Frac(GetBeatFloat());
     }
 
-    float GetBeatFloat() const
+    float GetBeatFloat() const override
     {
         auto absTime = (Uptime() - mRootTime);
         return absTime.ElapsedBeats(mBPM);

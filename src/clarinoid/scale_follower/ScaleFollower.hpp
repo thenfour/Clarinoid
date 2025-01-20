@@ -356,111 +356,112 @@ struct ScaleFollower
     // Call to "feed" musical context.
     Scale Update(const MusicalVoice *voices, size_t voiceCount)
     {
-#ifdef CLARINOID_MODULE_TEST
-        clarinoid::log("Scale Follower Update-----------------------");
+// #ifdef CLARINOID_MODULE_TEST
+//         clarinoid::log("Scale Follower Update-----------------------");
 
-        auto ImportantListToString = [](ImportantNoteList_t &list) {
-            String ret = "(";
-            for (size_t i = 0; i < list.mArray.mSize; ++i)
-            {
-                // (Eb : 100)
-                ret += list.mArray.mArray[i].second->GetNote().ToString();
-                ret += " : ";
-                ret += list.mArray.mArray[i].second->GetImportance();
-                ret += "  ";
-            }
-            ret += ")";
-            return ret.mStr.str();
-        };
+//         auto ImportantListToString = [](ImportantNoteList_t &list) {
+//             String ret = "(";
+//             for (size_t i = 0; i < list.mArray.mSize; ++i)
+//             {
+//                 // (Eb : 100)
+//                 ret += list.mArray.mArray[i].second->GetNote().ToString();
+//                 ret += " : ";
+//                 ret += list.mArray.mArray[i].second->GetImportance();
+//                 ret += "  ";
+//             }
+//             ret += ")";
+//             return ret.mStr.str();
+//         };
 
-#endif // CLARINOID_MODULE_TEST
+// #endif // CLARINOID_MODULE_TEST
 
-        ImportantNoteList_t mostImportantNoTransients;
-        ImportantNoteList_t mostImportantAll;
+//         ImportantNoteList_t mostImportantNoTransients;
+//         ImportantNoteList_t mostImportantAll;
 
-        for (auto &myv : mNotes)
-        {
-            myv.BeginFrame();
-        }
+//         for (auto &myv : mNotes)
+//         {
+//             myv.BeginFrame();
+//         }
 
-        for (size_t i = 0; i < voiceCount; ++i)
-        {
-            auto &lv = voices[i];
-            auto &myv = mNotes[MidiNote(lv.mMidiNote).GetNoteIndex()];
-            myv.UpdateWithVoice(lv); // can be called more than once per note.
-        }
+//         for (size_t i = 0; i < voiceCount; ++i)
+//         {
+//             auto &lv = voices[i];
+//             auto &myv = mNotes[MidiNote(lv.mMidiNote).GetNoteIndex()];
+//             myv.UpdateWithVoice(lv); // can be called more than once per note.
+//         }
 
-        for (auto &myv : mNotes)
-        {
-            myv.EndFrame();
-            mostImportantAll.Update(myv.GetImportance(), &myv);
-            if (!myv.IsTransient())
-            {
-                mostImportantNoTransients.Update(myv.GetImportance(), &myv);
-            }
-        }
+//         for (auto &myv : mNotes)
+//         {
+//             myv.EndFrame();
+//             mostImportantAll.Update(myv.GetImportance(), &myv);
+//             if (!myv.IsTransient())
+//             {
+//                 mostImportantNoTransients.Update(myv.GetImportance(), &myv);
+//             }
+//         }
 
-        uint16_t kNoTransients = ((uint16_t)mCurrentScale.mFlavorIndex) << 12;
-        uint16_t kAll = kNoTransients;
+//         uint16_t kNoTransients = ((uint16_t)mCurrentScale.mFlavorIndex) << 12;
+//         uint16_t kAll = kNoTransients;
 
-        auto fnTakeImportantNotes =
-            [](const decltype(mostImportantNoTransients) &importantNotes, uint16_t &k, const Scale &currentScale) {
-                for (size_t i = 0; i < importantNotes.mArray.mSize; ++i)
-                {
-                    if (importantNotes.mArray.mArray[i].first < SCALE_FOLLOWER_IMPORTANCE_THRESHOLD)
-                    {
-#ifdef CLARINOID_MODULE_TEST
-                        clarinoid::log("  Note [ %s ] importance [ %d ] below threshold [ %d ]",
-                                       importantNotes.mArray.mArray[i].second->GetNote().ToString(),
-                                       importantNotes.mArray.mArray[i].first,
-                                       SCALE_FOLLOWER_IMPORTANCE_THRESHOLD);
-#endif                         // CLARINOID_MODULE_TEST
-                        break; // filter by threshold of importance
-                    }
-                    // convert to relative to the scale.
-                    auto *p = importantNotes.mArray.mArray[i].second;
-                    uint8_t rel = currentScale.MidiToChromaticRelativeToRoot(
-                        p->GetNote().GetMidiValue()); // p->mRunningVoice.mMidiNote);
-                    CCASSERT(rel >= 0 && rel <= 11);
+//         auto fnTakeImportantNotes =
+//             [](const decltype(mostImportantNoTransients) &importantNotes, uint16_t &k, const Scale &currentScale) {
+//                 for (size_t i = 0; i < importantNotes.mArray.mSize; ++i)
+//                 {
+//                     if (importantNotes.mArray.mArray[i].first < SCALE_FOLLOWER_IMPORTANCE_THRESHOLD)
+//                     {
+// #ifdef CLARINOID_MODULE_TEST
+//                         clarinoid::log("  Note [ %s ] importance [ %d ] below threshold [ %d ]",
+//                                        importantNotes.mArray.mArray[i].second->GetNote().ToString(),
+//                                        importantNotes.mArray.mArray[i].first,
+//                                        SCALE_FOLLOWER_IMPORTANCE_THRESHOLD);
+// #endif                         // CLARINOID_MODULE_TEST
+//                         break; // filter by threshold of importance
+//                     }
+//                     // convert to relative to the scale.
+//                     auto *p = importantNotes.mArray.mArray[i].second;
+//                     uint8_t rel = currentScale.MidiToChromaticRelativeToRoot(
+//                         p->GetNote().GetMidiValue()); // p->mRunningVoice.mMidiNote);
+//                     CCASSERT(rel >= 0 && rel <= 11);
 
-                    k |= 1 << rel;
-                }
-            };
+//                     k |= 1 << rel;
+//                 }
+//             };
 
-        fnTakeImportantNotes(mostImportantNoTransients, kNoTransients, mCurrentScale);
-        fnTakeImportantNotes(mostImportantAll, kAll, mCurrentScale);
+//         fnTakeImportantNotes(mostImportantNoTransients, kNoTransients, mCurrentScale);
+//         fnTakeImportantNotes(mostImportantAll, kAll, mCurrentScale);
 
-        auto fnGetScale = [](uint16_t k, const Scale &currentScale) {
-            // convert map value to scale.
-            // auto v = ScaleFollowerDetail::MapValue::Deserialize(gScaleToScaleMappings[k]);
-            Scale ret;
-            ret.mFlavorIndex = ScaleFlavorIndex::Blues; // v.mScaleFlavor;
-            int8_t root = 69;                           // v.mRelativeRoot;
-            root += (uint8_t)currentScale.mRootNoteIndex;
-            ret.mRootNoteIndex = (Note)RotateIntoRangeByte(root, 12);
-            return ret;
-        };
+//         auto fnGetScale = [](uint16_t k, const Scale &currentScale) {
+//             // convert map value to scale.
+//             // auto v = ScaleFollowerDetail::MapValue::Deserialize(gScaleToScaleMappings[k]);
+//             Scale ret;
+//             ret.mFlavorIndex = ScaleFlavorIndex::Blues; // v.mScaleFlavor;
+//             int8_t root = 69;                           // v.mRelativeRoot;
+//             root += (uint8_t)currentScale.mRootNoteIndex;
+//             ret.mRootNoteIndex = (Note)RotateIntoRangeByte(root, 12);
+//             return ret;
+//         };
 
-        auto newCurrentScale = fnGetScale(kNoTransients, mCurrentScale);
-        Scale ret = fnGetScale(kAll, mCurrentScale);
+//         auto newCurrentScale = fnGetScale(kNoTransients, mCurrentScale);
+//         Scale ret = fnGetScale(kAll, mCurrentScale);
 
-#ifdef CLARINOID_MODULE_TEST
-        if (newCurrentScale != mCurrentScale)
-        {
-            clarinoid::log("  CHANGING current scale [%s] + long notes [%s] ==> [%s]",
-                           mCurrentScale.ToString().mStr.str().c_str(),
-                           ImportantListToString(mostImportantNoTransients).c_str(),
-                           newCurrentScale.ToString().mStr.str().c_str());
-        }
-        clarinoid::log("  Current scale [%s] + short notes [%s] ==> [%s]",
-                       mCurrentScale.ToString().mStr.str().c_str(),
-                       ImportantListToString(mostImportantAll).c_str(),
-                       ret.ToString().mStr.str().c_str());
-#endif // CLARINOID_MODULE_TEST
+// #ifdef CLARINOID_MODULE_TEST
+//         if (newCurrentScale != mCurrentScale)
+//         {
+//             clarinoid::log("  CHANGING current scale [%s] + long notes [%s] ==> [%s]",
+//                            mCurrentScale.ToString().mStr.str().c_str(),
+//                            ImportantListToString(mostImportantNoTransients).c_str(),
+//                            newCurrentScale.ToString().mStr.str().c_str());
+//         }
+//         clarinoid::log("  Current scale [%s] + short notes [%s] ==> [%s]",
+//                        mCurrentScale.ToString().mStr.str().c_str(),
+//                        ImportantListToString(mostImportantAll).c_str(),
+//                        ret.ToString().mStr.str().c_str());
+// #endif // CLARINOID_MODULE_TEST
 
-        mCurrentScale = newCurrentScale;
+//         mCurrentScale = newCurrentScale;
 
-        return ret;
+//        return ret;
+        return Scale {Note::C, ScaleFlavorIndex::Major};
     }
 };
 

@@ -246,7 +246,16 @@ struct GuiPerformanceApp : GuiApp
          this},
         AlwaysEnabled};
 
-    GuiLabelControl mGlobalScale = {0, PointI::Construct(70, 39), "F# hw dim"};
+    GuiLabelControl mGlobalScale = {
+        0,
+        PointI::Construct(70, 39),
+        [](void* cap) -> String {
+            auto *pThis = (GuiPerformanceApp *)cap;
+            auto &patch = pThis->mAppSettings->GetCurrentPerformancePatch();
+            return patch.mGlobalScale.ToString();
+        },
+        this
+        };
 
     // verb
     GuiLabelControl mReverbCaption = {1, PointI::Construct(0, 0), "Reverb Fx"};

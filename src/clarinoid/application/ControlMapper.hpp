@@ -8,6 +8,100 @@
 namespace clarinoid
 {
 
+
+struct GlobalTempoMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+    IMetronome* mpMetronome;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc, IMetronome* pMetronome)
+    {
+        mpMetronome = pMetronome;
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        float nv = v.AsRoundedInt();
+        auto old = mAppSettings->GetCurrentPerformancePatch().mBPM;
+        if (old != nv)
+        {
+            mAppSettings->GetCurrentPerformancePatch().mBPM = nv;
+            mpMetronome->OnBPMChanged();
+            mInputSrc->InputSource_ShowToast(String("BPM: ") + nv);
+        }
+    }
+
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        return ControlValue::FloatValue(mAppSettings->GetCurrentPerformancePatch().mBPM);
+    }
+};
+
+
+
+
+
+struct GlobalKeyRootMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        int nv = v.AsRoundedInt();
+        Note newNote = (Note)RotateIntoRange(nv, SizeofStaticArray(gNoteItems));
+        auto old = mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mRootNoteIndex;
+        if (old != newNote)
+        {
+            mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mRootNoteIndex = newNote;
+            mInputSrc->InputSource_ShowToast(String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
+        }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        int v = (int)mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mRootNoteIndex;
+        return ControlValue::IntValue(v);
+    }
+};
+
+struct GlobalScaleFlavorMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        int nv = v.AsRoundedInt();
+        ScaleFlavorIndex newFlavor = (ScaleFlavorIndex)RotateIntoRange(nv, ScaleFlavorCount);
+        auto old = mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mFlavorIndex;
+        if (old != newFlavor)
+        {
+            mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mFlavorIndex = newFlavor;
+            mInputSrc->InputSource_ShowToast(String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
+        }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        int v = (int)mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mFlavorIndex;
+        return ControlValue::IntValue(v);
+    }
+};
+
 struct SynthPresetAMappableFunction : FunctionHandler
 {
     IInputSource *mInputSrc;
@@ -220,25 +314,33 @@ struct InputDelegator
     VirtualSwitch mModifierPerf;
     VirtualSwitch mModifierHarm;
     VirtualSwitch mModifierShift;
+    VirtualSwitch mModifierTranspose;
+    VirtualSwitch mModifierKey;
+    VirtualSwitch mModifierTempo;
 
     SynthPresetAMappableFunction mSynthPresetAFn;
     SynthPresetBMappableFunction mSynthPresetBFn;
     HarmPresetMappableFunction mHarmPresetFn;
     TransposeMappableFunction mTransposeFn;
     PerfPresetMappableFunction mPerfPresetFn;
+    GlobalKeyRootMappableFunction mGlobalKeyRoot;
+    GlobalScaleFlavorMappableFunction mGlobalKeyFlavor;
+    GlobalTempoMappableFunction mGlobalTempo;
 
     VirtualSwitch mLoopStopButton;
     VirtualSwitch mLoopGoButton;
 
     VirtualSwitch mBaseNoteHoldToggle;
     VirtualSwitch mMetronomeLEDToggle;
+    VirtualSwitch mTransposeReset;
+    VirtualSwitch mMetronomeToggle;
     VirtualSwitch mHarmPresetOnOffToggle;
     VirtualSwitch mDisplayFontToggle;
     VirtualSwitch mEffectEnableToggle;
 
     VirtualSwitch mSoftResetMpr121;
 
-    void Init(AppSettings *appSettings, IInputSource *psrc)
+    void Init(AppSettings *appSettings, IInputSource *psrc, IMetronome* pMetronome)
     {
         mpAppSettings = appSettings;
         mpSrc = psrc;
@@ -248,6 +350,9 @@ struct InputDelegator
         mHarmPresetFn.Init(appSettings, psrc);
         mTransposeFn.Init(appSettings, psrc);
         mPerfPresetFn.Init(appSettings, psrc);
+        mGlobalKeyRoot.Init(appSettings, psrc);
+        mGlobalKeyFlavor.Init(appSettings, psrc);
+        mGlobalTempo.Init(appSettings, psrc, pMetronome);
 
         RegisterFunction(ControlMapping::Function::Nop,
                          &mMenuBack); // anything works; it's never called.
@@ -258,6 +363,10 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::ModifierHarm, &mModifierHarm);
         RegisterFunction(ControlMapping::Function::ModifierPerf, &mModifierPerf);
         RegisterFunction(ControlMapping::Function::ModifierShift, &mModifierShift);
+
+        RegisterFunction(ControlMapping::Function::ModifierTranspose, &mModifierTranspose);
+        RegisterFunction(ControlMapping::Function::ModifierTempo, &mModifierTempo);
+        RegisterFunction(ControlMapping::Function::ModifierKey, &mModifierKey);
 
         RegisterFunction(ControlMapping::Function::MenuBack, &mMenuBack);
         RegisterFunction(ControlMapping::Function::MenuOK, &mMenuOK);
@@ -301,6 +410,13 @@ struct InputDelegator
 
         RegisterFunction(ControlMapping::Function::DisplayFontToggle, &mDisplayFontToggle);
 
+        RegisterFunction(ControlMapping::Function::GlobalKeyRoot, &mGlobalKeyRoot);
+        RegisterFunction(ControlMapping::Function::GlobalKeyFlavor, &mGlobalKeyFlavor);
+        RegisterFunction(ControlMapping::Function::GlobalTempo, &mGlobalTempo);
+
+        RegisterFunction(ControlMapping::Function::TransposeReset, &mTransposeReset);
+        RegisterFunction(ControlMapping::Function::MetronomeToggle, &mMetronomeToggle);
+
         mpSrc->InputSource_Init(this);
     }
 
@@ -318,7 +434,8 @@ struct InputDelegator
         {
         case ModifierKey::None: // = 0, // requires no modifiers are pressed.
             return !mModifierFine.CurrentValue() && !mModifierCourse.CurrentValue() && !mModifierSynth.CurrentValue() &&
-                   !mModifierHarm.CurrentValue() && !mModifierPerf.CurrentValue() && !mModifierShift.CurrentValue();
+                   !mModifierHarm.CurrentValue() && !mModifierPerf.CurrentValue() && !mModifierShift.CurrentValue() &&
+                   !mModifierTranspose.CurrentValue() && !mModifierKey.CurrentValue() && !mModifierTempo.CurrentValue();
         case ModifierKey::Fine: // = 1,
             return mModifierFine.CurrentValue();
         case ModifierKey::Course: // = 2,
@@ -331,6 +448,12 @@ struct InputDelegator
             return mModifierPerf.CurrentValue();
         case ModifierKey::Shift: // = 2,
             return mModifierShift.CurrentValue();
+        case ModifierKey::Transpose:
+            return mModifierTranspose.CurrentValue();
+        case ModifierKey::Tempo:
+            return mModifierTempo.CurrentValue();
+        case ModifierKey::Key:
+            return mModifierKey.CurrentValue();
         default:
         case ModifierKey::Any: // = 128, // special; any combination works.
             return true;
@@ -346,6 +469,9 @@ struct InputDelegator
         mModifierHarm.mValue = false;
         mModifierPerf.mValue = false;
         mModifierShift.mValue = false;
+        mModifierTranspose.mValue = false;
+        mModifierKey.mValue = false;
+        mModifierTempo.mValue = false;
     }
 
     // process all input state and delegate to handlers.
