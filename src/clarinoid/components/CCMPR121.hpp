@@ -64,12 +64,24 @@ struct CCMPR121
         bool mIsTouched = false;
         MPR121::MPR121Device *mDevice = nullptr;
     };
-
 struct ElectrodeStatusQuerier : ITask
 {
     static constexpr uint8_t gMaxElectrodeCount = 16;
+
+    // Simple 2-step state machine to read baseline first, then filtered data next.
+    enum class ReadStep
+    {
+        READ_BASELINE,
+        READ_FILTERED
+    };
+
     ElectrodeQueryResult mElectrodeData[gMaxElectrodeCount];
     int mCurrentIndex = 0;
+    ReadStep mCurrentStep = ReadStep::READ_BASELINE;
+
+    // Temporary storage to hold the baseline until we read the filtered data
+    uint16_t mBaselineTemp = 0;
+
     CCMPR121 &mDevice;
 
     ElectrodeStatusQuerier(CCMPR121 &device) : mDevice(device)
@@ -85,18 +97,44 @@ struct ElectrodeStatusQuerier : ITask
         }
     }
 
-    virtual void TaskRun()
+    virtual void TaskRun() override
     {
-        auto baselineRaw = mDevice.mMpr121.GetBaselineData(mCurrentIndex);
-        auto filteredRaw = mDevice.mMpr121.filteredData(mCurrentIndex);
-        mElectrodeData[mCurrentIndex].mBaselineValue10bit = baselineRaw;
-        mElectrodeData[mCurrentIndex].mFilteredData10bit = filteredRaw;
-        mElectrodeData[mCurrentIndex].mBaselineValue01 = Clamp01(baselineRaw / 1024.0f);
-        mElectrodeData[mCurrentIndex].mFilteredData01 = Clamp01(filteredRaw / 1024.0f);
-        mElectrodeData[mCurrentIndex].mIsTouched = !!(mDevice.mCurrentValue & (1 << mCurrentIndex));
-        mCurrentIndex = (mCurrentIndex + 1) % gMaxElectrodeCount;
+        switch (mCurrentStep)
+        {
+        case ReadStep::READ_BASELINE:
+        {
+            // Step 1: Read the baseline for the current electrode
+            mBaselineTemp = mDevice.mMpr121.GetBaselineData(mCurrentIndex);
+
+            // Next time we run, read the filtered data
+            mCurrentStep = ReadStep::READ_FILTERED;
+            break;
+        }
+        case ReadStep::READ_FILTERED:
+        {
+            // Step 2: Read the filtered data
+            auto filteredRaw = mDevice.mMpr121.filteredData(mCurrentIndex);
+
+            // Now we have both baseline (mBaselineTemp) and filtered data
+            auto &e = mElectrodeData[mCurrentIndex];
+            e.mBaselineValue10bit = mBaselineTemp;
+            e.mFilteredData10bit = filteredRaw;
+
+            e.mBaselineValue01 = Clamp01(mBaselineTemp / 1024.0f);
+            e.mFilteredData01 = Clamp01(filteredRaw / 1024.0f);
+
+            // Check if touched
+            e.mIsTouched = !!(mDevice.mCurrentValue & (1 << mCurrentIndex));
+
+            // Move to next electrode and wrap
+            mCurrentIndex = (mCurrentIndex + 1) % gMaxElectrodeCount;
+
+            // Go back to reading baseline first
+            mCurrentStep = ReadStep::READ_BASELINE;
+            break;
+        }
+        }
     }
 };
-
 
 } // namespace clarinoid
