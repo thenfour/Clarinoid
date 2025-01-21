@@ -252,7 +252,11 @@ struct GuiPerformanceApp : GuiApp
         [](void* cap) -> String {
             auto *pThis = (GuiPerformanceApp *)cap;
             auto &patch = pThis->mAppSettings->GetCurrentPerformancePatch();
-            return patch.mGlobalScale.ToString();
+
+            if (patch.mGlobalScaleRef == GlobalScaleRefType::Chosen) {
+                return patch.mGlobalScale.ToString();
+            }
+            return patch.mDeducedScale.ToString();
         },
         this
         };

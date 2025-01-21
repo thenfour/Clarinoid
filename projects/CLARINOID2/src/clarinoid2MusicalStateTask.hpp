@@ -28,6 +28,7 @@ struct MusicalStateTask : ITask
 
     SwitchControlReader mSoftResetMpr121Reader;
     SwitchControlReader mEffectsEnableToggleReader;
+    SwitchControlReader mScaleDeducedToggleReader;
 
     MusicalStateTask(IDisplay *pDisplay,
                      AppSettings *appSettings,
@@ -58,6 +59,24 @@ struct MusicalStateTask : ITask
         {
             mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable = !mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable;
             mControlMapper->InputSource_ShowToast(String("Effects: ") + (mAppSettings->GetCurrentPerformancePatch().mMasterFXEnable ? "ON" : "OFF"));
+        }
+
+        mScaleDeducedToggleReader.Update(&mpInput->mGlobalScaleDeducedToggle);
+        if (mScaleDeducedToggleReader.IsNewlyPressed())
+        {
+            switch (mAppSettings->GetCurrentPerformancePatch().mGlobalScaleRef)
+            {
+                case GlobalScaleRefType::Chosen:
+                default:
+                    mAppSettings->GetCurrentPerformancePatch().mGlobalScaleRef = GlobalScaleRefType::Deduced;
+                    mControlMapper->InputSource_ShowToast(String("Scale detector enabled"));
+                    break;
+                case GlobalScaleRefType::Deduced:
+                    mAppSettings->GetCurrentPerformancePatch().mGlobalScaleRef = GlobalScaleRefType::Chosen;
+                    mControlMapper->InputSource_ShowToast(String("Manual scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
+                    break;
+            }
+
         }
 
         {

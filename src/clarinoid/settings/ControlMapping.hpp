@@ -68,6 +68,7 @@ struct ControlMapping
         GlobalTempo,
         PerfPreset,
         EffectsEnabledToggle,
+        GlobalScaleDeducedToggle,
         LoopGo,
         LoopStop,
         BaseNoteHoldToggle,

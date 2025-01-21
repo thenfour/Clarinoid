@@ -190,7 +190,6 @@ enum class EnharmonicDirection : uint8_t
 // FLAGS
 enum class ScaleFlavorOptions : uint8_t
 {
-    AllowInScaleFollower = 1,
     AllowInMenus = 2,
     AllowEverywhere = 3,
 };
@@ -205,10 +204,6 @@ struct ScaleFlavor
     bool IsAllowedInMenus() const
     {
         return (uint8_t)mOptions & (uint8_t)ScaleFlavorOptions::AllowInMenus;
-    }
-    bool IsAllowedInScaleFollower() const
-    {
-        return (uint8_t)mOptions & (uint8_t)ScaleFlavorOptions::AllowInScaleFollower;
     }
 
     // list of intervals in the scale?
@@ -227,14 +222,25 @@ struct ScaleFlavor
     uint8_t mScaleDegreeToChromaticRelNoteLUT[12]; // convert scale degree to chromatic relative note (0=scale root,
                                                    // 1=scale root +1 semitone)
 
+    float mChromaticFitnessFits[12]; // how well each chromatic note fits in the scale.
+    float howCommonInScaleDetector;
+
     ScaleFlavor(ScaleFlavorIndex id,
                 const char *shortName,
                 const char *longName,
                 ScaleFlavorOptions options,
                 uint8_t symmetry,
                 std::initializer_list<int8_t> intervals,
-                std::initializer_list<int8_t> degreeCharacteristicStrengths)
-        : mID(id), mShortName(shortName), mLongName(longName), mOptions(options), mSymmetry(symmetry)
+                std::initializer_list<int8_t> degreeCharacteristicStrengths,
+                float howCommonInScaleDetector, // 1 = most common, 0 = NEVER.
+                std::initializer_list<float> chromaticFitnessFits)
+        :
+        mID(id),
+        mShortName(shortName),
+        mLongName(longName),
+        mOptions(options),
+        mSymmetry(symmetry),
+        howCommonInScaleDetector(howCommonInScaleDetector)
     {
         size_t i = 0;
         for (auto it = intervals.begin(); it != intervals.end(); ++it, ++i)
@@ -251,6 +257,28 @@ struct ScaleFlavor
         }
         mDegreeCharacteristicStrengths[degreeCharacteristicStrengths.size()] = -1;
         mDegreeCharacteristicStrengthsCount = degreeCharacteristicStrengths.size();
+
+        i = 0;
+        float sumOfPositiveFitnesses = 0;
+        for (auto it = chromaticFitnessFits.begin(); it != chromaticFitnessFits.end(); ++it, ++i)
+        {
+            float score = *it;
+            mChromaticFitnessFits[i] = score;
+            if (score > 0)
+            {
+                sumOfPositiveFitnesses += score;
+            }
+        }
+
+        // we need to find a way to normalize fitness score so every scale flavor will return a similar value for similar fitness.
+        float factor = 1.0f / (std::max(1.0f, sumOfPositiveFitnesses));
+        for (i = 0; i < 12; ++i)
+        {
+            //if (mChromaticFitnessFits[i] > 0)
+            {
+                mChromaticFitnessFits[i] *= factor;
+            }
+        }
 
         uint8_t span = 0;
         for (auto i : mIntervals)
@@ -346,6 +374,22 @@ struct ScaleFlavor
     }
 };
 
+struct PitchFitnessClass {
+    static constexpr float NotInScale_HardBlock = -1;
+    static constexpr float NotInScale_Unfit = -1;
+    static constexpr float NotInScale_Agnostic = 0; // not in scale, but does not penalize. rare to use this; only place i could really think needs this is minor blues around the 7th.
+    static constexpr float InScale = 1;
+    static constexpr float Strong = 2;
+};
+
+struct HowCommonClasses {
+    static constexpr float Never = 0;
+    // actually i think this is not used; basically the more rare the scale is the more penalties it will incur.
+    static constexpr float Novelty = 0.7f; // effect scales: chromatic, whole tone, diminished...
+    static constexpr float Secondary = 0.8f; // secondary scales: pentatonic, blues, harm minor...
+    static constexpr float Primary = 0.9f; // primary: major, minor, ...
+};
+
 // always make sure the scale spans 1 octave exactly.
 // !! NB: match indices to ScaleFlavorIndex!
 const ScaleFlavor gScaleFlavors[14] = {
@@ -355,86 +399,317 @@ const ScaleFlavor gScaleFlavors[14] = {
      ScaleFlavorOptions::AllowInMenus,
      1,
      {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Novelty,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::InScale, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::InScale, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::InScale, // B
+     }
+     },
+
     {ScaleFlavorIndex::Major,
      "Major",
      "Major",
      ScaleFlavorOptions::AllowEverywhere,
      12,
      {2, 2, 1, 2, 2, 2, 1},
-     {2, 1, 3, 1, 2, 1, 1}},
+     {2, 1, 3, 1, 2, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Primary,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_Unfit, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::NotInScale_Unfit, // D#
+        PitchFitnessClass::Strong, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::NotInScale_Unfit, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::NotInScale_Unfit, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::NotInScale_Unfit, // A#
+        PitchFitnessClass::InScale, // B
+     }},
+
     {ScaleFlavorIndex::Minor,
      "Minor",
      "Minor",
      ScaleFlavorOptions::AllowInMenus,
      12,
      {2, 1, 2, 2, 1, 2, 2},
-     {2, 1, 3, 1, 2, 1, 1}},
+     {2, 1, 3, 1, 2, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Primary,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_Unfit, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::NotInScale_Unfit, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::NotInScale_Unfit, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::NotInScale_Unfit, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::NotInScale_Unfit, // B
+     }},
+
     {ScaleFlavorIndex::MelodicMinor,
      "MelMi",
      "Mel Min",
      ScaleFlavorOptions::AllowEverywhere,
      12,
      {2, 1, 2, 2, 2, 2, 1},
-     {2, 1, 3, 1, 1, 1, 3}},
+     {2, 1, 3, 1, 1, 1, 3}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Secondary,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_Unfit, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::NotInScale_HardBlock, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::NotInScale_Unfit, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::NotInScale_HardBlock, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::NotInScale_Unfit, // A#
+        PitchFitnessClass::InScale, // B
+     }},
+
     {ScaleFlavorIndex::HarmonicMinor,
      "HrmMi",
      "Harm Min",
      ScaleFlavorOptions::AllowInMenus,
      12,
      {2, 1, 2, 2, 1, 3, 1},
-     {2, 1, 3, 1, 1, 3, 3}},
+     {2, 1, 3, 1, 1, 3, 3}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Secondary,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_Unfit, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::NotInScale_Unfit, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::NotInScale_Unfit, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::NotInScale_HardBlock, // A
+        PitchFitnessClass::NotInScale_HardBlock, // A#
+        PitchFitnessClass::InScale, // B
+     }},
+
     {ScaleFlavorIndex::MajorPentatonic,
      "MajPent",
      "Maj Pent",
      ScaleFlavorOptions::AllowEverywhere,
      12,
      {2, 2, 3, 2, 3},
-     {2, 1, 3, 2, 1}},
+     {2, 1, 3, 2, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Secondary,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_Unfit, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::NotInScale_HardBlock, // D#
+        PitchFitnessClass::Strong, // E
+        PitchFitnessClass::NotInScale_Unfit, // F agnostic candidate
+        PitchFitnessClass::NotInScale_Unfit, // F# agnostic candidate
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::NotInScale_Unfit, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::NotInScale_Unfit, // A# agnostic candidate
+        PitchFitnessClass::NotInScale_Unfit, // B agnostic candidate
+     }},
+
     {ScaleFlavorIndex::MinorPentatonic,
      "MinPent",
      "Min Pent",
      ScaleFlavorOptions::AllowEverywhere,
      12,
      {3, 2, 2, 3, 2},
-     {2, 3, 1, 1, 1}},
+     {2, 3, 1, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Secondary,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_Unfit, // C#
+        PitchFitnessClass::NotInScale_Unfit, // D // could be agnostic but this way it distinguishes from major/minor scales
+        PitchFitnessClass::Strong, // D#
+        PitchFitnessClass::NotInScale_HardBlock, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::NotInScale_Unfit, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::NotInScale_Unfit, // G#
+        PitchFitnessClass::NotInScale_Unfit, // A // agnostic candidate
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::NotInScale_Unfit, // B
+     }},
+
     {ScaleFlavorIndex::WholeTone,
      "WholeTone",
      "WholeTone",
      ScaleFlavorOptions::AllowInMenus,
      2,
      {2, 2, 2, 2, 2, 2},
-     {1, 1, 1, 1, 1, 1}},
+     {1, 1, 1, 1, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Novelty,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_HardBlock, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::NotInScale_HardBlock, // D#
+        PitchFitnessClass::InScale, // E
+        PitchFitnessClass::NotInScale_HardBlock, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::NotInScale_HardBlock, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::NotInScale_HardBlock, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::NotInScale_HardBlock, // B
+     }},
+
     {ScaleFlavorIndex::HalfWholeDiminished,
      "HalfWhDim",
      "Half-Whole Dim",
      ScaleFlavorOptions::AllowEverywhere,
      3,
      {1, 2, 1, 2, 1, 2, 1, 2},
-     {1, 1, 1, 1, 1, 1, 1, 1}},
+     {1, 1, 1, 1, 1, 1, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Novelty,
+     {
+        // need to distinguish this from blues scale.
+        // think A C C#
+        // this could definitely be both F# blues or C half-whole dim.
+        // the presence of the B is the key.
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::InScale, // C#
+        PitchFitnessClass::NotInScale_HardBlock, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::InScale, // E
+        PitchFitnessClass::NotInScale_HardBlock, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::NotInScale_HardBlock, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::NotInScale_HardBlock, // B
+     }},
+
     {ScaleFlavorIndex::WholeHalfDiminished,
      "WhHalfDim",
      "Whole-Half Dim",
      ScaleFlavorOptions::AllowInMenus,
      3,
      {2, 1, 2, 1, 2, 1, 2, 1},
-     {1, 1, 1, 1, 1, 1, 1, 1}},
+     {1, 1, 1, 1, 1, 1, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Novelty,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_HardBlock, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::NotInScale_HardBlock, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::NotInScale_HardBlock, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::NotInScale_HardBlock, // A#
+        PitchFitnessClass::InScale, // B
+     }},
+
     {ScaleFlavorIndex::Altered,
      "Alt",
      "Altered",
      ScaleFlavorOptions::AllowInMenus,
      12,
      {1, 2, 1, 2, 2, 2, 2},
-     {2, 2, 1, 2, 1, 1, 1}},
+     {2, 2, 1, 2, 1, 1, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Secondary,
+     {
+        // TODO: but because we don't include this in scale follower it's not needed now.
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::InScale, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::InScale, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::InScale, // B
+     }},
+
     {ScaleFlavorIndex::Blues,
-     "Blues",
-     "Blues",
+     "MinBlues",
+     "MinBlues",
      ScaleFlavorOptions::AllowInMenus,
      12,
      {3, 2, 1, 1, 3, 2},
-     {2, 3, 1, 3, 2, 1}},
-    {ScaleFlavorIndex::Unison, "Uni", "Unison", ScaleFlavorOptions::AllowEverywhere, 12, {12}, {1}},
-    {ScaleFlavorIndex::Power, "5th", "Power", ScaleFlavorOptions::AllowEverywhere, 12, {7, 5}, {1, 1}},
+     {2, 3, 1, 3, 2, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Secondary,
+     {
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::NotInScale_Unfit, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::NotInScale_HardBlock, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::NotInScale_HardBlock, // G#
+        PitchFitnessClass::NotInScale_Agnostic, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::NotInScale_Agnostic, // B
+     }},
+
+    {ScaleFlavorIndex::Unison, "Uni", "Unison", ScaleFlavorOptions::AllowEverywhere, 12, {12}, {1}, // characteristic strengths (not used anymore)
+    HowCommonClasses::Never,
+     {
+        // TODO: but because we don't include this in scale follower it's not needed now.
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::InScale, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::InScale, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::InScale, // B
+     }},
+
+    {ScaleFlavorIndex::Power, "5th", "Power", ScaleFlavorOptions::AllowEverywhere, 12, {7, 5}, {1, 1}, // characteristic strengths (not used anymore)
+    HowCommonClasses::Never,
+     {
+        // TODO: but because we don't include this in scale follower it's not needed now.
+        PitchFitnessClass::InScale, // C
+        PitchFitnessClass::InScale, // C#
+        PitchFitnessClass::InScale, // D
+        PitchFitnessClass::InScale, // D#
+        PitchFitnessClass::InScale, // E
+        PitchFitnessClass::InScale, // F
+        PitchFitnessClass::InScale, // F#
+        PitchFitnessClass::InScale, // G
+        PitchFitnessClass::InScale, // G#
+        PitchFitnessClass::InScale, // A
+        PitchFitnessClass::InScale, // A#
+        PitchFitnessClass::InScale, // B
+     }},
 };
 
 constexpr auto scaleFlavorSize = sizeof(gScaleFlavors);
@@ -527,6 +802,13 @@ struct Scale
         uint8_t temp = 0;
         auto ctx = GetNoteInScaleContext(MidiNote(1, note).GetMidiValue(), temp, EnharmonicDirection::Flat);
         return ctx.mEnharmonic == 0;
+    }
+
+    float GetFitnessForNote(Note note) const
+    {
+        // get chromatic pitch relative to root
+        uint8_t chr = MidiToChromaticRelativeToRoot(MidiNote(1, note).GetMidiValue());
+        return GetScaleFlavor().mChromaticFitnessFits[chr];
     }
 
 #ifdef CLARINOID_MODULE_TEST // because this is using std::vector, and is not optimized

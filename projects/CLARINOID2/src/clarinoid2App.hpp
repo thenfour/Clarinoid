@@ -286,7 +286,10 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKey::None);
         mAppSettings.mControlMappings[++im] =
             ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKey::Shift);
-        // 25 so far. + 20 = 45 total mappings.
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::GlobalScaleDeducedToggle, ModifierKey::Key);
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo);
 
         // RH buttons
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(

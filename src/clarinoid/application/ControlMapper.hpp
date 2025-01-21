@@ -337,6 +337,7 @@ struct InputDelegator
     VirtualSwitch mHarmPresetOnOffToggle;
     VirtualSwitch mDisplayFontToggle;
     VirtualSwitch mEffectEnableToggle;
+    VirtualSwitch mGlobalScaleDeducedToggle;
 
     VirtualSwitch mSoftResetMpr121;
 
@@ -416,6 +417,8 @@ struct InputDelegator
 
         RegisterFunction(ControlMapping::Function::TransposeReset, &mTransposeReset);
         RegisterFunction(ControlMapping::Function::MetronomeToggle, &mMetronomeToggle);
+
+        RegisterFunction(ControlMapping::Function::GlobalScaleDeducedToggle, &mGlobalScaleDeducedToggle);
 
         mpSrc->InputSource_Init(this);
     }

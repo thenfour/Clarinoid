@@ -66,32 +66,15 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                      this},
         AlwaysEnabled};
 
-        // deduced scale note & flavor
-    EnumSettingItem<Note> mDeducedScaleNote = {
-        "Deduced scale note",
-        gNoteInfo,
-        Property<Note>{[](void *cap) FLASHMEM {
-                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                           return pThis->GetBinding().mDeducedScale.mRootNoteIndex;
-                       },
-                       [](void *cap, const Note &v) {
-                        // no setter possible.
-                       },
-                       this},
-        NeverEnabled};
-
-    EnumSettingItem<ScaleFlavorIndex> mDeducedScaleFlavor = {
-        "Deduced scale flavor",
-        gScaleFlavorIndexInfo,
-        Property<ScaleFlavorIndex>{[](void *cap) FLASHMEM {
-                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                      return pThis->GetBinding().mDeducedScale.mFlavorIndex;
-                                  },
-                                  [](void *cap, const ScaleFlavorIndex &v) {
-                                      // no setter possible.
-                                  },
-                                  this},
-        NeverEnabled};
+    LabelSettingItem mDeducedScale = {
+        Property<String>{[](void *cap) FLASHMEM {
+                             auto *pThis = (PerformancePatchSettingsApp *)cap;
+                             return pThis->GetBinding().mDeducedScale.ToString();
+                         },
+                         this},
+        Property<bool> { [](void *cap) FLASHMEM {
+            return true;
+        }, this}};
 
     EnumSettingItem<Note> mChosenScaleNote = {
         "Scale note",
@@ -375,13 +358,12 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
 
     SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
 
-    ISettingItem *mArray[15] = {
+    ISettingItem *mArray[14] = {
         &mMasterGain,
         &mTranspose,
 
         &mGlobalScaleRef,
-        &mDeducedScaleNote,
-        &mDeducedScaleFlavor,
+        &mDeducedScale,
         &mChosenScaleNote,
         &mChosenScaleFlavor,
 

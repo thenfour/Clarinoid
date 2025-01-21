@@ -1,7 +1,6 @@
 
 #pragma once
 
-//#include <optional> // not available!
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/basic/Music.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
@@ -77,40 +76,6 @@ private:
     std::array<PitchClassEnvelope, 12> mEnvelopes;
 };
 
-struct ScaleDefinition {
-
-    ScaleDefinition(Scale scale, float outOfScalePenalty)
-        : mScale(scale)
-        , mOutOfScalePenalty(outOfScalePenalty)
-    {
-
-    }
-
-    Scale mScale;
-
-    // Optional: some penalty factor for out-of-scale notes, weighting, etc.
-    float mOutOfScalePenalty; // 1.0f
-
-    float MeasureFit(const PitchClassEnvelopes& pce) const
-    {
-        float score = 0.0f;
-
-        for (int pc = 0; pc < 12; ++pc) {
-            //int interval = pc % 12;
-            //bool isInScale = (std::find(intervals.begin(), intervals.end(), interval) != intervals.end());
-            bool isInScale = mScale.IsNoteInScale((Note)pc);
-            float presence = pce.GetLevel(pc);
-
-            if (isInScale) {
-                score += presence; 
-            } else {
-                score -= presence * mOutOfScalePenalty;
-            }
-        }
-        return score;
-    }
-};
-
 struct ScaleDetector {
 
     // Main call ~ every 3ms
@@ -125,6 +90,8 @@ struct ScaleDetector {
     }
 
     PitchClassEnvelopes mEnvelopes;
+
+private:
     float mAttackTimeSec = 0.1f;
     float mReleaseTimeSec = 3.0f;
     float mFrameTimeSec = 0.003f;
@@ -132,38 +99,12 @@ struct ScaleDetector {
     float mAlphaAttack  = 1.0f - std::exp(-mFrameTimeSec / mAttackTimeSec);
     float mAlphaRelease = 1.0f - std::exp(-mFrameTimeSec / mReleaseTimeSec);
 
-    // Available scales
-    //std::vector<ScaleDefinition> mScaleDefs;
-    ScaleDefinition mScaleDefs[27] = {
-        ScaleDefinition(Scale { Note::C, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::Db, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::D, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::Eb, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::E, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::F_, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::Gb, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::G, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::Ab, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::A, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::Bb, ScaleFlavorIndex::Major }, 1.0f),
-        ScaleDefinition(Scale { Note::B, ScaleFlavorIndex::Major }, 1.0f),
-
-        ScaleDefinition(Scale { Note::C, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::Db, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::D, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::Eb, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::E, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::F_, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::Gb, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::G, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::Ab, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::A, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::Bb, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-        ScaleDefinition(Scale { Note::B, ScaleFlavorIndex::MelodicMinor }, 1.0f),
-
-        ScaleDefinition(Scale { Note::A, ScaleFlavorIndex::HalfWholeDiminished }, 3.0f),
-        ScaleDefinition(Scale { Note::Bb, ScaleFlavorIndex::HalfWholeDiminished }, 3.0f),
-        ScaleDefinition(Scale { Note::B, ScaleFlavorIndex::HalfWholeDiminished }, 3.0f),
+    ScaleFlavorIndex mScaleFlavors[5] = {
+        ScaleFlavorIndex::Major,
+        ScaleFlavorIndex::MajorPentatonic,
+        ScaleFlavorIndex::MelodicMinor,
+        ScaleFlavorIndex::Blues,
+        ScaleFlavorIndex::HalfWholeDiminished,
     };
 
     Scale FindBestScale()
@@ -174,23 +115,31 @@ struct ScaleDetector {
         Scale bestScale = { Note::C, ScaleFlavorIndex::Major }; // or however you want to represent it
 
         // Evaluate each root from 0..11
-        //for (int root = 0; root < 12; ++root) {
-            for (auto& sd : mScaleDefs) {
-                float score = sd.MeasureFit(mEnvelopes);
+        for (int root = 0; root < 12; ++root) {
+            for (auto& flavor : mScaleFlavors) {
+                Scale scale = { (Note)root, flavor };
+                float score = MeasureFitness(mEnvelopes, scale);
                 if (score > bestScore) {
                     bestScore = score;
-                    bestScale = sd.mScale;
+                    bestScale = scale;
                 }
             }
-        //}
+        }
 
         return bestScale;
     }
+
+    float MeasureFitness(const PitchClassEnvelopes& pce, const Scale& scale) const
+    {
+        float score = 0.0f;
+
+        for (int pc = 0; pc < 12; ++pc) {
+            float fit = scale.GetFitnessForNote((Note)pc);
+            float presence = pce.GetLevel(pc);
+            score += presence * fit;
+        }
+        return score;
+    }
 };
-
-
-
-
-
 
 } // namespace clarinoid

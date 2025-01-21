@@ -639,7 +639,7 @@ struct SynthSettings
     static void InitClarinoid2Preset(SynthPreset &p,
                                      const char *name,
                                      ClarinoidFilterType filt,
-                                     float filterKeyScaling,
+                                     //float filterKeyScaling,
                                      float q,
                                      float filterMaxFreq)
     {
@@ -660,7 +660,7 @@ struct SynthSettings
         p.mFilterMaxFreq = filterMaxFreq;
         p.mFilterSaturation = 0;
         p.mFilterQ = q;
-        p.mFilterKeytracking = filterKeyScaling;
+        //p.mFilterKeytracking = filterKeyScaling;
     }
 
     static void InitBasicLeadPreset(const char *name, OscWaveformShape shape, float pulseWidth, SynthPreset &p)
@@ -899,7 +899,7 @@ struct SynthSettings
         p.mName = name; //"Cinematic Tag";
         p.mSync = false;
         p.mDetune = detuneAmt;
-        p.mFilterKeytracking = 0.8f;
+        //p.mFilterKeytracking = 0.8f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog2;
         p.mFilterMaxFreq = 22050;
@@ -944,7 +944,7 @@ struct SynthSettings
         p.mDetune = 0.04f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterKeytracking = 0.8f;
+        //p.mFilterKeytracking = 0.8f;
         p.mFilterMaxFreq = 20000;
         p.mFilterQ = 0.0f;
         p.mFilterSaturation = 0.2f;
@@ -1101,7 +1101,7 @@ struct SynthSettings
     static void InitSynccyLead(SynthPreset &p)
     {
         p.mName = "Synccy Lead"; // default.
-        p.mFilterKeytracking = 0.8f;
+        //p.mFilterKeytracking = 0.8f;
         p.mFilterMaxFreq = 22000;
         p.mModulations[0].SetScaleN11_Legacy(0.9f);
         p.mModulations[0].mSource = AnyModulationSource::LFO1;
