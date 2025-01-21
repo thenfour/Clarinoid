@@ -33,7 +33,7 @@ struct PerformancePatch
     int8_t mTranspose = DEFAULT_TRANSPOSE;
 
     GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Chosen;
-    Scale mGlobalScale = Scale{Note::E, ScaleFlavorIndex::MajorPentatonic};  // you can set this in menus
+    Scale mGlobalScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic};  // you can set this in menus
     Scale mDeducedScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic}; // this is automatically populated always
 
     int16_t mSynthPresetA = 0;

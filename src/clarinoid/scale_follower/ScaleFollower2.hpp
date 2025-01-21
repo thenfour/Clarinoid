@@ -126,7 +126,7 @@ struct ScaleDetector {
 
     PitchClassEnvelopes mEnvelopes;
     float mAttackTimeSec = 0.1f;
-    float mReleaseTimeSec = 2.0f;
+    float mReleaseTimeSec = 3.0f;
     float mFrameTimeSec = 0.003f;
 
     float mAlphaAttack  = 1.0f - std::exp(-mFrameTimeSec / mAttackTimeSec);
@@ -161,9 +161,9 @@ struct ScaleDetector {
         ScaleDefinition(Scale { Note::Bb, ScaleFlavorIndex::MelodicMinor }, 1.0f),
         ScaleDefinition(Scale { Note::B, ScaleFlavorIndex::MelodicMinor }, 1.0f),
 
-        ScaleDefinition(Scale { Note::A, ScaleFlavorIndex::HalfWholeDiminished }, 2.0f),
-        ScaleDefinition(Scale { Note::Bb, ScaleFlavorIndex::HalfWholeDiminished }, 2.0f),
-        ScaleDefinition(Scale { Note::B, ScaleFlavorIndex::HalfWholeDiminished }, 2.0f),
+        ScaleDefinition(Scale { Note::A, ScaleFlavorIndex::HalfWholeDiminished }, 3.0f),
+        ScaleDefinition(Scale { Note::Bb, ScaleFlavorIndex::HalfWholeDiminished }, 3.0f),
+        ScaleDefinition(Scale { Note::B, ScaleFlavorIndex::HalfWholeDiminished }, 3.0f),
     };
 
     Scale FindBestScale()

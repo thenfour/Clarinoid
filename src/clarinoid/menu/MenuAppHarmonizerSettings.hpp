@@ -186,11 +186,6 @@ struct HarmVoiceSettingsApp
             this // capture val
         },
         AlwaysEnabled
-        //   [](void* cap) {
-        //         auto *pThis = (HarmVoiceSettingsApp *)cap;
-        //         return pThis->EditingVoice().mScaleRef ==
-        //         HarmScaleRefType::Voice;
-        //   }
     };
 
     EnumSettingItem<ScaleFlavorIndex> mLocalScaleFlavor = {
@@ -208,11 +203,6 @@ struct HarmVoiceSettingsApp
             this // capture val
         },
         AlwaysEnabled
-        //   [](void* cap) {
-        //         auto *pThis = (HarmVoiceSettingsApp *)cap;
-        //         return pThis->EditingVoice().mScaleRef ==
-        //         HarmScaleRefType::Voice;
-        //   }
     };
 
     EnumSettingItem<NonDiatonicBehavior> mNonDiatonicBehavior = {

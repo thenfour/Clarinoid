@@ -52,6 +52,81 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                                this},
                                  AlwaysEnabled};
 
+    EnumSettingItem<GlobalScaleRefType> mGlobalScaleRef = {
+        "Scale ref",
+        gGlobalScaleRefTypeInfo,
+        Property<GlobalScaleRefType>{[](void *cap) FLASHMEM {
+                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                         return pThis->GetBinding().mGlobalScaleRef;
+                                     },
+                                     [](void *cap, const GlobalScaleRefType &v) {
+                                         auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                         pThis->GetBinding().mGlobalScaleRef = v;
+                                     },
+                                     this},
+        AlwaysEnabled};
+
+        // deduced scale note & flavor
+    EnumSettingItem<Note> mDeducedScaleNote = {
+        "Deduced scale note",
+        gNoteInfo,
+        Property<Note>{[](void *cap) FLASHMEM {
+                           auto *pThis = (PerformancePatchSettingsApp *)cap;
+                           return pThis->GetBinding().mDeducedScale.mRootNoteIndex;
+                       },
+                       [](void *cap, const Note &v) {
+                        // no setter possible.
+                       },
+                       this},
+        NeverEnabled};
+
+    EnumSettingItem<ScaleFlavorIndex> mDeducedScaleFlavor = {
+        "Deduced scale flavor",
+        gScaleFlavorIndexInfo,
+        Property<ScaleFlavorIndex>{[](void *cap) FLASHMEM {
+                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                      return pThis->GetBinding().mDeducedScale.mFlavorIndex;
+                                  },
+                                  [](void *cap, const ScaleFlavorIndex &v) {
+                                      // no setter possible.
+                                  },
+                                  this},
+        NeverEnabled};
+
+    EnumSettingItem<Note> mChosenScaleNote = {
+        "Scale note",
+        gNoteInfo,
+        Property<Note>{[](void *cap) FLASHMEM {
+                           auto *pThis = (PerformancePatchSettingsApp *)cap;
+                           return pThis->GetBinding().mGlobalScale.mRootNoteIndex;
+                       },
+                       [](void *cap, const Note &v) {
+                           auto *pThis = (PerformancePatchSettingsApp *)cap;
+                           pThis->GetBinding().mGlobalScale.mRootNoteIndex = v;
+                       },
+                       this},
+        Property<bool> { [](void *cap) FLASHMEM {
+            auto *pThis = (PerformancePatchSettingsApp *)cap;
+            return pThis->GetBinding().mGlobalScaleRef == GlobalScaleRefType::Chosen;
+        }, this}};
+
+    EnumSettingItem<ScaleFlavorIndex> mChosenScaleFlavor = {
+        "Scale flavor",
+        gScaleFlavorIndexInfo,
+        Property<ScaleFlavorIndex>{[](void *cap) FLASHMEM {
+                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                      return pThis->GetBinding().mGlobalScale.mFlavorIndex;
+                                  },
+                                  [](void *cap, const ScaleFlavorIndex &v) {
+                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                      pThis->GetBinding().mGlobalScale.mFlavorIndex = v;
+                                  },
+                                  this},
+        Property<bool> { [](void *cap) FLASHMEM {
+            auto *pThis = (PerformancePatchSettingsApp *)cap;
+            return pThis->GetBinding().mGlobalScaleRef == GlobalScaleRefType::Chosen;
+        }, this}};
+
     GainSettingItem mReverbGain = {"Reverb gain",
                                    StandardRangeSpecs::gGeneralGain,
                                    Property<float>{[](void *cap) FLASHMEM {
@@ -283,6 +358,8 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                          AlwaysEnabled,
                                          this};
 
+
+
     ISettingItem *mMasterFXSubmenuItems[9] = {
         &mReverbDamping,
         &mReverbSize,
@@ -298,9 +375,16 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
 
     SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
 
-    ISettingItem *mArray[10] = {
+    ISettingItem *mArray[15] = {
         &mMasterGain,
         &mTranspose,
+
+        &mGlobalScaleRef,
+        &mDeducedScaleNote,
+        &mDeducedScaleFlavor,
+        &mChosenScaleNote,
+        &mChosenScaleFlavor,
+
         &mSelectedSynthPatchA,
         &mSelectedSynthPatchB,
         &mStereoSpread,

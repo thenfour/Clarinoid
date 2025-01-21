@@ -784,7 +784,7 @@ struct SynthSettings
         p.mOsc[2].mGain = 0.0f;
 
         p.mOsc[1].mWaveform = OscWaveformShape::VarTriangle;
-        p.mOsc[1].mGain = 0.19f * DecibelsToLinear(-4.0f);
+        p.mOsc[1].mGain = 0.19f * DecibelsToLinear(-0.0f);
         p.mOsc[1].mPulseWidth = 0.5f;
         p.mSync = false;
         p.mDetune = 0.0f;
@@ -799,6 +799,29 @@ struct SynthSettings
         p.mModulations[0].mDest = AnyModulationDestination::Osc2Frequency;
         p.mModulations[0].mSource = AnyModulationSource::LFO2;
         p.mModulations[0].SetScaleN11_Legacy(0.02f);
+    }
+
+    static void InitHarmFMFB(SynthPreset &p)
+    {
+        p.mName = "FMFB (harm)";
+        p.mSync = false;
+        p.mDetune = 0;
+        p.mStereoSpread = 0;
+        p.mFilterQ = 0;
+        p.mFilterSaturation = 0;
+        p.mFilterKeytracking = 0;
+        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[0].mGain = DecibelsToLinear(-19.0f);
+
+        p.mOsc[1].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[2].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[1].mGain = 0;
+        p.mOsc[2].mGain = 0;
+
+        p.mModulations[0].mSource = AnyModulationSource::Breath;
+        p.mModulations[0].mDest = AnyModulationDestination::Osc1FMFeedback;
+        p.mModulations[0].SetScaleN11_Legacy(0.22f);
+        p.mModulations[0].mAuxEnabled = false;
     }
 
     static void InitHarmPulseLead(SynthPreset &p)
@@ -920,9 +943,9 @@ struct SynthSettings
         p.mOsc[1].mWaveform = p.mOsc[0].mWaveform = OscWaveformShape::Pulse;
         p.mDetune = 0.04f;
 
-        p.mFilterType = ClarinoidFilterType::BP_Moog4;
+        p.mFilterType = ClarinoidFilterType::LP_Moog4;
         p.mFilterKeytracking = 0.8f;
-        p.mFilterMaxFreq = 14000;
+        p.mFilterMaxFreq = 20000;
         p.mFilterQ = 0.0f;
         p.mFilterSaturation = 0.2f;
 
@@ -1261,29 +1284,6 @@ struct SynthSettings
         p.mOsc[2].mGain = 0;
     }
 
-    static void InitHarmFMFB(SynthPreset &p)
-    {
-        p.mName = "FMFB (harm)";
-        p.mSync = false;
-        p.mDetune = 0;
-        p.mStereoSpread = 0;
-        p.mFilterQ = 0;
-        p.mFilterSaturation = 0;
-        p.mFilterKeytracking = 0;
-        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[0].mGain = DecibelsToLinear(-23.0f);
-
-        p.mOsc[1].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[2].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[1].mGain = 0;
-        p.mOsc[2].mGain = 0;
-
-        p.mModulations[0].mSource = AnyModulationSource::Breath;
-        p.mModulations[0].mDest = AnyModulationDestination::Osc1FMFeedback;
-        p.mModulations[0].SetScaleN11_Legacy(0.22f);
-        p.mModulations[0].mAuxEnabled = false;
-    }
-
     static void InitFMTest(SynthPreset &p)
     {
         p.mName = "fm test";
@@ -1348,15 +1348,6 @@ struct SynthSettings
         mPresets[i].mModulations[1].SetScaleN11_Legacy(0.16f);
         ++i;
 
-        InitDetunedLeadPreset(
-            "Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[SynthPresetID_HarmDetunedSaws]);
-        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[0].mGain = 0.19f * DecibelsToLinear(-17.0f);
-        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[1].mGain = 0.19f * DecibelsToLinear(-17.0f);
-        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[2].mGain = 0.19f * DecibelsToLinear(-17.0f);
-        mPresets[SynthPresetID_HarmDetunedSaws].mFilterQ = 0;
-        mPresets[SynthPresetID_HarmDetunedSaws].mFilterType = ClarinoidFilterType::BP_Moog4;
-        mPresets[SynthPresetID_HarmDetunedSaws].mFilterMaxFreq = 5000;
-
         InitBassoonoidPreset(
             mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
@@ -1370,13 +1361,22 @@ struct SynthSettings
         InitHarmFMFB(mPresets[SynthPresetID_HarmFMFB]);
 
         InitDetunedLeadPreset(
+            "Harm: Detsaws", OscWaveformShape::SawSync, 0.5f, mPresets[SynthPresetID_HarmDetunedSaws]);
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[0].mGain = 0.19f * DecibelsToLinear(-13.0f);
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[1].mGain = 0.19f * DecibelsToLinear(-13.0f);
+        mPresets[SynthPresetID_HarmDetunedSaws].mOsc[2].mGain = 0.19f * DecibelsToLinear(-13.0f);
+        mPresets[SynthPresetID_HarmDetunedSaws].mFilterQ = 0;
+        mPresets[SynthPresetID_HarmDetunedSaws].mFilterType = ClarinoidFilterType::LP_Moog4;
+        mPresets[SynthPresetID_HarmDetunedSaws].mFilterMaxFreq = 8000;
+
+        InitDetunedLeadPreset(
             "Harm: Det PWM", OscWaveformShape::Pulse, 0.5f, mPresets[SynthPresetID_HarmDetunedPWM]);
-        mPresets[SynthPresetID_HarmDetunedPWM].mOsc[0].mGain = 0.19f * DecibelsToLinear(-20.0f);
-        mPresets[SynthPresetID_HarmDetunedPWM].mOsc[1].mGain = 0.19f * DecibelsToLinear(-20.0f);
-        mPresets[SynthPresetID_HarmDetunedPWM].mOsc[2].mGain = 0.19f * DecibelsToLinear(-20.0f);
+        mPresets[SynthPresetID_HarmDetunedPWM].mOsc[0].mGain = 0.19f * DecibelsToLinear(-16.0f);
+        mPresets[SynthPresetID_HarmDetunedPWM].mOsc[1].mGain = 0.19f * DecibelsToLinear(-16.0f);
+        mPresets[SynthPresetID_HarmDetunedPWM].mOsc[2].mGain = 0.19f * DecibelsToLinear(-16.0f);
         mPresets[SynthPresetID_HarmDetunedPWM].mFilterQ = 0;
-        mPresets[SynthPresetID_HarmDetunedPWM].mFilterType = ClarinoidFilterType::BP_Moog4;
-        mPresets[SynthPresetID_HarmDetunedPWM].mFilterMaxFreq = 5000;
+        mPresets[SynthPresetID_HarmDetunedPWM].mFilterType = ClarinoidFilterType::LP_Moog4;
+        mPresets[SynthPresetID_HarmDetunedPWM].mFilterMaxFreq = 8000;
 
         mPresets[SynthPresetID_HarmDetunedPWM].mModulations[0].mSource = AnyModulationSource::Breath;
         mPresets[SynthPresetID_HarmDetunedPWM].mModulations[0].mDest = AnyModulationDestination::Osc1PulseWidth;
