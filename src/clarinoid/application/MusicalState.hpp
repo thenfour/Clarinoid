@@ -68,7 +68,7 @@ struct CCEWIMusicalState
     AppSettings *mAppSettings;
     InputDelegator *mInput;
     Metronome *mMetronome;
-    ScaleFollower *mScaleFollower;
+    ScaleDetector *mScaleFollower;
     IInputSource *mInputSrc;
 
     int mLastInterval = 0;
@@ -121,7 +121,7 @@ struct CCEWIMusicalState
                       AppSettings *appSettings,
                       InputDelegator *inputDelegator,
                       Metronome *metronome,
-                      ScaleFollower *scaleFollower,
+                      ScaleDetector *scaleFollower,
                       IInputSource *inputSrc)
         : mpDisplay(pDisplay), mAppSettings(appSettings), mInput(inputDelegator), mMetronome(metronome),
           mScaleFollower(scaleFollower), mInputSrc(inputSrc),

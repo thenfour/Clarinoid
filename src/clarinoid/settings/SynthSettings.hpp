@@ -1306,24 +1306,26 @@ struct SynthSettings
 
         InitFluvial(mPresets[i++]);
         InitFunkyLeadPreset(mPresets[i++]);
+        InitBraker(mPresets[i++]);
+
         InitPWMLead2(mPresets[i++]);
         InitPanFlutePreset(mPresets[i++]);
         InitSynthTrumpetPreset(mPresets[i++]);
-        InitBraker(mPresets[i++]);
+
+        InitDetunePWMLead(mPresets[i++]);
+        InitCloudsStars(mPresets[i++]);
+        InitCinematicTagPatch(mPresets[i++], "Cinematic", 0.06f, 0.02f, -0.08f);
+
+        InitBasicSine(mPresets[i++]);
 
         // InitFMPreset(mPresets[i++]);
         //InitSynccyLead(mPresets[i++]);
         //InitPWMLeadStack(mPresets[i++]);
-        InitDetunePWMLead(mPresets[i++]);
-        InitCloudsStars(mPresets[i++]);
         //InitCrystalFieldsPatch(mPresets[i++]);
-        InitCinematicTagPatch(mPresets[i++], "Cinematic", 0.06f, 0.02f, -0.08f);
         //InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
 
         //InitFifthLeadPresetA(mPresets[i++]);
         //InitFifthLeadPresetB(mPresets[i++]);
-
-        InitBasicSine(mPresets[i++]);
 
         // harmonizer-friendly patches
 

@@ -671,4 +671,57 @@ struct MPR121ConfigApp : SettingsMenuApp
     }
 };
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct ScaleDetectorApp : DisplayApp
+{
+    MusicalStateTask & mMusicalStateTask;
+    ScaleDetectorApp(IDisplay &d, MusicalStateTask & musicalStateTask) : DisplayApp(d), mMusicalStateTask(musicalStateTask)
+    {
+    }
+
+    virtual const char *DisplayAppGetName() override
+    {
+        return "Scale detector viz";
+    }
+
+    virtual void UpdateApp() override
+    {
+        if (mBack.IsNewlyPressed())
+        {
+            GoToFrontPage();
+        }
+    }
+    virtual void RenderApp() override
+    {
+    }
+    virtual void RenderFrontPage() override
+    {
+        mDisplay.setCursor(0, 0);
+        mDisplay.println(String(mMusicalStateTask.mAppSettings->GetCurrentPerformancePatch().mDeducedScale.ToString()));
+        // 8 * 12 = 96
+        // hud height = 10
+        for (int i = 0; i < 12; ++ i) {
+            constexpr int width = 10;
+            constexpr int ymin = 40;
+            constexpr int ymax = 10;
+
+            mDisplay.setCursor(i * 8, ymin + 1);
+            mDisplay.print(MidiNote(1, i).ToString());
+            
+            float noteWeight = mMusicalStateTask.mMusicalState.mScaleFollower->mEnvelopes.GetLevel(i);
+            int y = ymin - noteWeight * (ymin - ymax);
+            mDisplay.fillRect(i * width, y, width - 1, ymin - y, WHITE);
+        }
+    }
+
+    virtual void DisplayAppUpdate() override
+    {
+        DisplayApp::DisplayAppUpdate(); // update input
+    }
+};
+
+
+
 } // namespace clarinoid

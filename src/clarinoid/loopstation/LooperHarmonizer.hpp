@@ -14,9 +14,9 @@ struct LooperAndHarmonizer
 {
     AppSettings *mAppSettings;
     Metronome *mMetronome;
-    ScaleFollower *mScaleFollower;
+    ScaleDetector *mScaleFollower;
 
-    explicit LooperAndHarmonizer(AppSettings *appSettings, Metronome *metronome, ScaleFollower *scaleFollower)
+    explicit LooperAndHarmonizer(AppSettings *appSettings, Metronome *metronome, ScaleDetector *scaleFollower)
         : mAppSettings(appSettings), mMetronome(metronome), mScaleFollower(scaleFollower),
 
           mHarmonizer(appSettings)

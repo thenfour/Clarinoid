@@ -72,6 +72,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
     GuiPerformanceApp mGuiPerformanceApp;    //(mDisplay, mMusicalStateTask.mMetronome);
     MPR121ConfigApp<10, 4> mMPR121ConfigApp; //(mDisplay, mControlMapper, mMusicalStateTask);
+    ScaleDetectorApp mScaleDetectorApp;
 
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
@@ -107,7 +108,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
           mHarmVoiceSettingsApp(mDisplay),                            //
           mHarmPatchApp(mDisplay),                                    //
           mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome), //
-          mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask)
+          mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask),
+          mScaleDetectorApp(mDisplay, mMusicalStateTask)
     {
     }
 
@@ -193,6 +195,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
             &mDebugDisplayApp,
             &mMPR121ConfigApp,
+            &mScaleDetectorApp,
         };
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper, &mMusicalStateTask.mMetronome);

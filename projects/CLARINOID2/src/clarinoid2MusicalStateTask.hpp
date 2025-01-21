@@ -19,7 +19,7 @@ struct MusicalStateTask : ITask
     Metronome mMetronome;
     CCEWIMusicalState mMusicalState;
     CCSynth mSynth;
-    ScaleFollower mScaleFollower;
+    ScaleDetector mScaleFollower;
 
     // for timing subtasks
     SimpleMovingAverage<15> mInputTiming;

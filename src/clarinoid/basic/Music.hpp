@@ -522,11 +522,12 @@ struct Scale
         return ret;
     }
 
-    // bool IsNoteDiatonic(Note note) const {
-    //  uint8_t temp = 0;
-    //  auto ctx = GetNoteInScaleContext(MidiNote(1, note).GetMidiValue(), temp, EnharmonicDirection::Flat);
-    //  return ctx.mEnharmonic == 0;
-    //}
+    bool IsNoteInScale(Note note) const
+    {
+        uint8_t temp = 0;
+        auto ctx = GetNoteInScaleContext(MidiNote(1, note).GetMidiValue(), temp, EnharmonicDirection::Flat);
+        return ctx.mEnharmonic == 0;
+    }
 
 #ifdef CLARINOID_MODULE_TEST // because this is using std::vector, and is not optimized
     std::vector<std::pair<Note, int>> GetDiatonicNotesAndCharacter() const
