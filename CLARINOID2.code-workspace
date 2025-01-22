@@ -87,7 +87,11 @@
 			"xlocmon": "cpp",
 			"xloctime": "cpp",
 			"memory_resource": "cpp",
-			"string_view": "cpp"
+			"string_view": "cpp",
+			"chrono": "cpp",
+			"forward_list": "cpp",
+			"iomanip": "cpp",
+			"ratio": "cpp"
 		}
 	}
 }

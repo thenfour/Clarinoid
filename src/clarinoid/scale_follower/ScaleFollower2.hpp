@@ -99,11 +99,11 @@ private:
     float mAlphaAttack  = 1.0f - std::exp(-mFrameTimeSec / mAttackTimeSec);
     float mAlphaRelease = 1.0f - std::exp(-mFrameTimeSec / mReleaseTimeSec);
 
-    ScaleFlavorIndex mScaleFlavors[5] = {
+    ScaleFlavorIndex mScaleFlavors[3] = {
         ScaleFlavorIndex::Major,
-        ScaleFlavorIndex::MajorPentatonic,
+        //ScaleFlavorIndex::MajorPentatonic,
         ScaleFlavorIndex::MelodicMinor,
-        ScaleFlavorIndex::Blues,
+        //ScaleFlavorIndex::Blues,
         ScaleFlavorIndex::HalfWholeDiminished,
     };
 

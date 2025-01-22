@@ -78,6 +78,7 @@ class CCEWIMIDIOut
         // important: send note on before note off, to make portamento work.
         if (transitionEvents.mNeedsNoteOn)
         {
+            noteOns ++;
             gMidi.sendNoteOn(liveVoice.mMidiNote, liveVoice.mVelocity, CCEWI_MIDICHANNEL);
             // log(String("note on") + liveVoice.mMidiNote);
         }

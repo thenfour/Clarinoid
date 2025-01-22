@@ -102,6 +102,8 @@ struct RectI
     int y;
     int width;
     int height;
+    int left() const { return x; }
+    int top() const { return y; }
     int right() const
     {
         return x + width;

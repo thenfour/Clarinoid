@@ -628,6 +628,19 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequence[0] = -12;
     }
 
+    void InitCol8vaPreset(HarmPreset &p)
+    {
+        p.mName = "Col 8va";
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        //p.mVoiceSettings[0].mMaxOutpNote = 36;
+        //p.mVoiceSettings[0].mMaxOutpNote = 50;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
+        //p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_MoogBass;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = 12;
+    }
+
     // void InitColDetSawsPreset(HarmPreset &p)
     // {
     //     p.mName = "Thiccc";
@@ -666,13 +679,20 @@ struct HarmSettings
         size_t iPreset = 1;
 
         InitBigBandPreset(mPresets[iPreset++], "World Peace");
-        InitFunkyHarmPreset(mPresets[iPreset++]);
-        InitFunky2(mPresets[iPreset++]);
-        InitFunky3(mPresets[iPreset++]);
-        InitColBassPreset(mPresets[iPreset++]);
-
-        InitQuartalHarmPreset2(mPresets[iPreset++]);
+        InitBigPreset(mPresets[iPreset++]);
         InitFuzionPreset(mPresets[iPreset++]);
+        InitMin6Preset(mPresets[iPreset++]);
+        InitQuartQuintHarmPreset(mPresets[iPreset++]);
+        InitQuartalHarmPreset2(mPresets[iPreset++]);
+        InitMajInv2Preset(mPresets[iPreset++]);
+        InitFunky3(mPresets[iPreset++]);
+        InitFunky2(mPresets[iPreset++]);
+        InitFunkyHarmPreset(mPresets[iPreset++]);
+
+        InitColBassPreset(mPresets[iPreset++]);
+        InitCol8vaPreset(mPresets[iPreset++]);
+
+        InitSpicePreset(mPresets[iPreset++]);
 
         // InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
         // InitSlumsHarmPreset(mPresets[iPreset++]);
@@ -681,14 +701,9 @@ struct HarmSettings
 
         // InitOctDownPreset(mPresets[iPreset++]);
         // InitColDetSawsPreset(mPresets[iPreset++]);
-        InitSpicePreset(mPresets[iPreset++]);
         // Init5thPreset(mPresets[iPreset++]);
 
-        InitMajInv2Preset(mPresets[iPreset++]);
-        InitBigPreset(mPresets[iPreset++]);
 
-        InitMin6Preset(mPresets[iPreset++]);
-        InitQuartQuintHarmPreset(mPresets[iPreset++]);
         // InitQuartalHarmPreset1(mPresets[iPreset++]); <-- it's nice, but too similar to the other quartal
 
         //InitBigBandPreset(mPresets[HarmPresetID_WorldPeace], "World Peace");

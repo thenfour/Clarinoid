@@ -32,6 +32,8 @@
 #include "clarinoid2ControlMapper.hpp"
 #include "clarinoid2MusicalStateTask.hpp"
 #include "clarinoid2DebugDisplayApp.hpp"
+#include "clarinoid2RhythmGoniometer.hpp"
+//#include "clarinoid2RhythmLissajaus.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
@@ -73,6 +75,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     GuiPerformanceApp mGuiPerformanceApp;    //(mDisplay, mMusicalStateTask.mMetronome);
     MPR121ConfigApp<10, 4> mMPR121ConfigApp; //(mDisplay, mControlMapper, mMusicalStateTask);
     ScaleDetectorApp mScaleDetectorApp;
+    RhythmGoniometerApp mGoniometerApp;
+    //RhythmLissajausApp mLissajausApp;
 
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
@@ -109,7 +113,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
           mHarmPatchApp(mDisplay),                                    //
           mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome), //
           mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask),
-          mScaleDetectorApp(mDisplay, mMusicalStateTask)
+          mScaleDetectorApp(mDisplay, mMusicalStateTask),
+          mGoniometerApp(mDisplay, mMusicalStateTask)
     {
     }
 
@@ -196,6 +201,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mDebugDisplayApp,
             &mMPR121ConfigApp,
             &mScaleDetectorApp,
+            &mGoniometerApp,
+            //&mLissajausApp,
         };
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper, &mMusicalStateTask.mMetronome);

@@ -1,3 +1,5 @@
+#include <array>
+#include "Dither.hpp"
 
 namespace clarinoid
 {
@@ -98,6 +100,23 @@ struct IDisplay
                          float angleStart,
                          float angleSweep,
                          bool filled = true) = 0;
+
+    // new stuff for dithering support
+    virtual bool IsInBounds(const PointI& pt) const = 0;
+    virtual void SetPixel(const PointI& pt, uint16_t color) = 0;
+    virtual void SetPixelShaded(const PointI&, int coverageQp8) = 0; // 0..255
+    virtual void DrawHLineDithered(const PointI& pt, int length, int brightnessQp8) = 0;
+    virtual void FillRectWithBrightness(const RectI& rc, int brightnessQp8) = 0;
+    virtual void FindFarthestPair(const PointI* points, size_t pointCount, PointI& bestA, PointI& bestB) = 0;
+    virtual void DrawLineWithBrightness(const PointI& pt0, const PointI& pt1, int brightness) = 0;
+    virtual void DrawLine(const PointI& pt0, const PointI& pt1) = 0;
+    virtual void DrawInfiniteLineClipped(
+        const PointI& pt0,
+        const PointI& pt1,
+        const RectI& clipRect,
+        int brightness) = 0;
+    virtual void FillCircleWithBrightness(const PointI& c, int r, int brightnessQp8) = 0;
+
 
     // from Adafruit_GFX
     virtual int16_t width() const = 0;
