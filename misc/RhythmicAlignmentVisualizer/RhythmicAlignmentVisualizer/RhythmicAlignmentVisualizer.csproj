@@ -87,6 +87,7 @@
     <Compile Include="Goniometer.cs" />
     <Compile Include="LissajousVisualizer.cs" />
     <Compile Include="Metronome.cs" />
+    <Compile Include="NoteEventGrid.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProgressBarVis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

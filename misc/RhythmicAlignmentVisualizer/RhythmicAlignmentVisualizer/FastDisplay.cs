@@ -86,7 +86,7 @@ namespace RhythmicAlignmentVisualizer
 
         public bool GetDitheredColor(int shade, int x, int y)
         {
-            var thresh = GetScaledThreshold(x, y) + 1;
+            var thresh = GetScaledThreshold(x, y) - 2;
             return shade > thresh;
         }
 

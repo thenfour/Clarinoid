@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+
+
+
 public class NoteCountScroller
 {
     // StopWatch tracks elapsed time since scroller started
@@ -17,8 +20,8 @@ public class NoteCountScroller
     // This marks the oldest bucket index we have cleared so far.
 
     // SCROLLER CONFIG
-    public int BucketWidth = 2;       // horizontal px per bucket
-    public int MsPerBucket = 30;     // each bucket spans 100 ms
+    public int BucketWidth = 4;       // horizontal px per bucket
+    public int MsPerBucket = 90;     // each bucket spans 100 ms
     public int ScrollerHeight = 10;   // vertical px allocated for scroller
     public int ScreenWidth = 128;     // total screen width in px
     public int ScreenHeight = 55;     // total screen height in px
@@ -49,11 +52,12 @@ public class NoteCountScroller
     /// The newest bucket is at the right edge, older to the left.
     /// Also clears any buckets that are older than the left edge.
     /// </summary>
-    public void Render(IDisplay display)
+    public void Render(IDisplay display, IMetronome metronome)
     {
         int screenBottom = ScreenHeight - 1;
         // int scrollerTop = screenBottom - (ScrollerHeight - 1);
 
+        MsPerBucket = (int)(60000 / metronome.BPM / 12);
         int elapsedMs = (int)_stopwatch.ElapsedMilliseconds;
         int currentBucketIndex = elapsedMs / MsPerBucket;
 
@@ -75,6 +79,8 @@ public class NoteCountScroller
         // We'll iterate horizontally from x=0..ScreenWidth-1 in steps of BucketWidth
         for (int screenX = 0; screenX < ScreenWidth; screenX += BucketWidth)
         {
+            // TODO: don't scroll. just display it
+
             // distanceFromRight = how many px from the right edge
             int distanceFromRight = (ScreenWidth - 1) - screenX;
             // how many buckets to the left of current
@@ -105,13 +111,18 @@ public class NoteCountScroller
             // from bottom to top
             for (int n = 0; n < noteCount; n++)
             {
-                int lineY = screenBottom - (n * 2);
-                // fill a horizontal line of width BucketWidth at lineY
-                display.FillRect(screenX, lineY, BucketWidth, 1 /* height */);
+                //int r = (BucketWidth - 1) / 2;
+                int top = screenBottom - (n * 5);
+                //int lineY = screenBottom - (n * BucketWidth);
+                //display.FillCircleWithBrightness(FastDisplay.Bayer8x8Matrix, screenX + r, lineY, r, 255);
+                display.FillRectWithBrightness(FastDisplay.Bayer8x8Matrix, screenX, top, BucketWidth - 1, 4, 255);
             }
         }
     }
 }
+
+
+
 
 
 
@@ -221,7 +232,7 @@ public class GoniometerVisualizer : IVisualization
                 GetBrightness((int)a2.whenAdded.ElapsedMilliseconds, 0, 800));
         }
 
-        noteCountScroller.Render(display);
+        noteCountScroller.Render(display, metronome);
     }
 
     private (float x, float y) DeviationAngleToPoint(float angleDegrees)
