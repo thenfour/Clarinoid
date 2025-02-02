@@ -2,8 +2,7 @@
 
 #pragma once
 
-namespace clarinoid
-{
+namespace clarinoid {
 
 // clarinoid custom fonts will define these characters
 #define CHARSTR_DB "\x7f"
@@ -16,175 +15,44 @@ namespace clarinoid
 #define CHARSTR_NARROWPLUSMINUS "\x86"
 #define CHARSTR_DIGITWIDTHSPACE "\x87"
 
-template <typename T, size_t N>
+template<typename T, size_t N>
 struct StaticArray
 {
-    T (&mArray)[N];
-    static constexpr size_t Size = N;
-    StaticArray(T (&x)[N]) : mArray(x)
-    {
-    }
+  T (&mArray)[N];
+  static constexpr size_t Size = N;
+  StaticArray(T (&x)[N])
+    : mArray(x)
+  {
+  }
 };
 
-template <typename T, size_t N>
-constexpr size_t SizeofStaticArray(const T (&x)[N])
+template<typename T, size_t N>
+constexpr size_t
+SizeofStaticArray(const T (&x)[N])
 {
-    return N;
+  return N;
 }
 
-template <typename T, size_t N>
-void CopyPODArray(const T (&from)[N], T (&to)[N])
+template<typename T, size_t N>
+void
+CopyPODArray(const T (&from)[N], T (&to)[N])
 {
-    memcpy(to, from, sizeof(T) * N);
+  memcpy(to, from, sizeof(T) * N);
 }
 
-template <typename T>
-void CopyPODArray(const T *from, T *to, size_t N)
+template<typename T>
+void
+CopyPODArray(const T* from, T* to, size_t N)
 {
-    memcpy(to, from, sizeof(T) * N);
+  memcpy(to, from, sizeof(T) * N);
 }
 
-struct PointI
+struct IMetronome
 {
-    int x;
-    int y;
-    static PointI Construct(int x_, int y_)
-    {
-        PointI ret;
-        ret.x = x_;
-        ret.y = y_;
-        return ret;
-    }
+  virtual uint32_t GetBeatInt() const = 0;
+  virtual float GetBeatFrac() const = 0;
+  virtual float GetBeatFloat() const = 0;
+  virtual void OnBPMChanged() = 0;
 };
-
-struct PointF
-{
-    float x;
-    float y;
-    static PointF Construct(float x_, float y_)
-    {
-        PointF ret;
-        ret.x = x_;
-        ret.y = y_;
-        return ret;
-    }
-    PointF Add(const PointF &rhs) const
-    {
-        return PointF::Construct(x + rhs.x, y + rhs.y);
-    }
-    PointF Add(const PointI &rhs) const
-    {
-        return PointF::Construct(x + rhs.x, y + rhs.y);
-    }
-};
-
-struct RectI
-{
-    static RectI Construct(int x, int y, int w, int h)
-    {
-        RectI ret;
-        ret.x = x;
-        ret.y = y;
-        ret.width = w;
-        ret.height = h;
-        return ret;
-    }
-    static RectI Construct(PointI upperLeft, int w, int h)
-    {
-        RectI ret;
-        ret.x = upperLeft.x;
-        ret.y = upperLeft.y;
-        ret.width = w;
-        ret.height = h;
-        return ret;
-    }
-    int x;
-    int y;
-    int width;
-    int height;
-    int left() const { return x; }
-    int top() const { return y; }
-    int right() const
-    {
-        return x + width;
-    }
-    int bottom() const
-    {
-        return y + height;
-    }
-    RectI Inflate(int n) const
-    {
-        return Construct(x - n, y - n, width + n + n, height + n + n);
-    }
-    PointI UpperLeft() const
-    {
-        return PointI::Construct(x, y);
-    }
-    PointI UpperRight() const
-    {
-        return PointI::Construct(x + width, y);
-    }
-    PointI BottomLeft() const
-    {
-        return PointI::Construct(x, y + height);
-    }
-    PointI BottomRight() const
-    {
-        return PointI::Construct(x + width, y + height);
-    }
-    bool YInRect(int y) const
-    {
-        return (y >= this->y) && (y < this->right());
-    }
-};
-struct RectF
-{
-    float x;
-    float y;
-    float width;
-    float height;
-};
-
-struct ColorF
-{
-    float r;
-    float g;
-    float b;
-};
-struct ColorByte
-{
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-};
-
-struct BitmapSpec
-{
-    const uint8_t *pBmp = nullptr;
-    int bitmapDataSizeBytes = 0;
-    uint8_t widthBytes = 0;
-    uint8_t widthPixels = 0;
-    uint8_t heightPixels = 0;
-
-    template <size_t BitmapDataSizeBytes>
-    static BitmapSpec Construct(const uint8_t (&bmpBytes)[BitmapDataSizeBytes], uint8_t widthBytes, uint8_t widthPixels)
-    {
-        BitmapSpec ret;
-        ret.pBmp = bmpBytes;
-        ret.widthBytes = widthBytes;
-        ret.widthPixels = widthPixels;
-        ret.bitmapDataSizeBytes = BitmapDataSizeBytes;
-        ret.heightPixels = BitmapDataSizeBytes / ret.widthBytes;
-        return ret;
-    }
-};
-
-
-    struct IMetronome {
-        virtual uint32_t GetBeatInt() const = 0;
-        virtual float GetBeatFrac() const = 0;
-        virtual float GetBeatFloat() const = 0;
-        virtual void OnBPMChanged() = 0;
-    };
 
 } // namespace clarinoid

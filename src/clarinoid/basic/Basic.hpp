@@ -3,6 +3,11 @@
 
 #include "Binary.hpp"
 #include "BaseDefs.hpp"
+#include "FixedPoint.hpp"
+#include "Geometry.hpp"
+#include "Color.hpp"
+#include "Dither.hpp"
+#include "Bitmap.hpp"
 #include "log.hpp"
 #include "assert.hpp"
 #include "Uptime.hpp"

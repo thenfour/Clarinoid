@@ -1,5 +1,6 @@
 ﻿---
-BasedOnStyle: Microsoft
+BasedOnStyle: Mozilla
+ColumnLimit: 120
 AlignAfterOpenBracket: Align
 AlignEscapedNewlines: Right
 AllowAllConstructorInitializersOnNextLine: 'false'
@@ -12,5 +13,6 @@ SortIncludes: 'false'
 SortUsingDeclarations: 'false'
 SpaceInEmptyParentheses: 'false'
 SpacesInSquareBrackets: 'false'
-
+BreakInheritanceList: AfterColon
+AllowShortEnumsOnASingleLine: 'false'
 ...
