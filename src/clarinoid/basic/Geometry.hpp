@@ -125,118 +125,6 @@ struct Rect
   // "end" of the rect; the first value that is not part of the rect.
   T Right() const { return position.x + size.width; }
   T Bottom() const { return position.y + size.height; }
-  // void SetTop(T t) { position.y = t; }
-  // void SetLeft(T l) { position.x = l; }
-  // void SetRight(T r) { size.width = r - position.x; }
-  // void SetBottom(T b) { size.height = b - position.y; }
-
-  // void SetSize(const Size<T>& sz) { size = sz; }
-  // void SetWidth(T w) { size.width = w; }
-  // void SetHeight(T h) { size.height = h; }
-
-  // void SetTopLeft(const Point<T>& pt) { position = pt; }
-  // void SetTopRight(const Point<T>& pt) { size.width = pt.x - position.x; }
-  // void SetBottomLeft(const Point<T>& pt) { size.height = pt.y - position.y; }
-  // void SetBottomRight(const Point<T>& pt) { size = Size<T>::Construct(pt.x - position.x, pt.y - position.y); }
-
-  // void OffsetLeft(T dx) { position.x += dx; }
-  // void OffsetTop(T dy) { position.y += dy; }
-  // void OffsetRight(T dx) { size.width += dx; }
-  // void OffsetBottom(T dy) { size.height += dy; }
-
-  // Rect WithTop(T t) const
-  // {
-  //   Rect r(*this);
-  //   r.SetTop(t);
-  //   return r;
-  // }
-  // Rect WithLeft(T l) const
-  // {
-  //   Rect r(*this);
-  //   r.SetLeft(l);
-  //   return r;
-  // }
-  // Rect WithRight(T rVal) const
-  // {
-  //   Rect r(*this);
-  //   r.SetRight(rVal);
-  //   return r;
-  // }
-  // Rect WithBottom(T b) const
-  // {
-  //   Rect r(*this);
-  //   r.SetBottom(b);
-  //   return r;
-  // }
-
-  // Rect WithSize(const Size<T>& sz) const
-  // {
-  //   Rect r(*this);
-  //   r.SetSize(sz);
-  //   return r;
-  // }
-  // Rect WithWidth(T w) const
-  // {
-  //   Rect r(*this);
-  //   r.SetWidth(w);
-  //   return r;
-  // }
-  // Rect WithHeight(T h) const
-  // {
-  //   Rect r(*this);
-  //   r.SetHeight(h);
-  //   return r;
-  // }
-
-  // Rect WithTopLeft(const Point<T>& pt) const
-  // {
-  //   Rect r(*this);
-  //   r.SetTopLeft(pt);
-  //   return r;
-  // }
-  // Rect WithTopRight(const Point<T>& pt) const
-  // {
-  //   Rect r(*this);
-  //   r.SetTopRight(pt);
-  //   return r;
-  // }
-  // Rect WithBottomLeft(const Point<T>& pt) const
-  // {
-  //   Rect r(*this);
-  //   r.SetBottomLeft(pt);
-  //   return r;
-  // }
-  // Rect WithBottomRight(const Point<T>& pt) const
-  // {
-  //   Rect r(*this);
-  //   r.SetBottomRight(pt);
-  //   return r;
-  // }
-
-  // Rect WithOffsetLeft(T dx) const
-  // {
-  //   Rect r(*this);
-  //   r.OffsetLeft(dx);
-  //   return r;
-  // }
-  // Rect WithOffsetTop(T dy) const
-  // {
-  //   Rect r(*this);
-  //   r.OffsetTop(dy);
-  //   return r;
-  // }
-  // Rect WithOffsetRight(T dx) const
-  // {
-  //   Rect r(*this);
-  //   r.OffsetRight(dx);
-  //   return r;
-  // }
-  // Rect WithOffsetBottom(T dy) const
-  // {
-  //   Rect r(*this);
-  //   r.OffsetBottom(dy);
-  //   return r;
-  // }
 
   // Set the top edge (i.e. move the top while keeping the bottom fixed)
   void SetTop(T t)
@@ -428,6 +316,21 @@ struct Rect
     return r;
   }
 
+  Rect CenteredHorizontallyIn(const Rect& container) const
+  {
+    auto centerX = container.Left() + container.Width() / 2;
+    auto newLeft = centerX - Width() / 2;
+    return Construct(newLeft, Top(), Width(), Height());
+  }
+
+  Rect WithBipolarVerticalFill(float fractionN11) const
+  {
+    if (fractionN11 >= 0) {
+      return BottomHalf().TopFraction(fractionN11);
+    }
+    return TopHalf().BottomFraction(-fractionN11);
+  }
+
   Rect Inflate(T amount) const
   {
     // Because we're inflating outwards from top-left, the new left/top
@@ -477,27 +380,6 @@ struct Rect
                      Size<T>::Construct(size.width * fraction01, size.height));
   }
 
-  // Rect<T> TopFraction(T numerator, T denominator) const
-  // {
-  //   return Construct(position, Size<T>::Construct(size.width, size.height * numerator / denominator));
-  // }
-  // Rect<T> BottomFraction(T numerator, T denominator) const
-  // {
-  //   return Construct(
-  //     Point<T>::Construct(position.x, position.y + size.height * (denominator - numerator) / denominator),
-  //     Size<T>::Construct(size.width, size.height * numerator / denominator));
-  // }
-  // Rect<T> LeftFraction(T numerator, T denominator) const
-  // {
-  //   return Construct(position, Size<T>::Construct(size.width * numerator / denominator, size.height));
-  // }
-  // Rect<T> RightFraction(T numerator, T denominator) const
-  // {
-  //   return Construct(Point<T>::Construct(position.x + size.width * (denominator - numerator) / denominator,
-  //   position.y),
-  //                    Size<T>::Construct(size.width * numerator / denominator, size.height));
-  // }
-
   // breaks this rect into equally sized cells, and returns the rect for the requested cell index.
   // cells are indexed from left to right, top to bottom. out of bounds cell indices are supported.
   // using this operation is pretty powerful; can do things like mirroring around edges, taking quadrants etc.
@@ -531,23 +413,6 @@ struct Rect
   {
     return Construct(position.x + xOffset, position.y, width, size.height);
   }
-
-  // Rect<T> MirroredOverTop() const
-  // {
-  //   return Construct(Point<T>::Construct(position.x, position.y - size.height), size);
-  // }
-  // Rect<T> MirroredAroundBottom() const
-  // {
-  //   return Construct(Point<T>::Construct(position.x, position.y + size.height), size);
-  // }
-  // Rect<T> MirroredAroundLeft() const
-  // {
-  //   return Construct(Point<T>::Construct(position.x - size.width, position.y), size);
-  // }
-  // Rect<T> MirroredAroundRight() const
-  // {
-  //   return Construct(Point<T>::Construct(position.x + size.width, position.y), size);
-  // }
 
   Point<T> Center() const
   {

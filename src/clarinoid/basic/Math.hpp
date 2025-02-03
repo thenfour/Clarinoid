@@ -360,6 +360,11 @@ Clamp01(float x)
 {
   return Clamp(x, 0.0f, 1.0f);
 }
+static float
+ClampN11(float x)
+{
+  return Clamp(x, -1.0f, 1.0f);
+}
 
 template<typename T>
 static T

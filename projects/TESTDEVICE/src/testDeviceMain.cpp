@@ -48,8 +48,8 @@ using namespace clarinoid;
 #include "CapGraphs.hpp"
 
 MPR121::MPR121Device cap;
-static constexpr int kNumElectrodes = 12;
-CapacitiveSlider<kNumElectrodes> gSlider;
+static constexpr int kNumElectrodes = 10;
+BipolarCapacitiveSlider<kNumElectrodes> gSlider;
 
 Encoder myEnc(26, 9);
 
@@ -247,28 +247,36 @@ loop()
   }
 
   clarinoid::gDisplay.FillScreen(SSD1306_BLACK);
-  display.SetTextLeftMargin(0);
   clarinoid::gDisplay.SetTextSize(SizeI::Square(1));
   clarinoid::gDisplay.SetTextColor(WHITE);
+  display.SetTextLeftMargin(0);
   clarinoid::gDisplay.SetCursor({ 0, 0 });
+
+  gSlider.Update();
+  auto sliderValN11 = gSlider.GetValueN11();
+
   // clarinoid::gDisplay.PrintLine("hi.");
   // clarinoid::gDisplay.PrintLine(String("t:") + displayTime + ", " + frame);
 
   // clarinoid::gDisplay.FillRectWithBrightness(display.ScreenRect().UpperRightRect(10, 10), (255 * (frame % 64)) / 64);
 
-  gSlider.Update();
-  auto sliderVal01 = gSlider.GetValue01();
-
-  display.FillRectWithBrightness(display.ScreenRect().VerticalSlice(0, 8).BottomFraction(sliderVal01), 160);
+  auto sliderSlice = display.ScreenRect().VerticalSlice(0, 8);
+  display.FillRectWithBrightness(sliderSlice, 24);
+  display.FillRectWithBrightness(sliderSlice.WithBipolarVerticalFill(sliderValN11), 255);
 
   int textWidth = 64;
   auto rcBarArea = display.ScreenRect().WithOffsetLeft(10).WithOffsetRight(-textWidth);
+
+  display.SetTextLeftMargin(8);
+  clarinoid::gDisplay.SetCursor({ 8, 0 });
+  display.PrintLine(String("") + (gSlider.IsTouched() ? "Touched" : "Untouched"));
+  display.PrintLine(String("") + sliderValN11);
 
   display.SetTextLeftMargin(display.ScreenRect().Right() - textWidth);
   display.SetCursor({ display.GetTextLeftMargin(), 0 });
 
   for (int i = 0; i < kNumElectrodes; i++) {
-    auto str = gSlider.computeTouchStrength(i);
+    auto str = gSlider.mSlider.computeTouchStrength(i);
     display.PrintLine(String(i) + ":" + str);
     auto rc = rcBarArea.Cell(kNumElectrodes, 1, i, 0);
     display.FillRectWithBrightness(rc.BottomFraction(sqrtf(RemapTo01(str, 0, 600))), 128);
