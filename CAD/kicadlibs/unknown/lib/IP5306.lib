@@ -1,0 +1,27 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#(c) SnapEDA 2016 (snapeda.com)
+#This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA) with Design Exception 1.0
+#
+# IP5306
+#
+DEF IP5306 U 0 40 Y Y 1 L N
+F0 "U" -400 430 50 H V L BNN
+F1 "IP5306" 100 -500 50 H V L BNN
+F2 "SOP8-P" 0 0 50 H I L BNN
+F3 "" 0 0 50 H I L BNN
+DRAW
+S -400 -400 400 400 0 0 10 f
+X VIN 1 -500 300 100 R 40 40 0 0 B 
+X LED1 2 -500 100 100 R 40 40 0 0 B 
+X LED2 3 -500 -100 100 R 40 40 0 0 B 
+X LED3 4 -500 -300 100 R 40 40 0 0 B 
+X KEY 5 500 -300 100 L 40 40 0 0 B 
+X BAT 6 500 -100 100 L 40 40 0 0 B 
+X SW 7 500 100 100 L 40 40 0 0 B 
+X VOUT 8 500 300 100 L 40 40 0 0 B 
+X GND EXP 0 -500 100 U 40 40 0 0 B 
+ENDDRAW
+ENDDEF
+#
+# End Library

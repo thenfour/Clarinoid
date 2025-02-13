@@ -1,0 +1,136 @@
+(footprint "CaptouchSlider_Separate_10p_Masked"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at -2.5 -4.6 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "ae1e04aa-d1ee-4bcd-8a7c-31411a29445c")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "CaptouchSlider_Separate_10p_Masked"
+		(at -2 -9.6 0)
+		(layer "F.Fab")
+		(uuid "307c3e6a-dd50-4f09-b8e9-81a4a976e277")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+	)
+	(property "Footprint" ""
+		(at -2.5 -0.6 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "48f77458-beba-4218-ae99-abdb7ba50d09")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at -2.5 -0.6 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "7e7dfba4-516a-42e5-97af-245cb9d2a088")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at -2.5 -0.6 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "2d1ee03f-8a86-407d-b733-57d0e81fceab")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr exclude_from_pos_files exclude_from_bom)
+	(pad "1" smd rect
+		(at 0 0)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "23f2ae93-a7fd-4e59-98bf-c73fb5d38a0b")
+	)
+	(pad "2" smd rect
+		(at 9 -4)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "ca3023b5-c8dc-411e-ad68-7bc081e2a69a")
+	)
+	(pad "3" smd rect
+		(at 18 0)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "482fc342-4e86-4601-bb8e-a2ee9b3817f5")
+	)
+	(pad "4" smd rect
+		(at 27 -4)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "bec6f655-38fa-4673-8d64-d759db917387")
+	)
+	(pad "5" smd rect
+		(at 36 0)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "b73b9aa4-3793-4fcd-bfe5-9e13a83f0810")
+	)
+	(pad "6" smd rect
+		(at 45 -4)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "e65e48f6-f644-48be-80c1-467cc680fa0c")
+	)
+	(pad "7" smd rect
+		(at 54 0)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "8fd251c5-7201-448a-a7e9-6510c7e0e8c4")
+	)
+	(pad "8" smd rect
+		(at 63 -4)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "4578906d-13d0-403e-b748-d460abac6beb")
+	)
+	(pad "9" smd rect
+		(at 72 0)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "0636461c-f02a-4ff9-9d30-cb8f5d825daa")
+	)
+	(pad "10" smd rect
+		(at 81 -4)
+		(size 8 8)
+		(layers "F.Cu")
+		(uuid "f140990c-4948-4ade-bc4a-e81bd973a78d")
+	)
+	(group ""
+		(uuid "49720684-d810-47bf-ac7b-903c49e12c5f")
+		(members "0636461c-f02a-4ff9-9d30-cb8f5d825daa" "23f2ae93-a7fd-4e59-98bf-c73fb5d38a0b"
+			"4578906d-13d0-403e-b748-d460abac6beb" "482fc342-4e86-4601-bb8e-a2ee9b3817f5"
+			"8fd251c5-7201-448a-a7e9-6510c7e0e8c4" "b73b9aa4-3793-4fcd-bfe5-9e13a83f0810"
+			"bec6f655-38fa-4673-8d64-d759db917387" "ca3023b5-c8dc-411e-ad68-7bc081e2a69a"
+			"e65e48f6-f644-48be-80c1-467cc680fa0c" "f140990c-4948-4ade-bc4a-e81bd973a78d"
+		)
+	)
+)
