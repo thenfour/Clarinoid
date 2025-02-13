@@ -323,12 +323,22 @@ struct Rect
     return Construct(newLeft, Top(), Width(), Height());
   }
 
+  // Returns a new rect that fills from the center upward towards the top, or downward towards the bottom, depending on
+  // the fraction value specified in the range of -1 to 1.
   Rect WithBipolarVerticalFill(float fractionN11) const
   {
     if (fractionN11 >= 0) {
       return BottomHalf().TopFraction(fractionN11);
     }
     return TopHalf().BottomFraction(-fractionN11);
+  }
+
+  Rect WithBipolarHorizontalFill(float fractionN11) const
+  {
+    if (fractionN11 >= 0) {
+      return RightHalf().LeftFraction(fractionN11);
+    }
+    return LeftHalf().RightFraction(-fractionN11);
   }
 
   Rect Inflate(T amount) const
