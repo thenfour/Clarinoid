@@ -1,0 +1,21 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP NE555DR
+D Single Precision Timer
+K
+F http://www.ti.com/lit/ds/symlink/ne555.pdf
+$ENDCMP
+#
+$CMP 1-2199230-4
+D M.2 NGFF, M.2 Connectors, Height 4.2 mm [.165 in], Keying Code M, Gold, Board-to-Board, 67 Position, .02 in [.5 mm] Centerline, Printed Circuit Board
+K
+F https://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Customer+Drawing%7F2199230%7FB3%7Fpdf%7FEnglish%7FENG_CD_2199230_B3.pdf%7F1-2199230-4
+$ENDCMP
+#
+$CMP 2199230-4
+D Body Features: Primary Product Color Black | Connector & Keying Code E | Configuration Features: Number of Positions 67 | PCB Mount Orientation Right Angle | Number of Rows 2 | Contact Features: PCB Contact Termination Area Plating Material Tin | Contact Mating Area Plating Material Gold | Contact Mating Area Plating Material Thickness 15 MICIN | PCB Contact Termination Area Plating Material Finish Matte | PCB Contact Termination Area Plating Material Gold Flash | Contact Base Material Copper Alloy | Contac
+K
+F https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=1-1773706-1NGFF_QRG-SC&DocType=Data%20Sheet&DocLang=Chinese (Simplified)&PartCntxt=2199230-4&DocFormat=pdf
+$ENDCMP
+#
+#End Doc Library

@@ -37,3 +37,10 @@
      - output capacitors
      - component sizes matching that of MH-CD42
 
+08 - mm only
+  i want to test jlcpcb's color options with an assembly. so let's just fab this sub-board. the most critical is the m.2 connector so let's go.
+  some changes:
+  - absolutely no leads on top side under the M.2
+  - changing diode package to SOD-123
+  - adding big thermal via under the 3.3v regulator
+  

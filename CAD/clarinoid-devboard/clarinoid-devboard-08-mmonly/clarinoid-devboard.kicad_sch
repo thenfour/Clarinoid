@@ -1,0 +1,51 @@
+(kicad_sch
+	(version 20231120)
+	(generator "eeschema")
+	(generator_version "8.0")
+	(uuid "f6aa397d-c7a0-4360-a610-f0c5683f8dfc")
+	(paper "A4")
+	(lib_symbols)
+	(sheet
+		(at 129.794 86.36)
+		(size 12.7 3.81)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "e2910527-2f4f-4ae8-a31c-5aee65be03d3")
+		(property "Sheetname" "processor_mm"
+			(at 129.794 85.6484 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "processor_mm.kicad_sch"
+			(at 129.794 90.7546 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "clarinoid-devboard"
+				(path "/f6aa397d-c7a0-4360-a610-f0c5683f8dfc"
+					(page "5")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)
