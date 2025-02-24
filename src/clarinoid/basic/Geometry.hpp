@@ -253,15 +253,31 @@ struct Rect
     r.size = sz;
     return r;
   }
-  Rect WithWidth(T w) const
+  Rect WithWidthLeftJustified(T w) const
   {
     Rect r(*this);
     r.size.width = w;
     return r;
   }
-  Rect WithHeight(T h) const
+  Rect WithHeightTopJustified(T h) const
   {
     Rect r(*this);
+    r.size.height = h;
+    return r;
+  }
+
+  Rect WithWidthRightJustified(T w) const
+  {
+    Rect r(*this);
+    r.position.x = Right() - w;
+    r.size.width = w;
+    return r;
+  }
+
+  Rect WithHeightBottomJustified(T h) const
+  {
+    Rect r(*this);
+    r.position.y = Bottom() - h;
     r.size.height = h;
     return r;
   }
@@ -398,6 +414,14 @@ struct Rect
     T cellWidth = size.width / columnCount;
     T cellHeight = size.height / rowCount;
     return Construct(position.x + cellXIndex * cellWidth, position.y + cellYIndex * cellHeight, cellWidth, cellHeight);
+  }
+
+  Rect<T> CellWithSize(size_t columnSizePixels, size_t rowSizePixels, size_t cellXIndex, size_t cellYIndex) const
+  {
+    return Construct(position.x + cellXIndex * columnSizePixels,
+                     position.y + cellYIndex * rowSizePixels,
+                     columnSizePixels,
+                     rowSizePixels);
   }
 
   Rect<T> UpperLeftRect(T width, T height) const { return Construct(position.x, position.y, width, height); }

@@ -46,12 +46,16 @@ using namespace clarinoid;
 #include <Encoder.h>
 #include "CapacitiveSlider.hpp"
 #include "CapGraphs.hpp"
+#include <clarinoid/components/HoneywellABPI2C.hpp>
 
 MPR121::MPR121Device cap;
 static constexpr int kNumElectrodes = 10;
 BipolarCapacitiveSlider<kNumElectrodes> gSlider;
 
 Encoder myEnc(26, 9);
+
+CCHoneywellAPB gPressureSensor{ Wire };
+SimpleMovingAverage<10> gPressureAvg;
 
 struct PCA9554APW_118
 {
@@ -241,6 +245,8 @@ loop()
   auto& display = clarinoid::gDisplay;
   // Serial.println(String("t:") + displayTime + ", " + frame);
 
+  gPressureSensor.Update();
+
   for (int pin : pins) {
     pinMode(pin, OUTPUT);
     analogWrite(pin, vals[frame % valCount]);
@@ -253,37 +259,65 @@ loop()
   clarinoid::gDisplay.SetCursor({ 0, 0 });
 
   gSlider.Update();
-  auto sliderValN11 = gSlider.GetValueN11();
 
-  // clarinoid::gDisplay.PrintLine("hi.");
-  // clarinoid::gDisplay.PrintLine(String("t:") + displayTime + ", " + frame);
+  // auto sliderValN11 = gSlider.GetValueN11();
+  // auto sliderSlice = display.ScreenRect().VerticalSlice(0, 8);
+  // display.FillRectWithBrightness(sliderSlice, 24);
+  // display.FillRectWithBrightness(sliderSlice.WithBipolarVerticalFill(sliderValN11), 255);
 
-  // clarinoid::gDisplay.FillRectWithBrightness(display.ScreenRect().UpperRightRect(10, 10), (255 * (frame % 64)) / 64);
+  // int textWidth = 64;
+  // auto rcBarArea = display.ScreenRect().WithOffsetLeft(10).WithOffsetRight(-textWidth);
 
-  auto sliderSlice = display.ScreenRect().VerticalSlice(0, 8);
-  display.FillRectWithBrightness(sliderSlice, 24);
-  display.FillRectWithBrightness(sliderSlice.WithBipolarVerticalFill(sliderValN11), 255);
+  // display.SetTextLeftMargin(8);
+  // clarinoid::gDisplay.SetCursor({ 8, 0 });
+  // display.PrintLine(String("") + (gSlider.IsTouched() ? "Touched" : "Untouched"));
+  // display.PrintLine(String("") + sliderValN11);
 
-  int textWidth = 64;
-  auto rcBarArea = display.ScreenRect().WithOffsetLeft(10).WithOffsetRight(-textWidth);
+  // display.SetTextLeftMargin(display.ScreenRect().Right() - textWidth);
+  // display.SetCursor({ display.GetTextLeftMargin(), 0 });
 
-  display.SetTextLeftMargin(8);
-  clarinoid::gDisplay.SetCursor({ 8, 0 });
-  display.PrintLine(String("") + (gSlider.IsTouched() ? "Touched" : "Untouched"));
-  display.PrintLine(String("") + sliderValN11);
+  // for (int i = 0; i < kNumElectrodes; i++) {
+  //   auto str = gSlider.mSlider.computeTouchStrength(i);
+  //   display.PrintLine(String(i) + ":" + str);
+  //   auto rc = rcBarArea.Cell(kNumElectrodes, 1, i, 0);
+  //   display.FillRectWithBrightness(rc.BottomFraction(sqrtf(RemapTo01(str, 0, 600))), 128);
+  // }
 
-  display.SetTextLeftMargin(display.ScreenRect().Right() - textWidth);
-  display.SetCursor({ display.GetTextLeftMargin(), 0 });
+  float pressureRaw01 = gPressureSensor.CurrentValue01();
 
-  for (int i = 0; i < kNumElectrodes; i++) {
-    auto str = gSlider.mSlider.computeTouchStrength(i);
-    display.PrintLine(String(i) + ":" + str);
-    auto rc = rcBarArea.Cell(kNumElectrodes, 1, i, 0);
-    display.FillRectWithBrightness(rc.BottomFraction(sqrtf(RemapTo01(str, 0, 600))), 128);
+  // Breath unsmoothed
+  {
+    // float pressureScaled01 = map(pressureRaw01, kRawPressureMin, kRawPressureMax, 0, 1);
+    //  get slice of the top 8 pixels of the screen.
+    auto breathSlice = display.ScreenRect().CellWithSize(128, 8, 0, 0);
+    display.FillRectWithBrightness(breathSlice, 24);
+    display.FillRectWithBrightness(breathSlice.LeftFraction(pressureRaw01), 255);
+
+    auto rawPressureTextRect = display.ScreenRect().CellWithSize(128, 8, 0, 1);
+    display.SetCursor(rawPressureTextRect.TopLeft());
+    display.FillRect(rawPressureTextRect, SSD1306_BLACK);
+    display.PrintLine(String("") + pressureRaw01 * 100);
+  }
+
+  // breath smoothed
+  gPressureAvg.Update(pressureRaw01);
+  {
+    static constexpr float kRawPressureMin = 0.10f;
+    static constexpr float kRawPressureMax = 0.35f;
+    float pressureSmoothed01 = Clamp01(gPressureAvg.GetValue());
+    float pressureScaled01 = map(pressureSmoothed01, kRawPressureMin, kRawPressureMax, 0, 1);
+    auto graphSlice = display.ScreenRect().CellWithSize(128, 8, 0, 3);
+    display.FillRectWithBrightness(graphSlice, 24);
+    display.FillRectWithBrightness(graphSlice.LeftFraction(pressureScaled01), 255);
+
+    auto rawPressureTextRect = display.ScreenRect().CellWithSize(128, 8, 0, 4);
+    display.SetCursor(rawPressureTextRect.TopLeft());
+    display.FillRect(rawPressureTextRect, SSD1306_BLACK);
+    display.PrintLine(String("") + pressureScaled01 * 100 + " - " + pressureSmoothed01 * 100);
   }
 
   clarinoid::gDisplay.PresentToDevice();
 
   frame++;
-  delay(10);
+  delay(3);
 }

@@ -11,4 +11,11 @@
     test shape of collar, hugging around the pipe, and neck strap connection strength
 04 collar
     now with circular ring, correct orientation of screw box holes
-    
+11 hose part
+    plumbing main tube and buffer cap, which seem to work.
+12 hose part for 10-6 hose
+    modifications from plumbing:
+    - adapted for 10mm OD, 6mm ID hose
+    - main body smaller so it doesn't collide
+    - fixed some broken constraints
+    - shortened buffer neck
