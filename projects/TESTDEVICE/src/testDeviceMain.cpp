@@ -231,6 +231,9 @@ setup()
   // } // when you are debugging with serial, uncomment this to ensure you see startup msgs
   // Serial.println("starting normally....");
 
+  Wire.begin();
+  Wire.setClock(400000);
+
   cap.begin(0x5A, &Wire, 12, 6, kNumElectrodes, true);
   gSlider.Init(cap);
   //   // myusb.begin();
@@ -258,29 +261,31 @@ loop()
   display.SetTextLeftMargin(0);
   clarinoid::gDisplay.SetCursor({ 0, 0 });
 
-  gSlider.Update();
+  // {
+  //   gSlider.Update();
 
-  // auto sliderValN11 = gSlider.GetValueN11();
-  // auto sliderSlice = display.ScreenRect().VerticalSlice(0, 8);
-  // display.FillRectWithBrightness(sliderSlice, 24);
-  // display.FillRectWithBrightness(sliderSlice.WithBipolarVerticalFill(sliderValN11), 255);
+  //   auto sliderValN11 = gSlider.GetValueN11();
+  //   auto sliderSlice = display.ScreenRect().VerticalSlice(0, 8);
+  //   display.FillRectWithBrightness(sliderSlice, 24);
+  //   display.FillRectWithBrightness(sliderSlice.WithBipolarVerticalFill(sliderValN11), 255);
 
-  // int textWidth = 64;
-  // auto rcBarArea = display.ScreenRect().WithOffsetLeft(10).WithOffsetRight(-textWidth);
+  //   int textWidth = 64;
+  //   auto rcBarArea = display.ScreenRect().WithOffsetLeft(10).WithOffsetRight(-textWidth);
 
-  // display.SetTextLeftMargin(8);
-  // clarinoid::gDisplay.SetCursor({ 8, 0 });
-  // display.PrintLine(String("") + (gSlider.IsTouched() ? "Touched" : "Untouched"));
-  // display.PrintLine(String("") + sliderValN11);
+  //   display.SetTextLeftMargin(8);
+  //   clarinoid::gDisplay.SetCursor({ 8, 0 });
+  //   display.PrintLine(String("") + (gSlider.IsTouched() ? "Touched" : "Untouched"));
+  //   display.PrintLine(String("") + sliderValN11);
 
-  // display.SetTextLeftMargin(display.ScreenRect().Right() - textWidth);
-  // display.SetCursor({ display.GetTextLeftMargin(), 0 });
+  //   display.SetTextLeftMargin(display.ScreenRect().Right() - textWidth);
+  //   display.SetCursor({ display.GetTextLeftMargin(), 0 });
 
-  // for (int i = 0; i < kNumElectrodes; i++) {
-  //   auto str = gSlider.mSlider.computeTouchStrength(i);
-  //   display.PrintLine(String(i) + ":" + str);
-  //   auto rc = rcBarArea.Cell(kNumElectrodes, 1, i, 0);
-  //   display.FillRectWithBrightness(rc.BottomFraction(sqrtf(RemapTo01(str, 0, 600))), 128);
+  //   for (int i = 0; i < kNumElectrodes; i++) {
+  //     auto str = gSlider.mSlider.computeTouchStrength(i);
+  //     display.PrintLine(String(i) + ":" + str);
+  //     auto rc = rcBarArea.Cell(kNumElectrodes, 1, i, 0);
+  //     display.FillRectWithBrightness(rc.BottomFraction(sqrtf(RemapTo01(str, 0, 600))), 128);
+  //   }
   // }
 
   float pressureRaw01 = gPressureSensor.CurrentValue01();

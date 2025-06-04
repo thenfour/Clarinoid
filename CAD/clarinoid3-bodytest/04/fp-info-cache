@@ -1,4 +1,4 @@
-24846304459967935
+24848045411509810
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -100183,3 +100183,10 @@ Integrated Circuit
 0
 8
 8
+library_loader
+SK6805EC15
+SK6805-EC15-1
+LED
+0
+4
+4

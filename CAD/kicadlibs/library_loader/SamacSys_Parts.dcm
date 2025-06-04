@@ -18,4 +18,10 @@ K
 F https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=1-1773706-1NGFF_QRG-SC&DocType=Data%20Sheet&DocLang=Chinese (Simplified)&PartCntxt=2199230-4&DocFormat=pdf
 $ENDCMP
 #
+$CMP SK6805-EC15
+D 1.5x1.5x0.65mm Type 0.1Watt Power Embedded(MSL:4)
+K
+F http://www.normandled.com/upload/202003/SK6805-EC15%20LED%20Datasheet.pdf
+$ENDCMP
+#
 #End Doc Library
