@@ -4,6 +4,8 @@ namespace clarinoid {
 
 #pragma once
 
+// TODO: test logic for int vs float. best to support fixed point.
+
 template<typename T>
 struct Point
 {

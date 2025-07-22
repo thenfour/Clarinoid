@@ -1,83 +1,14 @@
-// // todo: write tests.
+// todo:
+// - support construction from int16/uint16, but don't operate on them. always use native int32/uint32.
+//   justification: simplifies logic, more maintainable and understandable.
+// - create a layer: put basic FP operations in free utility functions; more modular and simplifies logic in the Fixed<>
+//   class.
+// ERRRR
+// - i have a better design i'd prefer to pursue:
+// an underlying library of building blocks to define FP behaviors like widening / demotion / conversions / enabling the
+// use of float types, etc. Right now a lot of decisions are built into this file and parameterizing them is
+// impractical.
 
-// // A fixed-point library specifically optimized for ARM Cortex M7 (Teensy).
-// // Don't want to lock ourselves into specific fixed point types like Q15, Q31, Q32.
-// // This library aims to be fluid about the FP type, in order to allow the compiler to fully
-// // optimize chained operations so intermediate datatypes are optimal, reducing the amount
-// // of shifting and precision loss.
-
-// // Using a fixed-point class is tricky, because for my purpose the point is to tightly control
-// // how operations are performed, which datatypes to select, and which precision levels are
-// // required.
-// //
-// // So the point of this class is to make calling code more expressive about its intent
-// // (kinda the goal of any abstracting class). But the caller can't completely ignore what's
-// // going on behind the scenes. The caller needs to be wary of avoiding certain pitfalls
-// // like how chaining operations "wants" to result in a never-ending increase of data type
-// // width.
-
-// // Some notes about performance on Teensy:
-// // #1 rule: 64-bit division is expensive. It's so slow that converting to double, dividing,
-// //          and converting back is twice as fast. Never ever do it. There's no hardware
-// //          instruction for it so it's basically emulated in software.
-// // #2 rule: 32-bit values are the fastest. 8 and 16 bit are fast but still not as fast as
-// //          32-bit, and because we want to reduce the amount of conversions, we should
-// //          gravitate towards 32-bit and nothing else.
-// //
-// // Some other notes:
-// // - Signed does not affect performance.
-// // - Inline assembly does not help. Even with the ummul instruction. It forces the compiler
-// //   to rearrange how it does things, set up registers in a certain way, and loses performance.
-// // - 64-bit ops are about >5x slower than 32 in general
-// // - 32-bit all ops are blazing fast; effectively free. Except division (& mod) is twice as slow.
-// // - 8 and 16 bit are about ~3x slower than 32.
-// // - conversion to and from 32-bit is not free; it's about on par with other arith ops.
-
-// // With that in mind, some comments that drive design.
-// // - Favor staying in 32-bit types. Don't try to stay in 8 or 16 bits; they are slower.
-// //   1) to avoid converting
-// //   2) because it's fastest by far.
-// // - *Strongly* avoid 64-bit types.
-// //
-// // Therefore, by default everything will be done within 32-bit types unless callers explicitly
-// // request maximum precision.
-// //
-// // We want to try and optimize for chained operations. Many FP libraries want to always
-// // convert back to the input type, for each operation. Let's not do that; ops will return the
-// // optimal format, to either be converted later to the type you want (no slower than baking it
-// // into the op), or ready to be optimally input to the next operation in the expression.
-// //
-// // Callers must specify integral bits + fractional bits.
-// // If callers do not specify that, then it would be impossible to retain reasonable
-// // precision without using 64-bit intermediate types. For staying in 32-bit types, we must
-// // almost always right-shift before multiplying. How much to shift depends on the *total width*
-// // of the value.
-// // Imagine multiplying A: 16.16 by 16.16, versus B: 0.16 by 0.16.
-// // In A, both should be shifted right 16 bits first, then multiplied to use the 32-bit space.
-// //       any less and you'll likely overflow.
-// // In B, both should not be shifted at all because we know there's enough overhead.
-// //       If you were to shift right 16, the value would always be 0.
-// // Therefore specifying intbits is absolutely necessary.
-// //
-// // Another way to see that reasoning: Because we are gravitating towards 32-bit datatypes
-// // always, we differ from most FP libraries. FP libraries assume datatypes saturate the
-// // type width. That works when you're constantly converting back to the smaller type
-// // (and therefore have space to use 32-bit temps). But since we stay in 32-bit land,
-// // even for narrow values, we need to know how much overhead is remaining to continue
-// // shifting optimally.
-
-// // And another way: If we DONT use intbits, we will need to use slower intermediate values,
-// // either needlessly converting back to int16, or needlessly converting between int64.
-
-// // Considering signedness does not affect performance, we can therefore assume
-// // the datatype is int32 when intbits+fractbits < 32
-
-// // It would be slightly better than just assuming intbits is the full width; it would
-// // immply that we convert back to an input type. We'd have to select type A or B, which
-// // imo would be no less confusing than supplying intbits where things are optimal.
-
-// // Note that we don't promote to 64-bit even if the operation requires it. Caller
-// // would need to specify to do it.
 // #pragma once
 
 // #include <stdint.h>
@@ -1024,11 +955,11 @@
 
 //   // For unit types, units outside of 1 are not possible therefore nothing is needed to Fract(). This is effectively
 //   a
-//   // NOP.
-//   template<typename T = BaseType,
-//            bool TIsUnitType = IsUnitType,
-//            std::enable_if_t<TIsUnitType && !std::is_signed<T>::value, int> = 0>
-//   constexpr CL_NODISCARD MyT Fract() const
+//     // NOP.
+//     template<typename T = BaseType,
+//              bool TIsUnitType = IsUnitType,
+//              std::enable_if_t<TIsUnitType && !std::is_signed<T>::value, int> = 0>
+//     constexpr CL_NODISCARD MyT Fract() const
 //   {
 //     return *this;
 //   }
@@ -1089,8 +1020,8 @@
 //     using ShiftRightResultType = typename std::conditional<EnableFastShiftRight,
 //                                                            Fixed<FastRightShiftedIntBits, kFractBits + amt,
 //                                                            BaseType>, MyT>::type; // otherwise, the underlying value
-//                                                            must be
-//                                                                        // shifted, and the format doesn't change.
+//     must be
+//     // shifted, and the format doesn't change.
 //   };
 
 // public:

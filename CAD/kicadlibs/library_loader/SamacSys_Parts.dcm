@@ -24,4 +24,10 @@ K
 F http://www.normandled.com/upload/202003/SK6805-EC15%20LED%20Datasheet.pdf
 $ENDCMP
 #
+$CMP 4492__SK6805-EC_15_
+D Addressable Lighting series 10 LED Discrete - Red, Green, Blue (RGB) 1.50mm L x 1.50mm W
+K
+F https://cdn-shop.adafruit.com/product-files/4492/Datasheet.pdf
+$ENDCMP
+#
 #End Doc Library
