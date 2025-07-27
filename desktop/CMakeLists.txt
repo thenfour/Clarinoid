@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.15)
 project(clarinoid_desktop LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -22,23 +21,36 @@ endif()
 # Add global include directory for ../src
 include_directories("${CMAKE_SOURCE_DIR}/../src")
 
-add_executable(simulator
-  simulator/main.cpp
-)
-target_compile_definitions(simulator PRIVATE CLARINOID_PLATFORM_X86)
-
-
-# GoogleTest
+# GoogleTest and ImGui
 include(FetchContent)
 FetchContent_Declare(googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.15.2) # or latest
-FetchContent_MakeAvailable(googletest)
+  GIT_TAG v1.15.2 # or latest
+)
+FetchContent_Declare(imgui
+  GIT_REPOSITORY https://github.com/ocornut/imgui.git
+  GIT_TAG master # or a specific release tag
+)
+FetchContent_MakeAvailable(googletest imgui)
 enable_testing()
+
+add_executable(simulator WIN32
+  simulator/SimulatorMain.cpp
+  ${imgui_SOURCE_DIR}/imgui.cpp
+  ${imgui_SOURCE_DIR}/imgui_draw.cpp
+  ${imgui_SOURCE_DIR}/imgui_tables.cpp
+  ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+  ${imgui_SOURCE_DIR}/imgui_demo.cpp
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
+  )
+target_include_directories(simulator PRIVATE ${imgui_SOURCE_DIR})
+target_compile_definitions(simulator PRIVATE CLARINOID_PLATFORM_X86)
+
 
 # ClarinoidTests project
 add_executable(ClarinoidTests
-  tests/main.cpp
+  tests/TestsMain.cpp
 )
 target_compile_definitions(ClarinoidTests PRIVATE CLARINOID_PLATFORM_X86)
 target_include_directories(ClarinoidTests PRIVATE "${CMAKE_SOURCE_DIR}/../src")
