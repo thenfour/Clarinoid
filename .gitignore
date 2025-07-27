@@ -1,2 +1,4 @@
 *.code-workspace
 trash/
+build/
+.vs/

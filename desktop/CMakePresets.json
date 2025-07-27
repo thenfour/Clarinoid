@@ -1,0 +1,40 @@
+{
+  "version": 5,
+  "configurePresets": [
+    {
+      "name": "vs-x86",
+      "displayName": "VS 2022 • x86",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/../build/vs-x86",
+      "architecture": {
+        "value": "Win32",
+        "strategy": "set"
+      },
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "17"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "vs-x86-Debug",
+      "configurePreset": "vs-x86",
+      "configuration": "Debug"
+    },
+    {
+      "name": "vs-x86-Release",
+      "configurePreset": "vs-x86",
+      "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "tests-x86-Debug",
+      "configurePreset": "vs-x86",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
