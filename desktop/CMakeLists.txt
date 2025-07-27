@@ -46,6 +46,7 @@ add_executable(simulator WIN32
   )
 target_include_directories(simulator PRIVATE ${imgui_SOURCE_DIR})
 target_compile_definitions(simulator PRIVATE CLARINOID_PLATFORM_X86)
+target_compile_definitions(simulator PRIVATE NOMINMAX) # Prevent windows min/max macros from interfering with everything.
 
 
 # ClarinoidTests project
@@ -54,6 +55,7 @@ add_executable(ClarinoidTests
 )
 target_compile_definitions(ClarinoidTests PRIVATE CLARINOID_PLATFORM_X86)
 target_include_directories(ClarinoidTests PRIVATE "${CMAKE_SOURCE_DIR}/../src")
+target_compile_definitions(ClarinoidTests PRIVATE NOMINMAX) # Prevent windows min/max macros from interfering with everything.
 set_target_properties(ClarinoidTests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
