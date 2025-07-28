@@ -1,124 +1,12 @@
+
 #pragma once
-
-// todo:
-// - support construction from int16/uint16, but don't operate on them. always use native int32/uint32.
-//   justification: simplifies logic, more maintainable and understandable.
-// - create a layer: put basic FP operations in free utility functions; more modular and simplifies logic in the Fixed<>
-//   class.
-// ERRRR
-// - i have a better design i'd prefer to pursue:
-// an underlying library of building blocks to define FP behaviors like widening / demotion / conversions / enabling the
-// use of float types, etc. Right now a lot of decisions are built into this file and parameterizing them is
-// impractical.
-
-// #include <stdint.h>
-// #include "Basic.hpp"
-// // #include <intrin.h>
 
 // // COMPILE-TIME OPTIONS:
 // // FP_CACHE_DOUBLE
 // // FP_RUNTIME_CHECKS
 
 namespace clarinoid {
-// // mod curve uses
-// // - 16p16 (unsigned)
-// // - 12p20
-// // mod matrix node
-// // - 15p16 (signed)
 
-// // arm_math defines
-// // - q7_t * @brief 8-bit fractional data type in 1.7 format.
-// // - q15_t * 16-bit fractional data type in 1.15 format.
-// // - q31_t 32-bit fractional data type in 1.31 format.
-// // - q63_t  64-bit fractional data type in 1.63 format.
-
-// static inline uint32_t
-// CLZ(uint32_t value)
-// {
-// #ifdef CLARINOID_PLATFORM_X86
-//   unsigned int count = __lzcnt(value);
-// #else
-//   unsigned int count = __builtin_clz(value);
-// #endif
-//   // #else
-//   //     // Fallback implementation
-//   //     unsigned int count = 0;
-//   //     while ((value & (1 << (31 - count))) == 0 && count < 32)
-//   //     {
-//   //         count++;
-//   //     }
-//   // #endif
-//   return count;
-// }
-
-// const uint32_t sqrt_integer_guess_table[33] = {
-//   55109, 38968, 27555, 19484, 13778, 9742, 6889, 4871, 3445, 2436, 1723, 1218, 862, 609, 431, 305, 216,
-//   153,   108,   77,    54,    39,    27,   20,   14,   10,   7,    5,    4,    3,   2,   1,   0,
-// };
-
-// // Newton-Raphson integral square root. accepts a Q32, returns Q16. I would like to find a way to return a Q32 but I
-// // don't see it yet.
-// static inline uint32_t
-// sqrt_Q32_to_Q16(uint32_t in)
-// {
-//   int i = CLZ(in);
-//   uint32_t n = sqrt_integer_guess_table[i];
-//   n = ((in / n) + n) >> 1;
-//   n = ((in / n) + n) >> 1;
-//   n = ((in / n) + n) >> 1;
-//   return n;
-// }
-
-// template<int32_t i>
-// struct StaticAbs
-// {
-//   static constexpr int32_t value = i < 0 ? -i : i;
-// };
-
-// template<int32_t i>
-// struct StaticValueBitsNeeded
-// {
-//   static constexpr int32_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >>
-//   1)>::value_allow_zero; static constexpr int32_t value = value_allow_zero;
-// };
-
-// template<>
-// struct StaticValueBitsNeeded<0>
-// {
-//   static constexpr int32_t value = 1;
-//   static constexpr int32_t value_allow_zero = 0;
-// };
-
-// template<typename T, std::enable_if_t<std::is_signed<T>::value, int> = 0>
-// static inline T
-// FPAbs(T val)
-// {
-//   return val < 0 ? -val : val;
-// }
-
-// template<typename T, std::enable_if_t<!std::is_signed<T>::value, int> = 0>
-// static inline T
-// FPAbs(T val)
-// {
-//   return val;
-// }
-
-// // probably optimizable via some intrinsics but not sure.
-// template<typename T>
-// static inline uint8_t
-// ValueBitsNeededForValue(T i)
-// {
-//   if (i == 0) {
-//     return 1;
-//   }
-//   uint8_t bits = 0;
-//   T value = FPAbs(i);
-//   while (value > 0) {
-//     value >>= 1;
-//     bits++;
-//   }
-//   return bits;
-// }
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////
 // template<typename T>
@@ -1571,9 +1459,6 @@ namespace clarinoid {
 //   return ReturnType::FromFixed(sqrt_Q32_to_Q16(x.mValue));
 // }
 
-
-
-
 // default: arithmetic types are scalar-like
 template<class T>
 struct is_scalar_like : std::is_arithmetic<T>
@@ -1584,7 +1469,4 @@ template<int I, int F, class S>
 struct is_scalar_like<fx::Fixed<I, F, S>> : std::true_type
 {};
 
-
-
 } // namespace clarinoid
-

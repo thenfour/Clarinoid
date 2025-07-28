@@ -4,5 +4,10 @@
     "\\projects",
     "\\projects\\test"
   ],
-  "PreviewInSolutionExplorer": false
+  "PreviewInSolutionExplorer": false,
+  "OutputFoldersPerTargetSystem": {
+    "Local Machine": [
+      "..\\build\\vs-x86"
+    ]
+  }
 }

@@ -18,8 +18,7 @@ if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-# Add global include directory for ../src
-include_directories("${CMAKE_SOURCE_DIR}/../src")
+include_directories("${CMAKE_SOURCE_DIR}/src")
 
 # GoogleTest and ImGui
 include(FetchContent)
@@ -35,7 +34,7 @@ FetchContent_MakeAvailable(googletest imgui)
 enable_testing()
 
 add_executable(simulator WIN32
-  simulator/SimulatorMain.cpp
+  ${CMAKE_SOURCE_DIR}/src/desktop/simulator/SimulatorMain.cpp
   ${imgui_SOURCE_DIR}/imgui.cpp
   ${imgui_SOURCE_DIR}/imgui_draw.cpp
   ${imgui_SOURCE_DIR}/imgui_tables.cpp
@@ -51,10 +50,10 @@ target_compile_definitions(simulator PRIVATE NOMINMAX) # Prevent windows min/max
 
 # ClarinoidTests project
 add_executable(ClarinoidTests
-  tests/TestsMain.cpp
+  ${CMAKE_SOURCE_DIR}/src/desktop/tests/TestsMain.cpp
 )
 target_compile_definitions(ClarinoidTests PRIVATE CLARINOID_PLATFORM_X86)
-target_include_directories(ClarinoidTests PRIVATE "${CMAKE_SOURCE_DIR}/../src")
+target_include_directories(ClarinoidTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
 target_compile_definitions(ClarinoidTests PRIVATE NOMINMAX) # Prevent windows min/max macros from interfering with everything.
 set_target_properties(ClarinoidTests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
