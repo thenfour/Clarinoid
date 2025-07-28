@@ -47,21 +47,33 @@ struct ClarinoidSimulatorApp
       static int pattern2 = 3;
       ImGui::SliderInt("pattern2", &pattern2, 1, 100);
 
-      static int samples = 10;
+      static int samples = 19;
       ImGui::SliderInt("samples", &samples, 3, 100);
+
+      static float speed = 0.1f;
+      ImGui::SliderFloat("spin", &speed, 0, 1);
+
+      static float phaseShiftSpeed = 0.0f;
+      ImGui::SliderFloat("phaseShiftSpeed", &phaseShiftSpeed, 0, 1);
+
+      static float sampleShiftSpeed = 0.1f;
+      ImGui::SliderFloat("sampleShiftSpeed", &sampleShiftSpeed, 0, 1);
+
+      static float thickness = 0.0f;
+      ImGui::SliderFloat("thickness", &thickness, 0, 10);
 
       std::array<bool, 128 * 64> ssd1306_mono_buffer;
 
       oled128x64::FillLissajous(ssd1306_mono_buffer,
-                                ImGui::GetTime() * 0.3f,
+                                ImGui::GetTime() * speed,
                                 pattern1,
                                 pattern2,
-                                0.0f,
+                                ImGui::GetTime() * phaseShiftSpeed,
                                 1.0f,
-                                0,
+                                thickness,
                                 samples,
                                 1,
-                                ImGui::GetTime() * 2.0f);
+                                ImGui::GetTime() * sampleShiftSpeed);
 
       mSSD1306Texture.Update(ssd1306_mono_buffer, mFg, mBg);
       mSSD1306Texture.Draw(4);
@@ -89,7 +101,7 @@ struct ClarinoidSimulatorApp
                                     /*cross*/ "#355"_imu32,
                                     /*cellOutline*/ "#ff0"_imu32
           );
-      ImGui::Text("(%d, %d)", px, py);
+      //ImGui::Text("(%d, %d)", px, py);
 
       mSSD1306Texture.Draw(2);
       ImGui::SameLine();

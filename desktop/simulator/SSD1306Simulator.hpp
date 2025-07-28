@@ -18,8 +18,7 @@ FillLissajous(std::array<bool, W * H>& buf,
               int thickness = 0,       // 0 = single‑pixel, 1.. = radius in px
               int samples = 2000,      // curve sampling
               int margin = 2,          // border margin in px
-    float samplePhaseOffset = 0
-) 
+              float sampleOffset = 0)
 {
   std::fill(buf.begin(), buf.end(), false);
 
@@ -74,26 +73,44 @@ FillLissajous(std::array<bool, W * H>& buf,
   const float cy = (H - 1) * 0.5f;
   const float ax = (W - 1 - 2 * margin) * 0.5f;
   const float ay = (H - 1 - 2 * margin) * 0.5f;
-
-  const float delta = phase0 + phaseSpeed * timeSeconds; // animate by shifting phase
   constexpr float TWO_PI = 6.28318530717958647692f;
 
-  int prevx = INT32_MIN, prevy = INT32_MIN;
-  for (int i = 0; i < samples; ++i) {
-    float u = (i / float(samples - 1)) * TWO_PI;
-    float X = std::sinf(a * u + delta + samplePhaseOffset);
-    float Y = std::sinf(b * u + samplePhaseOffset);
+  // Curve "shape" phase (what you already had)
+  const float delta = phase0 + phaseSpeed * timeSeconds;
 
+  // Normalize offset
+  float off = std::fmod(sampleOffset, 1.0f);
+  if (off < 0.0f)
+    off += 1.0f;
+
+  auto pointAt = [&](float u) {
+    float X = std::sinf(a * u + delta);
+    float Y = std::sinf(b * u);
     int x = int(std::lround(cx + ax * X));
-    int y = int(std::lround(cy - ay * Y)); // minus because screen y grows downward
+    int y = int(std::lround(cy - ay * Y)); // screen y grows downward
+    return std::pair<int, int>{ x, y };
+  };
 
-    if (i == 0)
+  int prevx = 0, prevy = 0;
+  for (int i = 0; i < samples; ++i) {
+    // Uniformly spaced in u, shifted by 'off' turns
+    float u = ((i / float(samples)) + off) * TWO_PI; // wraps naturally
+    auto [x, y] = pointAt(u);
+
+    if (i == 0) {
       drawDisk(x, y, thickness);
-    else
+    } else {
       drawLine(prevx, prevy, x, y);
-
+    }
     prevx = x;
     prevy = y;
+  }
+
+  // Close the loop explicitly
+  {
+    float u0 = off * TWO_PI;
+    auto [x0, y0] = pointAt(u0);
+    drawLine(prevx, prevy, x0, y0);
   }
 }
 
@@ -113,8 +130,7 @@ class MonoBitmapTexture
   NearestNeighborRenderer pointSampler_;
 
 public:
-
-    int GetWidth() const { return width_; }
+  int GetWidth() const { return width_; }
   int GetHeight() const { return height_; }
 
   MonoBitmapTexture(D3DAppContext* pd3dAppContext, int width = 128, int height = 64)
@@ -176,8 +192,7 @@ public:
 
   ID3D11ShaderResourceView* GetSRV() const { return srv_.Get(); }
 
-
-void DrawMagnifier(int cx,
+  void DrawMagnifier(int cx,
                      int cy,
                      int regionW = 16,
                      int regionH = 16,
@@ -185,7 +200,8 @@ void DrawMagnifier(int cx,
                      ImU32 gridColor = IM_COL32(80, 80, 80, 255),
                      ImU32 borderColor = IM_COL32(255, 255, 255, 255),
                      ImU32 crossColor = IM_COL32(255, 0, 0, 255),
-                     ImU32 cellOutlineColor = IM_COL32(255, 255, 0, 200))
+                     ImU32 cellOutlineColor = IM_COL32(255, 255, 0, 200),
+                     ImU32 textColor = "#Ff0"_imu32)
   {
     if (!srv_ || regionW <= 0 || regionH <= 0 || scale <= 0)
       return;
@@ -235,7 +251,7 @@ void DrawMagnifier(int cx,
     const ImVec2 p1 = ImGui::GetItemRectMax();
 
     // Outer border
-    //dl->AddRect(p0, p1, borderColor, 0.0f, 0, 1.0f);
+    // dl->AddRect(p0, p1, borderColor, 0.0f, 0, 1.0f);
 
     // Grid between pixels
     for (int i = 1; i < w; ++i) {
@@ -266,6 +282,13 @@ void DrawMagnifier(int cx,
     const float xMid = std::floor(cellX + 0.5f * float(scale));
     const float yMid = std::floor(cellY + 0.5f * float(scale));
 
+    //ImGui::Text("(%d, %d)", px, py);
+    std::string str;
+    str.resize(200);
+    std::snprintf(str.data(), str.size(), "%d,%d", hx, hy);
+
+    dl->AddText(ImVec2(cellMax.x + 2.0f, cellMax.y + 2.0f), textColor, str.c_str());
+
     // Vertical line
     dl->AddRectFilled(ImVec2(xMid, p0.y), ImVec2(xMid + 1.0f, p1.y), crossColor);
     // Horizontal line
@@ -275,9 +298,7 @@ void DrawMagnifier(int cx,
     dl->AddRect(p0, p1, borderColor, 0.0f, 0, 1.0f);
   }
 
-
-
-// Draw an outline over the *last drawn* full image, showing the magnified region.
+  // Draw an outline over the *last drawn* full image, showing the magnified region.
   // Call this immediately after Draw(baseScale), while that ImGui item is still "current".
   void DrawMagnifierOutlineOverImage(int cx,
                                      int cy,
