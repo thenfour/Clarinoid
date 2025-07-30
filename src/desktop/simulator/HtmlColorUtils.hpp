@@ -1,22 +1,5 @@
 
-
-
-
-// --- compile-time helpers ---
-constexpr int
-nibble(char c)
-{
-  return (c >= '0' && c <= '9')   ? (c - '0')
-         : (c >= 'a' && c <= 'f') ? (c - 'a' + 10)
-         : (c >= 'A' && c <= 'F') ? (c - 'A' + 10)
-                                  : -1;
-}
-constexpr unsigned
-byte2(char a, char b)
-{
-  int x = nibble(a), y = nibble(b);
-  return (x < 0 || y < 0) ? 256u : unsigned((x << 4) | y); // 256 == invalid
-}
+#include <utils.hpp>
 
 // Returns IM_COL32 from a compile-time char array (without leading '#')
 template<std::size_t M>
@@ -68,25 +51,9 @@ operator"" _imu32()
   return parsed_u32<Cs...>::value;
 }
 
-constexpr int
-hex1(char c)
-{
-  return (c >= '0' && c <= '9')   ? (c - '0')
-         : (c >= 'a' && c <= 'f') ? (c - 'a' + 10)
-         : (c >= 'A' && c <= 'F') ? (c - 'A' + 10)
-                                  : -1;
-}
-constexpr unsigned
-hex2(char a, char b)
-{
-  int x = hex1(a), y = hex1(b);
-  return (x < 0 || y < 0) ? 256u : unsigned((x << 4) | y); // 256 = invalid sentinel
-}
-
 constexpr ImU32
 parse_html_hex_cstr(const char* s, std::size_t n)
 {
-  // strip leading '#'
   if (n && s[0] == '#') {
     ++s;
     --n;
@@ -95,16 +62,16 @@ parse_html_hex_cstr(const char* s, std::size_t n)
   unsigned r = 0, g = 0, b = 0, a = 255;
 
   if (n == 3 || n == 4) { // #RGB / #RGBA (nibbles)
-    int R = hex1(s[0]), G = hex1(s[1]), B = hex1(s[2]);
-    int A = (n == 4) ? hex1(s[3]) : 15;
+    int R = parse_hex_digit(s[0]), G = parse_hex_digit(s[1]), B = parse_hex_digit(s[2]);
+    int A = (n == 4) ? parse_hex_digit(s[3]) : 15;
     if ((R | G | B | A) < 0)
       return IM_COL32(255, 0, 255, 255); // magenta on error
     return IM_COL32((R << 4) | R, (G << 4) | G, (B << 4) | B, (A << 4) | A);
   } else if (n == 6 || n == 8) { // #RRGGBB / #RRGGBBAA (bytes)
-    r = hex2(s[0], s[1]);
-    g = hex2(s[2], s[3]);
-    b = hex2(s[4], s[5]);
-    a = (n == 8) ? hex2(s[6], s[7]) : 255u;
+    r = parse_hex_byte(s[0], s[1]);
+    g = parse_hex_byte(s[2], s[3]);
+    b = parse_hex_byte(s[4], s[5]);
+    a = (n == 8) ? parse_hex_byte(s[6], s[7]) : 255u;
     if (r == 256u || g == 256u || b == 256u || a == 256u)
       return IM_COL32(255, 0, 255, 255);
     return IM_COL32(r, g, b, a);
@@ -118,3 +85,5 @@ operator"" _imu32(const char* s, std::size_t n)
 {
   return parse_html_hex_cstr(s, n);
 }
+
+// todo: find nice ways to convert to other color types

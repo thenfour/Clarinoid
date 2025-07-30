@@ -11,360 +11,74 @@
 // use of float types, etc. Right now a lot of decisions are built into this file and parameterizing them is
 // impractical.
 
-// #include <stdint.h>
-// #include "Basic.hpp"
-// // #include <intrin.h>
-
-// // COMPILE-TIME OPTIONS:
-// // FP_CACHE_DOUBLE
-// // FP_RUNTIME_CHECKS
-
 namespace clarinoid {
-// // mod curve uses
-// // - 16p16 (unsigned)
-// // - 12p20
-// // mod matrix node
-// // - 15p16 (signed)
 
-// // arm_math defines
-// // - q7_t * @brief 8-bit fractional data type in 1.7 format.
-// // - q15_t * 16-bit fractional data type in 1.15 format.
-// // - q31_t 32-bit fractional data type in 1.31 format.
-// // - q63_t  64-bit fractional data type in 1.63 format.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// NAMING:
+// mod curve uses
+// - 16p16 (unsigned)
+// - 12p20
+// mod matrix node
+// - 15p16 (signed)
 
-// static inline uint32_t
-// CLZ(uint32_t value)
-// {
-// #ifdef CLARINOID_PLATFORM_X86
-//   unsigned int count = __lzcnt(value);
-// #else
-//   unsigned int count = __builtin_clz(value);
-// #endif
-//   // #else
-//   //     // Fallback implementation
-//   //     unsigned int count = 0;
-//   //     while ((value & (1 << (31 - count))) == 0 && count < 32)
-//   //     {
-//   //         count++;
-//   //     }
-//   // #endif
-//   return count;
-// }
+// arm_math defines
+// - q7_t * @brief 8-bit fractional data type in 1.7 format.
+// - q15_t * 16-bit fractional data type in 1.15 format.
+// - q31_t 32-bit fractional data type in 1.31 format.
+// - q63_t  64-bit fractional data type in 1.63 format.
 
-// const uint32_t sqrt_integer_guess_table[33] = {
-//   55109, 38968, 27555, 19484, 13778, 9742, 6889, 4871, 3445, 2436, 1723, 1218, 862, 609, 431, 305, 216,
-//   153,   108,   77,    54,    39,    27,   20,   14,   10,   7,    5,    4,    3,   2,   1,   0,
-// };
+// note about naming conventions:
+// - Qm.n
+// 	   - m = sign + integral bits
+// 	   - n = fractional bits (m + n = total bits of the storage type)
+// 	   Q1.15, when signed, is an int16_t with 1 sign bit, 0 int bits, and 15 fractional bits.
+// 	   qn is assumed to be a signed Q1.n. (q7 = Q1.7)
+// - IpF "4p16" style
+//	   - I = integral bits, NO SIGN BIT.
+//     - "s4p16" is 1 sign bit, 4 integral bits, and 16 fractional bits (21 bits of storage)
 
-// // Newton-Raphson integral square root. accepts a Q32, returns Q16. I would like to find a way to return a Q32 but I
-// // don't see it yet.
-// static inline uint32_t
-// sqrt_Q32_to_Q16(uint32_t in)
-// {
-//   int i = CLZ(in);
-//   uint32_t n = sqrt_integer_guess_table[i];
-//   n = ((in / n) + n) >> 1;
-//   n = ((in / n) + n) >> 1;
-//   n = ((in / n) + n) >> 1;
-//   return n;
-// }
+// and many audio ops may use s4p27 for some headroom.
 
-// template<int32_t i>
-// struct StaticAbs
-// {
-//   static constexpr int32_t value = i < 0 ? -i : i;
-// };
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// TYPES:
+// Original design wanted to easily slide between 8,16, 32, and 64 bit types. However each type has
+// such different performance characteristics that agnostic conversion is not a good idea.
+// So you may construct from narrower types to convert between, but arith ops will not automatically widen or narrow.
 
-// template<int32_t i>
-// struct StaticValueBitsNeeded
-// {
-//   static constexpr int32_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >>
-//   1)>::value_allow_zero; static constexpr int32_t value = value_allow_zero;
-// };
+// policies can be employed to control:
+// - intermediate widening/narrowing.
+// - whether a double is stored for debugging purposes
+// - whether runtime checks are performed (e.g. for overflow/underflow, or for sign bit truncation)
+// - overflow / underflow behavior (saturate, wrap, trap)
 
-// template<>
-// struct StaticValueBitsNeeded<0>
-// {
-//   static constexpr int32_t value = 1;
-//   static constexpr int32_t value_allow_zero = 0;
-// };
+// for teensy, we need to use 32-bit for pretty much everything.
 
-// template<typename T, std::enable_if_t<std::is_signed<T>::value, int> = 0>
-// static inline T
-// FPAbs(T val)
-// {
-//   return val < 0 ? -val : val;
-// }
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// DESIGN
+// the rationale behind specifying int & fract bits...
+// this is NOT the same as the conventional fixed point layout descriptions, because we
+// are not only specifying the number of int bits, it's also describing the max value, therefore
+// we know how much overhead there is in the type.
+// that allows better decision making when doing ops, and keep things within int32.
 
-// template<typename T, std::enable_if_t<!std::is_signed<T>::value, int> = 0>
-// static inline T
-// FPAbs(T val)
-// {
-//   return val;
-// }
+// for example the typical problem: when you multiply a u16p16 by a u16p16 (32 bits of storage), you get a u32p32 result
+// (64 bits of storage). we need to avoid 64 bit storage, so we have to decide how to narrow things. Before? Left
+// operand? Right operand? ... If we know that the operands of the u16p16 are of value [0,2), then specify them as
+// u1p31, and it's clear that the correct method is to shift the incoming operands right.
 
-// // probably optimizable via some intrinsics but not sure.
-// template<typename T>
-// static inline uint8_t
-// ValueBitsNeededForValue(T i)
-// {
-//   if (i == 0) {
-//     return 1;
-//   }
-//   uint8_t bits = 0;
-//   T value = FPAbs(i);
-//   while (value > 0) {
-//     value >>= 1;
-//     bits++;
-//   }
-//   return bits;
-// }
+// behavior policies (outcome of operations):
+// - MultiplyOperandTypeHelper (formerly OperandTypeHelper)
+// - DivideOperandTypeHelper
+// - IntegerDivideHelper
+// - UnsignedToSignedHelper
+// - DifferenceTypeHelper
+// - ShiftHelper
+
+// but actually, these "behaviors" are not totally complete. for example shifting before multiplication or after...
+// considering the core operations are so basic, better to just have "kernel" classes that perform the various types of
+// maneuvers, along with providing return types and other metadata.
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////
-// template<typename T>
-// struct FPTypeInfo
-// {};
-
-// template<>
-// struct FPTypeInfo<uint8_t>
-// {
-//   using MyType = uint8_t;
-//   using PromotedType = uint16_t;
-//   static constexpr bool Is64BitType = false;
-//   static constexpr MyType NormalizedScale = 0xff;
-//   static constexpr int32_t MaxFractBits = 8;
-// };
-
-// template<>
-// struct FPTypeInfo<uint16_t>
-// {
-//   using MyType = uint16_t;
-//   using PromotedType = uint32_t;
-//   static constexpr bool Is64BitType = false;
-//   static constexpr MyType NormalizedScale = 0xffff;
-//   static constexpr int32_t MaxFractBits = 16;
-// };
-
-// template<>
-// struct FPTypeInfo<uint32_t>
-// {
-//   using MyType = uint32_t;
-//   using PromotedType = uint64_t;
-//   static constexpr bool Is64BitType = false;
-//   static constexpr MyType NormalizedScale = 0xffffffff;
-//   static constexpr int32_t MaxFractBits = 32;
-// };
-
-// template<>
-// struct FPTypeInfo<uint64_t>
-// {
-//   using MyType = uint64_t;
-//   using PromotedType = uint64_t;
-//   static constexpr bool Is64BitType = true;
-//   static constexpr MyType NormalizedScale = 0xffffffffffffffff;
-//   static constexpr int32_t MaxFractBits = 64;
-// };
-
-// template<>
-// struct FPTypeInfo<int8_t>
-// {
-//   using MyType = int8_t;
-//   using PromotedType = int16_t;
-//   static constexpr bool Is64BitType = false;
-//   static constexpr MyType NormalizedScale = 0x7f;
-//   static constexpr int32_t MaxFractBits = 7;
-// };
-
-// template<>
-// struct FPTypeInfo<int16_t>
-// {
-//   using MyType = int16_t;
-//   using PromotedType = int32_t;
-//   static constexpr bool Is64BitType = false;
-//   static constexpr MyType NormalizedScale = 0x7fff;
-//   static constexpr int32_t MaxFractBits = 15;
-// };
-
-// template<>
-// struct FPTypeInfo<int32_t>
-// {
-//   using MyType = int32_t;
-//   using PromotedType = int64_t;
-//   static constexpr bool PromotedIs64Bits = true;
-//   static constexpr bool Is64BitType = false;
-//   static constexpr MyType NormalizedScale = 0x7fffffff;
-//   static constexpr int32_t MaxFractBits = 31;
-// };
-
-// template<>
-// struct FPTypeInfo<int64_t>
-// {
-//   using MyType = int64_t;
-//   using PromotedType = int64_t;
-//   static constexpr bool PromotedIs64Bits = true;
-//   static constexpr bool Is64BitType = true;
-//   static constexpr MyType NormalizedScale = 0x7fffffffffffffff;
-//   static constexpr int32_t MaxFractBits = 63;
-// };
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// // selects datatype that can hold the given # of bits. allows 8, 16, 32, or 64 bit types
-// template<uint8_t valueBits>
-// using FPAutoBaseType = typename std::conditional<
-//   (valueBits <= 7),
-//   int8_t,
-//   typename std::conditional<
-//     (valueBits <= 8),
-//     uint8_t,
-//     typename std::conditional<
-//       (valueBits <= 15),
-//       int16_t,
-//       typename std::conditional<
-//         (valueBits <= 16),
-//         uint16_t,
-//         typename std::conditional<
-//           (valueBits <= 31),
-//           int32_t,
-//           typename std::conditional<(valueBits <= 32),
-//                                     uint32_t,
-//                                     typename std::conditional<(valueBits <= 63), int64_t, uint64_t>::type>::type>::
-//           type>::type>::type>::type>::type;
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// // selects datatype that can hold the given # of bits. allows 32 or 64-bit types
-// template<uint8_t valueBits>
-// using FPAutoBaseType3264 = typename std::conditional<
-//   (valueBits <= 31),
-//   int32_t,
-//   typename std::conditional<(valueBits <= 32),
-//                             uint32_t,
-//                             typename std::conditional<(valueBits <= 63), int64_t, uint64_t>::type>::type>::type;
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// // selects datatype that can hold the given # of bits. Allows only 32 bit types
-// template<uint8_t valueBits>
-// using FPAutoBaseType32 = typename std::conditional<(valueBits <= 31), int32_t, uint32_t>::type;
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// // try to automatically select an amount of fract bits, given integral bit width.
-// template<uint8_t TIntBits>
-// struct FPAutoFractBitsAny
-// {
-//   static constexpr uint8_t value = (TIntBits <= 7)    ? (7 - TIntBits)
-//                                    : (TIntBits == 8)  ? (0)
-//                                    : (TIntBits <= 15) ? (15 - TIntBits)
-//                                    : (TIntBits == 16) ? (0)
-//                                    : (TIntBits <= 31) ? (31 - TIntBits)
-//                                    : (TIntBits == 32) ? (0)
-//                                    : (TIntBits <= 63) ? (63 - TIntBits)
-//                                                       : (0);
-// };
-
-// // we will either select 64 or 32-bit type. prefer signed if there's space.
-// // intbits  fractbits
-// // 0        31
-// // 16       15
-// // 31       0
-// // 32       0
-// // 33       30
-// // 63       0
-// // 64       0
-// template<uint8_t TIntBits>
-// struct FPAutoFractBits3264
-// {
-//   static constexpr uint8_t value = (TIntBits <= 31)   ? (31 - TIntBits)
-//                                    : (TIntBits == 32) ? (0)
-//                                    : (TIntBits <= 63) ? (63 - TIntBits)
-//                                                       : (0);
-// };
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// template<uint8_t bits, typename T = FPAutoBaseType<bits>>
-// static constexpr T
-// FillBits()
-// {
-//   // ensure remaining code has bits > 0
-//   if (bits == 0)
-//     return 0;
-//   T ret = 1ULL << std::max(0, (bits - 1)); // avoid compile warning about negative shifts
-//   ret -= 1;
-//   ret <<= 1;
-//   ret |= 1;
-//   return ret;
-// }
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// template<int B, class T>
-// static constexpr auto
-// const_shift(const T& a, ::std::enable_if_t<(B > 0)>* = 0)
-// {
-//   return a << ::std::integral_constant<decltype(B), B>{};
-// }
-// template<int B, class T>
-// static constexpr auto
-// const_shift(const T& a, ::std::enable_if_t<(B < 0)>* = 0)
-// {
-//   return a >> ::std::integral_constant<decltype(B), -B>{};
-// }
-// template<int B, class T>
-// static constexpr auto
-// const_shift(const T& a, ::std::enable_if_t<(B == 0)>* = 0)
-// {
-//   return a;
-// }
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// // SignedSaturate<n>() does a clamp(-(1<<n), (1<<n)-1)
-// // TODO: check that intbits <= 31
-// template<uint8_t intbits, typename Tinput> // template Tinput because it may be signed or unsigned and we want
-//                                            // conversions & full range to work seamlessly.
-// static CL_NODISCARD int32_t
-// SignedSaturate(Tinput val)
-// {
-//   static_assert(intbits <= 31, "ssat does not support 32+ bits");
-// #ifdef CLARINOID_PLATFORM_X86
-//   static constexpr int32_t pos = (1UL << intbits) - 1; // for 15 bits, 32767
-//   static constexpr int32_t neg = -(1L << intbits);     // for 15 bits, -32768
-//   // int32_t xpos = pos;
-//   // int32_t xneg = neg;
-//   if (val < neg)
-//     return neg;
-//   if (val > pos)
-//     return pos;
-//   return val;
-// #else
-//   int32_t tmp;
-//   asm volatile("ssat %0, %1, %2" : "=r"(tmp) : "I"(intbits), "r"(val));
-//   return tmp;
-// #endif
-// }
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// // SignedSaturate<n>() does a clamp(-(1<<n), (1<<n)-1)
-// // TODO: check that intbits <= 31
-// template<uint8_t intbits, typename Tinput> // template Tinput because it may be signed or unsigned and we want
-//                                            // conversions & full range to work seamlessly.
-// static CL_NODISCARD uint32_t
-// UnsignedSaturate(Tinput val)
-// {
-//   static_assert(intbits <= 32, "usat does not support >32 bits");
-// #ifdef CLARINOID_PLATFORM_X86
-//   static constexpr uint32_t pos = (1ULL << intbits) - 1;
-//   // auto xpos = pos;
-//   if (val < 0)
-//     return 0;
-//   if (val > pos)
-//     return pos;
-//   return val;
-// #else
-//   uint32_t tmp;
-//   asm volatile("usat %0, %1, %2" : "=r"(tmp) : "I"(intbits), "r"(val));
-//   return tmp;
-// #endif
-// }
-
-// ///////////////////////////////////////////////////////////////////////////////////////////////////
-// // specify both fract bits and int bits, so we know how much overhead there is and can choose small types as needed.
 // template<uint8_t TIntBits,
 //          uint8_t TFractBits = FPAutoFractBits3264<TIntBits>::value,
 //          typename TBaseType = FPAutoBaseType3264<TIntBits + TFractBits>>
@@ -1571,20 +1285,14 @@ namespace clarinoid {
 //   return ReturnType::FromFixed(sqrt_Q32_to_Q16(x.mValue));
 // }
 
-
-
-
 // default: arithmetic types are scalar-like
-template<class T>
-struct is_scalar_like : std::is_arithmetic<T>
-{};
-
-// opt in Fixed
-template<int I, int F, class S>
-struct is_scalar_like<fx::Fixed<I, F, S>> : std::true_type
-{};
-
-
+//template<class T>
+//struct is_scalar_like : std::is_arithmetic<T>
+//{};
+//
+//// opt in Fixed
+//template<int I, int F, class S>
+//struct is_scalar_like<fx::Fixed<I, F, S>> : std::true_type
+//{};
 
 } // namespace clarinoid
-

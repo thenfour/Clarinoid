@@ -1,27 +1,74 @@
 #pragma once
 #include <algorithm>
 #include "D3DAppContext.hpp"
+#include "serial.hpp"
+#include "utils.hpp"
+#include "PolledValue.hpp"
+#include <widgets/GuiLog.hpp>
+#include <widgets/fps.hpp>
+#include <widgets/Plotter.hpp>
+#include "SeriesCollection.hpp"
+#include "TimeSeriesStore.hpp"
+#include "TelemetryIngestor.hpp"
+#include "CommandLine.hpp"
+#include <StringLineDispatcher.hpp>
 
 struct ClarinoidSimulatorApp
 {
   MonoBitmapTexture mSSD1306Texture;
+  GuiLog mLog;
+  GuiFps mFps;
+  SerialPort mSerial;
+  Polled<std::vector<PortInfo>> mDeviceEnumeration;
+  CommandLine mCommandLine;
+  StringLineDispatcher mStringLineDispatcher;
 
-  ClarinoidSimulatorApp(D3DAppContext* pd3dAppContext)
-    : mSSD1306Texture(pd3dAppContext)
-  {
-    //
-  }
+  SeriesCollection mSeriesCollection;
+  TimeSeriesStore mTimeSeriesStore;
+  TelemetryIngestor mTelemetryIngestor{ mSeriesCollection, mTimeSeriesStore };
+  PlotterView mPlotter{ &mSeriesCollection, &mTimeSeriesStore };
 
   ImColor mFg = "#6aa"_imu32;
   ImColor mBg = "#081010"_imu32;
   bool mShowDemoWindow = false;
 
+  ClarinoidSimulatorApp(D3DAppContext* pd3dAppContext)
+    : mSSD1306Texture(pd3dAppContext)
+    , mDeviceEnumeration(std::chrono::milliseconds(1000), [&]() -> std::vector<PortInfo> { return enumSerialPorts(); })
+  {
+    mStringLineDispatcher.mLineCallback = [&](const std::string& line) {
+      mTelemetryIngestor.HandleLine(line);
+
+      if (line.find("#") == 0) {
+        mLog.append(line.substr(1));
+      }
+    };
+
+    mSerial.setReceiveCallback([&](const uint8_t* data, size_t n) {
+      std::string msg{ reinterpret_cast<const char*>(data), n };
+      mStringLineDispatcher.HandleIncomingString(msg);
+    });
+
+    mCommandLine.setExecuteCallback([&](const char* cmd) {
+      if (cmd && *cmd) {
+        mLog.append(std::string("> ") + cmd);
+        if (mSerial.isOpen()) {
+          mSerial.writeString(cmd);
+        } else {
+          mLog.append("Serial port not open, command ignored.");
+        }
+      }
+    });
+  }
+
   void Render()
   {
+    GuiFps::Scope _s(mFps);
 
     static bool use_work_area = true;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
-                                    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+                                    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar | 
+        ImGuiWindowFlags_AlwaysVerticalScrollbar;
 
     // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
     // Based on your use case you may want one or the other.
@@ -38,29 +85,54 @@ struct ClarinoidSimulatorApp
           ImGui::EndMenu();
         }
 
+        // if (ImGui::BeginMenu("Devices")) {
+        if (mDeviceEnumeration.snapshot().has_value()) {
+          const auto& list = *mDeviceEnumeration.snapshot().get();
+          for (const auto& p : list) {
+            if (ImGui::MenuItem(wstring_to_bytes(p.knownProduct + L"" + p.friendlyName).c_str())) {
+              if (!mSerial.open(p)) {
+                // log.
+                int a = 0;
+              }
+              mSerial.setDtr(true);
+            }
+          }
+        } else {
+          ImGui::Text("No serial devices found");
+        }
+        // ImGui::EndMenu();
+        //}
+
+        ImGui::Text(mSerial.isOpen() ? "Connected" : "Not connected");
+
+        mFps.renderImGui();
+
         ImGui::EndMenuBar();
       }
 
-      static int pattern1 = 2;
-      ImGui::SliderInt("pattern1", &pattern1, 1, 100);
-
-      static int pattern2 = 3;
-      ImGui::SliderInt("pattern2", &pattern2, 1, 100);
-
-      static int samples = 19;
-      ImGui::SliderInt("samples", &samples, 3, 100);
-
-      static float speed = 0.1f;
-      ImGui::SliderFloat("spin", &speed, 0, 1);
+      //{
+      //  char buf[2000] = "parse test";
+      //  ImGui::InputTextWithHint("##testinpu", "parse test", buf, 2000);
+      //  TelemetryMessage msg;
+      //  bool x = ParseTelemetryMessage(buf, msg);
+      //  ImGui::Text(x ? "is telemetry" : "Not telemetry");
+      //}
 
       static float phaseShiftSpeed = 0.0f;
-      ImGui::SliderFloat("phaseShiftSpeed", &phaseShiftSpeed, 0, 1);
-
       static float sampleShiftSpeed = 0.1f;
-      ImGui::SliderFloat("sampleShiftSpeed", &sampleShiftSpeed, 0, 1);
-
       static float thickness = 0.0f;
-      ImGui::SliderFloat("thickness", &thickness, 0, 10);
+      static float speed = 0.1f;
+      static int samples = 19;
+      static int pattern2 = 3;
+      static int pattern1 = 2;
+
+      // ImGui::SliderInt("pattern1", &pattern1, 1, 100);
+      // ImGui::SliderInt("pattern2", &pattern2, 1, 100);
+      // ImGui::SliderInt("samples", &samples, 3, 100);
+      // ImGui::SliderFloat("spin", &speed, 0, 1);
+      //  ImGui::SliderFloat("phaseShiftSpeed", &phaseShiftSpeed, 0, 1);
+      //  ImGui::SliderFloat("sampleShiftSpeed", &sampleShiftSpeed, 0, 1);
+      // ImGui::SliderFloat("thickness", &thickness, 0, 10);
 
       std::array<bool, 128 * 64> ssd1306_mono_buffer;
 
@@ -93,20 +165,27 @@ struct ClarinoidSimulatorApp
       mSSD1306Texture.DrawMagnifierOutlineOverImage(px, py, 24, 24, 4, "#f80"_imu32, 1);
       mSSD1306Texture.DrawMagnifier(px,
                                     py,
-                                    /*regionW*/ 24,
-                                    /*regionH*/ 24,
+                                    /*regionW*/ 16,
+                                    /*regionH*/ 16,
                                     /*scale*/ 16,
                                     /*grid*/ "#122"_imu32,
                                     /*border*/ "#f80"_imu32,
                                     /*cross*/ "#355"_imu32,
-                                    /*cellOutline*/ "#ff0"_imu32
-          );
-      //ImGui::Text("(%d, %d)", px, py);
+                                    /*cellOutline*/ "#ff0"_imu32);
 
-      mSSD1306Texture.Draw(2);
       ImGui::SameLine();
+      ImGui::BeginGroup();
+      mSSD1306Texture.Draw(2);
+      //ImGui::SameLine();
       mSSD1306Texture.Draw(1);
+      ImGui::EndGroup();
 
+      // mAudioCycleScope.RenderImGui();
+      // mOscilloscope.RenderImGui();
+      mPlotter.RenderImGui();
+      mLog.render();
+
+      mCommandLine.Render();
     }
     ImGui::End();
 

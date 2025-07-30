@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <chrono>
 #include <functional>
 
 #include <backends/imgui_impl_win32.h>
@@ -87,7 +88,7 @@ struct ImGuiD3D11Window : SimpleWindow
   std::function<void()> onRenderFrame;
 
   ImGuiD3D11Window()
-    : SimpleWindow("heaoeui", 1200, 900)
+    : SimpleWindow("Clarinoid Test Bench", 1200, 900)
   {
 
     ShowWindow(mhWnd, SW_SHOWDEFAULT);
@@ -194,12 +195,20 @@ struct ImGuiD3D11Window : SimpleWindow
 struct ImGuiWindowApp
 {
   ImGuiD3D11Window mAppWindow;
+  double mTargetFps = 60;
 
   virtual void inline RenderFrame() = 0;
 
   inline void Main()
   {
+    using clock = std::chrono::steady_clock;
+    const auto frame_interval =
+      std::chrono::duration_cast<clock::duration>(std::chrono::duration<double>(1.0 / mTargetFps));
+
     mAppWindow.onRenderFrame = [this]() { this->RenderFrame(); };
+
+    auto next_frame = clock::now(); // schedule first frame at "now"
+
     bool done = false;
     while (!done) {
       MSG msg;
@@ -212,9 +221,24 @@ struct ImGuiWindowApp
       if (done)
         break;
 
+      // Sleep until the next frame time, but wake early for input/messages.
+      auto now = clock::now();
+      if (now < next_frame) {
+        DWORD timeout_ms = (DWORD)std::chrono::duration_cast<std::chrono::milliseconds>(next_frame - now).count();
+        // Wake early if there is any kind of input/message.
+        MsgWaitForMultipleObjectsEx(0, nullptr, timeout_ms, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+        continue; // loop to pump messages before deciding to render
+      }
+
+      // Time to render a frame
       if (!mAppWindow.mInSizeMove) {
-        // Normal render when not in the sizing modal loop
-        mAppWindow.RenderOneFrame();
+        mAppWindow.RenderOneFrame(); // should call Present(0,0) if you want this cap independent of vsync
+      }
+
+      // Schedule the next frame, catching up if we fell behind
+      next_frame += frame_interval;
+      while (next_frame <= clock::now()) {
+        next_frame += frame_interval; // avoid drift if a frame took long
       }
     }
   }

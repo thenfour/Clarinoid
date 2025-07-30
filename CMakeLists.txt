@@ -19,6 +19,7 @@ if(MSVC)
 endif()
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
+include_directories("${CMAKE_SOURCE_DIR}/src/desktop/include")
 
 # GoogleTest and ImGui
 include(FetchContent)

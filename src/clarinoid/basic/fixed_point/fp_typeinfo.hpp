@@ -1459,14 +1459,4 @@ namespace clarinoid {
 //   return ReturnType::FromFixed(sqrt_Q32_to_Q16(x.mValue));
 // }
 
-// default: arithmetic types are scalar-like
-template<class T>
-struct is_scalar_like : std::is_arithmetic<T>
-{};
-
-// opt in Fixed
-template<int I, int F, class S>
-struct is_scalar_like<fx::Fixed<I, F, S>> : std::true_type
-{};
-
 } // namespace clarinoid

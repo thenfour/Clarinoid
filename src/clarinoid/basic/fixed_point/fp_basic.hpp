@@ -114,4 +114,81 @@ struct StaticValueBitsNeeded<0>
   static constexpr int32_t value_allow_zero = 0;
 };
 
+
+ ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+ /// <summary>
+ /// Generates a value of type T with the lowest 'bits' bits set to 1.
+ /// </summary>
+ /// <typeparam name="T">The integer type to use for the result. Defaults to FPAutoBaseType<bits>.</typeparam>
+ /// <typeparam name="bits">The number of least significant bits to set to 1.</typeparam>
+ /// <returns>A value of type T where the lowest 'bits' bits are set to 1. Returns 0 if bits is 0.</returns>
+ template<uint8_t bits, typename T = FPAutoBaseType<bits>>
+ static constexpr T
+ FillBits()
+ {
+   // ensure remaining code has bits > 0
+   if (bits == 0)
+     return 0;
+   T ret = 1ULL << std::max(0, (bits - 1)); // avoid compile warning about negative shifts
+   ret -= 1;
+   ret <<= 1;
+   ret |= 1;
+   return ret;
+ }
+
+ ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+ // does a compile-time shift of T left by B bits.
+ // B can be negative, in which case it shifts right.
+ template<int B, class T>
+ static constexpr auto
+ const_shift(const T& a, ::std::enable_if_t<(B > 0)>* = 0)
+ {
+   return a << ::std::integral_constant<decltype(B), B>{};
+ }
+
+ // right-shift variant when B is negative.
+ template<int B, class T>
+ static constexpr auto
+ const_shift(const T& a, ::std::enable_if_t<(B < 0)>* = 0)
+ {
+   return a >> ::std::integral_constant<decltype(B), -B>{};
+ }
+
+ // noop when B is 0.
+ template<int B, class T>
+ static constexpr auto
+ const_shift(const T& a, ::std::enable_if_t<(B == 0)>* = 0)
+ {
+   return a;
+ }
+
+ ///////////////////////////////////////////////////////////////////////////////////////////////////
+ // SignedSaturate<n>() does a clamp(-(1<<n), (1<<n)-1)
+ // TODO: check that intbits <= 31
+ template<uint8_t intbits, typename Tinput> // template Tinput because it may be signed or unsigned and we want
+                                            // conversions & full range to work seamlessly.
+ static CL_NODISCARD int32_t
+ SignedSaturate(Tinput val)
+ {
+   static_assert(intbits <= 31, "ssat does not support 32+ bits");
+ #ifdef CLARINOID_PLATFORM_X86
+   static constexpr int32_t pos = (1UL << intbits) - 1; // for 15 bits, 32767
+   static constexpr int32_t neg = -(1L << intbits);     // for 15 bits, -32768
+   // int32_t xpos = pos;
+   // int32_t xneg = neg;
+   if (val < neg)
+     return neg;
+   if (val > pos)
+     return pos;
+   return val;
+ #else
+   int32_t tmp;
+   asm volatile("ssat %0, %1, %2" : "=r"(tmp) : "I"(intbits), "r"(val));
+   return tmp;
+ #endif
+ }
+
+
 } // namespace clarinoid
