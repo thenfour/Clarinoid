@@ -8,6 +8,26 @@
  *                         5) int64 (reference / “too fancy”)
  *-------------------------------------------------------------------*/
 #include <Arduino.h>
+
+
+#if defined(__ARM_FEATURE_DSP) && defined(__ARM_ARCH) && (__ARM_ARCH >= 7)
+/*------------------------------  fast path  ------------------------------*/
+#define _SMMUL_BODY(inst, a, b, out) \
+    __asm__ volatile (inst "  %0, %1, %2" : "=r"(out) : "r"(a), "r"(b))
+
+#define _SMMLA_BODY(inst, a, b, c, out) \
+    __asm__ volatile (inst "  %0, %1, %2, %3" : "=r"(out) : "r"(a), "r"(b), "r"(c))
+
+static inline int32_t smmul  (int32_t a, int32_t b)                { int32_t r; _SMMUL_BODY("smmul",  a,b,r); return r; }
+static inline int32_t smmulr (int32_t a, int32_t b)                { int32_t r; _SMMUL_BODY("smmulr", a,b,r); return r; }
+static inline int32_t smmla  (int32_t a, int32_t b, int32_t acc)   { int32_t r; _SMMLA_BODY("smmla",  a,b,acc,r); return r; }
+static inline int32_t smmlar (int32_t a, int32_t b, int32_t acc)   { int32_t r; _SMMLA_BODY("smmlar", a,b,acc,r); return r; }
+static inline int32_t smmls  (int32_t a, int32_t b, int32_t acc)   { int32_t r; _SMMLA_BODY("smmls",  a,b,acc,r); return r; }
+static inline int32_t smmlsr (int32_t a, int32_t b, int32_t acc)   { int32_t r; _SMMLA_BODY("smmlsr", a,b,acc,r); return r; }
+
+
+#endif
+
 /*  ----------------------------------------------------------------
     ssat()  – saturate a signed integer to ±(2^(sat_bits-1)-1)
     • val       : value to clamp
@@ -197,6 +217,40 @@ static uint32_t time_bq_q31_scalar()
   return dt;
 }
 
+/*****************************************************************
+ *  Variant 3b : Q31-DSP (SMMUL/SMMLA based)
+ *****************************************************************/
+static uint32_t time_bq_q31_dsp()
+{
+  volatile int32_t *p = buf_q31;
+  /* Local biquad copies with 32-bit state (direct-form II transposed) */
+  int32_t b0 = coef_q31.b0, b1 = coef_q31.b1, b2 = coef_q31.b2;
+  int32_t a1 = coef_q31.a1, a2 = coef_q31.a2;
+  int32_t z1L = 0, z2L = 0, z1R = 0, z2R = 0;
+
+  uint32_t t0 = cycles();
+  for (uint32_t n = 0; n < FRAMES; ++n) {
+    /* ------------ Left channel ------------ */
+    int32_t xn = *p;
+    int32_t acc = smmlar(xn, b0, z1L);          // y = b0*x + z1   (round)
+    z1L = smmlar(xn, b1, z2L) - smmlar(acc, a1, 0);
+    z2L =                      - smmlar(acc, a2, smmlar(xn, b2, 0));
+    *p++ = acc;
+
+    /* ------------ Right channel ----------- */
+    xn   = *p;
+    acc  = smmlar(xn, b0, z1R);
+    z1R  = smmlar(xn, b1, z2R) - smmlar(acc, a1, 0);
+    z2R  =                     - smmlar(acc, a2, smmlar(xn, b2, 0));
+    *p++ = acc;
+  }
+  uint32_t dt = cycles() - t0;
+  coef_q31.z1 = z1L + z1R;                       // keep side-effect
+  return dt;
+}
+
+
+
 /* ========== Variant 4 : float32 =================================== */
 static uint32_t time_bq_f32()
 {
@@ -286,6 +340,7 @@ void setup() {
   fill_buffers(); t = time_bq_q15_scalar(); pr("Q15 scalar",  t);
   fill_buffers(); t = time_bq_q15_simd();   pr("Q15 SIMD",    t);
   fill_buffers(); t = time_bq_q31_scalar(); pr("Q31 scalar",  t);
+  fill_buffers(); t = time_bq_q31_dsp();    pr("Q31 DSP",  t);
   fill_buffers(); t = time_bq_f32();        pr("float32",     t);
   fill_buffers(); t = time_bq_i64();        pr("int64",       t);
 
