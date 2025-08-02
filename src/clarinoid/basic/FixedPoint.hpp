@@ -1,15 +1,18 @@
 #pragma once
 
-// todo:
-// - support construction from int16/uint16, but don't operate on them. always use native int32/uint32.
-//   justification: simplifies logic, more maintainable and understandable.
-// - create a layer: put basic FP operations in free utility functions; more modular and simplifies logic in the Fixed<>
-//   class.
-// ERRRR
-// - i have a better design i'd prefer to pursue:
-// an underlying library of building blocks to define FP behaviors like widening / demotion / conversions / enabling the
-// use of float types, etc. Right now a lot of decisions are built into this file and parameterizing them is
-// impractical.
+// status:
+// this works quite well, but not quite there yet.
+// problems:
+// - untested
+// - too promiscuous with promotion & tolerance of 16-bits...
+
+// it's difficult to come up with policies that work for all usages,
+// and i am toying with a different architecture which uses layers & kernels.
+// - the kernel:
+//   - defines specific behaviors like how MUL promotes / uses intermediate types / etc.
+// - and the Fixed<> class then mostly composes kernel ops to make a complete usable dropin.
+
+#include "fixed_point/fp2.hpp"
 
 namespace clarinoid {
 

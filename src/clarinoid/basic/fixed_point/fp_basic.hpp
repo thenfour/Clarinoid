@@ -38,18 +38,81 @@ const uint32_t sqrt_integer_guess_table[33] = {
   153,   108,   77,    54,    39,    27,   20,   14,   10,   7,    5,    4,    3,   2,   1,   0,
 };
 
-// Newton-Raphson integral square root. accepts a Q32, returns Q16. I would like to find a way to return a Q32 but I
-// don't see it yet.
+//// Newton-Raphson integral square root. accepts a Q32, returns Q16. I would like to find a way to return a Q32 but I
+//// don't see it yet.
+//static inline uint32_t
+//sqrt_Q32_to_Q16(uint32_t in)
+//{
+//  int i = CLZ(in);
+//  uint32_t n = sqrt_integer_guess_table[i];
+//  n = ((in / n) + n) >> 1;
+//  n = ((in / n) + n) >> 1;
+//  n = ((in / n) + n) >> 1;
+//  return n;
+//}
+
 static inline uint32_t
 sqrt_Q32_to_Q16(uint32_t in)
 {
-  int i = CLZ(in);
+  if (!in)
+    return 0;
+  int i = CLZ(in); // or std::countl_zero in C++20
   uint32_t n = sqrt_integer_guess_table[i];
+  // Two Newton steps
   n = ((in / n) + n) >> 1;
   n = ((in / n) + n) >> 1;
-  n = ((in / n) + n) >> 1;
+  // Exact correction (at most a couple of adjustments)
+  uint64_t nn = uint64_t(n) * n;
+  if (nn > in) {
+    while (uint64_t(n - 1) * (n - 1) >= in)
+      --n;
+  } else {
+    while (uint64_t(n + 1) * (n + 1) <= in)
+      ++n;
+  }
   return n;
 }
+
+
+
+// 31-entry table (indices 0..30). Values fit in 16 bits.
+static constexpr uint16_t sqrt_integer_guess_table[31] = { 55109, 38968, 27555, 19484, 13778, 9742, 6889, 4871,
+                                                           3445,  2436,  1723,  1218,  862,   609,  431,  305,
+                                                           216,   153,   108,   77,    54,    39,   27,   20,
+                                                           14,    10,    7,     5,     4,     3,    2 };
+
+static inline uint32_t
+sqrt_Q32_to_Q16_NR(uint32_t in)
+{
+  if (in <= 1u)
+    return in; // avoids clz==31 case and is exact
+
+  uint32_t n = sqrt_integer_guess_table[__builtin_clz(in)];
+
+  // Two Newton steps (Heron), 32-bit divisions
+  uint32_t q = in / n;
+  n = (q + n) >> 1;
+  q = in / n;
+  n = (q + n) >> 1;
+
+  // Exact correction to floor (slightly more accurate, and actually still very fast but only if really needed)
+  // uint64_t n2 = (uint64_t)n * n;
+  // if (n2 > in) { while ((uint64_t)(n-1)*(n-1) >= in) --n; }
+  // else         { while ((uint64_t)(n+1)*(n+1) <=  in) ++n; }
+
+  // Nearest rounding (optional; comment out to keep floor)
+  uint64_t low = (uint64_t)n * n;
+  uint64_t high = (uint64_t)(n + 1) * (n + 1);
+  if (in > low + ((high - low) >> 1))
+    ++n;
+
+  return n;
+}
+
+
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// <summary>
