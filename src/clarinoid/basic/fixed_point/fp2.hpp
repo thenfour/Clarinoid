@@ -1,42 +1,104 @@
 ﻿#pragma once
 
 #include <type_traits>
-//
-//
-//mul
-//div
-//reciprocal
-//modulo
-//floor
-//ceil
-//fract
-//int part
-//shift
-//abs
-//negate
-//make signed
-//get sign
-//add
-//sub
-//
-//>
-//>=
-//<
-//<=
-//==(exact)
-//==(approx)
-//!=
-//
-//clamp
-//signed saturate (ssat)
-//unsigned saturate (usat)
-//
-//sine_2pi [lut]
-//sqrt [using q32 to q16 algo]
-//lerp
-//step
-//...
 
+// mul
+// div
+// reciprocal
+// modulo
+
+// wrap
+// fold
+
+// floor
+// ceil
+// fract part
+// int part
+// round
+   
+// shift
+// saturating left shift
+// rotate
+
+// abs
+// negate
+// make signed
+// make unsigned (remove sign bit)
+// get sign
+   
+// add
+// sub
+
+// min
+// max
+
+// clamp
+// signed saturate (ssat)
+// unsigned saturate (usat)
+
+// lerp
+// step
+// smoothstep
+// smootherstep
+// other DSP interpolation functions
+// bilinear interp
+// reverse lerp
+// map
+// smooth min
+// smooth max (log, exp, ..)
+
+// hash
+// rand
+   
+// sqrt
+// pow
+// exp
+// log
+
+// sinh
+// cosh
+// tanh
+// sin
+// cos
+// tan
+// asin
+// acos
+// atan
+
+// modcurve
+// massive's freq knob math
+
+// >
+// >=
+// <
+// <=
+// ==(exact)
+// ==(approx)
+// !=
+
+// erf https://en.wikipedia.org/wiki/Error_function
+// inverseerf
+// lgamma
+// digamma
+// lambertw
+// lambertwexpx
+// sigmoid -> exp
+
+
+
+//| Category                          | Commonly-needed ops that aren’t on your list                                                                                                                                      | Why they tend to show up                                                                                                              |
+//| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+//| **DSP “inner-loop” kernels**      | **• FMA / MAC (`y = a·b + c`)**<br>**• Multiply-accumulate with rounding & saturation**<br>**• Dot / sum-of-products helpers**                                                    | Every biquad, FIR, FFT, and envelope follower is built on “multiply then add”; a fused path saves one rounding + one saturation.      |
+//| **Format / range utilities**      | **• Convert `Fixed<A>` → `Fixed<B>`** (rescale & saturate)<br>**• Left-shift with saturation (`q = sat_shift_left(x,n)`)**<br>**• Count-leading-zeros / count-leading-sign bits** | Converting between Q-formats is unavoidable at module boundaries; CLZ is the fastest way to auto-pick a safe shift.                   |
+//| **Bitwise & masking**             | **• AND / OR / XOR / NOT** (on the raw value)<br>**• Bit-field extract / set**                                                                                                    | Needed for flag manipulation, packing RGBA colours, checksum parity, etc.                                                             |
+//| **Comparisons / predicates**      | **• `signbit` (returns −1,0,+1)**<br>**• `hypot(x,y)`** (length for 2-D vectors)<br>**• `atan2(y,x)`**                                                                            | UI knob rendering and vector graphics both rely on `atan2`; `hypot` and `signbit` remove a branch each in dynamics processing.        |
+//| **Extra transcendental variants** | **• `exp2`, `exp10`, `log2`, `log10` (direct)**<br>**• `pow2^k` (integer exponent fast path)**                                                                                    | `exp2`/`log2` often map to simple LUT-plus-poly; integer-power fast path is handy for envelope generators and sample-rate convertors. |
+//| **Interpolation / smoothing**     | **• Cubic-Hermite / 3rd-order Lagrange**<br>**• B-spline (catmull-rom)**<br>**• Exponential-smoother (`y += α·(target−y)`) helper**                                               | Linear/smoothstep are fine for UI fade-ins; audio rate interpolation generally needs cubic or better to keep the noise floor down.    |
+//| **Coordinate helpers (UI)**       | **• Degrees↔radians**<br>**• `wrap(angle, ±π)` / `fold(value, min,max)`**                                                                                                         | UI widgets almost always store angles in degrees even when DSP runs radians.                                                          |
+//| **Decibel utilities (audio)**     | **• `lin_to_db(x)` and `db_to_lin(x)`**<br>**• `rms(x[])`**                                                                                                                       | 20·log10 and RMS are the backbone of meters and limiters.                                                                             |
+//| **Random / noise**                | **• Uniform LCG / XOR-shift**<br>**• White & Pink noise accumulators**                                                                                                            | Synth LFOs, UI anim jitter, dithering, and test rigs all want a quick RNG.                                                            |
+//| **Math-policy variants**          | **• Exact vs. nearest vs. stochastic rounding** for every primitive<br>**• Wrap vs. sat vs. trap overflow flavours for `add`, `sub`, `mul`**                                      | You already plan `ssat/usat`; expose the full matrix once so callers don’t reinvent.                                                  |
+//
 
 
 namespace clarinoid {
