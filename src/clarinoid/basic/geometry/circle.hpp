@@ -6,7 +6,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
-#include "../FixedPoint.hpp"
+#include "../Numeric.hpp"
 
 namespace clarinoid {
 

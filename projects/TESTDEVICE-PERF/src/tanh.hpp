@@ -88,7 +88,7 @@
 // for fixed point implementations, it's hard to avoid a 64-bit divide, and you kinda end up needing float assistance to make it optimal.
 // it means that basically, i haven't found a fixed point implementation that's usable. plus there's no headroom.
 
-#include <clarinoid/basic/fixed_point/smmul.hpp>
+#include <clarinoid/basic/numeric/smmul.hpp>
 #include <math.h>
 
 #pragma once

@@ -14,31 +14,31 @@ namespace clarinoid {
 //  asm volatile("smmulr %0,%1,%2" : "=r"(r) : "r"(a), "r"(b));
 //  return r;
 //}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <summary>
-/// Counts the number of leading zero bits in a 32-bit unsigned integer.
-/// </summary>
-/// <param name="value">The 32-bit unsigned integer whose leading zeros are to be counted.</param>
-/// <returns>The number of leading zero bits in the input value.</returns>
-static inline uint32_t
-CLZ(uint32_t value)
-{
-#ifdef CLARINOID_PLATFORM_X86
-  unsigned int count = __lzcnt(value);
-#else
-  unsigned int count = __builtin_clz(value);
-#endif
-  // #else
-  //     // Fallback implementation
-  //     unsigned int count = 0;
-  //     while ((value & (1 << (31 - count))) == 0 && count < 32)
-  //     {
-  //         count++;
-  //     }
-  // #endif
-  return count;
-}
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///// <summary>
+///// Counts the number of leading zero bits in a 32-bit unsigned integer.
+///// </summary>
+///// <param name="value">The 32-bit unsigned integer whose leading zeros are to be counted.</param>
+///// <returns>The number of leading zero bits in the input value.</returns>
+//static inline uint32_t
+//CLZ(uint32_t value)
+//{
+//#ifdef CLARINOID_PLATFORM_X86
+//  unsigned int count = __lzcnt(value);
+//#else
+//  unsigned int count = __builtin_clz(value);
+//#endif
+//  // #else
+//  //     // Fallback implementation
+//  //     unsigned int count = 0;
+//  //     while ((value & (1 << (31 - count))) == 0 && count < 32)
+//  //     {
+//  //         count++;
+//  //     }
+//  // #endif
+//  return count;
+//}
 
 // 31-entry table (indices 0..30). Values fit in 16 bits.
 static constexpr uint16_t sqrt_integer_guess_table[31] = { 55109, 38968, 27555, 19484, 13778, 9742, 6889, 4871,

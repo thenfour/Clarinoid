@@ -11,6 +11,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <clarinoid/basic/Basic.hpp>
+
 #include "HtmlColorUtils.hpp"
 #include "ImguiUtils.hpp"
 #include "ComPtr.hpp"

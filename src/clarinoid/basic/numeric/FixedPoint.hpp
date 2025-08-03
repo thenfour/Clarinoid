@@ -12,7 +12,7 @@
 //   - defines specific behaviors like how MUL promotes / uses intermediate types / etc.
 // - and the Fixed<> class then mostly composes kernel ops to make a complete usable dropin.
 
-#include "fixed_point/fp2.hpp"
+#include "./fp2.hpp"
 
 namespace clarinoid {
 
@@ -1289,9 +1289,9 @@ namespace clarinoid {
 // }
 
 // default: arithmetic types are scalar-like
-//template<class T>
-//struct is_scalar_like : std::is_arithmetic<T>
-//{};
+template<class T>
+struct is_scalar_like : std::is_arithmetic<T>
+{};
 //
 //// opt in Fixed
 //template<int I, int F, class S>

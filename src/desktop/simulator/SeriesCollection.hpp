@@ -42,7 +42,7 @@ adjust_to_luma(ImU32 col, float targetY)
   float bs = ((col >> IM_COL32_B_SHIFT) & 255) / 255.0f;
   float rl = srgb_to_linear(rs), gl = srgb_to_linear(gs), bl = srgb_to_linear(bs);
   float Yo = 0.2126f * rl + 0.7152f * gl + 0.0722f * bl;
-  targetY = clamp(targetY, 0.0f, 1.0f);
+  targetY = clarinoid::Clamp(targetY, 0.0f, 1.0f);
   if (Yo < targetY) {
     float t = (targetY - Yo) / (1.0f - Yo + 1e-6f);
     rl = rl * (1 - t) + t;
@@ -54,9 +54,9 @@ adjust_to_luma(ImU32 col, float targetY)
     gl = gl * (1 - t);
     bl = bl * (1 - t);
   }
-  int R = (int)std::round(clamp(linear_to_srgb(rl), 0.0f, 1.0f) * 255.0f);
-  int G = (int)std::round(clamp(linear_to_srgb(gl), 0.0f, 1.0f) * 255.0f);
-  int B = (int)std::round(clamp(linear_to_srgb(bl), 0.0f, 1.0f) * 255.0f);
+  int R = (int)std::round(clarinoid::Clamp(linear_to_srgb(rl), 0.0f, 1.0f) * 255.0f);
+  int G = (int)std::round(clarinoid::Clamp(linear_to_srgb(gl), 0.0f, 1.0f) * 255.0f);
+  int B = (int)std::round(clarinoid::Clamp(linear_to_srgb(bl), 0.0f, 1.0f) * 255.0f);
   return IM_COL32(R, G, B, 255);
 }
 inline ImU32

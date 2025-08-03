@@ -1,8 +1,7 @@
 
 
 #include <gtest/gtest.h>
-#include <desktop/ArduinoDesktop.hpp>
-#include <clarinoid/basic/BaseDefs.hpp>
+#include <clarinoid/basic/basic.hpp>
 
 int
 main(int argc, char** argv)

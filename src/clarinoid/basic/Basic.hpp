@@ -1,24 +1,33 @@
 
 #pragma once
 
+#ifdef CLARINOID_PLATFORM_X86
+#include "../x86/ArduinoEmu.hpp"
+#endif
+
+
 // language basics, syntax, types, fundamental helpers
 #include "Binary.hpp"
 #include "Teensy.hpp"
-#include "BaseDefs.hpp"
 #include "Array.hpp"
+#include "assert.hpp"
+#include "BaseDefs.hpp"
+#include "Memory.hpp"
+
 #include "function.hpp"
 #include "Enum.hpp"
 #include "Tristate.hpp"
-#include "assert.hpp"
-#include "Memory.hpp"
+
 #include "Util.hpp"
 #include "MovingAverage.hpp"
 #include "CircularArray.hpp"
 #include "SortedArray.hpp"
 
-#include "Numeric.hpp"
+#include "string/format.hpp"
 
-#include "Geometry.hpp"
+#include "./Numeric.hpp"
+
+#include "./Geometry.hpp"
 
 #include "Gfx.hpp"
 

@@ -73,7 +73,7 @@ DeriveLineEnding: true
 
 # Include sorting
 SortIncludes: true
-IncludeBlocks: Regroup
+IncludeBlocks: Preserve
 
 # Namespace formatting
 NamespaceIndentation: None

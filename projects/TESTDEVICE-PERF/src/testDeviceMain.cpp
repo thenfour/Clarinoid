@@ -8,11 +8,11 @@
 
 #pragma GCC diagnostic pop
 
-#include "harness.hpp"
-
+#include "./harness.hpp"
 
 // todo:
-// - support various signature types (int16, int32, uint32, 2-op, 3-op, etc... maybe group tests by signature type?)
+// - support various signature types (int16, int32, uint32, 2-op, 3-op, etc...
+// maybe group tests by signature type?)
 // - better test discovery (simple registration function...)
 // - operate on FxValue<> instead of uint32_t
 

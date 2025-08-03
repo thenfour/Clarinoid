@@ -153,7 +153,7 @@ static inline void Die(const String &msg)
 
 static inline void Die(const String &msg)
 {
-    log(msg.mStr.str().c_str());
+    log(msg.c_str());
     DebugBreak();
 }
 

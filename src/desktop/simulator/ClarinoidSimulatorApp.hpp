@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+
 #include "D3DAppContext.hpp"
 #include "serial.hpp"
 #include "utils.hpp"

@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <stdio.h>
 
+#include "./Array.hpp"
+
 namespace clarinoid
 {
 
@@ -10,7 +12,7 @@ String ToString(void *p)
 {
     static char x[20];
 #ifdef CLARINOID_PLATFORM_X86 // for some reason snprintf() is not available in teensyduino
-    std::snprintf(x, SizeofStaticArray(x), "%p", p);
+    std::snprintf(x, clarinoid::SizeofStaticArray(x), "%p", p);
 #else
     sprintf(x, "%p", p);
 #endif
@@ -57,13 +59,13 @@ struct ScopeLog
     {
         // Serial.print("{ ");
         // Serial.println(msg);
-        log("{ %s", msg.mStr.str().c_str());
+        log("{ %s", msg.c_str());
         gLogIndent++;
     }
     ~ScopeLog()
     {
         gLogIndent--;
-        log("} %s", mMsg.mStr.str().c_str());
+        log("} %s", mMsg.c_str());
         // Serial.print("} ");
         // Serial.println(mMsg);
     }

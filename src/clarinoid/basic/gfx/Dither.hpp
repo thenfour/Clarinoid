@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Geometry.hpp"
+#include "../Geometry.hpp"
 
 namespace clarinoid {
 
 struct IDitherMatrix
 {
-  virtual bool getDitheredColor(int shade, const PointI& pt) const = 0;
+  virtual bool getDitheredColor(int shade, const Point<int32_t>& pt) const = 0;
 };
 
 template<size_t N>
@@ -28,7 +28,7 @@ private:
     return maxVal;
   }
 
-  int getScaledThreshold(const PointI& pt) const
+  int getScaledThreshold(const Point<int32_t>& pt) const
   {
     int mx = (pt.x) % N;
     int my = (pt.y) % N;
@@ -54,7 +54,7 @@ public:
     }
   }
 
-  virtual bool getDitheredColor(int shade, const PointI& pt) const override
+  virtual bool getDitheredColor(int shade, const Point<int32_t>& pt) const override
   {
     int thresh = getScaledThreshold(pt);
     return (shade >= thresh);

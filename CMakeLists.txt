@@ -43,7 +43,7 @@ add_executable(simulator WIN32
   ${imgui_SOURCE_DIR}/imgui_demo.cpp
   ${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp
   ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
-  )
+   "src/clarinoid/x86/ArduinoEmu.cpp")
 target_include_directories(simulator PRIVATE ${imgui_SOURCE_DIR})
 target_compile_definitions(simulator PRIVATE CLARINOID_PLATFORM_X86)
 target_compile_definitions(simulator PRIVATE NOMINMAX) # Prevent windows min/max macros from interfering with everything.
@@ -52,7 +52,7 @@ target_compile_definitions(simulator PRIVATE NOMINMAX) # Prevent windows min/max
 # ClarinoidTests project
 add_executable(ClarinoidTests
   ${CMAKE_SOURCE_DIR}/src/desktop/tests/TestsMain.cpp
-)
+ "src/clarinoid/x86/ArduinoEmu.cpp")
 target_compile_definitions(ClarinoidTests PRIVATE CLARINOID_PLATFORM_X86)
 target_include_directories(ClarinoidTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
 target_compile_definitions(ClarinoidTests PRIVATE NOMINMAX) # Prevent windows min/max macros from interfering with everything.

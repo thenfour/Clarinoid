@@ -1,7 +1,8 @@
 // for user interface.
 #pragma once
 
-#include "math.hpp"
+//#include "math.hpp"
+#include "Numeric.hpp"
 
 namespace clarinoid
 {
@@ -190,7 +191,7 @@ static const NumericEditRangeSpec<int> gPortamentoRange = NumericEditRangeSpec<i
 
 // osc pitch and global transpose
 static const NumericEditRangeSpec<int> gTransposeRange = NumericEditRangeSpec<int>{-48, 48, 6, 1, 1};
-static const NumericEditRangeSpec<int> gCurveIndexRange = NumericEditRangeSpec<int>{0, gModCurveLUT.LutSizeY - 1};
+//static const NumericEditRangeSpec<int> gCurveIndexRange = NumericEditRangeSpec<int>{0, gModCurveLUT.LutSizeY - 1};
 
 static const NumericEditRangeSpec<float> gDelayStereoSpread = NumericEditRangeSpec<float>{0.0f, 100.0f};
 static const NumericEditRangeSpec<float> gFilterFreqRange = NumericEditRangeSpec<float>{0.0f, 20000.0f};

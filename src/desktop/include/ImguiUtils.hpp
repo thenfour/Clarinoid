@@ -14,7 +14,7 @@ ImU32
 apply_opacity_mul(ImU32 col, float opacity01)
 {
   ImVec4 c = ImGui::ColorConvertU32ToFloat4(col); // RGBA in [0..1]
-  c.w *= clamp(opacity01, 0.0f, 1.0f);          // multiply alpha
+  c.w *= clarinoid::Clamp(opacity01, 0.0f, 1.0f);          // multiply alpha
   return ImGui::ColorConvertFloat4ToU32(c);
 }
 

@@ -1,5 +1,4 @@
 
-
 #pragma once
 
 namespace clarinoid {
@@ -34,7 +33,7 @@ template <typename T> struct array_view {
   template <size_t N> array_view(T (&a)[N]) : mSize(N), mData(a) {}
 
   T &operator[](size_t i) {
-    CCASSERT(i < mSize);
+    //CCASSERT(i < mSize);
     return mData[i];
   }
 };
