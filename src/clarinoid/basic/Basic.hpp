@@ -3,6 +3,7 @@
 
 #include "Binary.hpp"
 #include "BaseDefs.hpp"
+#include "Teensy.hpp"
 #include "FixedPoint.hpp"
 #include "Geometry.hpp"
 #include "Color.hpp"

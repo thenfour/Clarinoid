@@ -23,6 +23,20 @@ static inline void cycles_enable() {}
 static inline uint32_t cycles_now() { return micros(); } // coarse fallback
 #endif
 
+
+
+
+static inline int32_t smmul  (int32_t a, int32_t b) { int32_t r;
+  __asm__ volatile ("smmul  %0, %1, %2" : "=r"(r) : "r"(a), "r"(b)); return r; }
+
+static inline int32_t smmulr (int32_t a, int32_t b) { int32_t r;
+  __asm__ volatile ("smmulr %0, %1, %2" : "=r"(r) : "r"(a), "r"(b)); return r; }
+
+static inline int32_t smmla  (int32_t a, int32_t b, int32_t acc) { int32_t r;
+  __asm__ volatile ("smmla  %0, %1, %2, %3" : "=r"(r) : "r"(a), "r"(b), "r"(acc)); return r; }
+
+
+
 /*========================= Utilities =========================*/
 static inline uint32_t xorshift32(uint32_t &s) {
   uint32_t x = s; x ^= x << 13; x ^= x >> 17; x ^= x << 5; s = x; return x;
@@ -185,7 +199,8 @@ static void fmt_num(char* out, size_t outsz, const char* fmt, double v, int widt
   char buf[32];
   snprintf(buf, sizeof(buf), fmt, v);
   // Left-pad to width
-  char pad[32]; int len = (int)strlen(buf);
+  //char pad[32];
+   int len = (int)strlen(buf);
   int padn = (width > len) ? (width - len) : 0;
   int n = 0;
   out[n++] = '`';
@@ -277,7 +292,7 @@ static void fmt_float(char* out, size_t outsz, double v, const char* fmt) {
   snprintf(out, outsz, fmt, v);
 }
 static void fmt_uint(char* out, size_t outsz, uint32_t v) {
-  snprintf(out, outsz, "%u", v);
+  snprintf(out, outsz, "%u", (unsigned int)v);
 }
 
 // Compute widths for a group: headers and each row cell string

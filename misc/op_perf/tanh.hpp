@@ -79,8 +79,8 @@
 // npisanti_fasttanh: error around 0.5 too much, plus incorrect saturation. don't use.
 // zangtw_fasttanh has good accuracy, but too slow
 // leaving only these which are FAST, and behave accurately from [-1,1]:
-// - discohead_fastTanh
 // - vox_fasttanh2
+// - discohead_fastTanh
 // - fastTanh_NIM
 //
 // but for extended range (-16,16), only vox_fasttanh2 is good, and performs well.
@@ -103,19 +103,19 @@ inline float vox_fasttanh2(const float x)
             (2.44506634652299f + (2.44506634652299f + x2) * fabsf(x + 0.814642734961073f * x * ax)));
 }
 
+// https://github.com/npisanti/ofxPDSP/blob/e106991f4abf4314116d4e7c4ef7ad69d6ca005f/src/math/trig/fasttanh.h
+inline float npisanti_fasttanh(float angle)
+{
+
+    return angle / (fabsf(2 * angle) + 3 / (2 + 2 * angle * 2 * angle));
+}
+
 // less accurate, a bit faster than vox_
 // https://github.com/ftsf/nimsynth/blob/57d4e56cd0370309a12a0bf902d5d3115539adea/src/core/filter.nim
 inline float fastTanh_NIM(float x)
 {
     float x2 = x * x;
     return x * (27.0f + x2) / (27.0f + 9.0f * x2);
-}
-
-// https://github.com/npisanti/ofxPDSP/blob/e106991f4abf4314116d4e7c4ef7ad69d6ca005f/src/math/trig/fasttanh.h
-inline float npisanti_fasttanh(float angle)
-{
-
-    return angle / (fabsf(2 * angle) + 3 / (2 + 2 * angle * 2 * angle));
 }
 
 // https://github.com/discohead/LXR_JCM/blob/14b4b06ce5c9f4a60528d0c2d181f47227ae87df/mainboard/LxrStm32/src/DSPAudio/ResonantFilter.c
@@ -238,15 +238,6 @@ static constexpr int16_t E_Q15 = 0x14B1;
     if (y32 < -0x8000) y32 = -0x8000;
     return (int16_t)y32;
 }
-
-static inline int32_t smmul  (int32_t a, int32_t b) { int32_t r;
-  __asm__ volatile ("smmul  %0, %1, %2" : "=r"(r) : "r"(a), "r"(b)); return r; }
-
-static inline int32_t smmulr (int32_t a, int32_t b) { int32_t r;
-  __asm__ volatile ("smmulr %0, %1, %2" : "=r"(r) : "r"(a), "r"(b)); return r; }
-
-static inline int32_t smmla  (int32_t a, int32_t b, int32_t acc) { int32_t r;
-  __asm__ volatile ("smmla  %0, %1, %2, %3" : "=r"(r) : "r"(a), "r"(b), "r"(acc)); return r; }
 
 // xQ31 in ±1.999 (1.31).  Uses one reciprocal-Newton step.
 static inline int32_t tanh_vox_q31_fast(int32_t xQ31)
@@ -388,13 +379,49 @@ static inline int32_t tanh_vox_q31_fast_div32(int32_t xQ31)
     return out;
 }
 
+//constexpr int32_t fp(double d) { return int32_t(d * 2147483648.0 + 0.5); }
 
+//--- NIM:  x·(27+x²)/(27+9x²) ---------------------------------------------
+// static inline int32_t tanh_nim_q31(int32_t x)
+// {
+// constexpr int32_t A_NIM_Q31 = fp(27.0);   // 0x1B000000
+// constexpr int32_t B_NIM_Q31 = fp(9.0);    // 0x07000000
+
+//     int32_t x2 = smmul(x, x);                       // x²   Q31
+//     int32_t num = smmla(A_NIM_Q31, x2, A_NIM_Q31);  // 27 + x²
+//     num = smmul(x, num);                            // x*(27+x²)
+
+//     int32_t den = smmla(B_NIM_Q31, x2, A_NIM_Q31);  // 27 + 9x²
+//     // multiply by reciprocal 1/den (Q2.30) pre-scaled into Brec
+//     // pre-compute 1/den in float and convert once:
+//     float f = (float)den * (1.0f/2147483648.0f);
+//     int32_t rec = int32_t((1.0f/f) * 1073741824.0f + 0.5f); // Q2.30
+//     int32_t y = smmul(rec, num)<<1;               // back to Q31
+//     return y;
+// }
+
+//--- Discohead: (4.15 x)/(4.29 + x²) ---------------------------------------
+// static inline int32_t tanh_disco_q31(int32_t x)
+// {
+// constexpr int32_t A_DISCO_Q31 = fp(4.15); // 0x84A7EFEB -- these overflow; not sure what i was expecting.
+// constexpr int32_t B_DISCO_Q31 = fp(4.29); // 0x89BA5E35
+
+//     int32_t num = smmul(A_DISCO_Q31, x);            // 4.15·x
+//     int32_t den = B_DISCO_Q31 + smmul(x, x);        // 4.29+x²
+
+//     float f = (float)den * (1.0f/2147483648.0f);
+//     int32_t rec = int32_t((1.0f/f) * 1073741824.0f + 0.5f); // Q2.30
+//     int32_t y = smmul(rec, num)<<1;
+//     return y;
+// }
 
 
 static const VariantUQF kTanhQ32Variants[] = {
   { "tanh_vox_q31",   &tanh_vox_q31 },
   { "tanh_vox_q31_fast",   &tanh_vox_q31_fast },
   { "tanh_vox_q31_fast_div32",   &tanh_vox_q31_fast_div32 },
+  //{ "tanh_disco_q31",   &tanh_disco_q31 },
+  //{ "tanh_nim_q31",   &tanh_nim_q31 },
 };
 
 

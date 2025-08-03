@@ -1,6 +1,7 @@
 BASSOONOID = ..
 CLARINOID2 = ..
 TESTDEVICE = ..
+TESTDEVICE-PERF = specifically for performance benchmarking, with no clarinoid OS stuff
 
 ClarinoidSimulator = windows native graphical sim
 ClarinoidTests = unit tests

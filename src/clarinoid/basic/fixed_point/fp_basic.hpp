@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 // // COMPILE-TIME OPTIONS:
@@ -6,6 +6,14 @@
 // // FP_RUNTIME_CHECKS
 
 namespace clarinoid {
+
+inline uint32_t
+__SMMULR(uint32_t a, uint32_t b)
+{
+  uint32_t r;
+  asm volatile("smmulr %0,%1,%2" : "=r"(r) : "r"(a), "r"(b));
+  return r;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// <summary>
@@ -32,55 +40,12 @@ CLZ(uint32_t value)
   return count;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const uint32_t sqrt_integer_guess_table[33] = {
-  55109, 38968, 27555, 19484, 13778, 9742, 6889, 4871, 3445, 2436, 1723, 1218, 862, 609, 431, 305, 216,
-  153,   108,   77,    54,    39,    27,   20,   14,   10,   7,    5,    4,    3,   2,   1,   0,
-};
-
-//// Newton-Raphson integral square root. accepts a Q32, returns Q16. I would like to find a way to return a Q32 but I
-//// don't see it yet.
-//static inline uint32_t
-//sqrt_Q32_to_Q16(uint32_t in)
-//{
-//  int i = CLZ(in);
-//  uint32_t n = sqrt_integer_guess_table[i];
-//  n = ((in / n) + n) >> 1;
-//  n = ((in / n) + n) >> 1;
-//  n = ((in / n) + n) >> 1;
-//  return n;
-//}
-
-static inline uint32_t
-sqrt_Q32_to_Q16(uint32_t in)
-{
-  if (!in)
-    return 0;
-  int i = CLZ(in); // or std::countl_zero in C++20
-  uint32_t n = sqrt_integer_guess_table[i];
-  // Two Newton steps
-  n = ((in / n) + n) >> 1;
-  n = ((in / n) + n) >> 1;
-  // Exact correction (at most a couple of adjustments)
-  uint64_t nn = uint64_t(n) * n;
-  if (nn > in) {
-    while (uint64_t(n - 1) * (n - 1) >= in)
-      --n;
-  } else {
-    while (uint64_t(n + 1) * (n + 1) <= in)
-      ++n;
-  }
-  return n;
-}
-
-
-
 // 31-entry table (indices 0..30). Values fit in 16 bits.
 static constexpr uint16_t sqrt_integer_guess_table[31] = { 55109, 38968, 27555, 19484, 13778, 9742, 6889, 4871,
                                                            3445,  2436,  1723,  1218,  862,   609,  431,  305,
                                                            216,   153,   108,   77,    54,    39,   27,   20,
                                                            14,    10,    7,     5,     4,     3,    2 };
-
+// returns Q(n+1/2) for Q(n) input.
 static inline uint32_t
 sqrt_Q32_to_Q16_NR(uint32_t in)
 {
@@ -109,6 +74,62 @@ sqrt_Q32_to_Q16_NR(uint32_t in)
   return n;
 }
 
+
+//   index = top 8 bits of the mantissa in [0.5 .. 1)
+//   value = round( 2^32 / mantissa )  → Q0.32 reciprocal seed
+static constexpr uint32_t recip8_LUT[256] = {
+  0xFFFFFFFF, 0xFE03F80F, 0xFC0FC0FC, …, 0x80808081
+  /* generated once – total 1 kB */
+};
+
+// Generation script :
+//  val[i] = uint32_t((1u << 32) / (0x80 + i) + 0.5)
+
+
+// returns  ⌈32/F⌉ fractional bits  (same as sqrt rule)
+// unsigned.
+template<int F, bool twoIterations = true>
+static inline uint32_t
+recip_uq(uint32_t X)
+{
+  if (X == 0)
+    return 0xFFFFFFFFu; // saturate 1/0 -> max
+  constexpr bool oddF = F & 1;
+
+  /* --- normalise ------------------------------------------------------ */
+  unsigned lz = CLZ(X);
+  unsigned shift = lz - (oddF ? 1u : 0u); // make mantissa in [0.5,1)
+  uint32_t a = X << shift;                // Q0.32
+  uint32_t idx = a >> 24;                 // top 8 frac bits
+  uint32_t x = recip8_LUT[idx];           // Q0.32 seed  ~10-11 good bits
+
+  /* --- Newton  -------------------------------------------------------- */
+  // x_{n+1} = x_n * (2 − a*x_n)
+  auto step = [&](uint32_t x0) -> uint32_t {
+    uint32_t t = __SMMULR(a, x0); // Q0.32
+    t = 0xFFFFFFFFu - t;          // (2 – a*x)
+    return __SMMULR(x0, t);       // Q0.32
+  };
+  x = step(x); // 1st iteration  (~16 bits)
+  if constexpr (twoIterations)
+    x = step(x); // 2nd iteration  (~31 bits)
+
+  /* --- denormalise ---------------------------------------------------- */
+  unsigned outShift = (oddF ? (shift + 1) : shift); // same rule as sqrt
+  return x >> outShift;                             //  result lives in Q⌈F⌉
+}
+
+// signed.
+template<int F>
+uint32_t
+recip_qs(int32_t Xin)
+{
+  if (Xin == 0)
+    return 0x7FFFFFFFu; // saturate
+  uint32_t mag = Xin < 0 ? -Xin : Xin;
+  uint32_t r = recip_uq<F>(mag);
+  return (Xin < 0) ? -int32_t(r) : r;
+}
 
 
 
