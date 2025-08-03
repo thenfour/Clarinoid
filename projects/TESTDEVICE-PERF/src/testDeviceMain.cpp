@@ -7,3 +7,43 @@
 #include <Arduino.h>
 
 #pragma GCC diagnostic pop
+
+#include "harness.hpp"
+
+
+
+/*========================= Run plan =========================*/
+void
+setup()
+{
+  Serial.begin(115200);
+  while (!Serial && millis() < 4000) {
+  }
+  Serial.println("\n--- Modular benchmark harness (Teensy 4.x) ---");
+#if HAVE_DWT
+  Serial.println("Timing: DWT cycle counter");
+#else
+  Serial.println("Timing: micros() fallback (coarser)");
+#endif
+  Serial.printf("Random=%u  Sweep=%u  Edge=%s\n", (unsigned)kNumRandom, (unsigned)kNumSweep, kDoEdge ? "yes" : "no");
+
+  // Run all registered UQF ops
+  for (uint32_t i = 0; i < kNumOps_UQF; ++i) {
+    run_bench(kOps_UQF[i], kNumRandom, kNumSweep, kDoEdge);
+  }
+
+  // Run all registered float ops (uncomment when you add entries)
+  for (uint32_t i = 0; i < kNumOps_Float; ++i) {
+    run_bench(kOps_Float[i], kNumRandom, kNumSweep);
+  }
+
+  Serial.println("\n### Summary (Markdown-ready)\n");
+  print_markdown_summaries();
+
+  Serial.println("\nDone.");
+}
+
+void
+loop()
+{
+}
