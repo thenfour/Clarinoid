@@ -11,13 +11,16 @@
 #include "harness.hpp"
 
 
+// todo:
+// - support various signature types (int16, int32, uint32, 2-op, 3-op, etc... maybe group tests by signature type?)
+// - better test discovery (simple registration function...)
+// - operate on FxValue<> instead of uint32_t
 
-/*========================= Run plan =========================*/
-void
-setup()
+void setup()
 {
   Serial.begin(115200);
-  while (!Serial && millis() < 4000) {
+  while (!Serial && millis() < 4000)
+  {
   }
   Serial.println("\n--- Modular benchmark harness (Teensy 4.x) ---");
 #if HAVE_DWT
@@ -28,12 +31,14 @@ setup()
   Serial.printf("Random=%u  Sweep=%u  Edge=%s\n", (unsigned)kNumRandom, (unsigned)kNumSweep, kDoEdge ? "yes" : "no");
 
   // Run all registered UQF ops
-  for (uint32_t i = 0; i < kNumOps_UQF; ++i) {
+  for (uint32_t i = 0; i < kNumOps_UQF; ++i)
+  {
     run_bench(kOps_UQF[i], kNumRandom, kNumSweep, kDoEdge);
   }
 
   // Run all registered float ops (uncomment when you add entries)
-  for (uint32_t i = 0; i < kNumOps_Float; ++i) {
+  for (uint32_t i = 0; i < kNumOps_Float; ++i)
+  {
     run_bench(kOps_Float[i], kNumRandom, kNumSweep);
   }
 
@@ -43,7 +48,4 @@ setup()
   Serial.println("\nDone.");
 }
 
-void
-loop()
-{
-}
+void loop() {}

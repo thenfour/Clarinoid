@@ -1,3 +1,5 @@
+// actually we should not make this "Teensy" but something generic, which has teensy specializations.
+
 #pragma once
 
 //#include "imxrt.h"

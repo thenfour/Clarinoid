@@ -112,10 +112,10 @@ namespace clarinoid {
 template<int TIntBits, int TFracBits>
 struct FxLayout
 {
-  static_assert(I >= 0 && F >= 0, "negative bit count");
-  static constexpr IntBits = TIntBits;
-  static constexpr FracBits = TFracBits;
-  static constexpr ValueBits = TIntBits + TFracBits;
+  static_assert(TIntBits >= 0 && TFracBits >= 0, "negative bit count");
+  static constexpr int IntBits = TIntBits;
+  static constexpr int FracBits = TFracBits;
+  static constexpr int ValueBits = TIntBits + TFracBits;
 };
 
 // describes the raw value type's capabilities
@@ -123,9 +123,9 @@ template<typename TRaw>
 struct FxStorage
 {
   static constexpr bool IsSigned = std::is_signed<TRaw>::value;
-  static constexpr bool SignBits = IsSigned ? 1 : 0;
   static constexpr int StorageWidthBits = sizeof(TRaw) * 8;
-  static constexpr int StorageValueBits = StorageWidthBits - SignBits;
+  static constexpr int StorageValueBits = std::numeric_limits<TRaw>::digits;
+  using RawType = TRaw;
 };
 
 // describes the binary format (layout + type), which is a complete description of the fixed point type.
@@ -140,8 +140,9 @@ struct FxFormat
   using TLayout::TFracBits;
   using TLayout::ValueBits;
 
+  using TRaw = typename TStorage::RawType;
+
   using TRaw::IsSigned;
-  using TRaw::SignBits;
   using TRaw::StorageWidthBits;
   using TRaw::StorageValueBits;
 };
@@ -150,8 +151,8 @@ struct FxFormat
 template<typename TFormat>
 struct FxValue
 {
-  using RawType = TFormat::StorageType;
-  RawType mValue;
+  using RawType = typename TFormat::StorageType;
+  RawType mRawValue;
 
   // possibly provide primitve ops here which don't make any decisions about format?
 };
@@ -176,23 +177,24 @@ struct FxPrototypeKernel
   ;
 
   // todo: construction
-  template<typename TFormatDesired, typename TFormatExisting>
-  [[nodiscard]] constexpr auto static ConstructFromFixed(const TFormat::StorageType& rhsRaw)
+  template<typename TDestFormat, typename TSrcFormat>
+  [[nodiscard]] constexpr auto static ConstructFromFixed(const typename TSrcFormat::StorageType& rhsRaw)
   {
-    return StorageType{};
+
+    return TDestFormat{};
   }
 
   // todo: construction
-  template<typename TFormat>
-  [[nodiscard]] constexpr auto static ConstructFromFloat(const TFormat::StorageType& rhsRaw)
+  template <typename TDestFormat, typename TF, typename std::enable_if_t<std::is_floating_point_v<TF>> = 0>
+  [[nodiscard]] constexpr auto static ConstructFromFloat(const TF& rhsRaw)
   {
-    return StorageType{};
+    return TDestFormat{};
   }
 
   // multiplication
   // in theory, could decide to use a SMMUL intrinsic, or perform strategic shifting to retain within a 32-bit type, ...
   template<typename TFormatA, typename TFormatB>
-  [[nodiscard]] constexpr auto static mul(const FxValue<TFormatA>& a, const FxValue<TFormatB>& b) const
+  [[nodiscard]] constexpr auto static mul(const FxValue<TFormatA>& a, const FxValue<TFormatB>& b)
   {
     using ResultFormat = MulResultFormat<TFormatA, TFormatB>;
     return ResultFormat::ConstructFrom(a.mValue * b.mValue);
@@ -203,13 +205,20 @@ template<typename TFormat, typename TKernel>
 struct Fixed
 {
   using FormatType = TFormat;
+  using StorageType = typename FormatType::StorageType;
+  using LayoutType = typename FormatType::LayoutType;
+  using RawType = typename FormatType::RawType;
+
   using KernelType = TKernel;
 
   // raw type is specified explicitly by caller.
-  using ValueType = TKernel::template ValueType<TFormat>;
-  ValueType mStore;
+  using ValueType = typename TKernel::template ValueType<TFormat>;
+  ValueType mValue;
 
-  [[nodiscard]] constexpr RawValue() const { return mStore.mValue; }
+  [[nodiscard]] constexpr RawType RawValue() const
+  {
+    return mValue.mRawValue;
+  }
 
   // constructors
   // from float or int values
