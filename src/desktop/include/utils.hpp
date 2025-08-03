@@ -4,20 +4,19 @@
 #include <string>
 #include <iterator>
 #include <system_error>
+//
+//static float
+//lerp(float v0, float v1, float t)
+//{
+//  return v0 + t * (v1 - v0);
+//}
+//static float
+//clamp(float v, float v0, float v1)
+//{
+//  return std::max(v0, std::min(v1, v));
+//}
 
-static float
-lerp(float v0, float v1, float t)
-{
-  return v0 + t * (v1 - v0);
-}
-static float
-clamp(float v, float v0, float v1)
-{
-  return std::max(v0, std::min(v1, v));
-}
-
-constexpr int
-parse_hex_digit(char c)
+constexpr inline int parse_hex_digit(char c)
 {
   return (c >= '0' && c <= '9')   ? (c - '0')
          : (c >= 'a' && c <= 'f') ? (c - 'a' + 10)
@@ -25,8 +24,7 @@ parse_hex_digit(char c)
                                   : -1;
 }
 
-constexpr unsigned
-parse_hex_byte(char a, char b)
+constexpr inline unsigned parse_hex_byte(char a, char b)
 {
   int x = parse_hex_digit(a), y = parse_hex_digit(b);
   return (x < 0 || y < 0) ? 256u : unsigned((x << 4) | y); // 256 = invalid sentinel
@@ -75,8 +73,7 @@ bytes_to_wstring(const std::string& s, UINT code_page = CP_ACP)
   return out;
 }
 
-std::string
-removeAll(const std::string& s, char ch)
+inline std::string removeAll(const std::string& s, char ch)
 {
   std::string result;
   std::copy_if(s.begin(), s.end(), std::back_inserter(result), [ch](char c) { return c != ch; });

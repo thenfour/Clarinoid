@@ -7,13 +7,13 @@
 
 namespace clarinoid {
 
-inline uint32_t
-__SMMULR(uint32_t a, uint32_t b)
-{
-  uint32_t r;
-  asm volatile("smmulr %0,%1,%2" : "=r"(r) : "r"(a), "r"(b));
-  return r;
-}
+//inline uint32_t
+//__SMMULR(uint32_t a, uint32_t b)
+//{
+//  uint32_t r;
+//  asm volatile("smmulr %0,%1,%2" : "=r"(r) : "r"(a), "r"(b));
+//  return r;
+//}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// <summary>

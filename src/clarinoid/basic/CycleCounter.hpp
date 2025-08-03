@@ -19,4 +19,6 @@ struct CyleCounter
   }
 };
 
+// todo: stopwatch that uses this cycle counter.
+
 }  // namespace clarinoid

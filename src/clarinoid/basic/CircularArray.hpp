@@ -3,6 +3,8 @@
 
 namespace clarinoid
 {
+// aka ring buffer.
+// 
 // as you push items, old items are overwritten. useful for plotting on a screen fe.
 // when READING items, they're returned in the order they were written.
 template <typename Tval, size_t N>
