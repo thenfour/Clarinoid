@@ -1,0 +1,26 @@
+{
+    "name": "clarinoid_lib_example",
+    "version": "0.1.0",
+    "description": "Simple example library for Clarinoid project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Your Name"
+        }
+    ],
+    "frameworks": "*",
+    "platforms": "*",
+    "build": {
+        "srcDir": "src",
+        "includeDir": "include"
+    },
+    "export": {
+        "exclude": [
+            ".git",
+            "test",
+            "tests",
+            "examples",
+            "docs"
+        ]
+    }
+}

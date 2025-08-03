@@ -1,0 +1,1 @@
+int gTestPoint = 0;
