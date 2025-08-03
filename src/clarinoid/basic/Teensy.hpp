@@ -1,4 +1,7 @@
 // actually we should not make this "Teensy" but something generic, which has teensy specializations.
+// the "Teensy" project should probably also represent the device itself,
+// so it should contain the pin configuration, connected devices etc.
+// and for a cycle counter, there would be only 1 per device.
 
 #pragma once
 
@@ -22,6 +25,9 @@ namespace clarinoid
 // provide access to Teensy-specific features, provide fallbacks if not available.
 struct Teensy
 {
+  // gotchas:
+  // - there may be quirks leaving this on, so use only for benchmarking / debugging code.
+  // - because it's a uint32, it will overflow after 2^32 cycles, which is about 7 seconds at 600 MHz.
   static inline void cycles_enable()
   {
     ARM_DEMCR |= ARM_DEMCR_TRCENA;           // enable trace/DWT

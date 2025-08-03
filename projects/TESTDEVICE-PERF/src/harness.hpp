@@ -25,18 +25,6 @@ static const UQFOperation kOps_UQF[] = {
      2u},
 
     {"tanh", 31, 31, &tanhf, kTanhQ32Variants, (uint32_t)(sizeof(kTanhQ32Variants) / sizeof(kTanhQ32Variants[0]))},
-    // {
-    //     "recip",
-    //     32,
-    //     32,
-    //     [](double x)
-    //     {
-    //       return 1.0 / x;
-    //     },
-    //     kRecipQ32Variants,
-    //     (uint32_t)(sizeof(kRecipQ32Variants) / sizeof(kRecipQ32Variants[0])),
-    //     0xFFFFFFFFu /* full range */
-    // },
 };
 static const uint32_t kNumOps_UQF = sizeof(kOps_UQF) / sizeof(kOps_UQF[0]);
 
