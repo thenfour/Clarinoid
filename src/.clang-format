@@ -1,0 +1,91 @@
+﻿
+BasedOnStyle: LLVM
+
+# Language and standard
+Language: Cpp
+Standard: c++17
+
+# Column limits and line breaking
+ColumnLimit: 120
+CommentPragmas: '^ IWYU pragma:|^ clang-format'
+
+# More diff-friendly options - prevent packing multiple statements on one line
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+AllowShortEnumsOnASingleLine: false
+
+# Function and method formatting - better for diffs
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+BinPackArguments: false
+
+# Breaking before braces for better diffs
+BreakBeforeBraces: Allman
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+
+# Comment handling - preserve formatting for tables/visualizations
+ReflowComments: false
+AlignTrailingComments: true
+SpacesBeforeTrailingComments: 2
+
+# Indentation
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Alignment
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: true
+AlignAfterOpenBracket: Align
+
+# Other formatting preferences
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2
+PointerAlignment: Left
+DerivePointerAlignment: false
+ReferenceAlignment: Left
+DeriveLineEnding: true
+
+# Include sorting
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# Namespace formatting
+NamespaceIndentation: None
+CompactNamespaces: false
+
+# Template and macro handling
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeConceptDeclarations: true
+
+# Penalty system for better line breaking decisions
+PenaltyBreakAssignment: 100
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 200

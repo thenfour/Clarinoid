@@ -1,0 +1,22 @@
+{
+    "name": "lib_example",
+    "version": "0.1.0",
+    "description": "Example library for Clarinoid project",
+    "authors": [
+        {
+            "name": "Your Name"
+        }
+    ],
+    "frameworks": "*",
+    "platforms": "*",
+    "build": {
+        "srcDir": "src",
+        "includeDir": "include"
+    },
+    "export": {
+        "exclude": [
+            "test",
+            "tests"
+        ]
+    }
+}

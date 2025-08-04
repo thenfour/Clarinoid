@@ -1,0 +1,29 @@
+{
+    "name": "clarinoid_core",
+    "version": "0.1",
+    "description": "Clarinoid base platform, cross-platform library optimized for Teensy",
+    "authors": [
+        {
+            "name": "Carl Corcoran",
+            "email": "carlco@gmail.com"
+        }
+    ],
+    "build": {
+        "includeDir": "include",
+        "srcFilter": [
+            "+<src/>",
+            "-<*/tests/>"
+        ]
+    },
+    "frameworks": [
+        "arduino"
+    ],
+    "platforms": [
+        "teensy",
+        "native"
+    ],
+    "dependencies": [
+        "adafruit/Adafruit SSD1306@^2.4.0",
+        "adafruit/Adafruit BusIO@^1.4.1"
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "name": "clarinoid_sim",
+    "version": "0.1",
+    "description": "Clarinoid desktop simulation library; not intended to run on Teensy.",
+    "authors": [
+        {
+            "name": "Carl Corcoran",
+            "email": "carlco@gmail.com"
+        }
+    ],
+    "build": {
+        "includeDir": "include",
+        "srcFilter": [
+            "+<src/>",
+            "-<*/tests/>"
+        ]
+    },
+    "frameworks": [
+        "arduino"
+    ],
+    "platforms": [
+        "teensy",
+        "native"
+    ],
+    "dependencies": [
+        "file://../clarinoid_core"
+    ]
+}
