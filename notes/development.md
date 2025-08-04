@@ -1,5 +1,19 @@
 # Random development notes
 
+## projects - vs code - platformio - visual studio
+
+* platformio for native win32 is very finnicky.
+  * it wants to use G++ not GCC, differing from other projects. maybe this can be fixed but ... i didn't get there.
+  * i couldn't find a way to build using C++17. despite the -std=c++17 build flag, it was not using it.
+  * debugging is just broken; i never got running an executable to land in a debugger.
+  * unit test support is not very mature compared to visual studio (selecting which tests to run, debugging tests...)
+* visual studio doesn't do platformio teensy targets.
+
+therefore for anything to run on native, visual studio.
+
+Anything for teensy, vs code / platformio.
+
+Don't attempt to mix the environments; it's all so finnicky and what would be the point really.
 
 ## Bloaty & memory use
 Teensy will crash mysteriously when running out of memory. Before 1.54, it was pretty hard to get quick insight about mem usage. But now we can see memory.
