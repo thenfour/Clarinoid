@@ -35,7 +35,7 @@ struct Teensy
     ARM_DWT_CYCCNT = 0;                      // reset the counter
     ARM_DWT_CTRL |= ARM_DWT_CTRL_CYCCNTENA;  // start counting
 #else
-//
+    // nop
 #endif
   }
   static inline uint32_t cycles_now()
@@ -43,6 +43,7 @@ struct Teensy
 #if HAVE_DWT
     return ARM_DWT_CYCCNT;  // read current cycle count
 #else
+    return micros() * 600;  // fallback: use micros() and assume 600 MHz clock
 #endif
   }
 

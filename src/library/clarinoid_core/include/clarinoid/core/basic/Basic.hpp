@@ -1,29 +1,39 @@
 
 #pragma once
 
+#if __cplusplus >= 201703L
+  #define CLN_NODISCARD [[nodiscard]]
+#else
+  #error C++17 or later is required for this project.
+  #define CLN_NODISCARD /*nothing*/
+#endif
+
 #ifdef CLARINOID_PLATFORM_X86
-#include "../x86/ArduinoEmu.hpp"
+  #include "../x86/ArduinoEmu.hpp"
 #endif
 
 
 // language basics, syntax, types, fundamental helpers
-#include "Binary.hpp"
-#include "Teensy.hpp"
 #include "Array.hpp"
-#include "assert.hpp"
 #include "BaseDefs.hpp"
+#include "Binary.hpp"
 #include "Memory.hpp"
+#include "Teensy.hpp"
+#include "assert.hpp"
 
-#include "function.hpp"
+
 #include "Enum.hpp"
 #include "Tristate.hpp"
+#include "function.hpp"
 
-#include "Util.hpp"
-#include "MovingAverage.hpp"
+
 #include "CircularArray.hpp"
+#include "MovingAverage.hpp"
 #include "SortedArray.hpp"
+#include "Util.hpp"
 
-#include "string/format.hpp"
+
+#include "./string/format.hpp"
 
 #include "./Numeric.hpp"
 
@@ -31,12 +41,12 @@
 
 #include "Gfx.hpp"
 
-#include "log.hpp"
-#include "Uptime.hpp"
-#include "FPS.hpp"
-#include "Stopwatch.hpp"
-#include "Music.hpp"
-#include "Profiler.hpp"
-#include "Taskman.hpp"
 #include "Control.hpp"
+#include "FPS.hpp"
+#include "Music.hpp"
 #include "NumericRanges.hpp"
+#include "Profiler.hpp"
+#include "Stopwatch.hpp"
+#include "Taskman.hpp"
+#include "Uptime.hpp"
+#include "log.hpp"

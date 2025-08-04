@@ -3,15 +3,17 @@
 // #include <algorithm>
 // #include <cmath>
 #include <limits>
-#include <optional>
+//#include <optional>
+#include "../Numeric.hpp"
 #include <type_traits>
 #include <utility>
-#include "../Numeric.hpp"
 
-namespace clarinoid {
+
+namespace clarinoid
+{
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<typename T>
+template <typename T>
 struct Rect
 {
   static_assert(is_scalar_like<T>::value, "Rect<T>: T must be scalar-like");
@@ -27,35 +29,59 @@ struct Rect
   // ~Rect() = default;
 
   Rect()
-    : position(Point<T>::Construct(static_cast<T>(0), static_cast<T>(0)))
-    , size(Size<T>::Construct(static_cast<T>(0), static_cast<T>(0)))
+      : position(Point<T>::Construct(static_cast<T>(0), static_cast<T>(0)))
+      , size(Size<T>::Construct(static_cast<T>(0), static_cast<T>(0)))
   {
   }
 
   Rect(T x, T y, T w, T h)
-    : position(Point<T>::Construct(x, y))
-    , size(Size<T>::Construct(w, h))
+      : position(Point<T>::Construct(x, y))
+      , size(Size<T>::Construct(w, h))
   {
   }
 
   Rect(const Point<T>& pos, const Size<T>& sz)
-    : position(pos)
-    , size(sz)
+      : position(pos)
+      , size(sz)
   {
   }
 
-  static Rect Construct(const Point<T>& pos, const Size<T>& sz) { return { pos, sz }; }
+  static Rect Construct(const Point<T>& pos, const Size<T>& sz)
+  {
+    return {pos, sz};
+  }
 
-  static Rect Construct(T x, T y, T w, T h) { return { x, y, w, h }; }
+  static Rect Construct(T x, T y, T w, T h)
+  {
+    return {x, y, w, h};
+  }
 
-  T Left() const { return position.x; }
-  T Top() const { return position.y; }
-  T Width() const { return size.width; }
-  T Height() const { return size.height; }
+  T Left() const
+  {
+    return position.x;
+  }
+  T Top() const
+  {
+    return position.y;
+  }
+  T Width() const
+  {
+    return size.width;
+  }
+  T Height() const
+  {
+    return size.height;
+  }
 
   // "end" of the rect; the first value that is not part of the rect.
-  T Right() const { return position.x + size.width; }
-  T Bottom() const { return position.y + size.height; }
+  T Right() const
+  {
+    return position.x + size.width;
+  }
+  T Bottom() const
+  {
+    return position.y + size.height;
+  }
 
   // Set the top edge (i.e. move the top while keeping the bottom fixed)
   void SetTop(T t)
@@ -74,10 +100,16 @@ struct Rect
   }
 
   // Set the right edge (move right; top-left remains fixed)
-  void SetRight(T r) { size.width = r - position.x; }
+  void SetRight(T r)
+  {
+    size.width = r - position.x;
+  }
 
   // Set the bottom edge (move bottom; top remains fixed)
-  void SetBottom(T b) { size.height = b - position.y; }
+  void SetBottom(T b)
+  {
+    size.height = b - position.y;
+  }
 
   //
   // Set corner functions.
@@ -123,7 +155,7 @@ struct Rect
 
   //
   // Offset edge functions.
-  // When you “offset” one edge, you move that edge only.
+  // When you ï¿½offsetï¿½ one edge, you move that edge only.
   // For example, offsetting the left edge moves it while leaving the right edge fixed.
   //
 
@@ -147,7 +179,10 @@ struct Rect
     size.width += dx;
   }
 
-  void OffsetBottom(T dy) { size.height += dy; }
+  void OffsetBottom(T dy)
+  {
+    size.height += dy;
+  }
 
   //
   // "With" functions: they return a modified copy of the rectangle.
@@ -274,7 +309,8 @@ struct Rect
   // the fraction value specified in the range of -1 to 1.
   Rect WithBipolarVerticalFill(float fractionN11) const
   {
-    if (fractionN11 >= 0) {
+    if (fractionN11 >= 0)
+    {
       return BottomHalf().TopFraction(fractionN11);
     }
     return TopHalf().BottomFraction(-fractionN11);
@@ -282,7 +318,8 @@ struct Rect
 
   Rect WithBipolarHorizontalFill(float fractionN11) const
   {
-    if (fractionN11 >= 0) {
+    if (fractionN11 >= 0)
+    {
       return RightHalf().LeftFraction(fractionN11);
     }
     return LeftHalf().RightFraction(-fractionN11);
@@ -308,15 +345,39 @@ struct Rect
   }
 
   // Return corners as Points
-  Point<T> TopLeft() const { return { position }; }
-  Point<T> TopRight() const { return Point<T>::Construct(Right(), Top()); }
-  Point<T> BottomLeft() const { return Point<T>::Construct(Left(), Bottom()); }
-  Point<T> BottomRight() const { return Point<T>::Construct(Right(), Bottom()); }
+  Point<T> TopLeft() const
+  {
+    return {position};
+  }
+  Point<T> TopRight() const
+  {
+    return Point<T>::Construct(Right(), Top());
+  }
+  Point<T> BottomLeft() const
+  {
+    return Point<T>::Construct(Left(), Bottom());
+  }
+  Point<T> BottomRight() const
+  {
+    return Point<T>::Construct(Right(), Bottom());
+  }
 
-  Rect<T> LeftHalf() const { return Cell(2, 1, 0, 0); }
-  Rect<T> RightHalf() const { return Cell(2, 1, 1, 0); }
-  Rect<T> TopHalf() const { return Cell(1, 2, 0, 0); }
-  Rect<T> BottomHalf() const { return Cell(1, 2, 0, 1); }
+  Rect<T> LeftHalf() const
+  {
+    return Cell(2, 1, 0, 0);
+  }
+  Rect<T> RightHalf() const
+  {
+    return Cell(2, 1, 1, 0);
+  }
+  Rect<T> TopHalf() const
+  {
+    return Cell(1, 2, 0, 0);
+  }
+  Rect<T> BottomHalf() const
+  {
+    return Cell(1, 2, 0, 1);
+  }
 
   Rect<T> TopFraction(float fraction01) const
   {
@@ -355,7 +416,10 @@ struct Rect
                      rowSizePixels);
   }
 
-  Rect<T> UpperLeftRect(T width, T height) const { return Construct(position.x, position.y, width, height); }
+  Rect<T> UpperLeftRect(T width, T height) const
+  {
+    return Construct(position.x, position.y, width, height);
+  }
   Rect<T> UpperRightRect(T width, T height) const
   {
     return Construct(position.x + size.width - width, position.y, width, height);
@@ -385,15 +449,24 @@ struct Rect
                                position.y + size.height / static_cast<T>(2));
   }
 
-  bool YInRect(T testY) const { return (testY >= Top()) && (testY < Bottom()); }
-  bool XInRect(T testX) const { return (testX >= Left()) && (testX < Right()); }
+  bool YInRect(T testY) const
+  {
+    return (testY >= Top()) && (testY < Bottom());
+  }
+  bool XInRect(T testX) const
+  {
+    return (testX >= Left()) && (testX < Right());
+  }
 
   bool Contains(const Point<T>& pt) const
   {
     return pt.x >= Left() && pt.x < Right() && pt.y >= Top() && pt.y < Bottom();
   }
 
-  Size<T> GetSize() const { return size; }
+  Size<T> GetSize() const
+  {
+    return size;
+  }
 
   // returns a new rect that contains both this rect and the other rect.
   Rect<T> Union(const Rect<T>& other) const
@@ -413,17 +486,21 @@ struct Rect
     T ny = std::max(Top(), other.Top());
     T nr = std::min(Right(), other.Right());
     T nb = std::min(Bottom(), other.Bottom());
-    if (nr > nx && nb > ny) {
+    if (nr > nx && nb > ny)
+    {
       // (nx, ny) is top-left, (nr - nx, nb - ny) is width, height
       return Rect::Construct(nx, ny, nr - nx, nb - ny);
     }
-    return {}; // or however you define an empty rect
+    return {};  // or however you define an empty rect
   }
   bool Intersects(const Rect& other) const
   {
     return (Right() > other.Left()) && (Left() < other.Right()) && (Bottom() > other.Top()) && (Top() < other.Bottom());
   }
-  Rect<T> Offset(T dx, T dy) const { return Construct(position.x + dx, position.y + dy, size.width, size.height); }
+  Rect<T> Offset(T dx, T dy) const
+  {
+    return Construct(position.x + dx, position.y + dy, size.width, size.height);
+  }
 
   Point<T> Clamp(const Point<T>& pt) const
   {
@@ -432,12 +509,18 @@ struct Rect
     return Point<T>::Construct(nx, ny);
   }
 
-  [[nodiscard]] Span<T> TopSpan() const { return Span<T>::from_endpoints(Left(), Right()).with_length(size.width); }
+  [[nodiscard]] Span<T> TopSpan() const
+  {
+    return Span<T>::from_endpoints(Left(), Right()).with_length(size.width);
+  }
   [[nodiscard]] Span<T> BottomSpan() const
   {
     return Span<T>::from_endpoints(Left(), Right()).with_length(size.width).translated(Bottom() - Top());
   }
-  [[nodiscard]] Span<T> LeftSpan() const { return Span<T>::from_endpoints(Top(), Bottom()).with_length(size.height); }
+  [[nodiscard]] Span<T> LeftSpan() const
+  {
+    return Span<T>::from_endpoints(Top(), Bottom()).with_length(size.height);
+  }
   [[nodiscard]] Span<T> RightSpan() const
   {
     return Span<T>::from_endpoints(Top(), Bottom()).with_length(size.height).translated(Right() - Left());
@@ -448,4 +531,4 @@ struct Rect
 //using RectI16 = Rect<int16_t>;
 //using RectF = Rect<float>;
 
-} // namespace clarinoid
+}  // namespace clarinoid

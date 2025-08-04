@@ -2,9 +2,19 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <experimental/string_view>
+#include <type_traits>
+
+
+namespace std
+{
+using std::experimental::basic_string_view;
+using std::experimental::string_view;
+}  // namespace std
+
 #include <iterator>
 #include <ostream>
-#include <string_view>
+//#include <string_view>
 #include <type_traits>
 
 /*--------------------------------------------------------------------
@@ -148,7 +158,7 @@ void write_arg(Sink& sink, std::string_view sv)
 }
 
 template <class Sink>
-std::enable_if_t<std::is_integral_v<int>, void>  // only int for brevity
+std::enable_if_t<std::is_integral<int>::value, void>  // only int for brevity
 write_arg(Sink& sink, int v)
 {
   write_decimal(sink, v);

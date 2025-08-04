@@ -3,41 +3,53 @@
 // #include <algorithm>
 // #include <cmath>
 #include <limits>
-#include <optional>
+//#include <optional>
+#include "../Numeric.hpp"
 #include <type_traits>
 #include <utility>
-#include "../Numeric.hpp"
 
-namespace clarinoid {
 
-template<typename T>
+namespace clarinoid
+{
+
+template <typename T>
 struct Circle
 {
   static_assert(is_scalar_like<T>::value, "Circle<T>: T must be scalar-like");
 
   Vec2<T> mCenter{};
-  T mRadius{}; // invariant: r >= 0 for signed T; always true for unsigned T
+  T mRadius{};  // invariant: r >= 0 for signed T; always true for unsigned T
 
   // construction
   constexpr Circle() = default;
   constexpr Circle(const Vec2<T>& c, T r)
-    : mCenter(c)
-    , mRadius(r)
+      : mCenter(c)
+      , mRadius(r)
   {
-    if constexpr (std::is_signed_v<T>) { /* assert(r >= T{0}); */
+    if constexpr (std::is_signed_v<T>)
+    { /* assert(r >= T{0}); */
     }
   }
 
   // basic queries
-  [[nodiscard]] constexpr Vec2<T> center() const noexcept { return mCenter; }
-  [[nodiscard]] constexpr T radius() const noexcept { return mRadius; }
-  [[nodiscard]] constexpr T diameter() const noexcept { return mRadius * T{ 2 }; }
+  [[nodiscard]] constexpr Vec2<T> center() const noexcept
+  {
+    return mCenter;
+  }
+  [[nodiscard]] constexpr T radius() const noexcept
+  {
+    return mRadius;
+  }
+  [[nodiscard]] constexpr T diameter() const noexcept
+  {
+    return mRadius * T{2};
+  }
   [[nodiscard]] constexpr bool empty() const noexcept
   {
     if constexpr (std::is_signed_v<T>)
-      return mRadius <= T{ 0 };
+      return mRadius <= T{0};
     else
-      return mRadius == T{ 0 };
+      return mRadius == T{0};
   }
 
   // metrics
@@ -49,11 +61,14 @@ struct Circle
   [[nodiscard]] T circumference() const noexcept
   {
     using std::numbers::pi_v;
-    return T{ 2 } * pi_v<T> * mRadius;
+    return T{2} * pi_v<T> * mRadius;
   }
 
   // containment
-  [[nodiscard]] bool contains(const Vec2<T>& p) const noexcept { return distance2(p, mCenter) <= mRadius * mRadius; }
+  [[nodiscard]] bool contains(const Vec2<T>& p) const noexcept
+  {
+    return distance2(p, mCenter) <= mRadius * mRadius;
+  }
   [[nodiscard]] bool contains(const Circle& other) const noexcept
   {
     const T d = distance(mCenter, other.mCenter);
@@ -66,11 +81,11 @@ struct Circle
     const T d2 = distance2(mCenter, other.mCenter);
     const T sum = mRadius + other.mRadius;
     if (d2 > sum * sum)
-      return false; // too far
+      return false;  // too far
     const T diff = (mRadius > other.mRadius) ? (mRadius - other.mRadius) : (other.mRadius - mRadius);
     if (d2 < diff * diff)
-      return false; // one completely inside without touching
-    return true;    // overlapping or tangent
+      return false;  // one completely inside without touching
+    return true;     // overlapping or tangent
   }
   [[nodiscard]] bool overlaps_area(const Circle& other) const noexcept
   {
@@ -86,57 +101,63 @@ struct Circle
   // distances to points
   [[nodiscard]] T signed_distance(const Vec2<T>& p) const noexcept
   {
-    return distance(p, mCenter) - mRadius; // inside: negative; on: 0; outside: positive
+    return distance(p, mCenter) - mRadius;  // inside: negative; on: 0; outside: positive
   }
   [[nodiscard]] T distance_to(const Vec2<T>& p) const noexcept
   {
     const T s = signed_distance(p);
-    return (s > T{ 0 }) ? s : T{ 0 };
+    return (s > T{0}) ? s : T{0};
   }
   [[nodiscard]] Vec2<T> closest_point(const Vec2<T>& p) const noexcept
   {
     const Vec2<T> v = p - mCenter;
     const T len = v.length();
-    if (len <= mRadius || len == T{ 0 })
-      return p; // already inside/on, or degenerate
+    if (len <= mRadius || len == T{0})
+      return p;  // already inside/on, or degenerate
     return mCenter + v * (mRadius / len);
   }
 
   // bounding box (AABB): min, max
   [[nodiscard]] constexpr std::pair<Vec2<T>, Vec2<T>> aabb() const noexcept
   {
-    const Vec2<T> r{ mRadius, mRadius };
-    return { mCenter - r, mCenter + r };
+    const Vec2<T> r{mRadius, mRadius};
+    return {mCenter - r, mCenter + r};
   }
 
   // transforms
   [[nodiscard]] constexpr Circle translated(const Vec2<T>& delta) const noexcept
   {
-    return { mCenter + delta, mRadius };
+    return {mCenter + delta, mRadius};
   }
-  [[nodiscard]] constexpr Circle with_center(const Vec2<T>& c) const noexcept { return { c, mRadius }; }
-  [[nodiscard]] constexpr Circle with_radius(T r) const noexcept { return { mCenter, (r > T{ 0 }) ? r : T{ 0 } }; }
+  [[nodiscard]] constexpr Circle with_center(const Vec2<T>& c) const noexcept
+  {
+    return {c, mRadius};
+  }
+  [[nodiscard]] constexpr Circle with_radius(T r) const noexcept
+  {
+    return {mCenter, (r > T{0}) ? r : T{0}};
+  }
 
   // uniform scale about origin or pivot (radius scales by |s|)
   [[nodiscard]] constexpr Circle scaled(T s) const noexcept
   {
-    const T ar = (s >= T{ 0 }) ? (mRadius * s) : (mRadius * -s);
-    return { mCenter * s, ar };
+    const T ar = (s >= T{0}) ? (mRadius * s) : (mRadius * -s);
+    return {mCenter * s, ar};
   }
 
   // parameterization & angles
   // point at angle 'theta' (radians)
-  template<typename U>
+  template <typename U>
   [[nodiscard]] Vec2<std::common_type_t<T, U>> point_at(U theta) const noexcept
   {
     using R = std::common_type_t<T, U>;
     R ct = std::cos(static_cast<R>(theta));
     R st = std::sin(static_cast<R>(theta));
-    return { static_cast<R>(mCenter.x) + static_cast<R>(mRadius) * ct,
-             static_cast<R>(mCenter.y) + static_cast<R>(mRadius) * st };
+    return {static_cast<R>(mCenter.x) + static_cast<R>(mRadius) * ct,
+            static_cast<R>(mCenter.y) + static_cast<R>(mRadius) * st};
   }
   // angle of a point relative to center (radians)
-  template<typename U>
+  template <typename U>
   [[nodiscard]] U angle_of(const Vec2<U>& p) const noexcept
   {
     using std::atan2;
@@ -156,11 +177,10 @@ struct Circle
 
     // Otherwise, minimal enclosing circle of two circles:
     // center lies on the line segment between centers.
-    const T newR = (d + a.mRadius + b.mRadius) / T{ 2 };
-    const T t = (newR - a.mRadius) / d; // fraction from a.center towards b.center
-    const Vec2<T> newC = { a.mCenter.x + (b.mCenter.x - a.mCenter.x) * t,
-                           a.mCenter.y + (b.mCenter.y - a.mCenter.y) * t };
-    return { newC, newR };
+    const T newR = (d + a.mRadius + b.mRadius) / T{2};
+    const T t = (newR - a.mRadius) / d;  // fraction from a.center towards b.center
+    const Vec2<T> newC = {a.mCenter.x + (b.mCenter.x - a.mCenter.x) * t, a.mCenter.y + (b.mCenter.y - a.mCenter.y) * t};
+    return {newC, newR};
   }
 
   // intersection points (if any). Returns:
@@ -173,20 +193,21 @@ struct Circle
     const T d = dC.length();
     const T r0 = mRadius, r1 = o.mRadius;
 
-    if (d > r0 + r1 || d < std::abs(r0 - r1) || (d == T{ 0 } && r0 == r1)) {
-      return std::nullopt; // separate, contained w/out touching, or coincident infinite points
+    if (d > r0 + r1 || d < std::abs(r0 - r1) || (d == T{0} && r0 == r1))
+    {
+      return std::nullopt;  // separate, contained w/out touching, or coincident infinite points
     }
 
     // a = distance from c0 to chord center along the center line
-    const T a = (r0 * r0 - r1 * r1 + d * d) / (T{ 2 } * d);
+    const T a = (r0 * r0 - r1 * r1 + d * d) / (T{2} * d);
     const T h2 = r0 * r0 - a * a;
-    const T h = (h2 > T{ 0 }) ? std::sqrt(h2) : T{ 0 };
+    const T h = (h2 > T{0}) ? std::sqrt(h2) : T{0};
 
-    const Vec2<T> dir = (d > T{ 0 }) ? (dC / d) : Vec2<T>{ T{ 1 }, T{ 0 } }; // fallback direction
+    const Vec2<T> dir = (d > T{0}) ? (dC / d) : Vec2<T>{T{1}, T{0}};  // fallback direction
     const Vec2<T> p0 = mCenter + dir * a;
 
     // perpendicular vector
-    const Vec2<T> perp{ -dir.y, dir.x };
+    const Vec2<T> perp{-dir.y, dir.x};
     const Vec2<T> i1 = p0 + perp * h;
     const Vec2<T> i2 = p0 - perp * h;
     return std::make_pair(i1, i2);
@@ -203,20 +224,21 @@ struct Circle
     const T bottom = (out.mCenter.y - out.mRadius) - rmin.y;
     const T top = rmax.y - (out.mCenter.y + out.mRadius);
 
-    if (left < T{ 0 })
+    if (left < T{0})
       out.mCenter.x -= left;
-    if (right < T{ 0 })
+    if (right < T{0})
       out.mCenter.x += right;
-    if (bottom < T{ 0 })
+    if (bottom < T{0})
       out.mCenter.y -= bottom;
-    if (top < T{ 0 })
+    if (top < T{0})
       out.mCenter.y += top;
 
-    if (shrink) {
-      const T maxR =
-        std::min({ out.mCenter.x - rmin.x, rmax.x - out.mCenter.x, out.mCenter.y - rmin.y, rmax.y - out.mCenter.y });
+    if (shrink)
+    {
+      const T maxR = std::min(
+          {out.mCenter.x - rmin.x, rmax.x - out.mCenter.x, out.mCenter.y - rmin.y, rmax.y - out.mCenter.y});
       if (maxR < out.mRadius)
-        out.mRadius = std::max(T{ 0 }, maxR);
+        out.mRadius = std::max(T{0}, maxR);
     }
     return out;
   }
@@ -230,4 +252,4 @@ struct Circle
   }
 };
 
-} // namespace clarinoid
+}  // namespace clarinoid

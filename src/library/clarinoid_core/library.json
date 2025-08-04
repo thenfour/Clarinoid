@@ -8,13 +8,6 @@
             "email": "carlco@gmail.com"
         }
     ],
-    "build": {
-        "includeDir": "include",
-        "srcFilter": [
-            "+<src/>",
-            "-<*/tests/>"
-        ]
-    },
     "frameworks": [
         "arduino"
     ],
