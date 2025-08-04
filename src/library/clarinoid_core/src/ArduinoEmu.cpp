@@ -1,7 +1,7 @@
-#include "./ArduinoEmu.hpp"
 
 #ifdef CLARINOID_PLATFORM_X86
 
+  #include <clarinoid/core/x86/ArduinoEmu.hpp>
 
 CrashReportClass CrashReport;
 

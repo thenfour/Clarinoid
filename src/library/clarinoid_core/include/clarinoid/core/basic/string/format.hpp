@@ -2,20 +2,10 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
-#include <experimental/string_view>
+#include <string_view>
 #include <type_traits>
-
-
-namespace std
-{
-using std::experimental::basic_string_view;
-using std::experimental::string_view;
-}  // namespace std
-
 #include <iterator>
 #include <ostream>
-//#include <string_view>
-#include <type_traits>
 
 /*--------------------------------------------------------------------
  * 1. Generic "Sink" concept: any type that provides

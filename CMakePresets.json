@@ -5,7 +5,7 @@
       "name": "vs-x86",
       "displayName": "VS 2022 • x86",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/../build/vs-x86",
+      "binaryDir": "${sourceDir}/build/vs-x86",
       "architecture": {
         "value": "Win32",
         "strategy": "set"
