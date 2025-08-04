@@ -1,5 +1,8 @@
 #include "./ArduinoEmu.hpp"
 
+#ifdef CLARINOID_PLATFORM_X86
+
+
 CrashReportClass CrashReport;
 
 char* utoa(unsigned int value, char* str, int radix)
@@ -126,7 +129,7 @@ String::String(const String& value)
   *this = value;
 }
 
-#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+  #if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
 String::String(String&& rval)
 {
   init();
@@ -137,7 +140,7 @@ String::String(StringSumHelper&& rval)
   init();
   move(rval);
 }
-#endif
+  #endif
 
 String::String(char c)
 {
@@ -299,7 +302,7 @@ String& String::operator=(const String& rhs)
   return copy(rhs.buffer, rhs.len);
 }
 
-#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+  #if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
 String& String::operator=(String&& rval)
 {
   if (this != &rval)
@@ -313,7 +316,7 @@ String& String::operator=(StringSumHelper&& rval)
     move(rval);
   return *this;
 }
-#endif
+  #endif
 
 String& String::operator=(const char* cstr)
 {
@@ -936,3 +939,6 @@ float String::toFloat(void) const
     return strtof(buffer, (char**)NULL);
   return 0.0;
 }
+
+
+#endif  // CLARINOID_PLATFORM_X86
