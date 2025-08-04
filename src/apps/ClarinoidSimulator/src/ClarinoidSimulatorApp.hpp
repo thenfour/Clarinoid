@@ -1,18 +1,19 @@
 #pragma once
 #include <algorithm>
 
-#include "D3DAppContext.hpp"
-#include "serial.hpp"
-#include "utils.hpp"
-#include "PolledValue.hpp"
-#include <widgets/GuiLog.hpp>
-#include <widgets/fps.hpp>
-#include <widgets/Plotter.hpp>
-#include "SeriesCollection.hpp"
-#include "TimeSeriesStore.hpp"
-#include "TelemetryIngestor.hpp"
-#include "CommandLine.hpp"
+#include "./CommandLine.hpp"
+#include "./D3DAppContext.hpp"
+#include "./PolledValue.hpp"
+#include "./SeriesCollection.hpp"
+#include "./TelemetryIngestor.hpp"
+#include "./TimeSeriesStore.hpp"
+#include "./serial.hpp"
+#include "./utils.hpp"
 #include <StringLineDispatcher.hpp>
+#include <widgets/GuiLog.hpp>
+#include <widgets/Plotter.hpp>
+#include <widgets/fps.hpp>
+
 
 struct ClarinoidSimulatorApp
 {
@@ -26,40 +27,54 @@ struct ClarinoidSimulatorApp
 
   SeriesCollection mSeriesCollection;
   TimeSeriesStore mTimeSeriesStore;
-  TelemetryIngestor mTelemetryIngestor{ mSeriesCollection, mTimeSeriesStore };
-  PlotterView mPlotter{ &mSeriesCollection, &mTimeSeriesStore };
+  TelemetryIngestor mTelemetryIngestor{mSeriesCollection, mTimeSeriesStore};
+  PlotterView mPlotter{&mSeriesCollection, &mTimeSeriesStore};
 
   ImColor mFg = "#6aa"_imu32;
   ImColor mBg = "#081010"_imu32;
   bool mShowDemoWindow = false;
 
   ClarinoidSimulatorApp(D3DAppContext* pd3dAppContext)
-    : mSSD1306Texture(pd3dAppContext)
-    , mDeviceEnumeration(std::chrono::milliseconds(1000), [&]() -> std::vector<PortInfo> { return enumSerialPorts(); })
+      : mSSD1306Texture(pd3dAppContext)
+      , mDeviceEnumeration(std::chrono::milliseconds(1000),
+                           [&]() -> std::vector<PortInfo>
+                           {
+                             return enumSerialPorts();
+                           })
   {
-    mStringLineDispatcher.mLineCallback = [&](const std::string& line) {
+    mStringLineDispatcher.mLineCallback = [&](const std::string& line)
+    {
       mTelemetryIngestor.HandleLine(line);
 
-      if (line.find("#") == 0) {
+      if (line.find("#") == 0)
+      {
         mLog.append(line.substr(1));
       }
     };
 
-    mSerial.setReceiveCallback([&](const uint8_t* data, size_t n) {
-      std::string msg{ reinterpret_cast<const char*>(data), n };
-      mStringLineDispatcher.HandleIncomingString(msg);
-    });
+    mSerial.setReceiveCallback(
+        [&](const uint8_t* data, size_t n)
+        {
+          std::string msg{reinterpret_cast<const char*>(data), n};
+          mStringLineDispatcher.HandleIncomingString(msg);
+        });
 
-    mCommandLine.setExecuteCallback([&](const char* cmd) {
-      if (cmd && *cmd) {
-        mLog.append(std::string("> ") + cmd);
-        if (mSerial.isOpen()) {
-          mSerial.writeString(cmd);
-        } else {
-          mLog.append("Serial port not open, command ignored.");
-        }
-      }
-    });
+    mCommandLine.setExecuteCallback(
+        [&](const char* cmd)
+        {
+          if (cmd && *cmd)
+          {
+            mLog.append(std::string("> ") + cmd);
+            if (mSerial.isOpen())
+            {
+              mSerial.writeString(cmd);
+            }
+            else
+            {
+              mLog.append("Serial port not open, command ignored.");
+            }
+          }
+        });
   }
 
   void Render()
@@ -68,8 +83,8 @@ struct ClarinoidSimulatorApp
 
     static bool use_work_area = true;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
-                                    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar | 
-        ImGuiWindowFlags_AlwaysVerticalScrollbar;
+                                    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar |
+                                    ImGuiWindowFlags_AlwaysVerticalScrollbar;
 
     // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
     // Based on your use case you may want one or the other.
@@ -77,28 +92,35 @@ struct ClarinoidSimulatorApp
     ImGui::SetNextWindowPos(use_work_area ? viewport->WorkPos : viewport->Pos);
     ImGui::SetNextWindowSize(use_work_area ? viewport->WorkSize : viewport->Size);
 
-    if (ImGui::Begin("Clarinoid simulator", nullptr, flags)) {
-
-      if (ImGui::BeginMenuBar()) {
-
-        if (ImGui::BeginMenu("Menu")) {
+    if (ImGui::Begin("Clarinoid simulator", nullptr, flags))
+    {
+      if (ImGui::BeginMenuBar())
+      {
+        if (ImGui::BeginMenu("Menu"))
+        {
           ImGui::MenuItem("Show demo window", nullptr, &mShowDemoWindow);
           ImGui::EndMenu();
         }
 
         // if (ImGui::BeginMenu("Devices")) {
-        if (mDeviceEnumeration.snapshot().has_value()) {
+        if (mDeviceEnumeration.snapshot().has_value())
+        {
           const auto& list = *mDeviceEnumeration.snapshot().get();
-          for (const auto& p : list) {
-            if (ImGui::MenuItem(wstring_to_bytes(p.knownProduct + L"" + p.friendlyName).c_str())) {
-              if (!mSerial.open(p)) {
+          for (const auto& p : list)
+          {
+            if (ImGui::MenuItem(wstring_to_bytes(p.knownProduct + L"" + p.friendlyName).c_str()))
+            {
+              if (!mSerial.open(p))
+              {
                 // log.
                 int a = 0;
               }
               mSerial.setDtr(true);
             }
           }
-        } else {
+        }
+        else
+        {
           ImGui::Text("No serial devices found");
         }
         // ImGui::EndMenu();
@@ -153,7 +175,7 @@ struct ClarinoidSimulatorApp
 
       ImVec2 imgMin = ImGui::GetItemRectMin();
       ImVec2 mouse = ImGui::GetMousePos();
-      int scaleBase = 4; // the scale you used above
+      int scaleBase = 4;  // the scale you used above
 
       // Convert mouse to source pixel coords (clamp)
       int px = int((mouse.x - imgMin.x) / float(scaleBase));
@@ -191,7 +213,8 @@ struct ClarinoidSimulatorApp
     ImGui::End();
 
     // static bool demoOpen = false;
-    if (mShowDemoWindow) {
+    if (mShowDemoWindow)
+    {
       ImGui::ShowDemoWindow();
     }
   }
