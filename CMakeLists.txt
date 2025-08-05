@@ -1,6 +1,38 @@
 cmake_minimum_required(VERSION 3.15)
 project(clarinoid_desktop LANGUAGES CXX)
 
+#==============================================================================
+# Define a function to add files with preserved directory structure
+function(add_files_with_structure target_name glob_pattern base_path_for_relative)
+    file(GLOB_RECURSE found_files ${glob_pattern})
+    
+    # message(STATUS "Target: ${target_name}")
+    # message(STATUS "Pattern: ${glob_pattern}")
+    # message(STATUS "Found files: ${found_files}")
+    
+    # Filter out directories
+    set(filtered_files)
+    foreach(file ${found_files})
+        if(NOT IS_DIRECTORY ${file})
+            list(APPEND filtered_files ${file})
+        endif()
+    endforeach()
+    
+    # message(STATUS "Filtered files: ${filtered_files}")
+    
+    # Add files to target
+    target_sources(${target_name} PRIVATE ${filtered_files})
+    
+    # Preserve directory structure
+    foreach(file ${filtered_files})
+        file(RELATIVE_PATH rel_path ${base_path_for_relative} ${file})
+        get_filename_component(dir_path ${rel_path} DIRECTORY)
+        string(REPLACE "/" "\\" group_name ${dir_path})
+        source_group(${group_name} FILES ${file})
+    endforeach()
+endfunction()
+
+
 # C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -56,29 +88,20 @@ FetchContent_MakeAvailable(googletest imgui)
 # Library: clarinoid_core
 #==============================================================================
 
-file(GLOB_RECURSE CLARINOID_CORE_HEADERS 
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include/*.hpp"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include/*.h"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include/**/*.hpp"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include/**/*.h"
-)
+add_library(clarinoid_core STATIC)
 
-file(GLOB_RECURSE CLARINOID_CORE_SOURCES 
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/src/*.cpp" # files directly under src
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/src/*.c"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/src/**/*.cpp" # under subdirs
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/src/**/*.c"
-)
+# Add files with preserved directory structure
+add_files_with_structure(clarinoid_core 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include/clarinoid/core/**/*"
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include/clarinoid/")
 
-#message(STATUS "core include dir: ${CLARINOID_SRC_ROOT}/library/clarinoid_core/include/")
-#message(STATUS "core src dir: ${CLARINOID_SRC_ROOT}/library/clarinoid_core/src")
-# message(STATUS "Core sources: ${CLARINOID_CORE_HEADERS}")
-#message(STATUS "Core sources: ${CLARINOID_CORE_SOURCES}")
+add_files_with_structure(clarinoid_core 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/src/**/*" 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_core")
 
-add_library(clarinoid_core STATIC 
-    ${CLARINOID_CORE_HEADERS}
-    ${CLARINOID_CORE_SOURCES}
-)
+add_files_with_structure(clarinoid_core 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/src/*" 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_core")
 
 target_include_directories(clarinoid_core PUBLIC 
     "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include"
@@ -90,27 +113,24 @@ target_compile_features(clarinoid_core PUBLIC cxx_std_17)
 # Library: clarinoid_sim (depends on core)
 #==============================================================================
 
-file(GLOB_RECURSE CLARINOID_SIM_HEADERS 
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/*.hpp"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/*.h"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/**/*.hpp"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/**/*.h"
-)
+add_library(clarinoid_sim STATIC)
 
-file(GLOB_RECURSE CLARINOID_SIM_SOURCES 
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/src/*.cpp"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/src/*.c"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/src/**/*.cpp"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/src/**/*.c"
-)
+# Add files with preserved directory structure
+add_files_with_structure(clarinoid_sim 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/clarinoid/sim/**/*" 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/clarinoid/")
 
-#message(STATUS "Sim headers found: ${CLARINOID_SIM_HEADERS}")
-#message(STATUS "Sim sources found: ${CLARINOID_SIM_SOURCES}")
+    add_files_with_structure(clarinoid_sim 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/clarinoid/sim/*" 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include/clarinoid/")
 
-add_library(clarinoid_sim STATIC 
-    ${CLARINOID_SIM_HEADERS}
-    ${CLARINOID_SIM_SOURCES}
-)
+add_files_with_structure(clarinoid_sim 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/src/**/*" 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim")
+
+add_files_with_structure(clarinoid_sim 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/src/*" 
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim")
 
 target_include_directories(clarinoid_sim PUBLIC 
     "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include"
@@ -126,8 +146,7 @@ target_link_libraries(clarinoid_sim PUBLIC
 # Executable: simulator
 #==============================================================================
 
-add_executable(simulator WIN32
-    ${CLARINOID_SRC_ROOT}/apps/ClarinoidSimulator/src/SimulatorMain.cpp
+set(IMGUI_SOURCE_FILES
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
@@ -137,13 +156,27 @@ add_executable(simulator WIN32
     ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
 )
 
-target_include_directories(simulator PRIVATE 
+add_executable(ClarinoidSimulator WIN32
+    ${IMGUI_FILES}
+)
+
+# Group ImGui files
+source_group("imgui_src" FILES
+  ${IMGUI_SOURCE_FILES}
+)
+
+# Add simulator app files with preserved directory structure
+add_files_with_structure(ClarinoidSimulator 
+    "${CLARINOID_SRC_ROOT}/apps/ClarinoidSimulator/**/*" 
+    "${CLARINOID_SRC_ROOT}/apps/ClarinoidSimulator")
+
+target_include_directories(ClarinoidSimulator PRIVATE 
     ${imgui_SOURCE_DIR}
 )
 
-target_compile_features(simulator PRIVATE cxx_std_17)
+target_compile_features(ClarinoidSimulator PRIVATE cxx_std_17)
 
-target_link_libraries(simulator PRIVATE 
+target_link_libraries(ClarinoidSimulator PRIVATE 
     clarinoid_sim 
     clarinoid_core
 )
@@ -154,9 +187,12 @@ target_link_libraries(simulator PRIVATE
 
 enable_testing()
 
-add_executable(ClarinoidTests
-    ${CLARINOID_SRC_ROOT}/apps/clarinoid-core.tests/src/test_main.cpp
-)
+add_executable(ClarinoidTests)
+
+# Add test files with preserved directory structure
+add_files_with_structure(ClarinoidTests 
+    "${CLARINOID_SRC_ROOT}/apps/clarinoid-core.tests/**/*" 
+    "${CLARINOID_SRC_ROOT}/apps/clarinoid-core.tests")
 
 target_include_directories(ClarinoidTests PRIVATE 
     "${CLARINOID_SRC_ROOT}"
@@ -171,45 +207,3 @@ target_link_libraries(ClarinoidTests PRIVATE
 
 include(GoogleTest)
 gtest_discover_tests(ClarinoidTests)
-
-#==============================================================================
-# IDE Visibility Project (optional - for complete library structure)
-#==============================================================================
-
-file(GLOB_RECURSE CLARINOID_LIBRARY_ALL_FILES 
-    "${CLARINOID_SRC_ROOT}/library/**/*"
-)
-
-# Filter out directories
-set(CLARINOID_LIBRARY_FILES)
-foreach(file ${CLARINOID_LIBRARY_ALL_FILES})
-    if(NOT IS_DIRECTORY ${file})
-        list(APPEND CLARINOID_LIBRARY_FILES ${file})
-    endif()
-endforeach()
-
-add_library(ClarinoidLibraryFiles STATIC 
-    ${CLARINOID_LIBRARY_FILES}
-)
-
-# Preserve directory structure in Visual Studio
-foreach(file ${CLARINOID_LIBRARY_FILES})
-    file(RELATIVE_PATH rel_path "${CLARINOID_SRC_ROOT}/library" ${file})
-    get_filename_component(dir_path ${rel_path} DIRECTORY)
-    string(REPLACE "/" "\\" group_name ${dir_path})
-    source_group(${group_name} FILES ${file})
-endforeach()
-
-# Exclude from build (IDE visibility only)
-set_target_properties(ClarinoidLibraryFiles PROPERTIES 
-    EXCLUDE_FROM_ALL TRUE
-    EXCLUDE_FROM_DEFAULT_BUILD TRUE
-)
-
-target_compile_features(ClarinoidLibraryFiles PRIVATE cxx_std_17)
-
-target_include_directories(ClarinoidLibraryFiles PRIVATE 
-    "${CLARINOID_SRC_ROOT}"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include"
-    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include"
-)
