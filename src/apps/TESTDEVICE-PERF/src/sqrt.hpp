@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include <clarinoid/basic/Teensy.hpp>
+#include <clarinoid/core/basic/Teensy.hpp>
 #include <cstdint>
 
-#include "harnessTypes.hpp"
+#include "./harnessTypes.hpp"
 
 /*========================= Your sqrt candidates (examples) =========================*/
 // Heron NR (Q32->Q16), lean table (31 entries) and early exit

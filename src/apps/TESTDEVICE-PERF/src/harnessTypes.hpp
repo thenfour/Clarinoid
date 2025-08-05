@@ -1,6 +1,6 @@
 #pragma once
 
-#include <clarinoid/basic/Teensy.hpp>
+#include <clarinoid/core/basic/Teensy.hpp>
 #include <cstdint>
 
 

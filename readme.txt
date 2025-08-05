@@ -1,6 +1,8 @@
 
 Clarinoid.
 
+dev stuff / personal notes: check out notes/dev notes.md
+
 VS Code + platformio for teensy
 (GCC)
 https://code.visualstudio.com/docs/cpp/config-mingw
