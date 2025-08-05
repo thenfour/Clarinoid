@@ -14,7 +14,7 @@
 
 #include <clarinoid/core/basic/Basic.hpp>
 
-#include "./ClarinoidSimulatorApp.hpp"
+#include <clarinoid/sim/ClarinoidSimulatorApp.hpp>
 #include "./ComPtr.hpp"
 #include "./HtmlColorUtils.hpp"
 #include "./ImGuiWindowApp.hpp"

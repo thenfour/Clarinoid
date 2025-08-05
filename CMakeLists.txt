@@ -188,31 +188,28 @@ foreach(file ${CLARINOID_LIBRARY_ALL_FILES})
     endif()
 endforeach()
 
-if(CLARINOID_LIBRARY_FILES)
-    add_library(ClarinoidLibraryFiles STATIC 
-        ${CLARINOID_LIBRARY_FILES}
-    )
+add_library(ClarinoidLibraryFiles STATIC 
+    ${CLARINOID_LIBRARY_FILES}
+)
 
-    # Preserve directory structure in Visual Studio
-    foreach(file ${CLARINOID_LIBRARY_FILES})
-        file(RELATIVE_PATH rel_path "${CLARINOID_SRC_ROOT}/library" ${file})
-        get_filename_component(dir_path ${rel_path} DIRECTORY)
-        string(REPLACE "/" "\\" group_name ${dir_path})
-        source_group(${group_name} FILES ${file})
-    endforeach()
+# Preserve directory structure in Visual Studio
+foreach(file ${CLARINOID_LIBRARY_FILES})
+    file(RELATIVE_PATH rel_path "${CLARINOID_SRC_ROOT}/library" ${file})
+    get_filename_component(dir_path ${rel_path} DIRECTORY)
+    string(REPLACE "/" "\\" group_name ${dir_path})
+    source_group(${group_name} FILES ${file})
+endforeach()
 
-    # Exclude from build (IDE visibility only)
-    set_target_properties(ClarinoidLibraryFiles PROPERTIES 
-        EXCLUDE_FROM_ALL TRUE
-        EXCLUDE_FROM_DEFAULT_BUILD TRUE
-    )
+# Exclude from build (IDE visibility only)
+set_target_properties(ClarinoidLibraryFiles PROPERTIES 
+    EXCLUDE_FROM_ALL TRUE
+    EXCLUDE_FROM_DEFAULT_BUILD TRUE
+)
 
-    target_compile_features(ClarinoidLibraryFiles PRIVATE cxx_std_17)
+target_compile_features(ClarinoidLibraryFiles PRIVATE cxx_std_17)
 
-    target_include_directories(ClarinoidLibraryFiles PRIVATE 
-        "${CLARINOID_SRC_ROOT}"
-        "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include"
-        "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include"
-    )
-endif()
-
+target_include_directories(ClarinoidLibraryFiles PRIVATE 
+    "${CLARINOID_SRC_ROOT}"
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_core/include"
+    "${CLARINOID_SRC_ROOT}/library/clarinoid_sim/include"
+)

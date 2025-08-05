@@ -3,7 +3,7 @@
 // #include <algorithm>
 // #include <cmath>
 #include <limits>
-//#include <optional>
+#include <optional>
 #include "../Numeric.hpp"
 #include <type_traits>
 #include <utility>

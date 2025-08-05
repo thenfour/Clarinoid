@@ -1,9 +1,15 @@
 
 #ifdef CLARINOID_PLATFORM_X86
 
-  #include <clarinoid/core/x86/ArduinoEmu.hpp>
+#include <clarinoid/core/x86/ArduinoEmu.hpp>
+
+uint64_t gTestClockMicros = 0;
+
+SerialType Serial;
 
 CrashReportClass CrashReport;
+
+bool gPinStates[256];
 
 char* utoa(unsigned int value, char* str, int radix)
 {
@@ -939,6 +945,17 @@ float String::toFloat(void) const
     return strtof(buffer, (char**)NULL);
   return 0.0;
 }
+
+
+
+// Uptime.hpp
+namespace clarinoid
+{
+
+uint32_t gUptimeLastMicrosCall = 0;
+int64_t gUptimeCurrentOffset = 0;  // every time the 32-bit micros() call rolls over, this gets += 1<<32;
+
+}  // namespace clarinoid
 
 
 #endif  // CLARINOID_PLATFORM_X86

@@ -2,70 +2,85 @@
 #pragma once
 
 #ifndef CLARINOID_PLATFORM_X86
-#error This is only for x86 platform
+  #error This is only for x86 platform
 #endif
 
 #define PROGMEM
 #define EXTMEM
 
 #ifndef AUDIO_BLOCK_SAMPLES
-#  define AUDIO_BLOCK_SAMPLES 128
+  #define AUDIO_BLOCK_SAMPLES 128
 #endif
-
-//#define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
 #include <stdio.h>
 #ifndef NOMINMAX
-#define NOMINMAX
+  #define NOMINMAX
 #endif
 #include <Windows.h>
 
+#include <algorithm>
+#include <sstream>
 #include <stdint.h>
 #include <string>
-#include <sstream>
-#include <algorithm>
+
+// from core_pins.h
+#define HIGH 1
+#define LOW 0
+#define INPUT 0
+#define OUTPUT 1
+#define INPUT_PULLUP 2
+#define INPUT_PULLDOWN 3
+#define OUTPUT_OPENDRAIN 4
+#define INPUT_DISABLE 5
+#define LSBFIRST 0
+#define MSBFIRST 1
+#define _BV(n) (1 << (n))
+#define CHANGE 4
+#define FALLING 2
+#define RISING 3
+
+#define DMAMEM
+#define F
 
 class __FlashStringHelper;
 
 
-static uint64_t gTestClockMicros = 0;
+extern uint64_t gTestClockMicros;
 
-uint32_t millis()
+inline uint32_t millis()
 {
-    return (uint32_t)((gTestClockMicros / 1000) & 0xffffffff);
+  return (uint32_t)((gTestClockMicros / 1000) & 0xffffffff);
 }
 
-uint32_t micros()
+inline uint32_t micros()
 {
-    return (uint32_t)(gTestClockMicros & 0xffffffff);
+  return (uint32_t)(gTestClockMicros & 0xffffffff);
 }
 
 #include "../basic/Uptime.hpp"
 
-void SetTestClockMillis(int64_t ms)
+inline void SetTestClockMillis(int64_t ms)
 {
-    clarinoid::UptimeReset();
-    gTestClockMicros = ms * 1000;
+  clarinoid::UptimeReset();
+  gTestClockMicros = ms * 1000;
 }
-void SetTestClockMicros(int64_t m)
+inline void SetTestClockMicros(int64_t m)
 {
-    clarinoid::UptimeReset();
-    gTestClockMicros = m;
-}
-
-void delay(uint32_t ms)
-{
-    gTestClockMicros += ((uint64_t)ms) * 1000;
-}
-void delayMicroseconds(uint32_t m)
-{
-    gTestClockMicros += m;
+  clarinoid::UptimeReset();
+  gTestClockMicros = m;
 }
 
-void yield()
+inline void delay(uint32_t ms)
 {
+  gTestClockMicros += ((uint64_t)ms) * 1000;
 }
+inline void delayMicroseconds(uint32_t m)
+{
+  gTestClockMicros += m;
+}
+
+inline void yield() {}
 
 
 // An inherited class for holding the result of a concatenation.  These
@@ -429,19 +444,10 @@ public:
 };
 
 
-
 #define DEC 10
 #define HEX 16
 #define OCT 8
 #define BIN 2
-
-// BYTE was defined in very old versions of Arduino
-// maybe this now causes more trouble than it's worth?
-//#ifndef BYTE
-//#define BYTE 0
-//#endif
-
-
 
 class Print
 {
@@ -702,162 +708,131 @@ private:
 };
 
 
+struct SerialType
+{
+  void println(const String& str)
+  {
+    print(str);
+    print("\r\n");
+  }
+  void print(const String& str)
+  {
+    ::OutputDebugStringA(str.c_str());
+  }
+  void begin(uint32_t baud) {}
+  bool operator!() const
+  {
+    return true;
+  }
+  operator bool() const
+  {
+    return true;
+  }
+};
 
-struct
-{
-    void println(const String &str)
-    {
-        print(str);
-        print("\r\n");
-    }
-    void print(const String &str)
-    {
-        ::OutputDebugStringA(str.c_str());
-    }
-    void begin(uint32_t baud)
-    {
-    }
-    bool operator!() const
-    {
-        return true;
-    }
-    operator bool() const
-    {
-        return true;
-    }
-} Serial;
+extern SerialType Serial;
 
-// from core_pins.h
-#define HIGH 1
-#define LOW 0
-#define INPUT 0
-#define OUTPUT 1
-#define INPUT_PULLUP 2
-#define INPUT_PULLDOWN 3
-#define OUTPUT_OPENDRAIN 4
-#define INPUT_DISABLE 5
-#define LSBFIRST 0
-#define MSBFIRST 1
-#define _BV(n) (1 << (n))
-#define CHANGE 4
-#define FALLING 2
-#define RISING 3
-
-void pinMode(uint8_t pin, uint8_t mode)
+inline void pinMode(uint8_t pin, uint8_t mode) {}
+inline void init_pins(void) {}
+inline void analogWrite(uint8_t pin, int val) {}
+inline int analogRead(uint8_t pin)
 {
+  return 0;
 }
-void init_pins(void)
+inline uint32_t analogWriteRes(uint32_t bits)
 {
+  return 0;
 }
-void analogWrite(uint8_t pin, int val)
+inline uint32_t analogWriteResolution(uint32_t bits)
 {
-}
-int analogRead(uint8_t pin)
-{
-    return 0;
-}
-uint32_t analogWriteRes(uint32_t bits)
-{
-    return 0;
-}
-static inline uint32_t analogWriteResolution(uint32_t bits)
-{
-    return analogWriteRes(bits);
+  return analogWriteRes(bits);
 }
 
-bool gPinStates[256];
+extern bool gPinStates[256];
 
-void digitalWrite(uint8_t pin, uint8_t val)
+inline void digitalWrite(uint8_t pin, uint8_t val)
 {
-    gPinStates[pin] = val;
+  gPinStates[pin] = val;
 }
 
-bool digitalReadFast(uint8_t pin)
+inline bool digitalReadFast(uint8_t pin)
 {
-    return gPinStates[pin];
+  return gPinStates[pin];
 }
-
-#define DMAMEM
-#define F
 
 struct Encoder
 {
-    void write(int)
-    {
-    }
-    int read()
-    {
-        return 0;
-    }
+  void write(int) {}
+  int read()
+  {
+    return 0;
+  }
 };
-
-#define AUDIO_BLOCK_SAMPLES 128
 
 struct audio_block_t
 {
-    int16_t data[AUDIO_BLOCK_SAMPLES];
-    int transmittedAsIndex = 0;
+  int16_t data[AUDIO_BLOCK_SAMPLES];
+  int transmittedAsIndex = 0;
 };
+//
+//static audio_block_t gTestSrcBuffers[100];
+//static audio_block_t gTestDestBuffers[100];
+//static audio_block_t gTestTransmittedBuffers[100];
+//static size_t gAllocatedDestBuffers = 0;
 
-static audio_block_t gTestSrcBuffers[100];
-static audio_block_t gTestDestBuffers[100];
-static audio_block_t gTestTransmittedBuffers[100];
-static size_t gAllocatedDestBuffers = 0;
-
-void FillAudioBuffer(audio_block_t &b, int16_t val)
+inline void FillAudioBuffer(audio_block_t& b, int16_t val)
 {
-    for (int16_t &s : b.data)
-    {
-        s = val;
-    }
+  for (int16_t& s : b.data)
+  {
+    s = val;
+  }
 }
-
-void TestResetAudioStreams()
-{
-    gAllocatedDestBuffers = 0;
-    for (auto &b : gTestSrcBuffers)
-    {
-        FillAudioBuffer(b, 0);
-    }
-    for (auto &b : gTestDestBuffers)
-    {
-        FillAudioBuffer(b, 0);
-    }
-    for (auto &b : gTestTransmittedBuffers)
-    {
-        FillAudioBuffer(b, 0);
-    }
-}
+//
+//void TestResetAudioStreams()
+//{
+//    gAllocatedDestBuffers = 0;
+//    for (auto &b : gTestSrcBuffers)
+//    {
+//        FillAudioBuffer(b, 0);
+//    }
+//    for (auto &b : gTestDestBuffers)
+//    {
+//        FillAudioBuffer(b, 0);
+//    }
+//    for (auto &b : gTestTransmittedBuffers)
+//    {
+//        FillAudioBuffer(b, 0);
+//    }
+//}
 
 struct AudioStream
 {
-    AudioStream(unsigned char ninput, audio_block_t **iqueue)
-    {
-    }
-    static audio_block_t *allocate(void)
-    {
-        auto *ret = &gTestDestBuffers[gAllocatedDestBuffers];
-        gAllocatedDestBuffers++;
-        return ret;
-    }
-    static void release(audio_block_t *block)
-    {
-    }
-    void transmit(audio_block_t *block, unsigned char index)
-    {
-        block->transmittedAsIndex = index;
-        gTestTransmittedBuffers[index] = *block;
-    }
-    audio_block_t *receiveReadOnly(unsigned int index)
-    {
-        return &gTestSrcBuffers[index];
-    }
-    audio_block_t *receiveWritable(unsigned int index)
-    {
-        return &gTestSrcBuffers[index];
-    }
+  AudioStream(unsigned char ninput, audio_block_t** iqueue) {}
+  static audio_block_t* allocate(void)
+  {
+    return nullptr;
+    //auto *ret = &gTestDestBuffers[gAllocatedDestBuffers];
+    //gAllocatedDestBuffers++;
+    //return ret;
+  }
+  static void release(audio_block_t* block) {}
+  void transmit(audio_block_t* block, unsigned char index)
+  {
+    //block->transmittedAsIndex = index;
+    //gTestTransmittedBuffers[index] = *block;
+  }
+  audio_block_t* receiveReadOnly(unsigned int index)
+  {
+    return nullptr;
+    //return &gTestSrcBuffers[index];
+  }
+  audio_block_t* receiveWritable(unsigned int index)
+  {
+    return nullptr;
+    //return &gTestSrcBuffers[index];
+  }
 
-    virtual void update() = 0;
+  virtual void update() = 0;
 };
 
 class Printable
@@ -867,16 +842,19 @@ public:
 };
 
 
-
 class CrashReportClass : public Printable
 {
 public:
-  virtual size_t printTo(Print& p) const;
-  static void clear();
-  operator bool();
-  static void breadcrumb(unsigned int num, unsigned int value)
+  virtual size_t printTo(Print& p) const
   {
+    return p.print("CrashReport");
   }
+  static void clear();
+  operator bool()
+  {
+    return true;
+  }
+  static void breadcrumb(unsigned int num, unsigned int value) {}
   static uint32_t checksum(volatile const void* data, int len)
   {
     volatile const uint16_t* p = (volatile const uint16_t*)data;

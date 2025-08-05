@@ -2,10 +2,10 @@
 #pragma once
 
 #if __cplusplus >= 201703L
-  #define CLN_NODISCARD [[nodiscard]]
+  #define CL_NODISCARD [[nodiscard]]
 #else
   #error C++17 or later is required for this project.
-  #define CLN_NODISCARD /*nothing*/
+  #define CL_NODISCARD /*nothing*/
 #endif
 
 #ifdef CLARINOID_PLATFORM_X86
