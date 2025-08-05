@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include <clarinoid/harmonizer/harmonizer.hpp>
-#include <clarinoid/loopstation/LooperHarmonizer.hpp>
-#include <clarinoid/application/ControlMapper.hpp>
+#include <clarinoid/core/harmonizer/harmonizer.hpp>
+#include <clarinoid/core/loopstation/LooperHarmonizer.hpp>
+#include <clarinoid/core/application/ControlMapper.hpp>
 
 namespace clarinoid {
 

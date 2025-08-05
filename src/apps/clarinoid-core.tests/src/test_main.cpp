@@ -33,18 +33,6 @@ TEST(PointTest, StaticConstruct)
   EXPECT_EQ(7, p.y);
 }
 
-TEST(PointTest, LengthSquared)
-{
-  clarinoid::Point<int> p(3, 4);
-  EXPECT_EQ(25, p.LengthSquared()); // 3^2 + 4^2 = 9 + 16 = 25
-  
-  clarinoid::Point<int> origin(0, 0);
-  EXPECT_EQ(0, origin.LengthSquared());
-  
-  clarinoid::Point<int> p2(1, 1);
-  EXPECT_EQ(2, p2.LengthSquared());
-}
-
 TEST(PointTest, WithX)
 {
   clarinoid::Point<int> p(3, 4);
@@ -147,15 +135,6 @@ TEST(PointFloatTest, ParameterizedConstructor)
   EXPECT_FLOAT_EQ(4.2f, p.y);
 }
 
-TEST(PointFloatTest, LengthSquared)
-{
-  clarinoid::Point<float> p(3.0f, 4.0f);
-  EXPECT_FLOAT_EQ(25.0f, p.LengthSquared());
-  
-  clarinoid::Point<float> p2(1.5f, 2.0f);
-  EXPECT_FLOAT_EQ(6.25f, p2.LengthSquared()); // 1.5^2 + 2^2 = 2.25 + 4 = 6.25
-}
-
 TEST(PointFloatTest, WithOffsetPrecision)
 {
   clarinoid::Point<float> p(1.1f, 2.2f);
@@ -180,7 +159,6 @@ TEST(PointDoubleTest, HighPrecision)
 TEST(PointEdgeCasesTest, ZeroValues)
 {
   clarinoid::Point<int> p(0, 0);
-  EXPECT_EQ(0, p.LengthSquared());
   
   auto p2 = p.WithOffset(0, 0);
   EXPECT_EQ(0, p2.x);
@@ -192,7 +170,6 @@ TEST(PointEdgeCasesTest, NegativeValues)
   clarinoid::Point<int> p(-3, -4);
   EXPECT_EQ(-3, p.x);
   EXPECT_EQ(-4, p.y);
-  EXPECT_EQ(25, p.LengthSquared()); // (-3)^2 + (-4)^2 = 9 + 16 = 25
   
   auto p2 = p.WithX(5);
   EXPECT_EQ(5, p2.x);

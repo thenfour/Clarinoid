@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <clarinoid/Gui/Bitmaps.hpp>
+#include <clarinoid/core/Gui/Bitmaps.hpp>
 #include "Display.hpp"
 #include "Metronome.hpp"
 

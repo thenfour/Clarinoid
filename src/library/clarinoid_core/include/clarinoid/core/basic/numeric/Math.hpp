@@ -23,7 +23,7 @@ inline int16_t saturate16(int32_t n)
   return (int16_t)n;
 }
 
-void arm_q15_to_float(const int16_t* in, float* out, size_t n)
+inline void arm_q15_to_float(const int16_t* in, float* out, size_t n)
 {
   for (size_t i = 0; i < n; ++i)
   {
@@ -31,7 +31,7 @@ void arm_q15_to_float(const int16_t* in, float* out, size_t n)
   }
 }
 
-void arm_fill_f32(float val, float* out, size_t n)
+inline void arm_fill_f32(float val, float* out, size_t n)
 {
   for (size_t i = 0; i < n; ++i)
   {
@@ -39,7 +39,7 @@ void arm_fill_f32(float val, float* out, size_t n)
   }
 }
 
-void arm_fill_q15(int16_t val, int16_t* out, size_t n)
+inline void arm_fill_q15(int16_t val, int16_t* out, size_t n)
 {
   for (size_t i = 0; i < n; ++i)
   {
@@ -47,7 +47,7 @@ void arm_fill_q15(int16_t val, int16_t* out, size_t n)
   }
 }
 
-void arm_add_q15(int16_t* pSrcA, int16_t* pSrcB, int16_t* pDst, uint32_t blockSize)
+inline void arm_add_q15(int16_t* pSrcA, int16_t* pSrcB, int16_t* pDst, uint32_t blockSize)
 {
   for (uint32_t i = 0; i < blockSize; ++i)
   {
@@ -55,7 +55,7 @@ void arm_add_q15(int16_t* pSrcA, int16_t* pSrcB, int16_t* pDst, uint32_t blockSi
   }
 }
 
-void arm_offset_q15(int16_t* pSrc, int16_t offset, int16_t* pDst, uint32_t blockSize)
+inline void arm_offset_q15(int16_t* pSrc, int16_t offset, int16_t* pDst, uint32_t blockSize)
 {
   for (uint32_t i = 0; i < blockSize; ++i)
   {
@@ -63,7 +63,7 @@ void arm_offset_q15(int16_t* pSrc, int16_t offset, int16_t* pDst, uint32_t block
   }
 }
 
-void arm_scale_q15(int16_t* pSrc, int16_t scaleFract, int8_t shift, int16_t* pDst, uint32_t blockSize)
+inline void arm_scale_q15(int16_t* pSrc, int16_t scaleFract, int8_t shift, int16_t* pDst, uint32_t blockSize)
 {
   for (uint32_t i = 0; i < blockSize; ++i)
   {
@@ -72,13 +72,13 @@ void arm_scale_q15(int16_t* pSrc, int16_t scaleFract, int8_t shift, int16_t* pDs
 }
 
 // computes ((a[15:0] << 16) | b[15:0])
-static inline uint32_t pack_16b_16b(int32_t a, int32_t b)
+inline uint32_t pack_16b_16b(int32_t a, int32_t b)
 {
   return (a << 16) | (b & 0xffff);
 }
 
 // computes (((a[31:16] + b[31:16]) << 16) | (a[15:0 + b[15:0]))  (saturates)
-static inline uint32_t signed_add_16_and_16(uint32_t a, uint32_t b)
+inline uint32_t signed_add_16_and_16(uint32_t a, uint32_t b)
 {
   union packed
   {
@@ -98,19 +98,19 @@ static inline uint32_t signed_add_16_and_16(uint32_t a, uint32_t b)
 }
 
 // computes ((a[31:0] * b[15:0]) >> 16)
-static inline int32_t signed_multiply_32x16b(int32_t a, uint32_t b)
+inline int32_t signed_multiply_32x16b(int32_t a, uint32_t b)
 {
   return ((int64_t)a * (int16_t)(b & 0xFFFF)) >> 16;
 }
 
 // computes ((a[31:0] * b[31:16]) >> 16)
-static inline int32_t signed_multiply_32x16t(int32_t a, uint32_t b)
+inline int32_t signed_multiply_32x16t(int32_t a, uint32_t b)
 {
   return ((int64_t)a * (int16_t)(b >> 16)) >> 16;
 }
 
 // computes limit((val >> rshift), 2**bits)
-static inline int32_t signed_saturate_rshift(int32_t val, int bits, int rshift)
+inline int32_t signed_saturate_rshift(int32_t val, int bits, int rshift)
 {
   int32_t out, max;
   out = val >> rshift;
@@ -128,7 +128,7 @@ static inline int32_t signed_saturate_rshift(int32_t val, int bits, int rshift)
   return out;
 }
 
-void arm_scale_f32(const float* pSrc, float scale, float* pDst, uint32_t blockSize)
+inline void arm_scale_f32(const float* pSrc, float scale, float* pDst, uint32_t blockSize)
 {
   for (uint32_t i = 0; i < blockSize; ++i)
   {
@@ -137,7 +137,7 @@ void arm_scale_f32(const float* pSrc, float scale, float* pDst, uint32_t blockSi
 }
 
 // Portable fallback for arm_offset_f32 (add scalar to buffer)
-void arm_offset_f32(const float* pSrc, float offset, float* pDst, uint32_t blockSize)
+inline void arm_offset_f32(const float* pSrc, float offset, float* pDst, uint32_t blockSize)
 {
   for (uint32_t i = 0; i < blockSize; ++i)
   {
@@ -224,7 +224,7 @@ inline float tanh(float var)
 // NOTE : try not to process things sample-by-sample though.
 // there are block operations for this kind of thing:
 // https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicAdd.html et al.
-static inline float Sample16To32(int16_t s)
+inline float Sample16To32(int16_t s)
 {
   if (s == -32768)
     return -1.0f;
@@ -235,7 +235,7 @@ static inline float Sample16To32(int16_t s)
 // NOTE : try not to process things sample-by-sample though.
 // there are block operations for this kind of thing:
 // https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicAdd.html et al.
-static inline int16_t Sample32To16(float s)
+inline int16_t Sample32To16(float s)
 {
   // saturate16(int32_t(pf[i] * 32768.0f));
   return saturate16(int32_t(s * 32767.0f));
@@ -296,7 +296,7 @@ inline void BufferOffsetInPlace(float* buf, float offset)
 
 }  // namespace fast
 
-uint16_t ClampUint32ToUint16(uint32_t a)
+inline uint16_t ClampUint32ToUint16(uint32_t a)
 {
   if (a > std::numeric_limits<uint16_t>::max())
     return std::numeric_limits<uint16_t>::max();
@@ -341,7 +341,7 @@ inline bool FloatRoundedEqualsInt(float f, int n)
   return (int)FloatRoundToInt(f) == n;
 }
 
-static float Clamp(float x, float low, float hi)
+inline float Clamp(float x, float low, float hi)
 {
   if (x <= low)
     return low;
@@ -349,17 +349,17 @@ static float Clamp(float x, float low, float hi)
     return hi;
   return x;
 }
-static float Clamp01(float x)
+inline float Clamp01(float x)
 {
   return Clamp(x, 0.0f, 1.0f);
 }
-static float ClampN11(float x)
+inline float ClampN11(float x)
 {
   return Clamp(x, -1.0f, 1.0f);
 }
 
 template <typename T>
-static T ClampInclusive(T x, T minInclusive, T maxInclusive)
+inline T ClampInclusive(T x, T minInclusive, T maxInclusive)
 {
   if (x <= minInclusive)
     return minInclusive;
@@ -375,7 +375,7 @@ static T ClampInclusive(T x, T minInclusive, T maxInclusive)
 
 // remap so src min to max become [0-1]. results are NOT clamped.
 // if min-max == 0, just return x to avoid bad behaviors
-static float RemapTo01(float x, float xmin, float xmax)
+inline float RemapTo01(float x, float xmin, float xmax)
 {
   if (FloatEquals(xmax - xmin, 0.0f))
     return x;
@@ -385,7 +385,7 @@ static float RemapTo01(float x, float xmin, float xmax)
 }
 
 // remap so src min to max become [0-1]. results are NOT clamped.
-static float RemapTo01Clamped(float x, float xmin, float xmax)
+inline float RemapTo01Clamped(float x, float xmin, float xmax)
 {
   if (FloatEquals(xmax - xmin, 0.0f))
     return xmin;
@@ -395,7 +395,7 @@ static float RemapTo01Clamped(float x, float xmin, float xmax)
 }
 // remap a 0-1 float val to a new min/max. no clamping performed anywhere so if the src is out of 0-1 range, the dest
 // will be out of destMin-destMax range.
-static float Remap01ToRange(float x01, float destMin, float destMax)
+inline float Remap01ToRange(float x01, float destMin, float destMax)
 {
   if (FloatEquals(destMax - destMin, 0.0f))
     return destMin;
@@ -405,7 +405,7 @@ static float Remap01ToRange(float x01, float destMin, float destMax)
 }
 
 // same as arduino's map() fn.
-static float RemapToRange(float x, float amin, float amax, float bmin, float bmax)
+inline float RemapToRange(float x, float amin, float amax, float bmin, float bmax)
 {
   if (FloatEquals(amin - amax, 0.0f))
     return bmin;
@@ -451,18 +451,18 @@ inline float blep1(float x)
 
 // 1 hz = 1000 ms
 // 2 hz = 500 ms
-float HertzToCycleMS(float hz)
+inline float HertzToCycleMS(float hz)
 {
   return 1000.0f / hz;
 }
 
-float CycleMSToHertz(float ms)
+inline float CycleMSToHertz(float ms)
 {
   return 1000.0f / ms;
 }
 
 // 1/1 @ 60bpm = 1000 ms.
-float NoteLengthToMS(float bpmIfNeeded, float numerator, float denom)
+inline float NoteLengthToMS(float bpmIfNeeded, float numerator, float denom)
 {
   return 60000.0f * numerator / denom;
 }
@@ -644,7 +644,7 @@ void DivRem(T val, T& wholeParts, T& remainder)
 }
 
 template <size_t divBits, typename Tval, typename Tremainder>
-void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)
+inline void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)
 {
   static_assert(std::is_integral<Tval>::value, "must be integral");
   static_assert(std::is_integral<Tremainder>::value, "must be integral");
@@ -656,7 +656,7 @@ void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)
   remainder = (Tremainder)rem;
 }
 
-static int RotateIntoRange(const int& val, const int& itemCount)
+inline int RotateIntoRange(const int& val, const int& itemCount)
 {
   CCASSERT(itemCount > 0);
   int ret = val;
@@ -667,7 +667,7 @@ static int RotateIntoRange(const int& val, const int& itemCount)
   return ret % itemCount;
 }
 
-static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount)
+inline uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount)
 {
   CCASSERT(itemCount > 0);
   while (val < 0)
@@ -678,7 +678,7 @@ static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount)
 }
 
 // correction gets set to the # of rotations, neg, signed. basically an "adjustment".
-static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount, int8_t& correction)
+inline uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount, int8_t& correction)
 {
   CCASSERT(itemCount > 0);
   correction = 0;
@@ -695,7 +695,7 @@ static uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount, int8_t& correc
   return val;
 }
 
-static inline int AddConstrained(int orig, int delta, int min_, int max_)
+inline int AddConstrained(int orig, int delta, int min_, int max_)
 {
   CCASSERT(max_ >= min_);
   if (max_ <= min_)
@@ -712,13 +712,13 @@ static inline int AddConstrained(int orig, int delta, int min_, int max_)
 // assumes T is integral
 // performs integral division but with common 0.5 rounding
 template <typename T>
-T idiv_round(T dividend, T divisor)
+inline T idiv_round(T dividend, T divisor)
 {
   return (dividend + (divisor / 2)) / divisor;
 }
 
 template <int period>
-int ModularDistance(int a, int b)
+inline int ModularDistance(int a, int b)
 {
   a = RotateIntoRange(a, period);
   b = RotateIntoRange(b, period);
@@ -729,7 +729,7 @@ int ModularDistance(int a, int b)
   return std::min(b - a, a + period - b);
 }
 
-int ModularDistance(int period, int a, int b)
+inline int ModularDistance(int period, int a, int b)
 {
   a = RotateIntoRange(a, period);
   b = RotateIntoRange(b, period);
@@ -812,33 +812,5 @@ struct TriangleWave
     return r * 2;
   }
 };
-
-// wikipedia https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-template <typename T>
-void drawLine(int x0, int y0, int x1, int y1, T&& drawPixel)
-{
-  int dx = abs(x1 - x0);
-  int sx = x0 < x1 ? 1 : -1;
-  int dy = -abs(y1 - y0);
-  int sy = y0 < y1 ? 1 : -1;
-  int err = dx + dy; /* error value e_xy */
-  while (true)
-  { /* loop */
-    drawPixel(x0, y0, true);
-    if (x0 == x1 && y0 == y1)
-      break;
-    int e2 = 2 * err;
-    if (e2 >= dy)
-    { /* e_xy+e_x > 0 */
-      err += dy;
-      x0 += sx;
-    }
-    if (e2 <= dx)
-    { /* e_xy+e_y < 0 */
-      err += dx;
-      y0 += sy;
-    }
-  }
-}
 
 }  // namespace clarinoid

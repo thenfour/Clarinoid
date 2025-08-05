@@ -41,12 +41,6 @@ struct Point
     return {x_, y_};
   }
 
-  T LengthSquared() const
-  {
-    return x * x + y * y;
-  }
-  // float Length() const { return sqrt(LengthSquared()); }
-
   // vector ops...? vector3?
 
   Point WithX(T x_) const

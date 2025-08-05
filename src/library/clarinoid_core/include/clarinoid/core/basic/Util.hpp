@@ -46,6 +46,5 @@ struct NoInterrupts
     }
 };
 
-int NoInterrupts::gNoInterruptRefs = 0;
 
 } // namespace clarinoid

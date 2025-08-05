@@ -5,6 +5,9 @@
 // // FP_CACHE_DOUBLE
 // // FP_RUNTIME_CHECKS
 
+#include <cstdint>
+#include <type_traits>
+
 namespace clarinoid {
 
 //inline uint32_t
@@ -46,7 +49,7 @@ static constexpr uint16_t sqrt_integer_guess_table[31] = { 55109, 38968, 27555, 
                                                            216,   153,   108,   77,    54,    39,   27,   20,
                                                            14,    10,    7,     5,     4,     3,    2 };
 // returns Q(n+1/2) for Q(n) input.
-static inline uint32_t
+inline uint32_t
 sqrt_Q32_to_Q16_NR(uint32_t in)
 {
   if (in <= 1u)
@@ -226,7 +229,7 @@ struct StaticValueBitsNeeded<0>
  // does a compile-time shift of T left by B bits.
  // B can be negative, in which case it shifts right.
  template<int B, class T>
- static constexpr auto
+ inline constexpr auto
  const_shift(const T& a, ::std::enable_if_t<(B > 0)>* = 0)
  {
    return a << ::std::integral_constant<decltype(B), B>{};
@@ -234,7 +237,7 @@ struct StaticValueBitsNeeded<0>
 
  // right-shift variant when B is negative.
  template<int B, class T>
- static constexpr auto
+ inline constexpr auto
  const_shift(const T& a, ::std::enable_if_t<(B < 0)>* = 0)
  {
    return a >> ::std::integral_constant<decltype(B), -B>{};
@@ -242,7 +245,7 @@ struct StaticValueBitsNeeded<0>
 
  // noop when B is 0.
  template<int B, class T>
- static constexpr auto
+ inline constexpr auto
  const_shift(const T& a, ::std::enable_if_t<(B == 0)>* = 0)
  {
    return a;
@@ -253,7 +256,7 @@ struct StaticValueBitsNeeded<0>
  // TODO: check that intbits <= 31
  template<uint8_t intbits, typename Tinput> // template Tinput because it may be signed or unsigned and we want
                                             // conversions & full range to work seamlessly.
- static CL_NODISCARD int32_t
+ inline [[nodiscard]] int32_t
  SignedSaturate(Tinput val)
  {
    static_assert(intbits <= 31, "ssat does not support 32+ bits");

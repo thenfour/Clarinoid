@@ -2,11 +2,11 @@
 
 // #include <algorithm>
 // #include <cmath>
-#include "../Numeric.hpp"
+#include "../Numeric.hpp"  // for is_scalar_like
 //#include <experimental/optional>
-#include <limits>
-#include <type_traits>
-#include <utility>
+//#include <limits>
+//#include <type_traits>
+//#include <utility>
 
 
 namespace clarinoid
@@ -47,7 +47,7 @@ struct Size
   }
   float AspectRatio() const
   {
-    return (height == 0) ? 0.f : float(width) / float(height);
+    return (height == 0) ? 0.f : (width / height);
   }
   Size<T> Scale(T factor) const
   {

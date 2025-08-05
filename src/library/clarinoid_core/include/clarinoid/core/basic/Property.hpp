@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "function.hpp"
+
 namespace clarinoid
 {
 
@@ -86,7 +88,7 @@ struct Property
 };
 
 template <typename Tprop, typename Tval>
-Property<Tprop> MakePropertyByCasting(Tval *x)
+inline Property<Tprop> MakePropertyByCasting(Tval *x)
 {
     static auto getter = [](void *capture) {
         Tval *px = (Tval *)capture;

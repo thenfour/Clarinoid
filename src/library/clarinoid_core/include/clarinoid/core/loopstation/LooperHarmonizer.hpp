@@ -1,7 +1,10 @@
 
 #pragma once
 
-#include <clarinoid/application/Metronome.hpp>
+#include <clarinoid/core/application/Metronome.hpp>
+#include <clarinoid/core/basic/Music.hpp>
+#include <clarinoid/core/basic/Memory.hpp>
+#include <clarinoid/core/basic/Array.hpp>
 
 #include "LoopstationMemory.hpp"
 #include "Loopstation.hpp"

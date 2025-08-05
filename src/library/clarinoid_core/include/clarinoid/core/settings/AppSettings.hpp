@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/core/basic/Basic.hpp>
 
 #include "HarmonizerSettings.hpp"
 #include "SynthSettings.hpp"

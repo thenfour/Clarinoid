@@ -11,7 +11,7 @@ enum class Tristate
     Position3
 };
 
-const char *ToString(Tristate t)
+inline const char *ToString(Tristate t)
 {
     switch (t)
     {

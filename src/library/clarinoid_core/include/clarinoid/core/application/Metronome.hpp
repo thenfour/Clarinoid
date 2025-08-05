@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <clarinoid/basic/Basic.hpp>
-#include <clarinoid/settings/AppSettings.hpp>
+#include <clarinoid/core/basic/Basic.hpp>
+#include <clarinoid/core/settings/AppSettings.hpp>
 
 namespace clarinoid
 {

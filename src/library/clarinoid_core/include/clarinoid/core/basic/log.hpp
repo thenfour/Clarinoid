@@ -8,7 +8,7 @@
 namespace clarinoid
 {
 
-String ToString(void *p)
+inline String ToString(void *p)
 {
     static char x[20];
 #ifdef CLARINOID_PLATFORM_X86 // for some reason snprintf() is not available in teensyduino
@@ -19,7 +19,7 @@ String ToString(void *p)
     return String(x);
 }
 
-const char *ToString(bool p)
+inline const char* ToString(bool p)
 {
     if (p)
         return "true";
@@ -27,9 +27,10 @@ const char *ToString(bool p)
 }
 
 #ifdef CLARINOID_PLATFORM_X86 // for some reason snprintf() is not available in teensyduino
-static int gLogIndent = 0;
+extern int gLogIndent;
+
 template <typename... Args>
-static void log(const std::string &format, Args &&... args)
+inline void log(const std::string& format, Args&&... args)
 {
     std::string fmt = std::string("[%x:%x] %s") + format + "\r\n";
     auto size = std::snprintf(nullptr,

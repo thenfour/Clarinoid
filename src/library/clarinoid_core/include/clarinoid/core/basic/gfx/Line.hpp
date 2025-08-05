@@ -11,7 +11,7 @@ namespace clarinoid
 
 // wikipedia https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 template <typename T>
-void drawLine(int x0, int y0, int x1, int y1, T&& drawPixel)
+inline void drawLine(int x0, int y0, int x1, int y1, T&& drawPixel)
 {
   int dx = abs(x1 - x0);
   int sx = x0 < x1 ? 1 : -1;
@@ -36,5 +36,7 @@ void drawLine(int x0, int y0, int x1, int y1, T&& drawPixel)
     }
   }
 }
+
+
 
 }  // namespace clarinoid

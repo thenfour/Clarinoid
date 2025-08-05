@@ -1,10 +1,10 @@
+// todo: float-int-Fixed<> support including math fns like sqrt() etc.
+// avoid all conversions to explicit float types
+
 #pragma once
 
 #include "../Numeric.hpp"
-//#include <experimental/optional>
-#include <limits>
-#include <type_traits>
-#include <utility>
+#include "./vec2.hpp"
 
 
 namespace clarinoid
@@ -176,17 +176,17 @@ struct Vec3
   {
     return x * x + y * y + z * z;
   }
-  [[nodiscard]] T length() const noexcept
-  {
-    using std::sqrt;
-    return static_cast<T>(sqrt(static_cast<long double>(length2())));
-  }
+  //[[nodiscard]] T length() const noexcept
+  //{
+  //  using std::sqrt;
+  //  return static_cast<T>(sqrt(static_cast<long double>(length2())));
+  //}
 
-  [[nodiscard]] Vec3 normalized() const noexcept
-  {
-    const T len = length();
-    return (len > T{0}) ? (*this / len) : *this;
-  }
+  //[[nodiscard]] Vec3 normalized() const noexcept
+  //{
+  //  const T len = length();
+  //  return (len > T{0}) ? (*this / len) : *this;
+  //}
 
   [[nodiscard]] constexpr bool is_zero(T eps = T{0}) const noexcept
   {
@@ -194,12 +194,12 @@ struct Vec3
                          : (x >= -eps && x <= eps && y >= -eps && y <= eps && z >= -eps && z <= eps);
   }
 
-  [[nodiscard]] T distance(const Vec3& v) const noexcept
-  {
-    using std::sqrt;
-    const T dx = x - v.x, dy = y - v.y, dz = z - v.z;
-    return static_cast<T>(sqrt(static_cast<long double>(dx * dx + dy * dy + dz * dz)));
-  }
+  //[[nodiscard]] T distance(const Vec3& v) const noexcept
+  //{
+  //  using std::sqrt;
+  //  const T dx = x - v.x, dy = y - v.y, dz = z - v.z;
+  //  return static_cast<T>(sqrt(static_cast<long double>(dx * dx + dy * dy + dz * dz)));
+  //}
   [[nodiscard]] constexpr T distance2(const Vec3& v) const noexcept
   {
     const T dx = x - v.x, dy = y - v.y, dz = z - v.z;
@@ -207,31 +207,31 @@ struct Vec3
   }
 
   // Angle between vectors (radians) in [0, pi]
-  [[nodiscard]] T angle_between(const Vec3& v) const noexcept
-  {
-    using std::acos;
-    using F = long double;
-    const F la = static_cast<F>(length());
-    const F lb = static_cast<F>(v.length());
-    if (la == F{0} || lb == F{0})
-      return T{0};
-    F c = static_cast<F>(dot(v)) / (la * lb);
-    if (c > F{1})
-      c = F{1};
-    else if (c < F{-1})
-      c = F{-1};
-    return static_cast<T>(acos(c));
-  }
+  //[[nodiscard]] T angle_between(const Vec3& v) const noexcept
+  //{
+  //  using std::acos;
+  //  using F = long double;
+  //  const F la = static_cast<F>(length());
+  //  const F lb = static_cast<F>(v.length());
+  //  if (la == F{0} || lb == F{0})
+  //    return T{0};
+  //  F c = static_cast<F>(dot(v)) / (la * lb);
+  //  if (c > F{1})
+  //    c = F{1};
+  //  else if (c < F{-1})
+  //    c = F{-1};
+  //  return static_cast<T>(acos(c));
+  //}
 
   // Oriented smallest angle this->v around given axis (assumes axis != 0)
-  [[nodiscard]] T signed_angle_to(const Vec3& v, const Vec3& axis) const noexcept
-  {
-    using std::atan2;
-    const Vec3 a = this->cross(v);
-    const T s = axis.dot(a);
-    const T c = this->dot(v);
-    return static_cast<T>(atan2(static_cast<long double>(s), static_cast<long double>(c)));
-  }
+  //[[nodiscard]] T signed_angle_to(const Vec3& v, const Vec3& axis) const noexcept
+  //{
+  //  using std::atan2;
+  //  const Vec3 a = this->cross(v);
+  //  const T s = axis.dot(a);
+  //  const T c = this->dot(v);
+  //  return static_cast<T>(atan2(static_cast<long double>(s), static_cast<long double>(c)));
+  //}
 
   // Projection/rejection relative to v (v may be non-unit)
   [[nodiscard]] Vec3 project_onto(const Vec3& v) const noexcept
@@ -260,49 +260,49 @@ struct Vec3
 
   // Refract through surface with normal n. IOR ratio eta = eta_i / eta_t.
   // Assumes *this is the incident direction and n points "out" of the surface.
-  [[nodiscard]] Vec3 refract(const Vec3& n, T eta) const noexcept
-  {
-    // Based on GLSL refract
-    const Vec3 I = this->normalized();
-    const Vec3 N = n.normalized();
-    const T cosi = -(I.dot(N));
-    const T k = T{1} - eta * eta * (T{1} - cosi * cosi);
-    if (k < T{0})
-      return Vec3{};  // total internal reflection -> zero vector
-    return eta * I + (eta * cosi - static_cast<T>(std::sqrt(static_cast<long double>(k)))) * N;
-  }
+  //[[nodiscard]] Vec3 refract(const Vec3& n, T eta) const noexcept
+  //{
+  //  // Based on GLSL refract
+  //  const Vec3 I = this->normalized();
+  //  const Vec3 N = n.normalized();
+  //  const T cosi = -(I.dot(N));
+  //  const T k = T{1} - eta * eta * (T{1} - cosi * cosi);
+  //  if (k < T{0})
+  //    return Vec3{};  // total internal reflection -> zero vector
+  //  return eta * I + (eta * cosi - static_cast<T>(std::sqrt(static_cast<long double>(k)))) * N;
+  //}
 
   // Clamp length
-  [[nodiscard]] Vec3 clamped_length(T max_len) const noexcept
-  {
-    const T len = length();
-    return (len > max_len && len > T{0}) ? (*this * (max_len / len)) : *this;
-  }
-  [[nodiscard]] Vec3 clamped_length(T min_len, T max_len) const noexcept
-  {
-    const T len = length();
-    if (len == T{0})
-      return *this;
-    if (len < min_len)
-      return *this * (min_len / len);
-    if (len > max_len)
-      return *this * (max_len / len);
-    return *this;
-  }
-  [[nodiscard]] Vec3 with_length(T new_len) const noexcept
-  {
-    const T len = length();
-    return (len > T{0}) ? (*this * (new_len / len)) : *this;
-  }
+  //[[nodiscard]] Vec3 clamped_length(T max_len) const noexcept
+  //{
+  //  const T len = length();
+  //  return (len > max_len && len > T{0}) ? (*this * (max_len / len)) : *this;
+  //}
+  //[[nodiscard]] Vec3 clamped_length(T min_len, T max_len) const noexcept
+  //{
+  //  const T len = length();
+  //  if (len == T{0})
+  //    return *this;
+  //  if (len < min_len)
+  //    return *this * (min_len / len);
+  //  if (len > max_len)
+  //    return *this * (max_len / len);
+  //  return *this;
+  //}
+  //[[nodiscard]] Vec3 with_length(T new_len) const noexcept
+  //{
+  //  const T len = length();
+  //  return (len > T{0}) ? (*this * (new_len / len)) : *this;
+  //}
 
   // Move towards target by at most max_delta
-  [[nodiscard]] Vec3 move_towards(const Vec3& target, T max_delta) const noexcept
-  {
-    const T d = distance(target);
-    if (d <= max_delta || d == T{0})
-      return target;
-    return *this + (target - *this) * (max_delta / d);
-  }
+  //[[nodiscard]] Vec3 move_towards(const Vec3& target, T max_delta) const noexcept
+  //{
+  //  const T d = distance(target);
+  //  if (d <= max_delta || d == T{0})
+  //    return target;
+  //  return *this + (target - *this) * (max_delta / d);
+  //}
 
   // ----------------- rotations -----------------
   // Axis-angle rotation using Rodrigues' formula (axis can be non-unit)
@@ -321,18 +321,18 @@ struct Vec3
   }
 
   // Rotate "this" toward "to" by at most max_radians
-  [[nodiscard]] Vec3 rotate_towards(const Vec3& to, T max_radians) const noexcept
-  {
-    const Vec3 a = this->normalized();
-    const Vec3 b = to.normalized();
-    const T ang = a.angle_between(b);
-    if (ang <= max_radians)
-      return with_length(length()).normalized() * to.length();  // basically "to" with this magnitude
-    const Vec3 ax = a.cross(b);
-    if (ax.is_zero())
-      return *this;  // same or opposite; nothing better to do
-    return with_length(length()).rotated_about_axis(ax, max_radians);
-  }
+  //[[nodiscard]] Vec3 rotate_towards(const Vec3& to, T max_radians) const noexcept
+  //{
+  //  const Vec3 a = this->normalized();
+  //  const Vec3 b = to.normalized();
+  //  const T ang = a.angle_between(b);
+  //  if (ang <= max_radians)
+  //    return with_length(length()).normalized() * to.length();  // basically "to" with this magnitude
+  //  const Vec3 ax = a.cross(b);
+  //  if (ax.is_zero())
+  //    return *this;  // same or opposite; nothing better to do
+  //  return with_length(length()).rotated_about_axis(ax, max_radians);
+  //}
 
   // ----------------- component-wise helpers -----------------
   [[nodiscard]] constexpr Vec3 abs() const noexcept
@@ -442,6 +442,167 @@ struct Vec3
   [[nodiscard]] static constexpr Vec3 unit_z() noexcept
   {
     return {T{0}, T{0}, T{1}};
+  }
+
+
+  // ----------------- swizzle : 2-component -----------------
+  [[nodiscard]] static constexpr Vec2<T> xy() noexcept
+  {
+    return {x, y};
+  }
+  [[nodiscard]] static constexpr Vec2<T> xz() noexcept
+  {
+    return {x, z};
+  }
+  [[nodiscard]] static constexpr Vec2<T> yz() noexcept
+  {
+    return {y, z};
+  }
+
+  [[nodiscard]] static constexpr Vec2<T> yx() noexcept
+  {
+    return {y, x};
+  }
+  [[nodiscard]] static constexpr Vec2<T> zx() noexcept
+  {
+    return {z, x};
+  }
+  [[nodiscard]] static constexpr Vec2<T> zy() noexcept
+  {
+    return {z, y};
+  }
+
+  [[nodiscard]] static constexpr Vec2<T> xx() noexcept
+  {
+    return {x, x};
+  }
+  [[nodiscard]] static constexpr Vec2<T> yy() noexcept
+  {
+    return {y, y};
+  }
+  [[nodiscard]] static constexpr Vec2<T> zz() noexcept
+  {
+    return {z, z};
+  }
+
+  // ----------------- swizzle : 3-component, all permutations -----------------
+  [[nodiscard]] static constexpr Vec3 xxx() noexcept
+  {
+    return {x, x, x};
+  }
+  [[nodiscard]] static constexpr Vec3 xxy() noexcept
+  {
+    return {x, x, y};
+  }
+  [[nodiscard]] static constexpr Vec3 xxz() noexcept
+  {
+    return {x, x, z};
+  }
+
+  [[nodiscard]] static constexpr Vec3 xyx() noexcept
+  {
+    return {x, y, x};
+  }
+  [[nodiscard]] static constexpr Vec3 xyy() noexcept
+  {
+    return {x, y, y};
+  }
+  [[nodiscard]] static constexpr Vec3 xyz() noexcept
+  {
+    return {x, y, z};
+  }
+
+  [[nodiscard]] static constexpr Vec3 xzx() noexcept
+  {
+    return {x, z, x};
+  }
+  [[nodiscard]] static constexpr Vec3 xzy() noexcept
+  {
+    return {x, z, y};
+  }
+  [[nodiscard]] static constexpr Vec3 xzz() noexcept
+  {
+    return {x, z, z};
+  }
+
+  //
+  [[nodiscard]] static constexpr Vec3 yxx() noexcept
+  {
+    return {y, x, x};
+  }
+  [[nodiscard]] static constexpr Vec3 yxy() noexcept
+  {
+    return {y, x, y};
+  }
+  [[nodiscard]] static constexpr Vec3 yxz() noexcept
+  {
+    return {y, x, z};
+  }
+
+  [[nodiscard]] static constexpr Vec3 yyx() noexcept
+  {
+    return {y, y, x};
+  }
+  [[nodiscard]] static constexpr Vec3 yyy() noexcept
+  {
+    return {y, y, y};
+  }
+  [[nodiscard]] static constexpr Vec3 yyz() noexcept
+  {
+    return {y, y, z};
+  }
+
+  [[nodiscard]] static constexpr Vec3 yzx() noexcept
+  {
+    return {y, z, x};
+  }
+  [[nodiscard]] static constexpr Vec3 yzy() noexcept
+  {
+    return {y, z, y};
+  }
+  [[nodiscard]] static constexpr Vec3 yzz() noexcept
+  {
+    return {y, z, z};
+  }
+
+  //
+  [[nodiscard]] static constexpr Vec3 zxx() noexcept
+  {
+    return {z, x, x};
+  }
+  [[nodiscard]] static constexpr Vec3 zxy() noexcept
+  {
+    return {z, x, y};
+  }
+  [[nodiscard]] static constexpr Vec3 zxz() noexcept
+  {
+    return {z, x, z};
+  }
+
+  [[nodiscard]] static constexpr Vec3 zyx() noexcept
+  {
+    return {z, y, x};
+  }
+  [[nodiscard]] static constexpr Vec3 zyy() noexcept
+  {
+    return {z, y, y};
+  }
+  [[nodiscard]] static constexpr Vec3 zyz() noexcept
+  {
+    return {z, y, z};
+  }
+
+  [[nodiscard]] static constexpr Vec3 zzx() noexcept
+  {
+    return {z, z, x};
+  }
+  [[nodiscard]] static constexpr Vec3 zzy() noexcept
+  {
+    return {z, z, y};
+  }
+  [[nodiscard]] static constexpr Vec3 zzz() noexcept
+  {
+    return {z, z, z};
   }
 };
 

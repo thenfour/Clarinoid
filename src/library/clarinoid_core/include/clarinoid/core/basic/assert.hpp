@@ -13,7 +13,7 @@ struct IClarinoidCrashReportOutput
     virtual void IClarinoidCrashReportOutput_Print(const char *) = 0;
 };
 
-IClarinoidCrashReportOutput *gCrashHandlers[10] = {0};
+extern IClarinoidCrashReportOutput* gCrashHandlers[10];
 
 struct SerialCrashHandler : IClarinoidCrashReportOutput
 {
@@ -30,7 +30,7 @@ struct SerialCrashHandler : IClarinoidCrashReportOutput
     }
 };
 
-SerialCrashHandler gSerialCrashHandler;
+extern SerialCrashHandler gSerialCrashHandler;
 
 struct PrintToString : Print
 {

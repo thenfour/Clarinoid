@@ -2,6 +2,8 @@
 #ifdef CLARINOID_PLATFORM_X86
 
 #include <clarinoid/core/x86/ArduinoEmu.hpp>
+#include <clarinoid/core/basic/assert.hpp>
+#include <clarinoid/core/basic/Util.hpp>
 
 uint64_t gTestClockMicros = 0;
 
@@ -948,12 +950,23 @@ float String::toFloat(void) const
 
 
 
-// Uptime.hpp
 namespace clarinoid
 {
 
+// Uptime.hpp
 uint32_t gUptimeLastMicrosCall = 0;
 int64_t gUptimeCurrentOffset = 0;  // every time the 32-bit micros() call rolls over, this gets += 1<<32;
+
+// assert.hpp
+extern IClarinoidCrashReportOutput* gCrashHandlers[10] = {0};
+SerialCrashHandler gSerialCrashHandler;
+
+// log.hpp
+int gLogIndent = 0;
+
+// util.hpp
+int NoInterrupts::gNoInterruptRefs = 0;
+
 
 }  // namespace clarinoid
 
