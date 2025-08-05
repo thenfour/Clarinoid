@@ -1,19 +1,22 @@
 #pragma once
 #include <algorithm>
 
-#include "./CommandLine.hpp"
-#include "./D3DAppContext.hpp"
-#include "./PolledValue.hpp"
-#include "./SeriesCollection.hpp"
-#include "./TelemetryIngestor.hpp"
-#include "./TimeSeriesStore.hpp"
-#include "./serial.hpp"
-#include "./utils.hpp"
-#include <StringLineDispatcher.hpp>
+#include <clarinoid/sim/PolledValue.hpp>
+#include <clarinoid/sim/utils.hpp>
+#include <clarinoid/sim/StringLineDispatcher.hpp>
+
 #include <widgets/GuiLog.hpp>
 #include <widgets/Plotter.hpp>
 #include <widgets/fps.hpp>
 
+#include "./CommandLine.hpp"
+#include "./D3DAppContext.hpp"
+#include "./SeriesCollection.hpp"
+#include "./TelemetryIngestor.hpp"
+#include "./TimeSeriesStore.hpp"
+#include "./serial.hpp"
+#include "HtmlColorUtils.hpp"
+#include "./SSD1306Simulator.hpp"
 
 struct ClarinoidSimulatorApp
 {

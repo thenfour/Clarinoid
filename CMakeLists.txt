@@ -146,7 +146,7 @@ target_link_libraries(clarinoid_sim PUBLIC
 # Executable: simulator
 #==============================================================================
 
-set(IMGUI_SOURCE_FILES
+add_executable(ClarinoidSimulator WIN32
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
@@ -156,13 +156,14 @@ set(IMGUI_SOURCE_FILES
     ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
 )
 
-add_executable(ClarinoidSimulator WIN32
-    ${IMGUI_FILES}
-)
-
-# Group ImGui files
 source_group("imgui_src" FILES
-  ${IMGUI_SOURCE_FILES}
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
 )
 
 # Add simulator app files with preserved directory structure
@@ -172,6 +173,7 @@ add_files_with_structure(ClarinoidSimulator
 
 target_include_directories(ClarinoidSimulator PRIVATE 
     ${imgui_SOURCE_DIR}
+    "${CLARINOID_SRC_ROOT}/apps/ClarinoidSimulator/include" 
 )
 
 target_compile_features(ClarinoidSimulator PRIVATE cxx_std_17)

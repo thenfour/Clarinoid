@@ -1,10 +1,10 @@
+#pragma once
 
-#include <utils.hpp>
+#include <clarinoid/sim/utils.hpp>
 
 // Returns IM_COL32 from a compile-time char array (without leading '#')
 template<std::size_t M>
-constexpr ImU32
-parse_nohash(const std::array<char, M>& s)
+inline constexpr ImU32 parse_nohash(const std::array<char, M>& s)
 {
   static_assert(M == 3 || M == 4 || M == 6 || M == 8, "color: use #RGB[A] or #RRGGBB[AA]");
   if constexpr (M == 3 || M == 4) {
@@ -45,14 +45,13 @@ struct parsed_u32
 };
 
 template<char... Cs>
-constexpr ImU32
+inline constexpr ImU32
 operator"" _imu32()
 {
   return parsed_u32<Cs...>::value;
 }
 
-constexpr ImU32
-parse_html_hex_cstr(const char* s, std::size_t n)
+inline constexpr ImU32 parse_html_hex_cstr(const char* s, std::size_t n)
 {
   if (n && s[0] == '#') {
     ++s;
@@ -80,8 +79,7 @@ parse_html_hex_cstr(const char* s, std::size_t n)
   }
 }
 
-constexpr ImU32
-operator"" _imu32(const char* s, std::size_t n)
+inline constexpr ImU32 operator"" _imu32(const char* s, std::size_t n)
 {
   return parse_html_hex_cstr(s, n);
 }

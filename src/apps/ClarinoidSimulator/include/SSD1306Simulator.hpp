@@ -1,7 +1,9 @@
 ﻿#pragma once
 
+#include <clarinoid/core/basic/Geometry.hpp>
+
 #include "D3DAppContext.hpp"
-#include <clarinoid/basic/Geometry.hpp>
+#include "HtmlColorUtils.hpp"
 
 namespace oled128x64 {
 

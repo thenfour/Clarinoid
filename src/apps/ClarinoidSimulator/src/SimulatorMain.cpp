@@ -13,14 +13,13 @@
 
 
 #include <clarinoid/core/basic/Basic.hpp>
+#include <clarinoid/sim/ComPtr.hpp>
 
-#include <clarinoid/sim/ClarinoidSimulatorApp.hpp>
-#include "./ComPtr.hpp"
-#include "./HtmlColorUtils.hpp"
-#include "./ImGuiWindowApp.hpp"
-#include "./ImguiUtils.hpp"
-#include "./SSD1306Simulator.hpp"
-
+#include "ClarinoidSimulatorApp.hpp"
+#include "HtmlColorUtils.hpp"
+#include "ImGuiWindowApp.hpp"
+#include "ImguiUtils.hpp"
+#include "SSD1306Simulator.hpp"
 
 #pragma comment(lib, "d3d11.lib")
 
