@@ -184,28 +184,55 @@ target_link_libraries(ClarinoidSimulator PRIVATE
 )
 
 #==============================================================================
-# Executable: ClarinoidTests
+# Executable: ClarinoidTests (for C++17)
 #==============================================================================
 
 enable_testing()
 
-add_executable(ClarinoidTests)
+add_executable(ClarinoidTestsCpp17)
 
 # Add test files with preserved directory structure
-add_files_with_structure(ClarinoidTests 
+add_files_with_structure(ClarinoidTestsCpp17 
     "${CLARINOID_SRC_ROOT}/apps/clarinoid-core.tests/**/*" 
     "${CLARINOID_SRC_ROOT}/apps/clarinoid-core.tests")
 
-target_include_directories(ClarinoidTests PRIVATE 
+target_include_directories(ClarinoidTestsCpp17 PRIVATE 
     "${CLARINOID_SRC_ROOT}"
 )
 
-target_compile_features(ClarinoidTests PRIVATE cxx_std_17)
+target_compile_features(ClarinoidTestsCpp17 PRIVATE cxx_std_17)
 
-target_link_libraries(ClarinoidTests PRIVATE 
+target_link_libraries(ClarinoidTestsCpp17 PRIVATE 
     gtest_main 
     clarinoid_core
 )
 
 include(GoogleTest)
-gtest_discover_tests(ClarinoidTests)
+gtest_discover_tests(ClarinoidTestsCpp17)
+
+
+#==============================================================================
+# Executable: ClarinoidTests (for C++20)
+#==============================================================================
+add_executable(ClarinoidTestsCpp20)
+
+add_files_with_structure(ClarinoidTestsCpp20 
+    "${CLARINOID_SRC_ROOT}/apps/clarinoid-core.tests/**/*" 
+    "${CLARINOID_SRC_ROOT}/apps/clarinoid-core.tests")
+
+target_include_directories(ClarinoidTestsCpp20 PRIVATE 
+    "${CLARINOID_SRC_ROOT}"
+)
+
+# ‑- force C++20 only for this target
+set_target_properties(ClarinoidTestsCpp20 PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF)
+
+target_link_libraries(ClarinoidTestsCpp20 PRIVATE 
+    gtest_main 
+    clarinoid_core
+)
+
+gtest_discover_tests(ClarinoidTestsCpp20)

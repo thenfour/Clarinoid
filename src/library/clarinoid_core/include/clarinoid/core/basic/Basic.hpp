@@ -8,10 +8,7 @@
   #define CL_NODISCARD /*nothing*/
 #endif
 
-#ifdef CLARINOID_PLATFORM_X86
-  #include "../x86/ArduinoEmu.hpp"
-#endif
-
+#include "CLArduino.hpp"
 
 // language basics, syntax, types, fundamental helpers
 #include "Array.hpp"

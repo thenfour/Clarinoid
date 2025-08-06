@@ -4,8 +4,10 @@
 // #include <cmath>
 //#include <limits>
 #include <optional>
-#include "../Numeric.hpp" // is_scalar_like
+#include <numeric>
 #include <type_traits>
+
+#include "../Numeric.hpp" // is_scalar_like
 //#include <utility>
 
 

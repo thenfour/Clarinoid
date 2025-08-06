@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "../BaseDefs.hpp"
 #include "../function.hpp"
 
 #ifdef CLARINOID_PLATFORM_X86
@@ -152,6 +153,10 @@ namespace clarinoid
 
 template <typename T>
 constexpr T gPI = T(3.1415926535897932385);
+
+// ADL replacement of std::numbers::pi_v
+template <typename T>
+constexpr T pi_v = T(3.1415926535897932385);
 
 template <typename T>
 constexpr T gLog2of10 = T(3.3219280948873622);
@@ -708,14 +713,14 @@ inline int AddConstrained(int orig, int delta, int min_, int max_)
     ret -= period;
   return ret;
 }
-
-// assumes T is integral
-// performs integral division but with common 0.5 rounding
-template <typename T>
-inline T idiv_round(T dividend, T divisor)
-{
-  return (dividend + (divisor / 2)) / divisor;
-}
+//
+//// assumes T is integral
+//// performs integral division but with common 0.5 rounding
+//template <typename T>
+//inline T idiv_round(T dividend, T divisor)
+//{
+//  return (dividend + (divisor / 2)) / divisor;
+//}
 
 template <int period>
 inline int ModularDistance(int a, int b)

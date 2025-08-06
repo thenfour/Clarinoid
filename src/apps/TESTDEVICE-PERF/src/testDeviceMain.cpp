@@ -15,6 +15,7 @@
 // maybe group tests by signature type?)
 // - better test discovery (simple registration function...)
 // - operate on FxValue<> instead of uint32_t
+// - output error graph over the test range
 
 void setup()
 {

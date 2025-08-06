@@ -238,11 +238,11 @@ struct Fixed
   // abs
 
 
-  template<typename TFormatB, typename TKernelB>
-  [[nodiscard]] constexpr auto MultipliedWith(const Fixed<TFormatB, TKernelB>& rhs) const
-  {
-    return TKernel::template mul<TIntBits, TFracBits, TIntBitsB, TFracBitsB>(RawValue(), rhs.RawValue());
-  }
+  //template<typename TFormatB, typename TKernelB>
+  //[[nodiscard]] constexpr auto MultipliedWith(const Fixed<TFormatB, TKernelB>& rhs) const
+  //{
+  //  return TKernel::template mul<TIntBits, TFracBits, TIntBitsB, TFracBitsB>(RawValue(), rhs.RawValue());
+  //}
 };
 
 } // namespace clarinoid

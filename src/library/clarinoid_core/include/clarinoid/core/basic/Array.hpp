@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <array>
+#include "CLArduino.hpp"
+
 namespace clarinoid
 {
     // std::array is available in C++17.

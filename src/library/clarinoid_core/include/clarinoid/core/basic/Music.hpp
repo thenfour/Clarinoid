@@ -2,6 +2,7 @@
 
 #include <initializer_list>
 #include "Enum.hpp"
+#include "./numeric/Math.hpp"
 
 namespace clarinoid {
 
@@ -24,20 +25,7 @@ struct NoteDesc
   const char* mNameWithCustomGlyphs;
 };
 
-NoteDesc const gNotes[12] = {
-  { 0, "C ", "C " },
-  { 1, "C#", "C" CHARSTR_SHARP },
-  { 2, "D ", "D " },
-  { 3, "D#", "D" CHARSTR_SHARP },
-  { 4, "E ", "E " },
-  { 5, "F ", "F " },
-  { 6, "F#", "F" CHARSTR_SHARP },
-  { 7, "G ", "G " },
-  { 8, "G#", "G" CHARSTR_SHARP },
-  { 9, "A ", "A " },
-  { 10, "A#", "A" CHARSTR_SHARP },
-  { 11, "B ", "B " },
-};
+extern NoteDesc const gNotes[12];
 
 enum class Note : uint8_t
 {
@@ -55,13 +43,9 @@ enum class Note : uint8_t
   B = 11
 };
 
-EnumItemInfo<Note> gNoteItems[12] = {
-  { Note::C, "C" },   { Note::Db, "Db" }, { Note::D, "D" },   { Note::Eb, "Eb" },
-  { Note::E, "E" },   { Note::F_, "F_" }, { Note::Gb, "Gb" }, { Note::G, "G" },
-  { Note::Ab, "Ab" }, { Note::A, "A" },   { Note::Bb, "Bb" }, { Note::B, "B" },
-};
+extern EnumItemInfo<Note> gNoteItems[12];
 
-EnumInfo<Note> gNoteInfo("Note", gNoteItems);
+extern EnumInfo<Note> gNoteInfo;
 
 ////////////////////////////////////////////////////
 class MidiNote
@@ -133,24 +117,9 @@ enum class ScaleFlavorIndex : uint8_t // match index to gScaleFlavors
 static constexpr size_t ScaleFlavorCount = (size_t)ScaleFlavorIndex::ScaleFlavorCount;
 
 // abbreviated.
-EnumItemInfo<ScaleFlavorIndex> gScaleFlavorIndexItems[ScaleFlavorCount] = {
-  { ScaleFlavorIndex::Chromatic, "Chrom" },
-  { ScaleFlavorIndex::Major, "Maj" },
-  { ScaleFlavorIndex::Minor, "Min" },
-  { ScaleFlavorIndex::MelodicMinor, "MelMin" },
-  { ScaleFlavorIndex::HarmonicMinor, "HarmMin" },
-  { ScaleFlavorIndex::MajorPentatonic, "MajPent" },
-  { ScaleFlavorIndex::MinorPentatonic, "MinPent" },
-  { ScaleFlavorIndex::WholeTone, "Whole" },
-  { ScaleFlavorIndex::HalfWholeDiminished, "HWDim" },
-  { ScaleFlavorIndex::WholeHalfDiminished, "WHDim" },
-  { ScaleFlavorIndex::Altered, "Alt" },
-  { ScaleFlavorIndex::Blues, "Blues" },
-  { ScaleFlavorIndex::Unison, "Unison" },
-  { ScaleFlavorIndex::Power, "Power" },
-};
+extern EnumItemInfo<ScaleFlavorIndex> gScaleFlavorIndexItems[ScaleFlavorCount];
 
-EnumInfo<ScaleFlavorIndex> gScaleFlavorIndexInfo("ScaleFlavorIndex", gScaleFlavorIndexItems);
+extern EnumInfo<ScaleFlavorIndex> gScaleFlavorIndexInfo;
 
 ////////////////////////////////////////////////////
 // using this + Scale flavor allows you to construct an absolute MIDI note value.

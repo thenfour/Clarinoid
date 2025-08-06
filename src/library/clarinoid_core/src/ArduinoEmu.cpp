@@ -956,17 +956,34 @@ namespace clarinoid
 // Uptime.hpp
 uint32_t gUptimeLastMicrosCall = 0;
 int64_t gUptimeCurrentOffset = 0;  // every time the 32-bit micros() call rolls over, this gets += 1<<32;
-
-// assert.hpp
-extern IClarinoidCrashReportOutput* gCrashHandlers[10] = {0};
-SerialCrashHandler gSerialCrashHandler;
-
-// log.hpp
-int gLogIndent = 0;
-
-// util.hpp
-int NoInterrupts::gNoInterruptRefs = 0;
-
+//
+//// assert.hpp
+//extern IClarinoidCrashReportOutput* gCrashHandlers[10] = {0};
+//SerialCrashHandler gSerialCrashHandler;
+//
+//// log.hpp
+//int gLogIndent = 0;
+//
+//// util.hpp
+//int NoInterrupts::gNoInterruptRefs = 0;
+//
+//// Music.hpp
+//EnumItemInfo<Note> gNoteItems[12] = {
+//    {Note::C, "C"},
+//    {Note::Db, "Db"},
+//    {Note::D, "D"},
+//    {Note::Eb, "Eb"},
+//    {Note::E, "E"},
+//    {Note::F_, "F_"},
+//    {Note::Gb, "Gb"},
+//    {Note::G, "G"},
+//    {Note::Ab, "Ab"},
+//    {Note::A, "A"},
+//    {Note::Bb, "Bb"},
+//    {Note::B, "B"},
+//};
+//
+//EnumInfo<Note> gNoteInfo("Note", gNoteItems);
 
 }  // namespace clarinoid
 

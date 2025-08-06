@@ -4,10 +4,10 @@
 // #include <cmath>
 #include <limits>
 #include <optional>
-#include "../Numeric.hpp"
 #include <type_traits>
 #include <utility>
 
+#include "../Numeric.hpp"
 
 namespace clarinoid
 {
@@ -55,12 +55,14 @@ struct Circle
   // metrics
   [[nodiscard]] T area() const noexcept
   {
-    using std::numbers::pi_v;
+    //using std::numbers::pi_v;
+    using ::clarinoid::pi_v;
     return pi_v<T> * mRadius * mRadius;
   }
   [[nodiscard]] T circumference() const noexcept
   {
-    using std::numbers::pi_v;
+    //using std::numbers::pi_v;
+    using ::clarinoid::pi_v;
     return T{2} * pi_v<T> * mRadius;
   }
 

@@ -385,24 +385,24 @@ struct Vec3
     return (a.x <= a.y && a.x <= a.z) ? 0 : (a.y <= a.z ? 1 : 2);
   }
 
-  // Any unit vector orthogonal to this (or +X if zero)
-  [[nodiscard]] Vec3 any_orthogonal() const noexcept
-  {
-    if (this->is_zero())
-      return Vec3::unit_x();
-    const int m = minor_axis();
-    Vec3 axis = (m == 0) ? Vec3{T{1}, T{0}, T{0}} : (m == 1) ? Vec3{T{0}, T{1}, T{0}} : Vec3{T{0}, T{0}, T{1}};
-    return this->cross(axis).normalized();
-  }
+  //// Any unit vector orthogonal to this (or +X if zero)
+  //[[nodiscard]] Vec3 any_orthogonal() const noexcept
+  //{
+  //  if (this->is_zero())
+  //    return Vec3::unit_x();
+  //  const int m = minor_axis();
+  //  Vec3 axis = (m == 0) ? Vec3{T{1}, T{0}, T{0}} : (m == 1) ? Vec3{T{0}, T{1}, T{0}} : Vec3{T{0}, T{0}, T{1}};
+  //  return this->cross(axis).normalized();
+  //}
 
-  // Orthonormal basis: returns (tangent, bitangent, normal) with normal = normalized(*this)
-  [[nodiscard]] std::tuple<Vec3, Vec3, Vec3> orthonormal_basis() const noexcept
-  {
-    const Vec3 n = normalized();
-    const Vec3 t = n.any_orthogonal();
-    const Vec3 b = n.cross(t);
-    return std::make_tuple(t, b, n);
-  }
+  //// Orthonormal basis: returns (tangent, bitangent, normal) with normal = normalized(*this)
+  //[[nodiscard]] std::tuple<Vec3, Vec3, Vec3> orthonormal_basis() const noexcept
+  //{
+  //  const Vec3 n = normalized();
+  //  const Vec3 t = n.any_orthogonal();
+  //  const Vec3 b = n.cross(t);
+  //  return std::make_tuple(t, b, n);
+  //}
 
   // Face-forward (GLSL-style): orient this normal to face away from "I", using reference normal "Nref"
   [[nodiscard]] Vec3 face_forward(const Vec3& I, const Vec3& Nref) const noexcept
