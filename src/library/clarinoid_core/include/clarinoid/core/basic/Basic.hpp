@@ -1,13 +1,6 @@
 
 #pragma once
 
-#if __cplusplus >= 201703L
-  #define CL_NODISCARD [[nodiscard]]
-#else
-  #error C++17 or later is required for this project.
-  #define CL_NODISCARD /*nothing*/
-#endif
-
 #include "CLArduino.hpp"
 
 // language basics, syntax, types, fundamental helpers

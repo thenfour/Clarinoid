@@ -189,26 +189,26 @@ TEST(FormatSpecTest, ZeroPadding)
   EXPECT_EQ('>', spec4.align);
   EXPECT_TRUE(spec4.alt);
 
-//#if __cplusplus >= 202002L  // C++20 or later
-//
-//  auto a1 = std::format("{:8x}", 3);   // right-aligns with spaces: "       3"
-//  auto a2 = std::format("{:08x}", 3);  // right-aligns with '0' padding: "00000003"
-//  auto a3 = std::format(
-//      "{:88x}",
-//      3);  // right-align with 88 spaces "                                                                                       3"
-//  auto a4 = std::format(
-//      "{:088x}",
-//      3);  // right-align with 88 spaces "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000003"
-//
-//#endif
-//
-//  // Test zero-padding with other format specs
-//  auto spec5 = clarinoid::parse_spec("8x");
-//  EXPECT_EQ('x', spec5.type);
-//  EXPECT_EQ(8, spec5.width);
-//  EXPECT_EQ('0', spec5.fill);
-//  EXPECT_EQ('>', spec5.align);
-//  EXPECT_FALSE(spec5.alt);
+  //#if __cplusplus >= 202002L  // C++20 or later
+  //
+  //  auto a1 = std::format("{:8x}", 3);   // right-aligns with spaces: "       3"
+  //  auto a2 = std::format("{:08x}", 3);  // right-aligns with '0' padding: "00000003"
+  //  auto a3 = std::format(
+  //      "{:88x}",
+  //      3);  // right-align with 88 spaces "                                                                                       3"
+  //  auto a4 = std::format(
+  //      "{:088x}",
+  //      3);  // right-align with 88 spaces "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000003"
+  //
+  //#endif
+  //
+  //  // Test zero-padding with other format specs
+  //  auto spec5 = clarinoid::parse_spec("8x");
+  //  EXPECT_EQ('x', spec5.type);
+  //  EXPECT_EQ(8, spec5.width);
+  //  EXPECT_EQ('0', spec5.fill);
+  //  EXPECT_EQ('>', spec5.align);
+  //  EXPECT_FALSE(spec5.alt);
 }
 
 TEST(FormatSpecTest, PaddingEdgeCases)
@@ -261,6 +261,16 @@ TEST(FormatSpecTest, PaddingEdgeCases)
     EXPECT_EQ('>', spec5.align);
     EXPECT_FALSE(spec5.alt);
   }
+}
+
+TEST(FormatSpecTest, PaddingHugeBuffer)
+{
+  auto spec5 = clarinoid::parse_spec("0123x");
+  EXPECT_EQ('x', spec5.type);
+  EXPECT_EQ(123, spec5.width);
+  EXPECT_EQ('0', spec5.fill);
+  EXPECT_EQ('>', spec5.align);
+  EXPECT_FALSE(spec5.alt);
 }
 
 
@@ -872,6 +882,59 @@ TEST(CharFormattingTest, WidthLeftAlignCustomFill)
   EXPECT_STREQ("A***", buf);
 }
 
+TEST(CharFormattingTest, VeryLargePadding)
+{
+  char buf[1000];
+  size_t len;
+  
+  //len = clarinoid::format_to(buf, "{:0123c}", 65);
+  //EXPECT_EQ(123, len);
+  //EXPECT_STREQ("A000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  //             "00000000000000000000",
+  //             buf);
+
+  len = clarinoid::format_to(buf, "{:123c}", 65);
+  EXPECT_EQ(123, len);
+  EXPECT_STREQ("A                                                                                                      "
+               "                    ",
+               buf);
+
+  len = test_format_to(buf, "{:0>123c}", 65);
+  EXPECT_EQ(123, len);
+  EXPECT_STREQ("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+               "0000000000000000000A",
+               buf);
+
+  len = test_format_to(buf, "{:>123c}", 65);
+  EXPECT_EQ(123, len);
+  EXPECT_STREQ("                                                                                                       "
+               "                   A",
+               buf);
+
+  len = test_format_to(buf, "{:0<123c}", 65);
+  EXPECT_EQ(123, len);
+  EXPECT_STREQ("A000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+               "00000000000000000000",
+               buf);
+
+  len = test_format_to(buf, "{:<123c}", 65);
+  EXPECT_EQ(123, len);
+  EXPECT_STREQ("A                                                                                                      "
+               "                    ",
+               buf);
+
+  len = test_format_to(buf, "{:0^123c}", 65);
+  EXPECT_EQ(123, len);
+  EXPECT_STREQ("0000000000000000000000000000000000000000000000000000000000000A0000000000000000000000000000000000000000000000000000000000000",
+               buf);
+
+  len = test_format_to(buf, "{:^123c}", 65);
+  EXPECT_EQ(123, len);
+  EXPECT_STREQ("                                                             A                                         "
+               "                    ",
+               buf);
+}
+
 }  // namespace CharFormatting
 
 namespace WidthVsData
@@ -948,7 +1011,6 @@ TEST(StringArgTest, EmbeddedInSentence)
 }
 
 }  // namespace StringArguments
-
 
 
 }  // namespace StringFormat

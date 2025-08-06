@@ -4,6 +4,8 @@
         "format": "cpp",
         "regex": "cpp",
         "thread": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "random": "cpp",
+        "array": "cpp"
     }
 }
