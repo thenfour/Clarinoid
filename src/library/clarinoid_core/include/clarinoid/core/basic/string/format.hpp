@@ -2,12 +2,12 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>    // for std::sprintf, std::snprintf
-#include <cstring>   // for std::strlen
+#include <cstdio>   // for std::sprintf, std::snprintf
+#include <cstring>  // for std::strlen
 #include <iterator>
 #include <ostream>
 #include <string_view>
-#include <tuple>     // for std::tuple_size_v
+#include <tuple>  // for std::tuple_size_v
 #include <type_traits>
 
 /*--------------------------------------------------------------------
@@ -20,8 +20,7 @@ namespace clarinoid
 {
 
 // Helper function for safe buffer copying
-inline void safe_buffer_copy(char* dest, size_t dest_cap, size_t& dest_len, 
-                            const char* src, size_t src_len)
+inline void safe_buffer_copy(char* dest, size_t dest_cap, size_t& dest_len, const char* src, size_t src_len)
 {
   size_t room = (dest_len < dest_cap) ? dest_cap - dest_len : 0;
   size_t copy = (src_len < room) ? src_len : room;
@@ -36,12 +35,12 @@ struct BufferSink
   char* ptr;
   size_t cap;
   size_t len{0};
-  
+
   void write(const char* s, size_t n)
   {
     safe_buffer_copy(ptr, cap, len, s, n);
   }
-  
+
   void write(char c)
   {
     write(&c, 1);
@@ -88,13 +87,13 @@ struct OStreamSink
  *------------------------------------------------------------------*/
 struct FormatSpec
 {
-  char align = '>';     // '<', '>', '^'
+  char align = '>';  // '<', '>', '^'
   char fill = ' ';
-  char sign = '\0';     // '+', ' '
+  char sign = '\0';  // '+', ' '
   uint16_t width = 0;
-  int16_t prec = -1;    // -1 = not specified
-  char type = '\0';     // 'x','X','o','b','B','d','c'
-  bool alt = false;     // '#' prefix for alternate form
+  int16_t prec = -1;  // -1 = not specified
+  char type = '\0';   // 'x','X','o','b','B','d','c'
+  bool alt = false;   // '#' prefix for alternate form
 };
 
 inline FormatSpec parse_spec(std::string_view sv)
@@ -129,7 +128,8 @@ inline FormatSpec parse_spec(std::string_view sv)
 
   // zero-padding: if width starts with '0', it means zero-padding with right alignment
   bool zero_padding = false;
-  if (i < sv.size() && sv[i] == '0' && fs.align == '>' && fs.fill == ' ') {
+  if (i < sv.size() && sv[i] == '0' && fs.align == '>' && fs.fill == ' ')
+  {
     // Only apply zero-padding if no explicit fill/align was specified
     zero_padding = true;
     fs.fill = '0';
@@ -204,7 +204,7 @@ void write_padded(Sink& s, std::string_view data, const FormatSpec& fs)
       s.write(data.data(), data.size());
       pad(s, fs.fill, padlen - padlen / 2);
       break;
-    default: // '>' or any other value defaults to right align
+    default:  // '>' or any other value defaults to right align
       pad(s, fs.fill, padlen);
       s.write(data.data(), data.size());
       break;
@@ -215,9 +215,12 @@ void write_padded(Sink& s, std::string_view data, const FormatSpec& fs)
 template <class Sink>
 void write_string_arg(Sink& s, std::string_view sv, const FormatSpec* fs = nullptr)
 {
-  if (fs) {
+  if (fs)
+  {
     write_padded(s, sv, *fs);
-  } else {
+  }
+  else
+  {
     s.write(sv.data(), sv.size());
   }
 }
@@ -231,29 +234,34 @@ template <class Sink, typename IntType>
 void write_decimal_simple(Sink& sink, IntType v)
 {
   static_assert(std::is_integral_v<IntType>);
-  
-  char buf[32]; // Large enough for any integral type
+
+  char buf[32];  // Large enough for any integral type
   char* p = buf + sizeof(buf);
-  
+
   // Handle signed types
   bool neg = false;
   typename std::make_unsigned<IntType>::type val;
-  if constexpr (std::is_signed_v<IntType>) {
+  if constexpr (std::is_signed_v<IntType>)
+  {
     neg = v < 0;
     val = neg ? -static_cast<typename std::make_unsigned<IntType>::type>(v) : v;
-  } else {
+  }
+  else
+  {
     val = v;
   }
-  
-  do {
+
+  do
+  {
     *--p = char('0' + val % 10);
     val /= 10;
   } while (val);
-  
-  if (neg) {
+
+  if (neg)
+  {
     *--p = '-';
   }
-  
+
   sink.write(p, buf + sizeof(buf) - p);
 }
 
@@ -262,25 +270,29 @@ template <class Sink, typename IntType>
 void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
 {
   static_assert(std::is_integral_v<IntType>);
-  
-  char buf[64]; // Large enough for binary representation and prefixes
+
+  char buf[64];  // Large enough for binary representation and prefixes
   char* p = buf + sizeof(buf);
-  
+
   // Handle signed types for negative values
   bool neg = false;
   typename std::make_unsigned<IntType>::type val;
-  if constexpr (std::is_signed_v<IntType>) {
+  if constexpr (std::is_signed_v<IntType>)
+  {
     neg = v < 0;
     val = neg ? -static_cast<typename std::make_unsigned<IntType>::type>(v) : v;
-  } else {
+  }
+  else
+  {
     val = v;
   }
-  
+
   // Determine base and formatting options
   unsigned base;
   bool uppercase = false;
-  
-  switch (fs.type) {
+
+  switch (fs.type)
+  {
     case 'x':  // lowercase hex
       base = 16;
       break;
@@ -299,46 +311,58 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
       uppercase = true;
       break;
     case 'c':  // character
-      if (val <= 127) {  // ASCII range
+      if (val <= 127)
+      {  // ASCII range
         out.write(static_cast<char>(val));
         return;
       }
       // Fall through to decimal for non-ASCII
       [[fallthrough]];
-    case 'd':  // decimal (explicit)
-    case '\0': // decimal (default)
+    case 'd':   // decimal (explicit)
+    case '\0':  // decimal (default)
     default:
       base = 10;
       break;
   }
 
   // Generate digits
-  auto digit = [&](unsigned d) -> char {
-    if (d < 10) {
+  auto digit = [&](unsigned d) -> char
+  {
+    if (d < 10)
+    {
       return '0' + d;
-    } else {
+    }
+    else
+    {
       return (uppercase ? 'A' : 'a') + (d - 10);
     }
   };
 
-  if (val == 0) {
+  if (val == 0)
+  {
     *--p = '0';
-  } else {
-    while (val > 0) {
+  }
+  else
+  {
+    while (val > 0)
+    {
       *--p = digit(val % base);
       val /= base;
     }
   }
 
   // Add alternate form prefixes if requested
-  if (fs.alt && base != 10) {
-    switch (base) {
+  if (fs.alt && base != 10)
+  {
+    switch (base)
+    {
       case 16:
         *--p = uppercase ? 'X' : 'x';
         *--p = '0';
         break;
       case 8:
-        if (*(p) != '0') {  // Don't add prefix if number is already 0
+        if (*(p) != '0')
+        {  // Don't add prefix if number is already 0
           *--p = '0';
         }
         break;
@@ -349,23 +373,32 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
     }
   }
 
-  // Add sign for decimal numbers
-  if (base == 10) {
-    if constexpr (std::is_signed_v<IntType>) {
-      if (neg) {
-        *--p = '-';
-      } else if (fs.sign == '+') {
-        *--p = '+';
-      } else if (fs.sign == ' ') {
-        *--p = ' ';
-      }
-    } else {
-      // Unsigned types can still have + or space for positive values
-      if (fs.sign == '+') {
-        *--p = '+';
-      } else if (fs.sign == ' ') {
-        *--p = ' ';
-      }
+  // Add sign
+  if constexpr (std::is_signed_v<IntType>)
+  {
+    if (neg)
+    {
+      *--p = '-';
+    }
+    else if (fs.sign == '+')
+    {
+      *--p = '+';
+    }
+    else if (fs.sign == ' ')
+    {
+      *--p = ' ';
+    }
+  }
+  else
+  {
+    // Unsigned types can still have + or space for positive values
+    if (fs.sign == '+')
+    {
+      *--p = '+';
+    }
+    else if (fs.sign == ' ')
+    {
+      *--p = ' ';
     }
   }
 
@@ -513,18 +546,26 @@ struct write_by_idx_helper
   static void call(Sink& s, size_t idx, const FormatSpec& fs, Tup& tup)
   {
     constexpr size_t tuple_size = std::tuple_size<typename std::remove_reference<Tup>::type>::value;
-    
-    if constexpr (I < tuple_size) {
-      if (idx == I) {
+
+    if constexpr (I < tuple_size)
+    {
+      if (idx == I)
+      {
         // Check if we have any non-default formatting specs
-        if (fs.width > 0 || fs.prec >= 0 || fs.type != '\0' || fs.align != '>' || fs.fill != ' ' || fs.sign != '\0' || fs.alt) {
+        if (fs.width > 0 || fs.prec >= 0 || fs.type != '\0' || fs.align != '>' || fs.fill != ' ' || fs.sign != '\0' ||
+            fs.alt)
+        {
           // Use formatting version if any format specs are present
           write_arg(s, std::get<I>(tup), fs);
-        } else {
+        }
+        else
+        {
           // Use simple version for no formatting
           write_arg(s, std::get<I>(tup));
         }
-      } else {
+      }
+      else
+      {
         write_by_idx_helper<I + 1, Sink, Tup>::call(s, idx, fs, tup);
       }
     }
@@ -536,7 +577,8 @@ template <class Sink, class Tup>
 void write_by_idx(Sink& s, size_t idx, const FormatSpec& fs, Tup& tup)
 {
   constexpr size_t tuple_size = std::tuple_size<typename std::remove_reference<Tup>::type>::value;
-  if (tuple_size > 0 && idx < tuple_size) {
+  if (tuple_size > 0 && idx < tuple_size)
+  {
     write_by_idx_helper<0, Sink, Tup>::call(s, idx, fs, tup);
   }
   // If tuple is empty or index out of bounds, do nothing
@@ -565,13 +607,14 @@ void vformat(Sink& s, std::string_view fmt, Ts&&... args)
         ++i;
       if (i == fmt.size())
         break;
-      
+
       // Extract the format specification without the leading ':'
       std::string_view spec_str = fmt.substr(start, i - start);
-      if (!spec_str.empty() && spec_str[0] == ':') {
+      if (!spec_str.empty() && spec_str[0] == ':')
+      {
         spec_str = spec_str.substr(1);  // Skip the ':' character
       }
-      
+
       FormatSpec fs = parse_spec(spec_str);
       write_by_idx(s, argi++, fs, tup);
       ++i;
