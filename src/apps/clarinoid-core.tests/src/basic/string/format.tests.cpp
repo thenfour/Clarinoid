@@ -899,6 +899,56 @@ TEST(BufferOverflowTest, ArrayTooSmallRetIsFullLength)
 }
 
 }  // namespace BufferOverflow
-//
+
+
+// ------------------------------------------------------------------
+//  String-argument coverage – width / align / fill / no-truncation.
+// ------------------------------------------------------------------
+namespace StringArguments
+{
+
+TEST(StringArgTest, RightAlignWidth)
+{
+  char buf[32];
+  size_t len = test_format_to(buf, "{:>10}", std::string_view("abc"));
+  EXPECT_EQ(10, len);
+  EXPECT_STREQ("       abc", buf);
+}
+
+TEST(StringArgTest, LeftAlignWidth)
+{
+  char buf[32];
+  size_t len = test_format_to(buf, "{:<10}", "abc");
+  EXPECT_EQ(10, len);
+  EXPECT_STREQ("abc       ", buf);
+}
+
+TEST(StringArgTest, CenterAlignCustomFill)
+{
+  char buf[32];
+  size_t len = test_format_to(buf, "{:*^9}", "abc");
+  EXPECT_EQ(9, len);
+  EXPECT_STREQ("***abc***", buf);
+}
+
+TEST(StringArgTest, WidthLessThanDataNoTruncation)
+{
+  char buf[32];
+  size_t len = test_format_to(buf, "{:5}", "abcdefgh");
+  EXPECT_EQ(8, len);  // data longer than width – stays intact
+  EXPECT_STREQ("abcdefgh", buf);
+}
+
+TEST(StringArgTest, EmbeddedInSentence)
+{
+  char buf[64];
+  size_t len = test_format_to(buf, "name: '{}'", "clarinoid");
+  EXPECT_EQ(17, len);
+  EXPECT_STREQ("name: 'clarinoid'", buf);
+}
+
+}  // namespace StringArguments
+
+
 
 }  // namespace StringFormat
