@@ -96,31 +96,35 @@ struct FormatSpec
   bool alt = false;   // '#' prefix for alternate form
 };
 
-inline FormatSpec parse_spec(std::string_view sv)
+inline FormatSpec parse_spec(const std::string_view sv)
 {
   FormatSpec fs;
   size_t i = 0;
+  const size_t svSize = sv.size();
+  bool defaultAlign = true;
 
   // [fill][align]
-  if (i + 1 < sv.size() && (sv[i + 1] == '<' || sv[i + 1] == '>' || sv[i + 1] == '^'))
+  if (i + 1 < svSize && (sv[i + 1] == '<' || sv[i + 1] == '>' || sv[i + 1] == '^'))
   {
     fs.fill = sv[i];
     fs.align = sv[i + 1];
+    defaultAlign = false;
     i += 2;
   }
-  else if (i < sv.size() && (sv[i] == '<' || sv[i] == '>' || sv[i] == '^'))
+  else if (i < svSize && (sv[i] == '<' || sv[i] == '>' || sv[i] == '^'))
   {
     fs.align = sv[i++];
+    defaultAlign = false;
   }
 
   // sign
-  if (i < sv.size() && (sv[i] == '+' || sv[i] == ' '))
+  if (i < svSize && (sv[i] == '+' || sv[i] == ' '))
   {
     fs.sign = sv[i++];
   }
 
   // alternate form
-  if (i < sv.size() && sv[i] == '#')
+  if (i < svSize && sv[i] == '#')
   {
     fs.alt = true;
     ++i;
@@ -128,7 +132,7 @@ inline FormatSpec parse_spec(std::string_view sv)
 
   // zero-padding: if width starts with '0', it means zero-padding with right alignment
   bool zero_padding = false;
-  if (i < sv.size() && sv[i] == '0' && fs.align == '>' && fs.fill == ' ')
+  if (i < svSize && sv[i] == '0' && fs.align == '>' && fs.fill == ' ')
   {
     // Only apply zero-padding if no explicit fill/align was specified
     zero_padding = true;
@@ -138,24 +142,58 @@ inline FormatSpec parse_spec(std::string_view sv)
   }
 
   // width
-  while (i < sv.size() && std::isdigit(static_cast<unsigned char>(sv[i])))
+  while (i < svSize && std::isdigit(static_cast<unsigned char>(sv[i])))
     fs.width = static_cast<uint16_t>(fs.width * 10 + (sv[i++] - '0'));
 
   // precision
-  if (i < sv.size() && sv[i] == '.')
+  if (i < svSize && sv[i] == '.')
   {
     ++i;
     fs.prec = 0;
-    while (i < sv.size() && std::isdigit(static_cast<unsigned char>(sv[i])))
+    while (i < svSize && std::isdigit(static_cast<unsigned char>(sv[i])))
       fs.prec = static_cast<int16_t>(fs.prec * 10 + (sv[i++] - '0'));
   }
 
   // type
-  if (i < sv.size())
+  if (i < svSize)
     fs.type = sv[i];
+
+
+  // ------------------------------------------------------------------
+  //  Default-to-zero-fill for numeric types when user gave only width
+  //  (e.g. “8x” → width 8, fill ‘0’) and default left-align for text.
+  // ------------------------------------------------------------------
+  auto is_numeric_type = [](char t)
+  {
+    switch (t)
+    {
+      case 'x':
+      case 'X':
+      case 'o':
+      case 'b':
+      case 'B':
+      case 'd':
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  //if (fs.fill == ' '      // user did not set fill
+  //    && fs.align == '>'  // default align still in place
+  //    && fs.width > 0 && is_numeric_type(fs.type))
+  //{
+  //  fs.fill = '0';  // implicit zero padding
+  //}
+
+  // For text / char the standard default is left-align.
+  if (defaultAlign  && (fs.type == 'c' || fs.type == 's'))
+  {
+    fs.align = '<';
+  }
+
   return fs;
 }
-
 /*
  * parse_spec - Parses a format specification string
  * 
@@ -290,6 +328,7 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
   // Determine base and formatting options
   unsigned base;
   bool uppercase = false;
+  bool isChar = false;
 
   switch (fs.type)
   {
@@ -313,8 +352,9 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
     case 'c':  // character
       if (val <= 127)
       {  // ASCII range
-        out.write(static_cast<char>(val));
-        return;
+        //out.write(static_cast<char>(val));
+        isChar = true;
+        break;
       }
       // Fall through to decimal for non-ASCII
       [[fallthrough]];
@@ -338,18 +378,29 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
     }
   };
 
-  if (val == 0)
+  if (isChar)
   {
-    *--p = '0';
+    *--p = static_cast<char>(val);  // Directly write character
   }
   else
   {
-    while (val > 0)
+    if (val == 0)
     {
-      *--p = digit(val % base);
-      val /= base;
+      *--p = '0';
+    }
+    else
+    {
+      while (val > 0)
+      {
+        *--p = digit(val % base);
+        val /= base;
+      }
     }
   }
+
+  char* digits_start = p;
+  auto buf_end = EndPtr(buf);
+  size_t digits_len = buf_end - digits_start;
 
   // Add alternate form prefixes if requested
   if (fs.alt && base != 10)
@@ -402,7 +453,25 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
     }
   }
 
-  write_padded(out, {p, static_cast<size_t>(buf + sizeof(buf) - p)}, fs);
+
+  size_t total_len = buf_end - p;
+
+  // Special-case: right-align with ‘0’ fill → pad after prefix
+  if (fs.fill == '0' && fs.align == '>')
+  {
+    size_t prefix_len = digits_start - p;  // sign + "0x" …
+    size_t pad_needed = (fs.width > total_len) ? fs.width - total_len : 0;
+
+    out.write(p, prefix_len);             // 1. prefix
+    pad(out, '0', pad_needed);            // 2. zeros
+    out.write(digits_start, digits_len);  // 3. digits
+    return;
+  }
+
+  // All other cases (spaces, left/center align, …)
+  write_padded(out, {p, total_len}, fs);
+
+  //write_padded(out, {p, static_cast<size_t>(buf + sizeof(buf) - p)}, fs);
 }
 
 // Basic write_arg without formatting
@@ -485,6 +554,17 @@ void write_arg(Sink& s, double v, const FormatSpec& fs)
   FormatSpec padSpec = fs;
   padSpec.sign = '\0';  // prevent double sign
   write_padded(s, {tmp, static_cast<size_t>(n)}, padSpec);
+}
+
+template <class Sink>
+void write_arg(Sink& s, double v)
+{
+  // Default formatting for double without specific FormatSpec
+  FormatSpec fs;
+  fs.width = 0;   // No width specified
+  fs.prec = -1;   // No precision specified
+  fs.type = 'f';  // Default to fixed-point notation
+  write_arg(s, v, fs);
 }
 
 template <class Sink>
