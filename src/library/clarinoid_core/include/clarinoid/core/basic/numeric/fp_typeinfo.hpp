@@ -5,7 +5,8 @@
 // // FP_CACHE_DOUBLE
 // // FP_RUNTIME_CHECKS
 
-namespace clarinoid {
+namespace clarinoid
+{
 
 
 // ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1459,4 +1460,4 @@ namespace clarinoid {
 //   return ReturnType::FromFixed(sqrt_Q32_to_Q16(x.mValue));
 // }
 
-} // namespace clarinoid
+}  // namespace clarinoid

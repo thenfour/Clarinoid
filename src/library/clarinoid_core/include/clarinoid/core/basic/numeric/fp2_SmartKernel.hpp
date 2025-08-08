@@ -51,7 +51,13 @@ struct FxSmartKernel
   template <typename TFormat>
   static constexpr typename TFormat::RawType RawOne()
   {
-    return TFormat::RawMax;  // Full-scale normalized
+    if constexpr (TFormat::IntBits == 0)
+    {
+      // If no integer bits, raw one is the max value for the fractional bits (useful for normalized full scale)
+      return TFormat::RawMax;
+    }
+    // Otherwise, raw one is 1 shifted left by the fractional bits
+    return static_cast<typename TFormat::RawType>(1) << TFormat::FracBits;
   }
 
   // Construction methods (same as naive)

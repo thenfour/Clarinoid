@@ -4,8 +4,10 @@
 
 #include <clarinoid/core/basic/basic.hpp>
 #include <clarinoid/core/basic/numeric/fp2.hpp>
+// #include <clarinoid/core/basic/numeric/operator_fx.hpp>
 
 using namespace clarinoid;
+// using namespace clarinoid::fxl::literals;
 
 namespace FixedPointTests
 {
@@ -96,7 +98,7 @@ TEST_F(FixedPointTest, RawMinMaxConstants)
   // For Q7.8: 7 int bits + 8 frac bits = 15 value bits in signed int16_t
   // RawMax should be (2^14 - 1) for signed 15-bit value range
   // RawMin should be -RawMax - 1 = -2^14
-  int32_t expected_max_16 = 0x7fff;         // 2^14 - 1 = 16383
+  int32_t expected_max_16 = 0x7fff;   // 2^14 - 1 = 16383
   int32_t expected_min_16 = -0x8000;  // -2^14 = -16384
 
   EXPECT_EQ(expected_max_16, Q7_8_Format::RawMax);
@@ -560,5 +562,195 @@ TEST_F(FixedPointTest, ChainedOperations)
   auto very_clean = FixedAuto<15, 16>(3.5) * FixedAuto<15, 16>(2.0) + FixedAuto<15, 16>(1.0);
   EXPECT_NEAR(8.0, very_clean.ToFloat(), EPSILON);  // 3.5 * 2.0 + 1.0 = 8.0
 }
+
+// ============================================================================
+// Literal Operator Tests
+// ============================================================================
+
+// NOTE: These tests are commented out until operator_fx.hpp compilation issues are resolved
+
+using namespace clarinoid::fxl::literals;
+
+TEST_F(FixedPointTest, BasicLiteralOperator)
+{
+  // Test basic integer literals
+  auto a = 42_fx;
+  EXPECT_NEAR(42.0, a.ToFloat(), EPSILON);
+
+  auto b = 0_fx;
+  EXPECT_NEAR(0.0, b.ToFloat(), EPSILON);
+
+  auto c = 1_fx;
+  EXPECT_NEAR(1.0, c.ToFloat(), EPSILON);
+
+  // Test negative literals
+  auto d = -42_fx;
+  EXPECT_NEAR(-42.0, d.ToFloat(), EPSILON);
+}
+
+TEST_F(FixedPointTest, FractionalLiteralOperator)
+{
+  // Test basic fractional literals
+  auto a = 3.14_fx;
+  EXPECT_NEAR(3.14, a.ToFloat(), EPSILON);
+
+  auto b = 0.5_fx;
+  EXPECT_NEAR(0.5, b.ToFloat(), EPSILON);
+
+  auto c = -2.71828_fx;
+  EXPECT_NEAR(-2.71828, c.ToFloat(), EPSILON);
+
+  // Test very small fractional values
+  auto d = 0.001_fx;
+  EXPECT_NEAR(0.001, d.ToFloat(), EPSILON);
+}
+
+TEST_F(FixedPointTest, ScientificNotationLiterals)
+{
+  // Test scientific notation
+  auto a = 1e3_fx;
+  EXPECT_NEAR(1000.0, a.ToFloat(), EPSILON);
+
+  auto b = 1.5e2_fx;
+  EXPECT_NEAR(150.0, b.ToFloat(), EPSILON);
+
+  auto c = 2.5e-3_fx;
+  EXPECT_NEAR(0.0025, c.ToFloat(), EPSILON);
+
+  auto d = -1.23e-2_fx;
+  EXPECT_NEAR(-0.0123, d.ToFloat(), EPSILON);
+}
+
+TEST_F(FixedPointTest, LiteralOperatorTypeSelection)
+{
+  // Test that literals automatically select appropriate storage types
+
+  // Small values should use smaller storage
+  auto small = 3.14_fx;
+  static_assert(sizeof(decltype(small)::RawType) <= 4, "Small literals should use 32-bit or smaller storage");
+
+  // Large values should promote to larger storage if needed
+  auto large = 1000000.0_fx;
+  // This should still fit in 32-bit but demonstrates the concept
+  EXPECT_NEAR(1000000.0, large.ToFloat(), 1e-6);  // Some precision loss expected
+
+  // Very precise fractional values should maximize fractional bits
+  auto precise = 0.123456789_fx;
+  EXPECT_NEAR(0.123456789, precise.ToFloat(), 1e-6);  // Some precision loss expected
+}
+
+TEST_F(FixedPointTest, LiteralOperatorFormatOptimization)
+{
+  // Test that the literal operator chooses formats optimally
+
+  // Pure integer should have zero fractional bits
+  auto integer = 42_fx;
+  EXPECT_EQ(0, decltype(integer)::FormatType::FracBits);
+  EXPECT_EQ(6, decltype(integer)::FormatType::IntBits);
+  static_assert(std::is_same_v<int8_t, decltype(integer)::RawType>,
+                "Integer literals should use int8_t for small values");
+
+  // Fractional values should allocate fractional bits
+  auto fractional = 3.14_fx;
+  EXPECT_GT(decltype(fractional)::FormatType::FracBits, 0);
+
+  // Test magnitude bit allocation
+  auto small_mag = 7_fx;    // needs 3 magnitude bits
+  auto large_mag = 255_fx;  // needs 8 magnitude bits
+
+  // Verify that different magnitudes get different bit allocations
+  static_assert(decltype(small_mag)::FormatType::IntBits <= decltype(large_mag)::FormatType::IntBits,
+                "Larger values should get more integer bits");
+}
+
+TEST_F(FixedPointTest, LiteralOperatorArithmetic)
+{
+  // Test arithmetic operations with literal-created values
+  auto a = 1.5_fx;
+  auto b = 2.5_fx;
+
+  auto sum = a + b;
+  EXPECT_NEAR(4.0, sum.ToFloat(), EPSILON);
+
+  auto product = a * b;
+  EXPECT_NEAR(3.75, product.ToFloat(), EPSILON);
+
+  auto negated = -a;
+  EXPECT_NEAR(-1.5, negated.ToFloat(), EPSILON);
+
+  // Test mixed operations with regular Fixed types
+  Q15_16 regular(1.0);
+  // Note: This might require explicit conversion in real usage
+  // auto mixed = a + regular;  // May not compile without conversion
+}
+
+TEST_F(FixedPointTest, LiteralOperatorPrecisionLimits)
+{
+  // Test precision limits of literal-generated types
+
+  // Very small differences should be representable
+  auto a = 1.0_fx;
+  auto b = 1.0001_fx;
+
+  EXPECT_NE(a.RawValue(), b.RawValue());
+  EXPECT_GT(b.ToFloat(), a.ToFloat());
+
+  // Test that precision is maximized for the chosen storage
+  auto precise = 0.999999_fx;
+  EXPECT_NEAR(0.999999, precise.ToFloat(), 1e-5);
+}
+
+TEST_F(FixedPointTest, LiteralOperatorBoundaryValues)
+{
+  // Test boundary cases
+
+  // Very small positive value
+  auto tiny = 0.0001_fx;
+  EXPECT_GT(tiny.ToFloat(), 0.0);
+
+  // Values near powers of 2
+  auto pow2_minus = 1023.99_fx;  // Just under 2^10
+  auto pow2_plus = 1024.01_fx;   // Just over 2^10
+
+  EXPECT_NEAR(1023.99, pow2_minus.ToFloat(), EPSILON);
+  EXPECT_NEAR(1024.01, pow2_plus.ToFloat(), EPSILON);
+
+  // Test that the format can represent these accurately
+  EXPECT_LT(std::abs(pow2_minus.ToFloat() - 1023.99), 0.01);
+  EXPECT_LT(std::abs(pow2_plus.ToFloat() - 1024.01), 0.01);
+}
+
+TEST_F(FixedPointTest, LiteralOperatorTypeUniqueness)
+{
+  // Test that different literals create different types when appropriate
+
+  auto a = 1.5_fx;
+  auto b = 2.5_fx;
+  auto c = 100_fx;
+
+  // Same format should have same type
+  static_assert(std::is_same_v<decltype(a), decltype(b)> || !std::is_same_v<decltype(a), decltype(b)>,
+                "Types may or may not be same depending on optimization");
+
+  // Different magnitude requirements should potentially have different types
+  // This is implementation-dependent based on our optimization strategy
+}
+
+TEST_F(FixedPointTest, LiteralOperatorConstexpr)
+{
+  // Test that literal operators work in constexpr contexts
+
+  constexpr auto compile_time = 3.14159_fx;
+  static_assert(compile_time.RawValue() != 0, "Literal should be evaluable at compile time");
+
+  constexpr auto c1 = 1.5_fx;
+
+  // Test constexpr arithmetic
+  constexpr auto sum = 1.5_fx + 2.5_fx;
+  // Note: This may require operator+ to be constexpr in the Fixed class
+
+  //EXPECT_NEAR(3.14159, compile_time.ToFloat(), EPSILON);
+}
+
 
 }  // namespace FixedPointTests

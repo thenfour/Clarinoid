@@ -13,8 +13,10 @@
 // - and the Fixed<> class then mostly composes kernel ops to make a complete usable dropin.
 
 #include "./fp2.hpp"
+#include "./operator_fx.hpp"
 
-namespace clarinoid {
+namespace clarinoid
+{
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // NAMING:
@@ -1289,13 +1291,14 @@ namespace clarinoid {
 // }
 
 // default: arithmetic types are scalar-like
-template<class T>
+template <class T>
 struct is_scalar_like : std::is_arithmetic<T>
-{};
+{
+};
 //
 //// opt in Fixed
 //template<int I, int F, class S>
 //struct is_scalar_like<fx::Fixed<I, F, S>> : std::true_type
 //{};
 
-} // namespace clarinoid
+}  // namespace clarinoid
