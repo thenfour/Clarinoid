@@ -187,7 +187,7 @@ inline FormatSpec parse_spec(const std::string_view sv)
   //}
 
   // For text / char the standard default is left-align.
-  if (defaultAlign  && (fs.type == 'c' || fs.type == 's'))
+  if (defaultAlign && (fs.type == 'c' || fs.type == 's'))
   {
     fs.align = '<';
   }
@@ -326,7 +326,7 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
   }
 
   // Determine base and formatting options
-  unsigned base;
+  unsigned base = 10;
   bool uppercase = false;
   bool isChar = false;
 
@@ -358,10 +358,10 @@ void write_integer_formatted(Sink& out, IntType v, const FormatSpec& fs)
       }
       // Fall through to decimal for non-ASCII
       [[fallthrough]];
-    case 'd':   // decimal (explicit)
-    case '\0':  // decimal (default)
+    //case 'd':   // decimal (explicit)
+    //case '\0':  // decimal (default)
     default:
-      base = 10;
+      //base = 10;
       break;
   }
 
@@ -734,6 +734,34 @@ template <class... Ts>
 void format_to(std::ostream& os, const std::string_view fmt, Ts&&... ts)
 {
   OStreamSink sink{os};
+  vformat(sink, fmt, std::forward<Ts>(ts)...);
+}
+
+// Make a sink for arduino platform Serial, and a format_to() function for it
+class SerialSink
+{
+public:
+  SerialSink() = default;
+
+  void write(const char* s, size_t n)
+  {
+    for (size_t i = 0; i < n; ++i)
+    {
+      // Assuming Serial is a global object with a write method
+      Serial.write(s[i]);
+    }
+  }
+
+  void write(char c)
+  {
+    Serial.write(c);
+  }
+};
+
+template <class... Ts>
+void format_to_serial(const std::string_view fmt, Ts&&... ts)
+{
+  SerialSink sink;
   vformat(sink, fmt, std::forward<Ts>(ts)...);
 }
 

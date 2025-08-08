@@ -16,3 +16,7 @@
 #ifdef CLARINOID_PLATFORM_TEENSY
   #include <Arduino.h>
 #endif
+
+#ifndef AUDIO_BLOCK_SAMPLES
+  #define AUDIO_BLOCK_SAMPLES 128
+#endif

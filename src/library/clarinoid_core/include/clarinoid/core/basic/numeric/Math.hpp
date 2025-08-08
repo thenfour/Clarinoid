@@ -3,8 +3,54 @@
 #include <algorithm>
 #include <cmath>
 
+// see C:\Users\carl\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\cores\teensy4
+#include <arm_math.h>
+#include <imxrt.h>
+
+
 #include "../BaseDefs.hpp"
+#include "../CLArduino.hpp"
 #include "../function.hpp"
+
+
+// Teensy-optimized saturate to int16_t
+static inline int16_t saturate16(int32_t x)
+{
+#ifdef CLARINOID_PLATFORM_TEENSY
+  //#if defined(__ARM_ARCH_7EM__) || defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_8M_MAIN__)
+  // Available on Cortex-M3/M4/M7/M33 etc. Teensy 4.x is M7.
+  // __SSAT(val, sat_bits) saturates to signed 'sat_bits' range.
+  return static_cast<int16_t>(__SSAT(x, 16));
+#else
+  if (x > INT16_MAX)
+    return INT16_MAX;
+  if (x < INT16_MIN)
+    return INT16_MIN;
+  return static_cast<int16_t>(x);
+#endif
+}
+
+// returns 0xHHHHLLLL where LLLL is left, HHHH is right (both saturated)
+static inline uint32_t pack_s16_pair(int32_t left, int32_t right)
+{
+#ifdef CLARINOID_PLATFORM_TEENSY
+  //#if defined(__ARM_ARCH_7EM__) || defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_8M_MAIN__)
+  uint32_t L = static_cast<uint16_t>(__SSAT(left, 16));
+  uint32_t R = static_cast<uint16_t>(__SSAT(right, 16));
+  // PKHBT: Pack Halfword Bottom + Top (R in high half, L in low half)
+  return __PKHBT(L, R, 16);
+#else
+  auto sat = [](int32_t v) -> uint16_t
+  {
+    if (v > INT16_MAX)
+      v = INT16_MAX;
+    else if (v < INT16_MIN)
+      v = INT16_MIN;
+    return static_cast<uint16_t>(v);
+  };
+  return (uint32_t(sat(right)) << 16) | sat(left);
+#endif
+}
 
 #ifdef CLARINOID_PLATFORM_X86
 inline float arm_sin_f32(float x)
@@ -15,15 +61,6 @@ inline float arm_cos_f32(float x)
 {
   return ::cosf(x);
 }
-inline int16_t saturate16(int32_t n)
-{
-  if (n < std::numeric_limits<int16_t>::min())
-    return std::numeric_limits<int16_t>::min();
-  if (n > std::numeric_limits<int16_t>::max())
-    return std::numeric_limits<int16_t>::max();
-  return (int16_t)n;
-}
-
 inline void arm_q15_to_float(const int16_t* in, float* out, size_t n)
 {
   for (size_t i = 0; i < n; ++i)
@@ -231,9 +268,10 @@ inline float tanh(float var)
 // https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicAdd.html et al.
 inline float Sample16To32(int16_t s)
 {
-  if (s == -32768)
-    return -1.0f;
-  return s / 32767.0f;
+  // if (s == -32768)
+  //   return -1.0f;
+  constexpr float kScale = 1.0f / 32767.0f;
+  return s / kScale;
 }
 
 // -32768,32767 -> -1,1
@@ -661,25 +699,57 @@ inline void DivRemBitwise(Tval val, size_t& wholeParts, Tremainder& remainder)
   remainder = (Tremainder)rem;
 }
 
-inline int RotateIntoRange(const int& val, const int& itemCount)
+// inline int RotateIntoRange(const int& val, const int& itemCount)
+// {
+//   CCASSERT(itemCount > 0);
+//   int ret = val;
+//   while (ret < 0)
+//   {
+//     ret += itemCount;  // todo: optimize
+//   }
+//   return ret % itemCount;
+// }
+
+// inline uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount)
+// {
+//   CCASSERT(itemCount > 0);
+//   while (val < 0)
+//   {
+//     val += itemCount;  // todo: optimize
+//   }
+//   return ((uint8_t)(val)) % itemCount;
+// }
+
+
+// Rotate val into [0, itemCount)
+inline int RotateIntoRange(int val, int itemCount)
 {
   CCASSERT(itemCount > 0);
-  int ret = val;
-  while (ret < 0)
+  // Power-of-two fast path
+  if ((itemCount & (itemCount - 1)) == 0)
   {
-    ret += itemCount;  // todo: optimize
+    return val & (itemCount - 1);
   }
-  return ret % itemCount;
+  // General case: one modulo, then fix negative remainder
+  int r = val % itemCount;  // C++ remainder keeps sign of val
+  return (r < 0) ? (r + itemCount) : r;
 }
 
+// Rotate int8 into [0, itemCount) returning uint8_t
 inline uint8_t RotateIntoRangeByte(int8_t val, uint8_t itemCount)
 {
   CCASSERT(itemCount > 0);
-  while (val < 0)
+  // Power-of-two fast path (mask fits in 8 bits)
+  if ((itemCount & (itemCount - 1)) == 0)
   {
-    val += itemCount;  // todo: optimize
+    return static_cast<uint8_t>(val) & (itemCount - 1);
   }
-  return ((uint8_t)(val)) % itemCount;
+  // General case: promote to int, one modulo, then fixup
+  int m = itemCount;
+  int r = static_cast<int>(val) % m;
+  if (r < 0)
+    r += m;
+  return static_cast<uint8_t>(r);
 }
 
 // correction gets set to the # of rotations, neg, signed. basically an "adjustment".

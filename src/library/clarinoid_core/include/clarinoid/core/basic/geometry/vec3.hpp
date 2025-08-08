@@ -445,165 +445,165 @@ struct Vec3
   }
 
 
-  // ----------------- swizzle : 2-component -----------------
-  [[nodiscard]] static constexpr Vec2<T> xy() noexcept
-  {
-    return {x, y};
-  }
-  [[nodiscard]] static constexpr Vec2<T> xz() noexcept
-  {
-    return {x, z};
-  }
-  [[nodiscard]] static constexpr Vec2<T> yz() noexcept
-  {
-    return {y, z};
-  }
+  // // ----------------- swizzle : 2-component -----------------
+  // [[nodiscard]] static constexpr Vec2<T> xy() noexcept
+  // {
+  //   return {x, y};
+  // }
+  // [[nodiscard]] static constexpr Vec2<T> xz() noexcept
+  // {
+  //   return {x, z};
+  // }
+  // [[nodiscard]] static constexpr Vec2<T> yz() noexcept
+  // {
+  //   return {y, z};
+  // }
 
-  [[nodiscard]] static constexpr Vec2<T> yx() noexcept
-  {
-    return {y, x};
-  }
-  [[nodiscard]] static constexpr Vec2<T> zx() noexcept
-  {
-    return {z, x};
-  }
-  [[nodiscard]] static constexpr Vec2<T> zy() noexcept
-  {
-    return {z, y};
-  }
+  // [[nodiscard]] static constexpr Vec2<T> yx() noexcept
+  // {
+  //   return {y, x};
+  // }
+  // [[nodiscard]] static constexpr Vec2<T> zx() noexcept
+  // {
+  //   return {z, x};
+  // }
+  // [[nodiscard]] static constexpr Vec2<T> zy() noexcept
+  // {
+  //   return {z, y};
+  // }
 
-  [[nodiscard]] static constexpr Vec2<T> xx() noexcept
-  {
-    return {x, x};
-  }
-  [[nodiscard]] static constexpr Vec2<T> yy() noexcept
-  {
-    return {y, y};
-  }
-  [[nodiscard]] static constexpr Vec2<T> zz() noexcept
-  {
-    return {z, z};
-  }
+  // [[nodiscard]] static constexpr Vec2<T> xx() noexcept
+  // {
+  //   return {x, x};
+  // }
+  // [[nodiscard]] static constexpr Vec2<T> yy() noexcept
+  // {
+  //   return {y, y};
+  // }
+  // [[nodiscard]] static constexpr Vec2<T> zz() noexcept
+  // {
+  //   return {z, z};
+  // }
 
-  // ----------------- swizzle : 3-component, all permutations -----------------
-  [[nodiscard]] static constexpr Vec3 xxx() noexcept
-  {
-    return {x, x, x};
-  }
-  [[nodiscard]] static constexpr Vec3 xxy() noexcept
-  {
-    return {x, x, y};
-  }
-  [[nodiscard]] static constexpr Vec3 xxz() noexcept
-  {
-    return {x, x, z};
-  }
+  // // ----------------- swizzle : 3-component, all permutations -----------------
+  // [[nodiscard]] static constexpr Vec3 xxx() noexcept
+  // {
+  //   return {x, x, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 xxy() noexcept
+  // {
+  //   return {x, x, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 xxz() noexcept
+  // {
+  //   return {x, x, z};
+  // }
 
-  [[nodiscard]] static constexpr Vec3 xyx() noexcept
-  {
-    return {x, y, x};
-  }
-  [[nodiscard]] static constexpr Vec3 xyy() noexcept
-  {
-    return {x, y, y};
-  }
-  [[nodiscard]] static constexpr Vec3 xyz() noexcept
-  {
-    return {x, y, z};
-  }
+  // [[nodiscard]] static constexpr Vec3 xyx() noexcept
+  // {
+  //   return {x, y, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 xyy() noexcept
+  // {
+  //   return {x, y, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 xyz() noexcept
+  // {
+  //   return {x, y, z};
+  // }
 
-  [[nodiscard]] static constexpr Vec3 xzx() noexcept
-  {
-    return {x, z, x};
-  }
-  [[nodiscard]] static constexpr Vec3 xzy() noexcept
-  {
-    return {x, z, y};
-  }
-  [[nodiscard]] static constexpr Vec3 xzz() noexcept
-  {
-    return {x, z, z};
-  }
+  // [[nodiscard]] static constexpr Vec3 xzx() noexcept
+  // {
+  //   return {x, z, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 xzy() noexcept
+  // {
+  //   return {x, z, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 xzz() noexcept
+  // {
+  //   return {x, z, z};
+  // }
 
-  //
-  [[nodiscard]] static constexpr Vec3 yxx() noexcept
-  {
-    return {y, x, x};
-  }
-  [[nodiscard]] static constexpr Vec3 yxy() noexcept
-  {
-    return {y, x, y};
-  }
-  [[nodiscard]] static constexpr Vec3 yxz() noexcept
-  {
-    return {y, x, z};
-  }
+  // //
+  // [[nodiscard]] static constexpr Vec3 yxx() noexcept
+  // {
+  //   return {y, x, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 yxy() noexcept
+  // {
+  //   return {y, x, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 yxz() noexcept
+  // {
+  //   return {y, x, z};
+  // }
 
-  [[nodiscard]] static constexpr Vec3 yyx() noexcept
-  {
-    return {y, y, x};
-  }
-  [[nodiscard]] static constexpr Vec3 yyy() noexcept
-  {
-    return {y, y, y};
-  }
-  [[nodiscard]] static constexpr Vec3 yyz() noexcept
-  {
-    return {y, y, z};
-  }
+  // [[nodiscard]] static constexpr Vec3 yyx() noexcept
+  // {
+  //   return {y, y, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 yyy() noexcept
+  // {
+  //   return {y, y, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 yyz() noexcept
+  // {
+  //   return {y, y, z};
+  // }
 
-  [[nodiscard]] static constexpr Vec3 yzx() noexcept
-  {
-    return {y, z, x};
-  }
-  [[nodiscard]] static constexpr Vec3 yzy() noexcept
-  {
-    return {y, z, y};
-  }
-  [[nodiscard]] static constexpr Vec3 yzz() noexcept
-  {
-    return {y, z, z};
-  }
+  // [[nodiscard]] static constexpr Vec3 yzx() noexcept
+  // {
+  //   return {y, z, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 yzy() noexcept
+  // {
+  //   return {y, z, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 yzz() noexcept
+  // {
+  //   return {y, z, z};
+  // }
 
-  //
-  [[nodiscard]] static constexpr Vec3 zxx() noexcept
-  {
-    return {z, x, x};
-  }
-  [[nodiscard]] static constexpr Vec3 zxy() noexcept
-  {
-    return {z, x, y};
-  }
-  [[nodiscard]] static constexpr Vec3 zxz() noexcept
-  {
-    return {z, x, z};
-  }
+  // //
+  // [[nodiscard]] static constexpr Vec3 zxx() noexcept
+  // {
+  //   return {z, x, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 zxy() noexcept
+  // {
+  //   return {z, x, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 zxz() noexcept
+  // {
+  //   return {z, x, z};
+  // }
 
-  [[nodiscard]] static constexpr Vec3 zyx() noexcept
-  {
-    return {z, y, x};
-  }
-  [[nodiscard]] static constexpr Vec3 zyy() noexcept
-  {
-    return {z, y, y};
-  }
-  [[nodiscard]] static constexpr Vec3 zyz() noexcept
-  {
-    return {z, y, z};
-  }
+  // [[nodiscard]] static constexpr Vec3 zyx() noexcept
+  // {
+  //   return {z, y, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 zyy() noexcept
+  // {
+  //   return {z, y, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 zyz() noexcept
+  // {
+  //   return {z, y, z};
+  // }
 
-  [[nodiscard]] static constexpr Vec3 zzx() noexcept
-  {
-    return {z, z, x};
-  }
-  [[nodiscard]] static constexpr Vec3 zzy() noexcept
-  {
-    return {z, z, y};
-  }
-  [[nodiscard]] static constexpr Vec3 zzz() noexcept
-  {
-    return {z, z, z};
-  }
+  // [[nodiscard]] static constexpr Vec3 zzx() noexcept
+  // {
+  //   return {z, z, x};
+  // }
+  // [[nodiscard]] static constexpr Vec3 zzy() noexcept
+  // {
+  //   return {z, z, y};
+  // }
+  // [[nodiscard]] static constexpr Vec3 zzz() noexcept
+  // {
+  //   return {z, z, z};
+  // }
 };
 
 }  // namespace clarinoid

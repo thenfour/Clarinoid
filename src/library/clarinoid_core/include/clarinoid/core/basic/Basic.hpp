@@ -26,12 +26,14 @@
 #include "./string/format.hpp"
 
 #include "./Numeric.hpp"
+#include "./crc32.hpp"
 
 #include "./Geometry.hpp"
 
 #include "Gfx.hpp"
 
 #include "Control.hpp"
+#include "CycleCounter.hpp"
 #include "FPS.hpp"
 #include "Music.hpp"
 #include "NumericRanges.hpp"

@@ -353,22 +353,22 @@ struct Vec2
   }
 
   // swizzles: all permutations to vec2:
-  [[nodiscard]] constexpr Vec2 xx() const noexcept
-  {
-    return {x, x};
-  }
-  [[nodiscard]] constexpr Vec2 xy() const noexcept
-  {
-    return {x, y};
-  }
-  [[nodiscard]] constexpr Vec2 yx() const noexcept
-  {
-    return {y, x};
-  }
-  [[nodiscard]] constexpr Vec2 yy() const noexcept
-  {
-    return {y, y};
-  }
+  // [[nodiscard]] constexpr Vec2 xx() const noexcept
+  // {
+  //   return {x, x};
+  // }
+  // [[nodiscard]] constexpr Vec2 xy() const noexcept
+  // {
+  //   return {x, y};
+  // }
+  // [[nodiscard]] constexpr Vec2 yx() const noexcept
+  // {
+  //   return {y, x};
+  // }
+  // [[nodiscard]] constexpr Vec2 yy() const noexcept
+  // {
+  //   return {y, y};
+  // }
 };
 
 }  // namespace clarinoid

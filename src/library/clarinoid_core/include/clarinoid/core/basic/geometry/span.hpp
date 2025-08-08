@@ -3,11 +3,12 @@
 // #include <algorithm>
 // #include <cmath>
 //#include <limits>
-#include <optional>
 #include <numeric>
+#include <optional>
 #include <type_traits>
 
-#include "../Numeric.hpp" // is_scalar_like
+
+#include "../Numeric.hpp"  // is_scalar_like
 //#include <utility>
 
 
@@ -39,7 +40,10 @@ struct Span
   [[nodiscard]] constexpr T center() const noexcept
   {
     // avoids overflow, works for integral & floating
-    return std::midpoint(start(), end());
+    //return std::midpoint(start(), end());
+    // as we're in C++17, cannot use midpoint. so...
+    constexpr T half{T{1} / T{2}};
+    return mOrigin + (mLength * half);
   }
 
   // Factories from endpoints, for convenience and clarity.

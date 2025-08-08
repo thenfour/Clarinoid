@@ -229,7 +229,7 @@
             "defines": [
                 "PLATFORMIO=60118",
                 "__IMXRT1062__",
-                "ARDUINO_TEENSY_MICROMOD",
+                "ARDUINO_TEENSY40",
                 "CLARINOID_PLATFORM_TEENSY",
                 "USB_SERIAL",
                 "ARDUINO=10805",
