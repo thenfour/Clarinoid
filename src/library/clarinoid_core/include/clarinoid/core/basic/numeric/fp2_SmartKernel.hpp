@@ -15,9 +15,6 @@ struct FxSmartKernel
   template <typename TFormat>
   using ValueType = FxValue<TFormat>;
 
-  template <bool TWantsSign, int TIntBits, int TFracBits>
-  using OptimalRawType = OptimalRawType_t<TWantsSign, TIntBits, TFracBits>;
-
   template <typename TFormatA, typename TFormatB>
   using MulResultFormat =
       std::conditional_t<(TFormatA::ValueBits + TFormatB::ValueBits <= TFormatA::StorageValueBits),
@@ -40,9 +37,9 @@ struct FxSmartKernel
   template <typename TFormat>
   static constexpr typename TFormat::RawType RawOne()
   {
-    if constexpr (TFormat::IntBits == 0)
+    if constexpr (TFormat::MagBits == 0)
     {
-      // If no integer bits, raw one is the max value for the fractional bits (useful for normalized full scale)
+      // If no magnitude bits, raw one is the max value for the fractional bits (useful for normalized full scale)
       return TFormat::RawMax;
     }
     // Otherwise, raw one is 1 shifted left by the fractional bits
@@ -170,6 +167,112 @@ struct FxSmartKernel
     using ResultFormat = NegateResultFormat<TFormat>;
     static_assert(ResultFormat::IsSigned, "Cannot negate - result format must be signed");
     return ConstructFromRaw<ResultFormat>(-value.mRawValue);
+  }
+
+  // for finding the SMALLEST raw type that can hold the given bits
+  template <bool TWantsSign, int TMagBits, int TFracBits>
+  struct SelectIntegralFormat
+  {
+    static constexpr int SignBits = TWantsSign ? 1 : 0;
+    static constexpr int TotalBitsNeeded = SignBits + TMagBits + TFracBits;
+
+    using raw_type =
+        std::conditional_t<(TotalBitsNeeded <= 8),
+                           std::conditional_t<TWantsSign, int8_t, uint8_t>,
+                           std::conditional_t<(TotalBitsNeeded <= 16),
+                                              std::conditional_t<TWantsSign, int16_t, uint16_t>,
+                                              std::conditional_t<(TotalBitsNeeded <= 32),
+                                                                 std::conditional_t<TWantsSign, int32_t, uint32_t>,
+                                                                 std::conditional_t<TWantsSign, int64_t, uint64_t>>>>;
+
+    using type = FxFormat<FxLayout<TMagBits, TFracBits>, FxStorageTraits<raw_type>>;
+  };
+
+  //template <bool TWantsSign, int TMagBits, int TFracBits>
+  //using SmallestFormat = typename SelectSmallestFormat<TWantsSign, TMagBits, TFracBits>::type;
+
+  // for finding the type that should be used for holding the literal value. Don't bother storing values in int8 / int16
+  // for example; there's basically 0 chance that it will stay that way. use register-sized.
+  template <bool TWantsSign, int TMagBits, int TFracBits>
+  struct SelectFractionalFormat
+  {
+    static constexpr int SignBits = TWantsSign ? 1 : 0;
+    static constexpr int TotalBitsNeeded = SignBits + TMagBits + TFracBits;
+
+    using raw_type = std::conditional_t<(TotalBitsNeeded <= 32),
+                                        std::conditional_t<TWantsSign, int32_t, uint32_t>,
+                                        std::conditional_t<TWantsSign, int64_t, uint64_t>>;
+
+    using type = FxFormat<FxLayout<TMagBits, TFracBits>, FxStorageTraits<raw_type>>;
+  };
+
+  template <bool TWantsSign, int TMagBits, int TFracBits>
+  using LiteralFormat = std::conditional_t<(TFracBits > 0),
+      typename SelectFractionalFormat<TWantsSign, TMagBits, TFracBits>::type,
+      typename SelectIntegralFormat<TWantsSign, TMagBits, TFracBits>::type
+                                                                 >;// typename SelectSmallestFormat<TWantsSign, TMagBits, TFracBits>::type;
+
+  // -------------------------------- Literal decision descriptor -----------------
+  template <typename TParsed>
+  struct LiteralDecision
+  {
+    // Input snapshot
+    using Parsed = TParsed;
+    static constexpr bool SourceNegative = Parsed::neg;
+    static constexpr std::uint64_t AbsValue = Parsed::abs_val;
+    static constexpr bool HasFraction = Parsed::has_frac;
+
+    // Sign policy
+    static constexpr bool NeedsSign = SourceNegative;
+
+    static constexpr int MagBits = needed_int_bits(AbsValue);
+
+    // Choose storage & fractional bits
+    //using Store = OptimalRawType<NeedsSign, MagBits, HasFraction ? (32 - MagBits - (NeedsSign ? 1 : 0)) : 0>;
+    //static constexpr int TotalBits = std::numeric_limits<Store>::digits;
+    //static constexpr int FracBits = HasFraction ? (TotalBits - MagBits) : 0;
+
+    //using Layout = FxLayout<MagBits, FracBits>;
+    //using Storage = FxStorageTraits<Store>;
+    //using Format = FxFormat<Layout, Storage>;
+
+    // if there's a fraction, then make sure we have bits for it.
+    // - if magbits require an int64, then we can use int64_t as the raw type.
+    // - otherwise, use int32.
+    static constexpr int MinFractBitsNeeded = HasFraction ? 1 : 0; // we don't actualyl know how many fract bits are required to store the value accurately. we will just go for the biggest we can, once the raw type has been selected.
+    using FormatWithMinFractBits = LiteralFormat<NeedsSign, MagBits, MinFractBitsNeeded>;
+
+    // if !HasFraction, then FormatWithMinFractBits is already correct.
+    // otherwise, fill out fract bits to fill remaining bits of the raw type.
+    using Format = std::conditional_t<HasFraction,
+                                      LiteralFormat<NeedsSign, MagBits, FormatWithMinFractBits::StorageValueBits - MagBits>,
+                           FormatWithMinFractBits>;
+
+    using FxValueType = FxValue<Format>;
+    static constexpr int FracBits = Format::FracBits;
+
+    // Raw computation -- convert Parsed::numerator & denominator to the correct value. (rounded)
+    static constexpr std::uint64_t scale = (FracBits > 0) ? (std::uint64_t(1) << FracBits) : 1ULL;
+    static constexpr bool WillOverflow = Parsed::denominator &&
+                                         (Parsed::numerator > (std::numeric_limits<std::uint64_t>::max() / scale));
+    static constexpr std::uint64_t RawUnsigned = WillOverflow
+                                                     ? std::numeric_limits<std::uint64_t>::max()
+                                                     : (Parsed::denominator
+                                                            ? ((Parsed::numerator * scale + (Parsed::denominator / 2)) /
+                                                               Parsed::denominator)
+                                                            : 0ULL);
+
+    using RawType = typename Format::RawType;
+    static constexpr RawType RawValue = static_cast<RawType>(SourceNegative ? -static_cast<std::int64_t>(RawUnsigned)
+                                                                        : static_cast<std::int64_t>(RawUnsigned));
+
+    static constexpr FxValueType value = FxValueType::FromRaw(RawValue); 
+  };
+
+  template <typename Parsed>
+  static constexpr auto MakeLiteral(const Parsed&)
+  {
+    return LiteralDecision<Parsed>::value();
   }
 };
 

@@ -11,34 +11,34 @@
 
 namespace clarinoid
 {
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <summary>
-/// Computes the absolute value of a compile-time integer constant.
-/// </summary>
-/// <typeparam name="i">The integer value whose absolute value is to be computed.</typeparam>
-template <int64_t i>
-struct StaticAbs
-{
-  static constexpr int64_t value = i < 0 ? -i : i;
-};
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <summary>
-/// Computes the number of bits required to represent a static integer value at compile time.
-/// </summary>
-/// <typeparam name="i">The integer value for which to compute the number of bits needed.</typeparam>
-template <int64_t i>
-struct StaticValueBitsNeeded
-{
-  static constexpr int64_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >> 1)>::value_allow_zero;
-  static constexpr int64_t value = value_allow_zero;
-};
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// /// <summary>
+// /// Computes the absolute value of a compile-time integer constant.
+// /// </summary>
+// /// <typeparam name="i">The integer value whose absolute value is to be computed.</typeparam>
+// template <int64_t i>
+// struct StaticAbs
+// {
+//   static constexpr int64_t value = i < 0 ? -i : i;
+// };
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// /// <summary>
+// /// Computes the number of bits required to represent a static integer value at compile time.
+// /// </summary>
+// /// <typeparam name="i">The integer value for which to compute the number of bits needed.</typeparam>
+// template <int64_t i>
+// struct StaticValueBitsNeeded
+// {
+//   static constexpr int64_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >> 1)>::value_allow_zero;
+//   static constexpr int64_t value = value_allow_zero;
+// };
 
-template <>
-struct StaticValueBitsNeeded<0>
-{
-  static constexpr int64_t value = 1;
-  static constexpr int64_t value_allow_zero = 0;
-};
+// template <>
+// struct StaticValueBitsNeeded<0>
+// {
+//   static constexpr int64_t value = 1;
+//   static constexpr int64_t value_allow_zero = 0;
+// };
 
 template <typename T>
 constexpr int needed_int_bits(T value)
@@ -59,42 +59,42 @@ constexpr std::uint64_t pow10_u64(unsigned p)
   return p > 19 ? std::uint64_t{0} : (p == 0 ? 1 : pow10_u64(p - 1) * 10);
 }
 
-// Helper to select optimal raw type based on requirements
-template <bool TWantsSign, int TIntBits, int TFracBits>
-struct SelectOptimalRawType
-{
-  static constexpr int SignBits = TWantsSign ? 1 : 0;
-  static constexpr int TotalBitsNeeded = SignBits + TIntBits + TFracBits;
+// // Helper to select optimal raw type based on requirements
+// template <bool TWantsSign, int TIntBits, int TFracBits>
+// struct SelectOptimalRawType
+// {
+//   static constexpr int SignBits = TWantsSign ? 1 : 0;
+//   static constexpr int TotalBitsNeeded = SignBits + TIntBits + TFracBits;
 
-  using type =
-      std::conditional_t<(TotalBitsNeeded <= 8),
-                         std::conditional_t<TWantsSign, int8_t, uint8_t>,
-                         std::conditional_t<(TotalBitsNeeded <= 16),
-                                            std::conditional_t<TWantsSign, int16_t, uint16_t>,
-                                            std::conditional_t<(TotalBitsNeeded <= 32),
-                                                               std::conditional_t<TWantsSign, int32_t, uint32_t>,
-                                                               std::conditional_t<TWantsSign, int64_t, uint64_t>>>>;
-};
+//   using type =
+//       std::conditional_t<(TotalBitsNeeded <= 8),
+//                          std::conditional_t<TWantsSign, int8_t, uint8_t>,
+//                          std::conditional_t<(TotalBitsNeeded <= 16),
+//                                             std::conditional_t<TWantsSign, int16_t, uint16_t>,
+//                                             std::conditional_t<(TotalBitsNeeded <= 32),
+//                                                                std::conditional_t<TWantsSign, int32_t, uint32_t>,
+//                                                                std::conditional_t<TWantsSign, int64_t, uint64_t>>>>;
+// };
 
-// Type alias for the helper struct result
-template <bool TWantsSign, int TIntBits, int TFracBits>
-using OptimalRawType_t = typename SelectOptimalRawType<TWantsSign, TIntBits, TFracBits>::type;
+// // Type alias for the helper struct result
+// template <bool TWantsSign, int TIntBits, int TFracBits>
+// using OptimalRawType_t = typename SelectOptimalRawType<TWantsSign, TIntBits, TFracBits>::type;
 
 // Terminology:
-// - IntBits: number of magnitude bits (excluding sign bit)
+// - MagBits: number of magnitude bits (excluding sign bit)
 // - FracBits: number of fractional bits
 // - SignBits: 1 for signed, 0 for unsigned
 // - HeadroomBits: unused bits in MSBs for overflow protection
-// - StorageBits = SignBits + HeadroomBits + IntBits + FracBits
+// - StorageBits = SignBits + HeadroomBits + MagBits + FracBits
 
 // Describes the semantic layout of the fixed point type
-template <int TIntBits, int TFracBits>
+template <int TMagBits, int TFracBits>
 struct FxLayout
 {
-  static_assert(TIntBits >= 0 && TFracBits >= 0, "negative bit count");
-  static constexpr int IntBits = TIntBits;
+  static_assert(TMagBits >= 0 && TFracBits >= 0, "negative bit count");
+  static constexpr int MagBits = TMagBits;
   static constexpr int FracBits = TFracBits;
-  static constexpr int ValueBits = TIntBits + TFracBits;  // semantic payload (excluding sign)
+  static constexpr int ValueBits = MagBits + FracBits;  // semantic payload (excluding sign)
 };
 //| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 //| **DSP “inner-loop” kernels**      | **• FMA / MAC (`y = a·b + c`)**<br>**• Multiply-accumulate with rounding & saturation**<br>**• Dot / sum-of-products helpers**                                                    | Every biquad, FIR, FFT, and envelope follower is built on “multiply then add”; a fused path saves one rounding + one saturation.      |
@@ -129,7 +129,7 @@ struct FxFormat
   using RawType = typename TStorageTraits::RawType;
 
   // Layout properties
-  static constexpr int IntBits = TLayout::IntBits;
+  static constexpr int MagBits = TLayout::MagBits;
   static constexpr int FracBits = TLayout::FracBits;
   static constexpr int ValueBits = TLayout::ValueBits;
 
@@ -145,10 +145,10 @@ struct FxFormat
   // Safety checks
   static_assert(ValueBits > 0, "ValueBits must be positive");
   static_assert(HeadroomBits >= 0, "Not enough storage bits for the requested format");
-  static_assert((SignBits + HeadroomBits + IntBits + FracBits) == StorageWidthBits, "Total bits is not adding up...");
+  static_assert((SignBits + HeadroomBits + MagBits + FracBits) == StorageWidthBits, "Total bits is not adding up...");
 
   // Useful constants (RawOne moved to kernels to allow different policies)
-  static constexpr RawType RawMax = ((RawType(1) << (IntBits + FracBits)) - 1);
+  static constexpr RawType RawMax = ((RawType(1) << (MagBits + FracBits)) - 1);
   static constexpr RawType RawMin = IsSigned ? -RawMax - 1 : RawType(0);
 };
 
