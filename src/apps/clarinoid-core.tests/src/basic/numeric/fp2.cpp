@@ -189,6 +189,8 @@ TEST_F(FixedPointTest, ConstructionFromFloat)
 
   Q0_31_Smart e(0.25);
   EXPECT_NEAR(0.25, e.ToFloat(), EPSILON);
+
+  auto x1 = FixedAuto<>();
 }
 
 TEST_F(FixedPointTest, ConstructionFromRaw)

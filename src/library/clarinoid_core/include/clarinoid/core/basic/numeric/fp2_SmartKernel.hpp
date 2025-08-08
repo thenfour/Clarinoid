@@ -10,37 +10,26 @@
 namespace clarinoid
 {
 
-// Smart kernel that exploits headroom and shift elision for better performance
 struct FxSmartKernel
 {
-  // Value type - just use FxValue for now
   template <typename TFormat>
   using ValueType = FxValue<TFormat>;
 
-  // Helper to select optimal raw type based on requirements
   template <bool TWantsSign, int TIntBits, int TFracBits>
   using OptimalRawType = OptimalRawType_t<TWantsSign, TIntBits, TFracBits>;
 
-  // Smart multiplication result format selection
   template <typename TFormatA, typename TFormatB>
-  using MulResultFormat = std::conditional_t<
-      // If the total intermediate bits fit in the left operand's storage with headroom
-      (TFormatA::ValueBits + TFormatB::ValueBits <= TFormatA::StorageValueBits),
-      TFormatA,  // Use left operand format (no promotion needed)
+  using MulResultFormat =
+      std::conditional_t<(TFormatA::ValueBits + TFormatB::ValueBits <= TFormatA::StorageValueBits),
+                         TFormatA,
+                         std::conditional_t<(TFormatA::HeadroomBits >= TFormatB::HeadroomBits), TFormatA, TFormatB>>;
 
-      // If the left operand has more headroom, use it
-      std::conditional_t<(TFormatA::HeadroomBits >= TFormatB::HeadroomBits), TFormatA, TFormatB>>;
-
-  // Smart addition result format selection
   template <typename TFormatA, typename TFormatB>
-  using AddResultFormat = std::conditional_t<
-      // If same fractional bits and A has more headroom, use A
-      (TFormatA::FracBits == TFormatB::FracBits && TFormatA::HeadroomBits >= TFormatB::HeadroomBits),
-      TFormatA,
-      // Otherwise use B if it has more headroom
-      std::conditional_t<(TFormatB::HeadroomBits >= TFormatA::HeadroomBits), TFormatB, TFormatA>>;
+  using AddResultFormat =
+      std::conditional_t<(TFormatA::FracBits == TFormatB::FracBits && TFormatA::HeadroomBits >= TFormatB::HeadroomBits),
+                         TFormatA,
+                         std::conditional_t<(TFormatB::HeadroomBits >= TFormatA::HeadroomBits), TFormatB, TFormatA>>;
 
-  // Negation result format - same smart promotion as naive for now
   template <typename TFormat>
   using NegateResultFormat = std::conditional_t<
       TFormat::IsSigned,
@@ -90,8 +79,7 @@ struct FxSmartKernel
     if constexpr (TFormatA::FracBits == TFormatB::FracBits)
     {
       // Same fractional bits - direct addition
-      auto result_raw = a.mRawValue + b.mRawValue;
-      return ConstructFromRaw<ResultFormat>(result_raw);
+      return ConstructFromRaw<ResultFormat>(a.mRawValue + b.mRawValue);
     }
     else
     {
@@ -103,8 +91,7 @@ struct FxSmartKernel
       auto aligned_a = (a_shift >= 0) ? (a.mRawValue << a_shift) : (a.mRawValue >> (-a_shift));
       auto aligned_b = (b_shift >= 0) ? (b.mRawValue << b_shift) : (b.mRawValue >> (-b_shift));
 
-      auto result_raw = aligned_a + aligned_b;
-      return ConstructFromRaw<ResultFormat>(result_raw);
+      return ConstructFromRaw<ResultFormat>(aligned_a + aligned_b);
     }
   }
 
@@ -149,9 +136,7 @@ struct FxSmartKernel
     else
     {
       // Fallback to wider intermediate type
-      using IntermediateType = std::conditional_t<sizeof(typename ResultFormat::RawType) <= 4,
-                                                  int64_t,
-                                                  int64_t>;  // Could use __int128 for 64-bit types
+      using IntermediateType = int64_t;
 
       IntermediateType intermediate = static_cast<IntermediateType>(a.mRawValue) *
                                       static_cast<IntermediateType>(b.mRawValue);

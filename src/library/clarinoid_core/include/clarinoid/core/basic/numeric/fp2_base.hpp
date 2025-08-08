@@ -11,6 +11,53 @@
 
 namespace clarinoid
 {
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// <summary>
+/// Computes the absolute value of a compile-time integer constant.
+/// </summary>
+/// <typeparam name="i">The integer value whose absolute value is to be computed.</typeparam>
+template <int64_t i>
+struct StaticAbs
+{
+  static constexpr int64_t value = i < 0 ? -i : i;
+};
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// <summary>
+/// Computes the number of bits required to represent a static integer value at compile time.
+/// </summary>
+/// <typeparam name="i">The integer value for which to compute the number of bits needed.</typeparam>
+template <int64_t i>
+struct StaticValueBitsNeeded
+{
+  static constexpr int64_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >> 1)>::value_allow_zero;
+  static constexpr int64_t value = value_allow_zero;
+};
+
+template <>
+struct StaticValueBitsNeeded<0>
+{
+  static constexpr int64_t value = 1;
+  static constexpr int64_t value_allow_zero = 0;
+};
+
+template <typename T>
+constexpr int needed_int_bits(T value)
+{
+  if (value == 0)
+    return 1;
+  int bits = 0;
+  while (value)
+  {
+    value >>= 1;
+    ++bits;
+  }
+  return bits;
+}
+
+constexpr std::uint64_t pow10_u64(unsigned p)
+{
+  return p > 19 ? std::uint64_t{0} : (p == 0 ? 1 : pow10_u64(p - 1) * 10);
+}
 
 // Helper to select optimal raw type based on requirements
 template <bool TWantsSign, int TIntBits, int TFracBits>

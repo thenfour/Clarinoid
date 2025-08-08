@@ -8,24 +8,6 @@ namespace clarinoid
 namespace fxl::detail
 {
 
-constexpr int needed_int_bits(std::uint64_t value)
-{
-  if (value == 0)
-    return 1;
-  int bits = 0;
-  while (value)
-  {
-    value >>= 1;
-    ++bits;
-  }
-  return bits;
-}
-
-constexpr std::uint64_t pow10_u64(unsigned p)
-{
-  return p > 19 ? std::uint64_t{0} : (p == 0 ? 1 : pow10_u64(p - 1) * 10);
-}
-
 // -------------------------------------------------- master parsed -----
 // Greatly simplified: single pass constexpr parser instead of heavy template slicing.
 // Supports forms: [-]? [digits] [ . [digits] ] [ (e|E) [+-]? digits ]
