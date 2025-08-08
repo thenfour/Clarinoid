@@ -43,6 +43,29 @@ static constexpr std::uint64_t gcd_u64(std::uint64_t a, std::uint64_t b)
   return a;
 }
 
+// Add or subtract with modulo-2^N wraparound, where N = digits(ResRaw).
+// This deliberately uses unsigned arithmetic to avoid UB from signed overflow,
+// keeping the operation valid in constexpr contexts.
+// Note: This is NOT saturating arithmetic.
+// basically this is for adding / subtracting and emulating overflow behavior.
+template <typename ResRaw, bool IsSub>
+constexpr ResRaw add_or_sub_mod2n(ResRaw a, ResRaw b)
+{
+  using U = std::make_unsigned_t<ResRaw>;
+  U ua = static_cast<U>(a);
+  U ub = static_cast<U>(b);
+
+  if constexpr (IsSub)
+  {
+    return static_cast<ResRaw>(ua - ub);  // well-defined modulo 2^N
+  }
+  else
+  {
+    return static_cast<ResRaw>(ua + ub);  // well-defined modulo 2^N
+  }
+}
+
+
 // Terminology:
 // - MagBits: number of magnitude bits (excluding sign bit)
 // - FracBits: number of fractional bits
@@ -127,67 +150,6 @@ struct FxValue
   }
 };
 
-//if the requested layout doesn't fit into the storage type,
-// truncate the fractional bits first, then the magnitude bits.
-template <typename RawType, int IdealMagBits, int IdealFractBits>
-struct SqueezedFormat
-{
-  static_assert(IdealMagBits >= 0 && IdealFractBits >= 0, "Negative bit counts");
-  using StorageTraits = FxStorageTraits<RawType>;
-  static constexpr int Capacity = StorageTraits::StorageValueBits;  // value bits available (excludes sign)
-  static constexpr int IdealTotal = IdealMagBits + IdealFractBits;
-
-  // Start with ideals
-  static constexpr int _initialMag = IdealMagBits;
-  static constexpr int _initialFrac = IdealFractBits;
-
-  // If it fits, keep as-is
-  static constexpr bool Fits = (IdealTotal <= Capacity);
-
-  // Compute squeezed values
-  static constexpr int Overflow = Fits ? 0 : (IdealTotal - Capacity);
-
-  // Remove overflow from fractional bits first
-  static constexpr int FracAfterFirstTrim = Fits ? _initialFrac
-                                                 : (_initialFrac > Overflow ? _initialFrac - Overflow : 0);
-  static constexpr int ConsumedFromFrac = Fits ? 0 : (_initialFrac - FracAfterFirstTrim);
-  static constexpr int RemainingOverflow = Fits ? 0 : (Overflow - ConsumedFromFrac);
-
-  // Then, if still overflow, remove from mag bits
-  static constexpr int MagAfterTrim = Fits ? _initialMag
-                                           : (_initialMag > RemainingOverflow ? _initialMag - RemainingOverflow : 0);
-
-  // Guard against both becoming zero (FxFormat requires ValueBits>0). If both zero but capacity>0, force 1 mag bit.
-  static constexpr bool BothZero = (MagAfterTrim == 0) && (FracAfterFirstTrim == 0);
-  static constexpr int FinalMag = BothZero ? (Capacity > 0 ? 1 : 0) : MagAfterTrim;
-  static constexpr int FinalFrac = BothZero ? 0 : FracAfterFirstTrim;
-
-  using Layout = FxLayout<FinalMag, FinalFrac>;
-  using FormatType = FxFormat<Layout, StorageTraits>;
-};
-
-//// Utility: pick first provided raw type whose (signed-adjusted) digits >= NeededBits.
-//// signedness of provided types is ignored; make_signed or make_unsigned is employed depending on the 1st template parameter.
-//// Usage: PickUsableType_t<true, 17, uint8_t, uint16_t, uint32_t> -> int32_t
-//template <bool Signed, int NeededBits>
-//struct PickUsableType
-//{
-//    ...
-//};
-//
-//template <bool Signed, int NeededBits, typename First, typename... Rest>
-//struct PickUsableType<Signed, NeededBits, First, Rest...>
-//{
-//  static_assert(std::is_integral_v<First>, "Allowed raw types must be integral");
-//  using CandidateUnsigned = std::make_unsigned_t<First>;
-//  using CandidateSigned = std::make_signed_t<First>;
-//  using Candidate = std::conditional_t<Signed, CandidateSigned, CandidateUnsigned>;
-//  static constexpr int CandidateDigits = std::numeric_limits<Candidate>::digits;
-//  using NextResult = typename PickUsableType<Signed, NeededBits, Rest...>::type;
-//  using type = std::conditional_t<(CandidateDigits >= NeededBits), Candidate, NextResult>;
-//};
-
-
 // constexpr shifting
 template <typename T, int S>
 constexpr T shl_safe(T x)
@@ -259,7 +221,6 @@ template <typename... Ts>
 using WidestType_t = typename WidestType<Ts...>::type;
 
 
-
 template <typename...>
 struct _dependent_false : std::false_type
 {
@@ -282,11 +243,6 @@ template <bool Signed, int NeededBits, typename T0, typename... Rest>
 struct PickUsableType<Signed, NeededBits, T0, Rest...>
 {
   static_assert(NeededBits >= 0, "PickUsableType: NeededBits must be >= 0");
-
-  //using Raw0 = std::remove_cv_t<std::remove_reference_t<T0>>;
-  //using Base0 = std::conditional_t<std::is_enum<Raw0>::value, std::underlying_type_t<Raw0>, Raw0>;
-  //static_assert(std::is_integral<Base0>::value, "PickUsableType requires integral (or enum) types");
-  //static_assert(!std::is_same<Base0, bool>::value, "PickUsableType does not support bool");
 
   using Adj0 = std::conditional_t<Signed, std::make_signed_t<T0>, std::make_unsigned_t<T0>>;
   static constexpr int d0 = std::numeric_limits<Adj0>::digits;
@@ -316,5 +272,46 @@ struct NarrowedFormat
   using RawTypeToUse = std::conditional_t<(CandDigits < OrigDigits), CandidateRaw, OrigRaw>;
   using FormatType = FxFormat<FxLayout<TFormat::MagBits, TFormat::FracBits>, FxStorageTraits<RawTypeToUse>>;
 };
+
+
+//if the requested layout doesn't fit into the storage type,
+// truncate the fractional bits first, then the magnitude bits.
+template <typename RawType, int IdealMagBits, int IdealFractBits>
+struct SqueezedFormat
+{
+  static_assert(IdealMagBits >= 0 && IdealFractBits >= 0, "Negative bit counts");
+  using StorageTraits = FxStorageTraits<RawType>;
+  static constexpr int Capacity = StorageTraits::StorageValueBits;  // value bits available (excludes sign)
+  static constexpr int IdealTotal = IdealMagBits + IdealFractBits;
+
+  // Start with ideals
+  static constexpr int _initialMag = IdealMagBits;
+  static constexpr int _initialFrac = IdealFractBits;
+
+  // If it fits, keep as-is
+  static constexpr bool Fits = (IdealTotal <= Capacity);
+
+  // Compute squeezed values
+  static constexpr int Overflow = Fits ? 0 : (IdealTotal - Capacity);
+
+  // Remove overflow from fractional bits first
+  static constexpr int FracAfterFirstTrim = Fits ? _initialFrac
+                                                 : (_initialFrac > Overflow ? _initialFrac - Overflow : 0);
+  static constexpr int ConsumedFromFrac = Fits ? 0 : (_initialFrac - FracAfterFirstTrim);
+  static constexpr int RemainingOverflow = Fits ? 0 : (Overflow - ConsumedFromFrac);
+
+  // Then, if still overflow, remove from mag bits
+  static constexpr int MagAfterTrim = Fits ? _initialMag
+                                           : (_initialMag > RemainingOverflow ? _initialMag - RemainingOverflow : 0);
+
+  // Guard against both becoming zero (FxFormat requires ValueBits>0). If both zero but capacity>0, force 1 mag bit.
+  static constexpr bool BothZero = (MagAfterTrim == 0) && (FracAfterFirstTrim == 0);
+  static constexpr int FinalMag = BothZero ? (Capacity > 0 ? 1 : 0) : MagAfterTrim;
+  static constexpr int FinalFrac = BothZero ? 0 : FracAfterFirstTrim;
+
+  using Layout = FxLayout<FinalMag, FinalFrac>;
+  using FormatType = FxFormat<Layout, StorageTraits>;
+};
+
 
 }  // namespace clarinoid

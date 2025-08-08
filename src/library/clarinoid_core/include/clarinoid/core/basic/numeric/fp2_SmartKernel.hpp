@@ -55,11 +55,12 @@ struct FxSmartKernel
     static constexpr int BRightShift = (BFracDelta < 0) ? -BFracDelta : 0;
 
     // After alignment, effective magnitude bits for each operand increases by any left shift applied.
-    static constexpr int EffectiveMagA = FormatA::MagBits + ALeftShift;
-    static constexpr int EffectiveMagB = FormatB::MagBits + BLeftShift;
+    static constexpr int MagA = FormatA::MagBits;
+    static constexpr int MagB = FormatB::MagBits;
 
     // Ideal magnitude bits needs to accommodate possible carry ( +1 )
-    static constexpr int IdealMagBits = ((EffectiveMagA > EffectiveMagB) ? EffectiveMagA : EffectiveMagB) + 1;
+    //static constexpr int IdealMagBits = ((EffectiveMagA > EffectiveMagB) ? EffectiveMagA : EffectiveMagB) + 1;
+    static constexpr int IdealMagBits = ((MagA > MagB) ? MagA : MagB) + 1;
 
     // First build a widest-possible format (up to 64-bit storage) squeezing if necessary.
     using WideRaw = std::conditional_t<ResultIsSigned, int64_t, uint64_t>;
@@ -81,17 +82,6 @@ struct FxSmartKernel
 
     using ResultValueType = FxValue<ResultFormat>;
 
-    // helps keep compile-time-compatible... but ... wut?
-    template <typename ResRaw, bool IsSub>
-    static constexpr ResRaw addsub_wrap(ResRaw a, ResRaw b)
-    {
-      using U = std::make_unsigned_t<ResRaw>;
-      U ua = static_cast<U>(a);
-      U ub = static_cast<U>(b);
-      U ur = IsSub ? (ua - ub) : (ua + ub);  // well-defined modulo 2^N
-      return static_cast<ResRaw>(ur);
-    }
-
     static constexpr ResultValueType Execute(const ValueType<FormatA>& a, const ValueType<FormatB>& b)
     {
       using ResRaw = typename ResultFormat::RawType;
@@ -108,7 +98,7 @@ struct FxSmartKernel
       if constexpr (BRightShiftFinal > 0)
         b_adj = sar_safe<ResRaw, BRightShiftFinal>(b_adj);
 
-      ResRaw result = addsub_wrap<ResRaw, IsSubtraction>(a_adj, b_adj);
+      ResRaw result = add_or_sub_mod2n<ResRaw, IsSubtraction>(a_adj, b_adj);
 
       // Ensure this is constexpr as well:
       return FxValue<ResultFormat>::FromRaw(result);

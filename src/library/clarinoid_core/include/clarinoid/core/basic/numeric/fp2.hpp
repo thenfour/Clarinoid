@@ -67,6 +67,13 @@ public:
     return {CtorFromFxValue{}, value};
   }
 
+  template <typename TValue2>
+  [[nodiscard]] static constexpr auto MakeFromFxValue(const TValue2& value)
+  {
+    using ResultFormat = typename TValue2::FormatType;
+    return Fixed<ResultFormat, TKernel>::FromFxValue(value);
+  }
+
   // From float/double
   constexpr explicit Fixed(double value)
   {
@@ -83,8 +90,8 @@ public:
   template <typename TOtherFormat, typename TOtherKernel>
   [[nodiscard]] constexpr auto operator+(const Fixed<TOtherFormat, TOtherKernel>& rhs) const
   {
-    //using ResultFormat = typename TKernel::template AddResultFormat<TFormat, TOtherFormat>;
     auto v = TKernel::template Add<TFormat, TOtherFormat>(mValue, rhs.mValue);
+    //return MakeFromFxValue(v);
     using ResultFormat = typename decltype(v)::FormatType;
     return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);
   }
@@ -99,6 +106,10 @@ public:
 
   [[nodiscard]] constexpr auto operator-() const
   {
+    //auto v = TKernel::template Negate<TFormat>(mValue);
+    //using ResultFormat = typename decltype(v)::FormatType;
+    //return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);
+
     using ResultFormat = typename TKernel::template NegateResultFormat<TFormat>;
     auto v = TKernel::template Negate<TFormat>(mValue);
     return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);

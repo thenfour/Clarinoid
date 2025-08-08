@@ -793,8 +793,7 @@ using namespace clarinoid::fxl::literals;
 
 // utility function to test a Fixed<...> for its double representation, raw type, signedness, and bit layout.
 template <typename TExpectedRawType, typename FixedType>
-void TestFx(const FixedType& fixed, double expected_value,
-                   bool is_signed, int int_bits, int frac_bits)
+void TestFx(const FixedType& fixed, double expected_value, bool is_signed, int int_bits, int frac_bits)
 {
   static_assert(std::is_same_v<typename FixedType::RawType, TExpectedRawType>,
                 "Fixed type should have expected raw type");
@@ -805,11 +804,12 @@ void TestFx(const FixedType& fixed, double expected_value,
   EXPECT_EQ(frac_bits, FormatType::FracBits);
   EXPECT_NEAR(expected_value, fixed.ToFloat(), FixedPointTest::EPSILON);
 }
-// 
-// 
+//
+//
 
 
-TEST_F(FixedPointTest, SumPlan1) {
+TEST_F(FixedPointTest, SumPlan1)
+{
   using FormatA = clarinoid::FxFormat<clarinoid::FxLayout<1, 31>, clarinoid::FxStorageTraits<uint32_t>>;
   using FormatB = clarinoid::FxFormat<clarinoid::FxLayout<2, 30>, clarinoid::FxStorageTraits<uint32_t>>;
   using plan = clarinoid::FxSmartKernel::SumPlan<FormatA, FormatB, false>;
@@ -873,6 +873,23 @@ TEST_F(FixedPointTest, LiteralOperatorConstexpr)
     static_assert(std::is_same_v<uint32_t, D::RawType>);
   }
 
+  {
+    using D = decltype(1.5_fxd);
+    static_assert(15 == D::ParsedType::numerator);
+    static_assert(10 == D::ParsedType::denominator);
+    static_assert(false == D::ParsedType::neg);
+    static_assert(1 == D::ParsedType::int_part);
+    static_assert(5 == D::ParsedType::frac_part);
+    static_assert(0 == D::ParsedType::exp10);
+    static_assert(true == D::ParsedType::has_frac);
+    static_assert(true == D::ParsedType::valid);
+    static_assert(std::is_same_v<uint32_t, D::RawType>);
+
+    static_assert(31 == D::FracBits);
+    static_assert(1 == D::MagBits);
+    static_assert(std::is_same_v<uint32_t, D::RawType>);
+  }
+
   // Test constexpr arithmetic
   {
     constexpr auto a = 1.5_fx;
@@ -881,11 +898,23 @@ TEST_F(FixedPointTest, LiteralOperatorConstexpr)
     TestFx<uint32_t>(b, 2.5, false, 2, 30);
     auto runtimeSum = a + b;
     constexpr auto compile_time = a + b;
-    TestFx<uint64_t>(runtimeSum, 4, false, 3, 31); // magbits is 4??
+    TestFx<uint64_t>(runtimeSum, 4, false, 3, 31);  // magbits is 4??
     TestFx<uint64_t>(compile_time, 4, false, 3, 31);
   }
 
   {
+    constexpr auto a = 127_fx;
+    TestFx<uint8_t>(a, 127, false, 7, 0);
+    constexpr auto b = 1_fx;
+    TestFx<uint8_t>(b, 1, false, 1, 0);
+    auto runtimeSum = a + b;
+    constexpr auto compile_time = a + b;
+    TestFx<uint8_t>(runtimeSum, 128, false, 8, 0);
+    TestFx<uint8_t>(compile_time, 128, false, 8, 0);
+  }
+
+  {
+    // even though the value doesn't actualyl overflow, it theoretically could so we end up with a promotion.
     constexpr auto a = 254_fx;
     TestFx<uint8_t>(a, 254, false, 8, 0);
     constexpr auto b = 1_fx;
@@ -895,11 +924,23 @@ TEST_F(FixedPointTest, LiteralOperatorConstexpr)
     TestFx<uint16_t>(runtimeSum, 255, false, 9, 0);
     TestFx<uint16_t>(compile_time, 255, false, 9, 0);
   }
-
-  // Note: This may require operator+ to be constexpr in the Fixed class
-
-  //EXPECT_NEAR(3.14159, compile_time.ToFloat(), EPSILON);
 }
+
+//
+//TEST_F(FixedPointTest, Subtract)
+//{
+//  {
+//    constexpr auto a = 1.5_fx;
+//    TestFx<uint32_t>(a, 1.5, false, 1, 31);
+//    constexpr auto b = -2.25_fx;
+//    TestFx<int32_t>(b, -2.25, true, 2, 29);
+//    //auto runtimeSum = a + b;
+//    //constexpr auto compile_time = a + b;
+//    //TestFx<uint64_t>(runtimeSum, -0.75, false, 3, 31);  // magbits is 4??
+//    //TestFx<uint64_t>(compile_time, -0.75, false, 3, 31);
+//  }
+//}
+
 
 //
 //TEST_F(FixedPointTest, RuntimeConstruction_FracBits)

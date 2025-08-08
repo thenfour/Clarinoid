@@ -18,7 +18,8 @@ struct parsed
 {
   static constexpr std::size_t N = sizeof...(Cs);
   static constexpr char chars[N + 1] = {Cs..., '\0'};
-
+ 
+  // actually ... i don't think negative is needed; UDLs don't accept this char; it's instead handled as unary minus.
   static constexpr bool negative = (N > 0 && chars[0] == '-');
 
   static constexpr auto compute() noexcept
