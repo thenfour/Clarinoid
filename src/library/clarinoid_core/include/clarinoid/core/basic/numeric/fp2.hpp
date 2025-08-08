@@ -91,7 +91,14 @@ public:
   [[nodiscard]] constexpr auto operator+(const Fixed<TOtherFormat, TOtherKernel>& rhs) const
   {
     auto v = TKernel::template Add<TFormat, TOtherFormat>(mValue, rhs.mValue);
-    //return MakeFromFxValue(v);
+    using ResultFormat = typename decltype(v)::FormatType;
+    return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);
+  }
+
+  template <typename TOtherFormat, typename TOtherKernel>
+  [[nodiscard]] constexpr auto operator-(const Fixed<TOtherFormat, TOtherKernel>& rhs) const
+  {
+    auto v = TKernel::template Subtract<TFormat, TOtherFormat>(mValue, rhs.mValue);
     using ResultFormat = typename decltype(v)::FormatType;
     return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);
   }
@@ -106,13 +113,13 @@ public:
 
   [[nodiscard]] constexpr auto operator-() const
   {
-    //auto v = TKernel::template Negate<TFormat>(mValue);
-    //using ResultFormat = typename decltype(v)::FormatType;
-    //return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);
-
-    using ResultFormat = typename TKernel::template NegateResultFormat<TFormat>;
     auto v = TKernel::template Negate<TFormat>(mValue);
+    using ResultFormat = typename decltype(v)::FormatType;
     return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);
+
+    //using ResultFormat = typename TKernel::template NegateResultFormat<TFormat>;
+    //auto v = TKernel::template Negate<TFormat>(mValue);
+    //return Fixed<ResultFormat, TKernel>::FromRaw(v.mRawValue);
   }
 
   // Comparison (same format only for now)

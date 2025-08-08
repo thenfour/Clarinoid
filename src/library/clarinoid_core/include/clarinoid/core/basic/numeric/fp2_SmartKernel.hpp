@@ -1,3 +1,6 @@
+
+// todo: a lot of "safety" checks promote straight to 64-bit, which is almost always incorrect and inefficient.
+// better to add logic to each operation plan which "only promote to 64-bit when fractbits goes below N" or so.
 #pragma once
 
 #include <cassert>
@@ -105,11 +108,107 @@ struct FxSmartKernel
     }
   };
 
-  template <typename TFormat>
-  using NegateResultFormat = std::conditional_t<
-      TFormat::IsSigned,
-      TFormat,
-      FxFormat<typename TFormat::LayoutType, FxStorageTraits<std::make_signed_t<typename TFormat::RawType>>>>;
+  template <typename Format>
+  struct NegatePlan
+  {
+    using Raw = typename Format::RawType;
+    static constexpr bool InputSigned = Format::IsSigned;
+    static constexpr int MagBits = Format::MagBits;
+    static constexpr int FracBits = Format::FracBits;
+    static constexpr int ValueBits = Format::ValueBits;
+    static constexpr int HeadroomBits = Format::HeadroomBits;
+
+    // Helper: next wider unsigned raw
+    template <typename R>
+    struct NextUnsigned
+    {
+      using type = void;
+    };
+    template <>
+    struct NextUnsigned<uint8_t>
+    {
+      using type = uint16_t;
+    };
+    template <>
+    struct NextUnsigned<uint16_t>
+    {
+      using type = uint32_t;
+    };
+    template <>
+    struct NextUnsigned<uint32_t>
+    {
+      using type = uint64_t;
+    };
+    template <>
+    struct NextUnsigned<uint64_t>
+    {
+      using type = void;
+    };
+
+    // Case classification
+    static constexpr bool AlreadySigned = InputSigned;
+    static constexpr bool CanSignViaHeadroom = (!AlreadySigned) && (HeadroomBits > 0);
+    static constexpr bool CanPromoteRaw = (!AlreadySigned) && (HeadroomBits == 0) &&
+                                          !std::is_same_v<typename NextUnsigned<std::make_unsigned_t<Raw>>::type, void>;
+    static constexpr bool FullyUtilized64 = (!AlreadySigned) && (HeadroomBits == 0) &&
+                                            std::is_same_v<std::make_unsigned_t<Raw>, uint64_t>;
+    static constexpr bool CanDropFracBit = FullyUtilized64 && (FracBits > 0);
+    static constexpr bool NegationImpossible = FullyUtilized64 && (FracBits == 0);
+
+    // Decide result layout & raw type
+    // 1. Already signed: keep same
+    // 2. Use headroom -> same bit layout, switch to signed raw of same width
+    // 3. Promote raw -> same layout, wider signed raw
+    // 4. Drop one fractional bit -> FracBits-1, signed raw of same width (int64_t)
+    // 5. Impossible -> static_assert
+
+    // Result fractional bits after potential drop
+    static constexpr int ResultFracBits = CanDropFracBit ? (FracBits - 1) : FracBits;
+    static constexpr int ResultMagBits = MagBits;  // unchanged
+
+    // Raw type selection
+    using ChosenRaw = std::conditional_t<
+        AlreadySigned,
+        Raw,
+        std::conditional_t<
+            CanSignViaHeadroom,
+            std::make_signed_t<std::make_unsigned_t<Raw>>,
+            std::conditional_t<CanPromoteRaw,
+                               std::make_signed_t<typename NextUnsigned<std::make_unsigned_t<Raw>>::type>,
+                               std::conditional_t<CanDropFracBit, int64_t, void>>>>;
+
+    static_assert(!NegationImpossible,
+                  "NegatePlan: cannot negate an unsigned fully-utilized 64-bit integer with no fractional bits (no "
+                  "space for sign)");
+
+    using ResultFormat = FxFormat<FxLayout<ResultMagBits, ResultFracBits>, FxStorageTraits<ChosenRaw>>;
+    using ResultValueType = FxValue<ResultFormat>;
+
+    // Execution adjustments
+    static constexpr bool DropFrac = CanDropFracBit;
+
+    template <typename TInValue>
+    static constexpr ResultValueType Execute(const TInValue& v)
+    {
+      using SignedRaw = typename ResultFormat::RawType;
+      // Adjust raw if we dropped a fractional bit (right shift 1 -> truncate toward +inf for unsigned; acceptable per spec)
+      auto rawIn = v.mRawValue;
+      if constexpr (DropFrac)
+      {
+        rawIn = static_cast<decltype(rawIn)>(rawIn >> 1);  // lose 1 LS fractional bit
+      }
+      // Cast to signed target raw and negate
+      auto signedVal = static_cast<SignedRaw>(rawIn);
+      auto neg = static_cast<SignedRaw>(-signedVal);
+      return ResultValueType::FromRaw(neg);
+    }
+  };
+
+  //template <typename TFormat>
+  //using NegateResultFormat = std::conditional_t<
+  //    TFormat::IsSigned,
+  //    TFormat,
+  //    FxFormat<typename TFormat::LayoutType, FxStorageTraits<std::make_signed_t<typename TFormat::RawType>>>>;
 
   // constants
   template <typename TFormat>
@@ -150,6 +249,12 @@ struct FxSmartKernel
   [[nodiscard]] static constexpr auto Add(const ValueType<TFormatA>& a, const ValueType<TFormatB>& b)
   {
     return SumPlan<TFormatA, TFormatB, false>::Execute(a, b);
+  }
+
+  template <typename TFormatA, typename TFormatB>
+  [[nodiscard]] static constexpr auto Subtract(const ValueType<TFormatA>& a, const ValueType<TFormatB>& b)
+  {
+    return SumPlan<TFormatA, TFormatB, true>::Execute(a, b);
   }
 
   // Smart multiplication with shift elision
@@ -220,14 +325,12 @@ struct FxSmartKernel
     }
   }
 
-  // Negation (same as naive)
   template <typename TFormat>
-  [[nodiscard]] static constexpr auto Negate(const ValueType<TFormat>& value)
+  [[nodiscard]] static constexpr auto Negate(const ValueType<TFormat>& a)
   {
-    using ResultFormat = NegateResultFormat<TFormat>;
-    static_assert(ResultFormat::IsSigned, "Cannot negate - result format must be signed");
-    return ConstructFromRaw<ResultFormat>(-value.mRawValue);
+    return NegatePlan<TFormat>::Execute(a);
   }
+
 
   // for finding the SMALLEST raw type that can hold the given bits
   template <bool TWantsSign, int TMagBits, int TFracBits>

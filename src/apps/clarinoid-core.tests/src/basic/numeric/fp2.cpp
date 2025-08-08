@@ -926,20 +926,34 @@ TEST_F(FixedPointTest, LiteralOperatorConstexpr)
   }
 }
 
-//
-//TEST_F(FixedPointTest, Subtract)
-//{
-//  {
-//    constexpr auto a = 1.5_fx;
-//    TestFx<uint32_t>(a, 1.5, false, 1, 31);
-//    constexpr auto b = -2.25_fx;
-//    TestFx<int32_t>(b, -2.25, true, 2, 29);
-//    //auto runtimeSum = a + b;
-//    //constexpr auto compile_time = a + b;
-//    //TestFx<uint64_t>(runtimeSum, -0.75, false, 3, 31);  // magbits is 4??
-//    //TestFx<uint64_t>(compile_time, -0.75, false, 3, 31);
-//  }
-//}
+
+TEST_F(FixedPointTest, Negate)
+{
+  {
+    constexpr auto a = 1.5_fx;
+    TestFx<uint32_t>(a, 1.5, false, 1, 31);
+    constexpr auto b = -2.25_fx;
+    TestFx<int64_t>(b, -2.25, true, 2, 30);
+    auto runtimeSum = a + b;
+    constexpr auto compile_time = a + b;
+    TestFx<int64_t>(runtimeSum, -0.75, true, 3, 31);
+    TestFx<int64_t>(compile_time, -0.75, true, 3, 31);
+  }
+}
+
+TEST_F(FixedPointTest, Subtract)
+{
+  {
+    constexpr auto a = 1.5_fx;
+    TestFx<uint32_t>(a, 1.5, false, 1, 31);
+    constexpr auto b = 2.25_fx;
+    TestFx<uint32_t>(b, 2.25, false, 2, 30);
+    auto runtimeSum = a - b;
+    constexpr auto compile_time = a - b;
+    TestFx<int64_t>(runtimeSum, -0.75, true, 3, 31);
+    TestFx<int64_t>(compile_time, -0.75, true, 3, 31);
+  }
+}
 
 
 //
