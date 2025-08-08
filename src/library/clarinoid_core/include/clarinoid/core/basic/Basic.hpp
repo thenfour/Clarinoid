@@ -3,6 +3,9 @@
 
 #include "CLArduino.hpp"
 
+// correct windows header bs.
+#undef small
+
 // language basics, syntax, types, fundamental helpers
 #include "Array.hpp"
 #include "BaseDefs.hpp"

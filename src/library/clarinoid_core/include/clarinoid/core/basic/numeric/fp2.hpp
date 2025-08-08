@@ -1,248 +1,116 @@
 ﻿#pragma once
 
+#include <cassert>
+#include <limits>
 #include <type_traits>
 
-// mul
-// div
-// reciprocal
-// modulo
 
-// wrap
-// fold
-
-// floor
-// ceil
-// fract part
-// int part
-// round
-   
-// shift
-// saturating left shift
-// rotate
-
-// abs
-// negate
-// make signed
-// make unsigned (remove sign bit)
-// get sign
-   
-// add
-// sub
-
-// min
-// max
-
-// clamp
-// signed saturate (ssat)
-// unsigned saturate (usat)
-
-// lerp
-// step
-// smoothstep
-// smootherstep
-// other DSP interpolation functions
-// bilinear interp
-// reverse lerp
-// map
-// smooth min
-// smooth max (log, exp, ..)
-
-// hash
-// rand
-   
-// sqrt
-// pow
-// exp
-// log
-
-// sinh
-// cosh
-// tanh
-// sin
-// cos
-// tan
-// asin
-// acos
-// atan
-
-// modcurve
-// massive's freq knob math
-
-// >
-// >=
-// <
-// <=
-// ==(exact)
-// ==(approx)
-// !=
-
-// erf https://en.wikipedia.org/wiki/Error_function
-// inverseerf
-// lgamma
-// digamma
-// lambertw
-// lambertwexpx
-// sigmoid -> exp
+#include "fp2_NaiveKernel.hpp"
+#include "fp2_SmartKernel.hpp"
+#include "fp2_base.hpp"
 
 
-
-//| Category                          | Commonly-needed ops that aren’t on your list                                                                                                                                      | Why they tend to show up                                                                                                              |
-//| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-//| **DSP “inner-loop” kernels**      | **• FMA / MAC (`y = a·b + c`)**<br>**• Multiply-accumulate with rounding & saturation**<br>**• Dot / sum-of-products helpers**                                                    | Every biquad, FIR, FFT, and envelope follower is built on “multiply then add”; a fused path saves one rounding + one saturation.      |
-//| **Format / range utilities**      | **• Convert `Fixed<A>` → `Fixed<B>`** (rescale & saturate)<br>**• Left-shift with saturation (`q = sat_shift_left(x,n)`)**<br>**• Count-leading-zeros / count-leading-sign bits** | Converting between Q-formats is unavoidable at module boundaries; CLZ is the fastest way to auto-pick a safe shift.                   |
-//| **Bitwise & masking**             | **• AND / OR / XOR / NOT** (on the raw value)<br>**• Bit-field extract / set**                                                                                                    | Needed for flag manipulation, packing RGBA colours, checksum parity, etc.                                                             |
-//| **Comparisons / predicates**      | **• `signbit` (returns −1,0,+1)**<br>**• `hypot(x,y)`** (length for 2-D vectors)<br>**• `atan2(y,x)`**                                                                            | UI knob rendering and vector graphics both rely on `atan2`; `hypot` and `signbit` remove a branch each in dynamics processing.        |
-//| **Extra transcendental variants** | **• `exp2`, `exp10`, `log2`, `log10` (direct)**<br>**• `pow2^k` (integer exponent fast path)**                                                                                    | `exp2`/`log2` often map to simple LUT-plus-poly; integer-power fast path is handy for envelope generators and sample-rate convertors. |
-//| **Interpolation / smoothing**     | **• Cubic-Hermite / 3rd-order Lagrange**<br>**• B-spline (catmull-rom)**<br>**• Exponential-smoother (`y += α·(target−y)`) helper**                                               | Linear/smoothstep are fine for UI fade-ins; audio rate interpolation generally needs cubic or better to keep the noise floor down.    |
-//| **Coordinate helpers (UI)**       | **• Degrees↔radians**<br>**• `wrap(angle, ±π)` / `fold(value, min,max)`**                                                                                                         | UI widgets almost always store angles in degrees even when DSP runs radians.                                                          |
-//| **Decibel utilities (audio)**     | **• `lin_to_db(x)` and `db_to_lin(x)`**<br>**• `rms(x[])`**                                                                                                                       | 20·log10 and RMS are the backbone of meters and limiters.                                                                             |
-//| **Random / noise**                | **• Uniform LCG / XOR-shift**<br>**• White & Pink noise accumulators**                                                                                                            | Synth LFOs, UI anim jitter, dithering, and test rigs all want a quick RNG.                                                            |
-//| **Math-policy variants**          | **• Exact vs. nearest vs. stochastic rounding** for every primitive<br>**• Wrap vs. sat vs. trap overflow flavours for `add`, `sub`, `mul`**                                      | You already plan `ssat/usat`; expose the full matrix once so callers don’t reinvent.                                                  |
-//
-
-
-namespace clarinoid {
-
-// int bits and fract bits are NOT expected to sum to the storage bits of the underlying type.
-// we expect much of the time there is "unused overhead" in the storage, which lets operations like multiplication
-// make better decisions about shifting the result.
-
-// for clarity as i develop, i'm separating layout / storage / format / value, but some could possibly be combined.
-// describes the layout of the fixed point type
-template<int TIntBits, int TFracBits>
-struct FxLayout
+namespace clarinoid
 {
-  static_assert(TIntBits >= 0 && TFracBits >= 0, "negative bit count");
-  static constexpr int IntBits = TIntBits;
-  static constexpr int FracBits = TFracBits;
-  static constexpr int ValueBits = TIntBits + TFracBits;
-};
-
-// describes the raw value type's capabilities
-template<typename TRaw>
-struct FxStorage
-{
-  static constexpr bool IsSigned = std::is_signed<TRaw>::value;
-  static constexpr int StorageWidthBits = sizeof(TRaw) * 8;
-  static constexpr int StorageValueBits = std::numeric_limits<TRaw>::digits;
-  using RawType = TRaw;
-};
-
-// describes the binary format (layout + type), which is a complete description of the fixed point type.
-template<typename TLayout, typename TStorage>
-struct FxFormat
-{
-  static_assert(std::is_arithmetic_v<TStorage>, "TStorage must be an arithmetic type (e.g. int32_t, uint8_t, etc.)");
-  using LayoutType = TLayout;
-  using StorageType = TStorage;
-
-  using TLayout::TIntBits;
-  using TLayout::TFracBits;
-  using TLayout::ValueBits;
-
-  using TRaw = typename TStorage::RawType;
-
-  using TRaw::IsSigned;
-  using TRaw::StorageWidthBits;
-  using TRaw::StorageValueBits;
-};
-
-// based on format, actually stores the value and could maybe provide some primitive operations.
-template<typename TFormat>
-struct FxValue
-{
-  using RawType = typename TFormat::StorageType;
-  RawType mRawValue;
-
-  // possibly provide primitve ops here which don't make any decisions about format?
-};
-
-// defines behavior
-struct FxPrototypeKernel
-{
-    // type helpers
-
-  // value format could for example return a type that holds a `float` for debugging purposes.
-  // or it could refuse to return types that are not compatible with the format.
-  template<typename TFixedFormat>
-  using ValueType = FxValue<TFixedFormat>;
-
-  template<typename TFormatA, typename TFormatB>
-  using MulResultFormat =
-    // todo:
-    // - add sign if needed
-    // - based on the fx layout, promotion may not be necessary.
-    // - or demotion from 64 to 32-bits might be a possibility, and take it.
-    FxFormat<typename TFormatA::LayoutType, typename TFormatA::StorageType>;
-  ;
-
-  // todo: construction
-  template<typename TDestFormat, typename TSrcFormat>
-  [[nodiscard]] constexpr auto static ConstructFromFixed(const typename TSrcFormat::StorageType& rhsRaw)
-  {
-
-    return TDestFormat{};
-  }
-
-  // todo: construction
-  template <typename TDestFormat, typename TF, typename std::enable_if_t<std::is_floating_point_v<TF>> = 0>
-  [[nodiscard]] constexpr auto static ConstructFromFloat(const TF& rhsRaw)
-  {
-    return TDestFormat{};
-  }
-
-  // multiplication
-  // in theory, could decide to use a SMMUL intrinsic, or perform strategic shifting to retain within a 32-bit type, ...
-  template<typename TFormatA, typename TFormatB>
-  [[nodiscard]] constexpr auto static mul(const FxValue<TFormatA>& a, const FxValue<TFormatB>& b)
-  {
-    using ResultFormat = MulResultFormat<TFormatA, TFormatB>;
-    return ResultFormat::ConstructFrom(a.mValue * b.mValue);
-  }
-};
-
-template<typename TFormat, typename TKernel>
+template <typename TFormat, typename TKernel = FxNaiveKernel>
 struct Fixed
 {
   using FormatType = TFormat;
-  using StorageType = typename FormatType::StorageType;
-  using LayoutType = typename FormatType::LayoutType;
-  using RawType = typename FormatType::RawType;
-
   using KernelType = TKernel;
-
-  // raw type is specified explicitly by caller.
+  using RawType = typename TFormat::RawType;
   using ValueType = typename TKernel::template ValueType<TFormat>;
+
   ValueType mValue;
 
+  // Access raw value
   [[nodiscard]] constexpr RawType RawValue() const
   {
     return mValue.mRawValue;
   }
 
-  // constructors
-  // from float or int values
-  // from raw
-  // from Fixed<>
+  // Construction
+  constexpr Fixed()
+      : mValue()
+  {
+  }
 
-  // to float
-  // to Fixed<> (so Q31 x = Q31(0.5f) * 3 + 4 / 10; converts directly back to Q31, hiding all intermediate types)
+  // From raw (explicit to prevent accidents)
+  [[nodiscard]] static constexpr Fixed FromRaw(RawType raw)
+  {
+    Fixed result;
+    result.mValue = TKernel::template ConstructFromRaw<TFormat>(raw);
+    return result;
+  }
 
-  // add
-  // sub
-  // mul
-  // div
+  // From float/double
+  constexpr explicit Fixed(double value)
+  {
+    mValue = TKernel::template ConstructFromFloat<TFormat>(value);
+  }
 
-  // negate
-  // reciprocal
-  // abs
+  // To float
+  [[nodiscard]] constexpr double ToFloat() const
+  {
+    return TKernel::template ToFloat<TFormat>(mValue);
+  }
 
+  // Arithmetic operators
+  template <typename TOtherFormat, typename TOtherKernel>
+  [[nodiscard]] constexpr auto operator+(const Fixed<TOtherFormat, TOtherKernel>& rhs) const
+  {
+    using ResultFormat = typename TKernel::template AddResultFormat<TFormat, TOtherFormat>;
+    Fixed<ResultFormat, TKernel> result;
+    result.mValue = TKernel::template Add<TFormat, TOtherFormat>(mValue, rhs.mValue);
+    return result;
+  }
 
-  //template<typename TFormatB, typename TKernelB>
-  //[[nodiscard]] constexpr auto MultipliedWith(const Fixed<TFormatB, TKernelB>& rhs) const
-  //{
-  //  return TKernel::template mul<TIntBits, TFracBits, TIntBitsB, TFracBitsB>(RawValue(), rhs.RawValue());
-  //}
+  template <typename TOtherFormat, typename TOtherKernel>
+  [[nodiscard]] constexpr auto operator*(const Fixed<TOtherFormat, TOtherKernel>& rhs) const
+  {
+    using ResultFormat = typename TKernel::template MulResultFormat<TFormat, TOtherFormat>;
+    Fixed<ResultFormat, TKernel> result;
+    result.mValue = TKernel::template Mul<TFormat, TOtherFormat>(mValue, rhs.mValue);
+    return result;
+  }
+
+  [[nodiscard]] constexpr auto operator-() const
+  {
+    using ResultFormat = typename TKernel::template NegateResultFormat<TFormat>;
+    Fixed<ResultFormat, TKernel> result;
+    result.mValue = TKernel::template Negate<TFormat>(mValue);
+    return result;
+  }
+
+  // Comparison (same format only for now)
+  [[nodiscard]] constexpr bool operator==(const Fixed& rhs) const
+  {
+    return mValue.mRawValue == rhs.mValue.mRawValue;
+  }
+
+  [[nodiscard]] constexpr bool operator<(const Fixed& rhs) const
+  {
+    return mValue.mRawValue < rhs.mValue.mRawValue;
+  }
 };
 
-} // namespace clarinoid
+// Convenient type aliases for common formats
+using Q15_16 = Fixed<FxFormat<FxLayout<15, 16>, FxStorageTraits<int32_t>>>;
+using Q7_8 = Fixed<FxFormat<FxLayout<7, 8>, FxStorageTraits<int16_t>>>;
+using Q0_31 =
+    Fixed<FxFormat<FxLayout<0, 31>, FxStorageTraits<int32_t>>>;  // Valid: 31 value bits in 31-bit signed storage
+
+// Smart kernel variants with optimizations
+using Q15_16_Smart = Fixed<FxFormat<FxLayout<15, 16>, FxStorageTraits<int32_t>>, FxSmartKernel>;
+using Q7_8_Smart = Fixed<FxFormat<FxLayout<7, 8>, FxStorageTraits<int16_t>>, FxSmartKernel>;
+using Q0_31_Smart = Fixed<FxFormat<FxLayout<0, 31>, FxStorageTraits<int32_t>>, FxSmartKernel>;
+
+// Convenient template alias for automatic raw type selection
+// Usage: FixedAuto<1, 15> (signed by default), FixedAuto<1, 15, false> (unsigned), FixedAuto<1, 15, true, int16_t> (explicit raw type)
+template <int TIntBits,
+          int TFracBits,
+          bool TWantsSign = true,
+          typename TRaw = typename FxSmartKernel::template OptimalRawType<TWantsSign, TIntBits, TFracBits>,
+          typename TKernel = FxSmartKernel>
+using FixedAuto = Fixed<FxFormat<FxLayout<TIntBits, TFracBits>, FxStorageTraits<TRaw>>, TKernel>;
+
+}  // namespace clarinoid

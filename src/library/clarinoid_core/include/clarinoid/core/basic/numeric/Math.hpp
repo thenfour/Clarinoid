@@ -4,9 +4,10 @@
 #include <cmath>
 
 // see C:\Users\carl\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\cores\teensy4
-#include <arm_math.h>
+#ifdef CLARINOID_PLATFORM_TEENSY
+  #include <arm_math.h>
 #include <imxrt.h>
-
+#endif
 
 #include "../BaseDefs.hpp"
 #include "../CLArduino.hpp"

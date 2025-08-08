@@ -728,6 +728,46 @@ struct SerialType
   {
     return true;
   }
+
+  size_t write(uint8_t c)
+  {
+    if (c == '\n')
+      ::OutputDebugStringA("\r\n");
+    else
+    {
+      char buf[2] = {(char)c, '\0'};
+      ::OutputDebugStringA(buf);
+    }
+    return 1;
+  }
+  // Transmit a buffer containing any number of bytes to your PC
+  size_t write(const uint8_t* buffer, size_t size)
+  {
+    if (buffer == nullptr || size == 0)
+      return 0;
+    ::OutputDebugStringA((const char*)buffer);
+    return size;
+  }
+  // Transmit a single byte to your PC
+  size_t write(unsigned long n)
+  {
+    return write((uint8_t)n);
+  }
+  // Transmit a single byte to your PC
+  size_t write(long n)
+  {
+    return write((uint8_t)n);
+  }
+  // Transmit a single byte to your PC
+  size_t write(unsigned int n)
+  {
+    return write((uint8_t)n);
+  }
+  // Transmit a single byte to your PC
+  size_t write(int n)
+  {
+    return write((uint8_t)n);
+  }
 };
 
 extern SerialType Serial;
