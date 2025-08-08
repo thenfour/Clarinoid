@@ -92,13 +92,7 @@ struct parsed
         }
         r.exp10 = exp_neg ? -e : e;
       }
-      // packed integer value before applying net exponent
-      // V = (int_part + frac_part / 10^{frac_len}) * 10^{exp10}
-      // => packed = int_part*10^{frac_len} + frac_part; net exp = exp10 - frac_len
-      //auto pow10_u64 = [](unsigned p)
-      //{
-      //  return p > 19 ? std::uint64_t{0} : (p == 0 ? 1 : ((std::uint64_t)10 * pow10_u64(p - 1)));
-      //};
+
       auto pow10_frac = pow10_u64((unsigned)(r.frac_len <= 19 ? r.frac_len : 19));
       std::uint64_t packed = (r.int_part * pow10_frac) + r.frac_part;
       int net_exp = r.exp10 - (int)r.frac_len;
@@ -173,5 +167,6 @@ constexpr auto operator"" _fxd()
 
 
 }  // namespace fxl::literals
+
 
 }  // namespace clarinoid

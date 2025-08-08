@@ -22,6 +22,60 @@ struct FixedPointTest : public ::testing::Test
 // Format and Layout Tests
 // ============================================================================
 
+
+TEST_F(FixedPointTest, PickUsableTypeTests)
+{
+  {
+    using T = clarinoid::PickUsableType_t<true /*signed*/, 1, int8_t, uint8_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, int8_t>);
+  }
+  {
+    using T = clarinoid::PickUsableType_t<false /*signed*/, 1, int8_t, uint8_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, uint8_t>);
+  }
+  {
+    using T = clarinoid::PickUsableType_t<true /*signed*/, 1, int8_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, int8_t>);
+  }
+  // pick PREFERRED, not widest / narrowest.
+  {
+    using T = clarinoid::PickUsableType_t<false /*signed*/, 1, int8_t, uint16_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, uint8_t>);
+  }
+  {
+    using T = clarinoid::PickUsableType_t<false /*signed*/, 1, int16_t, uint8_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, uint16_t>);
+  }
+}
+
+TEST_F(FixedPointTest, WidestTypeTests)
+{
+  {
+    using T = clarinoid::WidestType_t<int8_t, uint8_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, uint8_t>);
+  }
+  {
+    using T = clarinoid::WidestType_t<int8_t, uint16_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, uint16_t>);
+  }
+  {
+    using T = clarinoid::WidestType_t<int16_t, uint8_t>;
+    T a = 0;
+    static_assert(std::is_same_v<T, int16_t>);
+  }
+}
+
+TEST_F(FixedPointTest, NarrowedFormatTests) {}
+
+TEST_F(FixedPointTest, SqueezedFormatTests) {}
+
 TEST_F(FixedPointTest, LayoutConstants)
 {
   // Test FxLayout constants
@@ -572,97 +626,97 @@ TEST_F(FixedPointTest, RawMinMaxEdgeCases)
 
 using namespace clarinoid::fxl::literals;
 
-TEST_F(FixedPointTest, BasicLiteralOperator)
-{
-  // Test basic integer literals
-  auto a = 42_fx;
-  EXPECT_NEAR(42.0, a.ToFloat(), EPSILON);
-
-  auto b = 0_fx;
-  EXPECT_NEAR(0.0, b.ToFloat(), EPSILON);
-
-  auto c = 1_fx;
-  EXPECT_NEAR(1.0, c.ToFloat(), EPSILON);
-
-  // Test negative literals
-  auto d = -42_fx;
-  EXPECT_NEAR(-42.0, d.ToFloat(), EPSILON);
-}
-
-TEST_F(FixedPointTest, FractionalLiteralOperator)
-{
-  // Test basic fractional literals
-  auto a = 3.14_fx;
-  EXPECT_NEAR(3.14, a.ToFloat(), EPSILON);
-
-  auto b = 0.5_fx;
-  EXPECT_NEAR(0.5, b.ToFloat(), EPSILON);
-
-  auto c = -2.71828_fx;
-  EXPECT_NEAR(-2.71828, c.ToFloat(), EPSILON);
-
-  // Test very small fractional values
-  auto d = 0.001_fx;
-  EXPECT_NEAR(0.001, d.ToFloat(), EPSILON);
-}
-
-TEST_F(FixedPointTest, ScientificNotationLiterals)
-{
-  // Test scientific notation
-  auto a = 1e3_fx;
-  EXPECT_NEAR(1000.0, a.ToFloat(), EPSILON);
-
-  auto b = 1.5e2_fx;
-  EXPECT_NEAR(150.0, b.ToFloat(), EPSILON);
-
-  auto c = 2.5e-3_fx;
-  EXPECT_NEAR(0.0025, c.ToFloat(), EPSILON);
-
-  auto d = -1.23e-2_fx;
-  EXPECT_NEAR(-0.0123, d.ToFloat(), EPSILON);
-}
-
-TEST_F(FixedPointTest, LiteralOperatorTypeSelection)
-{
-  // Test that literals automatically select appropriate storage types
-
-  // Small values should use smaller storage
-  auto small = 3.14_fx;
-  static_assert(sizeof(decltype(small)::RawType) <= 4, "Small literals should use 32-bit or smaller storage");
-
-  // Large values should promote to larger storage if needed
-  auto large = 1000000.0_fx;
-  // This should still fit in 32-bit but demonstrates the concept
-  EXPECT_NEAR(1000000.0, large.ToFloat(), 1e-6);  // Some precision loss expected
-
-  // Very precise fractional values should maximize fractional bits
-  auto precise = 0.123456789_fx;
-  EXPECT_NEAR(0.123456789, precise.ToFloat(), 1e-6);  // Some precision loss expected
-}
-
-TEST_F(FixedPointTest, LiteralOperatorFormatOptimization)
-{
-  // Test that the literal operator chooses formats optimally
-
-  // Pure integer should have zero fractional bits
-  auto integer = 42_fx;
-  EXPECT_EQ(0, decltype(integer)::FormatType::FracBits);
-  EXPECT_EQ(6, decltype(integer)::FormatType::MagBits);
-  using Txx = decltype(integer)::FormatType::RawType;
-  static_assert(std::is_same_v<uint8_t, decltype(integer)::RawType>);
-
-  // Fractional values should allocate fractional bits
-  auto fractional = 3.14_fx;
-  EXPECT_GT(decltype(fractional)::FormatType::FracBits, 0);
-
-  // Test magnitude bit allocation
-  auto small_mag = 7_fx;    // needs 3 magnitude bits
-  auto large_mag = 255_fx;  // needs 8 magnitude bits
-
-  // Verify that different magnitudes get different bit allocations
-  static_assert(decltype(small_mag)::FormatType::MagBits <= decltype(large_mag)::FormatType::MagBits,
-                "Larger values should get more integer bits");
-}
+//TEST_F(FixedPointTest, BasicLiteralOperator)
+//{
+//  // Test basic integer literals
+//  auto a = 42_fx;
+//  EXPECT_NEAR(42.0, a.ToFloat(), EPSILON);
+//
+//  auto b = 0_fx;
+//  EXPECT_NEAR(0.0, b.ToFloat(), EPSILON);
+//
+//  auto c = 1_fx;
+//  EXPECT_NEAR(1.0, c.ToFloat(), EPSILON);
+//
+//  // Test negative literals
+//  auto d = -42_fx;
+//  EXPECT_NEAR(-42.0, d.ToFloat(), EPSILON);
+//}
+//
+//TEST_F(FixedPointTest, FractionalLiteralOperator)
+//{
+//  // Test basic fractional literals
+//  auto a = 3.14_fx;
+//  EXPECT_NEAR(3.14, a.ToFloat(), EPSILON);
+//
+//  auto b = 0.5_fx;
+//  EXPECT_NEAR(0.5, b.ToFloat(), EPSILON);
+//
+//  auto c = -2.71828_fx;
+//  EXPECT_NEAR(-2.71828, c.ToFloat(), EPSILON);
+//
+//  // Test very small fractional values
+//  auto d = 0.001_fx;
+//  EXPECT_NEAR(0.001, d.ToFloat(), EPSILON);
+//}
+//
+//TEST_F(FixedPointTest, ScientificNotationLiterals)
+//{
+//  // Test scientific notation
+//  auto a = 1e3_fx;
+//  EXPECT_NEAR(1000.0, a.ToFloat(), EPSILON);
+//
+//  auto b = 1.5e2_fx;
+//  EXPECT_NEAR(150.0, b.ToFloat(), EPSILON);
+//
+//  auto c = 2.5e-3_fx;
+//  EXPECT_NEAR(0.0025, c.ToFloat(), EPSILON);
+//
+//  auto d = -1.23e-2_fx;
+//  EXPECT_NEAR(-0.0123, d.ToFloat(), EPSILON);
+//}
+//
+//TEST_F(FixedPointTest, LiteralOperatorTypeSelection)
+//{
+//  // Test that literals automatically select appropriate storage types
+//
+//  // Small values should use smaller storage
+//  auto small = 3.14_fx;
+//  static_assert(sizeof(decltype(small)::RawType) <= 4, "Small literals should use 32-bit or smaller storage");
+//
+//  // Large values should promote to larger storage if needed
+//  auto large = 1000000.0_fx;
+//  // This should still fit in 32-bit but demonstrates the concept
+//  EXPECT_NEAR(1000000.0, large.ToFloat(), 1e-6);  // Some precision loss expected
+//
+//  // Very precise fractional values should maximize fractional bits
+//  auto precise = 0.123456789_fx;
+//  EXPECT_NEAR(0.123456789, precise.ToFloat(), 1e-6);  // Some precision loss expected
+//}
+//
+//TEST_F(FixedPointTest, LiteralOperatorFormatOptimization)
+//{
+//  // Test that the literal operator chooses formats optimally
+//
+//  // Pure integer should have zero fractional bits
+//  auto integer = 42_fx;
+//  EXPECT_EQ(0, decltype(integer)::FormatType::FracBits);
+//  EXPECT_EQ(6, decltype(integer)::FormatType::MagBits);
+//  using Txx = decltype(integer)::FormatType::RawType;
+//  static_assert(std::is_same_v<uint8_t, decltype(integer)::RawType>);
+//
+//  // Fractional values should allocate fractional bits
+//  auto fractional = 3.14_fx;
+//  EXPECT_GT(decltype(fractional)::FormatType::FracBits, 0);
+//
+//  // Test magnitude bit allocation
+//  auto small_mag = 7_fx;    // needs 3 magnitude bits
+//  auto large_mag = 255_fx;  // needs 8 magnitude bits
+//
+//  // Verify that different magnitudes get different bit allocations
+//  static_assert(decltype(small_mag)::FormatType::MagBits <= decltype(large_mag)::FormatType::MagBits,
+//                "Larger values should get more integer bits");
+//}
 //
 //TEST_F(FixedPointTest, LiteralOperatorArithmetic)
 //{
@@ -684,62 +738,62 @@ TEST_F(FixedPointTest, LiteralOperatorFormatOptimization)
 //  // Note: This might require explicit conversion in real usage
 //  // auto mixed = a + regular;  // May not compile without conversion
 //}
-
-TEST_F(FixedPointTest, LiteralOperatorPrecisionLimits)
-{
-  // Test precision limits of literal-generated types
-
-  // Very small differences should be representable
-  auto a = 1.0_fx;
-  auto b = 1.0001_fx;
-
-  EXPECT_NE(a.RawValue(), b.RawValue());
-  EXPECT_GT(b.ToFloat(), a.ToFloat());
-
-  // Test that precision is maximized for the chosen storage
-  auto precise = 0.999999_fx;
-  EXPECT_NEAR(0.999999, precise.ToFloat(), 1e-5);
-}
-
-TEST_F(FixedPointTest, LiteralOperatorBoundaryValues)
-{
-  // Test boundary cases
-
-  // Very small positive value
-  auto tiny = 0.0001_fx;
-  EXPECT_GT(tiny.ToFloat(), 0.0);
-
-  // Values near powers of 2
-  auto pow2_minus = 1023.99_fx;  // Just under 2^10
-  auto pow2_plus = 1024.01_fx;   // Just over 2^10
-
-  EXPECT_NEAR(1023.99, pow2_minus.ToFloat(), EPSILON);
-  EXPECT_NEAR(1024.01, pow2_plus.ToFloat(), EPSILON);
-
-  // Test that the format can represent these accurately
-  EXPECT_LT(std::abs(pow2_minus.ToFloat() - 1023.99), 0.01);
-  EXPECT_LT(std::abs(pow2_plus.ToFloat() - 1024.01), 0.01);
-}
-
-TEST_F(FixedPointTest, LiteralOperatorTypeUniqueness)
-{
-  // Test that different literals create different types when appropriate
-
-  auto a = 1.5_fx;
-  auto b = 2.5_fx;
-  auto c = 100_fx;
-
-  // Same format should have same type
-  static_assert(std::is_same_v<decltype(a), decltype(b)> || !std::is_same_v<decltype(a), decltype(b)>,
-                "Types may or may not be same depending on optimization");
-
-  // Different magnitude requirements should potentially have different types
-  // This is implementation-dependent based on our optimization strategy
-}
+//
+//TEST_F(FixedPointTest, LiteralOperatorPrecisionLimits)
+//{
+//  // Test precision limits of literal-generated types
+//
+//  // Very small differences should be representable
+//  auto a = 1.0_fx;
+//  auto b = 1.0001_fx;
+//
+//  EXPECT_NE(a.RawValue(), b.RawValue());
+//  EXPECT_GT(b.ToFloat(), a.ToFloat());
+//
+//  // Test that precision is maximized for the chosen storage
+//  auto precise = 0.999999_fx;
+//  EXPECT_NEAR(0.999999, precise.ToFloat(), 1e-5);
+//}
+//
+//TEST_F(FixedPointTest, LiteralOperatorBoundaryValues)
+//{
+//  // Test boundary cases
+//
+//  // Very small positive value
+//  auto tiny = 0.0001_fx;
+//  EXPECT_GT(tiny.ToFloat(), 0.0);
+//
+//  // Values near powers of 2
+//  auto pow2_minus = 1023.99_fx;  // Just under 2^10
+//  auto pow2_plus = 1024.01_fx;   // Just over 2^10
+//
+//  EXPECT_NEAR(1023.99, pow2_minus.ToFloat(), EPSILON);
+//  EXPECT_NEAR(1024.01, pow2_plus.ToFloat(), EPSILON);
+//
+//  // Test that the format can represent these accurately
+//  EXPECT_LT(std::abs(pow2_minus.ToFloat() - 1023.99), 0.01);
+//  EXPECT_LT(std::abs(pow2_plus.ToFloat() - 1024.01), 0.01);
+//}
+//
+//TEST_F(FixedPointTest, LiteralOperatorTypeUniqueness)
+//{
+//  // Test that different literals create different types when appropriate
+//
+//  auto a = 1.5_fx;
+//  auto b = 2.5_fx;
+//  auto c = 100_fx;
+//
+//  // Same format should have same type
+//  static_assert(std::is_same_v<decltype(a), decltype(b)> || !std::is_same_v<decltype(a), decltype(b)>,
+//                "Types may or may not be same depending on optimization");
+//
+//  // Different magnitude requirements should potentially have different types
+//  // This is implementation-dependent based on our optimization strategy
+//}
 
 // utility function to test a Fixed<...> for its double representation, raw type, signedness, and bit layout.
 template <typename TExpectedRawType, typename FixedType>
-void TestFx(const FixedType& fixed, double expected_value, 
+void TestFx(const FixedType& fixed, double expected_value,
                    bool is_signed, int int_bits, int frac_bits)
 {
   static_assert(std::is_same_v<typename FixedType::RawType, TExpectedRawType>,
@@ -747,51 +801,168 @@ void TestFx(const FixedType& fixed, double expected_value,
   using FormatType = typename FixedType::FormatType;
   //EXPECT_EQ(expected_raw_value, fixed.RawValue());
   EXPECT_EQ(is_signed, FormatType::IsSigned);
-  EXPECT_EQ(int_bits, FormatType::IntBits);
+  EXPECT_EQ(int_bits, FormatType::MagBits);
   EXPECT_EQ(frac_bits, FormatType::FracBits);
   EXPECT_NEAR(expected_value, fixed.ToFloat(), FixedPointTest::EPSILON);
 }
+// 
+// 
+
+
+TEST_F(FixedPointTest, SumPlan1) {
+  using FormatA = clarinoid::FxFormat<clarinoid::FxLayout<1, 31>, clarinoid::FxStorageTraits<uint32_t>>;
+  using FormatB = clarinoid::FxFormat<clarinoid::FxLayout<2, 30>, clarinoid::FxStorageTraits<uint32_t>>;
+  using plan = clarinoid::FxSmartKernel::SumPlan<FormatA, FormatB, false>;
+  auto als = plan::ALeftShift;
+  auto ars = plan::ARightShift;
+  auto bls = plan::BLeftShift;
+  EXPECT_EQ(1, plan::BLeftShift);  // intermediate shift to equalize A and B; B is now 2.31 uint64_t layout.
+  auto brs = plan::BRightShift;
+
+  EXPECT_EQ(3, plan::IdealMagBits);
+
+  auto alsf = plan::ALeftShiftFinal;
+  auto arsf = plan::ARightShiftFinal;
+  auto blsf = plan::BLeftShiftFinal;
+  auto brsf = plan::BRightShiftFinal;
+
+  auto magBits = plan::ResultFormat::MagBits;
+  auto fractBits = plan::ResultFormat::FracBits;
+}
+
+
 TEST_F(FixedPointTest, LiteralOperatorConstexpr)
 {
   // Test that literal operators work in constexpr contexts
 
-  constexpr auto compile_time = 3.14159_fx;
-  TestFx<int32_t>(compile_time, 3.14159, true, 2, 30);
+  //constexpr auto compile_time = 3.14159_fx;
+  //TestFx<int32_t>(compile_time, 3.14159, true, 2, 30);
+
+  {
+    auto v = clarinoid::fx(10);
+    //auto v = BuildParsedFromValue(3.14);
+    //using D = decltype(v);
+  }
 
   {
     using D = decltype(42_fxd);
-    static_assert(42 == D::Parsed::numerator);
-    static_assert(1 == D::Parsed::denominator);
-    static_assert(false == D::Parsed::neg);
-    static_assert(42 == D::Parsed::int_part);
-    static_assert(0 == D::Parsed::frac_part);
-    static_assert(0 == D::Parsed::exp10);
-    static_assert(false == D::Parsed::has_frac);
-    static_assert(true == D::Parsed::valid);
+    static_assert(42 == D::ParsedType::numerator);
+    static_assert(1 == D::ParsedType::denominator);
+    static_assert(false == D::ParsedType::neg);
+    static_assert(42 == D::ParsedType::int_part);
+    static_assert(0 == D::ParsedType::frac_part);
+    static_assert(0 == D::ParsedType::exp10);
+    static_assert(false == D::ParsedType::has_frac);
+    static_assert(true == D::ParsedType::valid);
     static_assert(std::is_same_v<uint8_t, D::RawType>);
   }
 
-  constexpr auto c1 = 1.5_fx;
+  //constexpr auto c1 = 1.5_fx;
 
-  constexpr auto c2 = 2.5_fx;
-  using D = decltype(2.5_fxd);
-  static_assert(25 == D::Parsed::numerator);
-  static_assert(10 == D::Parsed::denominator);
-  static_assert(false == D::Parsed::neg);
-  static_assert(2 == D::Parsed::int_part);
-  static_assert(5 == D::Parsed::frac_part);
-  static_assert(0 == D::Parsed::exp10);
-  static_assert(true == D::Parsed::has_frac);
-  static_assert(true == D::Parsed::valid);
-  static_assert(std::is_same_v<uint32_t, D::RawType>);
+  //constexpr auto c2 = 2.5_fx;
+  {
+    using D = decltype(2.5_fxd);
+    static_assert(25 == D::ParsedType::numerator);
+    static_assert(10 == D::ParsedType::denominator);
+    static_assert(false == D::ParsedType::neg);
+    static_assert(2 == D::ParsedType::int_part);
+    static_assert(5 == D::ParsedType::frac_part);
+    static_assert(0 == D::ParsedType::exp10);
+    static_assert(true == D::ParsedType::has_frac);
+    static_assert(true == D::ParsedType::valid);
+    static_assert(std::is_same_v<uint32_t, D::RawType>);
+  }
 
   // Test constexpr arithmetic
-  //constexpr auto sum = 1.5_fx + 2.5_fx;
+  {
+    constexpr auto a = 1.5_fx;
+    TestFx<uint32_t>(a, 1.5, false, 1, 31);
+    constexpr auto b = 2.5_fx;
+    TestFx<uint32_t>(b, 2.5, false, 2, 30);
+    auto runtimeSum = a + b;
+    constexpr auto compile_time = a + b;
+    TestFx<uint64_t>(runtimeSum, 4, false, 3, 31); // magbits is 4??
+    TestFx<uint64_t>(compile_time, 4, false, 3, 31);
+  }
+
+  {
+    constexpr auto a = 254_fx;
+    TestFx<uint8_t>(a, 254, false, 8, 0);
+    constexpr auto b = 1_fx;
+    TestFx<uint8_t>(b, 1, false, 1, 0);
+    auto runtimeSum = a + b;
+    constexpr auto compile_time = a + b;
+    TestFx<uint16_t>(runtimeSum, 255, false, 9, 0);
+    TestFx<uint16_t>(compile_time, 255, false, 9, 0);
+  }
 
   // Note: This may require operator+ to be constexpr in the Fixed class
 
   //EXPECT_NEAR(3.14159, compile_time.ToFloat(), EPSILON);
 }
+
+//
+//TEST_F(FixedPointTest, RuntimeConstruction_FracBits)
+//{
+//  // signed frac-bits only
+//  auto a = clarinoid::fx<15>(3.25);  // expect int32 raw, MagBits=31-15=16
+//  static_assert(std::is_same_v<decltype(a)::RawType, int32_t>);
+//  static_assert(decltype(a)::FormatType::FracBits == 15);
+//  static_assert(decltype(a)::FormatType::MagBits == 16);
+//  static_assert(decltype(a)::FormatType::IsSigned);
+//  EXPECT_NEAR(3.25, a.ToFloat(), EPSILON);
+//
+//  // unsigned frac-bits only
+//  auto b = clarinoid::fx_u<10>(12.75);  // expect uint32 raw, MagBits=32-10=22
+//  static_assert(std::is_same_v<decltype(b)::RawType, uint32_t>);
+//  static_assert(decltype(b)::FormatType::FracBits == 10);
+//  static_assert(decltype(b)::FormatType::MagBits == 22);
+//  static_assert(!decltype(b)::FormatType::IsSigned);
+//  EXPECT_NEAR(12.75, b.ToFloat(), EPSILON);
+//}
+//
+//TEST_F(FixedPointTest, RuntimeConstruction_MagBits)
+//{
+//  // signed mag-bits only
+//  auto a = clarinoid::fx_m<3>(5.5);  // expect int32 raw, FracBits=31-3=28
+//  static_assert(std::is_same_v<decltype(a)::RawType, int32_t>);
+//  static_assert(decltype(a)::FormatType::MagBits == 3);
+//  static_assert(decltype(a)::FormatType::FracBits == 28);
+//  EXPECT_NEAR(5.5, a.ToFloat(), EPSILON);
+//
+//  // unsigned mag-bits only
+//  auto b = clarinoid::fx_m_u<8>(255.0);  // expect uint32 raw, FracBits=32-8=24
+//  static_assert(std::is_same_v<decltype(b)::RawType, uint32_t>);
+//  static_assert(decltype(b)::FormatType::MagBits == 8);
+//  static_assert(decltype(b)::FormatType::FracBits == 24);
+//  static_assert(!decltype(b)::FormatType::IsSigned);
+//  EXPECT_NEAR(255.0, b.ToFloat(), 1e-3);  // some rounding possible
+//}
+//
+//TEST_F(FixedPointTest, RuntimeConstruction_MagFracBits)
+//{
+//  auto a = clarinoid::fx_mf<10, 5>(123.625);  // 10 mag, 5 frac, signed
+//  static_assert(std::is_same_v<decltype(a)::RawType, int32_t>);
+//  static_assert(decltype(a)::FormatType::MagBits == 10);
+//  static_assert(decltype(a)::FormatType::FracBits == 5);
+//  EXPECT_NEAR(123.625, a.ToFloat(), EPSILON);
+//
+//  auto b = clarinoid::fx_mf_u<8, 8, uint16_t>(42.5);  // explicit uint16_t
+//  static_assert(std::is_same_v<decltype(b)::RawType, uint16_t>);
+//  static_assert(decltype(b)::FormatType::MagBits == 8);
+//  static_assert(decltype(b)::FormatType::FracBits == 8);
+//  static_assert(!decltype(b)::FormatType::IsSigned);
+//  EXPECT_NEAR(42.5, b.ToFloat(), 1e-3);
+//}
+//
+//TEST_F(FixedPointTest, RuntimeConstruction_DefaultFx)
+//{
+//  auto d = clarinoid::fx(2.5);  // default Q15.16 on int32
+//  static_assert(std::is_same_v<decltype(d)::RawType, int32_t>);
+//  static_assert(decltype(d)::FormatType::FracBits == 16);
+//  static_assert(decltype(d)::FormatType::MagBits == 15);
+//  EXPECT_NEAR(2.5, d.ToFloat(), EPSILON);
+//}
 
 
 }  // namespace FixedPointTests

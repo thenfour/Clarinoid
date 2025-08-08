@@ -21,11 +21,99 @@ struct FxSmartKernel
                          TFormatA,
                          std::conditional_t<(TFormatA::HeadroomBits >= TFormatB::HeadroomBits), TFormatA, TFormatB>>;
 
-  template <typename TFormatA, typename TFormatB>
-  using AddResultFormat =
-      std::conditional_t<(TFormatA::FracBits == TFormatB::FracBits && TFormatA::HeadroomBits >= TFormatB::HeadroomBits),
-                         TFormatA,
-                         std::conditional_t<(TFormatB::HeadroomBits >= TFormatA::HeadroomBits), TFormatB, TFormatA>>;
+
+  // when adding/subtracting (or adding a signed value), you may need to give up 1 bit of precision to add a sign bit.
+  // the operands must be brought into having a unified fractbits before performing the addition.
+  //
+  // The ideal return layout will have magbits = the larger bitness of A or B, plus 1.
+  // proof:
+  // max value 0.15 + 0.15 (which are just under 1 each) = just under 2. so you need to be able to represent 1.xxxx, which is a Q1.x type.
+  // another way to think of it: adding 2 values is like multiplying them by 2 (shifting left by 1 bit -- requiring 1 extra bit of space).
+  //
+  // the result is signed if either operand is signed, or if the operation is a subtraction
+  //
+  // examples:
+  // 8.8 minus 6.10 => 9.10, signed.
+  // 4.60 plus 4.60 => 5.60 (impossible) -> 5.59 reducing precision to fit the value.
+  // 64.0 plus 64.0 => 65.0 (impossible) -> 64.0 the result could overflow. employ an overflow strategy (todo in the future.)
+  template <typename FormatA, typename FormatB, bool TIsSubtraction>
+  struct SumPlan
+  {
+    static constexpr bool IsSubtraction = TIsSubtraction;
+    static constexpr bool ResultIsSigned = FormatA::IsSigned || FormatB::IsSigned || IsSubtraction;
+
+    // Align fractional bits to the maximum of the two (before any squeezing/narrowing)
+    static constexpr int IdealFracBits = (FormatA::FracBits > FormatB::FracBits) ? FormatA::FracBits
+                                                                                 : FormatB::FracBits;
+
+    // Compute shifts needed to align operands to IdealFracBits
+    static constexpr int AFracDelta = IdealFracBits - FormatA::FracBits;
+    static constexpr int BFracDelta = IdealFracBits - FormatB::FracBits;
+    static constexpr int ALeftShift = (AFracDelta > 0) ? AFracDelta : 0;
+    static constexpr int ARightShift = (AFracDelta < 0) ? -AFracDelta : 0;
+    static constexpr int BLeftShift = (BFracDelta > 0) ? BFracDelta : 0;
+    static constexpr int BRightShift = (BFracDelta < 0) ? -BFracDelta : 0;
+
+    // After alignment, effective magnitude bits for each operand increases by any left shift applied.
+    static constexpr int EffectiveMagA = FormatA::MagBits + ALeftShift;
+    static constexpr int EffectiveMagB = FormatB::MagBits + BLeftShift;
+
+    // Ideal magnitude bits needs to accommodate possible carry ( +1 )
+    static constexpr int IdealMagBits = ((EffectiveMagA > EffectiveMagB) ? EffectiveMagA : EffectiveMagB) + 1;
+
+    // First build a widest-possible format (up to 64-bit storage) squeezing if necessary.
+    using WideRaw = std::conditional_t<ResultIsSigned, int64_t, uint64_t>;
+    using WideSqueezed = SqueezedFormat<WideRaw, IdealMagBits, IdealFracBits>;
+    using WideFormat = typename WideSqueezed::FormatType;  // may have reduced frac then mag to fit 64-bit
+
+    // Now attempt to narrow storage while still fitting required value bits.
+    using Narrowed = NarrowedFormat<WideFormat, uint8_t, uint16_t, uint32_t, uint64_t>;
+    using ResultFormat = typename Narrowed::FormatType;
+
+    // Recompute final shifts relative to ResultFormat::FracBits (may have been reduced from IdealFracBits).
+    static constexpr int TargetFracBits = ResultFormat::FracBits;
+    static constexpr int ADeltaFinal = TargetFracBits - FormatA::FracBits;
+    static constexpr int BDeltaFinal = TargetFracBits - FormatB::FracBits;
+    static constexpr int ALeftShiftFinal = (ADeltaFinal > 0) ? ADeltaFinal : 0;
+    static constexpr int ARightShiftFinal = (ADeltaFinal < 0) ? -ADeltaFinal : 0;
+    static constexpr int BLeftShiftFinal = (BDeltaFinal > 0) ? BDeltaFinal : 0;
+    static constexpr int BRightShiftFinal = (BDeltaFinal < 0) ? -BDeltaFinal : 0;
+
+    using ResultValueType = FxValue<ResultFormat>;
+
+    // helps keep compile-time-compatible... but ... wut?
+    template <typename ResRaw, bool IsSub>
+    static constexpr ResRaw addsub_wrap(ResRaw a, ResRaw b)
+    {
+      using U = std::make_unsigned_t<ResRaw>;
+      U ua = static_cast<U>(a);
+      U ub = static_cast<U>(b);
+      U ur = IsSub ? (ua - ub) : (ua + ub);  // well-defined modulo 2^N
+      return static_cast<ResRaw>(ur);
+    }
+
+    static constexpr ResultValueType Execute(const ValueType<FormatA>& a, const ValueType<FormatB>& b)
+    {
+      using ResRaw = typename ResultFormat::RawType;
+
+      ResRaw a_adj = static_cast<ResRaw>(a.mRawValue);
+      if constexpr (ALeftShiftFinal > 0)
+        a_adj = shl_safe<ResRaw, ALeftShiftFinal>(a_adj);
+      if constexpr (ARightShiftFinal > 0)
+        a_adj = sar_safe<ResRaw, ARightShiftFinal>(a_adj);
+
+      ResRaw b_adj = static_cast<ResRaw>(b.mRawValue);
+      if constexpr (BLeftShiftFinal > 0)
+        b_adj = shl_safe<ResRaw, BLeftShiftFinal>(b_adj);
+      if constexpr (BRightShiftFinal > 0)
+        b_adj = sar_safe<ResRaw, BRightShiftFinal>(b_adj);
+
+      ResRaw result = addsub_wrap<ResRaw, IsSubtraction>(a_adj, b_adj);
+
+      // Ensure this is constexpr as well:
+      return FxValue<ResultFormat>::FromRaw(result);
+    }
+  };
 
   template <typename TFormat>
   using NegateResultFormat = std::conditional_t<
@@ -71,25 +159,7 @@ struct FxSmartKernel
   template <typename TFormatA, typename TFormatB>
   [[nodiscard]] static constexpr auto Add(const ValueType<TFormatA>& a, const ValueType<TFormatB>& b)
   {
-    using ResultFormat = AddResultFormat<TFormatA, TFormatB>;
-
-    if constexpr (TFormatA::FracBits == TFormatB::FracBits)
-    {
-      // Same fractional bits - direct addition
-      return ConstructFromRaw<ResultFormat>(a.mRawValue + b.mRawValue);
-    }
-    else
-    {
-      // Different fractional bits - need to align
-      constexpr int target_frac_bits = ResultFormat::FracBits;
-      constexpr int a_shift = target_frac_bits - TFormatA::FracBits;
-      constexpr int b_shift = target_frac_bits - TFormatB::FracBits;
-
-      auto aligned_a = (a_shift >= 0) ? (a.mRawValue << a_shift) : (a.mRawValue >> (-a_shift));
-      auto aligned_b = (b_shift >= 0) ? (b.mRawValue << b_shift) : (b.mRawValue >> (-b_shift));
-
-      return ConstructFromRaw<ResultFormat>(aligned_a + aligned_b);
-    }
+    return SumPlan<TFormatA, TFormatB, false>::Execute(a, b);
   }
 
   // Smart multiplication with shift elision
@@ -173,79 +243,129 @@ struct FxSmartKernel
   template <bool TWantsSign, int TMagBits, int TFracBits>
   struct SelectIntegralFormat
   {
-    static constexpr int SignBits = TWantsSign ? 1 : 0;
-    static constexpr int TotalBitsNeeded = SignBits + TMagBits + TFracBits;
-
     using raw_type =
-        std::conditional_t<(TotalBitsNeeded <= 8),
-                           std::conditional_t<TWantsSign, int8_t, uint8_t>,
-                           std::conditional_t<(TotalBitsNeeded <= 16),
-                                              std::conditional_t<TWantsSign, int16_t, uint16_t>,
-                                              std::conditional_t<(TotalBitsNeeded <= 32),
-                                                                 std::conditional_t<TWantsSign, int32_t, uint32_t>,
-                                                                 std::conditional_t<TWantsSign, int64_t, uint64_t>>>>;
-
+        typename PickUsableType<TWantsSign, TMagBits + TFracBits, uint8_t, uint16_t, uint32_t, uint64_t>::type;
     using type = FxFormat<FxLayout<TMagBits, TFracBits>, FxStorageTraits<raw_type>>;
   };
 
-  //template <bool TWantsSign, int TMagBits, int TFracBits>
-  //using SmallestFormat = typename SelectSmallestFormat<TWantsSign, TMagBits, TFracBits>::type;
-
-  // for finding the type that should be used for holding the literal value. Don't bother storing values in int8 / int16
-  // for example; there's basically 0 chance that it will stay that way. use register-sized.
+  // for finding the type that should be used for holding the literal value. Don't bother storing values in small types if fractional
   template <bool TWantsSign, int TMagBits, int TFracBits>
   struct SelectFractionalFormat
   {
-    static constexpr int SignBits = TWantsSign ? 1 : 0;
-    static constexpr int TotalBitsNeeded = SignBits + TMagBits + TFracBits;
-
-    using raw_type = std::conditional_t<(TotalBitsNeeded <= 32),
-                                        std::conditional_t<TWantsSign, int32_t, uint32_t>,
-                                        std::conditional_t<TWantsSign, int64_t, uint64_t>>;
-
+    using raw_type = typename PickUsableType<TWantsSign, TMagBits + TFracBits, uint32_t, uint64_t>::type;
     using type = FxFormat<FxLayout<TMagBits, TFracBits>, FxStorageTraits<raw_type>>;
   };
 
   template <bool TWantsSign, int TMagBits, int TFracBits>
   using LiteralFormat = std::conditional_t<(TFracBits > 0),
-      typename SelectFractionalFormat<TWantsSign, TMagBits, TFracBits>::type,
-      typename SelectIntegralFormat<TWantsSign, TMagBits, TFracBits>::type
-                                                                 >;// typename SelectSmallestFormat<TWantsSign, TMagBits, TFracBits>::type;
+                                           typename SelectFractionalFormat<TWantsSign, TMagBits, TFracBits>::type,
+                                           typename SelectIntegralFormat<TWantsSign, TMagBits, TFracBits>::type>;
+
+
+  // ---------------- Runtime format decision helpers ----------------
+  template <int TFracBits, bool TSigned = true, typename TRawOverride = void>
+  struct FracBitsDecision
+  {
+    static_assert(TFracBits >= 0, "Negative fractional bits");
+    using Raw = std::conditional_t<
+        std::is_same_v<TRawOverride, void>,
+        std::conditional_t<TSigned,
+                           std::conditional_t<(TFracBits < std::numeric_limits<int32_t>::digits), int32_t, int64_t>,
+                           std::conditional_t<(TFracBits < std::numeric_limits<uint32_t>::digits), uint32_t, uint64_t>>,
+        TRawOverride>;
+    static_assert(std::is_integral_v<Raw>, "Raw must be integral");
+    static constexpr int StorageValueBits = std::numeric_limits<Raw>::digits;
+    static_assert(TFracBits < StorageValueBits, "Too many fractional bits for chosen raw type");
+    static constexpr int MagBits = StorageValueBits - TFracBits;
+    using Format = FxFormat<FxLayout<MagBits, TFracBits>, FxStorageTraits<Raw>>;
+  };
+  template <int TMagBits, bool TSigned = true, typename TRawOverride = void>
+  struct MagBitsDecision
+  {
+    static_assert(TMagBits >= 0, "Negative magnitude bits");
+    using Raw = std::conditional_t<
+        std::is_same_v<TRawOverride, void>,
+        std::conditional_t<TSigned,
+                           std::conditional_t<(TMagBits < std::numeric_limits<int32_t>::digits), int32_t, int64_t>,
+                           std::conditional_t<(TMagBits < std::numeric_limits<uint32_t>::digits), uint32_t, uint64_t>>,
+        TRawOverride>;
+    static_assert(std::is_integral_v<Raw>, "Raw must be integral");
+    static constexpr int StorageValueBits = std::numeric_limits<Raw>::digits;
+    static_assert(TMagBits < StorageValueBits, "Too many magnitude bits for chosen raw type");
+    static constexpr int FracBits = StorageValueBits - TMagBits;
+    using Format = FxFormat<FxLayout<TMagBits, FracBits>, FxStorageTraits<Raw>>;
+  };
+  template <int TMagBits, int TFracBits, bool TSigned = true, typename TRawOverride = void>
+  struct MagFracBitsDecision
+  {
+    static_assert(TMagBits >= 0 && TFracBits >= 0, "Negative bit counts");
+    using Raw = std::conditional_t<
+        std::is_same_v<TRawOverride, void>,
+        std::conditional_t<
+            TSigned,
+            std::conditional_t<((TMagBits + TFracBits) <= std::numeric_limits<int32_t>::digits), int32_t, int64_t>,
+            std::conditional_t<((TMagBits + TFracBits) <= std::numeric_limits<uint32_t>::digits), uint32_t, uint64_t>>,
+        TRawOverride>;
+    static_assert(std::is_integral_v<Raw>, "Raw must be integral");
+    static constexpr int StorageValueBits = std::numeric_limits<Raw>::digits;
+    static_assert((TMagBits + TFracBits) <= StorageValueBits, "Bit counts exceed storage capacity");
+    using Format = FxFormat<FxLayout<TMagBits, TFracBits>, FxStorageTraits<Raw>>;
+  };
+  template <int TFracBits, bool TSigned = true, typename TRawOverride = void>
+  [[nodiscard]] static constexpr auto MakeFromFracBits(double value)
+  {
+    using D = FracBitsDecision<TFracBits, TSigned, TRawOverride>;
+    auto v = ConstructFromFloat<typename D::Format>(value);
+    return v;
+  }
+  template <int TMagBits, bool TSigned = true, typename TRawOverride = void>
+  [[nodiscard]] static constexpr auto MakeFromMagBits(double value)
+  {
+    using D = MagBitsDecision<TMagBits, TSigned, TRawOverride>;
+    auto v = ConstructFromFloat<typename D::Format>(value);
+    return v;
+  }
+  template <int TMagBits, int TFracBits, bool TSigned = true, typename TRawOverride = void>
+  [[nodiscard]] static constexpr auto MakeFromMagFracBits(double value)
+  {
+    using D = MagFracBitsDecision<TMagBits, TFracBits, TSigned, TRawOverride>;
+    auto v = ConstructFromFloat<typename D::Format>(value);
+    return v;
+  }
 
   // -------------------------------- Literal decision descriptor -----------------
-  template <typename TParsed>
+  // TParsed has:
+  // - neg: whether the literal is negative
+  // - abs_val: absolute value of the literal (without sign)
+  // - has_frac: whether the literal has a fractional part
+  // - numerator: numerator of the literal (for fractionals)
+  // - denominator: denominator of the literal (for fractionals)
+  template <typename Parsed>
   struct LiteralDecision
   {
-    // Input snapshot
-    using Parsed = TParsed;
+    using ParsedType = Parsed;
     static constexpr bool SourceNegative = Parsed::neg;
     static constexpr std::uint64_t AbsValue = Parsed::abs_val;
     static constexpr bool HasFraction = Parsed::has_frac;
 
-    // Sign policy
     static constexpr bool NeedsSign = SourceNegative;
 
     static constexpr int MagBits = needed_int_bits(AbsValue);
 
-    // Choose storage & fractional bits
-    //using Store = OptimalRawType<NeedsSign, MagBits, HasFraction ? (32 - MagBits - (NeedsSign ? 1 : 0)) : 0>;
-    //static constexpr int TotalBits = std::numeric_limits<Store>::digits;
-    //static constexpr int FracBits = HasFraction ? (TotalBits - MagBits) : 0;
-
-    //using Layout = FxLayout<MagBits, FracBits>;
-    //using Storage = FxStorageTraits<Store>;
-    //using Format = FxFormat<Layout, Storage>;
-
     // if there's a fraction, then make sure we have bits for it.
     // - if magbits require an int64, then we can use int64_t as the raw type.
     // - otherwise, use int32.
-    static constexpr int MinFractBitsNeeded = HasFraction ? 1 : 0; // we don't actualyl know how many fract bits are required to store the value accurately. we will just go for the biggest we can, once the raw type has been selected.
+    static constexpr int MinFractBitsNeeded =
+        HasFraction
+            ? 1
+            : 0;  // we don't actualyl know how many fract bits are required to store the value accurately. we will just go for the biggest we can, once the raw type has been selected.
     using FormatWithMinFractBits = LiteralFormat<NeedsSign, MagBits, MinFractBitsNeeded>;
 
     // if !HasFraction, then FormatWithMinFractBits is already correct.
     // otherwise, fill out fract bits to fill remaining bits of the raw type.
-    using Format = std::conditional_t<HasFraction,
-                                      LiteralFormat<NeedsSign, MagBits, FormatWithMinFractBits::StorageValueBits - MagBits>,
+    using Format =
+        std::conditional_t<HasFraction,
+                           LiteralFormat<NeedsSign, MagBits, FormatWithMinFractBits::StorageValueBits - MagBits>,
                            FormatWithMinFractBits>;
 
     using FxValueType = FxValue<Format>;
@@ -264,9 +384,9 @@ struct FxSmartKernel
 
     using RawType = typename Format::RawType;
     static constexpr RawType RawValue = static_cast<RawType>(SourceNegative ? -static_cast<std::int64_t>(RawUnsigned)
-                                                                        : static_cast<std::int64_t>(RawUnsigned));
+                                                                            : static_cast<std::int64_t>(RawUnsigned));
 
-    static constexpr FxValueType value = FxValueType::FromRaw(RawValue); 
+    static constexpr FxValueType value = FxValueType::FromRaw(RawValue);
   };
 
   template <typename Parsed>
@@ -274,6 +394,8 @@ struct FxSmartKernel
   {
     return LiteralDecision<Parsed>::value();
   }
-};
+
+
+};  // class FxSmartKernel
 
 }  // namespace clarinoid

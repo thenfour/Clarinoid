@@ -11,35 +11,6 @@
 
 namespace clarinoid
 {
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// /// <summary>
-// /// Computes the absolute value of a compile-time integer constant.
-// /// </summary>
-// /// <typeparam name="i">The integer value whose absolute value is to be computed.</typeparam>
-// template <int64_t i>
-// struct StaticAbs
-// {
-//   static constexpr int64_t value = i < 0 ? -i : i;
-// };
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// /// <summary>
-// /// Computes the number of bits required to represent a static integer value at compile time.
-// /// </summary>
-// /// <typeparam name="i">The integer value for which to compute the number of bits needed.</typeparam>
-// template <int64_t i>
-// struct StaticValueBitsNeeded
-// {
-//   static constexpr int64_t value_allow_zero = 1 + StaticValueBitsNeeded<(StaticAbs<i>::value >> 1)>::value_allow_zero;
-//   static constexpr int64_t value = value_allow_zero;
-// };
-
-// template <>
-// struct StaticValueBitsNeeded<0>
-// {
-//   static constexpr int64_t value = 1;
-//   static constexpr int64_t value_allow_zero = 0;
-// };
-
 template <typename T>
 constexpr int needed_int_bits(T value)
 {
@@ -59,26 +30,18 @@ constexpr std::uint64_t pow10_u64(unsigned p)
   return p > 19 ? std::uint64_t{0} : (p == 0 ? 1 : pow10_u64(p - 1) * 10);
 }
 
-// // Helper to select optimal raw type based on requirements
-// template <bool TWantsSign, int TIntBits, int TFracBits>
-// struct SelectOptimalRawType
-// {
-//   static constexpr int SignBits = TWantsSign ? 1 : 0;
-//   static constexpr int TotalBitsNeeded = SignBits + TIntBits + TFracBits;
 
-//   using type =
-//       std::conditional_t<(TotalBitsNeeded <= 8),
-//                          std::conditional_t<TWantsSign, int8_t, uint8_t>,
-//                          std::conditional_t<(TotalBitsNeeded <= 16),
-//                                             std::conditional_t<TWantsSign, int16_t, uint16_t>,
-//                                             std::conditional_t<(TotalBitsNeeded <= 32),
-//                                                                std::conditional_t<TWantsSign, int32_t, uint32_t>,
-//                                                                std::conditional_t<TWantsSign, int64_t, uint64_t>>>>;
-// };
-
-// // Type alias for the helper struct result
-// template <bool TWantsSign, int TIntBits, int TFracBits>
-// using OptimalRawType_t = typename SelectOptimalRawType<TWantsSign, TIntBits, TFracBits>::type;
+// Reduce fraction by GCD (constexpr)
+static constexpr std::uint64_t gcd_u64(std::uint64_t a, std::uint64_t b)
+{
+  while (b)
+  {
+    auto t = a % b;
+    a = b;
+    b = t;
+  }
+  return a;
+}
 
 // Terminology:
 // - MagBits: number of magnitude bits (excluding sign bit)
@@ -96,18 +59,6 @@ struct FxLayout
   static constexpr int FracBits = TFracBits;
   static constexpr int ValueBits = MagBits + FracBits;  // semantic payload (excluding sign)
 };
-//| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-//| **DSP “inner-loop” kernels**      | **• FMA / MAC (`y = a·b + c`)**<br>**• Multiply-accumulate with rounding & saturation**<br>**• Dot / sum-of-products helpers**                                                    | Every biquad, FIR, FFT, and envelope follower is built on “multiply then add”; a fused path saves one rounding + one saturation.      |
-//| **Format / range utilities**      | **• Convert `Fixed<A>` → `Fixed<B>`** (rescale & saturate)<br>**• Left-shift with saturation (`q = sat_shift_left(x,n)`)**<br>**• Count-leading-zeros / count-leading-sign bits** | Converting between Q-formats is unavoidable at module boundaries; CLZ is the fastest way to auto-pick a safe shift.                   |
-//| **Bitwise & masking**             | **• AND / OR / XOR / NOT** (on the raw value)<br>**• Bit-field extract / set**                                                                                                    | Needed for flag manipulation, packing RGBA colours, checksum parity, etc.                                                             |
-//| **Comparisons / predicates**      | **• `signbit` (returns −1,0,+1)**<br>**• `hypot(x,y)`** (length for 2-D vectors)<br>**• `atan2(y,x)`**                                                                            | UI knob rendering and vector graphics both rely on `atan2`; `hypot` and `signbit` remove a branch each in dynamics processing.        |
-//| **Extra transcendental variants** | **• `exp2`, `exp10`, `log2`, `log10` (direct)**<br>**• `pow2^k` (integer exponent fast path)**                                                                                    | `exp2`/`log2` often map to simple LUT-plus-poly; integer-power fast path is handy for envelope generators and sample-rate convertors. |
-//| **Interpolation / smoothing**     | **• Cubic-Hermite / 3rd-order Lagrange**<br>**• B-spline (catmull-rom)**<br>**• Exponential-smoother (`y += α·(target−y)`) helper**                                               | Linear/smoothstep are fine for UI fade-ins; audio rate interpolation generally needs cubic or better to keep the noise floor down.    |
-//| **Coordinate helpers (UI)**       | **• Degrees↔radians**<br>**• `wrap(angle, ±π)` / `fold(value, min,max)`**                                                                                                         | UI widgets almost always store angles in degrees even when DSP runs radians.                                                          |
-//| **Decibel utilities (audio)**     | **• `lin_to_db(x)` and `db_to_lin(x)`**<br>**• `rms(x[])`**                                                                                                                       | 20·log10 and RMS are the backbone of meters and limiters.                                                                             |
-//| **Random / noise**                | **• Uniform LCG / XOR-shift**<br>**• White & Pink noise accumulators**                                                                                                            | Synth LFOs, UI anim jitter, dithering, and test rigs all want a quick RNG.                                                            |
-//| **Math-policy variants**          | **• Exact vs. nearest vs. stochastic rounding** for every primitive<br>**• Wrap vs. sat vs. trap overflow flavours for `add`, `sub`, `mul`**                                      | You already plan `ssat/usat`; expose the full matrix once so callers don’t reinvent.                                                  |
-//
 
 // Describes the raw storage type's capabilities
 template <typename TRaw>
@@ -148,7 +99,7 @@ struct FxFormat
   static_assert((SignBits + HeadroomBits + MagBits + FracBits) == StorageWidthBits, "Total bits is not adding up...");
 
   // Useful constants (RawOne moved to kernels to allow different policies)
-  static constexpr RawType RawMax = ((RawType(1) << (MagBits + FracBits)) - 1);
+  static constexpr RawType RawMax = ((1ULL << (MagBits + FracBits)) - 1);
   static constexpr RawType RawMin = IsSigned ? -RawMax - 1 : RawType(0);
 };
 
@@ -156,6 +107,7 @@ struct FxFormat
 template <typename TFormat>
 struct FxValue
 {
+  using FormatType = TFormat;
   using RawType = typename TFormat::RawType;
   RawType mRawValue;
 
@@ -175,10 +127,194 @@ struct FxValue
   }
 };
 
-// Forward declarations for policies
-struct RoundingPolicy_Truncate;
-struct OverflowPolicy_Wrap;
-struct PromotionPolicy_LeftOperand;
+//if the requested layout doesn't fit into the storage type,
+// truncate the fractional bits first, then the magnitude bits.
+template <typename RawType, int IdealMagBits, int IdealFractBits>
+struct SqueezedFormat
+{
+  static_assert(IdealMagBits >= 0 && IdealFractBits >= 0, "Negative bit counts");
+  using StorageTraits = FxStorageTraits<RawType>;
+  static constexpr int Capacity = StorageTraits::StorageValueBits;  // value bits available (excludes sign)
+  static constexpr int IdealTotal = IdealMagBits + IdealFractBits;
 
+  // Start with ideals
+  static constexpr int _initialMag = IdealMagBits;
+  static constexpr int _initialFrac = IdealFractBits;
+
+  // If it fits, keep as-is
+  static constexpr bool Fits = (IdealTotal <= Capacity);
+
+  // Compute squeezed values
+  static constexpr int Overflow = Fits ? 0 : (IdealTotal - Capacity);
+
+  // Remove overflow from fractional bits first
+  static constexpr int FracAfterFirstTrim = Fits ? _initialFrac
+                                                 : (_initialFrac > Overflow ? _initialFrac - Overflow : 0);
+  static constexpr int ConsumedFromFrac = Fits ? 0 : (_initialFrac - FracAfterFirstTrim);
+  static constexpr int RemainingOverflow = Fits ? 0 : (Overflow - ConsumedFromFrac);
+
+  // Then, if still overflow, remove from mag bits
+  static constexpr int MagAfterTrim = Fits ? _initialMag
+                                           : (_initialMag > RemainingOverflow ? _initialMag - RemainingOverflow : 0);
+
+  // Guard against both becoming zero (FxFormat requires ValueBits>0). If both zero but capacity>0, force 1 mag bit.
+  static constexpr bool BothZero = (MagAfterTrim == 0) && (FracAfterFirstTrim == 0);
+  static constexpr int FinalMag = BothZero ? (Capacity > 0 ? 1 : 0) : MagAfterTrim;
+  static constexpr int FinalFrac = BothZero ? 0 : FracAfterFirstTrim;
+
+  using Layout = FxLayout<FinalMag, FinalFrac>;
+  using FormatType = FxFormat<Layout, StorageTraits>;
+};
+
+//// Utility: pick first provided raw type whose (signed-adjusted) digits >= NeededBits.
+//// signedness of provided types is ignored; make_signed or make_unsigned is employed depending on the 1st template parameter.
+//// Usage: PickUsableType_t<true, 17, uint8_t, uint16_t, uint32_t> -> int32_t
+//template <bool Signed, int NeededBits>
+//struct PickUsableType
+//{
+//    ...
+//};
+//
+//template <bool Signed, int NeededBits, typename First, typename... Rest>
+//struct PickUsableType<Signed, NeededBits, First, Rest...>
+//{
+//  static_assert(std::is_integral_v<First>, "Allowed raw types must be integral");
+//  using CandidateUnsigned = std::make_unsigned_t<First>;
+//  using CandidateSigned = std::make_signed_t<First>;
+//  using Candidate = std::conditional_t<Signed, CandidateSigned, CandidateUnsigned>;
+//  static constexpr int CandidateDigits = std::numeric_limits<Candidate>::digits;
+//  using NextResult = typename PickUsableType<Signed, NeededBits, Rest...>::type;
+//  using type = std::conditional_t<(CandidateDigits >= NeededBits), Candidate, NextResult>;
+//};
+
+
+// constexpr shifting
+template <typename T, int S>
+constexpr T shl_safe(T x)
+{
+  static_assert(S >= 0, "shift must be non-negative");
+  if constexpr (S == 0)
+    return x;
+  using U = std::make_unsigned_t<T>;
+  static_assert(S < std::numeric_limits<U>::digits, "shift too large");
+  return static_cast<T>(static_cast<U>(x) << S);
+}
+
+template <typename T, int S>
+constexpr T sar_safe(T x)
+{
+  static_assert(S >= 0, "shift must be non-negative");
+  if constexpr (S == 0)
+    return x;
+  using U = std::make_unsigned_t<T>;
+  constexpr int W = std::numeric_limits<U>::digits;
+  static_assert(S < W, "shift too large");
+
+  if constexpr (std::is_unsigned<T>::value)
+  {
+    return static_cast<T>(static_cast<U>(x) >> S);
+  }
+  else
+  {
+    U ux = static_cast<U>(x);  // two's-complement representation
+    U shifted = ux >> S;       // logical shift
+    // If negative, sign-extend the vacated high bits:
+    if (ux >> (W - 1))
+    {
+      shifted |= (~U{0}) << (W - S);
+    }
+    return static_cast<T>(shifted);
+  }
+}
+
+template <typename A0, typename B0>
+struct WiderOf
+{
+  static_assert(std::is_integral<A0>::value && std::is_integral<B0>::value,
+                "WidestType requires integral (or enum) types");
+  // value-capable bits (sign bit does NOT count)
+  static constexpr int da = std::numeric_limits<A0>::digits;
+  static constexpr int db = std::numeric_limits<B0>::digits;
+  using type = std::conditional_t<(da >= db), A0, B0>;
+};
+
+template <typename... TRaw>
+struct WidestType;
+
+template <typename T>
+struct WidestType<T>
+{
+  using type = T;
+  static_assert(std::is_integral<type>::value, "WidestType requires integral (or enum) types");
+};
+
+template <typename T0, typename T1, typename... Ts>
+struct WidestType<T0, T1, Ts...>
+{
+  using type = typename WidestType<typename WiderOf<T0, T1>::type, Ts...>::type;
+};
+
+// nice alias
+template <typename... Ts>
+using WidestType_t = typename WidestType<Ts...>::type;
+
+
+
+template <typename...>
+struct _dependent_false : std::false_type
+{
+};
+
+// Utility: pick first provided raw type whose (signed-adjusted) digits >= NeededBits.
+// signedness of provided types is ignored; we force Signed via make_signed/make_unsigned.
+template <bool Signed, int NeededBits, typename... Ts>
+struct PickUsableType;
+
+template <bool Signed, int NeededBits>
+struct PickUsableType<Signed, NeededBits>
+{
+  static_assert(!_dependent_false<std::integral_constant<bool, Signed>>::value,
+                "PickUsableType: no provided type has enough value bits");
+  using type = void;
+};
+
+template <bool Signed, int NeededBits, typename T0, typename... Rest>
+struct PickUsableType<Signed, NeededBits, T0, Rest...>
+{
+  static_assert(NeededBits >= 0, "PickUsableType: NeededBits must be >= 0");
+
+  //using Raw0 = std::remove_cv_t<std::remove_reference_t<T0>>;
+  //using Base0 = std::conditional_t<std::is_enum<Raw0>::value, std::underlying_type_t<Raw0>, Raw0>;
+  //static_assert(std::is_integral<Base0>::value, "PickUsableType requires integral (or enum) types");
+  //static_assert(!std::is_same<Base0, bool>::value, "PickUsableType does not support bool");
+
+  using Adj0 = std::conditional_t<Signed, std::make_signed_t<T0>, std::make_unsigned_t<T0>>;
+  static constexpr int d0 = std::numeric_limits<Adj0>::digits;
+
+  using type = std::conditional_t<(d0 >= NeededBits), Adj0, typename PickUsableType<Signed, NeededBits, Rest...>::type>;
+};
+
+// nice alias
+template <bool Signed, int NeededBits, typename... Ts>
+using PickUsableType_t = typename PickUsableType<Signed, NeededBits, Ts...>::type;
+
+
+// calculates a format with a narrower storage, if there's headroom to do so.
+// Caller supplies allowed raw (unsigned) storage types in order of desirability.
+// We pick the first that can hold Needed bits; if it is narrower than original, we use it; else keep original.
+template <typename TFormat, typename... TAllowedRaw>
+struct NarrowedFormat
+{
+  static_assert(sizeof...(TAllowedRaw) > 0, "Provide at least one allowed raw type");
+  using OrigRaw = typename TFormat::RawType;
+  static constexpr bool Signed = TFormat::IsSigned;
+  static constexpr int Needed = TFormat::ValueBits;
+  static constexpr int OrigDigits = std::numeric_limits<OrigRaw>::digits;
+
+  using CandidateRaw = typename PickUsableType<Signed, Needed, TAllowedRaw...>::type;
+  static constexpr int CandDigits = std::numeric_limits<CandidateRaw>::digits;
+  using RawTypeToUse = std::conditional_t<(CandDigits < OrigDigits), CandidateRaw, OrigRaw>;
+  using FormatType = FxFormat<FxLayout<TFormat::MagBits, TFormat::FracBits>, FxStorageTraits<RawTypeToUse>>;
+};
 
 }  // namespace clarinoid
