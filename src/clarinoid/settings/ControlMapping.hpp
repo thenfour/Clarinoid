@@ -126,14 +126,15 @@ struct ControlMapping
         enum class State : uint8_t
         {
             Idle,
-            Primed,
+            WaitingSecondPress,
             Activated,
+            Cancelled,
         };
 
         StopwatchLight mStopwatch;
         State mState = State::Idle;
 
-        void Update(bool &triggerUp, bool &triggerDown, bool pressIsTriggerUp, int timeoutMS)
+        void Update(bool &triggerUp, bool &triggerDown, bool pressIsTriggerUp, bool isPressedNow, int timeoutMS)
         {
             bool pressEdge = pressIsTriggerUp ? triggerUp : triggerDown;
             bool releaseEdge = pressIsTriggerUp ? triggerDown : triggerUp;
@@ -143,14 +144,19 @@ struct ControlMapping
             case State::Idle:
                 if (pressEdge)
                 {
-                    mState = State::Primed;
+                    mState = State::WaitingSecondPress;
                     mStopwatch.Restart();
+                    triggerUp = false;
+                    triggerDown = false;
+                }
+                else if (releaseEdge)
+                {
                     triggerUp = false;
                     triggerDown = false;
                 }
                 break;
 
-            case State::Primed: {
+            case State::WaitingSecondPress: {
                 auto elapsed = mStopwatch.ElapsedTime().ElapsedMillisI();
                 if (pressEdge)
                 {
@@ -173,14 +179,17 @@ struct ControlMapping
                         triggerDown = false;
                     }
                 }
-                else if (releaseEdge)
+                else
                 {
-                    triggerUp = false;
-                    triggerDown = false;
-                }
-                else if (elapsed > timeoutMS)
-                {
-                    mState = State::Idle;
+                    if (releaseEdge)
+                    {
+                        triggerUp = false;
+                        triggerDown = false;
+                    }
+                    if (elapsed > timeoutMS)
+                    {
+                        mState = isPressedNow ? State::Cancelled : State::Idle;
+                    }
                 }
                 break;
             }
@@ -189,14 +198,6 @@ struct ControlMapping
                 if (releaseEdge)
                 {
                     mState = State::Idle;
-                    if (pressIsTriggerUp)
-                    {
-                        triggerUp = false;
-                    }
-                    else
-                    {
-                        triggerDown = false;
-                    }
                 }
                 else if (pressEdge)
                 {
@@ -208,6 +209,28 @@ struct ControlMapping
                     {
                         triggerDown = false;
                     }
+                }
+                break;
+
+            case State::Cancelled:
+                if (!isPressedNow)
+                {
+                    if (releaseEdge)
+                    {
+                        triggerUp = false;
+                        triggerDown = false;
+                    }
+                    mState = State::Idle;
+                }
+                else if (releaseEdge)
+                {
+                    triggerUp = false;
+                    triggerDown = false;
+                }
+                else if (pressEdge)
+                {
+                    triggerUp = false;
+                    triggerDown = false;
                 }
                 break;
             }
@@ -274,7 +297,11 @@ struct ControlMapping
 
         if (mActivation == Activation::DoublePress)
         {
-            mDoubleClickLogic.Update(triggerUp, triggerDown, PressUsesTriggerUp(), kDefaultDoubleClickWindowMS);
+            mDoubleClickLogic.Update(triggerUp,
+                                     triggerDown,
+                                     PressUsesTriggerUp(),
+                                     mReader.IsCurrentlyPressed(),
+                                     kDefaultDoubleClickWindowMS);
         }
 
         switch (mStyle)
