@@ -7,6 +7,7 @@
 #include "assert.hpp"
 #include "Uptime.hpp"
 #include "Math.hpp"
+#include "Wrap.hpp"
 #include "function.hpp"
 #include "Memory.hpp"
 #include "Util.hpp"

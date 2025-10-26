@@ -240,7 +240,10 @@ struct ControlMapping
         return {};
     }
 
-    static ControlMapping MomentaryMapping(PhysicalControl source, Function d, ModifierKey mod = ModifierKey::Any)
+    static ControlMapping MomentaryMapping(PhysicalControl source,
+                                           Function d,
+                                           ModifierKey mod = ModifierKey::Any,
+                                           ModifierKey mod2 = ModifierKey::Any)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -284,8 +287,7 @@ struct ControlMapping
         return ret;
     }
 
-    static ControlMapping TypicalEncoderMapping(PhysicalControl source, Function d,
-                                                 ModifierKey mod = ModifierKey::Any)
+    static ControlMapping TypicalEncoderMapping(PhysicalControl source, Function d, ModifierKey mod = ModifierKey::Any)
     {
         ControlMapping ret;
         ret.mSource = source;

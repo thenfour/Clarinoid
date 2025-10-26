@@ -6,19 +6,19 @@
 namespace clarinoid
 {
 
-//static constexpr size_t SynthPresetID_FunkyCave = SYNTH_PRESET_COUNT - 17;
-//static constexpr size_t SynthPresetID_CrystalSync = SYNTH_PRESET_COUNT - 16;
-//static constexpr size_t SynthPresetID_CinematicTagAlt = SYNTH_PRESET_COUNT - 15;
-//static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 14;
-// static constexpr size_t SynthPresetID_PWMMono = SYNTH_PRESET_COUNT - 13;
-// static constexpr size_t SynthPresetID_Crystal = SYNTH_PRESET_COUNT - 12;
-// static constexpr size_t SynthPresetID_CinematicTag = SYNTH_PRESET_COUNT - 11;
-// static constexpr size_t SynthPresetID_Fluvial = SYNTH_PRESET_COUNT - 10;
-// static constexpr size_t SynthPresetID_PanFlute = SYNTH_PRESET_COUNT - 9;
-// static constexpr size_t SynthPresetID_SynthTrumpetDoubler = SYNTH_PRESET_COUNT - 8;
-// static constexpr size_t SynthPresetID_HarmSync = SYNTH_PRESET_COUNT - 5;
-// static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
-//static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
+// static constexpr size_t SynthPresetID_FunkyCave = SYNTH_PRESET_COUNT - 17;
+// static constexpr size_t SynthPresetID_CrystalSync = SYNTH_PRESET_COUNT - 16;
+// static constexpr size_t SynthPresetID_CinematicTagAlt = SYNTH_PRESET_COUNT - 15;
+// static constexpr size_t SynthPresetID_SynccyLead = SYNTH_PRESET_COUNT - 14;
+//  static constexpr size_t SynthPresetID_PWMMono = SYNTH_PRESET_COUNT - 13;
+//  static constexpr size_t SynthPresetID_Crystal = SYNTH_PRESET_COUNT - 12;
+//  static constexpr size_t SynthPresetID_CinematicTag = SYNTH_PRESET_COUNT - 11;
+//  static constexpr size_t SynthPresetID_Fluvial = SYNTH_PRESET_COUNT - 10;
+//  static constexpr size_t SynthPresetID_PanFlute = SYNTH_PRESET_COUNT - 9;
+//  static constexpr size_t SynthPresetID_SynthTrumpetDoubler = SYNTH_PRESET_COUNT - 8;
+//  static constexpr size_t SynthPresetID_HarmSync = SYNTH_PRESET_COUNT - 5;
+//  static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
+// static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
 
 static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 11;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 10;
@@ -28,12 +28,12 @@ static constexpr size_t SynthPresetID_HarmDetunedSaws = SYNTH_PRESET_COUNT - 3;
 static constexpr size_t SynthPresetID_HarmTri = SYNTH_PRESET_COUNT - 2;
 static constexpr size_t SynthPresetID_HarmFMFB = SYNTH_PRESET_COUNT - 1;
 
-//static constexpr size_t HarmPresetID_WorldPeace = HARM_PRESET_COUNT - 1;
-//static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 2;
-// static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
-// static constexpr size_t HarmPresetID_WorldPeace_F = HARM_PRESET_COUNT - 3;
-// static constexpr size_t HarmPresetID_WorldPeace_Db = HARM_PRESET_COUNT - 4;
-// static constexpr size_t HarmPresetID_WorldPeace_Gb = HARM_PRESET_COUNT - 5;
+// static constexpr size_t HarmPresetID_WorldPeace = HARM_PRESET_COUNT - 1;
+// static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 2;
+//  static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
+//  static constexpr size_t HarmPresetID_WorldPeace_F = HARM_PRESET_COUNT - 3;
+//  static constexpr size_t HarmPresetID_WorldPeace_Db = HARM_PRESET_COUNT - 4;
+//  static constexpr size_t HarmPresetID_WorldPeace_Gb = HARM_PRESET_COUNT - 5;
 
 enum class HarmScaleRefType : uint8_t
 {
@@ -53,24 +53,26 @@ EnumInfo<HarmScaleRefType> gHarmScaleRefTypeInfo("HarmScaleRefType", gHarmScaleR
 ////////////////////////////////////////////////////
 enum class NonDiatonicBehavior : uint8_t
 {
-    NextDiatonicNote,
-    PrevDiatonicNote,
-    PreferStay, // keep playing the same note, if it's within range. otherwise change to the next.
-    PreferMove, // change to the next note (think cantaloupe comp that passing B)
-    Drop,       // just don't play this note.
-    // FollowMelodyFromBelow, // so this voice plays a nondiatonic note too, based on distance from lower note
-    // FollowMelodyFromAbove, // so this voice plays a nondiatonic note too, based on distance from upper note
-    TryAlternateScale, // could be interesting to have a list of alternative scales to try. need to have a LUT of
-                       // alternative scales or maybe even just use the scale follower's LUT?
+    // implementing the stateless ones.
+    NearestDiatonic, // imagines that the source note snaps to the nearest diatonic note, and uses that as basis for the
+                     // harmony voice
+    ChromaticFromAbove, // same as NearestDiatonic, but the resulting note gets transposed down the same as the distance
+                        // from the playing note from its next higher diatonic note.
+    ChromaticFromBelow, // same as NearestDiatonic, but the resulting note gets transposed up the same as the distance
+                        // from the playing note from its next lower diatonic note.
+    UseScaleFollower, // use the scale follower for an alternate scale; if it's still nondiatonic for that (weird), use
+                      // NearestDiatonic behavior.
+    Drop,             // just don't play this note.
+
+    // stateful modes could be useful like "keep playing the same note", but let's measure need first.
 };
 
-EnumItemInfo<NonDiatonicBehavior> gNonDiatonicBehaviorItems[6] = {
-    {NonDiatonicBehavior::NextDiatonicNote, "NextDiatonicNote"},
-    {NonDiatonicBehavior::PrevDiatonicNote, "PrevDiatonicNote"},
-    {NonDiatonicBehavior::PreferStay, "PreferStay"},
-    {NonDiatonicBehavior::PreferMove, "PreferMove"},
+EnumItemInfo<NonDiatonicBehavior> gNonDiatonicBehaviorItems[5] = {
+    {NonDiatonicBehavior::NearestDiatonic, "NearestDiatonic"},
+    {NonDiatonicBehavior::ChromaticFromAbove, "ChromaticFromAbove"},
+    {NonDiatonicBehavior::ChromaticFromBelow, "ChromaticFromBelow"},
+    {NonDiatonicBehavior::UseScaleFollower, "UseScaleFollower"},
     {NonDiatonicBehavior::Drop, "Drop"},
-    {NonDiatonicBehavior::TryAlternateScale, "TryAlternateScale"},
 };
 
 EnumInfo<NonDiatonicBehavior> gNonDiatonicBehaviorInfo("NonDiatonicBehavior", gNonDiatonicBehaviorItems);
@@ -79,15 +81,16 @@ EnumInfo<NonDiatonicBehavior> gNonDiatonicBehaviorInfo("NonDiatonicBehavior", gN
 enum class NoteOOBBehavior : uint8_t
 {
     Mute,
-    TransposeOctave
-    // transposeoctave_but_drop_if_it_crosses_live
-    // keep below live
-    // keep above live
+    RotateIntoRange,
+    RotateBelowLive, // rotate into range; mute if >= live
+    RotateAboveLive, // rotate into range; mute if <= live
 };
 
-EnumItemInfo<NoteOOBBehavior> gNoteOOBBehaviorItems[2] = {
+EnumItemInfo<NoteOOBBehavior> gNoteOOBBehaviorItems[4] = {
     {NoteOOBBehavior::Mute, "Mute"},
-    {NoteOOBBehavior::TransposeOctave, "TransposeOctave"},
+    {NoteOOBBehavior::RotateIntoRange, "RotateIntoRange"},
+    {NoteOOBBehavior::RotateBelowLive, "RotateBelowLive"},
+    {NoteOOBBehavior::RotateAboveLive, "RotateAboveLive"},
 };
 
 EnumInfo<NoteOOBBehavior> gNoteOOBBehaviorInfo("NoteOOBBehavior", gNoteOOBBehaviorItems);
@@ -146,8 +149,8 @@ struct HarmVoiceSettings
     Scale mLocalScale = {0, ScaleFlavorIndex::Chromatic};
     uint8_t mMinOutpNote = 0;
     uint8_t mMaxOutpNote = 127;
-    NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::TransposeOctave;
-    NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+    NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
+    NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
     PitchBendParticipation mPitchBendParticipation = PitchBendParticipation::Same;
 
     String GetMenuDetailString() const
@@ -192,21 +195,21 @@ struct HarmSettings
     static void InitSlumsHarmPreset(HarmPreset &p)
     {
         p.mName = "Slums";
-        //p.mPresetScale.mRootNoteIndex = Note::D;
-        //p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Minor;
+        // p.mPresetScale.mRootNoteIndex = Note::D;
+        // p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Minor;
         p.mStereoSeparation = 0.5f;
 
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -5;
-        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::PrevDiatonicNote;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
 
         p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[1].mSequenceLength = 1;
         p.mVoiceSettings[1].mSequence[0] = -3;
-        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
     }
 
     static void InitBotanicalHarmPreset(HarmPreset &p)
@@ -222,14 +225,14 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -5;
         p.mVoiceSettings[0].mMaxOutpNote = 80;
-        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::PrevDiatonicNote;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
 
         p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[1].mSequenceLength = 1;
         p.mVoiceSettings[1].mSequence[0] = -3;
         p.mVoiceSettings[1].mMaxOutpNote = 80;
-        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
     }
 
     static void InitCrystalFieldsHarmPreset(HarmPreset &p)
@@ -247,7 +250,7 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequence[1] = -2;
         p.mVoiceSettings[0].mSequence[2] = -3;
         p.mVoiceSettings[0].mMaxOutpNote = 80;
-        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::PrevDiatonicNote;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
 
         p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
@@ -257,7 +260,7 @@ struct HarmSettings
         p.mVoiceSettings[1].mSequence[2] = -5;
         p.mVoiceSettings[1].mSequence[3] = -5;
         p.mVoiceSettings[1].mMaxOutpNote = 80;
-        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
     }
 
     static void InitBellycrawlHarmPreset(HarmPreset &p)
@@ -272,13 +275,13 @@ struct HarmSettings
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -2;
-        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
 
         p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[1].mSequenceLength = 1;
         p.mVoiceSettings[1].mSequence[0] = -4;
-        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NextDiatonicNote;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
 
         p.mVoiceSettings[2].mScaleRef = HarmScaleRefType::Voice;
         p.mVoiceSettings[2].mLocalScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
@@ -548,9 +551,9 @@ struct HarmSettings
 
     static void InitBigBandPreset(HarmPreset &p, const char *name)
     {
-        p.mName = name;//"World Peace";
-        //p.mPresetScale.mRootNoteIndex = scaleRoot;//Note::Eb;
-        //p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
+        p.mName = name; //"World Peace";
+        // p.mPresetScale.mRootNoteIndex = scaleRoot;//Note::Eb;
+        // p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::MajorPentatonic;
         p.mStereoSeparation = 0.7f;
 
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
@@ -575,6 +578,22 @@ struct HarmSettings
         p.mVoiceSettings[3].mSequenceLength = 2;
         p.mVoiceSettings[3].mSequence[0] = -5; // D
         p.mVoiceSettings[3].mSequence[1] = -7; // Bb
+    }
+
+    static void InitPentatonicPreset(HarmPreset &p, const char *name, int interval1, int interval2)
+    {
+        p.mName = name;
+        p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
+        p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = interval1;
+
+        p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
+        p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = interval2;
     }
 
     // static void InitRoadPreset(HarmPreset &p)
@@ -632,11 +651,11 @@ struct HarmSettings
     {
         p.mName = "Col 8va";
         p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-        //p.mVoiceSettings[0].mMaxOutpNote = 36;
-        //p.mVoiceSettings[0].mMaxOutpNote = 50;
+        // p.mVoiceSettings[0].mMaxOutpNote = 36;
+        // p.mVoiceSettings[0].mMaxOutpNote = 50;
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
-        //p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_MoogBass;
+        // p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_MoogBass;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = 12;
     }
@@ -676,9 +695,19 @@ struct HarmSettings
 
     HarmSettings()
     {
-        size_t iPreset = 1;
+        size_t iPreset = 0;
 
         InitBigBandPreset(mPresets[iPreset++], "World Peace");
+
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -3,-2", -3, -2);
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -3,-1", -3, -1);
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -2,-1", -2, -1);
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -2,+1", -2, +1);
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -1,+1", -1, +1);
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -1,+2", -1, +2);
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic +1,+2", +1, +2);
+        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic +1,+3", +1, +3);
+
         InitBigPreset(mPresets[iPreset++]);
         InitFuzionPreset(mPresets[iPreset++]);
         InitMin6Preset(mPresets[iPreset++]);
@@ -703,15 +732,14 @@ struct HarmSettings
         // InitColDetSawsPreset(mPresets[iPreset++]);
         // Init5thPreset(mPresets[iPreset++]);
 
-
         // InitQuartalHarmPreset1(mPresets[iPreset++]); <-- it's nice, but too similar to the other quartal
 
-        //InitBigBandPreset(mPresets[HarmPresetID_WorldPeace], "World Peace");
-        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_F], "World Peace F", Note::F_);
-        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Bb], "World Peace Bb", Note::Bb);
-        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Eb], "World Peace Eb", Note::Eb);
-        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Gb], "World Peace Gb", Note::Gb);
-        //InitRoadPreset(mPresets[HarmPresetID_Road]);
+        // InitBigBandPreset(mPresets[HarmPresetID_WorldPeace], "World Peace");
+        //  InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_F], "World Peace F", Note::F_);
+        //  InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Bb], "World Peace Bb", Note::Bb);
+        //  InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Eb], "World Peace Eb", Note::Eb);
+        //  InitBigBandPreset(mPresets[HarmPresetID_WorldPeace_Gb], "World Peace Gb", Note::Gb);
+        // InitRoadPreset(mPresets[HarmPresetID_Road]);
     }
 };
 

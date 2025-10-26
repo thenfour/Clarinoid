@@ -17,7 +17,8 @@ int KeyStateToRelativeNote(bool LH1, bool LH2, bool LH3, bool LH4, bool RH1, boo
         relativeNote -= LH1 ? 2 : 1;
     if (LH3)
         relativeNote -= 2;
-    if (LH4) {
+    if (LH4)
+    {
         // in general this is a +1 key, but we need to account for some special cases like trills.
         relativeNote += 1;
     }
@@ -28,9 +29,12 @@ int KeyStateToRelativeNote(bool LH1, bool LH2, bool LH3, bool LH4, bool RH1, boo
         // but we need to support Bb.
         if (LH1 && !LH2) // x-??|x???
             relativeNote -= 1;
-        else if (LH1 && LH2) { // ?x??|x???  <-- normal case of G-F for examlpe
+        else if (LH1 && LH2)
+        { // ?x??|x???  <-- normal case of G-F for examlpe
             relativeNote -= 2;
-        } else { // enables Bb to C trill
+        }
+        else
+        { // enables Bb to C trill
             relativeNote -= 1;
         }
     }
@@ -43,19 +47,22 @@ int KeyStateToRelativeNote(bool LH1, bool LH2, bool LH3, bool LH4, bool RH1, boo
         // coming from F  0 100 -> 101 this is -1 E
         // coming from E  0 110 -> 111 this is -2 D
 
-        // Normally you want to use LH4 as a +1 key, but when it's down you often still want to +1 (Eb - E or Db - D). it's natural to use rh2 for this.
-        // coming from G# 1 000 -> 001 this is -1 F#
-        // coming from G  1 010 -> 011 this is -1 F   <-- allows rh2 trill between F and F#
-        // coming from F# 1 100 -> 101 this is -1 E
-        // coming from F  1 110 -> 111 this is -2 D
-        relativeNote --;
-        if (!LH4 && RH2 && RH1) { // no G#, with F and E keys down = -2 = E -> D
-            relativeNote --;
-        } else if (LH4) { // enable G# -> F# trill by trilling LH4.
-            relativeNote --;
+        // Normally you want to use LH4 as a +1 key, but when it's down you often still want to +1 (Eb - E or Db - D).
+        // it's natural to use rh2 for this. coming from G# 1 000 -> 001 this is -1 F# coming from G  1 010 -> 011 this
+        // is -1 F   <-- allows rh2 trill between F and F# coming from F# 1 100 -> 101 this is -1 E coming from F  1 110
+        // -> 111 this is -2 D
+        relativeNote--;
+        if (!LH4 && RH2 && RH1)
+        { // no G#, with F and E keys down = -2 = E -> D
+            relativeNote--;
+        }
+        else if (LH4)
+        { // enable G# -> F# trill by trilling LH4.
+            relativeNote--;
         }
 
-        // the ugly thing about enabling those trills is that now LH4 no longer acts as a +1, but i think it's an acceptable compromise.
+        // the ugly thing about enabling those trills is that now LH4 no longer acts as a +1, but i think it's an
+        // acceptable compromise.
     }
     if (RH4)
         relativeNote -= 2;
@@ -107,7 +114,8 @@ struct CCEWIMusicalState
     int noteOns = 0;
 
     int mLastPlayedNote = 0; // valid even when mLiveVoice is not.
-    int mLiveOctave = 0; // whether or not you're playing a note, indicates the octave # you're fingering. used for LED indication.
+    int mLiveOctave =
+        0; // whether or not you're playing a note, indicates the octave # you're fingering. used for LED indication.
     int mPitchShiftDueToOctaveKeys = 0;
 
     int mDefaultBaseNote = 49; // C#2
@@ -217,19 +225,19 @@ struct CCEWIMusicalState
         {
             mLiveOctave = 5;
             mPitchShiftDueToOctaveKeys = 36;
-            //relativeNote += 36;
+            // relativeNote += 36;
         }
         else if (mInput->mKeyOct5.CurrentValue())
         {
             mPitchShiftDueToOctaveKeys = 24;
             mLiveOctave = 4;
-            //relativeNote += 24;
+            // relativeNote += 24;
         }
         else if (mInput->mKeyOct4.CurrentValue())
         {
             mLiveOctave = 3;
             mPitchShiftDueToOctaveKeys = 12;
-            //relativeNote += 12;
+            // relativeNote += 12;
         }
         else if (mInput->mKeyOct3.CurrentValue())
         {
@@ -240,13 +248,13 @@ struct CCEWIMusicalState
         {
             mLiveOctave = 1;
             mPitchShiftDueToOctaveKeys = -12;
-            //relativeNote -= 12;
+            // relativeNote -= 12;
         }
         else if (mInput->mKeyOct1.CurrentValue())
         {
             mLiveOctave = 0;
             mPitchShiftDueToOctaveKeys = -24;
-            //relativeNote -= 24;
+            // relativeNote -= 24;
         }
         relativeNote += mPitchShiftDueToOctaveKeys;
 #endif
@@ -362,20 +370,18 @@ struct CCEWIMusicalState
         mHarmPresetOnOffToggleReader.Update(&mInput->mHarmPresetOnOffToggle);
         if (mHarmPresetOnOffToggleReader.IsNewlyPressed())
         {
-            if (perf.mHarmEnabled && perf.mHarmPreset)
+            if (perf.mHarmEnabled)
             {
                 perf.mHarmEnabled = false;
                 mpDisplay->ShowToast(String("Harmonizer OFF\r\n") +
                                      mAppSettings->mHarmSettings.mPresets[perf.mHarmPreset].ToString(perf.mHarmPreset));
             }
-            else if (!perf.mHarmEnabled && perf.mHarmPreset)
+            else if (!perf.mHarmEnabled)
             {
                 perf.mHarmEnabled = true;
                 mpDisplay->ShowToast(String("Harmonizer ON\r\n") + mAppSettings->GetHarmPatchName(perf.mHarmPreset));
             }
         }
-
-
 
         // we have calculated mLiveVoice, converting physical to live musical state.
         // now take the live musical state, and fills out mMusicalVoices based on harmonizer & looper settings.

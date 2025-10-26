@@ -33,7 +33,7 @@
 #include "clarinoid2MusicalStateTask.hpp"
 #include "clarinoid2DebugDisplayApp.hpp"
 #include "clarinoid2RhythmGoniometer.hpp"
-//#include "clarinoid2RhythmLissajaus.hpp"
+// #include "clarinoid2RhythmLissajaus.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
@@ -76,7 +76,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     MPR121ConfigApp<10, 4> mMPR121ConfigApp; //(mDisplay, mControlMapper, mMusicalStateTask);
     ScaleDetectorApp mScaleDetectorApp;
     RhythmGoniometerApp mGoniometerApp;
-    //RhythmLissajausApp mLissajausApp;
+    // RhythmLissajausApp mLissajausApp;
 
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
@@ -109,11 +109,10 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
           mSynthPatchApp(mDisplay),   //
           mAudioMonitorApp(mDisplay), //
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
-          mHarmVoiceSettingsApp(mDisplay),                            //
-          mHarmPatchApp(mDisplay),                                    //
-          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome), //
-          mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask),
-          mScaleDetectorApp(mDisplay, mMusicalStateTask),
+          mHarmVoiceSettingsApp(mDisplay, mMusicalStateTask.mMusicalState.mLooper.mHarmonizer), //
+          mHarmPatchApp(mDisplay),                                                              //
+          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome),                           //
+          mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask), mScaleDetectorApp(mDisplay, mMusicalStateTask),
           mGoniometerApp(mDisplay, mMusicalStateTask)
     {
     }
@@ -207,8 +206,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
         mInputDelegator.Init(&mAppSettings, &mControlMapper, &mMusicalStateTask.mMetronome);
 
-        mAppSettings.mControlMappings[breathMappingIndex] =
-            ControlMapping::MakeUnipolarMapping(PhysicalControl::Breath, ControlMapping::Function::Breath, 0.102f, 0.35f);
+        mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::MakeUnipolarMapping(
+            PhysicalControl::Breath, ControlMapping::Function::Breath, 0.102f, 0.35f);
         mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveP = 0.38f;
         mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping.mCurveS = 0;
         mGuiPerformanceApp.mBreathCalibration = &(mAppSettings.mControlMappings[breathMappingIndex].mUnipolarMapping);
@@ -273,9 +272,10 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
         // X Buttons ------------------------
 
-        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
-            PhysicalControl::Back, ControlMapping::Function::ModifierTranspose);
+        mAppSettings.mControlMappings[++im] =
+            ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::ModifierTranspose);
 
+        // nb: assigning multiple modifiers to same physical control complicates logic.
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
             PhysicalControl::LHx1, ControlMapping::Function::ModifierShift, ModifierKey::Any);
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
@@ -283,20 +283,21 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
             PhysicalControl::LHx1, ControlMapping::Function::ModifierHarm, ModifierKey::Any);
 
+        // we have controls relying on key+tempo together, so make sure anything using these modifiers requires
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
             PhysicalControl::LHx2, ControlMapping::Function::ModifierKey, ModifierKey::Any);
 
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
             PhysicalControl::LHx3, ControlMapping::Function::ModifierTempo, ModifierKey::Any);
 
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKey::None);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKey::Shift);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::GlobalScaleDeducedToggle, ModifierKey::Key);
-        mAppSettings.mControlMappings[++im] =
-            ControlMapping::MomentaryMapping(PhysicalControl::EncButton, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKey::None);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKey::Shift);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::EncButton, ControlMapping::Function::GlobalScaleDeducedToggle, ModifierKey::Key);
+        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
+            PhysicalControl::EncButton, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo);
 
         // RH buttons
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
@@ -313,10 +314,10 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f, ModifierKey::Harm);
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
             PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f, ModifierKey::Harm);
-        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Harm);
-        mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Harm);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::SynthPresetB, -1.0f, ModifierKey::Harm);
+        mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::SynthPresetB, 1.0f, ModifierKey::Harm);
 
         // KEY
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
@@ -336,7 +337,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
             PhysicalControl::RHx2, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo);
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo);
+            PhysicalControl::RHx1, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Tempo);
 
         // TRANSPOSE
         mAppSettings.mControlMappings[++im] = ControlMapping::ButtonIncrementMapping(
@@ -347,7 +348,6 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             PhysicalControl::RHx2, ControlMapping::Function::TransposeReset, ModifierKey::Transpose);
         mAppSettings.mControlMappings[++im] = ControlMapping::MomentaryMapping(
             PhysicalControl::RHx1, ControlMapping::Function::TransposeReset, ModifierKey::Transpose);
-
 
         mDisplay.Init(&mAppSettings, &mInputDelegator, &mHud, allApps);
         mMusicalStateTask.Init();
@@ -366,93 +366,91 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
         NopTask nopTask;
 
-/*
-{
-  "totalTime": 24000,
-  "tasks": [
-    {
-      "shortName": "enc",
-      "codeSymbol": "mMusicalStateTask.mControlMapper->mEncoderTask",
-      "intervalMicros": 3001,
-      "delayMicros": 0
-    },
-    {
-      "shortName": "mus",
-      "codeSymbol": "mMusicalStateTask",
-      "intervalMicros": 3001,
-      "delayMicros": 0
-    },
-    {
-      "shortName": "dispA",
-      "codeSymbol": "mDisplayTask1",
-      "intervalMicros": 24001,
-      "delayMicros": 3000
-    },
-    {
-      "shortName": "dispB",
-      "codeSymbol": "mDisplayTask2",
-      "intervalMicros": 24001,
-      "delayMicros": 15000
-    },
-    {
-      "shortName": "led",
-      "codeSymbol": "mLed",
-      "intervalMicros": 12001,
-      "delayMicros": 0
-    },
-    {
-      "shortName": "lhq",
-      "codeSymbol": "mMPR121ConfigApp.mLHStatusQuerier",
-      "intervalMicros": 8001,
-      "delayMicros": 1000
-    },
-    {
-      "shortName": "rhq",
-      "codeSymbol": "mMPR121ConfigApp.mRHStatusQuerier",
-      "intervalMicros": 8001,
-      "delayMicros": 5000
-    },
-    {
-      "shortName": "nop",
-      "codeSymbol": "nopTask",
-      "intervalMicros": 24001,
-      "delayMicros": 24000
-    }
-  ]
-}
-*/
+        /*
+        {
+          "totalTime": 24000,
+          "tasks": [
+            {
+              "shortName": "enc",
+              "codeSymbol": "mMusicalStateTask.mControlMapper->mEncoderTask",
+              "intervalMicros": 3001,
+              "delayMicros": 0
+            },
+            {
+              "shortName": "mus",
+              "codeSymbol": "mMusicalStateTask",
+              "intervalMicros": 3001,
+              "delayMicros": 0
+            },
+            {
+              "shortName": "dispA",
+              "codeSymbol": "mDisplayTask1",
+              "intervalMicros": 24001,
+              "delayMicros": 3000
+            },
+            {
+              "shortName": "dispB",
+              "codeSymbol": "mDisplayTask2",
+              "intervalMicros": 24001,
+              "delayMicros": 15000
+            },
+            {
+              "shortName": "led",
+              "codeSymbol": "mLed",
+              "intervalMicros": 12001,
+              "delayMicros": 0
+            },
+            {
+              "shortName": "lhq",
+              "codeSymbol": "mMPR121ConfigApp.mLHStatusQuerier",
+              "intervalMicros": 8001,
+              "delayMicros": 1000
+            },
+            {
+              "shortName": "rhq",
+              "codeSymbol": "mMPR121ConfigApp.mRHStatusQuerier",
+              "intervalMicros": 8001,
+              "delayMicros": 5000
+            },
+            {
+              "shortName": "nop",
+              "codeSymbol": "nopTask",
+              "intervalMicros": 24001,
+              "delayMicros": 24000
+            }
+          ]
+        }
+        */
 
-TaskPlanner::TaskDeadline plan[] = {
-    { TimeSpan::FromMicros(0), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc1" },
-    { TimeSpan::FromMicros(0), &mMusicalStateTask, "mus1" },
-    { TimeSpan::FromMicros(0), &mLed, "led1" },
-    { TimeSpan::FromMicros(1000), &mMPR121ConfigApp.mLHStatusQuerier, "lhq1" },
-    { TimeSpan::FromMicros(3000), &mDisplayTask1, "dispA1" },
-    { TimeSpan::FromMicros(3001), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc2" },
-    { TimeSpan::FromMicros(3001), &mMusicalStateTask, "mus2" },
-    { TimeSpan::FromMicros(5000), &mMPR121ConfigApp.mRHStatusQuerier, "rhq1" },
-    { TimeSpan::FromMicros(6002), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc3" },
-    { TimeSpan::FromMicros(6002), &mMusicalStateTask, "mus3" },
-    { TimeSpan::FromMicros(9001), &mMPR121ConfigApp.mLHStatusQuerier, "lhq2" },
-    { TimeSpan::FromMicros(9003), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc4" },
-    { TimeSpan::FromMicros(9003), &mMusicalStateTask, "mus4" },
-    { TimeSpan::FromMicros(12001), &mLed, "led2" },
-    { TimeSpan::FromMicros(12004), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc5" },
-    { TimeSpan::FromMicros(12004), &mMusicalStateTask, "mus5" },
-    { TimeSpan::FromMicros(13001), &mMPR121ConfigApp.mRHStatusQuerier, "rhq2" },
-    { TimeSpan::FromMicros(15000), &mDisplayTask2, "dispB1" },
-    { TimeSpan::FromMicros(15005), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc6" },
-    { TimeSpan::FromMicros(15005), &mMusicalStateTask, "mus6" },
-    { TimeSpan::FromMicros(17002), &mMPR121ConfigApp.mLHStatusQuerier, "lhq3" },
-    { TimeSpan::FromMicros(18006), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc7" },
-    { TimeSpan::FromMicros(18006), &mMusicalStateTask, "mus7" },
-    { TimeSpan::FromMicros(21002), &mMPR121ConfigApp.mRHStatusQuerier, "rhq3" },
-    { TimeSpan::FromMicros(21007), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc8" },
-    { TimeSpan::FromMicros(21007), &mMusicalStateTask, "mus8" },
-    { TimeSpan::FromMicros(24000), &nopTask, "nop1" },
-};
-
-
+        TaskPlanner::TaskDeadline plan[] = {
+            {TimeSpan::FromMicros(0), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc1"},
+            {TimeSpan::FromMicros(0), &mMusicalStateTask, "mus1"},
+            {TimeSpan::FromMicros(0), &mLed, "led1"},
+            {TimeSpan::FromMicros(1000), &mMPR121ConfigApp.mLHStatusQuerier, "lhq1"},
+            {TimeSpan::FromMicros(3000), &mDisplayTask1, "dispA1"},
+            {TimeSpan::FromMicros(3001), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc2"},
+            {TimeSpan::FromMicros(3001), &mMusicalStateTask, "mus2"},
+            {TimeSpan::FromMicros(5000), &mMPR121ConfigApp.mRHStatusQuerier, "rhq1"},
+            {TimeSpan::FromMicros(6002), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc3"},
+            {TimeSpan::FromMicros(6002), &mMusicalStateTask, "mus3"},
+            {TimeSpan::FromMicros(9001), &mMPR121ConfigApp.mLHStatusQuerier, "lhq2"},
+            {TimeSpan::FromMicros(9003), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc4"},
+            {TimeSpan::FromMicros(9003), &mMusicalStateTask, "mus4"},
+            {TimeSpan::FromMicros(12001), &mLed, "led2"},
+            {TimeSpan::FromMicros(12004), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc5"},
+            {TimeSpan::FromMicros(12004), &mMusicalStateTask, "mus5"},
+            {TimeSpan::FromMicros(13001), &mMPR121ConfigApp.mRHStatusQuerier, "rhq2"},
+            {TimeSpan::FromMicros(15000), &mDisplayTask2, "dispB1"},
+            {TimeSpan::FromMicros(15005), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc6"},
+            {TimeSpan::FromMicros(15005), &mMusicalStateTask, "mus6"},
+            {TimeSpan::FromMicros(17002), &mMPR121ConfigApp.mLHStatusQuerier, "lhq3"},
+            {TimeSpan::FromMicros(18006), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc7"},
+            {TimeSpan::FromMicros(18006), &mMusicalStateTask, "mus7"},
+            {TimeSpan::FromMicros(21002), &mMPR121ConfigApp.mRHStatusQuerier, "rhq3"},
+            {TimeSpan::FromMicros(21007), &mMusicalStateTask.mControlMapper->mEncoderTask, "enc8"},
+            {TimeSpan::FromMicros(21007), &mMusicalStateTask, "mus8"},
+            {TimeSpan::FromMicros(24000), &nopTask, "nop1"},
+        };
 
         TaskPlanner tp = {plan};
 

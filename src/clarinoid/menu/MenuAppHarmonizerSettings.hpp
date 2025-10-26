@@ -171,22 +171,20 @@ struct HarmVoiceSettingsApp
                                                        },
                                                        AlwaysEnabled};
 
-    EnumSettingItem<Note> mLocalScaleNote = {
-        "My Scale Root",
-        gNoteInfo,
-        Property<Note>{
-            [](void *cap) FLASHMEM {
-                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                return pThis->EditingVoice().mLocalScale.mRootNoteIndex;
-            }, // getter
-            [](void *cap, const Note &val) {
-                auto *pThis = (HarmVoiceSettingsApp *)cap;
-                pThis->EditingVoice().mLocalScale.mRootNoteIndex = val;
-            },   // setter
-            this // capture val
-        },
-        AlwaysEnabled
-    };
+    EnumSettingItem<Note> mLocalScaleNote = {"My Scale Root",
+                                             gNoteInfo,
+                                             Property<Note>{
+                                                 [](void *cap) FLASHMEM {
+                                                     auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                                     return pThis->EditingVoice().mLocalScale.mRootNoteIndex;
+                                                 }, // getter
+                                                 [](void *cap, const Note &val) {
+                                                     auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                                     pThis->EditingVoice().mLocalScale.mRootNoteIndex = val;
+                                                 },   // setter
+                                                 this // capture val
+                                             },
+                                             AlwaysEnabled};
 
     EnumSettingItem<ScaleFlavorIndex> mLocalScaleFlavor = {
         " ->Flav",
@@ -202,8 +200,7 @@ struct HarmVoiceSettingsApp
             },   // setter
             this // capture val
         },
-        AlwaysEnabled
-    };
+        AlwaysEnabled};
 
     EnumSettingItem<NonDiatonicBehavior> mNonDiatonicBehavior = {
         "OOS behav",
@@ -430,22 +427,22 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
         },
         AlwaysEnabled};
 
-    MultiSubmenuSettingItem mVoiceSubmenu = {[](void *cap) FLASHMEM { return clarinoid::HARM_VOICES; },
-                                             [](void *cap, size_t mi) { // name
-                                                 auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                 // like
-                                                 // Voice 5 [-2,2]
-                                                 return (String)(
-                                                     String("Voice ") + mi + "" +
-                                                     pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
-                                             },                         // return string name
-                                             [](void *cap, size_t mi) { // get submenu for item
-                                                 auto *pThis = (HarmPatchSettingsApp *)cap;
-                                                 pThis->mHarmVoiceSettingsApp.mEditingHarmVoice = mi;
-                                                 return &pThis->mHarmVoiceSettingsApp.mRootList;
-                                             },                                         // return submenu
-                                             [](void *cap, size_t mi) { return true; }, // is enabled
-                                             this};                                     // capture
+    MultiSubmenuSettingItem mVoiceSubmenu = {
+        [](void *cap) FLASHMEM { return clarinoid::HARM_VOICES; },
+        [](void *cap, size_t mi) { // name
+            auto *pThis = (HarmPatchSettingsApp *)cap;
+            // like
+            // Voice 5 [-2,2]
+            return (String)(String("Voice ") + mi + "" +
+                            pThis->EditingPreset().mVoiceSettings[mi].GetMenuDetailString());
+        },                         // return string name
+        [](void *cap, size_t mi) { // get submenu for item
+            auto *pThis = (HarmPatchSettingsApp *)cap;
+            pThis->mHarmVoiceSettingsApp.mEditingHarmVoice = mi;
+            return &pThis->mHarmVoiceSettingsApp.mRootList;
+        },                                         // return submenu
+        [](void *cap, size_t mi) { return true; }, // is enabled
+        this};                                     // capture
 
     FunctionListSettingItem mCopyPreset = {
         "Copy to ...",
@@ -508,14 +505,15 @@ struct HarmSettingsApp : public SettingsMenuApp
     }
 
     HarmPatchSettingsApp mHarmPatchSettings;
+    Harmonizer &mHarmonizer;
 
-    HarmSettingsApp(IDisplay &d) : SettingsMenuApp(d), mHarmPatchSettings(d)
+    HarmSettingsApp(IDisplay &d, Harmonizer &h) : SettingsMenuApp(d), mHarmPatchSettings(d), mHarmonizer(h)
     {
     }
 
     MultiSubmenuSettingItem mPatchSubmenu = {
         [](void *cap) FLASHMEM { return clarinoid::HARM_PRESET_COUNT; }, // get item count
-        [](void *cap, size_t mi) {                              // get item name
+        [](void *cap, size_t mi) {                                       // get item name
             auto *pThis = (HarmSettingsApp *)cap;
             return (String)(String("") + mi + ":" + pThis->GetAppSettings()->mHarmSettings.mPresets[mi].mName);
         },
@@ -542,9 +540,17 @@ struct HarmSettingsApp : public SettingsMenuApp
 
         auto &perf = this->GetAppSettings()->GetCurrentPerformancePatch();
         auto name = this->GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
-        // auto& h = this->GetAppSettings()->FindHarmPreset(perf.mHarmPreset);
 
         this->mDisplay.println(name);
+
+        // size_t i = 0;
+        // for (auto &state : this->mHarmonizer.mVoiceStates)
+        // {
+        //     this->mDisplay.println(String(i) + ":" + MidiNote{state.mCurrentMidiNote}.ToStringWithOctave() + " " +
+        //                            state.mCurrentMidiNote + " " + state.mResult);
+        //     ++i;
+        // }
+
         SettingsMenuApp::RenderFrontPage();
     }
 };

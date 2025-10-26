@@ -19,6 +19,12 @@ struct Harmonizer
 
     // state & processing for harmonizer.
 
+    struct VoiceState
+    {
+        uint8_t mCurrentMidiNote = 0; // 0 means no note.
+        // String mResult;
+    };
+
     enum class VoiceFilterOptions : uint8_t
     {
         AllExceptDeducedVoices,
@@ -27,6 +33,132 @@ struct Harmonizer
 
     size_t mSequencePos = 0;
     Stopwatch mRotationTriggerTimer;
+    VoiceState mVoiceStates[HARM_VOICES];
+
+    // accepts input note + voice settings, returns harmonized note
+    static uint8_t GetHarmonizedNote(uint8_t inputNote,
+                                     Scale &scale,
+                                     Scale &deducedScale,
+                                     size_t sequencePos,
+                                     HarmPreset &preset,
+                                     HarmVoiceSettings &voiceSetting,
+                                     VoiceState &voiceState)
+    {
+        auto sequenceIndex = sequencePos % voiceSetting.mSequenceLength;
+        uint8_t scaleRoot = 0;
+        auto ctx = scale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Sharp);
+        if (ctx.mEnharmonic == 0)
+        {
+            // diatonic.
+            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot); // get the harmonized note in the same scale
+            // voiceState.mResult = String("diatonic ") + ret;
+            voiceState.mCurrentMidiNote = ret;
+            return ret;
+        }
+
+        // deal with non-diatonic cases
+        switch (voiceSetting.mNonDiatonicBehavior)
+        {
+        default:
+        case NonDiatonicBehavior::Drop:
+            // voiceState.mResult = "harm mute";
+            return 0; // indicate mute
+        case NonDiatonicBehavior::UseScaleFollower: {
+            auto ctx = deducedScale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Sharp);
+            // just ignore if it's diatonic here. it would be weird for the deduced scale not to contain the live note.
+            // if it's non-diatonic, then it will chromatically adjust anyway.
+            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot); // get the harmonized note in the same scale
+            // voiceState.mResult = String("scalefoll ") + ret;
+            voiceState.mCurrentMidiNote = ret;
+            return ret;
+        }
+        break;
+        case NonDiatonicBehavior::NearestDiatonic: {
+            // the input note is non-diatonic; adjust it to the nearest diatonic note and harmonize from that.
+            // we already measured in context of sharps; measure as flat.
+            uint8_t scaleRootFlat = 0;
+            auto ctxFlat = scale.GetNoteInScaleContext(inputNote, scaleRootFlat, EnharmonicDirection::Flat);
+            if (std::abs(ctxFlat.mEnharmonic) < std::abs(ctx.mEnharmonic))
+            {
+                ctx = ctxFlat;
+            }
+            // sharp is nearer (or equal)
+            ctx.mEnharmonic = 0; // erase the chromatic adjustment; we're making it diatonic now.
+            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot);
+            // voiceState.mResult = String("nearest ") + ret;
+            voiceState.mCurrentMidiNote = ret;
+            return ret;
+        }
+        break;
+        case NonDiatonicBehavior::ChromaticFromAbove: {
+            // just express the chromatic adjustment in terms of flats instead of sharps.
+            auto ctx = scale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Flat);
+            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot);
+            // voiceState.mResult = String("chromatic above ") + ret;
+            voiceState.mCurrentMidiNote = ret;
+            return ret;
+        }
+        break;
+        case NonDiatonicBehavior::ChromaticFromBelow: {
+            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot);
+            // voiceState.mResult = String("chromatic below ") + ret;
+            voiceState.mCurrentMidiNote = ret;
+            return ret;
+        }
+        break;
+        }
+    }
+
+    static uint8_t EnsureHarmonizedNoteBounds(uint8_t note, uint8_t liveNote, HarmVoiceSettings &voiceSetting)
+    {
+        // out-of-bounds behavior
+        switch (voiceSetting.mNoteOOBBehavior)
+        {
+        default:
+        case NoteOOBBehavior::Mute: {
+            if (note < voiceSetting.mMinOutpNote || note > voiceSetting.mMaxOutpNote)
+            {
+                return 0;
+            }
+        }
+        break;
+        case NoteOOBBehavior::RotateIntoRange: {
+            int32_t outp = note;
+            if (!wrapByStepIntoRange<12>(note, voiceSetting.mMinOutpNote, voiceSetting.mMaxOutpNote, outp))
+            {
+                return 0;
+            }
+            return outp;
+        }
+        break;
+        case NoteOOBBehavior::RotateBelowLive: {
+            // effectively, it's the same as RotateIntoRange, just constraining the range to [min, live-1]
+            int32_t outp = note;
+            if (!wrapByStepIntoRange<12>(note, voiceSetting.mMinOutpNote, liveNote - 1, outp))
+            {
+                return 0;
+            }
+            return outp;
+        }
+        break;
+        case NoteOOBBehavior::RotateAboveLive: {
+            // effectively, it's the same as RotateIntoRange, just constraining the range to [live+1, max]
+            int32_t outp = note;
+            if (!wrapByStepIntoRange<12>(note, liveNote + 1, voiceSetting.mMaxOutpNote, outp))
+            {
+                return 0;
+            }
+            return outp;
+        }
+        break;
+        }
+        return note;
+    }
 
     // called each frame to add harmonizer voices to the output, given the live
     // playing voice. liveVoice is considered a part of the output. It will be
@@ -38,7 +170,8 @@ struct Harmonizer
                      const MusicalVoiceTransitionEvents &transitionEvents,
                      MusicalVoice *outp,
                      MusicalVoice *end,
-                     VoiceFilterOptions voiceFilter)
+                     VoiceFilterOptions voiceFilter,
+                     bool log)
     {
         HarmPreset &preset = mAppSettings->FindHarmPreset(liveVoice->mHarmPatch);
 
@@ -100,15 +233,29 @@ struct Harmonizer
         bool globalDeduced = perf.mGlobalScaleRef == GlobalScaleRefType::Deduced;
         Scale globalScale = globalDeduced ? perf.mDeducedScale : perf.mGlobalScale;
 
+        // reset states.
+        VoiceState sentinel;
+        for (size_t nVoice = 0; nVoice < SizeofStaticArray(preset.mVoiceSettings); ++nVoice)
+        {
+            auto &voiceState = log ? mVoiceStates[nVoice] : sentinel;
+            // voiceState.mResult = "?";
+            voiceState.mCurrentMidiNote = 0;
+        }
+
         for (size_t nVoice = 0; nVoice < SizeofStaticArray(preset.mVoiceSettings); ++nVoice)
         {
             auto &hv = preset.mVoiceSettings[nVoice];
+            auto &voiceState = log ? mVoiceStates[nVoice] : sentinel;
 
             // can we skip straight away?
             if (hv.mSequenceLength == 0)
+            {
+                // voiceState.mResult = "No seq";
                 continue;
+            }
             if (pout >= end)
             {
+                // voiceState.mResult = "No output";
                 return ret;
             }
 
@@ -132,10 +279,11 @@ struct Harmonizer
             }
 
             bool wantDeduced = (voiceFilter == VoiceFilterOptions::OnlyDeducedVoices);
-            // CCPlot(String("wantdeduced:") + (wantDeduced ? "yes" : "no") +
-            // "voiceFilter=" + (int)(voiceFilter));
             if (wantDeduced != deduced)
+            {
+                // voiceState.mResult = deduced ? "is deduced" : "not deduced";
                 continue;
+            }
 
             *pout = *liveVoice; // copy from live voice to get started.
             pout->mIsNoteCurrentlyMuted = !perf.mHarmEnabled;
@@ -159,37 +307,41 @@ struct Harmonizer
                 break;
             }
 
-            // todo: use hv.mNonDiatonicBehavior
-            auto newNote = scale.AdjustNoteByInterval(
-                pout->mMidiNote, hv.mSequence[mSequencePos % hv.mSequenceLength], EnharmonicDirection::Sharp);
+            // old method:
+            // auto newNote = scale.AdjustNoteByInterval(
+            //     pout->mMidiNote, hv.mSequence[mSequencePos % hv.mSequenceLength], EnharmonicDirection::Sharp);
+            // if (!newNote)
+            // {
+            //     voiceState.mResult = "oob mute";
+            //     continue;
+            // }
+
+            // pout->mMidiNote = newNote;
+            // voiceState.mCurrentMidiNote = pout->mMidiNote;
+            // voiceState.mResult = String("note ") + pout->mMidiNote;
+
+            // new method:
+            auto newNote =
+                GetHarmonizedNote(pout->mMidiNote, scale, perf.mDeducedScale, mSequencePos, preset, hv, voiceState);
             if (!newNote)
             {
-                continue;
+                continue; // muted
             }
-
-            pout->mMidiNote = newNote;
-
-            // corrective settings...
-            switch (hv.mNoteOOBBehavior)
+            newNote = EnsureHarmonizedNoteBounds(newNote, liveVoice->mMidiNote, hv);
+            if (!newNote)
             {
-            case NoteOOBBehavior::TransposeOctave:
-                while (pout->mMidiNote < hv.mMinOutpNote)
-                    pout->mMidiNote += 12;
-                while (pout->mMidiNote > hv.mMaxOutpNote)
-                    pout->mMidiNote -= 12;
-                break;
-            case NoteOOBBehavior::Mute:
-                if (pout->mMidiNote < hv.mMinOutpNote)
-                    continue;
-                if (pout->mMidiNote > hv.mMaxOutpNote)
-                    continue;
-                break;
+                // voiceState.mResult = "oob mute";
+                continue; // muted
             }
+            pout->mMidiNote = newNote;
+            voiceState.mCurrentMidiNote = newNote;
+            // voiceState.mResult = String("note ") + newNote;
 
-            if (pout->mMidiNote < 1)
-                continue;
             if (pout->mVelocity == 0)
+            {
+                // voiceState.mResult = "vel 0";
                 continue;
+            }
 
             switch (hv.mSynthPresetRef)
             {

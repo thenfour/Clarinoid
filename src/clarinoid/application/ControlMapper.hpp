@@ -8,14 +8,13 @@
 namespace clarinoid
 {
 
-
 struct GlobalTempoMappableFunction : FunctionHandler
 {
     IInputSource *mInputSrc;
     AppSettings *mAppSettings;
-    IMetronome* mpMetronome;
+    IMetronome *mpMetronome;
 
-    void Init(AppSettings *appSettings, IInputSource *psrc, IMetronome* pMetronome)
+    void Init(AppSettings *appSettings, IInputSource *psrc, IMetronome *pMetronome)
     {
         mpMetronome = pMetronome;
         mInputSrc = psrc;
@@ -40,10 +39,6 @@ struct GlobalTempoMappableFunction : FunctionHandler
     }
 };
 
-
-
-
-
 struct GlobalKeyRootMappableFunction : FunctionHandler
 {
     IInputSource *mInputSrc;
@@ -63,7 +58,8 @@ struct GlobalKeyRootMappableFunction : FunctionHandler
         if (old != newNote)
         {
             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mRootNoteIndex = newNote;
-            mInputSrc->InputSource_ShowToast(String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
+            mInputSrc->InputSource_ShowToast(String("Global scale\n") +
+                                             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
@@ -92,7 +88,8 @@ struct GlobalScaleFlavorMappableFunction : FunctionHandler
         if (old != newFlavor)
         {
             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mFlavorIndex = newFlavor;
-            mInputSrc->InputSource_ShowToast(String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
+            mInputSrc->InputSource_ShowToast(String("Global scale\n") +
+                                             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
@@ -341,7 +338,7 @@ struct InputDelegator
 
     VirtualSwitch mSoftResetMpr121;
 
-    void Init(AppSettings *appSettings, IInputSource *psrc, IMetronome* pMetronome)
+    void Init(AppSettings *appSettings, IInputSource *psrc, IMetronome *pMetronome)
     {
         mpAppSettings = appSettings;
         mpSrc = psrc;
@@ -433,7 +430,16 @@ struct InputDelegator
 
     bool MatchesModifierKeys(const ControlMapping &m)
     {
-        switch (m.mModifier)
+        if (!MatchesModifierKey(m.mModifier))
+            return false;
+        // if (!MatchesModifierKey(m.mModifier2))
+        //     return false;
+        return true;
+    }
+
+    bool MatchesModifierKey(const ModifierKey &m)
+    {
+        switch (m)
         {
         case ModifierKey::None: // = 0, // requires no modifiers are pressed.
             return !mModifierFine.CurrentValue() && !mModifierCourse.CurrentValue() && !mModifierSynth.CurrentValue() &&

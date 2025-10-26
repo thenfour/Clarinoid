@@ -20,42 +20,25 @@ namespace clarinoid
 
 static constexpr int TOAST_DURATION_MILLIS = 1600;
 
+static DitherMatrix<2> gBayer2x2Matrix{{0, 2, 3, 1}};
 
-static DitherMatrix<2> gBayer2x2Matrix {
-    { 0, 2,
-        3, 1 }
-};
+static DitherMatrix<4> gBayer4x4Matrix{{0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5}};
 
-static DitherMatrix<4> gBayer4x4Matrix {
-    {  0, 8, 2, 10,
-        12,  4, 14,  6,
-        3, 11,  1,  9,
-        15,  7, 13,  5 }
-};
-
-static DitherMatrix<8> gBayer8x8Matrix {
-    {  0, 48, 12, 60, 3, 51, 15, 63,
-        32, 16, 44, 28, 35, 19, 47, 31,
-        8, 56, 4, 52, 11, 59, 7, 55,
-        40, 24, 36, 20, 43, 27, 39, 23,
-        2, 50, 14, 62, 1, 49, 13, 61,
-        34, 18, 46, 30, 33, 17, 45, 29,
-        10, 58, 6, 54, 9, 57, 5, 53,
-        42, 26, 38, 22, 41, 25, 37, 21 }
-};
-
-
-
+static DitherMatrix<8> gBayer8x8Matrix{{0,  48, 12, 60, 3,  51, 15, 63, 32, 16, 44, 28, 35, 19, 47, 31,
+                                        8,  56, 4,  52, 11, 59, 7,  55, 40, 24, 36, 20, 43, 27, 39, 23,
+                                        2,  50, 14, 62, 1,  49, 13, 61, 34, 18, 46, 30, 33, 17, 45, 29,
+                                        10, 58, 6,  54, 9,  57, 5,  53, 42, 26, 38, 22, 41, 25, 37, 21}};
 
 //////////////////////////////////////////////////////////////////////
 struct _CCDisplay : IDisplay
 {
-//   private:
-//     static CCAdafruitSSD1306
-//         *gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in general.
+    //   private:
+    //     static CCAdafruitSSD1306
+    //         *gDisplay; // this is only to allow the crash handler to output to the screen. not for app use in
+    //         general.
 
   public:
-    CCAdafruitSSD1306& mDisplay;
+    CCAdafruitSSD1306 &mDisplay;
 
     AppSettings *mAppSettings = nullptr;
     InputDelegator *mInput = nullptr;
@@ -68,8 +51,7 @@ struct _CCDisplay : IDisplay
     int mCurrentAppIndex = 0;
 
     // hardware SPI
-    _CCDisplay(CCAdafruitSSD1306& display)
-        : mDisplay(display)
+    _CCDisplay(CCAdafruitSSD1306 &display) : mDisplay(display)
     {
     }
 
@@ -198,27 +180,93 @@ struct _CCDisplay : IDisplay
         ClearState();
         mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
 
-        String s = mHudProvider->IHudProvider_GetHudTransientIndicator(
-            this->mInput->mModifierFine.CurrentValue(),
-            this->mInput->mModifierCourse.CurrentValue(),
-            this->mInput->mModifierShift.CurrentValue(),
-            this->mInput->mModifierTranspose.CurrentValue(),
-            this->mInput->mModifierTempo.CurrentValue(),
-            this->mInput->mModifierKey.CurrentValue(),
-            this->mInput->mModifierHarm.CurrentValue()
-            );
-        if (s.length() > 0)
+        auto s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput->mModifierFine.CurrentValue(),
+                                                                     this->mInput->mModifierCourse.CurrentValue(),
+                                                                     this->mInput->mModifierShift.CurrentValue(),
+                                                                     this->mInput->mModifierTranspose.CurrentValue(),
+                                                                     this->mInput->mModifierTempo.CurrentValue(),
+                                                                     this->mInput->mModifierKey.CurrentValue(),
+                                                                     this->mInput->mModifierHarm.CurrentValue());
+        // if (s.length() > 0)
         {
             ClearState();
-            int16_t x, y;
-            uint16_t w, h;
-            mDisplay.getTextBounds(s, 0, 0, &x, &y, &w, &h);
-            x = mDisplay.width() - w; // x is where the text will appear
-            mDisplay.fillRect(x - 1 /*start rect 1 px left*/, y, w + 2, h + 2, SSD1306_WHITE);
-            mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-            mDisplay.setCursor(x, 1); // y + 2
-            mDisplay.print(s);
+            // int16_t x, y;
+            // uint16_t w, h;
+            // mDisplay.getTextBounds(s, 0, 0, &x, &y, &w, &h);
+            // x = mDisplay.width() - w; // x is where the text will appear
+            // mDisplay.fillRect(x - 1 /*start rect 1 px left*/, y, w + 2, h + 2, SSD1306_WHITE);
+            //  mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+            //  mDisplay.setCursor(x, 1); // y + 2
+
+            String chips[10];
+            size_t chipCount = 0;
+
+            if (s.length() > 0)
+            {
+                chips[chipCount++] = s;
+            }
+
+            if (this->mInput->mModifierFine.CurrentValue())
+            {
+                chips[chipCount++] = "Fine";
+            }
+            if (this->mInput->mModifierCourse.CurrentValue())
+            {
+                chips[chipCount++] = "Crs";
+            }
+            if (this->mInput->mModifierShift.CurrentValue())
+            {
+                chips[chipCount++] = "Shift";
+            }
+            if (this->mInput->mModifierTranspose.CurrentValue())
+            {
+                chips[chipCount++] = "Transp";
+            }
+            if (this->mInput->mModifierTempo.CurrentValue())
+            {
+                chips[chipCount++] = "Bpm";
+            }
+            if (this->mInput->mModifierKey.CurrentValue())
+            {
+                chips[chipCount++] = "Key";
+            }
+            if (this->mInput->mModifierHarm.CurrentValue())
+            {
+                chips[chipCount++] = "Harm";
+            }
+            if (this->mInput->mModifierPerf.CurrentValue())
+            {
+                chips[chipCount++] = "Perf";
+            }
+            if (this->mInput->mModifierSynth.CurrentValue())
+            {
+                chips[chipCount++] = "Synth";
+            }
+
+            // place cursor above hud, draw chips.
+            int16_t xPos = 0;
+            int16_t yPos = mDisplay.height() - mHudProvider->IHudProvider_GetHudHeight() - 10;
+
+            for (size_t i = 0; i < chipCount; i++)
+            {
+                DrawChip(chips[i], xPos, yPos);
+            }
+
+            // mDisplay.print(s);
         }
+    }
+
+    void DrawChip(const String &text, int16_t &xPos, int16_t yPos)
+    {
+        int16_t x, y;
+        uint16_t w, h;
+        mDisplay.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+        // draw rounded rect filled with white, draw text in black over it.
+        mDisplay.fillRect(xPos - 1 /*start rect 1 px left*/, yPos, w + 2, h + 2, SSD1306_WHITE);
+        mDisplay.setCursor(xPos, yPos + 1);
+        mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        mDisplay.print(text);
+        xPos += w + 6;
     }
 
     virtual int16_t GetHudHeight() const override
@@ -433,7 +481,6 @@ struct _CCDisplay : IDisplay
         mDisplay.fillRect(x1, y1, x2 - x1, y2 - y1, color);
     }
 
-
     // required for IDisplay.
     virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override
     {
@@ -562,21 +609,22 @@ struct _CCDisplay : IDisplay
         mDisplay.DrawMarchingAntsRectOutline(LineWidth, AntSize, AntMask, x, y, w, h, variation, style, edges);
     }
 
-    IDitherMatrix& matrix = gBayer8x8Matrix;
+    IDitherMatrix &matrix = gBayer8x8Matrix;
 
-    virtual void SetPixel(const PointI& pt, uint16_t color) override {
+    virtual void SetPixel(const PointI &pt, uint16_t color) override
+    {
         mDisplay.drawPixel(pt.x, pt.y, color);
     }
 
-    virtual bool IsInBounds(const PointI& pt) const override {
-        //return pt.x >= 0 && pt.x < mDisplay.width() && pt.y >= 0 && pt.y < mDisplay.height();
-        // consider the clip rect.
-        return pt.x >= mDisplay.mClipLeft && pt.x < mDisplay.mClipRight && pt.y >= mDisplay.mClipTop && pt.y < mDisplay.mClipBottom;
+    virtual bool IsInBounds(const PointI &pt) const override
+    {
+        // return pt.x >= 0 && pt.x < mDisplay.width() && pt.y >= 0 && pt.y < mDisplay.height();
+        //  consider the clip rect.
+        return pt.x >= mDisplay.mClipLeft && pt.x < mDisplay.mClipRight && pt.y >= mDisplay.mClipTop &&
+               pt.y < mDisplay.mClipBottom;
     }
 
-    virtual void SetPixelShaded(
-            const PointI& pt,
-            int coverageQp8) override
+    virtual void SetPixelShaded(const PointI &pt, int coverageQp8) override
     {
         if (!IsInBounds(pt))
         {
@@ -589,20 +637,19 @@ struct _CCDisplay : IDisplay
 
     /// Draws a horizontal line of 'length' pixels starting at (x, y),
     /// dithering each pixel according to 'brightness' and the DitherMatrix.
-    virtual void DrawHLineDithered(const PointI& pt, int length, int brightnessQp8) override
+    virtual void DrawHLineDithered(const PointI &pt, int length, int brightnessQp8) override
     {
-        if (length <= 0) return;
+        if (length <= 0)
+            return;
         for (int i = 0; i < length; i++)
         {
             int currentX = pt.x + i;
-            PointI currentPt { currentX, pt.y };
+            PointI currentPt{currentX, pt.y};
             SetPixelShaded(currentPt, brightnessQp8);
         }
     }
 
-    virtual void FillRectWithBrightness(
-        const RectI& rc,
-        int brightnessQp8) override
+    virtual void FillRectWithBrightness(const RectI &rc, int brightnessQp8) override
     {
         brightnessQp8 = ClampInclusive(brightnessQp8, 0, 255);
         for (int row = 0; row < rc.height; row++)
@@ -611,7 +658,7 @@ struct _CCDisplay : IDisplay
             for (int col = 0; col < rc.width; col++)
             {
                 int currentX = rc.x + col;
-                PointI currentPt { currentX, currentY };
+                PointI currentPt{currentX, currentY};
                 SetPixelShaded(currentPt, brightnessQp8);
             }
         }
@@ -619,7 +666,7 @@ struct _CCDisplay : IDisplay
 
     // finds the two points in 'points' that are farthest apart. supports only up to 4 points due to O(n^2) complexity.
     // assumes at least 1 point.
-    virtual void FindFarthestPair(const PointI* points, size_t pointCount, PointI& bestA, PointI& bestB) override
+    virtual void FindFarthestPair(const PointI *points, size_t pointCount, PointI &bestA, PointI &bestB) override
     {
         bestA = points[0];
         bestB = points[0];
@@ -653,10 +700,7 @@ struct _CCDisplay : IDisplay
     /// <param name="x1">Ending X coordinate.</param>
     /// <param name="y1">Ending Y coordinate.</param>
     /// <param name="brightness">Brightness level (0-255).</param>
-    virtual void DrawLineWithBrightness(
-        const PointI& pt0,
-        const PointI& pt1,
-        int brightnessQp8) override
+    virtual void DrawLineWithBrightness(const PointI &pt0, const PointI &pt1, int brightnessQp8) override
     {
         brightnessQp8 = ClampInclusive(brightnessQp8, 0, 255);
 
@@ -671,7 +715,7 @@ struct _CCDisplay : IDisplay
         int x = pt0.x;
         int y = pt0.y;
 
-// is this function freezing? alternative impl below...
+        // is this function freezing? alternative impl below...
         // while (true)
         // {
         //     SetPixelShaded(PointI { x, y }, brightnessQp8);
@@ -685,60 +729,60 @@ struct _CCDisplay : IDisplay
 
         while (true)
         {
-            SetPixelShaded(PointI { x, y }, brightnessQp8);
+            SetPixelShaded(PointI{x, y}, brightnessQp8);
 
-            if (x == pt1.x && y == pt1.y) break;
+            if (x == pt1.x && y == pt1.y)
+                break;
 
             int e2 = 2 * err;
-            if (e2 > -dy) {
+            if (e2 > -dy)
+            {
                 err -= dy;
                 x += sx;
-            } else if (e2 < dx) { // Use `else if` to ensure only one step occurs
+            }
+            else if (e2 < dx)
+            { // Use `else if` to ensure only one step occurs
                 err += dx;
                 y += sy;
             }
         }
     }
 
-    virtual void DrawLine(const PointI& pt0, const PointI& pt1) override {
+    virtual void DrawLine(const PointI &pt0, const PointI &pt1) override
+    {
         return mDisplay.drawLine(pt0.x, pt0.y, pt1.x, pt1.y, SSD1306_WHITE);
     }
 
     // Specialized function:
     //   draws the infinite line through (x0,y0)-(x1,y1),
     //   clipped to [clipLeft..clipRight] x [clipTop..clipBottom].
-    virtual void DrawInfiniteLineClipped(
-        const PointI& pt0,
-        const PointI& pt1,
-        const RectI& clipRect,
-        int brightness) override
+    virtual void DrawInfiniteLineClipped(const PointI &pt0,
+                                         const PointI &pt1,
+                                         const RectI &clipRect,
+                                         int brightness) override
     {
         // 1) Handle trivial cases: vertical / horizontal
         if (pt0.x == pt1.x)
         {
             // Vertical line x=x0
-            if (pt0.x < clipRect.left() || pt0.x > clipRect.right()) return; // outside
+            if (pt0.x < clipRect.left() || pt0.x > clipRect.right())
+                return; // outside
             int yStart = clipRect.top();
             int yEnd = clipRect.bottom();
             // Just draw from (x0, yStart) to (x0, yEnd)
-            DrawLineWithBrightness(
-                PointI { pt0.x, yStart },
-                PointI { pt0.x, yEnd },
-                brightness);
+            DrawLineWithBrightness(PointI{pt0.x, yStart}, PointI{pt0.x, yEnd}, brightness);
             return;
         }
 
         if (pt0.y == pt1.y)
         {
             // Horizontal line y=y0
-            if (pt0.y < clipRect.top() || pt0.y > clipRect.bottom()) return; // outside
+            if (pt0.y < clipRect.top() || pt0.y > clipRect.bottom())
+                return; // outside
             int xStart = clipRect.left();
             int xEnd = clipRect.right();
             // Draw from (xStart, y0) to (xEnd, y0)
-            DrawLineWithBrightness(
-                PointI { xStart, pt0.y },
-                PointI { xEnd, pt0.y },
-                brightness);
+            DrawLineWithBrightness(PointI{xStart, pt0.y}, PointI{xEnd, pt0.y}, brightness);
             return;
         }
 
@@ -753,27 +797,27 @@ struct _CCDisplay : IDisplay
         float yLeft = pt0.y + slope * (clipRect.left() - pt0.x);
         if (yLeft >= clipRect.top() && yLeft <= clipRect.bottom())
         {
-            candidates[candidateCount++] = PointI { clipRect.left(), (int)yLeft };
+            candidates[candidateCount++] = PointI{clipRect.left(), (int)yLeft};
         }
 
         float yRight = pt0.y + slope * (clipRect.right() - pt0.x);
         if (yRight >= clipRect.top() && yRight <= clipRect.bottom())
         {
-            candidates[candidateCount++] = PointI { clipRect.right(), (int)yRight };
+            candidates[candidateCount++] = PointI{clipRect.right(), (int)yRight};
         }
 
         // Intersection at y=clipTop => x = x0 + (clipTop - y0)/slope
         float xTop = pt0.x + (clipRect.top() - pt0.y) / slope;
         if (xTop >= clipRect.left() && xTop <= clipRect.right())
         {
-            candidates[candidateCount++] = PointI { (int)xTop, clipRect.top() };
+            candidates[candidateCount++] = PointI{(int)xTop, clipRect.top()};
         }
 
         // Intersection at y=clipBottom => x = x0 + (clipBottom - y0)/slope
         float xBottom = pt0.x + (clipRect.bottom() - pt0.y) / slope;
         if (xBottom >= clipRect.left() && xBottom <= clipRect.right())
         {
-            candidates[candidateCount++] = PointI { (int)xBottom, clipRect.bottom() };
+            candidates[candidateCount++] = PointI{(int)xBottom, clipRect.bottom()};
         }
 
         // Remove duplicates or near-duplicates if they happen (optional).
@@ -791,10 +835,14 @@ struct _CCDisplay : IDisplay
 
         for (size_t i = 0; i < candidateCount; i++)
         {
-            if (candidates[i].x < minX) minX = candidates[i].x;
-            if (candidates[i].x > maxX) maxX = candidates[i].x;
-            if (candidates[i].y < minY) minY = candidates[i].y;
-            if (candidates[i].y > maxY) maxY = candidates[i].y;
+            if (candidates[i].x < minX)
+                minX = candidates[i].x;
+            if (candidates[i].x > maxX)
+                maxX = candidates[i].x;
+            if (candidates[i].y < minY)
+                minY = candidates[i].y;
+            if (candidates[i].y > maxY)
+                maxY = candidates[i].y;
         }
 
         // Because it's a straight line, the "two extremes" in your intersection list
@@ -815,9 +863,10 @@ struct _CCDisplay : IDisplay
     /// Fills a circle of radius r centered at (x0,y0) with the given brightness,
     /// using a DitherMatrix for 1-bit dithering. No floating-point is used.
     /// </summary>
-    virtual void FillCircleWithBrightness(const PointI& c, int r, int brightnessQp8) override
+    virtual void FillCircleWithBrightness(const PointI &c, int r, int brightnessQp8) override
     {
-        if (r <= 0) return;  // no valid radius
+        if (r <= 0)
+            return; // no valid radius
 
         // Midpoint circle algorithm setup
         int x = 0;
@@ -856,7 +905,7 @@ struct _CCDisplay : IDisplay
             // each goes from (x0 - x) to (x0 + x)
 
             DrawHLineDithered({c.x - x, c.y + y}, (2 * x + 1), brightnessQp8);
-            if (y != 0)  // if y=0, top & bottom would be same line
+            if (y != 0) // if y=0, top & bottom would be same line
             {
                 DrawHLineDithered({c.x - x, c.y - y}, (2 * x + 1), brightnessQp8);
             }
@@ -867,16 +916,13 @@ struct _CCDisplay : IDisplay
             if (x != y)
             {
                 DrawHLineDithered({c.x - y, c.y + x}, (2 * y + 1), brightnessQp8);
-                if (x != 0)  // if x=0, same line repeated
+                if (x != 0) // if x=0, same line repeated
                 {
                     DrawHLineDithered({c.x - y, c.y - x}, (2 * y + 1), brightnessQp8);
                 }
             }
         }
     }
-
 };
-
-
 
 } // namespace clarinoid

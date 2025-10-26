@@ -45,7 +45,7 @@ struct PerformancePatch
     float mSynthBGain = 1.0f;
 
     int16_t mHarmPreset = 0;
-    bool mHarmEnabled = true;
+    bool mHarmEnabled = false;
     float mHarmGain = 1.0f;
 
     float mSynthStereoSpread = 0.35f; // -1 to 1
@@ -241,9 +241,6 @@ struct AppSettings
     //     p.mSynthBGain = DecibelsToLinear(-3);
     // }
 
-
-
-
     // static void InitClarinoidSoloPerf(PerformancePatch &p)
     // {
     //     p.mName = "ClarinoidSolo";
@@ -333,7 +330,7 @@ struct AppSettings
 
     AppSettings()
     {
-        //size_t i = 1;                                // 0 = default, no performance
+        // size_t i = 1;                                // 0 = default, no performance
 
         // InitSoaringGuitarPerf(mPerformancePatches[i++]);
         // InitCaveBouncer(mPerformancePatches[i++]);
@@ -345,12 +342,11 @@ struct AppSettings
         // InitCrystalPerf(mPerformancePatches[i++]);   // crystal
 
         // InitChameleon(mPerformancePatches[i++]);
-        // InitClarinoidSoloPerf(mPerformancePatches[i++]); // 
+        // InitClarinoidSoloPerf(mPerformancePatches[i++]); //
 
-        // during a performance, FX are always disabled because they come from elsewhere (pedals, house, etc.)
-        // so if a cheeky restart is needed, disable them by default avoiding an extra keypress.
-        // at home, fx are fine so enable them manually.
-        mPerformancePatches[0].mMasterFXEnable = false;
+        // at some point it was decided to disable fx by default for performances,
+        // but it's more common to have them on, and during a cheeky restart during live performance, you'll need to
+        // adjust other things anyway..
     }
 };
 

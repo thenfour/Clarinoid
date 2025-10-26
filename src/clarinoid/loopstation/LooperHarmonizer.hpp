@@ -280,7 +280,8 @@ struct LooperAndHarmonizer
                                               transitionEvents,
                                               pout + 1,
                                               outpEnd,
-                                              Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices);
+                                              Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices,
+                                              true);
             }
         }
 
@@ -303,7 +304,8 @@ struct LooperAndHarmonizer
                                               transitionEvents,
                                               pout,
                                               outpEnd,
-                                              Harmonizer::VoiceFilterOptions::OnlyDeducedVoices);
+                                              Harmonizer::VoiceFilterOptions::OnlyDeducedVoices,
+                                              false);
             }
         }
 
