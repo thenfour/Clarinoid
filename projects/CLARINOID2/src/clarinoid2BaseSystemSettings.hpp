@@ -4,7 +4,8 @@
 #define SIX_OCTAVE_SEQ_BUTTONS
 
 // when the encoder is not in use this doesn't cause any perf issues.
-// when the encoder IS in use, it's more important that it's responsive and accurate than the perf of other tasks. so use interrupts.
+// when the encoder IS in use, it's more important that it's responsive and accurate than the perf of other tasks. so
+// use interrupts.
 #define ENCODER_USE_INTERRUPTS
 
 #define CLARINOID_MIDI_INTERFACE Serial1
@@ -15,14 +16,10 @@ namespace clarinoid
 const char gClarinoidVersion[] = "CLARINOID 2";
 
 static const size_t MAX_SYNTH_VOICES = 8;
-#define VOICE_INITIALIZER                                                                                              \
-    {0}, {1}, {2}, {3}, {4}, {5}, {6},                                                                                 \
-    {                                                                                                                  \
-        7                                                                                                              \
-    }
+#define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
 
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 64000; // should be enough right?
-static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;    // a smaller buffer that's just used for intermediate copy ops
+static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;   // a smaller buffer that's just used for intermediate copy ops
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
@@ -57,7 +54,7 @@ static const size_t MAPPED_CONTROL_SEQUENCE_LENGTH = 4; // how many items in the
 static const size_t MAX_DISPLAY_WIDTH = 128; // in order to maintain some static buffers.
 
 // assignable slots.
-static const size_t MAX_CONTROL_MAPPINGS = 64;
+static const size_t MAX_CONTROL_MAPPINGS = 60;
 
 enum class PhysicalControl : uint8_t
 {

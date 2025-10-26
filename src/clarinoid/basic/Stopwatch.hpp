@@ -194,6 +194,34 @@ struct Stopwatch
     }
 };
 
+//////////////////////////////////////////////////////////////////////
+// a stopwatch that has smaller footprint, light and optimized. it's always running.
+// does not account for overflow
+struct StopwatchLight
+{
+    uint32_t mStartMicros = 0;
+
+    StopwatchLight()
+    {
+        Restart();
+    }
+
+    void Restart()
+    {
+        mStartMicros = micros();
+    }
+
+    uint32_t ElapsedMicros()
+    {
+        uint32_t now = micros();
+        return now - mStartMicros;
+    }
+    TimeSpan ElapsedTime()
+    {
+        return TimeSpan::FromMicros(ElapsedMicros());
+    }
+};
+
 template <uint32_t holdTimeMS, uint32_t falloffTimeMS>
 struct GenericPeakMeterUtility
 {

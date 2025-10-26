@@ -399,7 +399,7 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
         &mTranspose,
         &mSynthPatchATranspose,
         &mSynthPatchBTranspose,
-        &mDetuneSemis,
+        &mDetune,
 
         &mGlobalScaleRef,
         &mDeducedScale,

@@ -26,6 +26,8 @@ enum class ModifierKey : uint8_t
 // defines a mapping from a switch.
 struct ControlMapping
 {
+    static constexpr int kDefaultDoubleClickWindowMS = 325;
+
     enum class Function : uint8_t
     {
         Nop,
@@ -105,20 +107,127 @@ struct ControlMapping
         COUNT,
     };
 
+    enum class Activation : uint8_t
+    {
+        SinglePress,
+        DoublePress,
+    };
+
+    // 1.idle  2.primed....3.active
+    // ________        ____    ____
+    //         |______|    |__|
+    // 1. idle
+    // 2. primed (first downpress detected, start timer)
+    // 3. active (second downpress detected within time window)
+    // the triggerup/down logic remains; basically double press removes the first pair of triggers (so triggerdown -> up
+    // -> down becomes just the 2nd down.)
+    struct DoubleClickLogic
+    {
+        enum class State : uint8_t
+        {
+            Idle,
+            Primed,
+            Activated,
+        };
+
+        StopwatchLight mStopwatch;
+        State mState = State::Idle;
+
+        void Update(bool &triggerUp, bool &triggerDown, bool pressIsTriggerUp, int timeoutMS)
+        {
+            bool pressEdge = pressIsTriggerUp ? triggerUp : triggerDown;
+            bool releaseEdge = pressIsTriggerUp ? triggerDown : triggerUp;
+
+            switch (mState)
+            {
+            case State::Idle:
+                if (pressEdge)
+                {
+                    mState = State::Primed;
+                    mStopwatch.Restart();
+                    triggerUp = false;
+                    triggerDown = false;
+                }
+                break;
+
+            case State::Primed: {
+                auto elapsed = mStopwatch.ElapsedTime().ElapsedMillisI();
+                if (pressEdge)
+                {
+                    if (elapsed <= timeoutMS)
+                    {
+                        mState = State::Activated;
+                        if (pressIsTriggerUp)
+                        {
+                            triggerDown = false;
+                        }
+                        else
+                        {
+                            triggerUp = false;
+                        }
+                    }
+                    else
+                    {
+                        mStopwatch.Restart();
+                        triggerUp = false;
+                        triggerDown = false;
+                    }
+                }
+                else if (releaseEdge)
+                {
+                    triggerUp = false;
+                    triggerDown = false;
+                }
+                else if (elapsed > timeoutMS)
+                {
+                    mState = State::Idle;
+                }
+                break;
+            }
+
+            case State::Activated:
+                if (releaseEdge)
+                {
+                    mState = State::Idle;
+                    if (pressIsTriggerUp)
+                    {
+                        triggerUp = false;
+                    }
+                    else
+                    {
+                        triggerDown = false;
+                    }
+                }
+                else if (pressEdge)
+                {
+                    if (pressIsTriggerUp)
+                    {
+                        triggerUp = false;
+                    }
+                    else
+                    {
+                        triggerDown = false;
+                    }
+                }
+                break;
+            }
+        }
+    };
+
     ModifierKey mModifier = ModifierKey::Any;
     PhysicalControl mSource;
     Function mFunction = Function::Nop;
     MapStyle mStyle = MapStyle::Passthrough;
     Operator mOperator = Operator::Set;
+    Activation mActivation = Activation::SinglePress;
+    DoubleClickLogic mDoubleClickLogic;
 
     // trigger condition
-    float mTriggerBelowValue = 0.5f;
-    float mTriggerAboveValue = 0.5f;
+    static constexpr float mTriggerBelowValue = 0.5f;
+    static constexpr float mTriggerAboveValue = 0.5f;
+    static constexpr float mDeltaScale = 1.0f; // for delta operators.
 
-    // NPolarMapping mNPolarMapping;
     UnipolarMapping mUnipolarMapping;
-
-    float mDeltaScale = 1.0f; // for delta operators.
 
     float mValueArray[MAPPED_CONTROL_SEQUENCE_LENGTH];
     size_t mValueCount = 0;
@@ -126,6 +235,9 @@ struct ControlMapping
     // --> not app settings, but state stuff.
     size_t mCursor = 0;    // keeps track of the stack or sequence.
     ControlReader mReader; // some caller needs to set this when a mapping is established.
+    // DoubleClickState mDoubleClickState = DoubleClickState::Idle;
+    //  int mDoubleClickWindowMS = kDefaultDoubleClickWindowMS;
+    // TimeSpan mFirstClickTime = TimeSpan::Zero();
 
     bool IsTriggerUp()
     {
@@ -156,6 +268,15 @@ struct ControlMapping
     bool UpdateAndMapValue(const IControl *c, /*const ControlValue &i,*/ ControlValue &out)
     {
         mReader.Update(c);
+        // rising / falling edge detection
+        bool triggerUp = IsTriggerUp();
+        bool triggerDown = IsTriggerDown();
+
+        if (mActivation == Activation::DoublePress)
+        {
+            mDoubleClickLogic.Update(triggerUp, triggerDown, PressUsesTriggerUp(), kDefaultDoubleClickWindowMS);
+        }
+
         switch (mStyle)
         {
         default:
@@ -179,23 +300,23 @@ struct ControlMapping
             out = ControlValue::FloatValue(this->mDeltaScale * mReader.GetFloatDelta());
             return true;
         case MapStyle::TriggerUpValue: // when trigger condition is met, set dest value to X.
-            if (!IsTriggerUp())
+            if (!triggerUp)
                 return false;
             out = ControlValue::FloatValue(mValueArray[0]);
             return true;
         case MapStyle::TriggerDownValue: // when trigger condition is met, set dest value to X.
-            if (!IsTriggerDown())
+            if (!triggerDown)
                 return false;
             out = ControlValue::FloatValue(mValueArray[0]);
             return true;
         case MapStyle::TriggerUpDownValue: // when trigger condition is met, set the dest value to X. when the trigger
                                            // condition is not met, set to Y.
-            if (IsTriggerUp())
+            if (triggerUp)
             {
                 out = ControlValue::FloatValue(mValueArray[0]);
                 return true;
             }
-            if (IsTriggerDown())
+            if (triggerDown)
             {
                 out = ControlValue::FloatValue(mValueArray[1]);
                 return true;
@@ -203,7 +324,7 @@ struct ControlMapping
             return false;
         case MapStyle::TriggerUpValueSequence: // when trigger condition is met, set the dest value to the next value in
                                                // the sequence, cycling. can be used to set up a toggle.
-            if (!IsTriggerUp())
+            if (!triggerUp)
             {
                 return false;
             }
@@ -245,7 +366,8 @@ struct ControlMapping
     static ControlMapping MomentaryMapping(PhysicalControl source,
                                            Function d,
                                            ModifierKey mod = ModifierKey::Any,
-                                           ModifierKey mod2 = ModifierKey::Any)
+                                           ModifierKey mod2 = ModifierKey::Any,
+                                           Activation activation = Activation::SinglePress)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -256,6 +378,7 @@ struct ControlMapping
         ret.mValueArray[1] = -1.0f;
         ret.mFunction = d;
         ret.mModifier = mod;
+        ret.mActivation = activation;
         return ret;
     }
 
@@ -276,7 +399,8 @@ struct ControlMapping
     static ControlMapping ButtonIncrementMapping(PhysicalControl source,
                                                  Function fn,
                                                  float delta,
-                                                 ModifierKey mod = ModifierKey::Any)
+                                                 ModifierKey mod = ModifierKey::Any,
+                                                 Activation activation = Activation::SinglePress)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -286,6 +410,7 @@ struct ControlMapping
         ret.mValueArray[0] = delta;
         ret.mFunction = fn;
         ret.mModifier = mod;
+        ret.mActivation = activation;
         return ret;
     }
 
@@ -295,7 +420,7 @@ struct ControlMapping
         ret.mSource = source;
         ret.mOperator = Operator::Add;
         ret.mStyle = MapStyle::DeltaWithScale;
-        ret.mDeltaScale = 1.0f;
+        // ret.mDeltaScale = 1.0f;
         ret.mFunction = d;
         return ret;
     }
@@ -315,8 +440,20 @@ struct ControlMapping
         ret.mUnipolarMapping = clarinoid::UnipolarMapping{srcMin, srcMax, destMin, destMax, 0.5f, 0.0f};
         return ret;
     }
+
+  private:
+    bool PressUsesTriggerUp() const
+    {
+        switch (mStyle)
+        {
+        case MapStyle::TriggerDownValue:
+            return false;
+        default:
+            return true;
+        }
+    }
 };
 
-// constexpr size_t aoeuuichpcuihp = sizeof(ControlMapping);
+constexpr size_t aoeuuichpcuihp = sizeof(ControlMapping);
 
 } // namespace clarinoid
