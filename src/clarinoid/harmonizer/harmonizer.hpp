@@ -197,6 +197,7 @@ struct Harmonizer
         liveVoice->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote || !perf.mSynthAEnabled;
         liveVoice->mVoiceId = MakeMusicalVoiceID(loopLayerID, MAGIC_VOICE_ID_LIVE_A);
         liveVoice->mGain *= perf.mSynthAGain;
+        liveVoice->mTransposeSemis = perf.mSynthATranspose;
         if (voiceFilter == Harmonizer::VoiceFilterOptions::AllExceptDeducedVoices)
         {
             ++ret; // live voice is a non-deduced voice.
@@ -210,7 +211,9 @@ struct Harmonizer
 
         if (preset.mEmitLiveNote && (liveVoice->mSynthPatchB >= 0))
         {
+            liveVoice->mTransposeSemis += perf.mDetuneSemis;
             *pout = *liveVoice; // copy from live voice to get started.
+            pout->mTransposeSemis = perf.mSynthBTranspose - perf.mDetuneSemis;
             pout->mVoiceId = MakeMusicalVoiceID(loopLayerID, MAGIC_VOICE_ID_LIVE_B);
             pout->mGain *= perf.mSynthBGain;
             pout->mIsNoteCurrentlyMuted = !preset.mEmitLiveNote || !perf.mSynthBEnabled;

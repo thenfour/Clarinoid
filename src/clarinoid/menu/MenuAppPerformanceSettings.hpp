@@ -52,6 +52,45 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                                this},
                                  AlwaysEnabled};
 
+    IntSettingItem mSynthPatchATranspose = {"TransposeA",
+                                            StandardRangeSpecs::gTransposeRange,
+                                            Property<int>{[](void *cap) FLASHMEM {
+                                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                              return (int)pThis->GetBinding().mSynthATranspose;
+                                                          },
+                                                          [](void *cap, const int &v) {
+                                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                              pThis->GetBinding().mSynthATranspose = v;
+                                                          },
+                                                          this},
+                                            AlwaysEnabled};
+
+    IntSettingItem mSynthPatchBTranspose = {"TransposeB",
+                                            StandardRangeSpecs::gTransposeRange,
+                                            Property<int>{[](void *cap) FLASHMEM {
+                                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                              return (int)pThis->GetBinding().mSynthBTranspose;
+                                                          },
+                                                          [](void *cap, const int &v) {
+                                                              auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                              pThis->GetBinding().mSynthBTranspose = v;
+                                                          },
+                                                          this},
+                                            AlwaysEnabled};
+
+    FloatSettingItem mDetune = {"Detune",
+                                StandardRangeSpecs::gFloat_0_1_Fine,
+                                Property<float>{[](void *cap) FLASHMEM {
+                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                    return pThis->GetBinding().mDetuneSemis;
+                                                },
+                                                [](void *cap, const float &v) FLASHMEM {
+                                                    auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                    pThis->GetBinding().mDetuneSemis = v;
+                                                },
+                                                this},
+                                AlwaysEnabled};
+
     EnumSettingItem<GlobalScaleRefType> mGlobalScaleRef = {
         "Scale ref",
         gGlobalScaleRefTypeInfo,
@@ -66,49 +105,48 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                      this},
         AlwaysEnabled};
 
-    LabelSettingItem mDeducedScale = {
-        Property<String>{[](void *cap) FLASHMEM {
-                             auto *pThis = (PerformancePatchSettingsApp *)cap;
-                             return pThis->GetBinding().mDeducedScale.ToString();
-                         },
-                         this},
-        Property<bool> { [](void *cap) FLASHMEM {
-            return true;
-        }, this}};
+    LabelSettingItem mDeducedScale = {Property<String>{[](void *cap) FLASHMEM {
+                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                           return pThis->GetBinding().mDeducedScale.ToString();
+                                                       },
+                                                       this},
+                                      Property<bool>{[](void *cap) FLASHMEM { return true; }, this}};
 
-    EnumSettingItem<Note> mChosenScaleNote = {
-        "Scale note",
-        gNoteInfo,
-        Property<Note>{[](void *cap) FLASHMEM {
-                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                           return pThis->GetBinding().mGlobalScale.mRootNoteIndex;
-                       },
-                       [](void *cap, const Note &v) {
-                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                           pThis->GetBinding().mGlobalScale.mRootNoteIndex = v;
-                       },
-                       this},
-        Property<bool> { [](void *cap) FLASHMEM {
-            auto *pThis = (PerformancePatchSettingsApp *)cap;
-            return pThis->GetBinding().mGlobalScaleRef == GlobalScaleRefType::Chosen;
-        }, this}};
+    EnumSettingItem<Note> mChosenScaleNote = {"Scale note",
+                                              gNoteInfo,
+                                              Property<Note>{[](void *cap) FLASHMEM {
+                                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                                 return pThis->GetBinding().mGlobalScale.mRootNoteIndex;
+                                                             },
+                                                             [](void *cap, const Note &v) {
+                                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                                 pThis->GetBinding().mGlobalScale.mRootNoteIndex = v;
+                                                             },
+                                                             this},
+                                              Property<bool>{[](void *cap) FLASHMEM {
+                                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                                 return pThis->GetBinding().mGlobalScaleRef ==
+                                                                        GlobalScaleRefType::Chosen;
+                                                             },
+                                                             this}};
 
     EnumSettingItem<ScaleFlavorIndex> mChosenScaleFlavor = {
         "Scale flavor",
         gScaleFlavorIndexInfo,
         Property<ScaleFlavorIndex>{[](void *cap) FLASHMEM {
-                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                      return pThis->GetBinding().mGlobalScale.mFlavorIndex;
-                                  },
-                                  [](void *cap, const ScaleFlavorIndex &v) {
-                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                      pThis->GetBinding().mGlobalScale.mFlavorIndex = v;
-                                  },
-                                  this},
-        Property<bool> { [](void *cap) FLASHMEM {
-            auto *pThis = (PerformancePatchSettingsApp *)cap;
-            return pThis->GetBinding().mGlobalScaleRef == GlobalScaleRefType::Chosen;
-        }, this}};
+                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                       return pThis->GetBinding().mGlobalScale.mFlavorIndex;
+                                   },
+                                   [](void *cap, const ScaleFlavorIndex &v) {
+                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                       pThis->GetBinding().mGlobalScale.mFlavorIndex = v;
+                                   },
+                                   this},
+        Property<bool>{[](void *cap) FLASHMEM {
+                           auto *pThis = (PerformancePatchSettingsApp *)cap;
+                           return pThis->GetBinding().mGlobalScaleRef == GlobalScaleRefType::Chosen;
+                       },
+                       this}};
 
     GainSettingItem mReverbGain = {"Reverb gain",
                                    StandardRangeSpecs::gGeneralGain,
@@ -341,8 +379,6 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                          AlwaysEnabled,
                                          this};
 
-
-
     ISettingItem *mMasterFXSubmenuItems[9] = {
         &mReverbDamping,
         &mReverbSize,
@@ -358,9 +394,12 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
 
     SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
 
-    ISettingItem *mArray[14] = {
+    ISettingItem *mArray[17] = {
         &mMasterGain,
         &mTranspose,
+        &mSynthPatchATranspose,
+        &mSynthPatchBTranspose,
+        &mDetuneSemis,
 
         &mGlobalScaleRef,
         &mDeducedScale,

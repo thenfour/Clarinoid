@@ -698,6 +698,18 @@ struct HarmSettings
         size_t iPreset = 0;
 
         InitBigBandPreset(mPresets[iPreset++], "World Peace");
+        InitBigPreset(mPresets[iPreset++]);
+        InitFuzionPreset(mPresets[iPreset++]);
+        // InitMin6Preset(mPresets[iPreset++]);
+        InitQuartQuintHarmPreset(mPresets[iPreset++]);
+        InitQuartalHarmPreset2(mPresets[iPreset++]);
+        // InitMajInv2Preset(mPresets[iPreset++]);
+        // InitFunky3(mPresets[iPreset++]);
+        // InitFunky2(mPresets[iPreset++]);
+        // InitFunkyHarmPreset(mPresets[iPreset++]);
+
+        // InitColBassPreset(mPresets[iPreset++]);
+        InitCol8vaPreset(mPresets[iPreset++]);
 
         InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -3,-2", -3, -2);
         InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -3,-1", -3, -1);
@@ -708,20 +720,7 @@ struct HarmSettings
         InitPentatonicPreset(mPresets[iPreset++], "Pentatonic +1,+2", +1, +2);
         InitPentatonicPreset(mPresets[iPreset++], "Pentatonic +1,+3", +1, +3);
 
-        InitBigPreset(mPresets[iPreset++]);
-        InitFuzionPreset(mPresets[iPreset++]);
-        InitMin6Preset(mPresets[iPreset++]);
-        InitQuartQuintHarmPreset(mPresets[iPreset++]);
-        InitQuartalHarmPreset2(mPresets[iPreset++]);
-        InitMajInv2Preset(mPresets[iPreset++]);
-        InitFunky3(mPresets[iPreset++]);
-        InitFunky2(mPresets[iPreset++]);
-        InitFunkyHarmPreset(mPresets[iPreset++]);
-
-        InitColBassPreset(mPresets[iPreset++]);
-        InitCol8vaPreset(mPresets[iPreset++]);
-
-        InitSpicePreset(mPresets[iPreset++]);
+        // InitSpicePreset(mPresets[iPreset++]);
 
         // InitCrystalFieldsHarmPreset(mPresets[iPreset++]);
         // InitSlumsHarmPreset(mPresets[iPreset++]);

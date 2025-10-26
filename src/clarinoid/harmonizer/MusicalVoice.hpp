@@ -61,8 +61,10 @@ struct MusicalVoice
                                // SynthVoice, this is always -1. but it's needed during intermittent processing.
     int16_t mHarmPatch = 0;
 
-    float mPan = 0;     // as specified by harmonizer.
-    float mGain = 1.0f; // again set by harmonizer
+    float mPan = 0;               // as specified by harmonizer.
+    float mGain = 1.0f;           // again set by harmonizer
+    float mTransposeSemis = 0.0f; // added to midi note to get final note. notably is fractional and harmonizer doesn't
+                                  // see this (non-musical transpose)
 };
 
 struct MusicalVoiceTransitionEvents

@@ -271,6 +271,80 @@ struct TransposeMappableFunction : FunctionHandler
     }
 };
 
+struct TransposeSynthPatchAMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        int nv = v.AsRoundedInt();
+        if (nv < -48)
+        {
+            mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo low"));
+            return;
+        }
+        if (nv > 48)
+        {
+            mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo high"));
+            return;
+        }
+        int old = mAppSettings->GetCurrentPerformancePatch().mSynthATranspose;
+        if (old != nv)
+        {
+            mInputSrc->InputSource_ShowToast(String("Transpose A: ") + nv + " (" + (nv - old) + ")");
+            mAppSettings->GetCurrentPerformancePatch().mSynthATranspose = nv;
+        }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        return ControlValue::IntValue(mAppSettings->GetCurrentPerformancePatch().mSynthATranspose);
+    }
+};
+
+struct TransposeSynthPatchBMappableFunction : FunctionHandler
+{
+    IInputSource *mInputSrc;
+    AppSettings *mAppSettings;
+
+    void Init(AppSettings *appSettings, IInputSource *psrc)
+    {
+        mInputSrc = psrc;
+        mAppSettings = appSettings;
+    }
+
+    virtual void FunctionHandler_Update(const ControlValue &v) override
+    {
+        int nv = v.AsRoundedInt();
+        if (nv < -48)
+        {
+            mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo low"));
+            return;
+        }
+        if (nv > 48)
+        {
+            mInputSrc->InputSource_ShowToast(String("Transposition\r\ntoo high"));
+            return;
+        }
+        int old = mAppSettings->GetCurrentPerformancePatch().mSynthBTranspose;
+        if (old != nv)
+        {
+            mInputSrc->InputSource_ShowToast(String("Transpose B: ") + nv + " (" + (nv - old) + ")");
+            mAppSettings->GetCurrentPerformancePatch().mSynthBTranspose = nv;
+        }
+    }
+    virtual ControlValue FunctionHandler_GetCurrentValue() const override
+    {
+        return ControlValue::IntValue(mAppSettings->GetCurrentPerformancePatch().mSynthBTranspose);
+    }
+};
+
 struct InputDelegator
 {
     AppSettings *mpAppSettings = nullptr;
@@ -319,6 +393,8 @@ struct InputDelegator
     SynthPresetBMappableFunction mSynthPresetBFn;
     HarmPresetMappableFunction mHarmPresetFn;
     TransposeMappableFunction mTransposeFn;
+    TransposeSynthPatchAMappableFunction mTransposeAFn;
+    TransposeSynthPatchBMappableFunction mTransposeBFn;
     PerfPresetMappableFunction mPerfPresetFn;
     GlobalKeyRootMappableFunction mGlobalKeyRoot;
     GlobalScaleFlavorMappableFunction mGlobalKeyFlavor;
@@ -347,6 +423,8 @@ struct InputDelegator
         mSynthPresetBFn.Init(appSettings, psrc);
         mHarmPresetFn.Init(appSettings, psrc);
         mTransposeFn.Init(appSettings, psrc);
+        mTransposeAFn.Init(appSettings, psrc);
+        mTransposeBFn.Init(appSettings, psrc);
         mPerfPresetFn.Init(appSettings, psrc);
         mGlobalKeyRoot.Init(appSettings, psrc);
         mGlobalKeyFlavor.Init(appSettings, psrc);
@@ -394,6 +472,8 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::SynthPresetB, &mSynthPresetBFn);
         RegisterFunction(ControlMapping::Function::HarmPreset, &mHarmPresetFn);
         RegisterFunction(ControlMapping::Function::Transpose, &mTransposeFn);
+        RegisterFunction(ControlMapping::Function::TransposeA, &mTransposeAFn);
+        RegisterFunction(ControlMapping::Function::TransposeB, &mTransposeBFn);
         RegisterFunction(ControlMapping::Function::PerfPreset, &mPerfPresetFn);
 
         RegisterFunction(ControlMapping::Function::LoopStop, &mLoopStopButton);

@@ -534,7 +534,7 @@ struct Voice : IModulationKRateProvider
         }
 
         // update
-        float midiNote = (float)mv.mMidiNote;
+        float midiNote = (float)mv.mMidiNote + mv.mTransposeSemis;
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {

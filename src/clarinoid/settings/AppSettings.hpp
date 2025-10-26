@@ -39,16 +39,19 @@ struct PerformancePatch
     int16_t mSynthPresetA = 0;
     bool mSynthAEnabled = true;
     float mSynthAGain = 1.0f;
+    int16_t mSynthATranspose = 0;
 
     int16_t mSynthPresetB = -1; // -1 = mute, no patch.
     bool mSynthBEnabled = true;
     float mSynthBGain = 1.0f;
+    int16_t mSynthBTranspose = 0;
 
     int16_t mHarmPreset = 0;
     bool mHarmEnabled = false;
     float mHarmGain = 1.0f;
 
     float mSynthStereoSpread = 0.35f; // -1 to 1
+    float mDetuneSemis = 0.1f;        // detunes both synths away from each other by this amount.
 
     float mMasterGain = 1.0f;
 

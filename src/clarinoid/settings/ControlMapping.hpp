@@ -62,6 +62,8 @@ struct ControlMapping
         SynthPresetB,
         HarmPreset,
         Transpose,
+        TransposeA,
+        TransposeB,
         TransposeReset,
         GlobalKeyRoot,
         GlobalKeyFlavor,
