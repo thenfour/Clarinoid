@@ -331,9 +331,127 @@ struct AppSettings
     //     p.mMasterFXGain = DecibelsToLinear(-10);
     // }
 
+    // SPACE CAR (+ cinematic)
+    //     - reset transpose
+    //     - fluvial
+    //     - braker solo
+    static void InitSpaceCarPerf(PerformancePatch &p)
+    {
+        p.mName = "Space Car";
+
+        p.mTranspose = 0;
+
+        p.mSynthPresetA = SynthPresetID_Fluvial;
+        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthPresetB = SynthPresetID_BrakerSolo;
+        p.mSynthBGain = DecibelsToLinear(-3);
+
+        p.mHarmPreset = HarmPresetID_Quintal;
+        p.mGlobalScaleRef = GlobalScaleRefType::Chosen;
+        p.mGlobalScale = Scale{Note::F_, ScaleFlavorIndex::Major};
+    }
+
+    // RIPPLE BOOGIE
+    //     +3 transp
+    //     - funky + fluvial
+    static void InitRippleBoogiePerf(PerformancePatch &p)
+    {
+        p.mName = "Ripple Boogie";
+
+        p.mTranspose = 3;
+
+        p.mSynthPresetA = SynthPresetID_Funky;
+        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthPresetB = SynthPresetID_Fluvial;
+        p.mSynthBGain = DecibelsToLinear(-3);
+
+        p.mHarmPreset = HarmPresetID_Quintal;
+        p.mGlobalScaleRef = GlobalScaleRefType::Chosen;
+        p.mGlobalScale = Scale{Note::D, ScaleFlavorIndex::Minor};
+    }
+
+    // CLOUDS AND STARS
+    //     - fluvial + pwm
+    static void InitCloudsAndStarsPerf(PerformancePatch &p)
+    {
+        p.mName = "Clouds and Stars";
+
+        p.mSynthPresetA = SynthPresetID_Fluvial;
+        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthPresetB = SynthPresetID_PWMLead2;
+        p.mSynthBGain = DecibelsToLinear(-3);
+    }
+
+    // FULL SCALE
+    //     - fluvial + trumpet
+    //     - harm: pent -3 -2
+    //     - F major
+    static void InitFullScalePerf(PerformancePatch &p)
+    {
+        p.mName = "Full Scale";
+
+        p.mSynthPresetA = SynthPresetID_Fluvial;
+        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthPresetB = SynthPresetID_Trumpet;
+        p.mSynthBGain = DecibelsToLinear(-3);
+
+        p.mHarmPreset = HarmPresetID_N3N2;
+        p.mGlobalScaleRef = GlobalScaleRefType::Chosen;
+        p.mGlobalScale = Scale{Note::F_, ScaleFlavorIndex::Major};
+    }
+
+    // SILK SUSP PERF
+    //     - transpose +12
+    //     - pan flute
+    //     - trumpet -12
+    //     - C major
+    static void InitSilkSuspendersPerf(PerformancePatch &p)
+    {
+        p.mName = "Silk Suspenders";
+
+        p.mTranspose = 12;
+
+        p.mSynthPresetA = SynthPresetID_PanFlute;
+        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthPresetB = SynthPresetID_Trumpet;
+        p.mSynthBTranspose = -12;
+        p.mSynthBGain = DecibelsToLinear(-3);
+
+        p.mGlobalScaleRef = GlobalScaleRefType::Chosen;
+        p.mGlobalScale = Scale{Note::C, ScaleFlavorIndex::Major};
+    }
+
     AppSettings()
     {
-        // size_t i = 1;                                // 0 = default, no performance
+        size_t i = 1; // 0 = default, no performance
+
+        // SPACE CAR (+ cinematic)
+        //     - reset transpose
+        //     - fluvial
+        //     - braker solo
+        InitSpaceCarPerf(mPerformancePatches[i++]);
+
+        // RIPPLE BOOGIE
+        //     +3 transp
+        //     - funky + fluvial
+        InitRippleBoogiePerf(mPerformancePatches[i++]);
+
+        // CLOUDS AND STARS
+        //     - fluvial + pwm
+        InitCloudsAndStarsPerf(mPerformancePatches[i++]);
+
+        // FULL SCALE
+        //     - fluvial + trumpet
+        //     - harm: pent -3 -2
+        //     - F major
+        InitFullScalePerf(mPerformancePatches[i++]);
+
+        // SILK SUSP PERF
+        //     - transpose +12
+        //     - pan flute
+        //     - trumpet -12
+        //     - C major
+        InitSilkSuspendersPerf(mPerformancePatches[i++]);
 
         // InitSoaringGuitarPerf(mPerformancePatches[i++]);
         // InitCaveBouncer(mPerformancePatches[i++]);

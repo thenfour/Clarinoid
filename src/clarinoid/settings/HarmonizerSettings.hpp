@@ -20,6 +20,13 @@ namespace clarinoid
 //  static constexpr size_t SynthPresetID_HarmPulse = SYNTH_PRESET_COUNT - 4;
 // static constexpr size_t SynthPresetID_HarmSaw = SYNTH_PRESET_COUNT - 2;
 
+static constexpr size_t SynthPresetID_Fluvial = 0;
+static constexpr size_t SynthPresetID_Funky = 1;
+static constexpr size_t SynthPresetID_BrakerSolo = 2;
+static constexpr size_t SynthPresetID_PWMLead2 = 3;
+static constexpr size_t SynthPresetID_PanFlute = 4;
+static constexpr size_t SynthPresetID_Trumpet = 5;
+
 static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 11;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 10;
 
@@ -28,6 +35,9 @@ static constexpr size_t SynthPresetID_HarmDetunedSaws = SYNTH_PRESET_COUNT - 3;
 static constexpr size_t SynthPresetID_HarmTri = SYNTH_PRESET_COUNT - 2;
 static constexpr size_t SynthPresetID_HarmFMFB = SYNTH_PRESET_COUNT - 1;
 
+static constexpr size_t HarmPresetID_WorldPeaceGlobal = 0;
+static constexpr size_t HarmPresetID_Quintal = 1;
+static constexpr size_t HarmPresetID_N3N2 = 2;
 // static constexpr size_t HarmPresetID_WorldPeace = HARM_PRESET_COUNT - 1;
 // static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 2;
 //  static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
@@ -580,7 +590,7 @@ struct HarmSettings
         p.mVoiceSettings[3].mSequence[1] = -7; // Bb
     }
 
-    static void InitPentatonicPreset(HarmPreset &p, const char *name, int interval1, int interval2)
+    static void InitDiatonicPreset(HarmPreset &p, const char *name, int interval1, int interval2)
     {
         p.mName = name;
         p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Global;
@@ -697,12 +707,19 @@ struct HarmSettings
     {
         size_t iPreset = 0;
 
-        InitBigBandPreset(mPresets[iPreset++], "World Peace");
+        CCASSERT(iPreset == HarmPresetID_WorldPeaceGlobal);
+        InitBigBandPreset(mPresets[iPreset++], "World Peace-glob");
+
+        CCASSERT(iPreset == HarmPresetID_Quintal);
+        InitQuartalHarmPreset2(mPresets[iPreset++]);
+
+        CCASSERT(iPreset == HarmPresetID_N3N2);
+        InitDiatonicPreset(mPresets[iPreset++], "Dia -3,-2", -3, -2);
+
+        InitQuartQuintHarmPreset(mPresets[iPreset++]);
         InitBigPreset(mPresets[iPreset++]);
         InitFuzionPreset(mPresets[iPreset++]);
         // InitMin6Preset(mPresets[iPreset++]);
-        InitQuartQuintHarmPreset(mPresets[iPreset++]);
-        InitQuartalHarmPreset2(mPresets[iPreset++]);
         // InitMajInv2Preset(mPresets[iPreset++]);
         // InitFunky3(mPresets[iPreset++]);
         // InitFunky2(mPresets[iPreset++]);
@@ -711,14 +728,13 @@ struct HarmSettings
         // InitColBassPreset(mPresets[iPreset++]);
         InitCol8vaPreset(mPresets[iPreset++]);
 
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -3,-2", -3, -2);
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -3,-1", -3, -1);
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -2,-1", -2, -1);
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -2,+1", -2, +1);
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -1,+1", -1, +1);
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic -1,+2", -1, +2);
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic +1,+2", +1, +2);
-        InitPentatonicPreset(mPresets[iPreset++], "Pentatonic +1,+3", +1, +3);
+        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -3,-1", -3, -1);
+        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -2,-1", -2, -1);
+        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -2,+1", -2, +1);
+        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -1,+1", -1, +1);
+        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -1,+2", -1, +2);
+        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic +1,+2", +1, +2);
+        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic +1,+3", +1, +3);
 
         // InitSpicePreset(mPresets[iPreset++]);
 

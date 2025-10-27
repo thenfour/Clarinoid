@@ -283,6 +283,9 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             PhysicalControl::LHKey2, ControlMapping::Function::Course, ModifierKeyFlags::Any));
 
         // No modifiers
+        AddControlMapping(ControlMapping::MomentaryMapping(
+            PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKeyFlags::None));
+
         AddControlMapping(ControlMapping::ButtonIncrementMapping(
             PhysicalControl::RHx4, ControlMapping::Function::PerfPreset, -1.0f, ModifierKeyFlags::None));
         AddControlMapping(ControlMapping::ButtonIncrementMapping(

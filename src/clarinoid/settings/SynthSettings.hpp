@@ -327,12 +327,12 @@ enum class KRateModulationDestination : uint8_t
     FMStrength3To2,        // k-rate
     FMStrength1To3,        // k-rate
     FMStrength2To3,        // k-rate
-    Osc1FreqMul,  // k-rate
-Osc1FreqOffset,  // k-rate
-Osc2FreqMul,  // k-rate
-Osc2FreqOffset,  // k-rate
-Osc3FreqMul,  // k-rate
-Osc3FreqOffset,  // k-rate
+    Osc1FreqMul,           // k-rate
+    Osc1FreqOffset,        // k-rate
+    Osc2FreqMul,           // k-rate
+    Osc2FreqOffset,        // k-rate
+    Osc3FreqMul,           // k-rate
+    Osc3FreqOffset,        // k-rate
 };
 
 EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[23] = {
@@ -395,12 +395,12 @@ enum class AnyModulationDestination : uint8_t
     FMStrength1To3,    // k-rate
     FMStrength2To3,    // k-rate
 
-    Osc1FreqMul,     // k-rate
-    Osc1FreqOffset,     // k-rate
-    Osc2FreqMul,     // k-rate
-    Osc2FreqOffset,     // k-rate
-    Osc3FreqMul,     // k-rate
-    Osc3FreqOffset,     // k-rate
+    Osc1FreqMul,    // k-rate
+    Osc1FreqOffset, // k-rate
+    Osc2FreqMul,    // k-rate
+    Osc2FreqOffset, // k-rate
+    Osc3FreqMul,    // k-rate
+    Osc3FreqOffset, // k-rate
 
     // osc waveform morph (now replaces SYNC freq)
     // osc pan
@@ -639,7 +639,7 @@ struct SynthSettings
     static void InitClarinoid2Preset(SynthPreset &p,
                                      const char *name,
                                      ClarinoidFilterType filt,
-                                     //float filterKeyScaling,
+                                     // float filterKeyScaling,
                                      float q,
                                      float filterMaxFreq)
     {
@@ -660,7 +660,7 @@ struct SynthSettings
         p.mFilterMaxFreq = filterMaxFreq;
         p.mFilterSaturation = 0;
         p.mFilterQ = q;
-        //p.mFilterKeytracking = filterKeyScaling;
+        // p.mFilterKeytracking = filterKeyScaling;
     }
 
     static void InitBasicLeadPreset(const char *name, OscWaveformShape shape, float pulseWidth, SynthPreset &p)
@@ -899,7 +899,7 @@ struct SynthSettings
         p.mName = name; //"Cinematic Tag";
         p.mSync = false;
         p.mDetune = detuneAmt;
-        //p.mFilterKeytracking = 0.8f;
+        // p.mFilterKeytracking = 0.8f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog2;
         p.mFilterMaxFreq = 22050;
@@ -944,7 +944,7 @@ struct SynthSettings
         p.mDetune = 0.04f;
 
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        //p.mFilterKeytracking = 0.8f;
+        // p.mFilterKeytracking = 0.8f;
         p.mFilterMaxFreq = 20000;
         p.mFilterQ = 0.0f;
         p.mFilterSaturation = 0.2f;
@@ -962,7 +962,7 @@ struct SynthSettings
         p.mSync = true;
         p.mSyncMultMax = 4.0f;
         p.mDetune = 0;
-        p.mFilterQ = 0.40f;
+        p.mFilterQ = 0.60f;
         p.mFilterType = ClarinoidFilterType::LP_Diode;
         p.mFilterMaxFreq = 17000;
 
@@ -1101,7 +1101,7 @@ struct SynthSettings
     static void InitSynccyLead(SynthPreset &p)
     {
         p.mName = "Synccy Lead"; // default.
-        //p.mFilterKeytracking = 0.8f;
+        // p.mFilterKeytracking = 0.8f;
         p.mFilterMaxFreq = 22000;
         p.mModulations[0].SetScaleN11_Legacy(0.9f);
         p.mModulations[0].mSource = AnyModulationSource::LFO1;
@@ -1213,8 +1213,7 @@ struct SynthSettings
         p.mFilterQ = 0.15f;
         p.mFilterKeytracking = 0;
 
-        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain =
-            0.1f * DecibelsToLinear(-4.5f);
+        p.mOsc[0].mGain = p.mOsc[1].mGain = p.mOsc[2].mGain = 0.1f * DecibelsToLinear(-4.5f);
         p.mOsc[0].mWaveform = p.mOsc[1].mWaveform = p.mOsc[2].mWaveform = OscWaveformShape::VarTriangle;
         p.mOsc[0].mPulseWidth = p.mOsc[1].mPulseWidth = p.mOsc[2].mPulseWidth = 0.05f;
 
@@ -1251,7 +1250,7 @@ struct SynthSettings
         p.mFilterMaxFreq = 22000;
         p.mFilterType = ClarinoidFilterType::LP_Diode;
 
-        //p.mOsc[0].mFreqMultiplier = 0.998f;
+        // p.mOsc[0].mFreqMultiplier = 0.998f;
         p.mOsc[1].mPitchSemis = 0;
         p.mOsc[1].mPortamentoTimeMS = 30;
 
@@ -1304,12 +1303,22 @@ struct SynthSettings
     {
         size_t i = 0;
 
+        CCASSERT(i == SynthPresetID_Fluvial);
         InitFluvial(mPresets[i++]);
+
+        CCASSERT(i == SynthPresetID_Funky);
         InitFunkyLeadPreset(mPresets[i++]);
+
+        CCASSERT(i == SynthPresetID_BrakerSolo);
         InitBraker(mPresets[i++]);
 
+        CCASSERT(i == SynthPresetID_PWMLead2);
         InitPWMLead2(mPresets[i++]);
+
+        CCASSERT(i == SynthPresetID_PanFlute);
         InitPanFlutePreset(mPresets[i++]);
+
+        CCASSERT(i == SynthPresetID_Trumpet);
         InitSynthTrumpetPreset(mPresets[i++]);
 
         InitDetunePWMLead(mPresets[i++]);
@@ -1319,20 +1328,21 @@ struct SynthSettings
         InitBasicSine(mPresets[i++]);
 
         // InitFMPreset(mPresets[i++]);
-        //InitSynccyLead(mPresets[i++]);
-        //InitPWMLeadStack(mPresets[i++]);
-        //InitCrystalFieldsPatch(mPresets[i++]);
-        //InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
+        InitSynccyLead(mPresets[i++]);
+        // InitPWMLeadStack(mPresets[i++]);
+        // InitCrystalFieldsPatch(mPresets[i++]);
+        // InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);
 
-        //InitFifthLeadPresetA(mPresets[i++]);
-        //InitFifthLeadPresetB(mPresets[i++]);
+        // InitFifthLeadPresetA(mPresets[i++]);
+        // InitFifthLeadPresetB(mPresets[i++]);
 
         // harmonizer-friendly patches
 
         i = SynthPresetID_MoogBass;
         InitBasicLeadPreset("Moog bass", OscWaveformShape::Pulse, 0.50f, mPresets[i]);
         // make osc1 and osc2 equal
-        mPresets[i].mOsc[2].mGain = mPresets[i].mOsc[1].mGain = mPresets[i].mOsc[0].mGain = 0.25f * DecibelsToLinear(-5.5f);
+        mPresets[i].mOsc[2].mGain = mPresets[i].mOsc[1].mGain = mPresets[i].mOsc[0].mGain =
+            0.25f * DecibelsToLinear(-5.5f);
         mPresets[i].mOsc[2].mWaveform = mPresets[i].mOsc[1].mWaveform = mPresets[i].mOsc[0].mWaveform =
             OscWaveformShape::SawSync;
         mPresets[i].mOsc[0].mWaveform = OscWaveformShape::Pulse;
@@ -1356,7 +1366,7 @@ struct SynthSettings
         // InitSynccyLead(mPresets[SynthPresetID_SynccyLead]);
         // InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTag], "SynthwaveB", 0.06f, 0.025f, -0.09f);
         // InitFluvial(mPresets[SynthPresetID_Fluvial]);
-        //InitHarmSyncLead(mPresets[SynthPresetID_HarmSync]);
+        // InitHarmSyncLead(mPresets[SynthPresetID_HarmSync]);
         InitHarmTriLead(mPresets[SynthPresetID_HarmTri]);
         InitHarmFMFB(mPresets[SynthPresetID_HarmFMFB]);
 
@@ -1369,8 +1379,7 @@ struct SynthSettings
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterType = ClarinoidFilterType::LP_Moog4;
         mPresets[SynthPresetID_HarmDetunedSaws].mFilterMaxFreq = 8000;
 
-        InitDetunedLeadPreset(
-            "Harm: Det PWM", OscWaveformShape::Pulse, 0.5f, mPresets[SynthPresetID_HarmDetunedPWM]);
+        InitDetunedLeadPreset("Harm: Det PWM", OscWaveformShape::Pulse, 0.5f, mPresets[SynthPresetID_HarmDetunedPWM]);
         mPresets[SynthPresetID_HarmDetunedPWM].mOsc[0].mGain = 0.19f * DecibelsToLinear(-16.0f);
         mPresets[SynthPresetID_HarmDetunedPWM].mOsc[1].mGain = 0.19f * DecibelsToLinear(-16.0f);
         mPresets[SynthPresetID_HarmDetunedPWM].mOsc[2].mGain = 0.19f * DecibelsToLinear(-16.0f);
@@ -1390,16 +1399,13 @@ struct SynthSettings
         mPresets[SynthPresetID_HarmDetunedPWM].mModulations[2].mDest = AnyModulationDestination::Osc3PulseWidth;
         mPresets[SynthPresetID_HarmDetunedPWM].mModulations[2].SetScaleN11_Legacy(0.18f);
 
-
-
-
         // InitHarmPulseLead(mPresets[SynthPresetID_HarmPulse]);
         // InitHarmSawLead(mPresets[SynthPresetID_HarmSaw]);
         // InitSynthTrumpetPreset(mPresets[SynthPresetID_SynthTrumpetDoubler]);
         // InitPanFlutePreset(mPresets[SynthPresetID_PanFlute]);
         // InitCrystalFieldsPatch(mPresets[SynthPresetID_Crystal]);
         // InitCinematicTagPatch(mPresets[SynthPresetID_CinematicTagAlt], "SynthwaveA", 0.1f, 0.015f, -0.07f);
-        //InitBraker(mPresets[SynthPresetID_FunkyCave]);
+        // InitBraker(mPresets[SynthPresetID_FunkyCave]);
     }
 };
 
