@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 #include "Dither.hpp"
 
@@ -88,7 +90,9 @@ struct IDisplay
     virtual void SelectTinyFont() = 0;
     virtual void SelectEightiesFont() = 0;
     virtual void SelectNormalFont() = 0;
-    virtual void ShowToast(const String &msg) = 0;
+    virtual void ShowToast(const String &msg,
+                           void *capture = nullptr,
+                           cc::function<void(IDisplay &, void *)>::ptr_t renderExtra = nullptr) = 0;
     virtual int ClippedAreaHeight() const = 0;
     virtual void ResetClip() = 0;
     virtual void SetClipRect(const RectI &rc) = 0;

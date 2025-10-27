@@ -197,6 +197,10 @@ struct _CCDisplay : IDisplay
                 // render toast.
                 SetupModal();
                 mDisplay.print(mToastMsg);
+                if (mToastRenderExtra)
+                {
+                    mToastRenderExtra(*this, mToastCapture);
+                }
             }
         }
 
@@ -321,6 +325,9 @@ struct _CCDisplay : IDisplay
     Stopwatch mToastTimer;
     bool mIsShowingToast = false;
     String mToastMsg;
+    void *mToastCapture = nullptr;
+    cc::function<void(struct IDisplay &, void *)>::ptr_t mToastRenderExtra = nullptr;
+
     size_t mCurrentFontIndex = 0;
 
     // NB: CHANGING ANYTHING IN HERE, ALSO CHANGE
@@ -350,10 +357,14 @@ struct _CCDisplay : IDisplay
 
     SwitchControlReader mToggleReader;
 
-    virtual void ShowToast(const String &msg) override
+    virtual void ShowToast(const String &msg,
+                           void *capture = nullptr,
+                           cc::function<void(IDisplay &, void *)>::ptr_t renderExtra = nullptr) override
     {
         mIsShowingToast = true;
         mToastMsg = msg;
+        mToastCapture = capture;
+        mToastRenderExtra = renderExtra;
         mToastTimer.Restart();
     }
 

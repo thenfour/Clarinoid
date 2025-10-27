@@ -1,3 +1,4 @@
+#pragma once
 #include <clarinoid/basic/Basic.hpp>
 
 namespace clarinoid
@@ -5,13 +6,13 @@ namespace clarinoid
 
 struct IDitherMatrix
 {
-    virtual bool getDitheredColor(int shade, const PointI& pt) const = 0;
+    virtual bool getDitheredColor(int shade, const PointI &pt) const = 0;
 };
 
 template <size_t N>
 class DitherMatrix : public IDitherMatrix
 {
-private:
+  private:
     static constexpr size_t matrixSize = N;
     int values[N * N];
     int valuesScaled[N * N];
@@ -22,19 +23,20 @@ private:
         int maxVal = -32768;
         for (size_t i = 0; i < N * N; i++)
         {
-            if (values[i] > maxVal) maxVal = values[i];
+            if (values[i] > maxVal)
+                maxVal = values[i];
         }
         return maxVal;
     }
 
-    int getScaledThreshold(const PointI& pt) const
+    int getScaledThreshold(const PointI &pt) const
     {
         int mx = (pt.x) % N;
         int my = (pt.y) % N;
         return valuesScaled[my * N + mx];
     }
 
-public:
+  public:
     // explicit DitherMatrix(const int (&inputValues)[N][N])
     // {
     //     for (size_t y = 0; y < N; y++)
@@ -73,11 +75,11 @@ public:
         }
     }
 
-    virtual bool getDitheredColor(int shade, const PointI& pt) const override
+    virtual bool getDitheredColor(int shade, const PointI &pt) const override
     {
         int thresh = getScaledThreshold(pt) + 1; // why +1?
         return (shade > thresh);
     }
 };
 
-}
+} // namespace clarinoid

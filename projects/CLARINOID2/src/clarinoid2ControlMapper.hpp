@@ -12,15 +12,15 @@
 namespace clarinoid
 {
 
-    struct EncoderTask : ITask
-    {
-        CCEncoder<4 /* step increment each increment */, 2 /* pin #1 */, 3 /* pin #2 */> mEncoder;
+struct EncoderTask : ITask
+{
+    CCEncoder<4 /* step increment each increment */, 2 /* pin #1 */, 3 /* pin #2 */> mEncoder;
 
-        virtual void TaskRun() override
-        {
-            mEncoder.Update();
-        }
-    };
+    virtual void TaskRun() override
+    {
+        mEncoder.Update();
+    }
+};
 
 struct Clarinoid2ControlMapper : IInputSource, ITask
 {
@@ -88,11 +88,13 @@ struct Clarinoid2ControlMapper : IInputSource, ITask
         return mControlInfo[(size_t)index];
     }
 
-    virtual void InputSource_ShowToast(const String &s)
+    virtual void InputSource_ShowToast(
+        const String &s,
+        void *capture = nullptr,
+        cc::function<void(struct IDisplay &, void *)>::ptr_t renderExtra = nullptr) override
     {
-        mDisplay->ShowToast(s);
+        mDisplay->ShowToast(s, capture, renderExtra);
     }
-
 
     EncoderTask mEncoderTask;
 

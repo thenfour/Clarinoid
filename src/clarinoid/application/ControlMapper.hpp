@@ -4,6 +4,7 @@
 #include "FunctionHandler.hpp"
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
+#include <clarinoid/application/KeyboardDisplay.hpp>
 
 namespace clarinoid
 {
@@ -58,8 +59,15 @@ struct GlobalKeyRootMappableFunction : FunctionHandler
         if (old != newNote)
         {
             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mRootNoteIndex = newNote;
-            mInputSrc->InputSource_ShowToast(String("Global scale\n") +
-                                             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
+            mInputSrc->InputSource_ShowToast(
+                String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString(),
+                this,
+                [](IDisplay &display, void *capture) {
+                    auto p = (GlobalKeyRootMappableFunction *)capture;
+                    RenderKeyboard(display,
+                                   PointI::Construct(24, 20),
+                                   GetKeyStatesForScale(p->mAppSettings->GetCurrentPerformancePatch().mGlobalScale));
+                });
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
@@ -88,8 +96,15 @@ struct GlobalScaleFlavorMappableFunction : FunctionHandler
         if (old != newFlavor)
         {
             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.mFlavorIndex = newFlavor;
-            mInputSrc->InputSource_ShowToast(String("Global scale\n") +
-                                             mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString());
+            mInputSrc->InputSource_ShowToast(
+                String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString(),
+                this,
+                [](IDisplay &display, void *capture) {
+                    auto p = (GlobalKeyRootMappableFunction *)capture;
+                    RenderKeyboard(display,
+                                   PointI::Construct(24, 20),
+                                   GetKeyStatesForScale(p->mAppSettings->GetCurrentPerformancePatch().mGlobalScale));
+                });
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
