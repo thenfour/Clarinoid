@@ -190,7 +190,7 @@ struct GuiGainEditor : IGuiEditor<float>
             float oldValLin = binding.GetValue();
             float oldValDb = LinearToDecibels(oldValLin);
             auto r = mRange.AdjustValue(
-                oldValDb, d, app.mInput->mModifierCourse.CurrentValue(), app.mInput->mModifierFine.CurrentValue());
+                oldValDb, d, app.mInput->mCourse.CurrentValue(), app.mInput->mFine.CurrentValue());
             if (r.first)
             {
                 float newValDb = r.second;

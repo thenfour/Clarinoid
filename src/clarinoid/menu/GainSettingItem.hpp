@@ -62,8 +62,8 @@ struct GainEditor : ISettingItemEditor
         float valInDb = LinearToDecibels(valLinear);
         auto r = mRangeInDb.AdjustValue(valInDb,
                                         encIntDelta,
-                                        mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                        mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+                                        mpApi->GetInputDelegator()->mCourse.CurrentValue(),
+                                        mpApi->GetInputDelegator()->mFine.CurrentValue());
         if (r.first)
         {
             float adjValDb = r.second;
@@ -77,8 +77,8 @@ struct GainEditor : ISettingItemEditor
         float valInDb = LinearToDecibels(valLinear);
         auto r = mRangeInDb.AdjustValue(valInDb,
                                         encIntDelta,
-                                        mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                        mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+                                        mpApi->GetInputDelegator()->mCourse.CurrentValue(),
+                                        mpApi->GetInputDelegator()->mFine.CurrentValue());
         if (r.first)
         {
             float adjValDb = r.second;

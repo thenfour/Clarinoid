@@ -113,4 +113,20 @@ struct EnumInfo : /*GenericEnumItemInfo,*/ GenericEnumInfo
     }
 };
 
+template <typename Tval, typename TEnum>
+static bool HasFlag(Tval val, TEnum e)
+{
+    auto ival = (typename std::underlying_type<TEnum>::type)val;
+    auto ie = (typename std::underlying_type<TEnum>::type)e;
+    return (ival & ie) == ie;
+}
+
+// combines flags, where Tval is an enum type used as bitfield.
+template <typename Tval>
+static Tval CombineFlags(Tval a, Tval b)
+{
+    return static_cast<Tval>(static_cast<typename std::underlying_type<Tval>::type>(a) |
+                             static_cast<typename std::underlying_type<Tval>::type>(b));
+}
+
 } // namespace clarinoid

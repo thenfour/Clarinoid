@@ -379,15 +379,17 @@ struct InputDelegator
     VirtualAxis mBreath;
     VirtualAxis mPitchBend;
 
-    VirtualSwitch mModifierFine;
-    VirtualSwitch mModifierCourse;
-    VirtualSwitch mModifierSynth;
-    VirtualSwitch mModifierPerf;
-    VirtualSwitch mModifierHarm;
-    VirtualSwitch mModifierShift;
-    VirtualSwitch mModifierTranspose;
-    VirtualSwitch mModifierKey;
-    VirtualSwitch mModifierTempo;
+    VirtualSwitch mFine;
+    VirtualSwitch mCourse;
+
+    VirtualSwitch mModifier1;
+    VirtualSwitch mModifier2;
+    VirtualSwitch mModifier3;
+    VirtualSwitch mModifier4;
+    VirtualSwitch mModifier5;
+    VirtualSwitch mModifier6;
+    VirtualSwitch mModifier7;
+    VirtualSwitch mModifier8;
 
     SynthPresetAMappableFunction mSynthPresetAFn;
     SynthPresetBMappableFunction mSynthPresetBFn;
@@ -433,16 +435,17 @@ struct InputDelegator
         RegisterFunction(ControlMapping::Function::Nop,
                          &mMenuBack); // anything works; it's never called.
 
-        RegisterFunction(ControlMapping::Function::ModifierCourse, &mModifierCourse);
-        RegisterFunction(ControlMapping::Function::ModifierFine, &mModifierFine);
-        RegisterFunction(ControlMapping::Function::ModifierSynth, &mModifierSynth);
-        RegisterFunction(ControlMapping::Function::ModifierHarm, &mModifierHarm);
-        RegisterFunction(ControlMapping::Function::ModifierPerf, &mModifierPerf);
-        RegisterFunction(ControlMapping::Function::ModifierShift, &mModifierShift);
+        RegisterFunction(ControlMapping::Function::Course, &mCourse);
+        RegisterFunction(ControlMapping::Function::Fine, &mFine);
 
-        RegisterFunction(ControlMapping::Function::ModifierTranspose, &mModifierTranspose);
-        RegisterFunction(ControlMapping::Function::ModifierTempo, &mModifierTempo);
-        RegisterFunction(ControlMapping::Function::ModifierKey, &mModifierKey);
+        RegisterFunction(ControlMapping::Function::Mod1, &mModifier1);
+        RegisterFunction(ControlMapping::Function::Mod2, &mModifier2);
+        RegisterFunction(ControlMapping::Function::Mod3, &mModifier3);
+        RegisterFunction(ControlMapping::Function::Mod4, &mModifier4);
+        RegisterFunction(ControlMapping::Function::Mod5, &mModifier5);
+        RegisterFunction(ControlMapping::Function::Mod6, &mModifier6);
+        RegisterFunction(ControlMapping::Function::Mod7, &mModifier7);
+        RegisterFunction(ControlMapping::Function::Mod8, &mModifier8);
 
         RegisterFunction(ControlMapping::Function::MenuBack, &mMenuBack);
         RegisterFunction(ControlMapping::Function::MenuOK, &mMenuOK);
@@ -500,67 +503,47 @@ struct InputDelegator
         mpSrc->InputSource_Init(this);
     }
 
-    template <typename Tval, typename TEnum>
-    static bool HasFlag(Tval val, TEnum e)
-    {
-        auto ival = (typename std::underlying_type<TEnum>::type)val;
-        auto ie = (typename std::underlying_type<TEnum>::type)e;
-        return (ival & ie) == ie;
-    }
-
     bool MatchesModifierKeys(const ControlMapping &m)
     {
-        if (!MatchesModifierKey(m.mModifier))
-            return false;
-        // if (!MatchesModifierKey(m.mModifier2))
-        //     return false;
-        return true;
-    }
-
-    bool MatchesModifierKey(const ModifierKey &m)
-    {
-        switch (m)
+        if (m.mModifierFlags == ModifierKeyFlags::Any)
         {
-        case ModifierKey::None: // = 0, // requires no modifiers are pressed.
-            return !mModifierFine.CurrentValue() && !mModifierCourse.CurrentValue() && !mModifierSynth.CurrentValue() &&
-                   !mModifierHarm.CurrentValue() && !mModifierPerf.CurrentValue() && !mModifierShift.CurrentValue() &&
-                   !mModifierTranspose.CurrentValue() && !mModifierKey.CurrentValue() && !mModifierTempo.CurrentValue();
-        case ModifierKey::Fine: // = 1,
-            return mModifierFine.CurrentValue();
-        case ModifierKey::Course: // = 2,
-            return mModifierCourse.CurrentValue();
-        case ModifierKey::Synth: // = 2,
-            return mModifierSynth.CurrentValue();
-        case ModifierKey::Harm: // = 2,
-            return mModifierHarm.CurrentValue();
-        case ModifierKey::Perf: // = 2,
-            return mModifierPerf.CurrentValue();
-        case ModifierKey::Shift: // = 2,
-            return mModifierShift.CurrentValue();
-        case ModifierKey::Transpose:
-            return mModifierTranspose.CurrentValue();
-        case ModifierKey::Tempo:
-            return mModifierTempo.CurrentValue();
-        case ModifierKey::Key:
-            return mModifierKey.CurrentValue();
-        default:
-        case ModifierKey::Any: // = 128, // special; any combination works.
             return true;
         }
+
+        // must be exact match. so construct a bitmask of currently held modifiers.
+        ModifierKeyFlags currentModifiers = ModifierKeyFlags::None;
+        auto updateCurrentModifiers = [&](VirtualSwitch &sw, ModifierKeyFlags flag) {
+            if (sw.CurrentValue())
+            {
+                currentModifiers =
+                    (ModifierKeyFlags)((typename std::underlying_type<ModifierKeyFlags>::type)currentModifiers |
+                                       (typename std::underlying_type<ModifierKeyFlags>::type)flag);
+            }
+        };
+
+        updateCurrentModifiers(mModifier1, ModifierKeyFlags::Mod1);
+        updateCurrentModifiers(mModifier2, ModifierKeyFlags::Mod2);
+        updateCurrentModifiers(mModifier3, ModifierKeyFlags::Mod3);
+        updateCurrentModifiers(mModifier4, ModifierKeyFlags::Mod4);
+        updateCurrentModifiers(mModifier5, ModifierKeyFlags::Mod5);
+        updateCurrentModifiers(mModifier6, ModifierKeyFlags::Mod6);
+        updateCurrentModifiers(mModifier7, ModifierKeyFlags::Mod7);
+        updateCurrentModifiers(mModifier8, ModifierKeyFlags::Mod8);
+
+        return currentModifiers == m.mModifierFlags;
     }
 
     // for test code.
     void ResetModifiers()
     {
-        mModifierCourse.mValue = false;
-        mModifierFine.mValue = false;
-        mModifierSynth.mValue = false;
-        mModifierHarm.mValue = false;
-        mModifierPerf.mValue = false;
-        mModifierShift.mValue = false;
-        mModifierTranspose.mValue = false;
-        mModifierKey.mValue = false;
-        mModifierTempo.mValue = false;
+        mModifier1.mValue = false;
+        mModifier2.mValue = false;
+        mModifier3.mValue = false;
+        mModifier4.mValue = false;
+        mModifier5.mValue = false;
+        mModifier6.mValue = false;
+        mModifier7.mValue = false;
+        mModifier8.mValue = false;
     }
 
     // process all input state and delegate to handlers.

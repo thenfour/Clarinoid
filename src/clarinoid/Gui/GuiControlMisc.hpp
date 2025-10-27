@@ -181,7 +181,7 @@ struct GuiNumericEditor : IGuiEditor<Tparam>
                 mWasModified = true;
             }
             auto r = mRange.AdjustValue(
-                oldVal, d, app.mInput->mModifierCourse.CurrentValue(), app.mInput->mModifierFine.CurrentValue());
+                oldVal, d, app.mInput->mCourse.CurrentValue(), app.mInput->mFine.CurrentValue());
             if (r.first)
             {
                 Tparam newVal = r.second;

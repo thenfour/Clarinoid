@@ -39,13 +39,7 @@ struct DefaultHud : IHudProvider
                1; // -1 because the bottom line of the font will not really be used.
     }
 
-    virtual String IHudProvider_GetHudTransientIndicator(bool fine,
-                                                         bool course,
-                                                         bool shift,
-                                                         bool transpose,
-                                                         bool tempo,
-                                                         bool key,
-                                                         bool harm) override
+    virtual String IHudProvider_GetHudTransientIndicator(InputDelegator *input) override
     {
         String s("");
         int pbN100100 = FloatRoundToInt(mpInfo->ISysInfoProvider_GetPitchBendN11() * 100);

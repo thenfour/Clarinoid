@@ -33,7 +33,6 @@
 #include "clarinoid2MusicalStateTask.hpp"
 #include "clarinoid2DebugDisplayApp.hpp"
 #include "clarinoid2RhythmGoniometer.hpp"
-// #include "clarinoid2RhythmLissajaus.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
@@ -239,10 +238,6 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
         mControlMappingInitIndex = pitchDownMappingIndex + 1;
 
-        AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK));
-
-        AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack));
-
         AddControlMapping(
             ControlMapping::UniqueMomentaryMapping(PhysicalControl::Oct1, ControlMapping::Function::Oct1));
         AddControlMapping(
@@ -277,90 +272,230 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         AddControlMapping(
             ControlMapping::TypicalEncoderMapping(PhysicalControl::Enc, ControlMapping::Function::MenuScrollA));
 
-        // X Buttons ------------------------
+        // Buttons ------------------------
 
-        AddControlMapping(
-            ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::ModifierTranspose));
+        AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::Ok, ControlMapping::Function::MenuOK));
+        AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::MenuBack));
 
-        // nb: assigning multiple modifiers to same physical control complicates logic.
         AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::LHx1, ControlMapping::Function::ModifierShift, ModifierKey::Any));
+            PhysicalControl::LHKey1, ControlMapping::Function::Fine, ModifierKeyFlags::Any));
         AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::LHx1, ControlMapping::Function::ModifierFine, ModifierKey::Any));
+            PhysicalControl::LHKey2, ControlMapping::Function::Course, ModifierKeyFlags::Any));
+
+        // No modifiers
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::PerfPreset, -1.0f, ModifierKeyFlags::None));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::PerfPreset, 1.0f, ModifierKeyFlags::None));
+
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::MenuScrollA, -1.0f, ModifierKeyFlags::None));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::MenuScrollA, 1.0f, ModifierKeyFlags::None));
+
+        // LHx1 (modifier 1)
+        mDisplay.RegisterPreToastRenderFunc(this, [](void *capture) FLASHMEM {
+            auto pThis = (Clarinoid2App *)capture;
+            if (pThis->mInputDelegator.mModifier1.CurrentValue())
+            {
+                pThis->mDisplay.SetupModal();
+                pThis->mDisplay.println("dbl: fx toggle");
+                pThis->mDisplay.println("rh1: synth A +");
+                pThis->mDisplay.println("rh2: synth A -");
+                pThis->mDisplay.println("rh3: synth B +");
+                pThis->mDisplay.println("rh4: synth B -");
+            }
+        });
         AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::LHx1, ControlMapping::Function::ModifierHarm, ModifierKey::Any));
+            PhysicalControl::LHx1, ControlMapping::Function::Mod1, ModifierKeyFlags::Any));
 
         AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::LHx1,
-                                                           ControlMapping::Function::HarmPresetOnOffToggle,
-                                                           ModifierKey::Any,
-                                                           ModifierKey::Any,
+                                                           ControlMapping::Function::EffectsEnabledToggle,
+                                                           ModifierKeyFlags::Any,
                                                            ControlMapping::Activation::DoublePress));
 
-        // we have controls relying on key+tempo together, so make sure anything using these modifiers requires
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::LHx2, ControlMapping::Function::ModifierKey, ModifierKey::Any));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::SynthPresetA, -1.0f, ModifierKeyFlags::Mod1));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::SynthPresetA, 1.0f, ModifierKeyFlags::Mod1));
+
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::SynthPresetB, -1.0f, ModifierKeyFlags::Mod1));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::SynthPresetB, 1.0f, ModifierKeyFlags::Mod1));
+
+        // LHx2 (modifier 2)
+        mDisplay.RegisterPreToastRenderFunc(this, [](void *capture) FLASHMEM {
+            auto pThis = (Clarinoid2App *)capture;
+            if (pThis->mInputDelegator.mModifier2.CurrentValue())
+            {
+                pThis->mDisplay.SetupModal();
+                pThis->mDisplay.println("dbl: harm enable");
+                pThis->mDisplay.println("rh1: harm -");
+                pThis->mDisplay.println("rh2: harm +");
+                pThis->mDisplay.println("rh3: transpose -");
+                pThis->mDisplay.println("rh4: transpose +");
+            }
+        });
 
         AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::LHx3, ControlMapping::Function::ModifierTempo, ModifierKey::Any));
+            PhysicalControl::LHx2, ControlMapping::Function::Mod2, ModifierKeyFlags::Any));
+
+        AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::LHx2,
+                                                           ControlMapping::Function::HarmPresetOnOffToggle,
+                                                           ModifierKeyFlags::Any,
+                                                           ControlMapping::Activation::DoublePress));
+
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f, ModifierKeyFlags::Mod2));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f, ModifierKeyFlags::Mod2));
+
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::Transpose, -1.0f, ModifierKeyFlags::Mod2));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::Transpose, 1.0f, ModifierKeyFlags::Mod2));
+
+        // LHx3 (modifier 3)
+        mDisplay.RegisterPreToastRenderFunc(this, [](void *capture) FLASHMEM {
+            auto pThis = (Clarinoid2App *)capture;
+            if (pThis->mInputDelegator.mModifier3.CurrentValue())
+            {
+                pThis->mDisplay.SetupModal();
+                pThis->mDisplay.println("dbl: metronome enable");
+                pThis->mDisplay.println("rh1: bpm -");
+                pThis->mDisplay.println("rh2: bpm +");
+                pThis->mDisplay.println("rh3: transpose B -");
+                pThis->mDisplay.println("rh4: transpose B +");
+            }
+        });
 
         AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKey::None));
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKey::Shift));
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::EncButton, ControlMapping::Function::GlobalScaleDeducedToggle, ModifierKey::Key));
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::EncButton, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo));
+            PhysicalControl::LHx3, ControlMapping::Function::Mod3, ModifierKeyFlags::Any));
 
-        // RH buttons
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx4, ControlMapping::Function::SynthPresetA, -1.0f, ModifierKey::None));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx3, ControlMapping::Function::SynthPresetA, 1.0f, ModifierKey::None));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::MenuScrollA, -1.0f, ModifierKey::None));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::MenuScrollA, 1.0f, ModifierKey::None));
+        AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::LHx3,
+                                                           ControlMapping::Function::MetronomeToggle,
+                                                           ModifierKeyFlags::Any,
+                                                           ControlMapping::Activation::DoublePress));
 
-        // HARM
         AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f, ModifierKey::Harm));
+            PhysicalControl::RHx4, ControlMapping::Function::GlobalTempo, -3.0f, ModifierKeyFlags::Mod3));
         AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f, ModifierKey::Harm));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::SynthPresetB, -1.0f, ModifierKey::Harm));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::SynthPresetB, 1.0f, ModifierKey::Harm));
+            PhysicalControl::RHx3, ControlMapping::Function::GlobalTempo, 3.0f, ModifierKeyFlags::Mod3));
 
-        // KEY
         AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx4, ControlMapping::Function::GlobalKeyRoot, -1.0f, ModifierKey::Key));
+            PhysicalControl::RHx2, ControlMapping::Function::TransposeB, -1.0f, ModifierKeyFlags::Mod3));
         AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx3, ControlMapping::Function::GlobalKeyRoot, 1.0f, ModifierKey::Key));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::GlobalKeyFlavor, -1.0f, ModifierKey::Key));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::GlobalKeyFlavor, 1.0f, ModifierKey::Key));
+            PhysicalControl::RHx1, ControlMapping::Function::TransposeB, 1.0f, ModifierKeyFlags::Mod3));
 
-        // TEMPO
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx4, ControlMapping::Function::GlobalTempo, -3.0f, ModifierKey::Tempo));
-        AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx3, ControlMapping::Function::GlobalTempo, 3.0f, ModifierKey::Tempo));
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::MetronomeToggle, ModifierKey::Tempo));
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKey::Tempo));
+        // LHx2 + LHx3 (modifier 2 + 3)
+        mDisplay.RegisterPreToastRenderFunc(this, [](void *capture) FLASHMEM {
+            auto pThis = (Clarinoid2App *)capture;
+            if (pThis->mInputDelegator.mModifier2.CurrentValue() && pThis->mInputDelegator.mModifier3.CurrentValue())
+            {
+                pThis->mDisplay.SetupModal();
+                pThis->mDisplay.println("ENC: deduced/chosen scale");
+                pThis->mDisplay.println("rh1: key root -");
+                pThis->mDisplay.println("rh2: key root +");
+                pThis->mDisplay.println("rh3: scale type -");
+                pThis->mDisplay.println("rh4: scale type +");
+            }
+        });
 
-        // TRANSPOSE
+        AddControlMapping(
+            ControlMapping::MomentaryMapping(PhysicalControl::EncButton,
+                                             ControlMapping::Function::GlobalScaleDeducedToggle,
+                                             CombineFlags(ModifierKeyFlags::Mod2, ModifierKeyFlags::Mod3)));
+
+        auto m = CombineFlags(ModifierKeyFlags::Mod2, ModifierKeyFlags::Mod3);
+
         AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx4, ControlMapping::Function::Transpose, -1.0f, ModifierKey::Transpose));
+            PhysicalControl::RHx4, ControlMapping::Function::GlobalKeyRoot, -1.0f, m));
         AddControlMapping(ControlMapping::ButtonIncrementMapping(
-            PhysicalControl::RHx3, ControlMapping::Function::Transpose, 1.0f, ModifierKey::Transpose));
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::RHx2, ControlMapping::Function::TransposeReset, ModifierKey::Transpose));
-        AddControlMapping(ControlMapping::MomentaryMapping(
-            PhysicalControl::RHx1, ControlMapping::Function::TransposeReset, ModifierKey::Transpose));
+            PhysicalControl::RHx3, ControlMapping::Function::GlobalKeyRoot, 1.0f, m));
+
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx2, ControlMapping::Function::GlobalKeyFlavor, -1.0f, m));
+        AddControlMapping(ControlMapping::ButtonIncrementMapping(
+            PhysicalControl::RHx1, ControlMapping::Function::GlobalKeyFlavor, 1.0f, m));
+
+        // AddControlMapping(
+        //     ControlMapping::MomentaryMapping(PhysicalControl::Back, ControlMapping::Function::ModifierTranspose));
+
+        // nb: assigning multiple modifiers to same physical control complicates logic.
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::LHx1, ControlMapping::Function::Fine, ModifierKeyFlags::Any));
+
+        // AddControlMapping(ControlMapping::MomentaryMapping(PhysicalControl::LHx1,
+        //                                                    ControlMapping::Function::HarmPresetOnOffToggle,
+        //                                                    ModifierKeyFlags::Any,
+        //                                                    ModifierKeyFlags::Any,
+        //                                                    ControlMapping::Activation::DoublePress));
+
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::LHx2, ControlMapping::Function::ModifierKey, ModifierKeyFlags::Any));
+
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::LHx3, ControlMapping::Function::ModifierTempo, ModifierKeyFlags::Any));
+
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::EncButton, ControlMapping::Function::SoftResetMpr121, ModifierKeyFlags::None));
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::EncButton, ControlMapping::Function::EffectsEnabledToggle, ModifierKeyFlags::Shift));
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::EncButton, ControlMapping::Function::GlobalScaleDeducedToggle, ModifierKeyFlags::Key));
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::EncButton, ControlMapping::Function::MetronomeToggle, ModifierKeyFlags::Tempo));
+
+        // // RH buttons
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx4, ControlMapping::Function::SynthPresetA, -1.0f, ModifierKeyFlags::None));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx3, ControlMapping::Function::SynthPresetA, 1.0f, ModifierKeyFlags::None));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx2, ControlMapping::Function::MenuScrollA, -1.0f, ModifierKeyFlags::None));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx1, ControlMapping::Function::MenuScrollA, 1.0f, ModifierKeyFlags::None));
+
+        // // HARM
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx4, ControlMapping::Function::HarmPreset, -1.0f, ModifierKeyFlags::Harm));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx3, ControlMapping::Function::HarmPreset, 1.0f, ModifierKeyFlags::Harm));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx2, ControlMapping::Function::SynthPresetB, -1.0f, ModifierKeyFlags::Harm));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx1, ControlMapping::Function::SynthPresetB, 1.0f, ModifierKeyFlags::Harm));
+
+        // // KEY
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx4, ControlMapping::Function::GlobalKeyRoot, -1.0f, ModifierKeyFlags::Key));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx3, ControlMapping::Function::GlobalKeyRoot, 1.0f, ModifierKeyFlags::Key));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx2, ControlMapping::Function::GlobalKeyFlavor, -1.0f, ModifierKeyFlags::Key));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx1, ControlMapping::Function::GlobalKeyFlavor, 1.0f, ModifierKeyFlags::Key));
+
+        // // TEMPO
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx4, ControlMapping::Function::GlobalTempo, -3.0f, ModifierKeyFlags::Tempo));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx3, ControlMapping::Function::GlobalTempo, 3.0f, ModifierKeyFlags::Tempo));
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::RHx2, ControlMapping::Function::MetronomeToggle, ModifierKeyFlags::Tempo));
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::RHx1, ControlMapping::Function::HarmPresetOnOffToggle, ModifierKeyFlags::Tempo));
+
+        // // TRANSPOSE
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx4, ControlMapping::Function::Transpose, -1.0f, ModifierKeyFlags::Transpose));
+        // AddControlMapping(ControlMapping::ButtonIncrementMapping(
+        //     PhysicalControl::RHx3, ControlMapping::Function::Transpose, 1.0f, ModifierKeyFlags::Transpose));
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::RHx2, ControlMapping::Function::TransposeReset, ModifierKeyFlags::Transpose));
+        // AddControlMapping(ControlMapping::MomentaryMapping(
+        //     PhysicalControl::RHx1, ControlMapping::Function::TransposeReset, ModifierKeyFlags::Transpose));
 
         CCASSERT(mControlMappingInitIndex <= MAX_CONTROL_MAPPINGS);
 

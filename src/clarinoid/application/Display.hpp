@@ -50,6 +50,21 @@ struct _CCDisplay : IDisplay
     array_view<IDisplayApp *> mApps;
     int mCurrentAppIndex = 0;
 
+    using PreToastRenderFunc = cc::function<void(void *)>::ptr_t; // void fn(void* capture)
+    PreToastRenderFunc mPreToastRenderFunc[MAX_PRE_TOAST_RENDER_FUNCS];
+    void *mPreToastRenderFuncCaptures[MAX_PRE_TOAST_RENDER_FUNCS];
+    size_t mPreToastRenderFuncCount = 0;
+
+    void RegisterPreToastRenderFunc(void *capture, PreToastRenderFunc func)
+    {
+        if (mPreToastRenderFuncCount < MAX_PRE_TOAST_RENDER_FUNCS)
+        {
+            mPreToastRenderFunc[mPreToastRenderFuncCount] = func;
+            mPreToastRenderFuncCaptures[mPreToastRenderFuncCount] = capture;
+            mPreToastRenderFuncCount++;
+        }
+    }
+
     // hardware SPI
     _CCDisplay(CCAdafruitSSD1306 &display) : mDisplay(display)
     {
@@ -163,6 +178,14 @@ struct _CCDisplay : IDisplay
             pMenuApp->DisplayAppRender();
         }
 
+        // render pre-toast overlay handlers
+        ClearState();
+        for (size_t i = 0; i < mPreToastRenderFuncCount; i++)
+        {
+            mPreToastRenderFunc[i](mPreToastRenderFuncCaptures[i]);
+        }
+
+        ClearState();
         if (mIsShowingToast)
         {
             if (mToastTimer.ElapsedTime().ElapsedMillisI() >= TOAST_DURATION_MILLIS)
@@ -180,13 +203,7 @@ struct _CCDisplay : IDisplay
         ClearState();
         mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
 
-        auto s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput->mModifierFine.CurrentValue(),
-                                                                     this->mInput->mModifierCourse.CurrentValue(),
-                                                                     this->mInput->mModifierShift.CurrentValue(),
-                                                                     this->mInput->mModifierTranspose.CurrentValue(),
-                                                                     this->mInput->mModifierTempo.CurrentValue(),
-                                                                     this->mInput->mModifierKey.CurrentValue(),
-                                                                     this->mInput->mModifierHarm.CurrentValue());
+        auto s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput);
         // if (s.length() > 0)
         {
             ClearState();
@@ -203,44 +220,17 @@ struct _CCDisplay : IDisplay
 
             if (s.length() > 0)
             {
-                chips[chipCount++] = s;
+                int16_t x = 0;
+                DrawChip(s, x, 0);
             }
 
-            if (this->mInput->mModifierFine.CurrentValue())
+            if (this->mInput->mFine.CurrentValue())
             {
-                chips[chipCount++] = "Fine";
+                chips[chipCount++] = "F";
             }
-            if (this->mInput->mModifierCourse.CurrentValue())
+            if (this->mInput->mCourse.CurrentValue())
             {
-                chips[chipCount++] = "Crs";
-            }
-            if (this->mInput->mModifierShift.CurrentValue())
-            {
-                chips[chipCount++] = "Shift";
-            }
-            if (this->mInput->mModifierTranspose.CurrentValue())
-            {
-                chips[chipCount++] = "Transp";
-            }
-            if (this->mInput->mModifierTempo.CurrentValue())
-            {
-                chips[chipCount++] = "Bpm";
-            }
-            if (this->mInput->mModifierKey.CurrentValue())
-            {
-                chips[chipCount++] = "Key";
-            }
-            if (this->mInput->mModifierHarm.CurrentValue())
-            {
-                chips[chipCount++] = "Harm";
-            }
-            if (this->mInput->mModifierPerf.CurrentValue())
-            {
-                chips[chipCount++] = "Perf";
-            }
-            if (this->mInput->mModifierSynth.CurrentValue())
-            {
-                chips[chipCount++] = "Synth";
+                chips[chipCount++] = "C";
             }
 
             // place cursor above hud, draw chips.

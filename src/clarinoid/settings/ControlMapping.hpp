@@ -6,21 +6,20 @@
 namespace clarinoid
 {
 
-// these should be flags someday but for now no need.
-enum class ModifierKey : uint8_t
+// flags.
+enum class ModifierKeyFlags : uint8_t
 {
     None = 0, // requires no modifiers are pressed.
-    Fine = 1,
-    Course = 2,
+    Mod1 = 1 << 0,
+    Mod2 = 1 << 1,
+    Mod3 = 1 << 2,
+    Mod4 = 1 << 3,
+    Mod5 = 1 << 4,
+    Mod6 = 1 << 5,
+    Mod7 = 1 << 6,
+    Mod8 = 1 << 7,
 
-    Synth = 3,
-    Perf = 4,
-    Harm = 5,
-    Shift = 6,
-    Transpose = 7,
-    Key = 8,
-    Tempo = 9,
-    Any = 127, // special; any combination works.
+    Any = 255, // special; any combination works. avoid this; things like Fine / Course use it
 };
 
 // defines a mapping from a switch.
@@ -31,15 +30,18 @@ struct ControlMapping
     enum class Function : uint8_t
     {
         Nop,
-        ModifierFine,
-        ModifierCourse,
-        ModifierSynth,
-        ModifierPerf,
-        ModifierHarm,
-        ModifierShift,
-        ModifierTranspose,
-        ModifierKey,
-        ModifierTempo,
+        Fine,
+        Course,
+
+        Mod1,
+        Mod2,
+        Mod3,
+        Mod4,
+        Mod5,
+        Mod6,
+        Mod7,
+        Mod8,
+
         MenuBack,
         DisplayFontToggle,
         MenuOK,
@@ -237,7 +239,7 @@ struct ControlMapping
         }
     };
 
-    ModifierKey mModifier = ModifierKey::Any;
+    ModifierKeyFlags mModifierFlags = ModifierKeyFlags::None;
     PhysicalControl mSource;
     Function mFunction = Function::Nop;
     MapStyle mStyle = MapStyle::Passthrough;
@@ -392,8 +394,7 @@ struct ControlMapping
 
     static ControlMapping MomentaryMapping(PhysicalControl source,
                                            Function d,
-                                           ModifierKey mod = ModifierKey::Any,
-                                           ModifierKey mod2 = ModifierKey::Any,
+                                           ModifierKeyFlags modFlags = ModifierKeyFlags::None,
                                            Activation activation = Activation::SinglePress)
     {
         ControlMapping ret;
@@ -404,7 +405,7 @@ struct ControlMapping
         ret.mValueArray[0] = 1.0f;
         ret.mValueArray[1] = -1.0f;
         ret.mFunction = d;
-        ret.mModifier = mod;
+        ret.mModifierFlags = modFlags;
         ret.mActivation = activation;
         return ret;
     }
@@ -426,7 +427,7 @@ struct ControlMapping
     static ControlMapping ButtonIncrementMapping(PhysicalControl source,
                                                  Function fn,
                                                  float delta,
-                                                 ModifierKey mod = ModifierKey::Any,
+                                                 ModifierKeyFlags modFlags = ModifierKeyFlags::None,
                                                  Activation activation = Activation::SinglePress)
     {
         ControlMapping ret;
@@ -436,12 +437,14 @@ struct ControlMapping
             MapStyle::TriggerUpValue; // doing it this way allows you to map multiple buttons to the same boolean thing.
         ret.mValueArray[0] = delta;
         ret.mFunction = fn;
-        ret.mModifier = mod;
+        ret.mModifierFlags = modFlags;
         ret.mActivation = activation;
         return ret;
     }
 
-    static ControlMapping TypicalEncoderMapping(PhysicalControl source, Function d, ModifierKey mod = ModifierKey::Any)
+    static ControlMapping TypicalEncoderMapping(PhysicalControl source,
+                                                Function d,
+                                                ModifierKeyFlags modFlags = ModifierKeyFlags::None)
     {
         ControlMapping ret;
         ret.mSource = source;

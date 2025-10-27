@@ -39,8 +39,8 @@ struct NumericEditor : ISettingItemEditor
     {
         auto r = mRange.AdjustValue(mBinding.GetValue(),
                                     encIntDelta,
-                                    mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                    mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+                                    mpApi->GetInputDelegator()->mCourse.CurrentValue(),
+                                    mpApi->GetInputDelegator()->mFine.CurrentValue());
         if (r.first)
         {
             T val = r.second;
@@ -52,8 +52,8 @@ struct NumericEditor : ISettingItemEditor
     {
         auto r = mRange.AdjustValue(mBinding.GetValue(),
                                     encIntDelta,
-                                    mpApi->GetInputDelegator()->mModifierCourse.CurrentValue(),
-                                    mpApi->GetInputDelegator()->mModifierFine.CurrentValue());
+                                    mpApi->GetInputDelegator()->mCourse.CurrentValue(),
+                                    mpApi->GetInputDelegator()->mFine.CurrentValue());
         if (r.first)
         {
             T val = r.second;
