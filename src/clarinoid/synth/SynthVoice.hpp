@@ -534,7 +534,8 @@ struct Voice : IModulationKRateProvider
         }
 
         // update
-        float midiNote = (float)mv.mMidiNote + mv.mTransposeSemis;
+        float midiNote =
+            (float)mv.mMidiNote + mv.mTransposeSemis + 12; // #217 default of +12 transpose has now been baked in
 
         for (size_t i = 0; i < POLYBLEP_OSC_COUNT; ++i)
         {
