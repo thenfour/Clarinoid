@@ -239,7 +239,7 @@ struct ControlMapping
         }
     };
 
-    ModifierKeyFlags mModifierFlags = ModifierKeyFlags::None;
+    ModifierKeyFlags mModifierFlags = ModifierKeyFlags::Any;
     PhysicalControl mSource;
     Function mFunction = Function::Nop;
     MapStyle mStyle = MapStyle::Passthrough;
@@ -394,7 +394,7 @@ struct ControlMapping
 
     static ControlMapping MomentaryMapping(PhysicalControl source,
                                            Function d,
-                                           ModifierKeyFlags modFlags = ModifierKeyFlags::None,
+                                           ModifierKeyFlags modFlags = ModifierKeyFlags::Any,
                                            Activation activation = Activation::SinglePress)
     {
         ControlMapping ret;
@@ -413,13 +413,16 @@ struct ControlMapping
     // for touch keys, when state gets messed up, the TriggerUpDownValue will never reset.
     // this simply passes through the value, so it's always in sync with the touch key state,
     // but you lose the ability to stack mappings (which would be unreasonable anyway)
-    static ControlMapping UniqueMomentaryMapping(PhysicalControl source, Function d)
+    static ControlMapping UniqueMomentaryMapping(PhysicalControl source,
+                                                 Function d,
+                                                 ModifierKeyFlags modFlags = ModifierKeyFlags::Any)
     {
         ControlMapping ret;
         ret.mSource = source;
         ret.mFunction = d;
         ret.mOperator = Operator::Set;
         ret.mStyle = MapStyle::Passthrough;
+        ret.mModifierFlags = modFlags;
         return ret;
     }
 
@@ -427,7 +430,7 @@ struct ControlMapping
     static ControlMapping ButtonIncrementMapping(PhysicalControl source,
                                                  Function fn,
                                                  float delta,
-                                                 ModifierKeyFlags modFlags = ModifierKeyFlags::None,
+                                                 ModifierKeyFlags modFlags = ModifierKeyFlags::Any,
                                                  Activation activation = Activation::SinglePress)
     {
         ControlMapping ret;
@@ -444,7 +447,7 @@ struct ControlMapping
 
     static ControlMapping TypicalEncoderMapping(PhysicalControl source,
                                                 Function d,
-                                                ModifierKeyFlags modFlags = ModifierKeyFlags::None)
+                                                ModifierKeyFlags modFlags = ModifierKeyFlags::Any)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -452,6 +455,7 @@ struct ControlMapping
         ret.mStyle = MapStyle::DeltaWithScale;
         // ret.mDeltaScale = 1.0f;
         ret.mFunction = d;
+        ret.mModifierFlags = modFlags;
         return ret;
     }
 
@@ -460,7 +464,8 @@ struct ControlMapping
                                               float srcMin,
                                               float srcMax,
                                               float destMin = 0.0f,
-                                              float destMax = 1.0f)
+                                              float destMax = 1.0f,
+                                              ModifierKeyFlags modFlags = ModifierKeyFlags::Any)
     {
         ControlMapping ret;
         ret.mSource = source;
@@ -468,6 +473,7 @@ struct ControlMapping
         ret.mStyle = MapStyle::RemapUnipolar;
         ret.mOperator = Operator::Set;
         ret.mUnipolarMapping = clarinoid::UnipolarMapping{srcMin, srcMax, destMin, destMax, 0.5f, 0.0f};
+        ret.mModifierFlags = modFlags;
         return ret;
     }
 
