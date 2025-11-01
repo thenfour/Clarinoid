@@ -83,6 +83,7 @@ struct PortamentoCalc
 };
 
 // tracks phase and frequency supporting portamento
+// todo: use a fixed point class to make this cleaner and allow fp ops to extend to other areas / callers
 struct PhaseAccumulator
 {
     static constexpr uint64_t kPhaseScaleRaw = uint64_t(1) << 32;

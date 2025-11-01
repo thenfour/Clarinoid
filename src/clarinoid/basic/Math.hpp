@@ -137,6 +137,9 @@ constexpr T gPI = T(3.1415926535897932385);
 template <typename T>
 constexpr T gLog2of10 = T(3.3219280948873622);
 
+constexpr float kSampleRateF = AUDIO_SAMPLE_RATE_EXACT;
+constexpr float kSampleRateRecipF = 1.0f / kSampleRateF;
+
 // hand-selected evidence-based routines to prefer for performance. see experiments
 namespace fast
 {
@@ -395,10 +398,19 @@ static float RemapToRange(float x, float amin, float amax, float bmin, float bma
     return x;
 }
 
+// returns fractional part of x (outputs in range [0,1) )
 inline float Frac(float x)
 {
     return x - floorf(x);
 }
+
+namespace math
+{
+inline float wrap01(float x)
+{
+    return Frac(x);
+}
+} // namespace math
 
 // x^3 curve centered around 0.
 inline float blamp0(float x)
