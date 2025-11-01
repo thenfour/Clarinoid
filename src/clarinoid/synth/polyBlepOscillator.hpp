@@ -331,8 +331,53 @@ struct PulseWaveformProvider
     template <typename TOscillator>
     static void ResetPhaseDueToSync(TOscillator &caller, float x)
     {
-        caller.mMainPhase.SetPhaseNoWrap(x * caller.mMainPhase.mDt + caller.mMainPhase.GetPhaseOffset01());
+        caller.mOutput = caller.mBlepDelay;
+        caller.mBlepDelay = 0.0f;
+
+        float dt = caller.mMainPhase.mDt;
+        if (dt <= 0.0f)
+        {
+            float offset = caller.mMainPhase.GetPhaseOffset01();
+            caller.mMainPhase.SetPhaseNoWrap(offset);
+            caller.mPulseStage = false;
+            caller.mBlepDelay += 1.0f;
+            return;
+        }
+
+        // If the slave was in the low state, restart introduces a low->high jump.
+        if (caller.mPulseStage)
+        {
+            caller.mOutput += blep0(x);
+            caller.mBlepDelay += blep1(x);
+        }
+
         caller.mPulseStage = false;
+
+        float resetPhase = x * dt;
+        float widthPrev = caller.mWidthDelay;
+        float widthCurr = caller.mPulseWidth;
+        float denom = widthPrev - widthCurr + dt;
+        if (fabsf(denom) < 1e-9f)
+        {
+            denom = dt;
+        }
+
+        if (resetPhase >= caller.mPulseWidth)
+        {
+            float xFall = (resetPhase - caller.mPulseWidth) / denom;
+            xFall = Clamp(xFall, 0.0f, 1.0f);
+            caller.mOutput -= blep0(xFall);
+            caller.mBlepDelay -= blep1(xFall);
+            caller.mPulseStage = true;
+        }
+
+        caller.mWidthDelay = caller.mPulseWidth;
+
+        float offset = caller.mMainPhase.GetPhaseOffset01();
+        caller.mMainPhase.SetPhaseNoWrap(resetPhase + offset);
+
+        float naiveWave = caller.mPulseStage ? -1.0f : 1.0f;
+        caller.mBlepDelay += naiveWave;
     }
     template <typename TOscillator>
     static void Step(TOscillator &caller, float &fboutput, float phaseShift)
