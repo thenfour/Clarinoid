@@ -2,6 +2,8 @@
 #pragma once
 
 #include <arm_math.h>
+#include <cmath>
+#include <cstdint>
 
 namespace clarinoid
 {
@@ -80,68 +82,159 @@ struct PortamentoCalc
     }
 };
 
-// https://gitlab.com/flojawi/teensy-polyblep-oscillator
-
-/*
-   Written by Florian Wirth, August 2020
-
-   This is a module for the Teensy Audio Library which contains 3 independent
-   oscillators with bandlimited basic waveforms, frequency modulation, PWM and hard-sync.
-
-   The oscillators are based on two pieces of code from users at the kvraudio forum, namely:
-
-   - The PolyBLEP algorithm is from the user "mystran" (https://www.kvraudio.com/forum/viewtopic.php?t=398553)
-   - The hard-sync sawtooth is from the user "Tale" (https://www.kvraudio.com/forum/viewtopic.php?t=425054)
-
-    The handling of portamento is from "Chip Audette's" OpenAudio_ArduinoLibrary
-    (https://github.com/chipaudette/OpenAudio_ArduinoLibrary/blob/master/synth_waveform_F32.h)
-*/
-
 // tracks phase and frequency supporting portamento
 struct PhaseAccumulator
 {
-    float mFreq =
-        0; // the LIVE frequency the oscillator is actually using (only differs from mFrequency during portamento)
-    float mT = 0; // position in wave cycle, [0-1) // osc1_t
-    float mPhaseOffset = 0;
-    float mDt = 0; // cycles per sample, very small. amount of 0-1 cycle to advance each sample. // osc1_dt
+    static constexpr uint64_t kPhaseScaleRaw = uint64_t(1) << 32;
+
+    float mFreq = 0;              // live oscillator frequency (differs from request during portamento)
+    uint32_t mPhase = 0;          // current accumulator phase in [0, 2^32)
+    uint32_t mPhaseOffset = 0;    // stored phase offset in fixed-point form
+    uint32_t mPhaseIncrement = 0; // per-sample phase step in fixed-point
+    float mDt = 0;                // cycles per sample
+    float mPhaseNoWrap = 0;       // phase after last step before wrapping to [0,1)
+    float mWrapFraction = 0;      // fractional sample position when wrap occurred
+    bool mWrapped = false;
+
+    static uint32_t FloatToPhase(float phase01)
+    {
+        float wrapped = Frac(phase01);
+        if (wrapped < 0.0f)
+        {
+            wrapped += 1.0f;
+        }
+        float scaled = static_cast<float>(wrapped) * static_cast<float>(kPhaseScaleRaw);
+        if (scaled <= 0)
+        {
+            return 0;
+        }
+        uint64_t value = static_cast<uint64_t>(scaled + 0.5);
+        if (value >= kPhaseScaleRaw)
+        {
+            value = kPhaseScaleRaw - 1;
+        }
+        return static_cast<uint32_t>(value);
+    }
+
+    static uint32_t FloatToIncrement(float dt)
+    {
+        if (dt <= 0.0f)
+        {
+            return 0;
+        }
+        float scaled = static_cast<float>(dt) * static_cast<float>(kPhaseScaleRaw);
+        if (scaled <= 0)
+        {
+            return 0;
+        }
+        uint64_t value = static_cast<uint64_t>(scaled + 0.5f);
+        if (value >= kPhaseScaleRaw)
+        {
+            value = kPhaseScaleRaw - 1;
+        }
+        return static_cast<uint32_t>(value);
+    }
+
+    static float PhaseToFloat(uint32_t phase)
+    {
+        return static_cast<float>(static_cast<float>(phase) / static_cast<float>(kPhaseScaleRaw));
+    }
+
+    float GetPhase01() const
+    {
+        return PhaseToFloat(mPhase);
+    }
+
+    float GetPhaseNoWrap() const
+    {
+        return mPhaseNoWrap;
+    }
+
+    float GetPhaseOffset01() const
+    {
+        return PhaseToFloat(mPhaseOffset);
+    }
+
+    bool DidWrap() const
+    {
+        return mWrapped;
+    }
+
+    float GetWrapFraction() const
+    {
+        return mWrapFraction;
+    }
 
     void ResetPhase()
     {
-        mT = mPhaseOffset;
+        mPhase = mPhaseOffset;
+        mPhaseNoWrap = GetPhase01();
+        mWrapFraction = 0.0f;
+        mWrapped = false;
     }
 
-    // it's easier to control implementation details when all params are set at once. this is also how SynthVoice does
-    // things anyway so..
     void SetParams(float freq, float phaseOffset01)
     {
         mFreq = freq;
         mDt = mFreq / AUDIO_SAMPLE_RATE_EXACT;
+        mPhaseIncrement = FloatToIncrement(mDt);
 
-        if (FloatEquals(phaseOffset01, mPhaseOffset))
+        uint32_t newOffset = FloatToPhase(phaseOffset01);
+        if (newOffset != mPhaseOffset)
         {
-            return;
+            mPhase += newOffset - mPhaseOffset;
+            mPhaseOffset = newOffset;
         }
-        mT = Frac(mT + (phaseOffset01 - mPhaseOffset));
-        mPhaseOffset = phaseOffset01;
+
+        mPhaseNoWrap = GetPhase01();
+        mWrapFraction = 0.0f;
+        mWrapped = false;
     }
 
-    // steps the phase accum, but does not track crossing over cycle
     void StepWithoutFrac()
     {
-        mT += mDt;
+        uint32_t prev = mPhase;
+        mPhase += mPhaseIncrement;
+        mWrapped = mPhase < prev;
+        float phase01 = GetPhase01();
+        mPhaseNoWrap = mWrapped ? phase01 + 1.0f : phase01;
+        if (mWrapped && mDt > 0.0f)
+        {
+            mWrapFraction = Clamp(phase01 / mDt, 0.0f, 1.0f);
+        }
+        else
+        {
+            mWrapFraction = 0.0f;
+        }
     }
 
-    // steps the phase accum, and frac()s back to 0 if it crosses 1.
-    // returns true if phase has cycled, and then x is populated with the subsample
     bool StepWithFrac(float &x)
     {
-        mT += mDt;
-        if (mT < 1)
+        StepWithoutFrac();
+        if (!mWrapped)
+        {
             return false;
-        mT -= 1;
-        x = mT / mDt;
+        }
+        x = mWrapFraction;
         return true;
+    }
+
+    void SetPhaseNoWrap(float phase)
+    {
+        float normalized = phase - floorf(phase);
+        if (normalized < 0.0f)
+        {
+            normalized += 1.0f;
+        }
+        mPhase = FloatToPhase(normalized);
+        mPhaseNoWrap = normalized;
+        mWrapped = false;
+        mWrapFraction = 0.0f;
+    }
+
+    void WrapPhaseToUnitInterval()
+    {
+        SetPhaseNoWrap(mPhaseNoWrap);
     }
 };
 
@@ -150,15 +243,16 @@ struct SineWaveformProvider // : public WaveformProviderBase
     template <typename TOscillator>
     static void ResetPhaseDueToSync(TOscillator &caller, float x)
     {
-        caller.mMainPhase.mT = x * caller.mMainPhase.mDt + caller.mMainPhase.mPhaseOffset;
+        caller.mMainPhase.SetPhaseNoWrap(x * caller.mMainPhase.mDt + caller.mMainPhase.GetPhaseOffset01());
         caller.mPulseStage = false;
     }
     template <typename TOscillator>
     static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
-        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
-        caller.mOutput = fast::sin((caller.mMainPhase.mT + phaseShift + fboutput * caller.mPMFeedbackAmt) * TWO_PI);
-        // caller.mOutput = sinf((caller.mMainPhase.mT) * TWO_PI);
+        caller.mMainPhase.WrapPhaseToUnitInterval();
+        float phase = caller.mMainPhase.GetPhase01();
+        caller.mOutput = fast::sin((phase + phaseShift + fboutput * caller.mPMFeedbackAmt) * TWO_PI);
+        // caller.mOutput = sinf((phase) * TWO_PI);
     }
 };
 
@@ -167,7 +261,7 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
     template <typename TOscillator>
     static void ResetPhaseDueToSync(TOscillator &caller, float x)
     {
-        caller.mMainPhase.mT = x * caller.mMainPhase.mDt + caller.mMainPhase.mPhaseOffset;
+        caller.mMainPhase.SetPhaseNoWrap(x * caller.mMainPhase.mDt + caller.mMainPhase.GetPhaseOffset01());
         caller.mPulseStage = false;
     }
 
@@ -175,15 +269,16 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
     static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
         // TODO: use phase shift
+        float phase = caller.mMainPhase.GetPhaseNoWrap();
         while (true)
         {
             if (!caller.mPulseStage)
             {
-                if (caller.mMainPhase.mT < caller.mPulseWidth)
+                if (phase < caller.mPulseWidth)
                     break;
 
-                float x = (caller.mMainPhase.mT - caller.mPulseWidth) /
-                          (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
+                float x =
+                    (phase - caller.mPulseWidth) / (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
                 float scale = caller.mMainPhase.mDt / (caller.mPulseWidth - caller.mPulseWidth * caller.mPulseWidth);
 
                 caller.mOutput -= scale * blamp0(x);
@@ -193,15 +288,15 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
             }
             if (caller.mPulseStage)
             {
-                if (caller.mMainPhase.mT < 1)
+                if (phase < 1)
                     break;
 
                 // we have crossed over phase,
                 // remainder phase 0-1 / (freq/samplerate)
-                caller.mMainPhase.mT -= 1;
+                phase -= 1;
                 // x = number of master samples crossed over phase, but because we're processing 1 sample at a
                 // time, this is always 0-1.
-                float x = caller.mMainPhase.mT / caller.mMainPhase.mDt;
+                float x = phase / caller.mMainPhase.mDt;
 
                 float scale = caller.mMainPhase.mDt / (caller.mPulseWidth - caller.mPulseWidth * caller.mPulseWidth);
 
@@ -214,18 +309,19 @@ struct VarTriangleWaveformProvider // : public WaveformProviderBase
 
         float naiveWave;
 
-        if (caller.mMainPhase.mT <= caller.mPulseWidth)
+        if (phase <= caller.mPulseWidth)
         {
-            naiveWave = 2 * caller.mMainPhase.mT / caller.mPulseWidth - 1;
+            naiveWave = 2 * phase / caller.mPulseWidth - 1;
         }
         else
         {
-            naiveWave = -2 * (caller.mMainPhase.mT - caller.mPulseWidth) / (1 - caller.mPulseWidth) + 1;
+            naiveWave = -2 * (phase - caller.mPulseWidth) / (1 - caller.mPulseWidth) + 1;
         }
 
         caller.mBlepDelay += naiveWave;
 
         caller.mWidthDelay = caller.mPulseWidth;
+        caller.mMainPhase.SetPhaseNoWrap(phase);
     }
 };
 
@@ -234,22 +330,23 @@ struct PulseWaveformProvider
     template <typename TOscillator>
     static void ResetPhaseDueToSync(TOscillator &caller, float x)
     {
-        caller.mMainPhase.mT = x * caller.mMainPhase.mDt + caller.mMainPhase.mPhaseOffset;
+        caller.mMainPhase.SetPhaseNoWrap(x * caller.mMainPhase.mDt + caller.mMainPhase.GetPhaseOffset01());
         caller.mPulseStage = false;
     }
     template <typename TOscillator>
     static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
         // TODO: use phase shift
+        float phase = caller.mMainPhase.GetPhaseNoWrap();
         while (true)
         {
             if (!caller.mPulseStage)
             {
-                if (caller.mMainPhase.mT < caller.mPulseWidth)
+                if (phase < caller.mPulseWidth)
                     break;
 
-                float x = (caller.mMainPhase.mT - caller.mPulseWidth) /
-                          (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
+                float x =
+                    (phase - caller.mPulseWidth) / (caller.mWidthDelay - caller.mPulseWidth + caller.mMainPhase.mDt);
 
                 caller.mOutput -= blep0(x);
                 caller.mBlepDelay -= blep1(x);
@@ -258,14 +355,14 @@ struct PulseWaveformProvider
             }
             if (caller.mPulseStage)
             {
-                if (caller.mMainPhase.mT < 1)
+                if (phase < 1)
                     break;
 
                 // we have crossed over phase.
-                caller.mMainPhase.mT -= 1;
+                phase -= 1;
                 // x = number of master samples crossed over phase, but because we're processing 1 sample at a
                 // time, this is always 0-1.
-                float x = caller.mMainPhase.mT / caller.mMainPhase.mDt;
+                float x = phase / caller.mMainPhase.mDt;
 
                 caller.mOutput += blep0(x);
                 caller.mBlepDelay += blep1(x);
@@ -279,6 +376,7 @@ struct PulseWaveformProvider
         caller.mBlepDelay += naiveWave;
 
         caller.mWidthDelay = caller.mPulseWidth;
+        caller.mMainPhase.SetPhaseNoWrap(phase);
     }
 };
 
@@ -297,29 +395,28 @@ struct SawWaveformProvider
             scale = 1;
         }
 
-        caller.mOutput -= 0.5 * scale * blep0(x);
-        caller.mBlepDelay -= 0.5 * scale * blep1(x);
+        caller.mOutput -= 0.5f * scale * blep0(x);
+        caller.mBlepDelay -= 0.5f * scale * blep1(x);
 
         // increase slave phase by partial sample
         float dt = (1 - x) * caller.mMainPhase.mDt;
-        caller.mMainPhase.mT += dt;
-        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
+        float phase = Frac(caller.mMainPhase.GetPhase01() + dt);
 
-        if (caller.mMainPhase.mT < dt)
+        if (phase < dt)
         {
-            caller.mMainPhase.mT += x * caller.mMainPhase.mDt;
-            caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
+            phase = Frac(phase + x * caller.mMainPhase.mDt);
 
             // process transition for the slave
-            float x2 = caller.mMainPhase.mT / caller.mMainPhase.mDt;
-            caller.mOutput -= 0.5 * blep0(x2);
-            caller.mBlepDelay -= 0.5 * blep1(x2);
+            float x2 = phase / caller.mMainPhase.mDt;
+            caller.mOutput -= 0.5f * blep0(x2);
+            caller.mBlepDelay -= 0.5f * blep1(x2);
         }
 
         // reset slave phase:
-        caller.mMainPhase.mT = x * caller.mMainPhase.mDt;
+        float resetPhase = x * caller.mMainPhase.mDt;
+        caller.mMainPhase.SetPhaseNoWrap(resetPhase);
 
-        caller.mBlepDelay += caller.mMainPhase.mT;
+        caller.mBlepDelay += resetPhase;
 
         caller.mOutput = caller.mOutput * 2 - 1;
     }
@@ -328,16 +425,17 @@ struct SawWaveformProvider
     static void Step(TOscillator &caller, float &fboutput, float phaseShift)
     {
         // TODO: use phase shift
-        caller.mMainPhase.mT -= floorf(caller.mMainPhase.mT);
+        caller.mMainPhase.WrapPhaseToUnitInterval();
+        float phase = caller.mMainPhase.GetPhase01();
 
-        if (caller.mMainPhase.mT < caller.mMainPhase.mDt)
+        if (phase < caller.mMainPhase.mDt)
         {
-            float x = caller.mMainPhase.mT / caller.mMainPhase.mDt;
-            caller.mOutput -= 0.5 * blep0(x);
-            caller.mBlepDelay -= 0.5 * blep1(x);
+            float x = phase / caller.mMainPhase.mDt;
+            caller.mOutput -= 0.5f * blep0(x);
+            caller.mBlepDelay -= 0.5f * blep1(x);
         }
 
-        caller.mBlepDelay += caller.mMainPhase.mT;
+        caller.mBlepDelay += phase;
 
         caller.mOutput = caller.mOutput * 2 - 1;
     }
@@ -411,7 +509,7 @@ struct Oscillator
         if (doPM)
         {
             phaseShift += pm32[i];
-            //mMainPhase.mT += pm32[i];
+            // Potential extension: apply PM directly to the phase accumulator here.
         }
 
         if (doPWM)
@@ -435,7 +533,7 @@ struct Oscillator
         }
 
         out[i] = mOutput; // * mAmplitude;
-    }                     // void Step() {
+    } // void Step() {
 
     void ProcessBlock(audio_block_t *pwm, audio_block_t *pm, audio_block_t *pOut)
     {
