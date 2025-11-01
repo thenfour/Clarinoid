@@ -100,7 +100,7 @@ struct SpelledNote
             break;
         }
 
-        s += String(midi.GetOctave());
+        // s += String(midi.GetOctave());
 
         return s;
     }

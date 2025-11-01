@@ -75,14 +75,24 @@ struct BigPerfDisplayApp : DisplayApp
         auto voices = mSysInfoProvider.ISysInfoProvider_GetVoiceState();
 
         fixed_vector<SynthVoiceState, MAX_SYNTH_VOICES> voiceState;
-        fixed_vector<MidiNote, MAX_SYNTH_VOICES> chordNotes;
         for (auto &v : voices)
         {
             if (v.mIsPlaying)
             {
                 voiceState.push_back(v);
-                chordNotes.push_back(v.mNote);
             }
+        }
+
+        std::sort(voiceState.begin(),
+                  voiceState.end(), //
+                  [](const SynthVoiceState &a, const SynthVoiceState &b) {
+                      return a.mNote.GetMidiValue() > b.mNote.GetMidiValue();
+                  });
+
+        fixed_vector<MidiNote, MAX_SYNTH_VOICES> chordNotes;
+        for (auto &v : voiceState)
+        {
+            chordNotes.push_back(v.mNote);
         }
         auto spelledChord = spellChord(chordNotes).notes;
 

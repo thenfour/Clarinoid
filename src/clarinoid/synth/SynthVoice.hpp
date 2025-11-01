@@ -541,8 +541,9 @@ struct Voice : IModulationKRateProvider
         {
             mOsc.mOsc[i].waveform(mPreset->mOsc[i].mWaveform);
             mOsc.mOsc[i].pulseWidth(mPreset->mOsc[i].mPulseWidth);
-            mOsc.mOsc[i].mPMMultiplier = mPreset->mOverallFMStrength + mKRateOverallFMStrength;
-            mOsc.mOsc[i].mPMFeedbackAmt = mPreset->mOsc[i].mFMFeedbackGain + mKRateOscFMFeedback[i];
+            auto pmMultiplier = mPreset->mOverallFMStrength + mKRateOverallFMStrength;
+            mOsc.mOsc[i].mPMMultiplier = pmMultiplier;
+            mOsc.mOsc[i].mPMFeedbackAmt = pmMultiplier * (mPreset->mOsc[i].mFMFeedbackGain + mKRateOscFMFeedback[i]);
             // mOsc.mOsc[i].mWaveformMorph01 = mPreset->mOsc[i].mWaveformMorph01;
         }
 

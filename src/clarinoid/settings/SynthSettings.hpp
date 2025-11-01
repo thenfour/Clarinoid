@@ -1283,20 +1283,45 @@ struct SynthSettings
         p.mOsc[2].mGain = 0;
     }
 
-    static void InitFMTest(SynthPreset &p)
+    static void InitFMPreset(SynthPreset &p)
     {
         p.mName = "fm test";
         p.mSync = false;
         p.mDetune = 0;
         p.mStereoSpread = 0;
-        p.mFMStrength1To2 = 0.50f;
-        p.mOverallFMStrength = 0.1f;
+        // 3 -> 2 -> 1
+        p.mFMStrength3To2 = 0.50f;
+        p.mFMStrength2To1 = 0.50f;
+        p.mOverallFMStrength = 0.0f;
+
         p.mOsc[0].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[0].mFreqMultiplier = .5;
-        p.mOsc[0].mFreqOffset = 1;
+        p.mOsc[0].mFreqMultiplier = 1;
         p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
 
         p.mOsc[1].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[1].mFreqMultiplier = 2;
+        p.mOsc[1].mGain = 0;
+
+        p.mOsc[2].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[2].mFreqMultiplier = 3;
+        p.mOsc[2].mGain = 0;
+
+        // set up a breath modulation for them.
+        p.mModulations[0].mSource = AnyModulationSource::Breath;
+        p.mModulations[0].mDest = AnyModulationDestination::OverallFMStrength;
+        p.mModulations[0].mScaleN11 = 0.50f;
+
+        // p.mModulations[1].mSource = AnyModulationSource::Breath;
+        // p.mModulations[1].mDest = AnyModulationDestination::Osc1FMFeedback;
+        // p.mModulations[1].mScaleN11 = 0.25f;
+
+        // p.mModulations[2].mSource = AnyModulationSource::Breath;
+        // p.mModulations[2].mDest = AnyModulationDestination::Osc2FMFeedback;
+        // p.mModulations[2].mScaleN11 = 0.25f;
+
+        // p.mModulations[3].mSource = AnyModulationSource::Breath;
+        // p.mModulations[3].mDest = AnyModulationDestination::Osc3FMFeedback;
+        // p.mModulations[3].mScaleN11 = 0.25f;
     }
 
     SynthSettings()
@@ -1327,7 +1352,7 @@ struct SynthSettings
 
         InitBasicSine(mPresets[i++]);
 
-        // InitFMPreset(mPresets[i++]);
+        InitFMPreset(mPresets[i++]);
         InitSynccyLead(mPresets[i++]);
         // InitPWMLeadStack(mPresets[i++]);
         // InitCrystalFieldsPatch(mPresets[i++]);
