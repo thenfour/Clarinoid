@@ -124,6 +124,158 @@ struct EnvelopeMenuApp
     }
 };
 
+struct LFOMenuApp
+{
+    LFOSpec *mBinding = nullptr;
+
+    bool IsBasis(TimeBasis basis) const
+    {
+        return mBinding && mBinding->mTime.mBasis == basis;
+    }
+
+    bool WaveSupportsPulseWidth() const
+    {
+        return mBinding && mBinding->mWaveShape == OscWaveformShape::Pulse;
+    }
+
+    EnumSettingItem<OscWaveformShape> mWaveform = {"Waveform",
+                                                   gOscWaveformShapeInfo,
+                                                   Property<OscWaveformShape>{[](void *cap) FLASHMEM {
+                                                                                  auto *pThis = (LFOMenuApp *)cap;
+                                                                                  CCASSERT(pThis->mBinding);
+                                                                                  return pThis->mBinding->mWaveShape;
+                                                                              },
+                                                                              [](void *cap, const OscWaveformShape &v)
+                                                                                  FLASHMEM {
+                                                                                      auto *pThis = (LFOMenuApp *)cap;
+                                                                                      CCASSERT(pThis->mBinding);
+                                                                                      pThis->mBinding->mWaveShape = v;
+                                                                                  },
+                                                                              this},
+                                                   AlwaysEnabled};
+
+    FloatSettingItem mPulseWidth = {"PulseWidth",
+                                    StandardRangeSpecs::gFloat_0_1,
+                                    Property<float>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        CCASSERT(pThis->mBinding);
+                                                        return pThis->mBinding->mPulseWidth;
+                                                    },
+                                                    [](void *cap, const float &v) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        CCASSERT(pThis->mBinding);
+                                                        pThis->mBinding->mPulseWidth = v;
+                                                    },
+                                                    this},
+                                    Property<bool>{[](void *cap) FLASHMEM {
+                                                       auto *pThis = (LFOMenuApp *)cap;
+                                                       return pThis->WaveSupportsPulseWidth();
+                                                   },
+                                                   this}};
+
+    FloatSettingItem mWaveMorph = {"Morph",
+                                   StandardRangeSpecs::gFloat_0_1,
+                                   Property<float>{[](void *cap) FLASHMEM {
+                                                       auto *pThis = (LFOMenuApp *)cap;
+                                                       CCASSERT(pThis->mBinding);
+                                                       return pThis->mBinding->mWaveformMorph01;
+                                                   },
+                                                   [](void *cap, const float &v) FLASHMEM {
+                                                       auto *pThis = (LFOMenuApp *)cap;
+                                                       CCASSERT(pThis->mBinding);
+                                                       pThis->mBinding->mWaveformMorph01 = v;
+                                                   },
+                                                   this},
+                                   AlwaysEnabled};
+
+    BoolSettingItem mPhaseRestart = {"PhaseRestart",
+                                     "On",
+                                     "Off",
+                                     Property<bool>{[](void *cap) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        CCASSERT(pThis->mBinding);
+                                                        return pThis->mBinding->mPhaseRestart;
+                                                    },
+                                                    [](void *cap, const bool &v) FLASHMEM {
+                                                        auto *pThis = (LFOMenuApp *)cap;
+                                                        CCASSERT(pThis->mBinding);
+                                                        pThis->mBinding->mPhaseRestart = v;
+                                                    },
+                                                    this},
+                                     AlwaysEnabled};
+
+    EnumSettingItem<TimeBasis> mTimeBasis = {"Time Basis",
+                                             gTimeBasisInfo,
+                                             Property<TimeBasis>{[](void *cap) FLASHMEM {
+                                                                     auto *pThis = (LFOMenuApp *)cap;
+                                                                     CCASSERT(pThis->mBinding);
+                                                                     return pThis->mBinding->mTime.mBasis;
+                                                                 },
+                                                                 [](void *cap, const TimeBasis &v) FLASHMEM {
+                                                                     auto *pThis = (LFOMenuApp *)cap;
+                                                                     CCASSERT(pThis->mBinding);
+                                                                     pThis->mBinding->mTime.mBasis = v;
+                                                                 },
+                                                                 this},
+                                             AlwaysEnabled};
+
+    FloatSettingItem mRateHz = {"Rate Hz",
+                                StandardRangeSpecs::gLFOFrequency,
+                                Property<float>{[](void *cap) FLASHMEM {
+                                                    auto *pThis = (LFOMenuApp *)cap;
+                                                    CCASSERT(pThis->mBinding);
+                                                    return pThis->mBinding->mTime.mHz;
+                                                },
+                                                [](void *cap, const float &v) FLASHMEM {
+                                                    auto *pThis = (LFOMenuApp *)cap;
+                                                    CCASSERT(pThis->mBinding);
+                                                    pThis->mBinding->mTime.mHz = v;
+                                                },
+                                                this},
+                                Property<bool>{[](void *cap) FLASHMEM {
+                                                   auto *pThis = (LFOMenuApp *)cap;
+                                                   return pThis->IsBasis(TimeBasis::Hertz);
+                                               },
+                                               this}};
+
+    FloatSettingItem mRateMs = {"Rate ms",
+                                StandardRangeSpecs::gEnvReleaseMS,
+                                Property<float>{[](void *cap) FLASHMEM {
+                                                    auto *pThis = (LFOMenuApp *)cap;
+                                                    CCASSERT(pThis->mBinding);
+                                                    return pThis->mBinding->mTime.mTimeMS;
+                                                },
+                                                [](void *cap, const float &v) FLASHMEM {
+                                                    auto *pThis = (LFOMenuApp *)cap;
+                                                    CCASSERT(pThis->mBinding);
+                                                    pThis->mBinding->mTime.mTimeMS = v;
+                                                },
+                                                this},
+                                Property<bool>{[](void *cap) FLASHMEM {
+                                                   auto *pThis = (LFOMenuApp *)cap;
+                                                   return pThis->IsBasis(TimeBasis::Milliseconds);
+                                               },
+                                               this}};
+
+    ISettingItem *mArray[7] = {
+        &mWaveform,
+        &mPulseWidth,
+        &mWaveMorph,
+        &mPhaseRestart,
+        &mTimeBasis,
+        &mRateHz,
+        &mRateMs,
+    };
+
+    SettingsList mRootList = {mArray};
+
+    SettingsList *GetSubmenuList(LFOSpec &binding)
+    {
+        mBinding = &binding;
+        return &mRootList;
+    }
+};
+
 struct SynthPatchOscillatorMenuStuff
 {
     SynthOscillatorSettings *mpBinding = nullptr;
@@ -202,14 +354,14 @@ struct SynthPatchOscillatorMenuStuff
     IntSettingItem mPortamentoTimeMS = {"Portamento MS",
                                         StandardRangeSpecs::gPortamentoRange,
                                         Property<int>{[](void *cap) FLASHMEM {
-                                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                            return pThis->GetBinding().mPortamentoTimeMS;
-                                                        },
-                                                        [](void *cap, const int &v) FLASHMEM {
-                                                            auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
-                                                            pThis->GetBinding().mPortamentoTimeMS = v;
-                                                        },
-                                                        this},
+                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                          return pThis->GetBinding().mPortamentoTimeMS;
+                                                      },
+                                                      [](void *cap, const int &v) FLASHMEM {
+                                                          auto *pThis = (SynthPatchOscillatorMenuStuff *)cap;
+                                                          pThis->GetBinding().mPortamentoTimeMS = v;
+                                                      },
+                                                      this},
                                         AlwaysEnabled};
 
     FloatSettingItem mFreqMul = {"FreqMul",
@@ -828,17 +980,17 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         AlwaysEnabled};
 
     IntSettingItem mModCurve = {"Curve",
-                             StandardRangeSpecs::gCurveIndexRange,
-                             Property<int>{[](void *cap) FLASHMEM {
-                                               auto *pThis = (SynthPatchMenuApp *)cap;
-                                               return (int)pThis->GetModulationBinding().mCurveShape;
-                                           },
-                                           [](void *cap, const int &v) FLASHMEM {
-                                               auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->GetModulationBinding().mCurveShape = v;
-                                           },
-                                           this},
-                             AlwaysEnabled};
+                                StandardRangeSpecs::gCurveIndexRange,
+                                Property<int>{[](void *cap) FLASHMEM {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  return (int)pThis->GetModulationBinding().mCurveShape;
+                                              },
+                                              [](void *cap, const int &v) FLASHMEM {
+                                                  auto *pThis = (SynthPatchMenuApp *)cap;
+                                                  pThis->GetModulationBinding().mCurveShape = v;
+                                              },
+                                              this},
+                                AlwaysEnabled};
 
     BoolSettingItem mModAuxEnable = {"Aux enable",
                                      "On",
@@ -896,17 +1048,17 @@ struct SynthPatchMenuApp : public SettingsMenuApp
         AlwaysEnabled};
 
     IntSettingItem mModAuxCurve = {" - Aux Curve",
-                             StandardRangeSpecs::gCurveIndexRange,
-                             Property<int>{[](void *cap) FLASHMEM {
-                                               auto *pThis = (SynthPatchMenuApp *)cap;
-                                               return (int)pThis->GetModulationBinding().mAuxCurveShape;
-                                           },
-                                           [](void *cap, const int &v) FLASHMEM {
-                                               auto *pThis = (SynthPatchMenuApp *)cap;
-                                               pThis->GetModulationBinding().mAuxCurveShape = v;
-                                           },
-                                           this},
-                             AlwaysEnabled};
+                                   StandardRangeSpecs::gCurveIndexRange,
+                                   Property<int>{[](void *cap) FLASHMEM {
+                                                     auto *pThis = (SynthPatchMenuApp *)cap;
+                                                     return (int)pThis->GetModulationBinding().mAuxCurveShape;
+                                                 },
+                                                 [](void *cap, const int &v) FLASHMEM {
+                                                     auto *pThis = (SynthPatchMenuApp *)cap;
+                                                     pThis->GetModulationBinding().mAuxCurveShape = v;
+                                                 },
+                                                 this},
+                                   AlwaysEnabled};
 
     ISettingItem *mModulationSubmenu[10] = {
         &mModSource,
@@ -937,7 +1089,24 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                                 [](void *cap, size_t i) { return true; }, // isEnabled
                                                 this};
 
+    LFOMenuApp mLfoEditor;
     EnvelopeMenuApp mEnvEditor;
+
+    SubmenuSettingItem mLfo1SubmenuItem = {String("LFO1"),
+                                           [](void *cap) FLASHMEM {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               return pThis->mLfoEditor.GetSubmenuList(pThis->GetBinding().mLFO1);
+                                           },
+                                           AlwaysEnabled,
+                                           this};
+
+    SubmenuSettingItem mLfo2SubmenuItem = {String("LFO2"),
+                                           [](void *cap) FLASHMEM {
+                                               auto *pThis = (SynthPatchMenuApp *)cap;
+                                               return pThis->mLfoEditor.GetSubmenuList(pThis->GetBinding().mLFO2);
+                                           },
+                                           AlwaysEnabled,
+                                           this};
 
     SubmenuSettingItem mModEnv1SubmenuItem = {String("ENV1"),
                                               [](void *cap) FLASHMEM {
@@ -955,11 +1124,9 @@ struct SynthPatchMenuApp : public SettingsMenuApp
                                               AlwaysEnabled,
                                               this};
 
-    ISettingItem *mModulationsSubmenuArray[3] = {
-        //&mLfo1Frequency,
-        //&mLfo1Waveform,
-        //&mLfo2Frequency,
-        //&mLfo2Waveform,
+    ISettingItem *mModulationsSubmenuArray[5] = {
+        &mLfo1SubmenuItem,
+        &mLfo2SubmenuItem,
         &mModEnv1SubmenuItem,
         &mModEnv2SubmenuItem,
         &mModulationsList,

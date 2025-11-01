@@ -1103,7 +1103,7 @@ struct SynthSettings
         p.mName = name;
         p.mOsc[1].mWaveform = shape;
         p.mOsc[1].mPulseWidth = pulseWidth;
-        p.mOsc[1].mGain = DecibelsToLinear(-25.0f);
+        p.mOsc[1].mGain = DecibelsToLinear(-20.0f);
 
         p.mSync = true;
         p.mOsc[0].mGain = 0.0f;
@@ -1318,18 +1318,18 @@ struct SynthSettings
         p.mModulations[0].mDest = AnyModulationDestination::OverallFMStrength;
         p.mModulations[0].mCurveShape = 100;
         p.mModulations[0].mScaleN11 = 0.50f;
+    }
 
-        // p.mModulations[1].mSource = AnyModulationSource::Breath;
-        // p.mModulations[1].mDest = AnyModulationDestination::Osc1FMFeedback;
-        // p.mModulations[1].mScaleN11 = 0.25f;
+    static void InitWobblyCat(SynthPreset &p)
+    {
+        InitSynccyLead(p, "Wobbly Cat", OscWaveformShape::Pulse, 0.5f);
 
-        // p.mModulations[2].mSource = AnyModulationSource::Breath;
-        // p.mModulations[2].mDest = AnyModulationDestination::Osc2FMFeedback;
-        // p.mModulations[2].mScaleN11 = 0.25f;
+        p.mModulations[1].SetScaleN11_Legacy(.75f);
+        p.mModulations[1].mSource = AnyModulationSource::LFO2;
+        p.mModulations[1].mDest = AnyModulationDestination::Osc1Frequency;
 
-        // p.mModulations[3].mSource = AnyModulationSource::Breath;
-        // p.mModulations[3].mDest = AnyModulationDestination::Osc3FMFeedback;
-        // p.mModulations[3].mScaleN11 = 0.25f;
+        p.mLFO2.mTime.mBasis = TimeBasis::Milliseconds;
+        p.mLFO2.mTime.mTimeMS = 300;
     }
 
     SynthSettings()
@@ -1356,6 +1356,9 @@ struct SynthSettings
 
         CCASSERT(i == SynthPresetID_FMTest);
         InitFMPreset(mPresets[i++]);
+
+        CCASSERT(i == SynthPresetID_WobblyCat);
+        InitWobblyCat(mPresets[i++]);
 
         InitDetunePWMLead(mPresets[i++]);
         InitCloudsStars(mPresets[i++]);

@@ -400,6 +400,20 @@ struct AppSettings
         p.mGlobalScale = Scale{Note::F_, ScaleFlavorIndex::Major};
     }
 
+    static void InitWobblyCatPerf(PerformancePatch &p)
+    {
+        p.mName = "Wobbly Cat";
+
+        p.mSynthPresetA = SynthPresetID_WobblyCat;
+        p.mSynthAGain = DecibelsToLinear(-3);
+        p.mSynthPresetB = SynthPresetID_WobblyCat;
+        p.mSynthBGain = DecibelsToLinear(-3);
+
+        p.mHarmPreset = HarmPresetID_N3N2;
+        p.mGlobalScaleRef = GlobalScaleRefType::Chosen;
+        p.mGlobalScale = Scale{Note::F_, ScaleFlavorIndex::Major};
+    }
+
     // SILK SUSP PERF
     //     - transpose +12
     //     - pan flute
@@ -457,6 +471,7 @@ struct AppSettings
         //     - harm: pent -3 -2
         //     - F major
         InitFullScalePerf(mPerformancePatches[i++]);
+        InitWobblyCatPerf(mPerformancePatches[i++]);
 
         // SILK SUSP PERF
         //     - transpose +12
