@@ -312,26 +312,13 @@ struct Harmonizer
                 break;
             }
 
-            // old method:
-            // auto newNote = scale.AdjustNoteByInterval(
-            //     pout->mMidiNote, hv.mSequence[mSequencePos % hv.mSequenceLength], EnharmonicDirection::Sharp);
-            // if (!newNote)
-            // {
-            //     voiceState.mResult = "oob mute";
-            //     continue;
-            // }
-
-            // pout->mMidiNote = newNote;
-            // voiceState.mCurrentMidiNote = pout->mMidiNote;
-            // voiceState.mResult = String("note ") + pout->mMidiNote;
-
-            // new method:
             auto newNote =
                 GetHarmonizedNote(pout->mMidiNote, scale, perf.mDeducedScale, mSequencePos, preset, hv, voiceState);
             if (!newNote)
             {
                 continue; // muted
             }
+            newNote += hv.mOctaveTranspose * 12;
             newNote = EnsureHarmonizedNoteBounds(newNote, liveVoice->mMidiNote, hv);
             if (!newNote)
             {

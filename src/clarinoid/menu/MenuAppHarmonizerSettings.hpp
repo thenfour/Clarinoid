@@ -111,6 +111,29 @@ struct HarmVoiceSettingsApp
         this // capture
     };
 
+    IntSettingItem mOctaveTranspose = {
+        "Octave",
+        NumericEditRangeSpec<int>{-4, 4},
+        Property<int>{
+            [](void *cap) FLASHMEM {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                return (int)pThis->EditingVoice().mOctaveTranspose;
+            }, // getter
+            [](void *cap, const int &val) {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                pThis->EditingVoice().mOctaveTranspose = val;
+            },   // setter
+            this // capture val
+        },
+        [](void *cap, int val) FLASHMEM -> String // value formatter.
+        {
+            // always show sign (+1, -1, etc)
+            return String(val > 0 ? "+" : "") + String(val);
+        },
+        AlwaysEnabled,
+        this // capture
+    };
+
     IntSettingItem mMinOutpNote = {
         "Min note",
         NumericEditRangeSpec<int>{0, 127},
@@ -248,11 +271,12 @@ struct HarmVoiceSettingsApp
         },
         AlwaysEnabled};
 
-    ISettingItem *mArray[12] = {
+    ISettingItem *mArray[13] = {
         &mSynthPresetRef,
         &mOwnSynthPatch,
         &mSequenceLength,
         &mSequence,
+        &mOctaveTranspose,
         &mMinOutpNote,
         &mMaxOutpNote,
         &mOOBBehavior,

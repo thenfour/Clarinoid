@@ -157,6 +157,7 @@ struct HarmVoiceSettings
 
     HarmScaleRefType mScaleRef = HarmScaleRefType::Global;
     Scale mLocalScale = {0, ScaleFlavorIndex::Chromatic};
+    int8_t mOctaveTranspose = 0;
     uint8_t mMinOutpNote = 0;
     uint8_t mMaxOutpNote = 127;
     NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
