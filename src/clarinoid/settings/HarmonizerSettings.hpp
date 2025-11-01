@@ -26,6 +26,7 @@ static constexpr size_t SynthPresetID_BrakerSolo = 2;
 static constexpr size_t SynthPresetID_PWMLead2 = 3;
 static constexpr size_t SynthPresetID_PanFlute = 4;
 static constexpr size_t SynthPresetID_Trumpet = 5;
+static constexpr size_t SynthPresetID_FMTest = 6;
 
 static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 11;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 10;

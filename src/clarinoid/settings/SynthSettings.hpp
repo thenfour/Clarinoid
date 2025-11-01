@@ -1309,6 +1309,7 @@ struct SynthSettings
         // set up a breath modulation for them.
         p.mModulations[0].mSource = AnyModulationSource::Breath;
         p.mModulations[0].mDest = AnyModulationDestination::OverallFMStrength;
+        p.mModulations[0].mCurveShape = 100;
         p.mModulations[0].mScaleN11 = 0.50f;
 
         // p.mModulations[1].mSource = AnyModulationSource::Breath;
@@ -1346,13 +1347,15 @@ struct SynthSettings
         CCASSERT(i == SynthPresetID_Trumpet);
         InitSynthTrumpetPreset(mPresets[i++]);
 
+        CCASSERT(i == SynthPresetID_FMTest);
+        InitFMPreset(mPresets[i++]);
+
         InitDetunePWMLead(mPresets[i++]);
         InitCloudsStars(mPresets[i++]);
         InitCinematicTagPatch(mPresets[i++], "Cinematic", 0.06f, 0.02f, -0.08f);
 
         InitBasicSine(mPresets[i++]);
 
-        InitFMPreset(mPresets[i++]);
         InitSynccyLead(mPresets[i++]);
         // InitPWMLeadStack(mPresets[i++]);
         // InitCrystalFieldsPatch(mPresets[i++]);

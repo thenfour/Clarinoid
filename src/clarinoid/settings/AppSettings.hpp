@@ -421,6 +421,18 @@ struct AppSettings
         p.mGlobalScale = Scale{Note::C, ScaleFlavorIndex::Major};
     }
 
+    static void InitFMPerf(PerformancePatch &p)
+    {
+        p.mName = "FM test";
+        p.mSynthStereoSpread = 0.9f;
+
+        p.mSynthPresetA = SynthPresetID_FMTest;
+        p.mSynthAGain = DecibelsToLinear(-3);
+
+        p.mSynthPresetB = SynthPresetID_FMTest;
+        p.mSynthBGain = DecibelsToLinear(-3);
+    }
+
     AppSettings()
     {
         size_t i = 1; // 0 = default, no performance
@@ -452,6 +464,8 @@ struct AppSettings
         //     - trumpet -12
         //     - C major
         InitSilkSuspendersPerf(mPerformancePatches[i++]);
+
+        InitFMPerf(mPerformancePatches[i++]);
 
         // InitSoaringGuitarPerf(mPerformancePatches[i++]);
         // InitCaveBouncer(mPerformancePatches[i++]);
