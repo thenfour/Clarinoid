@@ -148,6 +148,19 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                        },
                        this}};
 
+    FloatSettingItem mStereoSpread = {"Width",
+                                      StandardRangeSpecs::gFloat_0_1,
+                                      Property<float>{[](void *cap) FLASHMEM {
+                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                          return pThis->GetBinding().mSynthStereoSpread;
+                                                      },
+                                                      [](void *cap, const float &v) {
+                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                          pThis->GetBinding().mSynthStereoSpread = v;
+                                                      },
+                                                      this},
+                                      AlwaysEnabled};
+
     GainSettingItem mReverbGain = {"Reverb gain",
                                    StandardRangeSpecs::gGeneralGain,
                                    Property<float>{[](void *cap) FLASHMEM {
@@ -161,18 +174,92 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                                    this},
                                    AlwaysEnabled};
 
-    FloatSettingItem mStereoSpread = {"B Spread",
-                                      StandardRangeSpecs::gFloat_0_1,
-                                      Property<float>{[](void *cap) FLASHMEM {
+    GainSettingItem mDelayGain = {"Delay gain",
+                                  StandardRangeSpecs::gGeneralGain,
+                                  Property<float>{[](void *cap) FLASHMEM {
+                                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                      return pThis->GetBinding().mDelayGain;
+                                                  },
+                                                  [](void *cap, const float &v) {
+                                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                      pThis->GetBinding().mDelayGain = v;
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
+
+    BoolSettingItem mMasterFXEnable = {"MasterFX Enable",
+                                       "Yes",
+                                       "No",
+                                       Property<bool>{[](void *cap) FLASHMEM {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          return pThis->GetBinding().mSynthStereoSpread;
+                                                          return pThis->GetBinding().mMasterFXEnable;
                                                       },
-                                                      [](void *cap, const float &v) {
+                                                      [](void *cap, const bool &v) {
                                                           auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          pThis->GetBinding().mSynthStereoSpread = v;
+                                                          pThis->GetBinding().mMasterFXEnable = v;
                                                       },
                                                       this},
-                                      AlwaysEnabled};
+                                       AlwaysEnabled};
+
+    IntSettingItem mSelectedSynthPatchA = {"Synth patch A",
+                                           NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
+                                           Property<int>{
+                                               [](void *cap) FLASHMEM {
+                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                   return (int)pThis->GetBinding().mSynthPresetA;
+                                               }, // getter
+                                               [](void *cap, const int &val) {
+                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                   pThis->GetBinding().mSynthPresetA = val;
+                                               },   // setter
+                                               this // capture val
+                                           },
+                                           [](void *cap, int n) { // formatter
+                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                               return pThis->mAppSettings->GetSynthPatchName(n);
+                                           },
+                                           AlwaysEnabled,
+                                           this};
+
+    IntSettingItem mSelectedSynthPatchB = {"Synth patch B",
+                                           NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
+                                           Property<int>{
+                                               [](void *cap) FLASHMEM {
+                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                   return (int)pThis->GetBinding().mSynthPresetB;
+                                               }, // getter
+                                               [](void *cap, const int &val) {
+                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                   pThis->GetBinding().mSynthPresetB = val;
+                                               },   // setter
+                                               this // capture val
+                                           },
+                                           [](void *cap, int n) { // formatter
+                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                               return pThis->mAppSettings->GetSynthPatchName(n);
+                                           },
+                                           AlwaysEnabled,
+                                           this};
+
+    IntSettingItem mSelectedHarmPatch = {"Harm patch",
+                                         NumericEditRangeSpec<int>{0, clarinoid::HARM_PRESET_COUNT - 1},
+                                         Property<int>{
+                                             [](void *cap) FLASHMEM {
+                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                 return (int)pThis->GetBinding().mHarmPreset;
+                                             }, // getter
+                                             [](void *cap, const int &val) {
+                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                                 pThis->GetBinding().mHarmPreset = val;
+                                             },   // setter
+                                             this // capture val
+                                         },
+                                         [](void *cap, int n) { // formatter
+                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                             return pThis->mAppSettings->GetHarmPatchName(n);
+                                         },
+                                         AlwaysEnabled,
+                                         this};
 
     FloatSettingItem mReverbDamping = {"Reverb damp",
                                        StandardRangeSpecs::gFloat_0_1,
@@ -199,19 +286,6 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                                     },
                                                     this},
                                     AlwaysEnabled};
-
-    GainSettingItem mDelayGain = {"Delay gain",
-                                  StandardRangeSpecs::gGeneralGain,
-                                  Property<float>{[](void *cap) FLASHMEM {
-                                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                      return pThis->GetBinding().mDelayGain;
-                                                  },
-                                                  [](void *cap, const float &v) {
-                                                      auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                      pThis->GetBinding().mDelayGain = v;
-                                                  },
-                                                  this},
-                                  AlwaysEnabled};
 
     FloatSettingItem mDelayTimeMS = {"Delay Time",
                                      NumericEditRangeSpec<float>(1, MAX_DELAY_MS),
@@ -305,80 +379,6 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                                 this},
                                 AlwaysEnabled};
 
-    BoolSettingItem mMasterFXEnable = {"MasterFX Enable",
-                                       "Yes",
-                                       "No",
-                                       Property<bool>{[](void *cap) FLASHMEM {
-                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          return pThis->GetBinding().mMasterFXEnable;
-                                                      },
-                                                      [](void *cap, const bool &v) {
-                                                          auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                          pThis->GetBinding().mMasterFXEnable = v;
-                                                      },
-                                                      this},
-                                       AlwaysEnabled};
-
-    IntSettingItem mSelectedSynthPatchA = {"Synth patch A",
-                                           NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
-                                           Property<int>{
-                                               [](void *cap) FLASHMEM {
-                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   return (int)pThis->GetBinding().mSynthPresetA;
-                                               }, // getter
-                                               [](void *cap, const int &val) {
-                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   pThis->GetBinding().mSynthPresetA = val;
-                                               },   // setter
-                                               this // capture val
-                                           },
-                                           [](void *cap, int n) { // formatter
-                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                               return pThis->mAppSettings->GetSynthPatchName(n);
-                                           },
-                                           AlwaysEnabled,
-                                           this};
-
-    IntSettingItem mSelectedSynthPatchB = {"Synth patch B",
-                                           NumericEditRangeSpec<int>{0, clarinoid::SYNTH_PRESET_COUNT - 1},
-                                           Property<int>{
-                                               [](void *cap) FLASHMEM {
-                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   return (int)pThis->GetBinding().mSynthPresetB;
-                                               }, // getter
-                                               [](void *cap, const int &val) {
-                                                   auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                   pThis->GetBinding().mSynthPresetB = val;
-                                               },   // setter
-                                               this // capture val
-                                           },
-                                           [](void *cap, int n) { // formatter
-                                               auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                               return pThis->mAppSettings->GetSynthPatchName(n);
-                                           },
-                                           AlwaysEnabled,
-                                           this};
-
-    IntSettingItem mSelectedHarmPatch = {"Harm patch",
-                                         NumericEditRangeSpec<int>{0, clarinoid::HARM_PRESET_COUNT - 1},
-                                         Property<int>{
-                                             [](void *cap) FLASHMEM {
-                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                 return (int)pThis->GetBinding().mHarmPreset;
-                                             }, // getter
-                                             [](void *cap, const int &val) {
-                                                 auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                                 pThis->GetBinding().mHarmPreset = val;
-                                             },   // setter
-                                             this // capture val
-                                         },
-                                         [](void *cap, int n) { // formatter
-                                             auto *pThis = (PerformancePatchSettingsApp *)cap;
-                                             return pThis->mAppSettings->GetHarmPatchName(n);
-                                         },
-                                         AlwaysEnabled,
-                                         this};
-
     ISettingItem *mMasterFXSubmenuItems[9] = {
         &mReverbDamping,
         &mReverbSize,
@@ -392,27 +392,38 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
     };
     SettingsList mMasterFXList = {mMasterFXSubmenuItems};
 
-    SubmenuSettingItem mMasterFX = {String("Master FX"), &mMasterFXList, AlwaysEnabled};
+    SubmenuSettingItem mMasterFX = {"Master FX", &mMasterFXList, AlwaysEnabled};
 
-    ISettingItem *mArray[17] = {
-        &mMasterGain,
-        &mTranspose,
-        &mSynthPatchATranspose,
-        &mSynthPatchBTranspose,
-        &mDetune,
-
+    ISettingItem *mScaleSubmenuItems[4] = {
         &mGlobalScaleRef,
         &mDeducedScale,
         &mChosenScaleNote,
         &mChosenScaleFlavor,
+    };
+    SettingsList mScaleList = {mScaleSubmenuItems};
 
+    SubmenuSettingItem mScaleSubmenu = {"Scale", &mScaleList, AlwaysEnabled};
+
+    // uint8_t tempBuffer[200] = {0};
+
+    ISettingItem *mArray[14] = {
+        &mMasterGain,
+        &mTranspose,
+        &mDetune,
+
+        &mSynthPatchATranspose,
+        &mSynthPatchBTranspose,
         &mSelectedSynthPatchA,
         &mSelectedSynthPatchB,
-        &mStereoSpread,
         &mSelectedHarmPatch,
+
+        &mScaleSubmenu,
+
+        &mStereoSpread,
         &mMasterFXEnable,
         &mReverbGain,
         &mDelayGain,
+
         &mMasterFX,
     };
     SettingsList mRootList = {mArray};
@@ -432,5 +443,9 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
         SettingsMenuApp::RenderFrontPage();
     }
 };
+
+static constexpr size_t aoseunth = sizeof(PerformancePatchSettingsApp);
+// 3660 = pass
+// 3832 = fail
 
 } // namespace clarinoid

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 #include <clarinoid/basic/Basic.hpp>
 #include "MenuAppBase.hpp"
 #include "MenuListControl.hpp"
@@ -23,6 +24,8 @@ struct NumericEditor : ISettingItemEditor
     }
 
     virtual void DrawValue(T val, T oldVal) = 0;
+    virtual void DrawValue(T val) = 0;
+    virtual String FormatValue(int n) = 0;
 
     virtual void SetupEditing(ISettingItemEditorActions *papi, int x, int y)
     {
@@ -94,18 +97,25 @@ struct IntEditor : NumericEditor<int>
     {
     }
 
-    virtual void DrawValue(int n, int oldVal)
+    virtual String FormatValue(int n) override
     {
         if (mValueFormatter)
         {
-            this->mpApi->GetDisplay()->print(mValueFormatter(mpCapture, n));
+            return mValueFormatter(mpCapture, n);
         }
-        else
-        {
-            this->mpApi->GetDisplay()->print(String("") + n);
-        }
+        return String("") + n;
+    }
+
+    virtual void DrawValue(int n, int oldVal) override
+    {
+        DrawValue(n);
         int delta = n - oldVal;
         this->mpApi->GetDisplay()->print(String(" (") + (delta >= 0 ? "+" : "") + delta + ")");
+    }
+
+    virtual void DrawValue(int n) override
+    {
+        this->mpApi->GetDisplay()->print(FormatValue(n));
     }
 };
 
@@ -116,22 +126,35 @@ struct FloatEditor : NumericEditor<float>
     {
     }
 
-    virtual void DrawValue(float n, float oldVal)
+    virtual String FormatValue(int n) override
     {
-        this->mpApi->GetDisplay()->print(String(n, 3));
+        return String(n, 3);
+    }
+
+    virtual void DrawValue(float n, float oldVal) override
+    {
+        DrawValue(n);
         float delta = n - oldVal;
         this->mpApi->GetDisplay()->print(String(" (") + (delta >= 0 ? "+" : "") + String(delta, 3) + ")");
     }
+    virtual void DrawValue(float n) override
+    {
+        this->mpApi->GetDisplay()->print(FormatValue(n));
+    }
 };
 
-template <typename T, typename TEditor>
+// careful making this struct too big; large setting lists can run out of memory.
+// NB: TEditor must be a NumericEditor<T>.
+template <typename T, typename TEditor, typename = std::enable_if<std::is_base_of<NumericEditor<T>, TEditor>::value>>
 struct NumericSettingItem : public ISettingItem
 {
+    // static_assert(std::is_base_of<NumericEditor<T>, TEditor>::value,
+    //               "TEditor must be derived from NumericEditor<T>");
     String mName;
     Property<T> mBinding;
     Property<bool> mIsEnabled;
-    typename cc::function<String(void *, int)>::ptr_t mValueFormatter = nullptr;
-    void *mpCapture = nullptr;
+    // typename cc::function<String(void *, int)>::ptr_t mValueFormatter = nullptr;
+    // void *mpCapture = nullptr;
 
     TEditor mEditor;
 
@@ -149,11 +172,11 @@ struct NumericSettingItem : public ISettingItem
                        typename cc::function<String(void *, T)>::ptr_t mValueFormatter,
                        const Property<bool> &isEnabled,
                        void *cap)
-        : mName(name),                                   //
-          mBinding(binding),                             //
-          mIsEnabled(isEnabled),                         //
-          mValueFormatter(mValueFormatter),              //
-          mpCapture(cap),                                //
+        : mName(name),           //
+          mBinding(binding),     //
+          mIsEnabled(isEnabled), //
+          // mValueFormatter(mValueFormatter),              //
+          // mpCapture(cap),                                //
           mEditor(range_, binding, mValueFormatter, cap) //
     {
     }
@@ -164,11 +187,7 @@ struct NumericSettingItem : public ISettingItem
     }
     virtual String GetValueString(size_t multiIndex)
     {
-        if (mValueFormatter)
-        {
-            return mValueFormatter(mpCapture, mBinding.GetValue());
-        }
-        return String(mBinding.GetValue());
+        return GetNumericEditor(multiIndex)->FormatValue(mBinding.GetValue());
     }
     virtual SettingItemType GetType(size_t multiIndex)
     {
@@ -183,9 +202,13 @@ struct NumericSettingItem : public ISettingItem
     {
         return &mEditor;
     }
+    virtual NumericEditor<T> *GetNumericEditor(size_t multiIndex)
+    {
+        return &mEditor;
+    }
 };
 
-template <typename T, typename TEditor>
+template <typename T, typename TEditor, typename = std::enable_if<std::is_base_of<NumericEditor<T>, TEditor>::value>>
 struct MultiNumericSettingItem : public ISettingItem
 {
     cc::function<size_t(void *)>::ptr_t mGetItemCount;
@@ -249,7 +272,11 @@ struct MultiNumericSettingItem : public ISettingItem
     {
         return mIsEnabled(mCapture, multiIndex);
     }
-    virtual ISettingItemEditor *GetEditor(size_t multiIndex)
+    virtual ISettingItemEditor *GetEditor(size_t multiIndex) override
+    {
+        return GetNumericEditor(multiIndex);
+    }
+    virtual NumericEditor<T> *GetNumericEditor(size_t multiIndex)
     {
         mEditingMultiIndex = multiIndex;
         return &mEditor;
