@@ -1098,10 +1098,17 @@ struct SynthSettings
         p.mModulations[4].SetScaleN11_Legacy(0.03f);
     }
 
-    static void InitSynccyLead(SynthPreset &p)
+    static void InitSynccyLead(SynthPreset &p, const char *name, OscWaveformShape shape, float pulseWidth)
     {
-        p.mName = "Synccy Lead"; // default.
-        // p.mFilterKeytracking = 0.8f;
+        p.mName = name;
+        p.mOsc[1].mWaveform = shape;
+        p.mOsc[1].mPulseWidth = pulseWidth;
+        p.mOsc[1].mGain = DecibelsToLinear(-25.0f);
+
+        p.mSync = true;
+        p.mOsc[0].mGain = 0.0f;
+        p.mOsc[2].mGain = 0.0f;
+
         p.mFilterMaxFreq = 22000;
         p.mModulations[0].SetScaleN11_Legacy(0.9f);
         p.mModulations[0].mSource = AnyModulationSource::LFO1;
@@ -1356,7 +1363,9 @@ struct SynthSettings
 
         InitBasicSine(mPresets[i++]);
 
-        InitSynccyLead(mPresets[i++]);
+        InitSynccyLead(mPresets[i++], "Saw Sync", OscWaveformShape::SawSync, 0.5f);
+        // InitSynccyLead(mPresets[i++], "Pulse Sync", OscWaveformShape::Pulse, 0.1f);
+        InitSynccyLead(mPresets[i++], "Square Sync", OscWaveformShape::Pulse, 0.5f);
         // InitPWMLeadStack(mPresets[i++]);
         // InitCrystalFieldsPatch(mPresets[i++]);
         // InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);

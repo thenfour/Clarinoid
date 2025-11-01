@@ -71,68 +71,98 @@ struct BigPerfDisplayApp : DisplayApp
 
         mDisplay.setTextColor(SSD1306_WHITE); // normal text
 
-        //
-        auto voices = mSysInfoProvider.ISysInfoProvider_GetVoiceState();
-
-        fixed_vector<SynthVoiceState, MAX_SYNTH_VOICES> voiceState;
-        for (auto &v : voices)
         {
-            if (v.mIsPlaying)
+            auto voices = mSysInfoProvider.ISysInfoProvider_GetVoiceState();
+
+            fixed_vector<SynthVoiceState, MAX_SYNTH_VOICES> voiceState;
+            for (auto &v : voices)
             {
-                voiceState.push_back(v);
+                if (v.mIsPlaying)
+                {
+                    voiceState.push_back(v);
+                }
             }
-        }
 
-        std::sort(voiceState.begin(),
-                  voiceState.end(), //
-                  [](const SynthVoiceState &a, const SynthVoiceState &b) {
-                      return a.mNote.GetMidiValue() > b.mNote.GetMidiValue();
-                  });
+            std::sort(voiceState.begin(),
+                      voiceState.end(), //
+                      [](const SynthVoiceState &a, const SynthVoiceState &b) {
+                          return a.mNote.GetMidiValue() > b.mNote.GetMidiValue();
+                      });
 
-        fixed_vector<MidiNote, MAX_SYNTH_VOICES> chordNotes;
-        for (auto &v : voiceState)
-        {
-            chordNotes.push_back(v.mNote);
-        }
-        auto spelledChord = spellChord(chordNotes).notes;
-
-        // live note
-        // find the live note
-        for (size_t i = 0; i < voiceState.size(); ++i)
-        {
-            auto &v = voiceState[i];
-            auto &spelledNote = spelledChord[i];
-            if (v.mVoiceSource == VoiceSource::Live)
+            fixed_vector<MidiNote, MAX_SYNTH_VOICES> chordNotes;
+            for (auto &v : voiceState)
             {
-                mDisplay.setCursor(3, 21);
-                mDisplay.SetFontScale(2, 2);
-                mDisplay.println(String("") + spelledNote.ToString());
-                mDisplay.SetFontScale(1, 1);
-                break;
+                chordNotes.push_back(v.mNote);
             }
-        }
+            auto spelledChord = spellChord(chordNotes).notes;
 
-        // all other notes will be drawn in a grid. up to 6 are shown,
-        std::array<PointI, 6> notePositions = {
-            PointI::Construct(51, 22),
-            PointI::Construct(81, 22),
-            PointI::Construct(109, 22),
-            PointI::Construct(51, 31),
-            PointI::Construct(81, 31),
-            PointI::Construct(109, 31),
-        };
-        size_t shownNoteIndex = 0;
-        for (size_t i = 0; i < voiceState.size(); ++i)
-        {
-            auto &v = voiceState[i];
-            auto &spelledNote = spelledChord[i];
-            if (v.mVoiceSource != VoiceSource::Live)
+            constexpr int noteSlotsX = 6; // including 2 for the double-sized live note.
+            constexpr int noteSlotsY = 2;
+            constexpr int marginX = 6;
+            constexpr int noteWidth = (MAX_DISPLAY_WIDTH - marginX * 2) / noteSlotsX;
+            constexpr int noteHeight = 10;
+            constexpr int noteStartY = 22;
+            auto setCursorToNoteSlot = [&](int slotX, int slotY) {
+                auto p = PointI::Construct(marginX + slotX * noteWidth, noteStartY + slotY * noteHeight);
+                mDisplay.setCursor(p.x, p.y);
+            };
+
+            // live note
+            // find the live note
+            for (size_t i = 0; i < voiceState.size(); ++i)
             {
-                if (i >= notePositions.size())
+                auto &v = voiceState[i];
+                auto &spelledNote = spelledChord[i];
+                if (v.mVoiceSource == VoiceSource::Live)
+                {
+                    setCursorToNoteSlot(0, 0);
+                    mDisplay.SetFontScale(2, 2);
+                    mDisplay.println(String("") + spelledNote.ToString());
+                    mDisplay.SetFontScale(1, 1);
                     break;
-                mDisplay.setCursor(notePositions[shownNoteIndex].x, notePositions[shownNoteIndex].y);
-                mDisplay.println(String("") + spelledNote.ToString());
-                shownNoteIndex++;
+                }
+            }
+
+            constexpr size_t nonLiveNoteColumnCount = noteSlotsX - 2;
+            constexpr size_t maxNonLiveNotesToShow = nonLiveNoteColumnCount * noteSlotsY;
+            auto setCursorToNonLiveVoiceSlot = [&](size_t index) -> bool {
+                // first 2 columns are for the big live note display. so effectively we work with a grid that's 2 less
+                // wide. convert to x/y, and then offset x by 2. return true if successful. if out of slots, return
+                // false.
+                if (index >= maxNonLiveNotesToShow)
+                    return false;
+                size_t slotX = (index % nonLiveNoteColumnCount) + 2;
+                size_t slotY = index / nonLiveNoteColumnCount;
+                setCursorToNoteSlot(slotX, slotY);
+                return true;
+            };
+
+            // all other notes will be drawn in a grid. up to 6 are shown,
+            // std::array<PointI, 8> notePositions = {
+            //     PointI::Construct(40, 22),
+            //     PointI::Construct(70, 22),
+            //     PointI::Construct(100, 22),
+            //     PointI::Construct(51, 22),
+            //     PointI::Construct(81, 31),
+            //     PointI::Construct(109, 31),
+            //     PointI::Construct(109, 31),
+            //     PointI::Construct(109, 31),
+            // };
+            size_t shownNoteIndex = 0;
+            for (size_t i = 0; i < voiceState.size(); ++i)
+            {
+                auto &v = voiceState[i];
+                auto &spelledNote = spelledChord[i];
+                if (v.mVoiceSource != VoiceSource::Live)
+                {
+                    if (!setCursorToNonLiveVoiceSlot(shownNoteIndex))
+                        break;
+                    // if (i >= notePositions.size())
+                    //     break;
+                    // mDisplay.setCursor(notePositions[shownNoteIndex].x, notePositions[shownNoteIndex].y);
+                    mDisplay.println(String("") + spelledNote.ToString());
+                    shownNoteIndex++;
+                }
             }
         }
 
