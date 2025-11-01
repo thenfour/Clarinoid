@@ -11,7 +11,15 @@ using MusicalVoiceID_t = uint16_t;
 
 static constexpr MusicalVoiceID_t MAGIC_VOICE_ID_UNASSIGNED =
     std::numeric_limits<MusicalVoiceID_t>::max(); // used as a voice ID for voices that aren't assigned to any musical
-                                                  // voice.
+// voice.
+
+enum class VoiceSource : uint8_t
+{
+    Unknown,
+    Live,
+    Harmonizer,
+    Looper,
+};
 
 static constexpr uint8_t MAGIC_VOICE_ID_LIVE_A = 0; // when we had 1 live voice, this is 0.
 static constexpr uint8_t MAGIC_VOICE_ID_LIVE_B = 1;
@@ -60,6 +68,7 @@ struct MusicalVoice
     int16_t mSynthPatchB = -1; // this one can be negative to indicate mute / no patch. by the time this object reaches
                                // SynthVoice, this is always -1. but it's needed during intermittent processing.
     int16_t mHarmPatch = 0;
+    VoiceSource mVoiceSource = VoiceSource::Unknown;
 
     float mPan = 0;               // as specified by harmonizer.
     float mGain = 1.0f;           // again set by harmonizer

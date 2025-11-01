@@ -29,6 +29,10 @@ struct IDisplayApp
     virtual void DisplayAppUpdate() = 0; // called to update internal state.
     virtual void DisplayAppRender() = 0; // called to render to display.
     virtual const char *DisplayAppGetName() = 0;
+    virtual bool AllowOverlayIndicators() const // for some stageworthy apps, overlays are distracting.
+    {
+        return true;
+    }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -84,6 +88,7 @@ struct IDisplay
     // calculates in general, not for a specific location on screen.
     virtual RectI GetTextBounds(const String &str) = 0;
     virtual void PrintInvertedText(const String &str, bool isInverted = true) = 0;
+    virtual void PrintInvertedText(const String &str, const RectI &padding, bool isInverted = true) = 0;
     virtual void PrintInvertedLine(const String &str, bool isInverted = true) = 0;
     virtual void DrawSelectionRect(const RectI &z) = 0;
     virtual void DisplayTask() = 0;
@@ -119,6 +124,7 @@ struct IDisplay
                                          const RectI &clipRect,
                                          int brightness) = 0;
     virtual void FillCircleWithBrightness(const PointI &c, int r, int brightnessQp8) = 0;
+    virtual void SetFontScale(int sx, int sy) = 0;
 
     // from Adafruit_GFX
     virtual int16_t width() const = 0;

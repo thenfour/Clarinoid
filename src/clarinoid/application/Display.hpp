@@ -209,6 +209,7 @@ struct _CCDisplay : IDisplay
 
         auto s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput);
         // if (s.length() > 0)
+        if (!pMenuApp || pMenuApp->AllowOverlayIndicators())
         {
             ClearState();
             // int16_t x, y;
@@ -288,11 +289,24 @@ struct _CCDisplay : IDisplay
 
     virtual void PrintInvertedText(const String &str, bool isInverted = true) override
     {
+        PrintInvertedText(str, RectI::Construct(0, 0, 0, 0), isInverted);
+    }
+
+    virtual void PrintInvertedText(const String &str, const RectI &padding, bool isInverted = true) override
+    {
         if (isInverted)
         {
-            int16_t x, y;
-            uint16_t w, h;
-            mDisplay.getTextBounds(str, mDisplay.getCursorX(), mDisplay.getCursorY(), &x, &y, &w, &h);
+            int16_t x = mDisplay.getCursorX() - padding.x;
+            int16_t y = mDisplay.getCursorY() - padding.y;
+            int16_t w = 0;
+            int16_t h = 0;
+            {
+                int16_t tx, ty;
+                uint16_t tw, th;
+                mDisplay.getTextBounds(str, mDisplay.getCursorX(), mDisplay.getCursorY(), &tx, &ty, &tw, &th);
+                w = tw + padding.width + padding.x;
+                h = th + padding.height + padding.y;
+            }
             mDisplay.fillRect(x, y, w, h, SSD1306_WHITE);
             mDisplay.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
         }
@@ -506,6 +520,10 @@ struct _CCDisplay : IDisplay
     virtual int16_t getCursorY() const override
     {
         return mDisplay.getCursorY();
+    }
+    virtual void SetFontScale(int sx, int sy) override
+    {
+        mDisplay.setTextSize(sx, sy);
     }
     virtual void setTextWrap(bool w) override
     {

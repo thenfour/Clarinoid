@@ -426,6 +426,7 @@ struct LoopEvent_FullState
         mv.mSynthPatchB = mSynthPatchBId;
         mv.mHarmPatch = mHarmPatchId;
         mv.mIsNoteCurrentlyMuted = false;
+        mv.mVoiceSource = VoiceSource::Looper;
         mv.mMidiNote = mMidiNote;
         mv.mVelocity = mVelocity;
     }

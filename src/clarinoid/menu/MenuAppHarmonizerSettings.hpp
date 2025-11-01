@@ -111,35 +111,49 @@ struct HarmVoiceSettingsApp
         this // capture
     };
 
-    IntSettingItem mMinOutpNote = {"Min note",
-                                   NumericEditRangeSpec<int>{0, 127},
-                                   Property<int>{
-                                       [](void *cap) FLASHMEM {
-                                           auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           return (int)pThis->EditingVoice().mMinOutpNote;
-                                       }, // getter
-                                       [](void *cap, const int &val) {
-                                           auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           pThis->EditingVoice().mMinOutpNote = val;
-                                       },   // setter
-                                       this // capture val
-                                   },
-                                   AlwaysEnabled};
+    IntSettingItem mMinOutpNote = {
+        "Min note",
+        NumericEditRangeSpec<int>{0, 127},
+        Property<int>{
+            [](void *cap) FLASHMEM {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                return (int)pThis->EditingVoice().mMinOutpNote;
+            }, // getter
+            [](void *cap, const int &val) {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                pThis->EditingVoice().mMinOutpNote = val;
+            },   // setter
+            this // capture val
+        },
+        [](void *cap, int val) FLASHMEM -> String // value formatter.
+        {
+            return MidiNote{(uint8_t(val))}.ToStringWithOctave(); //
+        },
+        AlwaysEnabled,
+        this // capture
+    };
 
-    IntSettingItem mMaxOutpNote = {"Max note",
-                                   NumericEditRangeSpec<int>{0, 127},
-                                   Property<int>{
-                                       [](void *cap) FLASHMEM {
-                                           auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           return (int)pThis->EditingVoice().mMaxOutpNote;
-                                       }, // getter
-                                       [](void *cap, const int &val) {
-                                           auto *pThis = (HarmVoiceSettingsApp *)cap;
-                                           pThis->EditingVoice().mMaxOutpNote = val;
-                                       },   // setter
-                                       this // capture val
-                                   },
-                                   AlwaysEnabled};
+    IntSettingItem mMaxOutpNote = {
+        "Max note",
+        NumericEditRangeSpec<int>{0, 127},
+        Property<int>{
+            [](void *cap) FLASHMEM {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                return (int)pThis->EditingVoice().mMaxOutpNote;
+            }, // getter
+            [](void *cap, const int &val) {
+                auto *pThis = (HarmVoiceSettingsApp *)cap;
+                pThis->EditingVoice().mMaxOutpNote = val;
+            },   // setter
+            this // capture val
+        },
+        [](void *cap, int val) FLASHMEM -> String // value formatter.
+        {
+            return MidiNote{(uint8_t(val))}.ToStringWithOctave(); //
+        },
+        AlwaysEnabled,
+        this // capture
+    };
 
     EnumSettingItem<NoteOOBBehavior> mOOBBehavior = {"OOB behav",
                                                      gNoteOOBBehaviorInfo,

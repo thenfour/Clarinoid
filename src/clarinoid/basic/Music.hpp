@@ -12,7 +12,9 @@ namespace clarinoid
 inline float MIDINoteToFreq(float x)
 {
     float a = 440;
-    return (a / 32.0f) * fast::pow(2.0f, (((float)x - 9.0f) / 12.0f));
+    constexpr float kOneTwelfth = 1.0f / 12.0f;
+    constexpr float kOneThirtySecond = 1.0f / 32.0f;
+    return (a * kOneThirtySecond) * fast::pow(2.0f, (((float)x - 9.0f) * kOneTwelfth));
 }
 
 ////////////////////////////////////////////////////
@@ -75,7 +77,7 @@ EnumInfo<Note> gNoteInfo("Note", gNoteItems);
 class MidiNote
 {
     uint8_t mValue = 0;     // 0-127 midi note value
-    uint8_t mNoteIndex = 0; // 0-11 gNote index
+    uint8_t mNoteIndex = 0; // 0-11 gNote index (aka pitch class)
     uint8_t mOctave = 0;
 
   public:
@@ -855,6 +857,10 @@ struct Scale
     String ToString() const
     {
         return String(gNotes[(uint8_t)mRootNoteIndex].mName) + " " + GetScaleFlavor().mLongName;
+    }
+    String ToShortString() const
+    {
+        return String(gNotes[(uint8_t)mRootNoteIndex].mName) + " " + GetScaleFlavor().mShortName;
     }
 };
 

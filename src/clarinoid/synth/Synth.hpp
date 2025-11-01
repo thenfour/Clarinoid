@@ -3,11 +3,6 @@
 
 #include <clarinoid/basic/Basic.hpp>
 
-namespace clarinoid
-{
-static constexpr float pitchBendRange = 2.0f;
-} // namespace clarinoid
-
 #ifdef CLARINOID_MODULE_TEST
 #include "MockSynthVoice.hpp"
 #else

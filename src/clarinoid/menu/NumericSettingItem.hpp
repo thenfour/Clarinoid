@@ -128,15 +128,18 @@ template <typename T, typename TEditor>
 struct NumericSettingItem : public ISettingItem
 {
     String mName;
-    TEditor mEditor;
     Property<T> mBinding;
     Property<bool> mIsEnabled;
+    typename cc::function<String(void *, int)>::ptr_t mValueFormatter = nullptr;
+    void *mpCapture = nullptr;
+
+    TEditor mEditor;
 
     NumericSettingItem(const String &name,
                        const NumericEditRangeSpec<T> &range_,
                        const Property<T> &binding,
                        const Property<bool> &isEnabled)
-        : mName(name), mEditor(range_, binding), mBinding(binding), mIsEnabled(isEnabled)
+        : mName(name), mBinding(binding), mIsEnabled(isEnabled), mEditor(range_, binding)
     {
     }
 
@@ -146,7 +149,12 @@ struct NumericSettingItem : public ISettingItem
                        typename cc::function<String(void *, T)>::ptr_t mValueFormatter,
                        const Property<bool> &isEnabled,
                        void *cap)
-        : mName(name), mEditor(range_, binding, mValueFormatter, cap), mBinding(binding), mIsEnabled(isEnabled)
+        : mName(name),                                   //
+          mBinding(binding),                             //
+          mIsEnabled(isEnabled),                         //
+          mValueFormatter(mValueFormatter),              //
+          mpCapture(cap),                                //
+          mEditor(range_, binding, mValueFormatter, cap) //
     {
     }
 
@@ -156,6 +164,10 @@ struct NumericSettingItem : public ISettingItem
     }
     virtual String GetValueString(size_t multiIndex)
     {
+        if (mValueFormatter)
+        {
+            return mValueFormatter(mpCapture, mBinding.GetValue());
+        }
         return String(mBinding.GetValue());
     }
     virtual SettingItemType GetType(size_t multiIndex)

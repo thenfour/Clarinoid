@@ -4,9 +4,18 @@
 #include <clarinoid/Gui/Bitmaps.hpp>
 #include "Display.hpp"
 #include "Metronome.hpp"
+#include <clarinoid/harmonizer/MusicalVoice.hpp>
 
 namespace clarinoid
 {
+struct SynthVoiceState
+{
+    bool mIsPlaying = false;
+    MidiNote mNote;
+    int16_t mSynthPatchIndex;
+    VoiceSource mVoiceSource;
+};
+
 struct ISysInfoProvider
 {
     virtual uint8_t ISysInfoProvider_GetPolyphony() = 0;
@@ -14,6 +23,7 @@ struct ISysInfoProvider
     virtual float ISysInfoProvider_GetTaskManagerCPUUsage() = 0; // in % (0-100)
     virtual float ISysInfoProvider_GetPeak() = 0;                // in amplitude.
     virtual MidiNote ISysInfoProvider_GetNote() = 0;
+    virtual std::array<SynthVoiceState, MAX_MUSICAL_VOICES> ISysInfoProvider_GetVoiceState() = 0;
     virtual float ISysInfoProvider_GetTempo() = 0; // bpm
     virtual Metronome *ISysInfoProvider_GetMetronome() = 0;
     virtual float ISysInfoProvider_GetPitchBendN11() = 0;
@@ -70,7 +80,7 @@ struct DefaultHud : IHudProvider
             std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
         int icpu = (int)std::ceil(cpu);
         mDisplay.print(String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " + icpu + "% " + dbpeak + " " +
-                       mpInfo->ISysInfoProvider_GetNote().ToString());
+                       mpInfo->ISysInfoProvider_GetNote().ToStringWithOctave());
 
         String bpmStr = String(CHARSTR_QEQ) + (int)std::round(mpInfo->ISysInfoProvider_GetTempo());
         auto rcbpm = mDisplay.GetTextBounds(bpmStr);

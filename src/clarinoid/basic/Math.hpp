@@ -252,16 +252,17 @@ inline void FillBufferWithConstant(int16_t val, int16_t *out)
 // multiply 2 buffers: arm_mult_q15 <-- this is actually a very interesting function, scaling everything, multiplying as
 // a vector, and saturating, with possibility of scaling to allow >1 scales
 
-
 // multiply(scale) buffer by constant
 // https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicScale.html#ga5e769c8e22da173674c6abca7291e713
-inline void BufferScaleInPlace(float* buf, float scale) {
+inline void BufferScaleInPlace(float *buf, float scale)
+{
     arm_scale_f32(buf, scale, buf, AUDIO_BLOCK_SAMPLES);
 }
 
 // add(offset) buffer by constant
 // https://arm-software.github.io/CMSIS_5/DSP/html/group__BasicScale.html#ga5e769c8e22da173674c6abca7291e713
-inline void BufferOffsetInPlace(float* buf, float offset) {
+inline void BufferOffsetInPlace(float *buf, float offset)
+{
     arm_offset_f32(buf, offset, buf, AUDIO_BLOCK_SAMPLES);
 }
 
@@ -298,6 +299,11 @@ inline bool FloatLessThanOrEquals(float lhs, float rhs, float eps = FloatEpsilon
 inline bool FloatIsAbove(float lhs, float rhs, float eps = FloatEpsilon)
 {
     return lhs > (rhs + eps);
+}
+
+inline float FloatDistance(float a, float b)
+{
+    return fabs(a - b);
 }
 
 template <typename T>
