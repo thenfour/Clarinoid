@@ -30,24 +30,20 @@ struct PerformancePatch
 
     float mBPM = 104.0f;
 
-    int8_t mTranspose = DEFAULT_TRANSPOSE;
-
     GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Chosen;
     Scale mGlobalScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic};  // you can set this in menus
     Scale mDeducedScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic}; // this is automatically populated always
 
+    int8_t mTranspose = DEFAULT_TRANSPOSE;
+
     int16_t mSynthPresetA = 0;
-    bool mSynthAEnabled = true;
     float mSynthAGain = 1.0f;
     int16_t mSynthATranspose = 0;
 
     int16_t mSynthPresetB = -1; // -1 = mute, no patch.
-    bool mSynthBEnabled = true;
-    float mSynthBGain = 1.0f;
     int16_t mSynthBTranspose = 0;
-
+    float mSynthBGain = 1.0f;
     int16_t mHarmPreset = 0;
-    bool mHarmEnabled = false;
     float mHarmGain = 1.0f;
 
     float mSynthStereoSpread = 0.35f; // -1 to 1
@@ -56,14 +52,17 @@ struct PerformancePatch
     float mMasterGain = 1.0f;
 
     float mMasterFXGain = 1.0f;
+
+    bool mSynthAEnabled = true;
+    bool mSynthBEnabled = true;
+    bool mHarmEnabled = false;
     bool mMasterFXEnable = true;
+    bool mReverbEnabled = true;
+    bool mDelayEnabled = true;
 
     float mReverbGain = DecibelsToLinear(-3.0f);
     float mReverbDamping = 0.6f;
     float mReverbSize = 0.6f;
-    bool mReverbEnabled = true;
-
-    bool mDelayEnabled = true;
     float mDelayGain = DecibelsToLinear(-3.0f);
 
     TimeWithBasis mDelayTime;

@@ -1472,8 +1472,8 @@ struct SynthSettings
         mPresets[i].mModulations[1].SetScaleN11_Legacy(0.16f);
         ++i;
 
-        InitBassoonoidPreset(
-            mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
+        // InitBassoonoidPreset(
+        //     mPresets[SynthPresetID_Bassoonoid], "Diode-ks7-q15", ClarinoidFilterType::LP_Diode, 0.7f, 0.15f, 15000);
 
         // InitPWMLead2(mPresets[SynthPresetID_PWMMono]);
         // InitCrystalSyncLead(mPresets[SynthPresetID_CrystalSync]);

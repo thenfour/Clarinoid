@@ -32,6 +32,7 @@
 #include "clarinoid2ControlMapper.hpp"
 #include "clarinoid2MusicalStateTask.hpp"
 #include "clarinoid2DebugDisplayApp.hpp"
+#include "clarinoid2DemoApp.hpp"
 #include "clarinoid2RhythmGoniometer.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
@@ -47,6 +48,11 @@ namespace clarinoid
 // global for debugging / crash handling purposes
 CCAdafruitSSD1306 gDisplay = {128, 64, &SPI, 9 /*DC*/, 8 /*RST*/, 10 /*CS*/, 10 * 1000000UL};
 
+// global app settings instance; use gClarinoidDmaMem.gAppSettingsBuffer for backing and instantiate it using placement
+// new.
+AppSettings *gpAppSettings = reinterpret_cast<AppSettings *>(gClarinoidDmaMem.gAppSettingsBuffer);
+StaticInit gAppSettingsInit([]() { new (gpAppSettings) AppSettings(); });
+
 struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 {
     static constexpr size_t breathMappingIndex = 0;
@@ -58,7 +64,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     Clarinoid2ControlMapper mControlMapper;
     _CCDisplay mDisplay;
     DefaultHud mHud;
-    AppSettings mAppSettings;
+    // AppSettings mAppSettings;
 
     MusicalStateTask mMusicalStateTask;
 
@@ -69,6 +75,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     SynthPatchMenuApp mSynthPatchApp;
     // AudioMonitorApp mAudioMonitorApp;
     DisplayTestApp mDisplayTestApp;
+    DemoApp mDemoApp{mDisplay, mMusicalStateTask};
     MetronomeSettingsApp mMetronomeSettingsApp;
     // HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
@@ -91,7 +98,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         : mLed(this),                                                                                    //
           mDisplay(gDisplay),                                                                            //
           mHud(mDisplay, this),                                                                          //
-          mMusicalStateTask(&mDisplay, &mAppSettings, &mInputDelegator, &mControlMapper),                //
+          mMusicalStateTask(&mDisplay, gpAppSettings, &mInputDelegator, &mControlMapper),                //
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome), //
           mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),                                 //
           mSystemSettingsApp(
@@ -113,7 +120,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
           mSynthPatchApp(mDisplay), //
           mDisplayTestApp(mDisplay),
           // mAudioMonitorApp(mDisplay), //
-          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
+          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, gpAppSettings, mDisplay),
           // mHarmVoiceSettingsApp(mDisplay, mMusicalStateTask.mMusicalState.mLooper.mHarmonizer), //
           mHarmPatchApp(mDisplay),                                       //
           mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome),    //
@@ -198,14 +205,14 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     }
     virtual AppSettings *ISysInfoProvider_GetSettings() override
     {
-        return &mAppSettings;
+        return gpAppSettings;
     }
 
     void AddControlMapping(const ControlMapping &mapping)
     {
         if (mControlMappingInitIndex < MAX_CONTROL_MAPPINGS)
         {
-            mAppSettings.mControlMappings[mControlMappingInitIndex++] = mapping;
+            gpAppSettings->mControlMappings[mControlMappingInitIndex++] = mapping;
         }
     }
 
@@ -235,10 +242,13 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mMPR121ConfigApp,
             &mScaleDetectorApp,
             &mGoniometerApp,
+            &mDemoApp,
             &mBigPerfDisplayApp,
         };
 
-        mInputDelegator.Init(&mAppSettings, &mControlMapper, &mMusicalStateTask.mMetronome);
+        mInputDelegator.Init(gpAppSettings, &mControlMapper, &mMusicalStateTask.mMetronome);
+
+        auto &mAppSettings = *gpAppSettings;
 
         mAppSettings.mControlMappings[breathMappingIndex] = ControlMapping::MakeUnipolarMapping(
             PhysicalControl::Breath, ControlMapping::Function::Breath, 0.102f, 0.35f);

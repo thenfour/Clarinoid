@@ -14,6 +14,7 @@ struct DMAClarinoidMemory
 {
     uint8_t gLoopStationBuffer[LOOPER_MEMORY_TOTAL_BYTES];
     uint8_t gLoopStationTempBuffer[LOOPER_TEMP_BUFFER_BYTES];
+    uint8_t gAppSettingsBuffer[sizeof(AppSettings)];
 #ifndef CLARINOID_MODULE_TEST
     audio_block_t gAudioMemory[AUDIO_MEMORY_TO_ALLOCATE];
 #endif // CLARINOID_MODULE_TEST
