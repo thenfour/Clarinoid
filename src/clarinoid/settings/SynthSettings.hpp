@@ -592,7 +592,7 @@ struct SynthPreset
 
     ClarinoidFilterType mFilterType = ClarinoidFilterType::LP_Moog4;
     float mFilterQ = 0.02f;
-    float mFilterMaxFreq = 16000.0f;
+    float mFilterMaxFreq = 22000.0f;
     float mFilterMinFreq = 0.0f;
     float mFilterSaturation = 0.2f;
     float mFilterKeytracking = 0.0f; // 0 = no keytracking affect. 1.0 = full effect applied, -1.0 = negative effect
@@ -1105,6 +1105,8 @@ struct SynthSettings
         p.mOsc[1].mPulseWidth = pulseWidth;
         p.mOsc[1].mGain = DecibelsToLinear(-20.0f);
 
+        p.mFilterType = ClarinoidFilterType::LP_K35;
+
         p.mSync = true;
         p.mOsc[0].mGain = 0.0f;
         p.mOsc[2].mGain = 0.0f;
@@ -1306,11 +1308,11 @@ struct SynthSettings
         p.mOsc[0].mGain = DecibelsToLinear(-6.0f);
 
         p.mOsc[1].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[1].mFreqMultiplier = 2;
+        p.mOsc[1].mFreqMultiplier = 0.5f;
         p.mOsc[1].mGain = 0;
 
         p.mOsc[2].mWaveform = OscWaveformShape::Sine;
-        p.mOsc[2].mFreqMultiplier = 3;
+        p.mOsc[2].mFreqMultiplier = 10;
         p.mOsc[2].mGain = 0;
 
         // set up a breath modulation for them.
@@ -1360,15 +1362,18 @@ struct SynthSettings
         CCASSERT(i == SynthPresetID_WobblyCat);
         InitWobblyCat(mPresets[i++]);
 
+        CCASSERT(i == SynthPresetID_PulseSync);
+        InitSynccyLead(mPresets[i++], "Square Sync", OscWaveformShape::Pulse, 0.5f);
+
+        InitSynccyLead(mPresets[i++], "Saw Sync", OscWaveformShape::SawSync, 0.5f);
+
         InitDetunePWMLead(mPresets[i++]);
         InitCloudsStars(mPresets[i++]);
         InitCinematicTagPatch(mPresets[i++], "Cinematic", 0.06f, 0.02f, -0.08f);
 
         InitBasicSine(mPresets[i++]);
 
-        InitSynccyLead(mPresets[i++], "Saw Sync", OscWaveformShape::SawSync, 0.5f);
         // InitSynccyLead(mPresets[i++], "Pulse Sync", OscWaveformShape::Pulse, 0.1f);
-        InitSynccyLead(mPresets[i++], "Square Sync", OscWaveformShape::Pulse, 0.5f);
         // InitPWMLeadStack(mPresets[i++]);
         // InitCrystalFieldsPatch(mPresets[i++]);
         // InitDetunedLeadPreset("Detuned pulse 08", OscWaveformShape::Pulse, 0.08f, mPresets[i++]);

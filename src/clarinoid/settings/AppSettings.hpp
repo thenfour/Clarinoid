@@ -438,12 +438,24 @@ struct AppSettings
     static void InitFMPerf(PerformancePatch &p)
     {
         p.mName = "FM test";
-        p.mSynthStereoSpread = 0.9f;
+        p.mSynthStereoSpread = 0.7f;
 
         p.mSynthPresetA = SynthPresetID_FMTest;
         p.mSynthAGain = DecibelsToLinear(-3);
 
         p.mSynthPresetB = SynthPresetID_FMTest;
+        p.mSynthBGain = DecibelsToLinear(-3);
+    }
+
+    static void InitSyncPerf(PerformancePatch &p)
+    {
+        p.mName = "Sync doubler";
+        p.mSynthStereoSpread = 0.7f;
+
+        p.mSynthPresetA = SynthPresetID_PulseSync;
+        p.mSynthAGain = DecibelsToLinear(-3);
+
+        p.mSynthPresetB = SynthPresetID_PulseSync;
         p.mSynthBGain = DecibelsToLinear(-3);
     }
 
@@ -481,6 +493,7 @@ struct AppSettings
         InitSilkSuspendersPerf(mPerformancePatches[i++]);
 
         InitFMPerf(mPerformancePatches[i++]);
+        InitSyncPerf(mPerformancePatches[i++]);
 
         // InitSoaringGuitarPerf(mPerformancePatches[i++]);
         // InitCaveBouncer(mPerformancePatches[i++]);

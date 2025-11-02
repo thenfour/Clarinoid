@@ -25,7 +25,7 @@ struct NumericEditor : ISettingItemEditor
 
     virtual void DrawValue(T val, T oldVal) = 0;
     virtual void DrawValue(T val) = 0;
-    virtual String FormatValue(int n) = 0;
+    virtual String FormatValue(T n) = 0;
 
     virtual void SetupEditing(ISettingItemEditorActions *papi, int x, int y)
     {
@@ -103,7 +103,7 @@ struct IntEditor : NumericEditor<int>
         {
             return mValueFormatter(mpCapture, n);
         }
-        return String("") + n;
+        return String(n);
     }
 
     virtual void DrawValue(int n, int oldVal) override
@@ -126,7 +126,7 @@ struct FloatEditor : NumericEditor<float>
     {
     }
 
-    virtual String FormatValue(int n) override
+    virtual String FormatValue(float n) override
     {
         return String(n, 3);
     }
