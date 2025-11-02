@@ -15,8 +15,8 @@ enum class ScrollbarOrientation : uint8_t
 
 struct ScrollbarOverlay
 {
-    static constexpr int kAnimDurationMs = 300;
-    static constexpr int kVisibleDurationMs = 600;
+    static constexpr int kAnimDurationMs = 450;
+    static constexpr int kVisibleDurationMs = 800;
     static constexpr float kMinimumHandlePixels = 8.0f;
     static constexpr float kTrackMargin = 0; // 1.0f;
     static constexpr float kTrackThickness = 6.0f;
@@ -30,6 +30,7 @@ struct ScrollbarOverlay
     Stopwatch mTimer;
     float mStartFraction = 0.0f;
     float mTargetFraction = 0.0f;
+    float mEaseAmount = 1.0f; // 0 = linear, 1 = smoothstep
 
     explicit ScrollbarOverlay(ScrollbarOrientation orientation = ScrollbarOrientation::Vertical)
         : mOrientation(orientation)
@@ -46,6 +47,11 @@ struct ScrollbarOverlay
     void SetOrientation(ScrollbarOrientation orientation)
     {
         mOrientation = orientation;
+    }
+
+    void SetEaseAmount(float easeAmount)
+    {
+        mEaseAmount = Clamp(easeAmount, 0.0f, 1.0f);
     }
 
     // stepDirection = -1, 0, +1 to indicate how we got to this new index.
@@ -163,7 +169,15 @@ struct ScrollbarOverlay
         }
         int clamped = ClampInclusive(elapsedMs, 0, kAnimDurationMs);
         float t = (float)clamped / (float)kAnimDurationMs;
-        return mStartFraction + (mTargetFraction - mStartFraction) * t;
+        float easedT = ApplyEasing(t);
+        return mStartFraction + (mTargetFraction - mStartFraction) * easedT;
+    }
+
+    float ApplyEasing(float t) const
+    {
+        float smooth = SmootherStep(t);
+        // return Lerp(t, smooth, mEaseAmount);
+        return Lerp(smooth, t, t); // linear at beginning, smooth at end
     }
 
     static void RenderVertical(IDisplay &display,

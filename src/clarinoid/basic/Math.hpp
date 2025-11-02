@@ -348,14 +348,26 @@ static T ClampInclusive(T x, T minInclusive, T maxInclusive)
     return x;
 }
 
-// static float Lerp(float a, float b, float t)
-// {
-//   return a * (1.0f - t) + b * t;
-// }
+static inline float Lerp(float a, float b, float t)
+{
+    return a * (1.0f - t) + b * t;
+}
+
+static inline float SmoothStep(float t)
+{
+    t = Clamp01(t);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+static inline float SmootherStep(float t)
+{
+    t = Clamp01(t);
+    return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+}
 
 // remap so src min to max become [0-1]. results are NOT clamped.
 // if min-max == 0, just return x to avoid bad behaviors
-static float RemapTo01(float x, float xmin, float xmax)
+static inline float RemapTo01(float x, float xmin, float xmax)
 {
     if (FloatEquals(xmax - xmin, 0.0f))
         return x;
