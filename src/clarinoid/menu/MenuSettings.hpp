@@ -1,6 +1,7 @@
 #pragma once
 
 #include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/application/ScrollbarOverlay.hpp>
 #include "MenuAppBase.hpp"
 #include "MenuListControl.hpp"
 
@@ -364,11 +365,15 @@ struct SettingsMenuState
 SettingsMenuState gSettingsMenuNavStack[SETTINGS_STACK_MAX_DEPTH];
 int gSettingsMenuNavDepth = 0;
 
+static constexpr size_t xxaenbao9netub = sizeof(SettingsMenuState);
+static constexpr size_t xxaenbaonetub = sizeof(gSettingsMenuNavStack);
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // abstract class for specific settings apps
 struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
 {
     ISettingItemEditor *mpCurrentEditor = nullptr;
+    ScrollbarOverlay mScrollbarOverlay{ScrollbarOrientation::Vertical};
 
     SettingsMenuApp(IDisplay &d) : DisplayApp(d)
     {
@@ -384,6 +389,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         gSettingsMenuNavDepth = 0;
         gSettingsMenuNavStack[0].focusedItem = 0;
         gSettingsMenuNavStack[0].pList = GetRootSettingsList();
+        mScrollbarOverlay.Reset();
         DisplayApp::DisplayAppOnSelected();
     }
 
@@ -470,6 +476,11 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
             itemToRender = (itemToRender + 1) % state.pList->Count();
         }
 
+        if (!mpCurrentEditor)
+        {
+            mScrollbarOverlay.Render(mDisplay, mDisplay.GetClientRect(), itemsToRender, state.pList->Count());
+        }
+
         if (mpCurrentEditor)
         {
             mpCurrentEditor->Render();
@@ -505,9 +516,11 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
     {
         SettingsMenuState &state = gSettingsMenuNavStack[gSettingsMenuNavDepth];
 
+        int encoderDelta = mEnc.GetIntDelta();
+
         if (mpCurrentEditor)
         {
-            mpCurrentEditor->Update(mBack.IsNewlyPressed(), mOK.IsNewlyPressed(), mEnc.GetIntDelta());
+            mpCurrentEditor->Update(mBack.IsNewlyPressed(), mOK.IsNewlyPressed(), encoderDelta);
             return;
         }
 
@@ -515,10 +528,17 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
         if (state.pList->Count() <= 1)
         {
             state.focusedItem = 0;
+            mScrollbarOverlay.Reset();
         }
         else
         {
-            state.focusedItem = AddConstrained(state.focusedItem, mEnc.GetIntDelta(), 0, state.pList->Count() - 1);
+            int previousFocused = state.focusedItem;
+            state.focusedItem = AddConstrained(state.focusedItem, encoderDelta, 0, state.pList->Count() - 1);
+            if (encoderDelta != 0)
+            {
+                mScrollbarOverlay.TriggerMovement(
+                    previousFocused, state.focusedItem, state.pList->Count(), encoderDelta);
+            }
         }
 
         // enter
@@ -548,6 +568,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
                     gSettingsMenuNavDepth++;
                     gSettingsMenuNavStack[gSettingsMenuNavDepth].pList = focusedItem->GetSubmenu(multiIndex);
                     gSettingsMenuNavStack[gSettingsMenuNavDepth].focusedItem = 0;
+                    mScrollbarOverlay.Reset();
                     break;
                 case SettingItemType::Trigger:
                     focusedItem->Trigger(multiIndex);
@@ -562,10 +583,12 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
             if (gSettingsMenuNavDepth == 0)
             {
                 GoToFrontPage();
+                mScrollbarOverlay.Reset();
             }
             else
             {
                 gSettingsMenuNavDepth--;
+                mScrollbarOverlay.Reset();
             }
         }
     }

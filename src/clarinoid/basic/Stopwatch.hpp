@@ -1,69 +1,83 @@
 
 #pragma once
 
+#include <type_traits>
+
 namespace clarinoid
 {
-struct TimeSpan
+// int32_t micros...
+// max 32 bit signed int = 2147483647 micros
+// milliseconds = 2147483.647
+// seconds = 2147.483647
+// minutes = 35.79139411666667
+// so 64 bit is needed for longer timespans.
+template <typename T> // T must be signed integral type.
+struct TimeSpanT
 {
+    static_assert(std::is_integral<T>::value, "TimeSpanT requires integral type");
+    static_assert(std::is_signed<T>::value, "TimeSpanT requires signed type");
+
+    using underlying_type = T;
+
   private:
-    int64_t mMicros =
+    underlying_type mMicros =
         0; // signed, because it simplifies math, less error-prone, and is still an enormous amount of time.
   public:
-    TimeSpan()
+    TimeSpanT()
     {
     }
-    explicit TimeSpan(int64_t duration_micros) : mMicros(duration_micros)
+    explicit TimeSpanT(underlying_type duration_micros) : mMicros(duration_micros)
     {
     }
-    TimeSpan(const TimeSpan &rhs) = default;
-    TimeSpan(TimeSpan &&rhs) = default;
+    TimeSpanT(const TimeSpanT &rhs) = default;
+    TimeSpanT(TimeSpanT &&rhs) = default;
 
-    TimeSpan &operator=(const TimeSpan &rhs)
+    TimeSpanT &operator=(const TimeSpanT &rhs)
     {
         mMicros = rhs.mMicros;
         return *this;
     }
-    TimeSpan &operator-=(const TimeSpan &rhs)
+    TimeSpanT &operator-=(const TimeSpanT &rhs)
     {
         mMicros -= rhs.mMicros;
         return *this;
     }
-    TimeSpan &operator+=(const TimeSpan &rhs)
+    TimeSpanT &operator+=(const TimeSpanT &rhs)
     {
         mMicros += rhs.mMicros;
         return *this;
     }
 
-    bool operator>(const TimeSpan &rhs) const
+    bool operator>(const TimeSpanT &rhs) const
     {
         return mMicros > rhs.mMicros;
     }
-    bool operator>=(const TimeSpan &rhs) const
+    bool operator>=(const TimeSpanT &rhs) const
     {
         return mMicros >= rhs.mMicros;
     }
-    bool operator<(const TimeSpan &rhs) const
+    bool operator<(const TimeSpanT &rhs) const
     {
         return mMicros < rhs.mMicros;
     }
-    bool operator<=(const TimeSpan &rhs) const
+    bool operator<=(const TimeSpanT &rhs) const
     {
         return mMicros <= rhs.mMicros;
     }
-    bool operator==(const TimeSpan &rhs) const
+    bool operator==(const TimeSpanT &rhs) const
     {
         return mMicros == rhs.mMicros;
     }
-    bool operator!=(const TimeSpan &rhs) const
+    bool operator!=(const TimeSpanT &rhs) const
     {
         return mMicros != rhs.mMicros;
     }
 
-    int64_t ElapsedMicros() const
+    underlying_type ElapsedMicros() const
     {
         return mMicros;
     }
-    int64_t ElapsedMillisI() const
+    underlying_type ElapsedMillisI() const
     {
         return mMicros / 1000;
     }
@@ -75,7 +89,7 @@ struct TimeSpan
     }
     float ElapsedBeats(float bpm) const
     {
-        return (float)(double(mMicros) * bpm / 60000000);
+        return (float(mMicros) * bpm / 60000000);
     }
 
     bool IsZero() const
@@ -87,31 +101,33 @@ struct TimeSpan
         return mMicros != 0;
     }
 
-    static TimeSpan FromMicros(int64_t m)
+    static TimeSpanT FromMicros(underlying_type m)
     {
-        return TimeSpan{m};
+        return TimeSpanT{m};
     }
-    static TimeSpan FromMillis(int64_t m)
+    static TimeSpanT FromMillis(underlying_type m)
     {
-        return TimeSpan{m * 1000};
+        return TimeSpanT{m * 1000};
     }
-    static TimeSpan FromBPM(float bpm)
+    static TimeSpanT FromBPM(float bpm)
     {
-        return FromMillis(int64_t(60000.0f / bpm));
+        return FromMillis(underlying_type(60000.0f / bpm));
     }
-    static TimeSpan FromBeats(float beats, float bpm)
+    static TimeSpanT FromBeats(float beats, float bpm)
     {
-        return FromMillis(int64_t(beats * 60000.0f / bpm));
+        return FromMillis(underlying_type(beats * 60000.0f / bpm));
     }
-    static TimeSpan FromFPS(float bpm)
+    static TimeSpanT FromFPS(float bpm)
     {
-        return FromMillis(int64_t(1000.0f / bpm));
+        return FromMillis(underlying_type(1000.0f / bpm));
     }
-    static TimeSpan Zero()
+    static TimeSpanT Zero()
     {
-        return TimeSpan{};
+        return TimeSpanT{};
     }
 };
+
+using TimeSpan = TimeSpanT<int64_t>;
 
 TimeSpan operator-(const TimeSpan &a, const TimeSpan &b)
 {

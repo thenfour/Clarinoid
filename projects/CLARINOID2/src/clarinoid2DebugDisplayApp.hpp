@@ -270,8 +270,7 @@ struct DebugDisplayApp : SettingsMenuApp
     LabelSettingItem mBreath = {
         Property<String>{[](void *cap) FLASHMEM {
                              DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-                             return (String)(
-                                 (String("Breath: ") + int(pThis->mControls.mBreath.CurrentValue01() * 1000)));
+                             return ((String("Breath: ") + int(pThis->mControls.mBreath.CurrentValue01() * 1000)));
                          },
                          this},
         AlwaysEnabled};
@@ -493,12 +492,13 @@ struct MPR121ConfigApp : SettingsMenuApp
     ElectrodeStatusQuerier mLHStatusQuerier;
     ElectrodeStatusQuerier mRHStatusQuerier;
 
-    MPR121ConfigApp(IDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst) :
-        SettingsMenuApp(d),
-        mControls(c),
-        mMusicalStateTask(mst),
-        mLHStatusQuerier(c.mLHMPR),
-        mRHStatusQuerier(c.mRHMPR)
+    MPR121ConfigApp(IDisplay &d, Clarinoid2ControlMapper &c, MusicalStateTask &mst)
+        :                             //
+          SettingsMenuApp(d),         //
+          mControls(c),               //
+          mMusicalStateTask(mst),     //
+          mLHStatusQuerier(c.mLHMPR), //
+          mRHStatusQuerier(c.mRHMPR)  //
     {
     }
 
@@ -567,14 +567,19 @@ struct MPR121ConfigApp : SettingsMenuApp
         int filteredY;
     };
 
-    static ElectrodeDisplayData GetElectrodeDisplayData(float baselineValue01, float filteredData01, float touchThreshold01, float releaseThreshold01, int displayHeight)
+    static ElectrodeDisplayData GetElectrodeDisplayData(float baselineValue01,
+                                                        float filteredData01,
+                                                        float touchThreshold01,
+                                                        float releaseThreshold01,
+                                                        int displayHeight)
     {
         ElectrodeDisplayData data{};
 
         // 1) Identify the largest threshold in 0–1 space
         float maxThreshold = std::max(touchThreshold01, releaseThreshold01);
         // Safety clamp
-        if (maxThreshold < 1e-6f) {
+        if (maxThreshold < 1e-6f)
+        {
             maxThreshold = 1e-6f;
         }
 
@@ -589,14 +594,15 @@ struct MPR121ConfigApp : SettingsMenuApp
         minVal = std::min(minVal, filteredVal);
         maxVal = std::max(maxVal, filteredVal);
 
-        // Optionally, you might also consider global clamp to [0..1], if the data 
+        // Optionally, you might also consider global clamp to [0..1], if the data
         // never meaningfully goes negative or above 1. But that's project-dependent:
         // minVal = std::max(0.0f, minVal);
         // maxVal = std::min(1.0f, maxVal);
 
         // 4) Prevent zero or negative range
         float range = maxVal - minVal;
-        if (range < 1e-6f) {
+        if (range < 1e-6f)
+        {
             range = 1e-6f; // avoid divide-by-zero
         }
 
@@ -607,33 +613,34 @@ struct MPR121ConfigApp : SettingsMenuApp
 
         // Helper lambda to map our 0–1 values into the display’s Y coords
         auto valueToY = [&](float val) -> int {
-            float y = static_cast<float>(displayHeight)
-                    - ((val - minVal) * scale);
+            float y = static_cast<float>(displayHeight) - ((val - minVal) * scale);
             // Round and cast to int
             return static_cast<int>(std::lround(y));
         };
 
         // 6) Calculate each display Y value
-        data.baselineY            = valueToY(baselineVal);
+        data.baselineY = valueToY(baselineVal);
         data.biggestThresholdYMin = valueToY(baselineVal - maxThreshold);
         data.biggestThresholdYMax = valueToY(baselineVal + maxThreshold);
-        data.filteredY            = valueToY(filteredVal);
+        data.filteredY = valueToY(filteredVal);
 
         // 7) Optional: clamp them all to [0, displayHeight-1] to avoid out-of-bounds
-        auto clampY = [&](int y) {
+        auto clampY = [&](int y) //
+        {                        //
             return std::max(0, std::min(y, displayHeight - 1));
         };
-        data.baselineY            = clampY(data.baselineY);
+        data.baselineY = clampY(data.baselineY);
         data.biggestThresholdYMin = clampY(data.biggestThresholdYMin);
         data.biggestThresholdYMax = clampY(data.biggestThresholdYMax);
-        data.filteredY            = clampY(data.filteredY);
+        data.filteredY = clampY(data.filteredY);
 
         return data;
     }
 
     static void DrawElectrode(IDisplay &display, int x, const ElectrodeDisplayData &data)
     {
-        display.drawFastVLine(x+1, data.biggestThresholdYMax, abs(data.biggestThresholdYMax - data.biggestThresholdYMin), WHITE);
+        display.drawFastVLine(
+            x + 1, data.biggestThresholdYMax, abs(data.biggestThresholdYMax - data.biggestThresholdYMin), WHITE);
         display.drawFastHLine(x, data.baselineY, 3, WHITE);
         display.drawFastHLine(x, data.biggestThresholdYMin, 3, WHITE);
         display.drawFastHLine(x, data.biggestThresholdYMax, 3, WHITE);
@@ -660,8 +667,12 @@ struct MPR121ConfigApp : SettingsMenuApp
 
         for (size_t i = 0; i < mKeyCount; ++i)
         {
-            ElectrodeQueryResult& item = electrodeData[i];
-            ElectrodeDisplayData displayData = GetElectrodeDisplayData(item.mBaselineValue01, item.mFilteredData01, item.mTouchThreshold01, item.mReleaseThreshold01, clientHeight);
+            ElectrodeQueryResult &item = electrodeData[i];
+            ElectrodeDisplayData displayData = GetElectrodeDisplayData(item.mBaselineValue01,
+                                                                       item.mFilteredData01,
+                                                                       item.mTouchThreshold01,
+                                                                       item.mReleaseThreshold01,
+                                                                       clientHeight);
             DrawElectrode(mDisplay, width * i, displayData);
             mDisplay.setCursor(width * i, clientHeight);
             mDisplay.print(item.mIsTouched ? "X" : " ");
@@ -671,13 +682,12 @@ struct MPR121ConfigApp : SettingsMenuApp
     }
 };
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct ScaleDetectorApp : DisplayApp
 {
-    MusicalStateTask & mMusicalStateTask;
-    ScaleDetectorApp(IDisplay &d, MusicalStateTask & musicalStateTask) : DisplayApp(d), mMusicalStateTask(musicalStateTask)
+    MusicalStateTask &mMusicalStateTask;
+    ScaleDetectorApp(IDisplay &d, MusicalStateTask &musicalStateTask)
+        : DisplayApp(d), mMusicalStateTask(musicalStateTask)
     {
     }
 
@@ -702,14 +712,15 @@ struct ScaleDetectorApp : DisplayApp
         mDisplay.println(String(mMusicalStateTask.mAppSettings->GetCurrentPerformancePatch().mDeducedScale.ToString()));
         // 8 * 12 = 96
         // hud height = 10
-        for (int i = 0; i < 12; ++ i) {
+        for (int i = 0; i < 12; ++i)
+        {
             constexpr int width = 10;
             constexpr int ymin = 40;
             constexpr int ymax = 10;
 
             mDisplay.setCursor(i * 8, ymin + 1);
             mDisplay.print(MidiNote(1, i).ToString());
-            
+
             float noteWeight = mMusicalStateTask.mMusicalState.mScaleFollower->mEnvelopes.GetLevel(i);
             int y = ymin - noteWeight * (ymin - ymax);
             mDisplay.fillRect(i * width, y, width - 1, ymin - y, WHITE);
@@ -721,7 +732,5 @@ struct ScaleDetectorApp : DisplayApp
         DisplayApp::DisplayAppUpdate(); // update input
     }
 };
-
-
 
 } // namespace clarinoid

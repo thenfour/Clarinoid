@@ -20,11 +20,11 @@ struct NoteCountScroller
     int _lastClearedBucketIndex = 0;
     // This marks the oldest bucket index we have cleared so far.
 
-    static constexpr int gBucketWidth = 2;       // horizontal px per bucket
-    static constexpr int gMsPerBucket = 60;     // each bucket spans 100 ms
-    static constexpr int gScrollerHeight = 30;   // vertical px allocated for scroller
-    static constexpr int gScreenWidth = 128;     // total screen width in px
-    static constexpr int gScreenHeight = 55;     // total screen height in px
+    static constexpr int gBucketWidth = 2;     // horizontal px per bucket
+    static constexpr int gMsPerBucket = 60;    // each bucket spans 100 ms
+    static constexpr int gScrollerHeight = 30; // vertical px allocated for scroller
+    static constexpr int gScreenWidth = 128;   // total screen width in px
+    static constexpr int gScreenHeight = 55;   // total screen height in px
 
     /// Called when a note-on event occurs.
     /// Simply increment the current bucket's count.
@@ -45,7 +45,7 @@ struct NoteCountScroller
     /// The newest bucket is at the right edge, older to the left.
     /// Also clears any buckets that are older than the left edge.
     /// </summary>
-    void Render(IDisplay* display)
+    void Render(IDisplay *display)
     {
         int screenBottom = gScreenHeight - 1;
 
@@ -84,7 +84,8 @@ struct NoteCountScroller
 
             // ring pos
             int ringPos = bucketIndex % gMaxBuckets;
-            if (ringPos < 0) ringPos += gMaxBuckets; // handle negative mod if needed
+            if (ringPos < 0)
+                ringPos += gMaxBuckets; // handle negative mod if needed
 
             // number of notes that happened in this bucket
             int noteCount = mBuckets[ringPos];
@@ -108,21 +109,19 @@ struct NoteCountScroller
     }
 };
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct RhythmGoniometerApp : DisplayApp
 {
     int xUpdates = 0;
 
-    MusicalStateTask & mMusicalStateTask;
+    MusicalStateTask &mMusicalStateTask;
     int lastKnownNoteOnSerial = 0;
 
-    NoteCountScroller mNoteCountScroller;
+    // NoteCountScroller mNoteCountScroller;
 
     static constexpr int gHeight = 44;
-    static constexpr PointI gCenter { 64, gHeight / 2 };
-    static constexpr RectI gClip { 0, 0, 128, gHeight };
+    static constexpr PointI gCenter{64, gHeight / 2};
+    static constexpr RectI gClip{0, 0, 128, gHeight};
     static constexpr float gRadius = 26;
 
     static constexpr int gLineHoldMS = 1500;
@@ -134,14 +133,15 @@ struct RhythmGoniometerApp : DisplayApp
     {
         PointI mPt;
         bool mActive = false;
-        Stopwatch mWhenAdded;
+        StopwatchLight mWhenAdded;
     };
 
     static constexpr int gMaxMarkers = 16;
     std::array<NotePoint, gMaxMarkers> mNotePoints;
     size_t mNotePointCursor = 0; // always point to the oldest entry.
 
-    RhythmGoniometerApp(IDisplay &d, MusicalStateTask & musicalStateTask) : DisplayApp(d), mMusicalStateTask(musicalStateTask)
+    RhythmGoniometerApp(IDisplay &d, MusicalStateTask &musicalStateTask)
+        : DisplayApp(d), mMusicalStateTask(musicalStateTask)
     {
     }
 
@@ -158,9 +158,9 @@ struct RhythmGoniometerApp : DisplayApp
         }
     }
 
-    void UpdateFrontPage() 
+    void UpdateFrontPage()
     {
-        xUpdates ++;
+        xUpdates++;
 
         bool didNoteOn = false;
         if (mMusicalStateTask.mMusicalState.mMidiOut.noteOns != lastKnownNoteOnSerial)
@@ -179,11 +179,11 @@ struct RhythmGoniometerApp : DisplayApp
             float currentBeatPos01 = beatFrac - 0.5f;
             auto pt = DeviationAngleToPoint(currentBeatPos01);
             AddNotePoint(pt);
-            mNoteCountScroller.OnNoteOn();
+            // mNoteCountScroller.OnNoteOn();
         }
     }
 
-    void AddNotePoint(const PointI& np)
+    void AddNotePoint(const PointI &np)
     {
         // notes are always added in order, so the list is always sorted by age from oldest to newest, as long as
         // you start from mNotePointCursor.
@@ -203,7 +203,7 @@ struct RhythmGoniometerApp : DisplayApp
         // Calculate marker position on the circumference
         float markerX = gCenter.x + gRadius * fast::cos(angleRad);
         float markerY = gCenter.y + gRadius * fast::sin(angleRad);
-        return { (int)markerX, (int)markerY };
+        return {(int)markerX, (int)markerY};
     }
 
     int GetBrightness(int elapsedMS, int holdMs, int decayMs)
@@ -229,40 +229,30 @@ struct RhythmGoniometerApp : DisplayApp
         for (size_t __i = 1; __i < mNotePoints.size(); __i++)
         {
             size_t idx = (mNotePointCursor + __i) % mNotePoints.size();
-            auto& a1 = mNotePoints[idx - 1];
-            auto& a2 = mNotePoints[idx];
+            auto &a1 = mNotePoints[idx - 1];
+            auto &a2 = mNotePoints[idx];
             if (!a1.mActive || !a2.mActive)
             {
                 continue;
             }
 
             // todo: remove if faded
-            int lineBrightness = GetBrightness((int)a2.mWhenAdded.ElapsedTime().ElapsedMillisI(), gLineHoldMS, gLineDecayMS);
+            int lineBrightness =
+                GetBrightness((int)a2.mWhenAdded.ElapsedTime().ElapsedMillisI(), gLineHoldMS, gLineDecayMS);
 
-            mDisplay.DrawInfiniteLineClipped(
-                a1.mPt,
-                a2.mPt,
-                gClip,
-                lineBrightness >> 2
-            );
+            mDisplay.DrawInfiniteLineClipped(a1.mPt, a2.mPt, gClip, lineBrightness >> 2);
 
-            mDisplay.DrawLineWithBrightness(
-                a1.mPt,
-                a2.mPt,
-                lineBrightness);
+            mDisplay.DrawLineWithBrightness(a1.mPt, a2.mPt, lineBrightness);
 
-            //mDisplay.DrawLine(a1.mPt, a2.mPt);
+            // mDisplay.DrawLine(a1.mPt, a2.mPt);
 
             mDisplay.FillCircleWithBrightness(
-                a2.mPt,
-                4,
-                GetBrightness((int)a2.mWhenAdded.ElapsedTime().ElapsedMillisI(), gDotHoldMS, gDotDecayMS));
-
+                a2.mPt, 4, GetBrightness((int)a2.mWhenAdded.ElapsedTime().ElapsedMillisI(), gDotHoldMS, gDotDecayMS));
         }
 
-        mNoteCountScroller.Render(&mDisplay);
+        // mNoteCountScroller.Render(&mDisplay);
 
-        mDisplay.setCursor(0,0);
+        mDisplay.setCursor(0, 0);
         mDisplay.print(String(mMusicalStateTask.mMusicalState.mMidiOut.noteOns));
     }
 
@@ -271,8 +261,5 @@ struct RhythmGoniometerApp : DisplayApp
         DisplayApp::DisplayAppUpdate(); // update input
     }
 };
-
-
-
 
 } // namespace clarinoid

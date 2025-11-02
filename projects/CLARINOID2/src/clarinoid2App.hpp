@@ -67,7 +67,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     SystemSettingsApp mSystemSettingsApp;
     PerformancePatchSettingsApp mPerfPatchApp;
     SynthPatchMenuApp mSynthPatchApp;
-    AudioMonitorApp mAudioMonitorApp;
+    // AudioMonitorApp mAudioMonitorApp;
     MetronomeSettingsApp mMetronomeSettingsApp;
     HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
@@ -78,10 +78,13 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     RhythmGoniometerApp mGoniometerApp;
     BigPerfDisplayApp mBigPerfDisplayApp;
 
+    static constexpr size_t kGoniometerAppSize = sizeof(mGoniometerApp);
+
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
     SimpleMovingAverage<30> mCPUUsage;
     PeakMeterUtility<2000, 300> mPeakMeter;
+    static constexpr size_t kpeakmetersize = sizeof(mPeakMeter);
 
     Clarinoid2App()
         : mLed(this),                                                                                    //
@@ -105,9 +108,9 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
               },
               this,
               &mMusicalStateTask.mMetronome),
-          mPerfPatchApp(mDisplay),    //
-          mSynthPatchApp(mDisplay),   //
-          mAudioMonitorApp(mDisplay), //
+          mPerfPatchApp(mDisplay),  //
+          mSynthPatchApp(mDisplay), //
+          // mAudioMonitorApp(mDisplay), //
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
           mHarmVoiceSettingsApp(mDisplay, mMusicalStateTask.mMusicalState.mLooper.mHarmonizer), //
           mHarmPatchApp(mDisplay),                                                              //
@@ -223,7 +226,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
             &mMetronomeSettingsApp,
             &mSystemSettingsApp, // <-- perf patch selector
-            &mAudioMonitorApp,
+            //&mAudioMonitorApp,
 
             &mDebugDisplayApp,
             &mMPR121ConfigApp,
@@ -556,5 +559,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         tp.Main();
     }
 };
+
+static constexpr size_t aoesunthchpchpcipciz = sizeof(Clarinoid2App);
 
 } // namespace clarinoid
