@@ -267,13 +267,13 @@ struct DebugDisplayApp : SettingsMenuApp
     {
     }
 
-    LabelSettingItem mBreath = {
-        Property<String>{[](void *cap) FLASHMEM {
-                             DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
-                             return ((String("Breath: ") + int(pThis->mControls.mBreath.CurrentValue01() * 1000)));
-                         },
-                         this},
-        AlwaysEnabled};
+    // LabelSettingItem mBreath = {
+    //     Property<String>{[](void *cap) FLASHMEM {
+    //                          DebugDisplayApp *pThis = (DebugDisplayApp *)cap;
+    //                          return ((String("Breath: ") + int(pThis->mControls.mBreath.CurrentValue01() * 1000)));
+    //                      },
+    //                      this},
+    //     AlwaysEnabled};
 
     LabelSettingItem mLHK = {
         Property<String>{
@@ -410,8 +410,8 @@ struct DebugDisplayApp : SettingsMenuApp
                                                               this},
                                              AlwaysEnabled};
 
-    ISettingItem *mArray[12] = {
-        &mBreath,
+    ISettingItem *mArray[11] = {
+        //&mBreath,
         &mLHK,
         &mOct,
         &mRHK,

@@ -69,7 +69,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     SynthPatchMenuApp mSynthPatchApp;
     // AudioMonitorApp mAudioMonitorApp;
     MetronomeSettingsApp mMetronomeSettingsApp;
-    HarmSettingsApp mHarmVoiceSettingsApp;
+    // HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
 
     GuiPerformanceApp mGuiPerformanceApp;    //(mDisplay, mMusicalStateTask.mMetronome);
@@ -112,12 +112,12 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
           mSynthPatchApp(mDisplay), //
           // mAudioMonitorApp(mDisplay), //
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
-          mHarmVoiceSettingsApp(mDisplay, mMusicalStateTask.mMusicalState.mLooper.mHarmonizer), //
-          mHarmPatchApp(mDisplay),                                                              //
-          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome),                           //
-          mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask),                        //
-          mScaleDetectorApp(mDisplay, mMusicalStateTask),                                       //
-          mGoniometerApp(mDisplay, mMusicalStateTask),                                          //
+          // mHarmVoiceSettingsApp(mDisplay, mMusicalStateTask.mMusicalState.mLooper.mHarmonizer), //
+          mHarmPatchApp(mDisplay),                                       //
+          mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome),    //
+          mMPR121ConfigApp(mDisplay, mControlMapper, mMusicalStateTask), //
+          mScaleDetectorApp(mDisplay, mMusicalStateTask),                //
+          mGoniometerApp(mDisplay, mMusicalStateTask),                   //
           mBigPerfDisplayApp(mDisplay, mMusicalStateTask, *this)
     {
     }
@@ -222,7 +222,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mHarmPatchApp,
             &mSynthPatchApp,
 
-            &mHarmVoiceSettingsApp,
+            //&mHarmVoiceSettingsApp,
 
             &mMetronomeSettingsApp,
             &mSystemSettingsApp, // <-- perf patch selector

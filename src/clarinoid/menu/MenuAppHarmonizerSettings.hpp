@@ -535,62 +535,62 @@ struct HarmPatchSettingsApp : public SettingsMenuApp
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct HarmSettingsApp : public SettingsMenuApp
-{
-    virtual const char *DisplayAppGetName() override
-    {
-        return "HarmSettingsApp";
-    }
+// struct HarmSettingsApp : public SettingsMenuApp
+// {
+//     virtual const char *DisplayAppGetName() override
+//     {
+//         return "HarmSettingsApp";
+//     }
 
-    HarmPatchSettingsApp mHarmPatchSettings;
-    Harmonizer &mHarmonizer;
+//     HarmPatchSettingsApp mHarmPatchSettings;
+//     Harmonizer &mHarmonizer;
 
-    HarmSettingsApp(IDisplay &d, Harmonizer &h) : SettingsMenuApp(d), mHarmPatchSettings(d), mHarmonizer(h)
-    {
-    }
+//     HarmSettingsApp(IDisplay &d, Harmonizer &h) : SettingsMenuApp(d), mHarmPatchSettings(d), mHarmonizer(h)
+//     {
+//     }
 
-    MultiSubmenuSettingItem mPatchSubmenu = {
-        [](void *cap) FLASHMEM { return clarinoid::HARM_PRESET_COUNT; }, // get item count
-        [](void *cap, size_t mi) {                                       // get item name
-            auto *pThis = (HarmSettingsApp *)cap;
-            return (String)(String("") + mi + ":" + pThis->GetAppSettings()->mHarmSettings.mPresets[mi].mName);
-        },
-        [](void *cap, size_t mi) { // get submenu
-            auto *pThis = (HarmSettingsApp *)cap;
-            pThis->GetAppSettings()->GetCurrentPerformancePatch().mHarmPreset = mi;
-            return &pThis->mHarmPatchSettings.mRootList;
-        },
-        [](void *cap, size_t mi) { return true; }, // is enabled?
-        this};                                     // cap
+//     MultiSubmenuSettingItem mPatchSubmenu = {
+//         [](void *cap) FLASHMEM { return clarinoid::HARM_PRESET_COUNT; }, // get item count
+//         [](void *cap, size_t mi) {                                       // get item name
+//             auto *pThis = (HarmSettingsApp *)cap;
+//             return (String)(String("") + mi + ":" + pThis->GetAppSettings()->mHarmSettings.mPresets[mi].mName);
+//         },
+//         [](void *cap, size_t mi) { // get submenu
+//             auto *pThis = (HarmSettingsApp *)cap;
+//             pThis->GetAppSettings()->GetCurrentPerformancePatch().mHarmPreset = mi;
+//             return &pThis->mHarmPatchSettings.mRootList;
+//         },
+//         [](void *cap, size_t mi) { return true; }, // is enabled?
+//         this};                                     // cap
 
-    ISettingItem *mArray[1] = {&mPatchSubmenu};
-    SettingsList mRootList = {mArray};
+//     ISettingItem *mArray[1] = {&mPatchSubmenu};
+//     SettingsList mRootList = {mArray};
 
-    virtual SettingsList *GetRootSettingsList()
-    {
-        return &mRootList;
-    }
+//     virtual SettingsList *GetRootSettingsList()
+//     {
+//         return &mRootList;
+//     }
 
-    virtual void RenderFrontPage()
-    {
-        this->mDisplay.ClearState();
-        this->mDisplay.println("Harmonizer >");
+//     virtual void RenderFrontPage()
+//     {
+//         this->mDisplay.ClearState();
+//         this->mDisplay.println("Harmonizer >");
 
-        auto &perf = this->GetAppSettings()->GetCurrentPerformancePatch();
-        auto name = this->GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
+//         auto &perf = this->GetAppSettings()->GetCurrentPerformancePatch();
+//         auto name = this->GetAppSettings()->GetHarmPatchName(perf.mHarmPreset);
 
-        this->mDisplay.println(name);
+//         this->mDisplay.println(name);
 
-        // size_t i = 0;
-        // for (auto &state : this->mHarmonizer.mVoiceStates)
-        // {
-        //     this->mDisplay.println(String(i) + ":" + MidiNote{state.mCurrentMidiNote}.ToStringWithOctave() + " " +
-        //                            state.mCurrentMidiNote + " " + state.mResult);
-        //     ++i;
-        // }
+//         // size_t i = 0;
+//         // for (auto &state : this->mHarmonizer.mVoiceStates)
+//         // {
+//         //     this->mDisplay.println(String(i) + ":" + MidiNote{state.mCurrentMidiNote}.ToStringWithOctave() + " " +
+//         //                            state.mCurrentMidiNote + " " + state.mResult);
+//         //     ++i;
+//         // }
 
-        SettingsMenuApp::RenderFrontPage();
-    }
-};
+//         SettingsMenuApp::RenderFrontPage();
+//     }
+// };
 
 } // namespace clarinoid

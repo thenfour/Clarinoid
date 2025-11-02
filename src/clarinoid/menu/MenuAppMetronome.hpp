@@ -144,7 +144,21 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                            this},
                              EnabledIfSoundOn};
 
-    ISettingItem *mArray[8] = {&mBPM, &mGain, &mSoundEnable, &mLEDEnable, &mLEDDecay, &mLEDBrightness, &mNote, &mDecay};
+    ISettingItem *mArray[12] = {
+        &mBPM, //
+        &mGain,
+        &mSoundEnable, //
+        &mLEDEnable,
+        &mLEDDecay, //
+        &mLEDBrightness,
+        &mNote,
+        &mDecay, //
+
+        &mDecay, //
+        &mDecay, //
+        &mDecay, //
+        &mDecay, //
+    };
     SettingsList mRootList = {mArray};
 
     virtual SettingsList *GetRootSettingsList()

@@ -3,17 +3,9 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/basic/Stopwatch.hpp>
 #include <clarinoid/application/DisplayDefs.hpp>
-#include <clarinoid/components/AdafruitSSD1366Wrapper.hpp>
 
 namespace clarinoid
 {
-
-#ifndef SSD1306_WHITE
-#define SSD1306_WHITE 1
-#endif
-#ifndef SSD1306_BLACK
-#define SSD1306_BLACK 0
-#endif
 
 enum class ScrollbarOrientation : uint8_t
 {
@@ -23,9 +15,15 @@ enum class ScrollbarOrientation : uint8_t
 
 struct ScrollbarOverlay
 {
-    static constexpr int kAnimDurationMs = 200;
-    static constexpr int kVisibleDurationMs = 500;
-    static constexpr int kMinimumHandlePixels = 8;
+    static constexpr int kAnimDurationMs = 600;
+    static constexpr int kVisibleDurationMs = 800;
+    static constexpr float kMinimumHandlePixels = 8.0f;
+    static constexpr float kTrackMargin = 1.0f;
+    static constexpr float kTrackThickness = 6.0f;
+    // static constexpr float kTrackCornerRadius = 1.0f;
+    static constexpr float kHandleCornerRadius = 3.0f;
+    // static constexpr int kTrackCoverageQp8 = 0;
+    static constexpr int kHandleCoverageQp8 = 255;
 
     ScrollbarOrientation mOrientation;
     bool mIsActive = false;
@@ -50,7 +48,8 @@ struct ScrollbarOverlay
         mOrientation = orientation;
     }
 
-    void TriggerMovement(int fromIndex, int toIndex, size_t totalItems, int step)
+    // stepDirection = -1, 0, +1 to indicate how we got to this new index.
+    void TriggerMovement(int fromIndex, int toIndex, size_t totalItems, int stepDirection)
     {
         if (totalItems <= 1)
         {
@@ -58,7 +57,7 @@ struct ScrollbarOverlay
             return;
         }
 
-        if (step == 0)
+        if (stepDirection == 0)
         {
             return;
         }
@@ -66,8 +65,8 @@ struct ScrollbarOverlay
         float fromFraction = IndexToFraction(fromIndex, totalItems);
         float toFraction = IndexToFraction(toIndex, totalItems);
 
-        bool wrappedForward = (step > 0) && (toIndex < fromIndex);
-        bool wrappedBackward = (step < 0) && (toIndex > fromIndex);
+        bool wrappedForward = (stepDirection > 0) && (toIndex < fromIndex);
+        bool wrappedBackward = (stepDirection < 0) && (toIndex > fromIndex);
 
         if (wrappedForward || wrappedBackward)
         {
@@ -87,10 +86,10 @@ struct ScrollbarOverlay
         else
         {
             mStartFraction = fromFraction;
+            mIsActive = true;
         }
 
         mTargetFraction = toFraction;
-        mIsActive = true;
         mTimer.Restart();
     }
 
@@ -169,34 +168,41 @@ struct ScrollbarOverlay
                                size_t totalItemCount,
                                float fraction)
     {
-        int trackHeight = clientRect.height;
-        if (trackHeight <= 0)
+        float trackHeight = (float)clientRect.height - 2.0f * kTrackMargin;
+        if (trackHeight <= 0.0f)
         {
             return;
         }
-        const int trackWidth = 3;
-        int trackX = clientRect.right() - trackWidth;
-        if (trackX < clientRect.x)
+        float trackWidth = kTrackThickness;
+        float trackX = (float)(clientRect.right()) - trackWidth - kTrackMargin;
+        float trackY = (float)clientRect.y + kTrackMargin;
+        if (trackX < (float)clientRect.x)
         {
-            trackX = clientRect.x;
+            trackX = (float)clientRect.x;
         }
 
-        int handleHeight = (int)((float)trackHeight * ((float)visibleItemCount / (float)totalItemCount));
-        handleHeight = ClampInclusive(handleHeight, kMinimumHandlePixels, trackHeight);
-
-        int maxTravel = trackHeight - handleHeight;
-        int handleOffset = (int)((float)maxTravel * fraction + 0.5f);
-        handleOffset = ClampInclusive(handleOffset, 0, maxTravel);
-
-        int handleY = clientRect.y + handleOffset;
-
-        display.fillRect(trackX, clientRect.y, trackWidth, trackHeight, SSD1306_BLACK);
-        display.drawFastVLine(trackX + trackWidth / 2, clientRect.y, trackHeight, SSD1306_WHITE);
-        display.fillRect(trackX, handleY, trackWidth, handleHeight, SSD1306_WHITE);
-        if (trackWidth > 2 && handleHeight > 2)
+        int backgroundX = (int)floorf(trackX - 1.0f);
+        int backgroundY = clientRect.y;
+        int backgroundWidth = (int)ceilf(trackWidth + 2.0f);
+        if (backgroundWidth < 1)
         {
-            display.fillRect(trackX + 1, handleY + 1, trackWidth - 2, handleHeight - 2, SSD1306_BLACK);
+            backgroundWidth = 1;
         }
+        display.fillRect(backgroundX, backgroundY, backgroundWidth, clientRect.height, 0);
+        display.drawFastVLine(backgroundX, backgroundY, clientRect.height, 1);
+
+        float handleHeight = trackHeight * ((float)visibleItemCount / (float)totalItemCount);
+        handleHeight = Clamp(handleHeight, kMinimumHandlePixels, trackHeight);
+        float maxTravel = trackHeight - handleHeight;
+        if (maxTravel < 0.0f)
+        {
+            maxTravel = 0.0f;
+        }
+        float handleOffset = maxTravel * fraction;
+        float handleY = trackY + handleOffset;
+
+        RectF handleRect{trackX, handleY, trackWidth, handleHeight};
+        display.DrawRoundedRectSubpixel(handleRect, kHandleCornerRadius, kHandleCoverageQp8, true);
     }
 
     static void RenderHorizontal(IDisplay &display,
@@ -205,34 +211,44 @@ struct ScrollbarOverlay
                                  size_t totalItemCount,
                                  float fraction)
     {
-        int trackWidth = clientRect.width;
-        if (trackWidth <= 0)
+        float trackWidth = (float)clientRect.width - 2.0f * kTrackMargin;
+        if (trackWidth <= 0.0f)
         {
             return;
         }
-        const int trackHeight = 3;
-        int trackY = clientRect.bottom() - trackHeight;
-        if (trackY < clientRect.y)
+        float trackHeight = kTrackThickness;
+        float trackX = (float)clientRect.x + kTrackMargin;
+        float trackY = (float)(clientRect.bottom()) - trackHeight - kTrackMargin;
+        if (trackY < (float)clientRect.y)
         {
-            trackY = clientRect.y;
+            trackY = (float)clientRect.y;
         }
 
-        int handleWidth = (int)((float)trackWidth * ((float)visibleItemCount / (float)totalItemCount));
-        handleWidth = ClampInclusive(handleWidth, kMinimumHandlePixels, trackWidth);
-
-        int maxTravel = trackWidth - handleWidth;
-        int handleOffset = (int)((float)maxTravel * fraction + 0.5f);
-        handleOffset = ClampInclusive(handleOffset, 0, maxTravel);
-
-        int handleX = clientRect.x + handleOffset;
-
-        display.fillRect(clientRect.x, trackY, trackWidth, trackHeight, SSD1306_BLACK);
-        display.drawFastHLine(clientRect.x, trackY + trackHeight / 2, trackWidth, SSD1306_WHITE);
-        display.fillRect(handleX, trackY, handleWidth, trackHeight, SSD1306_WHITE);
-        if (trackHeight > 2 && handleWidth > 2)
+        int backgroundX = clientRect.x;
+        int backgroundY = (int)floorf(trackY - 1.0f);
+        int backgroundHeight = (int)ceilf(trackHeight + 2.0f);
+        if (backgroundHeight < 1)
         {
-            display.fillRect(handleX + 1, trackY + 1, handleWidth - 2, trackHeight - 2, SSD1306_BLACK);
+            backgroundHeight = 1;
         }
+        display.fillRect(backgroundX, backgroundY, clientRect.width, backgroundHeight, 0);
+        display.drawFastHLine(backgroundX, backgroundY, clientRect.width, 1);
+
+        // RectF trackRect{trackX, trackY, trackWidth, trackHeight};
+        // display.DrawRoundedRectSubpixel(trackRect, kTrackCornerRadius, kTrackCoverageQp8, true);
+
+        float handleWidth = trackWidth * ((float)visibleItemCount / (float)totalItemCount);
+        handleWidth = Clamp(handleWidth, kMinimumHandlePixels, trackWidth);
+        float maxTravel = trackWidth - handleWidth;
+        if (maxTravel < 0.0f)
+        {
+            maxTravel = 0.0f;
+        }
+        float handleOffset = maxTravel * fraction;
+        float handleX = trackX + handleOffset;
+
+        RectF handleRect{handleX, trackY, handleWidth, trackHeight};
+        display.DrawRoundedRectSubpixel(handleRect, kHandleCornerRadius, kHandleCoverageQp8, true);
     }
 };
 

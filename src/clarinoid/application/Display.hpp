@@ -3,12 +3,15 @@
 
 #pragma once
 
+#include <cmath>
+
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 #include "clarinoid/components/AdafruitSSD1366Wrapper.hpp"
 #include <clarinoid/application/ControlMapper.hpp>
 
 #include "DisplayDefs.hpp"
+#include "ScrollbarOverlay.hpp"
 
 #include "clarinoid/application/Font/matchup8.hpp"
 #include "clarinoid/application/Font/chicago4px7b.hpp"
@@ -49,6 +52,7 @@ struct _CCDisplay : IDisplay
 
     array_view<IDisplayApp *> mApps;
     int mCurrentAppIndex = 0;
+    ScrollbarOverlay mAppSwitchScrollbar{ScrollbarOrientation::Horizontal};
 
     using PreToastRenderFunc = cc::function<void(void *)>::ptr_t; // void fn(void* capture)
     PreToastRenderFunc mPreToastRenderFunc[MAX_PRE_TOAST_RENDER_FUNCS];
@@ -128,15 +132,25 @@ struct _CCDisplay : IDisplay
 
         if (n == mCurrentAppIndex)
             return;
-
+        int previousIndex = mCurrentAppIndex;
         mApps.mData[mCurrentAppIndex]->DisplayAppOnUnselected();
         mCurrentAppIndex = n;
         mApps.mData[mCurrentAppIndex]->DisplayAppOnSelected();
+        mAppSwitchScrollbar.TriggerMovement(previousIndex, mCurrentAppIndex, mApps.mSize, 1);
     }
 
     virtual void ScrollApps(int delta) override
     {
+        // if (delta == 0)
+        // {
+        //     return;
+        // }
+        // int previousIndex = mCurrentAppIndex;
         SelectApp(mCurrentAppIndex + delta);
+        // if (previousIndex != mCurrentAppIndex)
+        // {
+        //     mAppSwitchScrollbar.TriggerMovement(previousIndex, mCurrentAppIndex, mApps.mSize, delta);
+        // }
     }
 
     int mframe = 0;
@@ -206,6 +220,7 @@ struct _CCDisplay : IDisplay
 
         ClearState();
         mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
+        mAppSwitchScrollbar.Render(*this, GetClientRect(), 1, mApps.mSize);
 
         auto s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput);
         // if (s.length() > 0)
@@ -377,7 +392,6 @@ struct _CCDisplay : IDisplay
     {
         mIsShowingToast = true;
         mToastMsg = msg;
-        mToastCapture = capture;
         mToastRenderExtra = renderExtra;
         mToastTimer.Restart();
     }
@@ -939,6 +953,87 @@ struct _CCDisplay : IDisplay
                 {
                     DrawHLineDithered({c.x - y, c.y - x}, (2 * y + 1), brightnessQp8);
                 }
+            }
+        }
+    }
+
+    static float RoundedRectSignedDistance(const RectF &rect, float radius, float px, float py)
+    {
+        float width = max(rect.width, 0.0f);
+        float height = max(rect.height, 0.0f);
+        float clampedRadius = Clamp(radius, 0.0f, 0.5f * min(width, height));
+        float cx = rect.x + width * 0.5f;
+        float cy = rect.y + height * 0.5f;
+        float hx = max(width * 0.5f - clampedRadius, 0.0f);
+        float hy = max(height * 0.5f - clampedRadius, 0.0f);
+        float dx = fabsf(px - cx);
+        float dy = fabsf(py - cy);
+        float qx = dx - hx;
+        float qy = dy - hy;
+        float mx = max(qx, 0.0f);
+        float my = max(qy, 0.0f);
+        float outside = sqrtf(mx * mx + my * my);
+        float inside = min(max(qx, qy), 0.0f);
+        return outside + inside - clampedRadius;
+    }
+
+    virtual void DrawRoundedRectSubpixel(const RectF &rect, float radius, int coverageQp8, bool filled) override
+    {
+        if (coverageQp8 <= 0)
+        {
+            return;
+        }
+        float width = rect.width;
+        float height = rect.height;
+        if (width <= 0.0f || height <= 0.0f)
+        {
+            return;
+        }
+
+        float clampedRadius = Clamp(radius, 0.0f, 0.5f * min(width, height));
+        int minX = (int)floorf(rect.x);
+        int maxX = (int)ceilf(rect.x + width);
+        int minY = (int)floorf(rect.y);
+        int maxY = (int)ceilf(rect.y + height);
+
+        static constexpr float sampleOffsets[4][2] = {
+            {0.25f, 0.25f},
+            {0.75f, 0.25f},
+            {0.25f, 0.75f},
+            {0.75f, 0.75f},
+        };
+
+        for (int y = minY; y < maxY; ++y)
+        {
+            for (int x = minX; x < maxX; ++x)
+            {
+                float coverageSamples = 0.0f;
+                for (const auto &offset : sampleOffsets)
+                {
+                    float sampleX = (float)x + offset[0];
+                    float sampleY = (float)y + offset[1];
+                    float dist = RoundedRectSignedDistance(rect, clampedRadius, sampleX, sampleY);
+                    bool sampleInside = filled ? (dist <= 0.0f) : fabsf(dist) <= 0.5f;
+                    if (sampleInside)
+                    {
+                        coverageSamples += 1.0f;
+                    }
+                }
+
+                if (coverageSamples <= 0.0f)
+                {
+                    continue;
+                }
+
+                float coverage01 = coverageSamples / (float)SizeofStaticArray(sampleOffsets);
+                int finalCoverage = (int)(coverage01 * (float)coverageQp8 + 0.5f);
+                finalCoverage = ClampInclusive(finalCoverage, 0, 255);
+                if (finalCoverage <= 0)
+                {
+                    continue;
+                }
+
+                SetPixelShaded(PointI{x, y}, finalCoverage);
             }
         }
     }

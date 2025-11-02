@@ -84,6 +84,7 @@ struct IDisplay
                                              int variation,
                                              AntStyle style,
                                              Edges::Flags edges) = 0;
+    virtual void DrawRoundedRectSubpixel(const RectF &rect, float radius, int coverageQp8, bool filled) = 0;
 
     // calculates in general, not for a specific location on screen.
     virtual RectI GetTextBounds(const String &str) = 0;
