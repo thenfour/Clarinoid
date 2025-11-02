@@ -333,9 +333,10 @@ enum class KRateModulationDestination : uint8_t
     Osc2FreqOffset,        // k-rate
     Osc3FreqMul,           // k-rate
     Osc3FreqOffset,        // k-rate
+    PatchDetune,           // k-rate
 };
 
-EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[23] = {
+EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[24] = {
     {KRateModulationDestination::VoiceFilterCutoff, "VoiceFilterCutoff"},
     {KRateModulationDestination::Osc1Frequency, "Osc1Frequency"},
     {KRateModulationDestination::Osc1Amplitude, "Osc1Amplitude"},
@@ -360,6 +361,7 @@ EnumItemInfo<KRateModulationDestination> gKRateModulationDestinationItems[23] = 
     {KRateModulationDestination::Osc2FreqOffset, "Osc2FreqOffset"},
     {KRateModulationDestination::Osc3FreqMul, "Osc3FreqMul"},
     {KRateModulationDestination::Osc3FreqOffset, "Osc3FreqOffset"},
+    {KRateModulationDestination::PatchDetune, "PatchDetune"},
 };
 
 static constexpr size_t gKRateModulationDestinationCount = SizeofStaticArray(gKRateModulationDestinationItems);
@@ -401,6 +403,7 @@ enum class AnyModulationDestination : uint8_t
     Osc2FreqOffset, // k-rate
     Osc3FreqMul,    // k-rate
     Osc3FreqOffset, // k-rate
+    PatchDetune,    // k-rate
 
     // osc waveform morph (now replaces SYNC freq)
     // osc pan
@@ -424,7 +427,7 @@ enum class AnyModulationDestination : uint8_t
     // env release
 };
 
-EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[30] = {
+EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[31] = {
     {AnyModulationDestination::None, "None"},
     {AnyModulationDestination::Osc1PulseWidth, "Osc1PulseWidth"},
     {AnyModulationDestination::Osc1Phase, "Osc1Phase"},
@@ -458,6 +461,7 @@ EnumItemInfo<AnyModulationDestination> gAnyModulationDestinationItems[30] = {
     {AnyModulationDestination::Osc2FreqOffset, "Osc2FreqOffset"},
     {AnyModulationDestination::Osc3FreqMul, "Osc3FreqMul"},
     {AnyModulationDestination::Osc3FreqOffset, "Osc3FreqOffset"},
+    {AnyModulationDestination::PatchDetune, "PatchDetune"},
 };
 
 static constexpr size_t gAnyModulationDestinationCount = SizeofStaticArray(gAnyModulationDestinationItems);
@@ -1355,8 +1359,9 @@ struct SynthSettings
         p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
         p.mOsc[2].mGain = DecibelsToLinear(-16.0f);
 
-        // p.mModulations[0].mSource = AnyModulationSource::Breath;
-        // p.mModulations[0].mDest = AnyModulationDestination::detune;
+        p.mModulations[0].mSource = AnyModulationSource::Breath;
+        p.mModulations[0].mDest = AnyModulationDestination::PatchDetune;
+        p.mModulations[0].SetScaleN11_Legacy(0.12f);
     }
 
     SynthSettings()

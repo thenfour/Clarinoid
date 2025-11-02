@@ -308,6 +308,8 @@ struct Voice : IModulationKRateProvider
             return mKRateFMStrength1To3;
         case KRateModulationDestination::FMStrength2To3:
             return mKRateFMStrength2To3;
+        case KRateModulationDestination::PatchDetune:
+            return mKRatePatchDetune;
         default:
             return 0;
         }
@@ -327,6 +329,7 @@ struct Voice : IModulationKRateProvider
     float mKRateFMStrength3To2 = 0;
     float mKRateFMStrength1To3 = 0;
     float mKRateFMStrength2To3 = 0;
+    float mKRatePatchDetune = 0;
 
     // these will not track FREQUENCY, but rather MIDI NOTE. this lets us apply portamento to certain parameters but not
     // others. it also may have the benefit of feeling more linear.
@@ -387,6 +390,9 @@ struct Voice : IModulationKRateProvider
             return;
         case KRateModulationDestination::FMStrength2To3:
             mKRateFMStrength2To3 = val;
+            return;
+        case KRateModulationDestination::PatchDetune:
+            mKRatePatchDetune = val;
             return;
 
         case KRateModulationDestination::Osc1FreqMul:
@@ -449,6 +455,7 @@ struct Voice : IModulationKRateProvider
             mKRateFMStrength3To2 = 0;
             mKRateFMStrength1To3 = 0;
             mKRateFMStrength2To3 = 0;
+            mKRatePatchDetune = 0;
 
             mModMatrix.SetSynthPatch(mPreset, this);
         }
@@ -570,9 +577,11 @@ struct Voice : IModulationKRateProvider
             return Clamp(ret, 0.0f, 22050.0f);
         };
 
+        float detuneAmt = mPreset->mDetune + mKRatePatchDetune;
+
         float freq0 = calcFreq(mPreset->mOsc[0],
                                midiNote,
-                               -mPreset->mDetune,
+                               -detuneAmt,
                                mKRateFrequencyN11[0],
                                mKRateOscFreqMul[0],
                                mKRateOscFreqOffset[0],
@@ -586,7 +595,7 @@ struct Voice : IModulationKRateProvider
                                mPortamentoCalc[1]);
         float freq2 = calcFreq(mPreset->mOsc[2],
                                midiNote,
-                               -mPreset->mDetune,
+                               -detuneAmt,
                                mKRateFrequencyN11[2],
                                mKRateOscFreqMul[2],
                                mKRateOscFreqOffset[2],

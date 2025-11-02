@@ -549,6 +549,17 @@ ModulationDestinationInfo gModulationDestinationInfo[gAnyModulationDestinationCo
      10000, // range max
      ModulationPoleType::Positive01},
 
+    {true,                                          // is a modulation
+     (size_t)AnyModulationDestination::PatchDetune, // index overall
+     AnyModulationDestination::PatchDetune,
+     (size_t)KRateModulationDestination::PatchDetune, // index for rate
+     ModulationRate::KRate,
+     KRateModulationDestination::PatchDetune,
+     (ARateModulationDestination)0,
+     -1, // range min
+     1,  // range max
+     ModulationPoleType::N11},
+
 };
 
 ModulationDestinationInfo *gKRateModulationDestinationInfoPtrs[gKRateModulationDestinationCount] = {nullptr};
