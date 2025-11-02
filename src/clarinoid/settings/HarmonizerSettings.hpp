@@ -30,6 +30,7 @@ static constexpr size_t SynthPresetID_FMTest = 6;
 static constexpr size_t SynthPresetID_WobblyCat = 7;
 static constexpr size_t SynthPresetID_PulseSync = 8;
 static constexpr size_t SynthPresetID_Supersaw = 9;
+static constexpr size_t SynthPresetID_TubularBell = 10;
 
 static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 11;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 10;

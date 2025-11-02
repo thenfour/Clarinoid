@@ -1364,6 +1364,39 @@ struct SynthSettings
         p.mModulations[0].SetScaleN11_Legacy(0.12f);
     }
 
+    static void InitTubularBellPreset(SynthPreset &p)
+    {
+        p.mName = "Tubular Bell";
+        p.mSync = false;
+        p.mDetune = 0.0f;
+        // p.mStereoSpread = 0.0f;
+        // p.mFilterQ = 0.0f;
+        // p.mFilterSaturation = 0.0f;
+        // p.mFilterType = ClarinoidFilterType::LP_Moog4;
+        // p.mFilterMaxFreq = 22000.0f;
+
+        p.mVerbSend = DecibelsToLinear(-10.0f);
+        p.mDelaySend = DecibelsToLinear(-10.0f);
+
+        p.mOsc[0].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[0].mGain = DecibelsToLinear(-16.0f);
+
+        p.mOsc[1].mWaveform = OscWaveformShape::Sine;
+        p.mOsc[1].mFreqMultiplier = 3.4f;
+        p.mOsc[1].mGain = 0;
+
+        p.mOsc[2].mGain = 0;
+
+        p.mEnv1.mAttackMS = 5;
+        p.mEnv1.mDecayMS = 1800;
+        p.mEnv1.mSustainLevel = 0.0f;
+        p.mEnv1.mReleaseMS = 500;
+
+        p.mModulations[0].mSource = AnyModulationSource::ENV1;
+        p.mModulations[0].mDest = AnyModulationDestination::FMStrength2To1;
+        p.mModulations[0].SetScaleN11_Legacy(.5f);
+    }
+
     SynthSettings()
     {
         size_t i = 0;
@@ -1397,6 +1430,9 @@ struct SynthSettings
 
         CCASSERT(i == SynthPresetID_Supersaw);
         InitSupersaw(mPresets[i++], "Supersaw");
+
+        CCASSERT(i == SynthPresetID_TubularBell);
+        InitTubularBellPreset(mPresets[i++]);
 
         InitSynccyLead(mPresets[i++], "Saw Sync", OscWaveformShape::SawSync, 0.5f);
 

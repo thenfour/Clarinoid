@@ -380,6 +380,8 @@ struct AppSettings
         p.mSynthAGain = DecibelsToLinear(-3);
         p.mSynthPresetB = SynthPresetID_PWMLead2;
         p.mSynthBGain = DecibelsToLinear(-3);
+
+        p.mGlobalScale = Scale{Note::A, ScaleFlavorIndex::MajorPentatonic};
     }
 
     // FULL SCALE
@@ -471,6 +473,19 @@ struct AppSettings
         p.mSynthBGain = DecibelsToLinear(-3);
     }
 
+    static void InitTubularBellPerf(PerformancePatch &p)
+    {
+        p.mName = "Tubular Bell";
+        p.mSynthStereoSpread = 0.6f;
+        p.mDetuneSemis = 0.15f;
+
+        p.mSynthPresetA = SynthPresetID_TubularBell;
+        p.mSynthAGain = DecibelsToLinear(-3);
+
+        p.mSynthPresetB = SynthPresetID_TubularBell;
+        p.mSynthBGain = DecibelsToLinear(-3);
+    }
+
     AppSettings()
     {
         size_t i = 1; // 0 = default, no performance
@@ -488,7 +503,8 @@ struct AppSettings
 
         // CLOUDS AND STARS
         //     - fluvial + pwm
-        InitCloudsAndStarsPerf(mPerformancePatches[i++]);
+        InitCloudsAndStarsPerf(mPerformancePatches[i++]); // as bass
+        InitCloudsAndStarsPerf(mPerformancePatches[i++]); // as lead
 
         // FULL SCALE
         //     - fluvial + trumpet
@@ -503,6 +519,7 @@ struct AppSettings
         //     - trumpet -12
         //     - C major
         InitSilkSuspendersPerf(mPerformancePatches[i++]);
+        InitTubularBellPerf(mPerformancePatches[i++]);
 
         InitFMPerf(mPerformancePatches[i++]);
         InitSyncPerf(mPerformancePatches[i++]);
