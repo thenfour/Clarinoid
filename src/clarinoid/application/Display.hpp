@@ -400,6 +400,7 @@ struct _CCDisplay : IDisplay
     {
         mIsShowingToast = true;
         mToastMsg = msg;
+        mToastCapture = capture;
         mToastRenderExtra = renderExtra;
         mToastTimer.Restart();
     }

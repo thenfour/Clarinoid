@@ -42,6 +42,7 @@ struct GlobalTempoMappableFunction : FunctionHandler
 
 struct GlobalKeyRootMappableFunction : FunctionHandler
 {
+    using TThis = GlobalKeyRootMappableFunction;
     IInputSource *mInputSrc;
     AppSettings *mAppSettings;
 
@@ -63,7 +64,7 @@ struct GlobalKeyRootMappableFunction : FunctionHandler
                 String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString(),
                 this,
                 [](IDisplay &display, void *capture) {
-                    auto p = (GlobalKeyRootMappableFunction *)capture;
+                    auto p = static_cast<TThis *>(capture);
                     RenderKeyboard(display,
                                    PointI::Construct(24, 20),
                                    GetKeyStatesForScale(p->mAppSettings->GetCurrentPerformancePatch().mGlobalScale));
@@ -79,6 +80,7 @@ struct GlobalKeyRootMappableFunction : FunctionHandler
 
 struct GlobalScaleFlavorMappableFunction : FunctionHandler
 {
+    using TThis = GlobalScaleFlavorMappableFunction;
     IInputSource *mInputSrc;
     AppSettings *mAppSettings;
 
@@ -100,7 +102,7 @@ struct GlobalScaleFlavorMappableFunction : FunctionHandler
                 String("Global scale\n") + mAppSettings->GetCurrentPerformancePatch().mGlobalScale.ToString(),
                 this,
                 [](IDisplay &display, void *capture) {
-                    auto p = (GlobalKeyRootMappableFunction *)capture;
+                    auto p = static_cast<TThis *>(capture);
                     RenderKeyboard(display,
                                    PointI::Construct(24, 20),
                                    GetKeyStatesForScale(p->mAppSettings->GetCurrentPerformancePatch().mGlobalScale));

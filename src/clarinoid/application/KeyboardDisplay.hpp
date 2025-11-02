@@ -122,7 +122,7 @@ void RenderKeyboard(IDisplay &display, const PointI &offset, const KeyStates &ke
     for (size_t i = 0; i < 12; i++)
     {
         const KeySpec &ks = gKeySpecs[i];
-        uint8_t fillColor = keyStates.isPressed[i] ? 48 : 0;
+        uint8_t fillColor = keyStates.isPressed[i] ? 64 : 0;
         for (const RectI &r : ks.fillAreas)
         {
             if (r.width == 0 || r.height == 0)
