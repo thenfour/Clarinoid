@@ -93,7 +93,7 @@ struct ScrollbarOverlay
         mTimer.Restart();
     }
 
-    void Render(IDisplay &display, const RectI &clientRect, size_t visibleItemCount, size_t totalItemCount)
+    void Render(IDisplay &display, const RectI &clientRect_, size_t visibleItemCount, size_t totalItemCount)
     {
         if (!mIsActive)
         {
@@ -123,6 +123,10 @@ struct ScrollbarOverlay
         }
 
         float fraction = Clamp01(AnimatedFractionInternal(elapsed));
+
+        // hackhack: client rect should be 1 px taller for perfect alignment.
+        RectI clientRect = clientRect_;
+        clientRect.height += 1;
 
         switch (mOrientation)
         {
