@@ -220,6 +220,7 @@ struct _CCDisplay : IDisplay
 
         ClearState();
         mHudProvider->IHudProvider_RenderHud(mDisplay.width(), mDisplay.height());
+        ResetClip(); // HUD narrows the clip region; restore client area for overlays
         mAppSwitchScrollbar.Render(*this, GetClientRect(), 1, mApps.mSize);
 
         auto s = mHudProvider->IHudProvider_GetHudTransientIndicator(this->mInput);
