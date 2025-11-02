@@ -32,6 +32,13 @@ static DitherMatrix<8> gBayer8x8Matrix{{0,  48, 12, 60, 3,  51, 15, 63, 32, 16, 
                                         2,  50, 14, 62, 1,  49, 13, 61, 34, 18, 46, 30, 33, 17, 45, 29,
                                         10, 58, 6,  54, 9,  57, 5,  53, 42, 26, 38, 22, 41, 25, 37, 21}};
 
+static constexpr float gSubpixelSampleOffsets[4][2] = {
+    {0.25f, 0.25f},
+    {0.75f, 0.25f},
+    {0.25f, 0.75f},
+    {0.75f, 0.75f},
+};
+
 //////////////////////////////////////////////////////////////////////
 struct _CCDisplay : IDisplay
 {
@@ -126,7 +133,7 @@ struct _CCDisplay : IDisplay
         return mInput;
     }
 
-    virtual void SelectApp(int n) override
+    virtual void SelectApp(int n, int scrollDirection) override
     {
         n = RotateIntoRange(n, mApps.mSize);
 
@@ -136,7 +143,7 @@ struct _CCDisplay : IDisplay
         mApps.mData[mCurrentAppIndex]->DisplayAppOnUnselected();
         mCurrentAppIndex = n;
         mApps.mData[mCurrentAppIndex]->DisplayAppOnSelected();
-        mAppSwitchScrollbar.TriggerMovement(previousIndex, mCurrentAppIndex, mApps.mSize, 1);
+        mAppSwitchScrollbar.TriggerMovement(previousIndex, mCurrentAppIndex, mApps.mSize, scrollDirection);
     }
 
     virtual void ScrollApps(int delta) override
@@ -146,7 +153,7 @@ struct _CCDisplay : IDisplay
         //     return;
         // }
         // int previousIndex = mCurrentAppIndex;
-        SelectApp(mCurrentAppIndex + delta);
+        SelectApp(mCurrentAppIndex + delta, delta);
         // if (previousIndex != mCurrentAppIndex)
         // {
         //     mAppSwitchScrollbar.TriggerMovement(previousIndex, mCurrentAppIndex, mApps.mSize, delta);
@@ -997,19 +1004,12 @@ struct _CCDisplay : IDisplay
         int minY = (int)floorf(rect.y);
         int maxY = (int)ceilf(rect.y + height);
 
-        static constexpr float sampleOffsets[4][2] = {
-            {0.25f, 0.25f},
-            {0.75f, 0.25f},
-            {0.25f, 0.75f},
-            {0.75f, 0.75f},
-        };
-
         for (int y = minY; y < maxY; ++y)
         {
             for (int x = minX; x < maxX; ++x)
             {
                 float coverageSamples = 0.0f;
-                for (const auto &offset : sampleOffsets)
+                for (const auto &offset : gSubpixelSampleOffsets)
                 {
                     float sampleX = (float)x + offset[0];
                     float sampleY = (float)y + offset[1];
@@ -1026,7 +1026,63 @@ struct _CCDisplay : IDisplay
                     continue;
                 }
 
-                float coverage01 = coverageSamples / (float)SizeofStaticArray(sampleOffsets);
+                float coverage01 = coverageSamples / (float)SizeofStaticArray(gSubpixelSampleOffsets);
+                int finalCoverage = (int)(coverage01 * (float)coverageQp8 + 0.5f);
+                finalCoverage = ClampInclusive(finalCoverage, 0, 255);
+                if (finalCoverage <= 0)
+                {
+                    continue;
+                }
+
+                SetPixelShaded(PointI{x, y}, finalCoverage);
+            }
+        }
+    }
+
+    virtual void FillRectSubpixel(const RectF &rect, int coverageQp8) override
+    {
+        if (coverageQp8 <= 0)
+        {
+            return;
+        }
+        float width = rect.width;
+        float height = rect.height;
+        if (width <= 0.0f || height <= 0.0f)
+        {
+            return;
+        }
+
+        int minX = (int)floorf(rect.x);
+        int maxX = (int)ceilf(rect.x + width);
+        int minY = (int)floorf(rect.y);
+        int maxY = (int)ceilf(rect.y + height);
+
+        float rectRight = rect.x + width;
+        float rectBottom = rect.y + height;
+
+        for (int y = minY; y < maxY; ++y)
+        {
+            for (int x = minX; x < maxX; ++x)
+            {
+                float coverageSamples = 0.0f;
+                for (const auto &offset : gSubpixelSampleOffsets)
+                {
+                    float sampleX = (float)x + offset[0];
+                    float sampleY = (float)y + offset[1];
+                    bool inside =
+                        (sampleX >= rect.x) && (sampleX < rectRight) && (sampleY >= rect.y) && (sampleY < rectBottom);
+                    if (inside)
+                    {
+                        coverageSamples += 1.0f;
+                    }
+                }
+
+                if (coverageSamples <= 0.0f)
+                {
+                    continue;
+                }
+
+                float coverage01 = coverageSamples / (float)SizeofStaticArray(gSubpixelSampleOffsets);
                 int finalCoverage = (int)(coverage01 * (float)coverageQp8 + 0.5f);
                 finalCoverage = ClampInclusive(finalCoverage, 0, 255);
                 if (finalCoverage <= 0)

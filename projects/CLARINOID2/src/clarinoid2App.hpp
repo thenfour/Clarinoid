@@ -70,6 +70,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     // AudioMonitorApp mAudioMonitorApp;
     MetronomeSettingsApp mMetronomeSettingsApp;
     // HarmSettingsApp mHarmVoiceSettingsApp;
+    DisplayTestApp mDisplayTestApp;
     HarmPatchSettingsApp mHarmPatchApp;
 
     GuiPerformanceApp mGuiPerformanceApp;    //(mDisplay, mMusicalStateTask.mMetronome);
@@ -110,6 +111,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
               &mMusicalStateTask.mMetronome),
           mPerfPatchApp(mDisplay),  //
           mSynthPatchApp(mDisplay), //
+          mDisplayTestApp(mDisplay),
           // mAudioMonitorApp(mDisplay), //
           mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, &mAppSettings, mDisplay),
           // mHarmVoiceSettingsApp(mDisplay, mMusicalStateTask.mMusicalState.mLooper.mHarmonizer), //
@@ -215,6 +217,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mControlMapper.Init(&mDisplay);
 
         IDisplayApp *allApps[] = {
+            &mDisplayTestApp,
+
             &mGuiPerformanceApp,
 
             &mPerformanceApp, // nice to have this as front page to know if things are running healthy.

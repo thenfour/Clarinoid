@@ -733,4 +733,63 @@ struct ScaleDetectorApp : DisplayApp
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct DisplayTestApp : DisplayApp
+{
+    DisplayTestApp(IDisplay &d) : DisplayApp(d)
+    {
+    }
+
+    virtual const char *DisplayAppGetName() override
+    {
+        return "Display Test App";
+    }
+
+    virtual void UpdateApp() override
+    {
+        if (mBack.IsNewlyPressed())
+        {
+            GoToFrontPage();
+        }
+    }
+
+    virtual void DisplayAppUpdate() override
+    {
+        DisplayApp::DisplayAppUpdate(); // update input
+    }
+
+    virtual void RenderApp() override
+    {
+    }
+    virtual void RenderFrontPage() override
+    {
+        mDisplay.ClearState();
+
+        const auto clientRect = mDisplay.GetClientRect();
+
+        // draw rects with various brightness.
+        // 2 rows, 4 columns each, from 0% to 100%.
+        constexpr int NUM_ROWS = 3;
+        constexpr int NUM_COLS = 3;
+        int brightnessLevels[NUM_ROWS * NUM_COLS] = {0, 32, 64, 96, 128, 160, 192, 224, 255};
+        for (int row = 0; row < NUM_ROWS; ++row)
+        {
+            for (int col = 0; col < NUM_COLS; ++col)
+            {
+                int brightness = brightnessLevels[row * NUM_COLS + col];
+                int rectWidth = clientRect.width / NUM_COLS;
+                int rectHeight = clientRect.height / NUM_ROWS;
+                int x = clientRect.x + col * rectWidth;
+                int y = clientRect.y + row * rectHeight;
+                int textHeight = 8;
+                mDisplay.FillRectWithBrightness(RectI{x, y + textHeight, rectWidth, rectHeight - textHeight},
+                                                brightness);
+                // draw label in the rect
+                mDisplay.setCursor(x + 2, y + 2);
+                mDisplay.print(brightness);
+            }
+        }
+    }
+};
+
 } // namespace clarinoid

@@ -37,23 +37,6 @@ class DitherMatrix : public IDitherMatrix
     }
 
   public:
-    // explicit DitherMatrix(const int (&inputValues)[N][N])
-    // {
-    //     for (size_t y = 0; y < N; y++)
-    //     {
-    //         for (size_t x = 0; x < N; x++)
-    //         {
-    //             values[y * N + x] = inputValues[y][x];
-    //         }
-    //     }
-    //     maxThreshold = findMaxThreshold();
-    //     int scale = 256 / (maxThreshold + 1);
-    //     for (size_t i = 0; i < N * N; i++)
-    //     {
-    //         valuesScaled[i] = (values[i] + 1) * scale;
-    //     }
-    // }
-
     explicit DitherMatrix(std::initializer_list<std::initializer_list<int>> init)
     {
         size_t y = 0;
@@ -77,7 +60,7 @@ class DitherMatrix : public IDitherMatrix
 
     virtual bool getDitheredColor(int shade, const PointI &pt) const override
     {
-        int thresh = getScaledThreshold(pt) + 1; // why +1?
+        int thresh = getScaledThreshold(pt);
         return (shade > thresh);
     }
 };

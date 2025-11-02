@@ -48,7 +48,7 @@ struct IDisplay
 
     virtual uint16_t GetLineHeight() const = 0;
     virtual RectI SetupModal() = 0;
-    virtual void SelectApp(int n) = 0;
+    virtual void SelectApp(int n, int scrollDirection) = 0;
     virtual void ScrollApps(int delta) = 0;
     virtual void UpdateAndRenderTask() = 0;
 
@@ -85,6 +85,7 @@ struct IDisplay
                                              AntStyle style,
                                              Edges::Flags edges) = 0;
     virtual void DrawRoundedRectSubpixel(const RectF &rect, float radius, int coverageQp8, bool filled) = 0;
+    virtual void FillRectSubpixel(const RectF &rect, int coverageQp8) = 0;
 
     // calculates in general, not for a specific location on screen.
     virtual RectI GetTextBounds(const String &str) = 0;

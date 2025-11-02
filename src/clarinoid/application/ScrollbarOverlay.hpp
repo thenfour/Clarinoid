@@ -15,13 +15,13 @@ enum class ScrollbarOrientation : uint8_t
 
 struct ScrollbarOverlay
 {
-    static constexpr int kAnimDurationMs = 600;
-    static constexpr int kVisibleDurationMs = 800;
+    static constexpr int kAnimDurationMs = 300;
+    static constexpr int kVisibleDurationMs = 600;
     static constexpr float kMinimumHandlePixels = 8.0f;
-    static constexpr float kTrackMargin = 1.0f;
+    static constexpr float kTrackMargin = 0; // 1.0f;
     static constexpr float kTrackThickness = 6.0f;
     // static constexpr float kTrackCornerRadius = 1.0f;
-    static constexpr float kHandleCornerRadius = 3.0f;
+    // static constexpr float kHandleCornerRadius = 3.0f;
     // static constexpr int kTrackCoverageQp8 = 0;
     static constexpr int kHandleCoverageQp8 = 255;
 
@@ -202,7 +202,7 @@ struct ScrollbarOverlay
         float handleY = trackY + handleOffset;
 
         RectF handleRect{trackX, handleY, trackWidth, handleHeight};
-        display.DrawRoundedRectSubpixel(handleRect, kHandleCornerRadius, kHandleCoverageQp8, true);
+        display.FillRectSubpixel(handleRect, kHandleCoverageQp8);
     }
 
     static void RenderHorizontal(IDisplay &display,
@@ -234,9 +234,6 @@ struct ScrollbarOverlay
         display.fillRect(backgroundX, backgroundY, clientRect.width, backgroundHeight, 0);
         display.drawFastHLine(backgroundX, backgroundY, clientRect.width, 1);
 
-        // RectF trackRect{trackX, trackY, trackWidth, trackHeight};
-        // display.DrawRoundedRectSubpixel(trackRect, kTrackCornerRadius, kTrackCoverageQp8, true);
-
         float handleWidth = trackWidth * ((float)visibleItemCount / (float)totalItemCount);
         handleWidth = Clamp(handleWidth, kMinimumHandlePixels, trackWidth);
         float maxTravel = trackWidth - handleWidth;
@@ -248,7 +245,7 @@ struct ScrollbarOverlay
         float handleX = trackX + handleOffset;
 
         RectF handleRect{handleX, trackY, handleWidth, trackHeight};
-        display.DrawRoundedRectSubpixel(handleRect, kHandleCornerRadius, kHandleCoverageQp8, true);
+        display.FillRectSubpixel(handleRect, kHandleCoverageQp8);
     }
 };
 
