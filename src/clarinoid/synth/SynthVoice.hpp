@@ -20,6 +20,7 @@
 namespace clarinoid
 {
 static constexpr float KRateFrequencyModulationMultiplier = 12.0f;
+uint32_t gSynthVoiceNoteOnCount = 0;
 
 struct SynthGraph
 {
@@ -536,6 +537,8 @@ struct Voice : IModulationKRateProvider
 
         if (voiceOrPatchChanged || transition.mNeedsNoteOn)
         {
+            gSynthVoiceNoteOnCount++;
+
             mEnv1.noteOn();
             mEnv2.noteOn();
         }
