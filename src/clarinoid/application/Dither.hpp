@@ -51,17 +51,20 @@ class DitherMatrix : public IDitherMatrix
             y++;
         }
         maxThreshold = findMaxThreshold();
-        int scale = 256 / (maxThreshold + 1);
+        int levels = maxThreshold + 1;
+        CCASSERT(levels > 0);
         for (size_t i = 0; i < N * N; i++)
         {
-            valuesScaled[i] = (values[i] + 1) * scale;
+            valuesScaled[i] = ((values[i] << 8) + (levels / 2)) / levels;
+            valuesScaled[i] = ClampInclusive(valuesScaled[i], 0, 255);
         }
     }
 
     virtual bool getDitheredColor(int shade, const PointI &pt) const override
     {
+        shade = ClampInclusive(shade, 0, 255);
         int thresh = getScaledThreshold(pt);
-        return (shade > thresh);
+        return shade > thresh;
     }
 };
 
