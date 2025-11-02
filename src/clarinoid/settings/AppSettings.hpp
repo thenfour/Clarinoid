@@ -459,6 +459,18 @@ struct AppSettings
         p.mSynthBGain = DecibelsToLinear(-3);
     }
 
+    static void InitSupersawPerf(PerformancePatch &p)
+    {
+        p.mName = "Supersaw";
+        p.mSynthStereoSpread = 0.7f;
+
+        p.mSynthPresetA = SynthPresetID_Supersaw;
+        p.mSynthAGain = DecibelsToLinear(-3);
+
+        p.mSynthPresetB = SynthPresetID_Supersaw;
+        p.mSynthBGain = DecibelsToLinear(-3);
+    }
+
     AppSettings()
     {
         size_t i = 1; // 0 = default, no performance
@@ -494,6 +506,7 @@ struct AppSettings
 
         InitFMPerf(mPerformancePatches[i++]);
         InitSyncPerf(mPerformancePatches[i++]);
+        InitSupersawPerf(mPerformancePatches[i++]);
 
         // InitSoaringGuitarPerf(mPerformancePatches[i++]);
         // InitCaveBouncer(mPerformancePatches[i++]);

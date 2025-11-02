@@ -1334,6 +1334,31 @@ struct SynthSettings
         p.mLFO2.mTime.mTimeMS = 300;
     }
 
+    static void InitSupersaw(SynthPreset &p, const String &name)
+    {
+        p.mName = name;
+        p.mSync = false;
+        p.mDetune = 0.05f;
+        p.mStereoSpread = 0.7f;
+        p.mFilterQ = 0;
+        p.mFilterType = ClarinoidFilterType::LP_Moog2;
+
+        p.mVerbSend = DecibelsToLinear(-12.0f);
+        p.mDelaySend = DecibelsToLinear(-12.0f);
+
+        p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[0].mGain = DecibelsToLinear(-16.0f);
+
+        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[1].mGain = DecibelsToLinear(-16.0f);
+
+        p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[2].mGain = DecibelsToLinear(-16.0f);
+
+        // p.mModulations[0].mSource = AnyModulationSource::Breath;
+        // p.mModulations[0].mDest = AnyModulationDestination::detune;
+    }
+
     SynthSettings()
     {
         size_t i = 0;
@@ -1364,6 +1389,9 @@ struct SynthSettings
 
         CCASSERT(i == SynthPresetID_PulseSync);
         InitSynccyLead(mPresets[i++], "Square Sync", OscWaveformShape::Pulse, 0.5f);
+
+        CCASSERT(i == SynthPresetID_Supersaw);
+        InitSupersaw(mPresets[i++], "Supersaw");
 
         InitSynccyLead(mPresets[i++], "Saw Sync", OscWaveformShape::SawSync, 0.5f);
 
