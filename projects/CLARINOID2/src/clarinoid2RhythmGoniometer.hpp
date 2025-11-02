@@ -3,111 +3,111 @@
 namespace clarinoid
 {
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct NoteCountScroller
-{
-    Stopwatch _stopwatch;
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// struct NoteCountScroller
+// {
+//     Stopwatch _stopwatch;
 
-    static constexpr int gMaxBuckets = 256; // maximum number of buckets to store
-    std::array<int, gMaxBuckets> mBuckets;
+//     static constexpr int gMaxBuckets = 256; // maximum number of buckets to store
+//     std::array<int, gMaxBuckets> mBuckets;
 
-    NoteCountScroller()
-    {
-        mBuckets.fill(0);
-    }
+//     NoteCountScroller()
+//     {
+//         mBuckets.fill(0);
+//     }
 
-    // We'll track how far time has advanced in terms of buckets
-    int _lastClearedBucketIndex = 0;
-    // This marks the oldest bucket index we have cleared so far.
+//     // We'll track how far time has advanced in terms of buckets
+//     int _lastClearedBucketIndex = 0;
+//     // This marks the oldest bucket index we have cleared so far.
 
-    static constexpr int gBucketWidth = 2;     // horizontal px per bucket
-    static constexpr int gMsPerBucket = 60;    // each bucket spans 100 ms
-    static constexpr int gScrollerHeight = 30; // vertical px allocated for scroller
-    static constexpr int gScreenWidth = 128;   // total screen width in px
-    static constexpr int gScreenHeight = 55;   // total screen height in px
+//     static constexpr int gBucketWidth = 2;     // horizontal px per bucket
+//     static constexpr int gMsPerBucket = 60;    // each bucket spans 100 ms
+//     static constexpr int gScrollerHeight = 30; // vertical px allocated for scroller
+//     static constexpr int gScreenWidth = 128;   // total screen width in px
+//     static constexpr int gScreenHeight = 55;   // total screen height in px
 
-    /// Called when a note-on event occurs.
-    /// Simply increment the current bucket's count.
-    /// (We only do clearing in Render, so that even if no notes arrive,
-    /// time-based clearing still happens.)
-    void OnNoteOn()
-    {
-        int elapsedMs = (int)_stopwatch.ElapsedTime().ElapsedMillisI();
-        int currentBucketIndex = elapsedMs / gMsPerBucket;
+//     /// Called when a note-on event occurs.
+//     /// Simply increment the current bucket's count.
+//     /// (We only do clearing in Render, so that even if no notes arrive,
+//     /// time-based clearing still happens.)
+//     void OnNoteOn()
+//     {
+//         int elapsedMs = (int)_stopwatch.ElapsedTime().ElapsedMillisI();
+//         int currentBucketIndex = elapsedMs / gMsPerBucket;
 
-        // ring pos for the current bucket
-        int ringPos = currentBucketIndex % gMaxBuckets;
-        mBuckets[ringPos]++;
-    }
+//         // ring pos for the current bucket
+//         int ringPos = currentBucketIndex % gMaxBuckets;
+//         mBuckets[ringPos]++;
+//     }
 
-    /// <summary>
-    /// Renders the scroller along the bottom of the screen.
-    /// The newest bucket is at the right edge, older to the left.
-    /// Also clears any buckets that are older than the left edge.
-    /// </summary>
-    void Render(IDisplay *display)
-    {
-        int screenBottom = gScreenHeight - 1;
+//     /// <summary>
+//     /// Renders the scroller along the bottom of the screen.
+//     /// The newest bucket is at the right edge, older to the left.
+//     /// Also clears any buckets that are older than the left edge.
+//     /// </summary>
+//     void Render(IDisplay *display)
+//     {
+//         int screenBottom = gScreenHeight - 1;
 
-        int elapsedMs = (int)_stopwatch.ElapsedTime().ElapsedMillisI();
-        int currentBucketIndex = elapsedMs / gMsPerBucket;
+//         int elapsedMs = (int)_stopwatch.ElapsedTime().ElapsedMillisI();
+//         int currentBucketIndex = elapsedMs / gMsPerBucket;
 
-        // 1) Clear buckets older than the left edge
-        // The leftmost bucket index:
-        int leftmostBucketIndex = currentBucketIndex - (gScreenWidth / gBucketWidth);
+//         // 1) Clear buckets older than the left edge
+//         // The leftmost bucket index:
+//         int leftmostBucketIndex = currentBucketIndex - (gScreenWidth / gBucketWidth);
 
-        // Move _lastClearedBucketIndex forward until it matches leftmostBucketIndex
-        // and set those old buckets to 0.
-        while (_lastClearedBucketIndex < leftmostBucketIndex)
-        {
-            int ringPos = _lastClearedBucketIndex % gMaxBuckets;
-            // clear that bucket
-            mBuckets[ringPos] = 0;
-            _lastClearedBucketIndex++;
-        }
+//         // Move _lastClearedBucketIndex forward until it matches leftmostBucketIndex
+//         // and set those old buckets to 0.
+//         while (_lastClearedBucketIndex < leftmostBucketIndex)
+//         {
+//             int ringPos = _lastClearedBucketIndex % gMaxBuckets;
+//             // clear that bucket
+//             mBuckets[ringPos] = 0;
+//             _lastClearedBucketIndex++;
+//         }
 
-        // 2) Now draw the visible region
-        // We'll iterate horizontally from x=0..ScreenWidth-1 in steps of BucketWidth
-        for (int screenX = 0; screenX < gScreenWidth; screenX += gBucketWidth)
-        {
-            // distanceFromRight = how many px from the right edge
-            int distanceFromRight = (gScreenWidth - 1) - screenX;
-            // how many buckets to the left of current
-            int bucketOffset = distanceFromRight / gBucketWidth;
-            int bucketIndex = currentBucketIndex - bucketOffset;
+//         // 2) Now draw the visible region
+//         // We'll iterate horizontally from x=0..ScreenWidth-1 in steps of BucketWidth
+//         for (int screenX = 0; screenX < gScreenWidth; screenX += gBucketWidth)
+//         {
+//             // distanceFromRight = how many px from the right edge
+//             int distanceFromRight = (gScreenWidth - 1) - screenX;
+//             // how many buckets to the left of current
+//             int bucketOffset = distanceFromRight / gBucketWidth;
+//             int bucketIndex = currentBucketIndex - bucketOffset;
 
-            if (bucketIndex < 0)
-            {
-                // time before 0 => no data
-                continue;
-            }
+//             if (bucketIndex < 0)
+//             {
+//                 // time before 0 => no data
+//                 continue;
+//             }
 
-            // ring pos
-            int ringPos = bucketIndex % gMaxBuckets;
-            if (ringPos < 0)
-                ringPos += gMaxBuckets; // handle negative mod if needed
+//             // ring pos
+//             int ringPos = bucketIndex % gMaxBuckets;
+//             if (ringPos < 0)
+//                 ringPos += gMaxBuckets; // handle negative mod if needed
 
-            // number of notes that happened in this bucket
-            int noteCount = mBuckets[ringPos];
+//             // number of notes that happened in this bucket
+//             int noteCount = mBuckets[ringPos];
 
-            // clamp noteCount so it won't exceed our scroller height
-            // each note uses 2 px vertically (1 line + 1 gap),
-            // but we only have 'ScrollerHeight' px total
-            int maxLines = gScrollerHeight / 2;
-            if (noteCount > maxLines)
-                noteCount = maxLines;
+//             // clamp noteCount so it won't exceed our scroller height
+//             // each note uses 2 px vertically (1 line + 1 gap),
+//             // but we only have 'ScrollerHeight' px total
+//             int maxLines = gScrollerHeight / 2;
+//             if (noteCount > maxLines)
+//                 noteCount = maxLines;
 
-            // draw each note as a horizontal line 1 px thick, with 1 px gap
-            // from bottom to top
-            for (int n = 0; n < noteCount; n++)
-            {
-                int lineY = screenBottom - (n * 2);
-                // fill a horizontal line of width BucketWidth at lineY
-                display->drawFastHLine(screenX, lineY, gBucketWidth, WHITE);
-            }
-        }
-    }
-};
+//             // draw each note as a horizontal line 1 px thick, with 1 px gap
+//             // from bottom to top
+//             for (int n = 0; n < noteCount; n++)
+//             {
+//                 int lineY = screenBottom - (n * 2);
+//                 // fill a horizontal line of width BucketWidth at lineY
+//                 display->drawFastHLine(screenX, lineY, gBucketWidth, WHITE);
+//             }
+//         }
+//     }
+// };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct RhythmGoniometerApp : DisplayApp
@@ -156,6 +156,15 @@ struct RhythmGoniometerApp : DisplayApp
         {
             GoToFrontPage();
         }
+    }
+
+    virtual void DisplayAppUpdate() override
+    {
+        DisplayApp::DisplayAppUpdate(); // update input
+    }
+
+    virtual void RenderApp() override
+    {
     }
 
     void UpdateFrontPage()
@@ -215,11 +224,7 @@ struct RhythmGoniometerApp : DisplayApp
             int fadeStage01 = ((elapsedMS - holdMs) << 8) / decayMs;
             brightness = 256 - fadeStage01;
         }
-        return brightness; // if out of range, it gets clamped in the display device anyway.
-    }
-
-    virtual void RenderApp() override
-    {
+        return ClampInclusive(brightness, 0, 255); // if out of range, it gets clamped in the display device anyway.
     }
 
     virtual void RenderFrontPage() override
@@ -229,7 +234,8 @@ struct RhythmGoniometerApp : DisplayApp
         for (size_t __i = 1; __i < mNotePoints.size(); __i++)
         {
             size_t idx = (mNotePointCursor + __i) % mNotePoints.size();
-            auto &a1 = mNotePoints[idx - 1];
+            size_t prevIdx = (idx == 0) ? (mNotePoints.size() - 1) : (idx - 1);
+            auto &a1 = mNotePoints[prevIdx];
             auto &a2 = mNotePoints[idx];
             if (!a1.mActive || !a2.mActive)
             {
@@ -244,21 +250,12 @@ struct RhythmGoniometerApp : DisplayApp
 
             mDisplay.DrawLineWithBrightness(a1.mPt, a2.mPt, lineBrightness);
 
-            // mDisplay.DrawLine(a1.mPt, a2.mPt);
-
             mDisplay.FillCircleWithBrightness(
                 a2.mPt, 4, GetBrightness((int)a2.mWhenAdded.ElapsedTime().ElapsedMillisI(), gDotHoldMS, gDotDecayMS));
         }
 
-        // mNoteCountScroller.Render(&mDisplay);
-
         mDisplay.setCursor(0, 0);
         mDisplay.print(String(mMusicalStateTask.mMusicalState.mMidiOut.noteOns));
-    }
-
-    virtual void DisplayAppUpdate() override
-    {
-        DisplayApp::DisplayAppUpdate(); // update input
     }
 };
 

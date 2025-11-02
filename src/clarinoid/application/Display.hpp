@@ -756,18 +756,6 @@ struct _CCDisplay : IDisplay
         int x = pt0.x;
         int y = pt0.y;
 
-        // is this function freezing? alternative impl below...
-        // while (true)
-        // {
-        //     SetPixelShaded(PointI { x, y }, brightnessQp8);
-
-        //     if (x == pt1.x && y == pt1.y) break;
-
-        //     int e2 = 2 * err;
-        //     if (e2 > -dy) { err -= dy; x += sx; }
-        //     if (e2 < dx) { err += dx; y += sy; }
-        // }
-
         while (true)
         {
             SetPixelShaded(PointI{x, y}, brightnessQp8);
@@ -782,7 +770,7 @@ struct _CCDisplay : IDisplay
                 x += sx;
             }
             else if (e2 < dx)
-            { // Use `else if` to ensure only one step occurs
+            {
                 err += dx;
                 y += sy;
             }
