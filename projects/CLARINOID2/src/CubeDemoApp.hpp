@@ -3,6 +3,7 @@
 #include <array>
 
 #include "MeshDemoAppBase.hpp"
+#include <clarinoid/menu/MenuAppBase.hpp>
 
 namespace clarinoid
 {
@@ -58,10 +59,10 @@ struct CubeDemoApp : CubeDemoBase
 
     virtual void RenderFrontPage() override
     {
-        mDisplay.setCursor(0, 0);
-        mDisplay.println("demo: cube");
-        mDisplay.println("press ok");
-        mDisplay.println("back to exit");
+        this->mDisplay.setCursor(0, 0);
+        this->mDisplay.println("demo: cube");
+        this->mDisplay.println("press ok");
+        this->mDisplay.println("back to exit");
     }
 
   protected:

@@ -34,6 +34,7 @@
 #include "clarinoid2DebugDisplayApp.hpp"
 #include "clarinoid2DemoApp.hpp"
 #include "CubeDemoApp.hpp"
+#include "TorusDemoApp.hpp"
 #include "clarinoid2RhythmGoniometer.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
@@ -78,6 +79,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     DisplayTestApp mDisplayTestApp;
     DemoApp mDemoApp{mDisplay, mMusicalStateTask};
     CubeDemoApp mCubeDemoApp{mDisplay, mMusicalStateTask};
+    TorusDemoApp mTorusDemoApp{mDisplay, mMusicalStateTask};
     MetronomeSettingsApp mMetronomeSettingsApp;
     // HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
@@ -246,6 +248,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mGoniometerApp,
             &mDemoApp,
             &mCubeDemoApp,
+            &mTorusDemoApp,
             &mBigPerfDisplayApp,
         };
 

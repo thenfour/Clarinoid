@@ -9,13 +9,14 @@
 #include <clarinoid/basic/Vec.hpp>
 #include <clarinoid/basic/Rendering3D.hpp>
 #include <clarinoid/application/Display.hpp>
+#include <clarinoid/menu/MenuAppBase.hpp>
+
+#include "clarinoid2MusicalStateTask.hpp"
 
 namespace clarinoid
 {
 
 extern uint32_t gSynthVoiceNoteOnCount;
-
-struct MusicalStateTask;
 
 template <typename ParamsT, size_t TVertexCount, size_t TFaceCount>
 struct MeshDemoAppBase : DisplayApp
