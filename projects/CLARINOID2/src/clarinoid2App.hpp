@@ -97,8 +97,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
     SimpleMovingAverage<30> mCPUUsage;
-    PeakMeterUtility<2000, 300> mPeakMeter;
-    static constexpr size_t kpeakmetersize = sizeof(mPeakMeter);
+    // PeakMeterUtility<2000, 300> mPeakMeter;
+    //  static constexpr size_t kpeakmetersize = sizeof(mPeakMeter);
 
     Clarinoid2App()
         : mLed(this),                                                                                    //
@@ -167,15 +167,15 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         p = 1.0f - p;
         return p * 100.0f;
     }
-    virtual float ISysInfoProvider_GetPeak() override
-    {
-        float peak, heldPeak;
-        mPeakMeter.Update(peak, heldPeak);
-        return heldPeak;
-    }
+    // virtual float ISysInfoProvider_GetPeak() override
+    // {
+    //     //float peak, heldPeak;
+    //     //mPeakMeter.Update(peak, heldPeak);
+    //     return heldPeak;
+    // }
     virtual MidiNote ISysInfoProvider_GetNote() override
     {
-        return MidiNote((uint8_t)mMusicalStateTask.mMusicalState.mLastPlayedNote);
+        return mMusicalStateTask.mMusicalState.mFingeredNote;
     }
     virtual std::array<SynthVoiceState, MAX_MUSICAL_VOICES> ISysInfoProvider_GetVoiceState() override
     {

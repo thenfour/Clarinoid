@@ -77,6 +77,11 @@ struct MeshSimulationBase
 
         HandleNoteImpulses();
 
+        const float rmsLinear = gAnalysisStateC.rmsLinear;
+        mAngularVelocity.x += rmsLinear * Params::kRmsAngularVelocityX;
+        mAngularVelocity.y += rmsLinear * Params::kRmsAngularVelocityY;
+        mAngularVelocity.z += rmsLinear * Params::kRmsAngularVelocityZ;
+
         mAngularVelocity.x += Params::kAmbientAngularVelocityX;
         mAngularVelocity.y += Params::kAmbientAngularVelocityY;
         mAngularVelocity.z += Params::kAmbientAngularVelocityZ;

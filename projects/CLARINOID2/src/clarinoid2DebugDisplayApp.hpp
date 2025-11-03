@@ -167,7 +167,7 @@ struct PerformanceApp : SettingsMenuApp
         return &mRootList;
     }
 
-    PeakMeterUtility<2000, 300> mPeakMeter;
+    // PeakMeterUtility<2000, 300> mPeakMeter;
 
     virtual void RenderFrontPage()
     {
@@ -189,8 +189,9 @@ struct PerformanceApp : SettingsMenuApp
         mDisplay.println(perf.mHarmEnabled ? String("H:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)
                                            : (String("H:off:") + mAppSettings->GetHarmPatchName(perf.mHarmPreset)));
 
-        float peak, heldPeak;
-        mPeakMeter.Update(peak, heldPeak);
+        float peak = gAnalysisStateC.peakLinear;
+        float heldPeak = gAnalysisStateC.heldPeakLinear;
+        // mPeakMeter.Update(peak, heldPeak);
         auto y = mDisplay.getCursorY();
         mDisplay.println(String("Peak ") + heldPeak);
         mDisplay.fillRoundRect(0, y, peak * mDisplay.width(), 5, 2, SSD1306_INVERSE);
@@ -466,7 +467,8 @@ struct AudioMonitorApp : DisplayApp
     virtual void RenderFrontPage() override
     {
         mDisplay.println(String("Peak"));
-        float peak = CCSynth::GetPeakLevel();
+        // float peak = CCSynth::GetPeakLevel();
+        float peak = gAnalysisStateC.heldPeakLinear;
         mPlotter.Plot(peak);
         RectI rcDisplay = {0, 0, this->mDisplay.width(), this->mDisplay.height()};
         mPlotter.Render(this->mDisplay, rcDisplay);

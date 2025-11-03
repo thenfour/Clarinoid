@@ -18,26 +18,32 @@ struct GeodesicSphereDemoParams
     // Positive Z offset keeping the sphere in front of the camera (model units).
     static constexpr float kCameraDistance = 3.1f;
     // Perspective multiplier applied during projection; larger values render a bigger sphere on screen.
-    static constexpr float kProjectionScale = 104.0f;
+    static constexpr float kProjectionScale = 112.0f;
     // Minimum allowed Z value when projecting (model units) to avoid divide-by-zero.
     static constexpr float kNearPlaneEpsilon = 0.12f;
 
     // Passive angular velocity about X/Y/Z (radians per frame) for idle motion.
-    static constexpr float kAmbientAngularVelocityX = 0.00009f;
-    static constexpr float kAmbientAngularVelocityY = 0.00008f;
-    static constexpr float kAmbientAngularVelocityZ = 0.00007f;
+    static constexpr float kAmbientAngularVelocityX = 0.00004f;
+    static constexpr float kAmbientAngularVelocityY = 0.00005f;
+    static constexpr float kAmbientAngularVelocityZ = 0.00006f;
+
+    // RMS-driven angular velocity (rms linear * this = radians per frame).
+    static constexpr float kRmsAngularVelocityX = 0.0003f;
+    static constexpr float kRmsAngularVelocityY = 0.0002f;
+    static constexpr float kRmsAngularVelocityZ = 0.0001f;
+
     // Exponential decay applied to angular velocity each frame (unitless 0-1).
-    static constexpr float kAngularDamping = 0.99f;
+    static constexpr float kAngularDamping = 0.985f;
     // Base and randomised portion of note-triggered impulses (radians per frame).
-    static constexpr float kImpulseMagnitudeMin = 0.03f;
+    static constexpr float kImpulseMagnitudeMin = 0.09f;
     static constexpr float kImpulseMagnitudeRange = 0.0f;
     // Maximum angular velocity per axis (radians per frame).
-    static constexpr float kMaxAngularVelocity = 0.38f;
+    static constexpr float kMaxAngularVelocity = 0.5f;
 
     // Face shading parameters: ambient brightness offset, diffuse scale, specular lift, and normal epsilon.
-    static constexpr float kFaceBaseBrightness = 6.0f;
-    static constexpr float kFaceDiffuseScale = 100.0f;
-    static constexpr float kFaceSpecularBias = 200.0f;
+    static constexpr float kFaceBaseBrightness = 8.0f;
+    static constexpr float kFaceDiffuseScale = 212.0f;
+    static constexpr float kFaceSpecularBias = 60.0f;
     static constexpr float kFaceNormalEpsilon = 1e-4f;
 
     // Directional light vector components (unitless, normalised internally).
@@ -317,7 +323,8 @@ struct GeodesicSphereDemoApp : DisplayApp
 
         static constexpr int kFingeredNoteRowY = 12;
         static constexpr int kTextAreaWidth = 72;
-        static constexpr int kPlayingNotesRowY = 33;
+        static constexpr int kPlayingNotesRowWidth = 80;
+        static constexpr int kPlayingNotesRowY = 31;
         auto kPadding = RectI::Construct(1, 1, 1, 1);
 
         if (perf.mSynthAEnabled && (perf.mSynthPresetA != -1))
@@ -390,6 +397,7 @@ struct GeodesicSphereDemoApp : DisplayApp
                       });
 
             fixed_vector<MidiNote, MAX_SYNTH_VOICES> chordNotes;
+            fixed_vector<SynthVoiceState, MAX_SYNTH_VOICES> prunedVoiceState; // maintain same indices as chordNotes.
             MidiNote lastNote{0};
             for (auto &v : voiceState)
             {
@@ -398,17 +406,24 @@ struct GeodesicSphereDemoApp : DisplayApp
                     continue;
                 }
                 chordNotes.push_back(v.mNote);
+                prunedVoiceState.push_back(v);
                 lastNote = v.mNote;
             }
             auto spelledChord = spellChord(chordNotes).notes;
 
+            const auto voiceWidth = std::min(18, kPlayingNotesRowWidth / static_cast<int>(spelledChord.size()));
+
             for (int i = 0; i < (int)spelledChord.size(); ++i)
             {
                 auto &tone = spelledChord[i];
-                const int x = kTextAreaWidth * (i) / (spelledChord.size());
+                auto &voiceState = prunedVoiceState[i];
+                const int x = voiceWidth * i;
                 mDisplay.setCursor(x, kPlayingNotesRowY);
-                mDisplay.print(tone.ToString(false)); // becasue we eliminate duplicates, and they're always sorted from
-                                                      // low to high, not necessary to include octave.
+                const bool invertText = voiceState.mVoiceSource == VoiceSource::Live;
+                mDisplay.PrintInvertedText(tone.ToString(false),
+                                           kPadding,
+                                           invertText); // becasue we eliminate duplicates, and they're always sorted
+                                                        // from low to high, not necessary to include octave.
             }
         }
 

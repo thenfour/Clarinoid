@@ -26,6 +26,11 @@ struct TorusDemoParams
     static constexpr float kAmbientAngularVelocityX = 0.00021f;
     static constexpr float kAmbientAngularVelocityY = 0.00011f;
     static constexpr float kAmbientAngularVelocityZ = 0.00021f;
+
+    static constexpr float kRmsAngularVelocityX = 0.0005f;
+    static constexpr float kRmsAngularVelocityY = 0.0006f;
+    static constexpr float kRmsAngularVelocityZ = 0.0004f;
+
     // Exponential decay applied to angular velocity each frame (unitless 0-1).
     static constexpr float kAngularDamping = 0.99f;
     // Base and randomised portion of note-triggered impulses (radians per frame).

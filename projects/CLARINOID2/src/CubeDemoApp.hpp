@@ -30,6 +30,11 @@ struct CubeDemoParams
     static constexpr float kAmbientAngularVelocityX = 0.00065f;
     static constexpr float kAmbientAngularVelocityY = 0.00045f;
     static constexpr float kAmbientAngularVelocityZ = 0.00030f;
+
+    static constexpr float kRmsAngularVelocityX = 0.0005f;
+    static constexpr float kRmsAngularVelocityY = 0.0006f;
+    static constexpr float kRmsAngularVelocityZ = 0.0004f;
+
     // Exponential decay applied to angular velocity each frame (unitless 0-1).
     static constexpr float kAngularDamping = 0.97f;
     // Minimum and randomised range of note-driven angular impulses (radians per frame).

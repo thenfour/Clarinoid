@@ -16,6 +16,7 @@
 #include "ModulationMatrixNode.hpp"
 #include "Patch.hpp"
 #include "polyBlepOscillator.hpp"
+#include "Analysis.hpp"
 
 namespace clarinoid
 {
@@ -47,8 +48,8 @@ struct SynthGraph
     AudioAmplifier ampLeft;               // xy=1573,776
     AudioAmplifier ampRight;              // xy=1576,857
     AudioOutputI2S i2s1;                  // xy=1758,809
-    AudioAnalyzePeak peakL;               // xy=1801,588
-    AudioAnalyzePeak peakR;               // xy=1851,598
+    AnalysisStream analysisL;             // xy=1820,600
+    AnalysisStream analysisR;             // xy=1820,600
     AudioConnection patchCord1 = {delayWetAmpLeft, 0, postMixerLeft, 1};
     AudioConnection patchCord2 = {delayWetAmpRight, 0, postMixerRight, 1};
     AudioConnection patchCord3 = {verbInputMixer, verb};
@@ -61,8 +62,8 @@ struct SynthGraph
     AudioConnection patchCord10 = {verbWetAmpRight, 0, postMixerRight, 2};
     AudioConnection patchCord11 = {postMixerLeft, ampLeft};
     AudioConnection patchCord12 = {postMixerRight, ampRight};
-    AudioConnection patchCord13 = {ampLeft, peakL};
-    AudioConnection patchCord14 = {ampRight, peakR};
+    AudioConnection patchCord13 = {ampLeft, 0, analysisL, 0};
+    AudioConnection patchCord14 = {ampRight, 0, analysisR, 1};
     AudioConnection patchCord15 = {ampLeft, 0, i2s1, 1};
     AudioConnection patchCord16 = {ampRight, 0, i2s1, 0};
     // GUItool: end automatically generated code

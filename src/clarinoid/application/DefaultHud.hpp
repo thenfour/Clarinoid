@@ -5,6 +5,8 @@
 #include "Display.hpp"
 #include "Metronome.hpp"
 #include <clarinoid/harmonizer/MusicalVoice.hpp>
+#include <clarinoid/synth/Analysis.hpp>
+#include <clarinoid/application/VUMeter.hpp>
 
 namespace clarinoid
 {
@@ -21,7 +23,7 @@ struct ISysInfoProvider
     virtual uint8_t ISysInfoProvider_GetPolyphony() = 0;
     virtual float ISysInfoProvider_GetAudioCPUUsage() = 0;       // in % (0-100)
     virtual float ISysInfoProvider_GetTaskManagerCPUUsage() = 0; // in % (0-100)
-    virtual float ISysInfoProvider_GetPeak() = 0;                // in amplitude.
+    // virtual float ISysInfoProvider_GetPeak() = 0;                // in amplitude.
     virtual MidiNote ISysInfoProvider_GetNote() = 0;
     virtual std::array<SynthVoiceState, MAX_MUSICAL_VOICES> ISysInfoProvider_GetVoiceState() = 0;
     virtual float ISysInfoProvider_GetTempo() = 0; // bpm
@@ -70,12 +72,8 @@ struct DefaultHud : IHudProvider
         mDisplay.setCursor(0, hudYStart + HUD_LINE_SEPARATOR_HEIGHT);
         mDisplay.setTextColor(SSD1306_WHITE); // normal text
 
-        // (int)(std::ceil(LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak()))) + CHAR_DB " " +
-        String dbpeak = DecibelsToIntString(
-            LinearToDecibels(mpInfo->ISysInfoProvider_GetPeak())); // "-" CHARSTR_INFINITY CHARSTR_DB;
+        String dbpeak = DecibelsToIntString(LinearToDecibels(gAnalysisStateC.heldPeakLinear));
 
-        // int cpu = (int)std::ceil(std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(),
-        // mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
         float cpu = mCPUPeakMeter.Update(
             std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
         int icpu = (int)std::ceil(cpu);

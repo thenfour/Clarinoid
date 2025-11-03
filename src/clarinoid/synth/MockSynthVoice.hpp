@@ -1,82 +1,126 @@
 
 #pragma once
 
-#include <clarinoid/basic/Basic.hpp>
-//#include <clarinoid/application/MusicalState.hpp>
+// todo.
 
-namespace clarinoid
-{
+// #include <clarinoid/basic/Basic.hpp>
+// // #include <clarinoid/application/MusicalState.hpp>
 
-struct MockPeakNode
-{
-    bool available() const
-    {
-        return true;
-    }
-    float readPeakToPeak() const
-    {
-        return 0.0f;
-    }
-};
-namespace CCSynthGraph
-{
-MockPeakNode peakL;
-MockPeakNode peakR;
-} // namespace CCSynthGraph
+// namespace clarinoid
+// {
 
-struct Voice
-{
-    // int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-    bool mTouched = false;
+// // struct IAnalysisStream
+// // {
+// //     virtual ~IAnalysisStream() = default;
+// //     virtual void Reset() = 0;
 
-    MusicalVoice mRunningVoice;
+// //     float CurrentRMS() const
+// //     {
+// //         return mCurrentRMSValue;
+// //     }
 
-    void EnsurePatchConnections()
-    {
-    }
+// //     bool ClipIndicator() const
+// //     {
+// //         return mClipIndicator;
+// //     }
 
-    void Update(const MusicalVoice &mv)
-    {
-        mRunningVoice = mv;
-    }
+// //     float CurrentPeak() const
+// //     {
+// //         return mCurrentPeak;
+// //     }
 
-    bool IsPlaying() const
-    {
-        return mRunningVoice.IsPlaying();
-    }
-    void Unassign()
-    {
-        mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
-    }
-};
+// //     float CurrentHeldPeak() const
+// //     {
+// //         return mCurrentHeldPeak;
+// //     }
 
-Voice gVoices[MAX_SYNTH_VOICES];
+// //   protected:
+// //     float mCurrentRMSValue = 0.0f;
+// //     bool mClipIndicator = false;
+// //     float mCurrentPeak = 0.0f;
+// //     float mCurrentHeldPeak = 0.0f;
+// // };
 
-struct SynthGraphControl
-{
-    CCThrottlerT<500> mMetronomeTimer;
+// // struct MockAnalysisStream : IAnalysisStream
+// // {
+// //     virtual void Reset() override
+// //     {
+// //         mCurrentRMSValue = 0.0f;
+// //         mClipIndicator = false;
+// //         mCurrentPeak = 0.0f;
+// //         mCurrentHeldPeak = 0.0f;
+// //     }
 
-    void Setup(...)
-    {
-    }
+// //     void SetValues(float peak, float heldPeak, float rms, bool clip)
+// //     {
+// //         mCurrentPeak = peak;
+// //         mCurrentHeldPeak = heldPeak;
+// //         mCurrentRMSValue = rms;
+// //         mClipIndicator = clip;
+// //     }
+// // };
 
-    void SetGain(float f)
-    {
-    }
+// // struct SynthGraph
+// // {
+// //     MockAnalysisStream analysis;
+// // };
 
-    void BeginUpdate()
-    {
-    }
+// SynthGraph gMockSynthGraphInstance;
+// SynthGraph *gpSynthGraph = &gMockSynthGraphInstance;
 
-    void EndUpdate()
-    {
-    }
+// struct Voice
+// {
+//     // int16_t mMusicalVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+//     bool mTouched = false;
 
-    void UpdatePostFx()
-    {
-    }
-};
+//     MusicalVoice mRunningVoice;
 
-SynthGraphControl gSynthGraphControl;
+//     void EnsurePatchConnections()
+//     {
+//     }
 
-} // namespace clarinoid
+//     void Update(const MusicalVoice &mv)
+//     {
+//         mRunningVoice = mv;
+//     }
+
+//     bool IsPlaying() const
+//     {
+//         return mRunningVoice.IsPlaying();
+//     }
+//     void Unassign()
+//     {
+//         mRunningVoice.mVoiceId = MAGIC_VOICE_ID_UNASSIGNED;
+//     }
+// };
+
+// Voice gVoices[MAX_SYNTH_VOICES];
+
+// struct SynthGraphControl
+// {
+//     CCThrottlerT<500> mMetronomeTimer;
+
+//     void Setup(...)
+//     {
+//     }
+
+//     void SetGain(float f)
+//     {
+//     }
+
+//     void BeginUpdate()
+//     {
+//     }
+
+//     void EndUpdate()
+//     {
+//     }
+
+//     void UpdatePostFx()
+//     {
+//     }
+// };
+
+// SynthGraphControl gSynthGraphControl;
+
+// } // namespace clarinoid

@@ -29,40 +29,43 @@ struct ILEDDataProvider
 template <int ledsPerBank, uint32_t holdTimeMS, uint32_t falloffTimeMS>
 struct PeakMeter
 {
-    float mHeldPeak = 0;
-    Stopwatch mHeldPeakTime; // peak is simply held for a duration.
+    // float mHeldPeak = 0;
+    // Stopwatch mHeldPeakTime; // peak is simply held for a duration.
 
     template <typename Tbank1, typename Tbank2>
     void Update(const Tbank1 &setBank1, const Tbank2 &setBank2)
     {
-        float peak = CCSynth::GetPeakLevel();
-        float heldPeakDisplay;
+        // float peak = CCSynth::GetPeakLevel();
+        // float heldPeakDisplay;
 
         // determine a new held peak
         // if the held peak has been holding longer than 500ms, fade linear to 0.
         // constexpr uint32_t holdTimeMS = 1500;
         // constexpr uint32_t falloffTimeMS = 350;
-        uint32_t holdDurationMS = (uint32_t)mHeldPeakTime.ElapsedTime().ElapsedMillisI();
-        if ((peak > mHeldPeak) || holdDurationMS > (holdTimeMS + falloffTimeMS))
-        {
-            // new peak, or after falloff reset.
-            mHeldPeak = peak;
-            heldPeakDisplay = peak;
-            mHeldPeakTime.Restart();
-        }
-        else if (holdDurationMS <= holdTimeMS)
-        {
-            heldPeakDisplay = mHeldPeak;
-        }
-        else
-        {
-            // falloff: remap millis from 500-1000 from heldpeak to 0.
-            heldPeakDisplay = map<float, float, float, float, float>(
-                holdDurationMS, holdTimeMS, holdTimeMS + falloffTimeMS, mHeldPeak, peak);
-        }
+        // uint32_t holdDurationMS = (uint32_t)mHeldPeakTime.ElapsedTime().ElapsedMillisI();
+        // if ((peak > mHeldPeak) || holdDurationMS > (holdTimeMS + falloffTimeMS))
+        // {
+        //     // new peak, or after falloff reset.
+        //     mHeldPeak = peak;
+        //     heldPeakDisplay = peak;
+        //     mHeldPeakTime.Restart();
+        // }
+        // else if (holdDurationMS <= holdTimeMS)
+        // {
+        //     heldPeakDisplay = mHeldPeak;
+        // }
+        // else
+        // {
+        //     // falloff: remap millis from 500-1000 from heldpeak to 0.
+        //     heldPeakDisplay = map<float, float, float, float, float>(
+        //         holdDurationMS, holdTimeMS, holdTimeMS + falloffTimeMS, mHeldPeak, peak);
+        // }
 
-        int peakLEDIndex = (int)((peak * (ledsPerBank - 1)) + 0.1f); // +.1 helps nudge it up a bit.
-        int heldPeakLEDIndex = (int)((heldPeakDisplay * (ledsPerBank - 1)) + 0.1f);
+        float rms = Clamp01(gAnalysisStateC.rmsLinear);
+        float heldPeak = Clamp01(gAnalysisStateC.heldPeakLinear);
+
+        int peakLEDIndex = (int)((rms * (ledsPerBank - 1)) + 0.1f); // +.1 helps nudge it up a bit.
+        int heldPeakLEDIndex = (int)((heldPeak * (ledsPerBank - 1)) + 0.1f);
 
         peakLEDIndex = ClampInclusive(peakLEDIndex, 0, (ledsPerBank - 1));
         heldPeakLEDIndex = ClampInclusive(heldPeakLEDIndex, 0, ledsPerBank - 1);
@@ -70,15 +73,15 @@ struct PeakMeter
         // render. 1 red, 2 yellow, rest green.
         for (int i = 0; i < ledsPerBank; ++i)
         {
-            uint32_t color1 = 0; // default off=black.
-            uint32_t color2 = 0; // default off=black.
+            uint32_t color1 = 0;               // default off=black.
+            uint32_t color2 = 0;               // default off=black.
             uint32_t onColor = GRB(0, 128, 0); // GREEN
             if (i == (ledsPerBank - 1))
                 onColor = GRB(((millis() / 180) & 1) * 128, 0, 0); // LAST LED = blinking RED
             else if (i == (ledsPerBank - 2))
                 onColor = GRB(32, 30, 0); // ORANGE
-            //else if (i == (ledsPerBank - 3))
-                //onColor = GRB(128, 128, 0); // also orange
+            // else if (i == (ledsPerBank - 3))
+            // onColor = GRB(128, 128, 0); // also orange
             // else if (i == (ledsPerBank - 4))
             //     onColor = GRB(4, 4, 0);
 
@@ -103,7 +106,7 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
 {
     //     <---------10-------->                     <------------10------->
     //     2 3 4 5 6 7 8 9 10 11                     16 17 18 19 20 21 22 23
-    // 0 1                       12 13 ------- 14 15                               
+    // 0 1                       12 13 ------- 14 15
     //                                                                 |  |
     //                                                                 |  +- note held
     //                                                                 +---- metronome
@@ -187,7 +190,7 @@ struct Clarinoid2LedsTask : Leds<28 /*ledcount*/, 14 /*pin*/>, ITask
             break;
         default:
         case 5:
-            this->SetPixel(iOctaveIndicator, GRBBrightness(0, 0,192, brightness)); // blue
+            this->SetPixel(iOctaveIndicator, GRBBrightness(0, 0, 192, brightness)); // blue
             break;
         }
 

@@ -4,14 +4,16 @@
 #include <clarinoid/basic/Basic.hpp>
 
 #ifdef CLARINOID_MODULE_TEST
-#include "MockSynthVoice.hpp"
+// #include "MockSynthVoice.hpp"
 #else
 #include "SynthVoice.hpp"
 #endif
 
 namespace clarinoid
 {
-static float gPeak = 0;
+AudioAnalysisState gAnalysisStateL;
+AudioAnalysisState gAnalysisStateC;
+AudioAnalysisState gAnalysisStateR;
 
 struct CCSynth
 {
@@ -59,17 +61,11 @@ struct CCSynth
     {
         mCurrentPolyphony = 0;
 
-        if (gpSynthGraph->peakL.available() && gpSynthGraph->peakR.available())
+        if (gpSynthGraph)
         {
-            gPeak = std::max(gpSynthGraph->peakL.readPeakToPeak(), gpSynthGraph->peakR.readPeakToPeak());
-        }
-        else if (gpSynthGraph->peakL.available())
-        {
-            gPeak = std::max(gpSynthGraph->peakL.readPeakToPeak(), gPeak);
-        }
-        else if (gpSynthGraph->peakR.available())
-        {
-            gPeak = std::max(gpSynthGraph->peakR.readPeakToPeak(), gPeak);
+            gAnalysisStateL = gpSynthGraph->analysisL.GetState();
+            gAnalysisStateR = gpSynthGraph->analysisR.GetState();
+            gAnalysisStateC = IAnalysisStream::Combine(gAnalysisStateL, gAnalysisStateR);
         }
 
         for (auto &v : gVoices)
@@ -107,22 +103,49 @@ struct CCSynth
         gSynthGraphControl.UpdatePostFx();
     }
 
-    static float GetPeakLevel()
-    {
-        return gPeak;
-    }
+    // static float GetPeakLevel()
+    // {
+    //     return gPeak;
+    // }
+
+    // static float GetHeldPeakLevel()
+    // {
+    //     if (!gpSynthGraph)
+    //     {
+    //         return 0.0f;
+    //     }
+    //     return gpSynthGraph->analysis.CurrentHeldPeak();
+    // }
+
+    // static float GetRMSLevel()
+    // {
+    //     if (!gpSynthGraph)
+    //     {
+    //         return 0.0f;
+    //     }
+    //     return gpSynthGraph->analysis.CurrentRMS();
+    // }
+
+    // static const IAnalysisStream *GetAnalysisStream()
+    // {
+    //     if (!gpSynthGraph)
+    //     {
+    //         return nullptr;
+    //     }
+    //     return &gpSynthGraph->analysis;
+    // }
 };
 
-template <uint32_t holdTimeMS, uint32_t falloffTimeMS>
-struct PeakMeterUtility
-{
-    GenericPeakMeterUtility<holdTimeMS, falloffTimeMS> mUtil;
+// template <uint32_t holdTimeMS, uint32_t falloffTimeMS>
+// struct PeakMeterUtility
+// {
+//     GenericPeakMeterUtility<holdTimeMS, falloffTimeMS> mUtil;
 
-    void Update(float &peak, float &heldPeak)
-    {
-        peak = CCSynth::GetPeakLevel();
-        heldPeak = mUtil.Update(peak);
-    }
-};
+//     void Update(float &peak, float &heldPeak)
+//     {
+//         peak = CCSynth::GetPeakLevel();
+//         heldPeak = mUtil.Update(peak);
+//     }
+// };
 
 } // namespace clarinoid
