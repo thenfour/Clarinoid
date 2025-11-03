@@ -33,6 +33,7 @@
 #include "clarinoid2MusicalStateTask.hpp"
 #include "clarinoid2DebugDisplayApp.hpp"
 #include "clarinoid2DemoApp.hpp"
+#include "CubeDemoApp.hpp"
 #include "clarinoid2RhythmGoniometer.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
 #include <clarinoid/menu/MenuAppMetronome.hpp>
