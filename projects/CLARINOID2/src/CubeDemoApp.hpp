@@ -69,13 +69,13 @@ struct CubeDemoApp : CubeDemoBase
         return "demo cube";
     }
 
-    virtual void RenderFrontPage() override
-    {
-        this->mDisplay.setCursor(0, 0);
-        this->mDisplay.println("demo: cube");
-        this->mDisplay.println("press ok");
-        this->mDisplay.println("back to exit");
-    }
+    // virtual void RenderFrontPage() override
+    // {
+    //     this->mDisplay.setCursor(0, 0);
+    //     this->mDisplay.println("demo: cube");
+    //     this->mDisplay.println("press ok");
+    //     this->mDisplay.println("back to exit");
+    // }
 
   protected:
     virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override

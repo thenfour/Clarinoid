@@ -23,14 +23,14 @@ struct TorusDemoParams
     static constexpr float kNearPlaneEpsilon = 0.12f;
 
     // Passive angular velocity about X/Y/Z (radians per frame) for idle motion.
-    static constexpr float kAmbientAngularVelocityX = 0.00042f;
-    static constexpr float kAmbientAngularVelocityY = 0.00078f;
-    static constexpr float kAmbientAngularVelocityZ = 0.00025f;
+    static constexpr float kAmbientAngularVelocityX = 0.00021f;
+    static constexpr float kAmbientAngularVelocityY = 0.00011f;
+    static constexpr float kAmbientAngularVelocityZ = 0.00021f;
     // Exponential decay applied to angular velocity each frame (unitless 0-1).
-    static constexpr float kAngularDamping = 0.965f;
+    static constexpr float kAngularDamping = 0.99f;
     // Base and randomised portion of note-triggered impulses (radians per frame).
-    static constexpr float kImpulseMagnitudeMin = 0.13f;
-    static constexpr float kImpulseMagnitudeRange = 0.05f;
+    static constexpr float kImpulseMagnitudeMin = 0.05f;
+    static constexpr float kImpulseMagnitudeRange = 0.00f;
     // Maximum angular velocity per axis (radians per frame).
     static constexpr float kMaxAngularVelocity = 0.42f;
 
@@ -50,7 +50,7 @@ struct TorusDemoParams
     static constexpr size_t kMinorSegments = 9;
     // Torus radii in model units: distance from center to tube center, and tube radius.
     static constexpr float kMajorRadius = 1.15f;
-    static constexpr float kMinorRadius = 0.4f;
+    static constexpr float kMinorRadius = 0.6f;
 };
 
 static constexpr size_t kTorusVertexCount = TorusDemoParams::kMajorSegments * TorusDemoParams::kMinorSegments;
@@ -76,13 +76,13 @@ struct TorusDemoApp : TorusDemoBase
         return "demo torus";
     }
 
-    virtual void RenderFrontPage() override
-    {
-        this->mDisplay.setCursor(0, 0);
-        this->mDisplay.println("demo: torus");
-        this->mDisplay.println("press ok");
-        this->mDisplay.println("back to exit");
-    }
+    // virtual void RenderFrontPage() override
+    // {
+    //     this->mDisplay.setCursor(0, 0);
+    //     this->mDisplay.println("demo: torus");
+    //     this->mDisplay.println("press ok");
+    //     this->mDisplay.println("back to exit");
+    // }
 
   protected:
     virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override

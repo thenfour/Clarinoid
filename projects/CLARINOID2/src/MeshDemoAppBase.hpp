@@ -60,8 +60,18 @@ struct MeshDemoAppBase : DisplayApp
 
     virtual void RenderApp() override
     {
+        // StepMeshSimulation();
+        // RenderMeshFrame();
+    }
+
+    virtual void RenderFrontPage() override
+    {
         StepMeshSimulation();
         RenderMeshFrame();
+        // this->mDisplay.setCursor(0, 0);
+        // this->mDisplay.println("demo: cube");
+        // this->mDisplay.println("press ok");
+        // this->mDisplay.println("back to exit");
     }
 
   protected:
