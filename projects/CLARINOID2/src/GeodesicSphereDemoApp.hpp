@@ -12,38 +12,39 @@ namespace clarinoid
 
 struct GeodesicSphereDemoParams
 {
-    static constexpr int kViewportWidth = 100;
-    static constexpr int kViewportHeight = 54;
+    // static constexpr int kViewportWidth = 100;
+    // static constexpr int kViewportHeight = 54;
 
     // Positive Z offset keeping the sphere in front of the camera (model units).
     static constexpr float kCameraDistance = 3.1f;
     // Perspective multiplier applied during projection; larger values render a bigger sphere on screen.
-    static constexpr float kProjectionScale = 112.0f;
+    static constexpr float kProjectionScale = 128.0f;
     // Minimum allowed Z value when projecting (model units) to avoid divide-by-zero.
     static constexpr float kNearPlaneEpsilon = 0.12f;
 
     // Passive angular velocity about X/Y/Z (radians per frame) for idle motion.
-    static constexpr float kAmbientAngularVelocityX = 0.00004f;
-    static constexpr float kAmbientAngularVelocityY = 0.00005f;
-    static constexpr float kAmbientAngularVelocityZ = 0.00006f;
+    static constexpr float kAmbientAngularVelocityX = 0.00002f;
+    static constexpr float kAmbientAngularVelocityY = 0.00003f;
+    static constexpr float kAmbientAngularVelocityZ = 0.00004f;
 
     // RMS-driven angular velocity (rms linear * this = radians per frame).
-    static constexpr float kRmsAngularVelocityX = 0.0003f;
-    static constexpr float kRmsAngularVelocityY = 0.0002f;
-    static constexpr float kRmsAngularVelocityZ = 0.0001f;
+    // static constexpr float kRmsAngularVelocityX = 0.0003f;
+    // static constexpr float kRmsAngularVelocityY = 0.0002f;
+    // static constexpr float kRmsAngularVelocityZ = 0.0001f;
+    static constexpr float kBreathAngularVelocityFactor = 0.01f;
 
     // Exponential decay applied to angular velocity each frame (unitless 0-1).
     static constexpr float kAngularDamping = 0.985f;
     // Base and randomised portion of note-triggered impulses (radians per frame).
-    static constexpr float kImpulseMagnitudeMin = 0.09f;
+    static constexpr float kImpulseMagnitudeMin = 0.1f;
     static constexpr float kImpulseMagnitudeRange = 0.0f;
     // Maximum angular velocity per axis (radians per frame).
     static constexpr float kMaxAngularVelocity = 0.5f;
 
     // Face shading parameters: ambient brightness offset, diffuse scale, specular lift, and normal epsilon.
     static constexpr float kFaceBaseBrightness = 8.0f;
-    static constexpr float kFaceDiffuseScale = 212.0f;
-    static constexpr float kFaceSpecularBias = 60.0f;
+    static constexpr float kFaceDiffuseScale = 180.0f;
+    static constexpr float kFaceSpecularBias = 100.0f;
     static constexpr float kFaceNormalEpsilon = 1e-4f;
 
     // Directional light vector components (unitless, normalised internally).
@@ -315,8 +316,9 @@ struct GeodesicSphereDemoApp : DisplayApp
     virtual void RenderFrontPage() override
     {
         mGeodesicSphereSim.StepMeshSimulation();
-        mGeodesicSphereSim.SetScreenOffsetPixels(9, -9);
-        mGeodesicSphereSim.RenderMeshFrame({72, 0, 56, 56});
+        mGeodesicSphereSim.SetScreenOffsetPixels(13, -17);
+        static constexpr int kSphereWidth = 64;
+        mGeodesicSphereSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
 
         auto &appSettings = *mMusicalStateTask.mAppSettings;
         auto &perf = appSettings.GetCurrentPerformancePatch();

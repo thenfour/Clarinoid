@@ -77,10 +77,11 @@ struct MeshSimulationBase
 
         HandleNoteImpulses();
 
-        const float rmsLinear = gAnalysisStateC.rmsLinear;
-        mAngularVelocity.x += rmsLinear * Params::kRmsAngularVelocityX;
-        mAngularVelocity.y += rmsLinear * Params::kRmsAngularVelocityY;
-        mAngularVelocity.z += rmsLinear * Params::kRmsAngularVelocityZ;
+        const float breath01 = mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
+
+        mAngularVelocity.x += breath01 * mBreathAxis.x * Params::kBreathAngularVelocityFactor;
+        mAngularVelocity.y += breath01 * mBreathAxis.y * Params::kBreathAngularVelocityFactor;
+        mAngularVelocity.z += breath01 * mBreathAxis.z * Params::kBreathAngularVelocityFactor;
 
         mAngularVelocity.x += Params::kAmbientAngularVelocityX;
         mAngularVelocity.y += Params::kAmbientAngularVelocityY;
@@ -106,12 +107,12 @@ struct MeshSimulationBase
 
         const auto &baseVertices = GetBaseVertices();
 
-        const float sx = static_cast<float>(std::sin(mRotationAngles.x));
-        const float cx = static_cast<float>(std::cos(mRotationAngles.x));
-        const float sy = static_cast<float>(std::sin(mRotationAngles.y));
-        const float cy = static_cast<float>(std::cos(mRotationAngles.y));
-        const float sz = static_cast<float>(std::sin(mRotationAngles.z));
-        const float cz = static_cast<float>(std::cos(mRotationAngles.z));
+        const float sx = static_cast<float>(fast::sin(mRotationAngles.x));
+        const float cx = static_cast<float>(fast::cos(mRotationAngles.x));
+        const float sy = static_cast<float>(fast::sin(mRotationAngles.y));
+        const float cy = static_cast<float>(fast::cos(mRotationAngles.y));
+        const float sz = static_cast<float>(fast::sin(mRotationAngles.z));
+        const float cz = static_cast<float>(fast::cos(mRotationAngles.z));
 
         const float m00 = cz * cy;
         const float m01 = (cz * sy * sx) - (sz * cx);
@@ -205,10 +206,13 @@ struct MeshSimulationBase
     virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const = 0;
     virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const = 0;
 
+    // breath-controlled angular velocity factors
+    Vec3f mBreathAxis{GenerateImpulseAxis()};
+
     virtual uint8_t ResolveFaceBrightness(size_t /*faceIndex*/, float diffuse) const
     {
         const float brightnessF = Params::kFaceBaseBrightness + (diffuse * Params::kFaceDiffuseScale) +
-                                  (std::pow(diffuse, 4.0f) * Params::kFaceSpecularBias);
+                                  (fast::pow(diffuse, 4.0f) * Params::kFaceSpecularBias);
         return static_cast<uint8_t>(Clamp(brightnessF, 0.0f, 255.0f));
     }
 
@@ -243,9 +247,10 @@ struct MeshSimulationBase
 
     void ApplyNoteImpulse()
     {
-        Vec3f axis = GenerateImpulseAxis();
+        mBreathAxis = GenerateImpulseAxis();
+
         const float impulseMagnitude = GenerateImpulseMagnitude();
-        mAngularVelocity += axis * impulseMagnitude;
+        mAngularVelocity += mBreathAxis * impulseMagnitude; // give it a big push
     }
 
     uint8_t NextRandomByte()
@@ -340,41 +345,5 @@ struct MeshSimulationBase
         render3d::RasterizeTriangle(p[2], p[3], p[0], renderRect, drawPixel, Params::kFaceNormalEpsilon);
     }
 };
-
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
-/////////
 
 } // namespace clarinoid
