@@ -1364,6 +1364,33 @@ struct SynthSettings
         p.mModulations[0].SetScaleN11_Legacy(0.12f);
     }
 
+    static void InitSupersawSoft(SynthPreset &p, const String &name)
+    {
+        p.mName = name;
+        p.mSync = false;
+        p.mDetune = 0.05f;
+        p.mStereoSpread = 0.7f;
+        p.mFilterQ = 0;
+        p.mFilterType = ClarinoidFilterType::LP_Moog4;
+        p.mFilterMaxFreq = 11000.0f;
+
+        p.mVerbSend = DecibelsToLinear(-12.0f);
+        p.mDelaySend = DecibelsToLinear(-12.0f);
+
+        p.mOsc[0].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[0].mGain = DecibelsToLinear(-16.0f);
+
+        p.mOsc[1].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[1].mGain = DecibelsToLinear(-16.0f);
+
+        p.mOsc[2].mWaveform = OscWaveformShape::SawSync;
+        p.mOsc[2].mGain = DecibelsToLinear(-16.0f);
+
+        p.mModulations[0].mSource = AnyModulationSource::Breath;
+        p.mModulations[0].mDest = AnyModulationDestination::PatchDetune;
+        p.mModulations[0].SetScaleN11_Legacy(0.12f);
+    }
+
     static void InitTubularBellPreset(SynthPreset &p)
     {
         p.mName = "Tubular Bell";
@@ -1430,6 +1457,9 @@ struct SynthSettings
 
         CCASSERT(i == SynthPresetID_Supersaw);
         InitSupersaw(mPresets[i++], "Supersaw");
+
+        CCASSERT(i == SynthPresetID_SupersawSoft);
+        InitSupersawSoft(mPresets[i++], "Supersaw Soft");
 
         CCASSERT(i == SynthPresetID_TubularBell);
         InitTubularBellPreset(mPresets[i++]);

@@ -371,14 +371,17 @@ struct AppSettings
 
     // CLOUDS AND STARS
     //     - fluvial + pwm
-    static void InitCloudsAndStarsPerf(PerformancePatch &p)
+    static void InitCloudsAndStarsPerf(PerformancePatch &p, const char *name, int16_t harmPresetId)
     {
-        p.mName = "Clouds and Stars";
+        p.mName = name;
 
-        p.mSynthPresetA = SynthPresetID_Fluvial;
-        p.mSynthAGain = DecibelsToLinear(-3);
-        p.mSynthPresetB = SynthPresetID_PWMLead2;
-        p.mSynthBGain = DecibelsToLinear(-3);
+        p.mSynthPresetA = SynthPresetID_SupersawSoft;
+        p.mSynthAGain = DecibelsToLinear(-6);
+        p.mSynthPresetB = SynthPresetID_SupersawSoft;
+        p.mSynthBGain = DecibelsToLinear(-6);
+
+        p.mHarmGain = DecibelsToLinear(-9);
+        p.mHarmPreset = harmPresetId;
 
         p.mGlobalScale = Scale{Note::A, ScaleFlavorIndex::MajorPentatonic};
     }
@@ -502,8 +505,8 @@ struct AppSettings
 
         // CLOUDS AND STARS
         //     - fluvial + pwm
-        InitCloudsAndStarsPerf(mPerformancePatches[i++]); // as bass
-        InitCloudsAndStarsPerf(mPerformancePatches[i++]); // as lead
+        InitCloudsAndStarsPerf(mPerformancePatches[i++], "Clouds as Bass", HarmPresetID_SynthWaveAsBass); // as bass
+        // InitCloudsAndStarsPerf(mPerformancePatches[i++], "Clouds-Lead", HarmPresetID_SynthWaveAsMelody); // as lead
 
         // FULL SCALE
         //     - fluvial + trumpet

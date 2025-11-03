@@ -30,7 +30,8 @@ static constexpr size_t SynthPresetID_FMTest = 6;
 static constexpr size_t SynthPresetID_WobblyCat = 7;
 static constexpr size_t SynthPresetID_PulseSync = 8;
 static constexpr size_t SynthPresetID_Supersaw = 9;
-static constexpr size_t SynthPresetID_TubularBell = 10;
+static constexpr size_t SynthPresetID_SupersawSoft = 10;
+static constexpr size_t SynthPresetID_TubularBell = 11;
 
 static constexpr size_t SynthPresetID_MoogBass = SYNTH_PRESET_COUNT - 11;
 static constexpr size_t SynthPresetID_Bassoonoid = SYNTH_PRESET_COUNT - 10;
@@ -43,12 +44,14 @@ static constexpr size_t SynthPresetID_HarmFMFB = SYNTH_PRESET_COUNT - 1;
 static constexpr size_t HarmPresetID_WorldPeaceGlobal = 0;
 static constexpr size_t HarmPresetID_Quintal = 1;
 static constexpr size_t HarmPresetID_N3N2 = 2;
-// static constexpr size_t HarmPresetID_WorldPeace = HARM_PRESET_COUNT - 1;
-// static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 2;
-//  static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
-//  static constexpr size_t HarmPresetID_WorldPeace_F = HARM_PRESET_COUNT - 3;
-//  static constexpr size_t HarmPresetID_WorldPeace_Db = HARM_PRESET_COUNT - 4;
-//  static constexpr size_t HarmPresetID_WorldPeace_Gb = HARM_PRESET_COUNT - 5;
+static constexpr size_t HarmPresetID_SynthWaveAsBass = 3;
+// static constexpr size_t HarmPresetID_SynthWaveAsMelody = 4;
+//  static constexpr size_t HarmPresetID_WorldPeace = HARM_PRESET_COUNT - 1;
+//  static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 2;
+//   static constexpr size_t HarmPresetID_WorldPeace_Bb = HARM_PRESET_COUNT - 2;
+//   static constexpr size_t HarmPresetID_WorldPeace_F = HARM_PRESET_COUNT - 3;
+//   static constexpr size_t HarmPresetID_WorldPeace_Db = HARM_PRESET_COUNT - 4;
+//   static constexpr size_t HarmPresetID_WorldPeace_Gb = HARM_PRESET_COUNT - 5;
 
 enum class HarmScaleRefType : uint8_t
 {
@@ -709,6 +712,80 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequence[0] = 7;
     }
 
+    // synthwave effect, live note is assumed to be the bass note.
+    void IniSynthWaveAsBassPreset(HarmPreset &p)
+    {
+        p.mName = "SawAsBass.235";
+        p.mSynthPreset1 = SynthPresetID_Supersaw;
+        p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
+        p.mSynthPreset3 = SynthPresetID_HarmTri;
+
+        // set up voice ranges from G3 to C5
+        for (auto &vs : p.mVoiceSettings)
+        {
+            vs.mMinOutpNote = MidiNote{3, Note::G}.GetMidiValue();
+            vs.mMaxOutpNote = MidiNote{5, Note::G}.GetMidiValue();
+            vs.mScaleRef = HarmScaleRefType::Global;
+            vs.mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
+            vs.mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
+            vs.mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
+        }
+
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[0].mSequence[0] = 2;
+
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequence[0] = 3;
+
+        p.mVoiceSettings[2].mSequenceLength = 1;
+        p.mVoiceSettings[2].mSequence[0] = 5;
+
+        // p.mVoiceSettings[3].mMinOutpNote = MidiNote{6, Note::C}.GetMidiValue();
+        // p.mVoiceSettings[3].mMaxOutpNote = MidiNote{8, Note::G}.GetMidiValue();
+        // // p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+        // p.mVoiceSettings[3].mSequenceLength = 2;
+        // p.mVoiceSettings[3].mSequence[0] = 5;
+        // p.mVoiceSettings[3].mSequence[1] = 6;
+    }
+
+    // // synthwave effect, live note is assumed to be the bass note.
+    // void IniSynthWaveAsMelodyPreset(HarmPreset &p)
+    // {
+    //     p.mName = "SawAsMelody.235";
+    //     p.mSynthPreset1 = SynthPresetID_Supersaw;
+    //     p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
+    //     p.mSynthPreset3 = SynthPresetID_HarmTri;
+
+    //     // set up voice ranges from G3 to C5
+    //     for (auto &vs : p.mVoiceSettings)
+    //     {
+    //         // vs.mMinOutpNote = MidiNote{3, Note::G}.GetMidiValue();
+    //         // vs.mMaxOutpNote = MidiNote{5, Note::C}.GetMidiValue();
+    //         vs.mScaleRef = HarmScaleRefType::Global;
+    //         vs.mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
+    //         // vs.mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
+    //         vs.mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
+    //     }
+
+    //     p.mVoiceSettings[0].mSequenceLength = 1;
+    //     p.mVoiceSettings[0].mSequence[0] = -1;
+
+    //     p.mVoiceSettings[1].mSequenceLength = 1;
+    //     p.mVoiceSettings[1].mSequence[0] = -2;
+
+    //     p.mVoiceSettings[2].mSequenceLength = 1;
+    //     p.mVoiceSettings[2].mSequence[0] = -3;
+
+    //     // p.mVoiceSettings[3].mMinOutpNote = MidiNote{6, Note::C}.GetMidiValue();
+    //     // p.mVoiceSettings[3].mMaxOutpNote = MidiNote{8, Note::G}.GetMidiValue();
+    //     // // p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
+    //     // p.mVoiceSettings[3].mSequenceLength = 2;
+    //     // p.mVoiceSettings[3].mOctaveTranspose = 1;
+    //     // p.mVoiceSettings[3].mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
+    //     // p.mVoiceSettings[3].mSequence[0] = 4;
+    //     // p.mVoiceSettings[3].mSequence[1] = 5;
+    // }
+
     HarmSettings()
     {
         size_t iPreset = 0;
@@ -721,6 +798,12 @@ struct HarmSettings
 
         CCASSERT(iPreset == HarmPresetID_N3N2);
         InitDiatonicPreset(mPresets[iPreset++], "Dia -3,-2", -3, -2);
+
+        CCASSERT(iPreset == HarmPresetID_SynthWaveAsBass);
+        IniSynthWaveAsBassPreset(mPresets[iPreset++]);
+
+        // CCASSERT(iPreset == HarmPresetID_SynthWaveAsMelody);
+        // IniSynthWaveAsMelodyPreset(mPresets[iPreset++]);
 
         InitQuartQuintHarmPreset(mPresets[iPreset++]);
         InitBigPreset(mPresets[iPreset++]);
