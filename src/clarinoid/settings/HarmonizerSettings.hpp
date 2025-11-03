@@ -748,6 +748,47 @@ struct HarmSettings
         // p.mVoiceSettings[3].mSequence[1] = 6;
     }
 
+    void InitMagicForestPreset(HarmPreset &p)
+    {
+        p.mName = "Magic Forest";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
+        p.mStereoSeparation = 0.5f;
+        p.mSynthPreset1 = SynthPresetID_SupersawSoft;
+        p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
+
+        // set up voice ranges from G3 to C5
+        for (auto &vs : p.mVoiceSettings)
+        {
+            vs.mScaleRef = HarmScaleRefType::Preset;
+            vs.mSynthPresetRef = HarmSynthPresetRefType::Preset1;
+        }
+
+        p.mVoiceSettings[0].mSequenceLength = 4;
+        p.mVoiceSettings[1].mSequenceLength = 4;
+        p.mVoiceSettings[2].mSequenceLength = 4;
+
+        // Db Eb Ab [C]
+        p.mVoiceSettings[0].mSequence[0] = -4;
+        p.mVoiceSettings[1].mSequence[0] = -9 - 12;
+        p.mVoiceSettings[2].mSequence[0] = -11;
+
+        // E F G [C]
+        p.mVoiceSettings[0].mSequence[1] = -5;
+        p.mVoiceSettings[1].mSequence[1] = -7 - 12;
+        p.mVoiceSettings[2].mSequence[1] = -8;
+
+        // Eb G Ab [C]
+        p.mVoiceSettings[0].mSequence[2] = -4;
+        p.mVoiceSettings[1].mSequence[2] = -5 - 12;
+        p.mVoiceSettings[2].mSequence[2] = -9;
+
+        // Bb F A [C]
+        p.mVoiceSettings[0].mSequence[3] = -4;
+        p.mVoiceSettings[1].mSequence[3] = -7;
+        p.mVoiceSettings[2].mSequence[3] = -14;
+    }
+
     // // synthwave effect, live note is assumed to be the bass note.
     // void IniSynthWaveAsMelodyPreset(HarmPreset &p)
     // {
@@ -808,6 +849,7 @@ struct HarmSettings
         InitQuartQuintHarmPreset(mPresets[iPreset++]);
         InitBigPreset(mPresets[iPreset++]);
         InitFuzionPreset(mPresets[iPreset++]);
+        InitMagicForestPreset(mPresets[iPreset++]);
         // InitMin6Preset(mPresets[iPreset++]);
         // InitMajInv2Preset(mPresets[iPreset++]);
         // InitFunky3(mPresets[iPreset++]);
