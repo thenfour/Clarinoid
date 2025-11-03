@@ -19,19 +19,15 @@ namespace clarinoid
 extern uint32_t gSynthVoiceNoteOnCount;
 
 template <typename ParamsT, size_t TVertexCount, size_t TFaceCount>
-struct MeshDemoAppBase : DisplayApp
+struct MeshSimulationBase
 {
     using Params = ParamsT;
     static constexpr size_t kVertexCount = TVertexCount;
     static constexpr size_t kFaceCount = TFaceCount;
 
-    struct FaceDesc
-    {
-        uint8_t i0;
-        uint8_t i1;
-        uint8_t i2;
-        uint8_t i3;
-    };
+    IDisplay &mDisplay;
+    MusicalStateTask &mMusicalStateTask;
+    uint32_t mRngState;
 
     struct FaceRenderInfo
     {
@@ -39,82 +35,6 @@ struct MeshDemoAppBase : DisplayApp
         float depth = 0.0f;
         uint8_t brightness = 0;
     };
-
-    MeshDemoAppBase(IDisplay &display, MusicalStateTask &musicalStateTask, uint32_t rngSeed = 0x51F00DF5u)
-        : DisplayApp(display), mMusicalStateTask(musicalStateTask), mRngState(rngSeed)
-    {
-    }
-
-    virtual void UpdateApp() override
-    {
-        if (mBack.IsNewlyPressed())
-        {
-            GoToFrontPage();
-        }
-    }
-
-    virtual void DisplayAppUpdate() override
-    {
-        DisplayApp::DisplayAppUpdate();
-    }
-
-    virtual void RenderApp() override
-    {
-        // StepMeshSimulation();
-        // RenderMeshFrame();
-    }
-
-    virtual void RenderFrontPage() override
-    {
-        StepMeshSimulation();
-        RenderMeshFrame();
-        // this->mDisplay.setCursor(0, 0);
-        // this->mDisplay.println("demo: cube");
-        // this->mDisplay.println("press ok");
-        // this->mDisplay.println("back to exit");
-    }
-
-  protected:
-    virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const = 0;
-    virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const = 0;
-
-    virtual uint8_t ResolveFaceBrightness(size_t /*faceIndex*/, float diffuse) const
-    {
-        const float brightnessF = Params::kFaceBaseBrightness + (diffuse * Params::kFaceDiffuseScale) +
-                                  (std::pow(diffuse, 4.0f) * Params::kFaceSpecularBias);
-        return static_cast<uint8_t>(Clamp(brightnessF, 0.0f, 255.0f));
-    }
-
-    virtual Vec3f GenerateImpulseAxis()
-    {
-        Vec3f axis{NextRandomSignedFloat(), NextRandomSignedFloat(), NextRandomSignedFloat()};
-        const float lenSq = LengthSq(axis);
-        if (lenSq <= Params::kFaceNormalEpsilon * Params::kFaceNormalEpsilon)
-        {
-            axis = Vec3f{0.0f, 0.0f, 1.0f};
-        }
-        else
-        {
-            axis = Normalize(axis, Params::kFaceNormalEpsilon);
-        }
-        return axis;
-    }
-
-    virtual float GenerateImpulseMagnitude()
-    {
-        return Params::kImpulseMagnitudeMin +
-               (static_cast<float>(NextRandomByte()) / 255.0f) * Params::kImpulseMagnitudeRange;
-    }
-
-    virtual void OnPostTransformVertices()
-    {
-    }
-
-    virtual void OnFacePrepared(size_t /*faceIndex*/, FaceRenderInfo & /*info*/)
-    {
-    }
-
-    MusicalStateTask &mMusicalStateTask;
 
     std::array<Vec3f, kVertexCount> mTransformedVertices{};
     std::array<FaceRenderInfo, kFaceCount> mFaceBuffer{};
@@ -124,51 +44,19 @@ struct MeshDemoAppBase : DisplayApp
     Vec3f mLightDirectionNormal{};
 
     bool mMeshInitialized = false;
-    uint32_t mRngState;
     int mLastNoteOnSerial = 0;
 
-    void ApplyNoteImpulse()
+    struct FaceDesc
     {
-        Vec3f axis = GenerateImpulseAxis();
-        const float impulseMagnitude = GenerateImpulseMagnitude();
-        mAngularVelocity += axis * impulseMagnitude;
-    }
+        uint8_t i0;
+        uint8_t i1;
+        uint8_t i2;
+        uint8_t i3;
+    };
 
-    uint8_t NextRandomByte()
+    MeshSimulationBase(IDisplay &display, MusicalStateTask &musicalStateTask, uint32_t rngSeed = 0x51F00DF5u)
+        : mDisplay(display), mMusicalStateTask(musicalStateTask), mRngState(rngSeed)
     {
-        mRngState = (mRngState * 1664525u) + 1013904223u;
-        return static_cast<uint8_t>(mRngState >> 24);
-    }
-
-    float NextRandomSignedFloat()
-    {
-        const float unipolar = static_cast<float>(NextRandomByte()) / 255.0f;
-        return (unipolar * 2.0f) - 1.0f;
-    }
-
-  private:
-    void EnsureMeshInitialized()
-    {
-        if (mMeshInitialized)
-        {
-            return;
-        }
-
-        const Vec3f rawLight{Params::kLightDirX, Params::kLightDirY, Params::kLightDirZ};
-        const float lightLenSq = LengthSq(rawLight);
-        if (lightLenSq <= Params::kFaceNormalEpsilon * Params::kFaceNormalEpsilon)
-        {
-            mLightDirectionNormal = Vec3f{0.0f, 0.0f, 1.0f};
-        }
-        else
-        {
-            mLightDirectionNormal = Normalize(rawLight, Params::kFaceNormalEpsilon);
-        }
-
-        mRotationAngles = Vec3f{};
-        mAngularVelocity = Vec3f{};
-        mLastNoteOnSerial = gSynthVoiceNoteOnCount;
-        mMeshInitialized = true;
     }
 
     void StepMeshSimulation()
@@ -186,43 +74,6 @@ struct MeshDemoAppBase : DisplayApp
 
         mRotationAngles += mAngularVelocity;
         WrapAngles();
-    }
-
-    void HandleNoteImpulses()
-    {
-        const int currentSerial = gSynthVoiceNoteOnCount;
-        if (currentSerial < mLastNoteOnSerial)
-        {
-            mLastNoteOnSerial = currentSerial;
-            return;
-        }
-
-        const int delta = currentSerial - mLastNoteOnSerial;
-        if (delta <= 0)
-        {
-            return;
-        }
-
-        mLastNoteOnSerial = currentSerial;
-        for (int i = 0; i < delta; ++i)
-        {
-            ApplyNoteImpulse();
-        }
-    }
-
-    void ClampAngularVelocity()
-    {
-        const float maxMag = Params::kMaxAngularVelocity;
-        mAngularVelocity.x = Clamp(mAngularVelocity.x, -maxMag, maxMag);
-        mAngularVelocity.y = Clamp(mAngularVelocity.y, -maxMag, maxMag);
-        mAngularVelocity.z = Clamp(mAngularVelocity.z, -maxMag, maxMag);
-    }
-
-    void WrapAngles()
-    {
-        mRotationAngles.x = render3d::WrapAngle(mRotationAngles.x);
-        mRotationAngles.y = render3d::WrapAngle(mRotationAngles.y);
-        mRotationAngles.z = render3d::WrapAngle(mRotationAngles.z);
     }
 
     void RenderMeshFrame()
@@ -333,6 +184,127 @@ struct MeshDemoAppBase : DisplayApp
         mDisplay.ResetClip();
     }
 
+  protected:
+    virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const = 0;
+    virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const = 0;
+
+    virtual uint8_t ResolveFaceBrightness(size_t /*faceIndex*/, float diffuse) const
+    {
+        const float brightnessF = Params::kFaceBaseBrightness + (diffuse * Params::kFaceDiffuseScale) +
+                                  (std::pow(diffuse, 4.0f) * Params::kFaceSpecularBias);
+        return static_cast<uint8_t>(Clamp(brightnessF, 0.0f, 255.0f));
+    }
+
+    virtual Vec3f GenerateImpulseAxis()
+    {
+        Vec3f axis{NextRandomSignedFloat(), NextRandomSignedFloat(), NextRandomSignedFloat()};
+        const float lenSq = LengthSq(axis);
+        if (lenSq <= Params::kFaceNormalEpsilon * Params::kFaceNormalEpsilon)
+        {
+            axis = Vec3f{0.0f, 0.0f, 1.0f};
+        }
+        else
+        {
+            axis = Normalize(axis, Params::kFaceNormalEpsilon);
+        }
+        return axis;
+    }
+
+    virtual float GenerateImpulseMagnitude()
+    {
+        return Params::kImpulseMagnitudeMin +
+               (static_cast<float>(NextRandomByte()) / 255.0f) * Params::kImpulseMagnitudeRange;
+    }
+
+    virtual void OnPostTransformVertices()
+    {
+    }
+
+    virtual void OnFacePrepared(size_t /*faceIndex*/, FaceRenderInfo & /*info*/)
+    {
+    }
+
+    void ApplyNoteImpulse()
+    {
+        Vec3f axis = GenerateImpulseAxis();
+        const float impulseMagnitude = GenerateImpulseMagnitude();
+        mAngularVelocity += axis * impulseMagnitude;
+    }
+
+    uint8_t NextRandomByte()
+    {
+        mRngState = (mRngState * 1664525u) + 1013904223u;
+        return static_cast<uint8_t>(mRngState >> 24);
+    }
+
+    float NextRandomSignedFloat()
+    {
+        const float unipolar = static_cast<float>(NextRandomByte()) / 255.0f;
+        return (unipolar * 2.0f) - 1.0f;
+    }
+
+  private:
+    void EnsureMeshInitialized()
+    {
+        if (mMeshInitialized)
+        {
+            return;
+        }
+
+        const Vec3f rawLight{Params::kLightDirX, Params::kLightDirY, Params::kLightDirZ};
+        const float lightLenSq = LengthSq(rawLight);
+        if (lightLenSq <= Params::kFaceNormalEpsilon * Params::kFaceNormalEpsilon)
+        {
+            mLightDirectionNormal = Vec3f{0.0f, 0.0f, 1.0f};
+        }
+        else
+        {
+            mLightDirectionNormal = Normalize(rawLight, Params::kFaceNormalEpsilon);
+        }
+
+        mRotationAngles = Vec3f{};
+        mAngularVelocity = Vec3f{};
+        mLastNoteOnSerial = gSynthVoiceNoteOnCount;
+        mMeshInitialized = true;
+    }
+
+    void HandleNoteImpulses()
+    {
+        const int currentSerial = gSynthVoiceNoteOnCount;
+        if (currentSerial < mLastNoteOnSerial)
+        {
+            mLastNoteOnSerial = currentSerial;
+            return;
+        }
+
+        const int delta = currentSerial - mLastNoteOnSerial;
+        if (delta <= 0)
+        {
+            return;
+        }
+
+        mLastNoteOnSerial = currentSerial;
+        for (int i = 0; i < delta; ++i)
+        {
+            ApplyNoteImpulse();
+        }
+    }
+
+    void ClampAngularVelocity()
+    {
+        const float maxMag = Params::kMaxAngularVelocity;
+        mAngularVelocity.x = Clamp(mAngularVelocity.x, -maxMag, maxMag);
+        mAngularVelocity.y = Clamp(mAngularVelocity.y, -maxMag, maxMag);
+        mAngularVelocity.z = Clamp(mAngularVelocity.z, -maxMag, maxMag);
+    }
+
+    void WrapAngles()
+    {
+        mRotationAngles.x = render3d::WrapAngle(mRotationAngles.x);
+        mRotationAngles.y = render3d::WrapAngle(mRotationAngles.y);
+        mRotationAngles.z = render3d::WrapAngle(mRotationAngles.z);
+    }
+
     Vec2f ProjectVertex(const Vec3f &vertex, float centreX, float centreY) const
     {
         const float invZ = Params::kProjectionScale / vertex.z;
@@ -351,5 +323,41 @@ struct MeshDemoAppBase : DisplayApp
         render3d::RasterizeTriangle(p[2], p[3], p[0], renderRect, drawPixel, Params::kFaceNormalEpsilon);
     }
 };
+
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
+/////////
 
 } // namespace clarinoid

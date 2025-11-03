@@ -209,11 +209,11 @@ inline const GeodesicSphereMeshData &GetGeodesicSphereMeshData()
 }
 } // namespace detail
 
-using GeodesicSphereDemoBase = MeshDemoAppBase<GeodesicSphereDemoParams,
-                                               GeodesicSphereDemoParams::kVertexCount,
-                                               GeodesicSphereDemoParams::kFaceCount>;
+using GeodesicSphereDemoBase = MeshSimulationBase<GeodesicSphereDemoParams,
+                                                  GeodesicSphereDemoParams::kVertexCount,
+                                                  GeodesicSphereDemoParams::kFaceCount>;
 
-struct GeodesicSphereDemoApp : GeodesicSphereDemoBase
+struct GeodesicSphereSimulation : GeodesicSphereDemoBase
 {
     using Base = GeodesicSphereDemoBase;
     using FaceDesc = typename Base::FaceDesc;
@@ -222,23 +222,10 @@ struct GeodesicSphereDemoApp : GeodesicSphereDemoBase
     static constexpr size_t kVertexCount = Base::kVertexCount;
     static constexpr size_t kFaceCount = Base::kFaceCount;
 
-    GeodesicSphereDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask)
+    GeodesicSphereSimulation(IDisplay &display, MusicalStateTask &musicalStateTask)
         : Base(display, musicalStateTask, 0xC0FEF00Du)
     {
     }
-
-    virtual const char *DisplayAppGetName() override
-    {
-        return "demo sphere";
-    }
-
-    // virtual void RenderFrontPage() override
-    // {
-    //     this->mDisplay.setCursor(0, 0);
-    //     this->mDisplay.println("demo: sphere");
-    //     this->mDisplay.println("press ok");
-    //     this->mDisplay.println("back to exit");
-    // }
 
   protected:
     virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override
@@ -274,6 +261,44 @@ struct GeodesicSphereDemoApp : GeodesicSphereDemoBase
         info.brightness = static_cast<uint8_t>(adjusted);
 
         (void)faceIndex;
+    }
+};
+
+struct GeodesicSphereDemoApp : DisplayApp
+{
+    GeodesicSphereSimulation mGeodesicSphereSim;
+
+    GeodesicSphereDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask, uint32_t rngSeed = 0x51F00DF5u)
+        : DisplayApp(display), mGeodesicSphereSim(display, musicalStateTask)
+    {
+    }
+
+    virtual void UpdateApp() override
+    {
+        if (mBack.IsNewlyPressed())
+        {
+            GoToFrontPage();
+        }
+    }
+
+    virtual void DisplayAppUpdate() override
+    {
+        DisplayApp::DisplayAppUpdate();
+    }
+
+    virtual const char *DisplayAppGetName() override
+    {
+        return "mesh demo";
+    }
+
+    virtual void RenderApp() override
+    {
+    }
+
+    virtual void RenderFrontPage() override
+    {
+        mGeodesicSphereSim.StepMeshSimulation();
+        mGeodesicSphereSim.RenderMeshFrame();
     }
 };
 

@@ -50,7 +50,7 @@ struct CubeDemoParams
     static constexpr float kLightDirZ = -0.82f;
 };
 
-using CubeDemoBase = MeshDemoAppBase<CubeDemoParams, 8, 6>;
+using CubeDemoBase = MeshSimulationBase<CubeDemoParams, 8, 6>;
 
 struct CubeDemoApp : CubeDemoBase
 {
@@ -63,19 +63,6 @@ struct CubeDemoApp : CubeDemoBase
     CubeDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask, 0x51F00DF5u)
     {
     }
-
-    virtual const char *DisplayAppGetName() override
-    {
-        return "demo cube";
-    }
-
-    // virtual void RenderFrontPage() override
-    // {
-    //     this->mDisplay.setCursor(0, 0);
-    //     this->mDisplay.println("demo: cube");
-    //     this->mDisplay.println("press ok");
-    //     this->mDisplay.println("back to exit");
-    // }
 
   protected:
     virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override

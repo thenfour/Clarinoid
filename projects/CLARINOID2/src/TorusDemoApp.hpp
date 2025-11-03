@@ -56,9 +56,9 @@ struct TorusDemoParams
 static constexpr size_t kTorusVertexCount = TorusDemoParams::kMajorSegments * TorusDemoParams::kMinorSegments;
 static constexpr size_t kTorusFaceCount = TorusDemoParams::kMajorSegments * TorusDemoParams::kMinorSegments;
 
-using TorusDemoBase = MeshDemoAppBase<TorusDemoParams, kTorusVertexCount, kTorusFaceCount>;
+using TorusDemoBase = MeshSimulationBase<TorusDemoParams, kTorusVertexCount, kTorusFaceCount>;
 
-struct TorusDemoApp : TorusDemoBase
+struct TorusSimulation : TorusDemoBase
 {
     using Base = TorusDemoBase;
     using FaceDesc = typename Base::FaceDesc;
@@ -67,22 +67,10 @@ struct TorusDemoApp : TorusDemoBase
     static constexpr size_t kVertexCount = Base::kVertexCount;
     static constexpr size_t kFaceCount = Base::kFaceCount;
 
-    TorusDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask, 0x8BADC0DEu)
+    TorusSimulation(IDisplay &display, MusicalStateTask &musicalStateTask)
+        : Base(display, musicalStateTask, 0x8BADC0DEu)
     {
     }
-
-    virtual const char *DisplayAppGetName() override
-    {
-        return "demo torus";
-    }
-
-    // virtual void RenderFrontPage() override
-    // {
-    //     this->mDisplay.setCursor(0, 0);
-    //     this->mDisplay.println("demo: torus");
-    //     this->mDisplay.println("press ok");
-    //     this->mDisplay.println("back to exit");
-    // }
 
   protected:
     virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override
@@ -157,6 +145,44 @@ struct TorusDemoApp : TorusDemoBase
         const float accent = 1.0f + (0.35f * breath * std::sin(ringPhase));
         const float adjusted = Clamp(static_cast<float>(info.brightness) * accent, 0.0f, 255.0f);
         info.brightness = static_cast<uint8_t>(adjusted);
+    }
+};
+
+struct TorusDemoApp : DisplayApp
+{
+    TorusSimulation mTorusSim;
+
+    TorusDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask, uint32_t rngSeed = 0x51F00DF5u)
+        : DisplayApp(display), mTorusSim(display, musicalStateTask)
+    {
+    }
+
+    virtual void UpdateApp() override
+    {
+        if (mBack.IsNewlyPressed())
+        {
+            GoToFrontPage();
+        }
+    }
+
+    virtual void DisplayAppUpdate() override
+    {
+        DisplayApp::DisplayAppUpdate();
+    }
+
+    virtual const char *DisplayAppGetName() override
+    {
+        return "mesh demo";
+    }
+
+    virtual void RenderApp() override
+    {
+    }
+
+    virtual void RenderFrontPage() override
+    {
+        mTorusSim.StepMeshSimulation();
+        mTorusSim.RenderMeshFrame();
     }
 };
 
