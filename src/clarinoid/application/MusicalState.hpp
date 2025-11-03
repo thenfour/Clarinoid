@@ -261,7 +261,7 @@ struct CCEWIMusicalState
 #endif
 
         // transpose
-        mFingeredNote = MidiNote(relativeNote);
+        mFingeredNote = MidiNote(relativeNote + mCurrentBaseNote);
         relativeNote += mAppSettings->GetCurrentPerformancePatch().mTranspose;
 
         // hold pitch is cool, but if we set the new base pitch while you're holding keys down (which is kinda

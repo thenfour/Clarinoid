@@ -80,7 +80,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     DisplayTestApp mDisplayTestApp;
     // DemoApp mDemoApp{mDisplay, mMusicalStateTask};
     // CubeDemoApp mCubeDemoApp{mDisplay, mMusicalStateTask};
-    TorusDemoApp mTorusDemoApp{mDisplay, mMusicalStateTask};
+    // TorusDemoApp mTorusDemoApp{mDisplay, mMusicalStateTask};
     GeodesicSphereDemoApp mSphereDemoApp{mDisplay, mMusicalStateTask, *this};
     MetronomeSettingsApp mMetronomeSettingsApp;
     // HarmSettingsApp mHarmVoiceSettingsApp;
@@ -230,6 +230,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
         mControlMapper.Init(&mDisplay);
 
         IDisplayApp *allApps[] = {
+            &mSphereDemoApp,
             &mGuiPerformanceApp,
             //&mDisplayTestApp,
 
@@ -241,7 +242,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             //&mHarmVoiceSettingsApp,
 
             &mMetronomeSettingsApp,
-            &mSystemSettingsApp, // <-- perf patch selector
+            &mSystemSettingsApp,
             //&mAudioMonitorApp,
 
             &mDebugDisplayApp,
@@ -250,8 +251,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mGoniometerApp,
             //&mDemoApp,
             //&mCubeDemoApp,
-            &mTorusDemoApp,
-            &mSphereDemoApp,
+            //&mTorusDemoApp,
             &mBigPerfDisplayApp,
         };
 

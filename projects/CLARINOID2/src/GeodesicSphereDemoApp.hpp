@@ -18,7 +18,7 @@ struct GeodesicSphereDemoParams
     // Positive Z offset keeping the sphere in front of the camera (model units).
     static constexpr float kCameraDistance = 3.1f;
     // Perspective multiplier applied during projection; larger values render a bigger sphere on screen.
-    static constexpr float kProjectionScale = 90.0f;
+    static constexpr float kProjectionScale = 104.0f;
     // Minimum allowed Z value when projecting (model units) to avoid divide-by-zero.
     static constexpr float kNearPlaneEpsilon = 0.12f;
 
@@ -254,13 +254,13 @@ struct GeodesicSphereSimulation : GeodesicSphereDemoBase
 
     virtual void OnFacePrepared(size_t faceIndex, FaceRenderInfo &info) override
     {
-        const float breath = mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
-        const float note = mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
-        const float modulation = 1.0f + (0.25f * breath) + (0.15f * note);
-        const float adjusted = Clamp(static_cast<float>(info.brightness) * modulation, 0.0f, 255.0f);
-        info.brightness = static_cast<uint8_t>(adjusted);
+        // const float breath = mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
+        // const float note = mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
+        // const float modulation = 1.0f + (0.25f * breath) + (0.15f * note);
+        // const float adjusted = Clamp(static_cast<float>(info.brightness) * modulation, 0.0f, 255.0f);
+        // info.brightness = static_cast<uint8_t>(adjusted);
 
-        (void)faceIndex;
+        // (void)faceIndex;
     }
 };
 
@@ -309,6 +309,7 @@ struct GeodesicSphereDemoApp : DisplayApp
     virtual void RenderFrontPage() override
     {
         mGeodesicSphereSim.StepMeshSimulation();
+        mGeodesicSphereSim.SetScreenOffsetPixels(9, -9);
         mGeodesicSphereSim.RenderMeshFrame({72, 0, 56, 56});
 
         auto &appSettings = *mMusicalStateTask.mAppSettings;
@@ -321,7 +322,7 @@ struct GeodesicSphereDemoApp : DisplayApp
 
         if (perf.mSynthAEnabled && (perf.mSynthPresetA != -1))
         {
-            mDisplay.setCursor(0, 1);
+            mDisplay.setCursor(1, 1);
             mDisplay.PrintInvertedText("A", kPadding);
         }
 
@@ -339,6 +340,23 @@ struct GeodesicSphereDemoApp : DisplayApp
             mDisplay.setCursor(36, 1);
             mDisplay.PrintInvertedText(perf.mGlobalScale.ToShortString().substring(0, 6),
                                        kPadding); // ppSettings.GetHarmPatchName(perf.mHarmPreset));
+        }
+
+        if (perf.mTranspose != 0)
+        {
+            mDisplay.setCursor(1, kFingeredNoteRowY);
+            mDisplay.PrintInvertedText(String(perf.mTranspose > 0 ? "+" : "") + perf.mTranspose, kPadding);
+        }
+
+        if (perf.mSynthATranspose != 0)
+        {
+            mDisplay.setCursor(kTextAreaWidth - 14, kFingeredNoteRowY);
+            mDisplay.PrintInvertedText(String(perf.mSynthATranspose > 0 ? "+" : "") + perf.mSynthATranspose, kPadding);
+        }
+        if (perf.mSynthBTranspose != 0)
+        {
+            mDisplay.setCursor(kTextAreaWidth - 14, kFingeredNoteRowY + 9);
+            mDisplay.PrintInvertedText(String(perf.mSynthBTranspose > 0 ? "+" : "") + perf.mSynthBTranspose, kPadding);
         }
 
         mDisplay.setTextColor(SSD1306_WHITE); // normal text

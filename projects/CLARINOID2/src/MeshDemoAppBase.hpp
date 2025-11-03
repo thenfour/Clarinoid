@@ -42,6 +42,7 @@ struct MeshSimulationBase
     Vec3f mRotationAngles{};
     Vec3f mAngularVelocity{};
     Vec3f mLightDirectionNormal{};
+    Vec2f mScreenOffsetPixels{0.0f, 0.0f};
 
     bool mMeshInitialized = false;
     int mLastNoteOnSerial = 0;
@@ -57,6 +58,17 @@ struct MeshSimulationBase
     MeshSimulationBase(IDisplay &display, MusicalStateTask &musicalStateTask, uint32_t rngSeed = 0x51F00DF5u)
         : mDisplay(display), mMusicalStateTask(musicalStateTask), mRngState(rngSeed)
     {
+    }
+
+    void SetScreenOffsetPixels(float offsetX, float offsetY)
+    {
+        mScreenOffsetPixels.x = offsetX;
+        mScreenOffsetPixels.y = offsetY;
+    }
+
+    Vec2f GetScreenOffsetPixels() const
+    {
+        return mScreenOffsetPixels;
     }
 
     void StepMeshSimulation()
@@ -84,8 +96,8 @@ struct MeshSimulationBase
         // const RectI renderRect = RectI::Construct(originX, originY, Params::kViewportWidth, Params::kViewportHeight);
         mDisplay.SetClipRect(renderRect);
 
-        const float centreX = static_cast<float>(renderRect.x) + (renderRect.width * 0.5f);
-        const float centreY = static_cast<float>(renderRect.y) + (renderRect.height * 0.5f);
+        const float centreX = static_cast<float>(renderRect.x) + (renderRect.width * 0.5f) + mScreenOffsetPixels.x;
+        const float centreY = static_cast<float>(renderRect.y) + (renderRect.height * 0.5f) + mScreenOffsetPixels.y;
 
         const auto &baseVertices = GetBaseVertices();
 
