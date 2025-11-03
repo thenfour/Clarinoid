@@ -166,79 +166,154 @@ struct BigPerfDisplayApp : DisplayApp
             }
         }
 
-        // pitch bend bar
-        // pitch bend range is usually +/- 2 semitones, but can be confirgured PER OSCILLATOR.
-        // so there's no way to guarantee this display is accurate. therefore no labels; just show -100%, -50%, 0%,
-        // +50%, +100% ticks.
         {
-            float pb = mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
-            constexpr int marginX = 4; // leave room for indicator
-            constexpr int circleRadius = 5;
-            constexpr int circleCenterY = 44;
-            constexpr int barYStart = 51;
-            constexpr int barHeight = 5;
-            constexpr int pbBarWidth = MAX_DISPLAY_WIDTH - marginX * 2;
-            constexpr int pbQuarterWidth = pbBarWidth / 4;
-            constexpr int pbHalfWidth = pbBarWidth / 2;
+            // float pb = mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
+            // constexpr int marginX = 4; // leave room for indicator
+            // constexpr int circleRadius = 5;
+            // constexpr int circleCenterY = 44;
+            // constexpr int barYStart = 51;
+            // constexpr int barHeight = 5;
+            // constexpr int pbBarWidth = MAX_DISPLAY_WIDTH - marginX * 2;
+            // constexpr int pbQuarterWidth = pbBarWidth / 4;
+            // constexpr int pbHalfWidth = pbBarWidth / 2;
 
-            // given pb range is -1 to 1, but normally it's -2 to 2 semitones.
-            // so these values are 1/2 what you'd expect at semitone scale.
-            constexpr float kNoteIndicatorMarginHalfSemisCourse =
-                0.15f; // how many semitones away from a pitch to be considered "at" that pitch. -- coarse; where the
-                       // indicator is drawn at all
-            constexpr float kNoteIndicatorMarginHalfSemisFine = 0.07f; // fine; highlighting the indicator.
+            // // given pb range is -1 to 1, but normally it's -2 to 2 semitones.
+            // // so these values are 1/2 what you'd expect at semitone scale.
+            // constexpr float kNoteIndicatorMarginHalfSemisCourse =
+            //     0.15f; // how many semitones away from a pitch to be considered "at" that pitch. -- coarse; where the
+            //            // indicator is drawn at all
+            // constexpr float kNoteIndicatorMarginHalfSemisFine = 0.07f; // fine; highlighting the indicator.
 
-            auto pbN11ToX = [&](float pbN11) -> int {
-                return marginX + (int)((((pbN11 + 1.0f) / 2.0f) * (float)pbBarWidth)); // map -1..1 to 0..pbBarWidth
-            };
-            // are we close enough to -100% to draw the indicator?
-            auto drawIndicatorAtPB = [&](float targetPBN11) -> void {
-                if (FloatDistance(pb, targetPBN11) > kNoteIndicatorMarginHalfSemisCourse)
-                {
-                    return;
-                }
-                bool fine = FloatDistance(pb, targetPBN11) <= kNoteIndicatorMarginHalfSemisFine;
-                // draw indicator
-                int indicatorCenterX = pbN11ToX(targetPBN11);
-                mDisplay.FillCircleWithBrightness(
-                    PointI::Construct(indicatorCenterX, circleCenterY), circleRadius, fine ? 255 : 32);
-            };
+            // auto pbN11ToX = [&](float pbN11) -> int {
+            //     return marginX + (int)((((pbN11 + 1.0f) / 2.0f) * (float)pbBarWidth)); // map -1..1 to 0..pbBarWidth
+            // };
+            // // are we close enough to -100% to draw the indicator?
+            // auto drawIndicatorAtPB = [&](float targetPBN11) -> void {
+            //     if (FloatDistance(pb, targetPBN11) > kNoteIndicatorMarginHalfSemisCourse)
+            //     {
+            //         return;
+            //     }
+            //     bool fine = FloatDistance(pb, targetPBN11) <= kNoteIndicatorMarginHalfSemisFine;
+            //     // draw indicator
+            //     int indicatorCenterX = pbN11ToX(targetPBN11);
+            //     mDisplay.FillCircleWithBrightness(
+            //         PointI::Construct(indicatorCenterX, circleCenterY), circleRadius, fine ? 255 : 32);
+            // };
 
-            drawIndicatorAtPB(-1.0f); // -100%
-            drawIndicatorAtPB(-0.5f); // -50%
-            drawIndicatorAtPB(0.0f);  // 0%
-            drawIndicatorAtPB(0.5f);  // +50%
-            drawIndicatorAtPB(1.0f);  // +100%
+            // drawIndicatorAtPB(-1.0f); // -100%
+            // drawIndicatorAtPB(-0.5f); // -50%
+            // drawIndicatorAtPB(0.0f);  // 0%
+            // drawIndicatorAtPB(0.5f);  // +50%
+            // drawIndicatorAtPB(1.0f);  // +100%
 
-            // draw bar.
-            int pbX = pbN11ToX(pb);
-            if (pb < 0) // negative bend
+            // // draw bar.
+            // int pbX = pbN11ToX(pb);
+            // if (pb < 0) // negative bend
+            // {
+            //     // fill from pbX to center
+            //     mDisplay.FillRectWithBrightness(
+            //         RectI::Construct(pbX, barYStart, pbHalfWidth - (pbX - marginX), barHeight), 128);
+            // }
+            // else
+            // {
+            //     // positive bend
+            //     int pbBarStartX = marginX + pbHalfWidth;
+            //     mDisplay.FillRectWithBrightness(RectI::Construct(pbBarStartX, barYStart, pbX - pbBarStartX,
+            //     barHeight),
+            //                                     128);
+            // }
+
+            // {
+            //     // draw indicator ticks at -100%, -50%, 0%, +50%, +100%
+            //     int x = marginX;
+            //     mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // -100
+            //     x += pbQuarterWidth;
+            //     mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // -50
+            //     x += pbQuarterWidth;
+            //     mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // 0
+            //     x += pbQuarterWidth;
+            //     mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // +50
+            //     x += pbQuarterWidth;
+            //     mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // +100
+            // }
+        }
+
+        RenderPitchbendBar(
+            mDisplay, mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue(), 51, MAX_DISPLAY_WIDTH);
+    }
+
+    // pitch bend bar
+    // pitch bend range is usually +/- 2 semitones, but can be confirgured PER OSCILLATOR.
+    // so there's no way to guarantee this display is accurate. therefore no labels; just show -100%, -50%, 0%,
+    // +50%, +100% ticks.
+    static void RenderPitchbendBar(IDisplay &display, float incomingPBN11, int barYStart, int width)
+    {
+        // float pb = mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
+        constexpr int marginX = 4; // leave room for indicator
+        constexpr int circleRadius = 5;
+        // constexpr int barYStart = 51;
+        const int circleCenterY = barYStart - circleRadius - 2;
+        constexpr int barHeight = 5;
+        const int pbBarWidth = width - marginX * 2;
+        const int pbQuarterWidth = pbBarWidth / 4;
+        const int pbHalfWidth = pbBarWidth / 2;
+
+        // given pb range is -1 to 1, but normally it's -2 to 2 semitones.
+        // so these values are 1/2 what you'd expect at semitone scale.
+        constexpr float kNoteIndicatorMarginHalfSemisCourse =
+            0.15f; // how many semitones away from a pitch to be considered "at" that pitch. -- coarse; where the
+                   // indicator is drawn at all
+        constexpr float kNoteIndicatorMarginHalfSemisFine = 0.07f; // fine; highlighting the indicator.
+
+        auto pbN11ToX = [&](float pbN11) -> int {
+            return marginX + (int)((((pbN11 + 1.0f) / 2.0f) * (float)pbBarWidth)); // map -1..1 to 0..pbBarWidth
+        };
+        // are we close enough to -100% to draw the indicator?
+        auto drawIndicatorAtPB = [&](float targetPBN11) -> void {
+            if (FloatDistance(incomingPBN11, targetPBN11) > kNoteIndicatorMarginHalfSemisCourse)
             {
-                // fill from pbX to center
-                mDisplay.FillRectWithBrightness(
-                    RectI::Construct(pbX, barYStart, pbHalfWidth - (pbX - marginX), barHeight), 128);
+                return;
             }
-            else
-            {
-                // positive bend
-                int pbBarStartX = marginX + pbHalfWidth;
-                mDisplay.FillRectWithBrightness(RectI::Construct(pbBarStartX, barYStart, pbX - pbBarStartX, barHeight),
-                                                128);
-            }
+            bool fine = FloatDistance(incomingPBN11, targetPBN11) <= kNoteIndicatorMarginHalfSemisFine;
+            // draw indicator
+            int indicatorCenterX = pbN11ToX(targetPBN11);
+            display.FillCircleWithBrightness(
+                PointI::Construct(indicatorCenterX, circleCenterY), circleRadius, fine ? 255 : 32);
+        };
 
-            {
-                // draw indicator ticks at -100%, -50%, 0%, +50%, +100%
-                int x = marginX;
-                mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // -100
-                x += pbQuarterWidth;
-                mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // -50
-                x += pbQuarterWidth;
-                mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // 0
-                x += pbQuarterWidth;
-                mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // +50
-                x += pbQuarterWidth;
-                mDisplay.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // +100
-            }
+        drawIndicatorAtPB(-1.0f); // -100%
+        drawIndicatorAtPB(-0.5f); // -50%
+        drawIndicatorAtPB(0.0f);  // 0%
+        drawIndicatorAtPB(0.5f);  // +50%
+        drawIndicatorAtPB(1.0f);  // +100%
+
+        // draw bar.
+        int pbX = pbN11ToX(incomingPBN11);
+        if (incomingPBN11 < 0) // negative bend
+        {
+            // fill from pbX to center
+            display.FillRectWithBrightness(RectI::Construct(pbX, barYStart, pbHalfWidth - (pbX - marginX), barHeight),
+                                           128);
+        }
+        else
+        {
+            // positive bend
+            int pbBarStartX = marginX + pbHalfWidth;
+            display.FillRectWithBrightness(RectI::Construct(pbBarStartX, barYStart, pbX - pbBarStartX, barHeight), 128);
+        }
+
+        {
+            // draw indicator ticks at -100%, -50%, 0%, +50%, +100%
+            int x = marginX;
+            display.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // -100
+            x += pbQuarterWidth;
+            display.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // -50
+            x += pbQuarterWidth;
+            display.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // 0
+            x += pbQuarterWidth;
+            display.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // +50
+            x += pbQuarterWidth;
+            display.drawFastVLine(x, barYStart, barHeight, SSD1306_WHITE); // +100
         }
     }
 

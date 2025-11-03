@@ -124,6 +124,7 @@ struct CCEWIMusicalState
     int mBaseNoteToUseAfterRelativePitchChanges = 0;
     int mRelativeNoteWhenPitchHeld = 0;
     int mCurrentBaseNote = mDefaultBaseNote;
+    MidiNote mFingeredNote; // does not include transposition; you want to see the fingered note not the playing note.
 
     CCEWIMusicalState(IDisplay *pDisplay,
                       AppSettings *appSettings,
@@ -260,6 +261,7 @@ struct CCEWIMusicalState
 #endif
 
         // transpose
+        mFingeredNote = MidiNote(relativeNote);
         relativeNote += mAppSettings->GetCurrentPerformancePatch().mTranspose;
 
         // hold pitch is cool, but if we set the new base pitch while you're holding keys down (which is kinda

@@ -60,7 +60,7 @@ struct SpelledNote
     // int8_t octave; // C4=60 -> 4
     MidiNote midi; // original MIDI 0..127
 
-    String ToString() const
+    String ToString(bool withOctave = false) const
     {
         String s;
         switch (letter)
@@ -100,8 +100,10 @@ struct SpelledNote
             break;
         }
 
-        // s += String(midi.GetOctave());
-
+        if (withOctave)
+        {
+            s += String(midi.GetOctave());
+        }
         return s;
     }
 };

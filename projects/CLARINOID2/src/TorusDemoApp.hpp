@@ -182,7 +182,7 @@ struct TorusDemoApp : DisplayApp
     virtual void RenderFrontPage() override
     {
         mTorusSim.StepMeshSimulation();
-        mTorusSim.RenderMeshFrame();
+        mTorusSim.RenderMeshFrame({14, 0, 100, 54});
     }
 };
 

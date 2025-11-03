@@ -76,12 +76,12 @@ struct MeshSimulationBase
         WrapAngles();
     }
 
-    void RenderMeshFrame()
+    void RenderMeshFrame(const RectI &renderRect)
     {
-        const RectI clientRect = mDisplay.GetClientRect();
-        const int originX = clientRect.x + (clientRect.width - Params::kViewportWidth) / 2;
-        const int originY = clientRect.y + (clientRect.height - Params::kViewportHeight) / 2;
-        const RectI renderRect = RectI::Construct(originX, originY, Params::kViewportWidth, Params::kViewportHeight);
+        // const RectI clientRect = mDisplay.GetClientRect();
+        // const int originX = Params::kViewportX;
+        // const int originY = Params::kViewportY; // clientRect.y + (clientRect.height - Params::kViewportHeight) / 2;
+        // const RectI renderRect = RectI::Construct(originX, originY, Params::kViewportWidth, Params::kViewportHeight);
         mDisplay.SetClipRect(renderRect);
 
         const float centreX = static_cast<float>(renderRect.x) + (renderRect.width * 0.5f);

@@ -81,7 +81,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     // DemoApp mDemoApp{mDisplay, mMusicalStateTask};
     // CubeDemoApp mCubeDemoApp{mDisplay, mMusicalStateTask};
     TorusDemoApp mTorusDemoApp{mDisplay, mMusicalStateTask};
-    GeodesicSphereDemoApp mSphereDemoApp{mDisplay, mMusicalStateTask};
+    GeodesicSphereDemoApp mSphereDemoApp{mDisplay, mMusicalStateTask, *this};
     MetronomeSettingsApp mMetronomeSettingsApp;
     // HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
