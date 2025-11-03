@@ -6,6 +6,8 @@
 #include <cmath>
 
 #include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/basic/Vec.hpp>
+#include <clarinoid/basic/Rendering3D.hpp>
 #include <clarinoid/menu/MenuSettings.hpp>
 #include <clarinoid/menu/Plotter.hpp>
 #include "clarinoid2MusicalStateTask.hpp"
@@ -444,6 +446,360 @@ struct DemoApp : DisplayApp
         row = ClampInclusive<int>(row, 0, FireParams::kRenderHeight - 1);
         col = ClampInclusive<int>(col, 0, FireParams::kRenderWidth - 1);
         return field[row * FireParams::kRenderWidth + col];
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct CubeDemoApp : DisplayApp
+{
+    MusicalStateTask &mMusicalStateTask;
+
+    // Solid cube with simple painter's algorithm. Rotation integrates angular velocity with light shading per face.
+    struct CubeParams
+    {
+        static constexpr int kViewportWidth = 100; // Pixels allocated for cube rendering (centred within client rect)
+        static constexpr int kViewportHeight = 54; // Pixel height of the cube viewport
+        static constexpr float kHalfEdge = 0.55f;  // Half edge length of cube in model space units
+
+        static constexpr float kCameraDistance = 3.2f;    // Positive Z offset pushing cube in front of camera
+        static constexpr float kProjectionScale = 88.0f;  // Perspective multiplier (larger => bigger cube)
+        static constexpr float kNearPlaneEpsilon = 0.15f; // Clamp to avoid blowing up projection when facing camera
+
+        static constexpr float kAmbientAngularVelocityX = 0.00065f; // Passive angular drift radians/frame (pitch)
+        static constexpr float kAmbientAngularVelocityY = 0.00045f; // Passive angular drift radians/frame (yaw)
+        static constexpr float kAmbientAngularVelocityZ = 0.00030f; // Passive angular drift radians/frame (roll)
+        static constexpr float kAngularDamping =
+            0.97f; // Exponential decay applied to angular velocity. smaller = more damping. 1.0 = no damping.
+        static constexpr float kImpulseMagnitudeMin = 0.2f;   // Note impulse base magnitude (radians/frame)
+        static constexpr float kImpulseMagnitudeRange = 0.1f; // Extra random impulse magnitude
+
+        static constexpr float kMaxAngularVelocity = 0.4f; // Clamp per-axis angular velocity for stability
+
+        static constexpr float kFaceBaseBrightness = 48.0f; // Ambient brightness applied to every face (0–255)
+        static constexpr float kFaceDiffuseScale = 180.0f;  // Diffuse term applied after dot(light, normal)
+        static constexpr float kFaceSpecularBias = 40.0f;   // Additional lift for nearly facing faces
+        static constexpr float kFaceNormalEpsilon = 1e-4f;  // Guards degenerate faces when cube edge collapses
+
+        static constexpr float kLightDirX = 0.35f; // Directional light vector (normalised internally)
+        static constexpr float kLightDirY = 0.45f;
+        static constexpr float kLightDirZ = -0.82f;
+    };
+
+    struct FaceDesc
+    {
+        uint8_t i0;
+        uint8_t i1;
+        uint8_t i2;
+        uint8_t i3;
+    };
+
+    struct FaceRenderInfo
+    {
+        std::array<Vec2f, 4> projected{};
+        float depth = 0.0f;
+        uint8_t brightness = 0;
+    };
+
+    static constexpr size_t kVertexCount = 8;
+    static constexpr size_t kFaceCount = 6;
+
+    std::array<Vec3f, kVertexCount> mTransformedVertices{}; // Model -> world (with camera offset)
+    std::array<FaceRenderInfo, kFaceCount> mFaceBuffer{};   // Painter ordering buffer each frame
+
+    Vec3f mRotationAngles{};       // Current Euler angles (radians)
+    Vec3f mAngularVelocity{};      // Radians per frame around X/Y/Z
+    Vec3f mLightDirectionNormal{}; // Cached normalised light direction
+
+    bool mCubeInitialized = false;
+    uint32_t mRngState = 0x51F00DF5u; // Independent RNG seed for cube dynamics
+    int mLastNoteOnSerial = 0;
+
+    CubeDemoApp(IDisplay &d, MusicalStateTask &musicalStateTask) : DisplayApp(d), mMusicalStateTask(musicalStateTask)
+    {
+    }
+
+    virtual const char *DisplayAppGetName() override
+    {
+        return "demo cube";
+    }
+
+    virtual void UpdateApp() override
+    {
+        if (mBack.IsNewlyPressed())
+        {
+            GoToFrontPage();
+        }
+    }
+
+    virtual void DisplayAppUpdate() override
+    {
+        DisplayApp::DisplayAppUpdate();
+    }
+
+    virtual void RenderApp() override
+    {
+        StepCubeSimulation();
+        RenderCubeFrame();
+    }
+
+    virtual void RenderFrontPage() override
+    {
+        mDisplay.setCursor(0, 0);
+        mDisplay.println("demo: cube");
+        mDisplay.println("press ok");
+        mDisplay.println("back to exit");
+    }
+
+  private:
+    void EnsureCubeInitialized()
+    {
+        if (mCubeInitialized)
+        {
+            return;
+        }
+
+        const Vec3f rawLight{CubeParams::kLightDirX, CubeParams::kLightDirY, CubeParams::kLightDirZ};
+        const float lightLenSq = LengthSq(rawLight);
+        if (lightLenSq <= CubeParams::kFaceNormalEpsilon * CubeParams::kFaceNormalEpsilon)
+        {
+            mLightDirectionNormal = Vec3f{0.0f, 0.0f, 1.0f};
+        }
+        else
+        {
+            mLightDirectionNormal = Normalize(rawLight, CubeParams::kFaceNormalEpsilon);
+        }
+        mRotationAngles = Vec3f{};
+        mAngularVelocity = Vec3f{};
+        mLastNoteOnSerial = gSynthVoiceNoteOnCount;
+        mCubeInitialized = true;
+    }
+
+    uint8_t NextRandomByte()
+    {
+        mRngState = (mRngState * 1664525u) + 1013904223u;
+        return static_cast<uint8_t>(mRngState >> 24);
+    }
+
+    float NextRandomSignedFloat()
+    {
+        const float unipolar = static_cast<float>(NextRandomByte()) / 255.0f;
+        return (unipolar * 2.0f) - 1.0f;
+    }
+
+    void StepCubeSimulation()
+    {
+        EnsureCubeInitialized();
+
+        HandleNoteImpulses();
+
+        mAngularVelocity.x += CubeParams::kAmbientAngularVelocityX;
+        mAngularVelocity.y += CubeParams::kAmbientAngularVelocityY;
+        mAngularVelocity.z += CubeParams::kAmbientAngularVelocityZ;
+
+        mAngularVelocity *= CubeParams::kAngularDamping;
+        ClampAngularVelocity();
+
+        mRotationAngles += mAngularVelocity;
+        WrapAngles();
+    }
+
+    void ClampAngularVelocity()
+    {
+        const float maxMag = CubeParams::kMaxAngularVelocity;
+        mAngularVelocity.x = Clamp(mAngularVelocity.x, -maxMag, maxMag);
+        mAngularVelocity.y = Clamp(mAngularVelocity.y, -maxMag, maxMag);
+        mAngularVelocity.z = Clamp(mAngularVelocity.z, -maxMag, maxMag);
+    }
+
+    void WrapAngles()
+    {
+        mRotationAngles.x = render3d::WrapAngle(mRotationAngles.x);
+        mRotationAngles.y = render3d::WrapAngle(mRotationAngles.y);
+        mRotationAngles.z = render3d::WrapAngle(mRotationAngles.z);
+    }
+
+    void HandleNoteImpulses()
+    {
+        const int currentSerial = gSynthVoiceNoteOnCount;
+        if (currentSerial < mLastNoteOnSerial)
+        {
+            mLastNoteOnSerial = currentSerial;
+            return;
+        }
+
+        const int delta = currentSerial - mLastNoteOnSerial;
+        if (delta <= 0)
+        {
+            return;
+        }
+
+        mLastNoteOnSerial = currentSerial;
+        for (int i = 0; i < delta; ++i)
+        {
+            ApplyNoteImpulse();
+        }
+    }
+
+    void ApplyNoteImpulse()
+    {
+        Vec3f axis{NextRandomSignedFloat(), NextRandomSignedFloat(), NextRandomSignedFloat()};
+        const float lenSq = LengthSq(axis);
+        if (lenSq <= CubeParams::kFaceNormalEpsilon * CubeParams::kFaceNormalEpsilon)
+        {
+            axis = Vec3f{0.0f, 0.0f, 1.0f};
+        }
+        else
+        {
+            axis = Normalize(axis, CubeParams::kFaceNormalEpsilon);
+        }
+
+        const float impulseMagnitude =
+            CubeParams::kImpulseMagnitudeMin +
+            (static_cast<float>(NextRandomByte()) / 255.0f) * CubeParams::kImpulseMagnitudeRange;
+        mAngularVelocity += axis * impulseMagnitude;
+    }
+
+    void RenderCubeFrame()
+    {
+        const RectI clientRect = mDisplay.GetClientRect();
+        const int originX = clientRect.x + (clientRect.width - CubeParams::kViewportWidth) / 2;
+        const int originY = clientRect.y + (clientRect.height - CubeParams::kViewportHeight) / 2;
+        const RectI renderRect =
+            RectI::Construct(originX, originY, CubeParams::kViewportWidth, CubeParams::kViewportHeight);
+        mDisplay.SetClipRect(renderRect);
+
+        const float centreX = static_cast<float>(renderRect.x) + (renderRect.width * 0.5f);
+        const float centreY = static_cast<float>(renderRect.y) + (renderRect.height * 0.5f);
+
+        static const Vec3f baseVertices[kVertexCount] = {
+            Vec3f{-CubeParams::kHalfEdge, -CubeParams::kHalfEdge, -CubeParams::kHalfEdge},
+            Vec3f{CubeParams::kHalfEdge, -CubeParams::kHalfEdge, -CubeParams::kHalfEdge},
+            Vec3f{CubeParams::kHalfEdge, CubeParams::kHalfEdge, -CubeParams::kHalfEdge},
+            Vec3f{-CubeParams::kHalfEdge, CubeParams::kHalfEdge, -CubeParams::kHalfEdge},
+            Vec3f{-CubeParams::kHalfEdge, -CubeParams::kHalfEdge, CubeParams::kHalfEdge},
+            Vec3f{CubeParams::kHalfEdge, -CubeParams::kHalfEdge, CubeParams::kHalfEdge},
+            Vec3f{CubeParams::kHalfEdge, CubeParams::kHalfEdge, CubeParams::kHalfEdge},
+            Vec3f{-CubeParams::kHalfEdge, CubeParams::kHalfEdge, CubeParams::kHalfEdge},
+        };
+
+        static const FaceDesc faces[kFaceCount] = {
+            FaceDesc{0, 3, 2, 1}, // Back (-Z)
+            FaceDesc{4, 5, 6, 7}, // Front (+Z)
+            FaceDesc{0, 4, 7, 3}, // Left (-X)
+            FaceDesc{1, 2, 6, 5}, // Right (+X)
+            FaceDesc{3, 7, 6, 2}, // Top (+Y)
+            FaceDesc{0, 1, 5, 4}, // Bottom (-Y)
+        };
+
+        const float sx = static_cast<float>(std::sin(mRotationAngles.x));
+        const float cx = static_cast<float>(std::cos(mRotationAngles.x));
+        const float sy = static_cast<float>(std::sin(mRotationAngles.y));
+        const float cy = static_cast<float>(std::cos(mRotationAngles.y));
+        const float sz = static_cast<float>(std::sin(mRotationAngles.z));
+        const float cz = static_cast<float>(std::cos(mRotationAngles.z));
+
+        // Combined rotation matrix R = Rz * Ry * Rx
+        const float m00 = cz * cy;
+        const float m01 = cz * sy * sx - sz * cx;
+        const float m02 = cz * sy * cx + sz * sx;
+        const float m10 = sz * cy;
+        const float m11 = sz * sy * sx + cz * cx;
+        const float m12 = sz * sy * cx - cz * sx;
+        const float m20 = -sy;
+        const float m21 = cy * sx;
+        const float m22 = cy * cx;
+
+        for (size_t i = 0; i < kVertexCount; ++i)
+        {
+            const Vec3f &v = baseVertices[i];
+            Vec3f rotated{
+                (m00 * v.x) + (m01 * v.y) + (m02 * v.z),
+                (m10 * v.x) + (m11 * v.y) + (m12 * v.z),
+                (m20 * v.x) + (m21 * v.y) + (m22 * v.z),
+            };
+
+            rotated.z += CubeParams::kCameraDistance;
+            rotated.z = std::max(rotated.z, CubeParams::kNearPlaneEpsilon);
+            mTransformedVertices[i] = rotated;
+        }
+
+        size_t visibleFaceCount = 0;
+        for (size_t faceIndex = 0; faceIndex < kFaceCount; ++faceIndex)
+        {
+            const auto &face = faces[faceIndex];
+            const Vec3f &v0 = mTransformedVertices[face.i0];
+            const Vec3f &v1 = mTransformedVertices[face.i1];
+            const Vec3f &v2 = mTransformedVertices[face.i2];
+            const Vec3f &v3 = mTransformedVertices[face.i3];
+
+            const Vec3f edgeA = v1 - v0;
+            const Vec3f edgeB = v2 - v0;
+            Vec3f normal = Cross(edgeA, edgeB);
+
+            const float normalLenSq = LengthSq(normal);
+            if (normalLenSq <= CubeParams::kFaceNormalEpsilon * CubeParams::kFaceNormalEpsilon)
+            {
+                continue;
+            }
+
+            const Vec3f faceCentre = Vec3f{(v0.x + v1.x + v2.x + v3.x) * 0.25f,
+                                           (v0.y + v1.y + v2.y + v3.y) * 0.25f,
+                                           (v0.z + v1.z + v2.z + v3.z) * 0.25f};
+
+            const Vec3f toCamera{-faceCentre.x, -faceCentre.y, -faceCentre.z};
+            const float viewDot = Dot(normal, toCamera);
+            if (viewDot <= 0.0f)
+            {
+                continue; // Back-face cull
+            }
+
+            normal = Normalize(normal, CubeParams::kFaceNormalEpsilon);
+
+            const float diffuse = Clamp(Dot(normal, mLightDirectionNormal), 0.0f, 1.0f);
+            const float brightnessF = CubeParams::kFaceBaseBrightness + (diffuse * CubeParams::kFaceDiffuseScale) +
+                                      (std::pow(diffuse, 4.0f) * CubeParams::kFaceSpecularBias);
+            const uint8_t brightness = static_cast<uint8_t>(Clamp(brightnessF, 0.0f, 255.0f));
+
+            FaceRenderInfo &info = mFaceBuffer[visibleFaceCount++];
+            info.brightness = brightness;
+            info.depth = faceCentre.z;
+            info.projected[0] = ProjectVertex(v0, centreX, centreY);
+            info.projected[1] = ProjectVertex(v1, centreX, centreY);
+            info.projected[2] = ProjectVertex(v2, centreX, centreY);
+            info.projected[3] = ProjectVertex(v3, centreX, centreY);
+        }
+
+        std::sort(mFaceBuffer.begin(),
+                  mFaceBuffer.begin() + visibleFaceCount,
+                  [](const FaceRenderInfo &a, const FaceRenderInfo &b) {
+                      return a.depth > b.depth; // Painter from far to near
+                  });
+
+        for (size_t i = 0; i < visibleFaceCount; ++i)
+        {
+            const FaceRenderInfo &info = mFaceBuffer[i];
+            FillFace(info, renderRect);
+        }
+
+        mDisplay.ResetClip();
+    }
+
+    Vec2f ProjectVertex(const Vec3f &vertex, float centreX, float centreY) const
+    {
+        const float invZ = CubeParams::kProjectionScale / vertex.z;
+        const float px = centreX + vertex.x * invZ;
+        const float py = centreY - vertex.y * invZ;
+        return Vec2f{px, py};
+    }
+
+    void FillFace(const FaceRenderInfo &info, const RectI &renderRect)
+    {
+        const auto &p = info.projected;
+        auto drawPixel = [this, brightness = info.brightness](int x, int y) {
+            mDisplay.SetPixelShaded(PointI::Construct(x, y), brightness);
+        };
+        render3d::RasterizeTriangle(p[0], p[1], p[2], renderRect, drawPixel, CubeParams::kFaceNormalEpsilon);
+        render3d::RasterizeTriangle(p[2], p[3], p[0], renderRect, drawPixel, CubeParams::kFaceNormalEpsilon);
     }
 };
 

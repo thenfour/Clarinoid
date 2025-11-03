@@ -76,6 +76,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     // AudioMonitorApp mAudioMonitorApp;
     DisplayTestApp mDisplayTestApp;
     DemoApp mDemoApp{mDisplay, mMusicalStateTask};
+    CubeDemoApp mCubeDemoApp{mDisplay, mMusicalStateTask};
     MetronomeSettingsApp mMetronomeSettingsApp;
     // HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
@@ -243,6 +244,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mScaleDetectorApp,
             &mGoniometerApp,
             &mDemoApp,
+            &mCubeDemoApp,
             &mBigPerfDisplayApp,
         };
 
