@@ -11,33 +11,46 @@ namespace clarinoid
 
 struct TorusDemoParams
 {
+    // Width of the torus viewport in pixels (centered on the display).
     static constexpr int kViewportWidth = 100;
+    // Height of the torus viewport in pixels (centered on the display).
     static constexpr int kViewportHeight = 54;
+    // Positive Z offset keeping the torus in front of the camera (model units).
     static constexpr float kCameraDistance = 5.f;
+    // Perspective multiplier applied during projection; larger values render a bigger torus on screen.
     static constexpr float kProjectionScale = 112.0f;
+    // Minimum allowed Z value when projecting (model units) to avoid divide-by-zero.
     static constexpr float kNearPlaneEpsilon = 0.12f;
 
+    // Passive angular velocity about X/Y/Z (radians per frame) for idle motion.
     static constexpr float kAmbientAngularVelocityX = 0.00042f;
     static constexpr float kAmbientAngularVelocityY = 0.00078f;
     static constexpr float kAmbientAngularVelocityZ = 0.00025f;
+    // Exponential decay applied to angular velocity each frame (unitless 0-1).
     static constexpr float kAngularDamping = 0.965f;
+    // Base and randomised portion of note-triggered impulses (radians per frame).
     static constexpr float kImpulseMagnitudeMin = 0.13f;
     static constexpr float kImpulseMagnitudeRange = 0.05f;
+    // Maximum angular velocity per axis (radians per frame).
     static constexpr float kMaxAngularVelocity = 0.42f;
 
+    // Face shading parameters: ambient brightness offset, diffuse scale, specular lift, and normal epsilon.
     static constexpr float kFaceBaseBrightness = 40.0f;
     static constexpr float kFaceDiffuseScale = 190.0f;
     static constexpr float kFaceSpecularBias = 24.0f;
     static constexpr float kFaceNormalEpsilon = 1e-4f;
 
+    // Directional light vector components (unitless, normalised internally).
     static constexpr float kLightDirX = -0.25f;
     static constexpr float kLightDirY = 0.62f;
     static constexpr float kLightDirZ = -0.75f;
 
+    // Torus tessellation: number of segments around major (ring) and minor (tube) axes.
     static constexpr size_t kMajorSegments = 13;
     static constexpr size_t kMinorSegments = 9;
-    static constexpr float kMajorRadius = 1.3f;
-    static constexpr float kMinorRadius = 0.2f;
+    // Torus radii in model units: distance from center to tube center, and tube radius.
+    static constexpr float kMajorRadius = 1.15f;
+    static constexpr float kMinorRadius = 0.4f;
 };
 
 static constexpr size_t kTorusVertexCount = TorusDemoParams::kMajorSegments * TorusDemoParams::kMinorSegments;
