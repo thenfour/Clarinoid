@@ -63,7 +63,7 @@ struct CubeDemoApp : CubeDemoBase
     static constexpr size_t kVertexCount = Base::kVertexCount;
     static constexpr size_t kFaceCount = Base::kFaceCount;
 
-    CubeDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask, 0x51F00DF5u)
+    CubeDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask)
     {
     }
 

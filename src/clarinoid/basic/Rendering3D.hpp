@@ -4,19 +4,10 @@
 #include <cmath>
 #include <clarinoid/basic/BaseDefs.hpp>
 #include <clarinoid/basic/Vec.hpp>
+#include <clarinoid/basic/Wrap.hpp>
 
 namespace clarinoid::render3d
 {
-
-inline float WrapAngle(float angle)
-{
-    static constexpr float twoPi = 6.28318530718f;
-    if (angle > twoPi || angle < -twoPi)
-    {
-        angle = std::fmod(angle, twoPi);
-    }
-    return angle;
-}
 
 inline float EdgeFunction(const Vec2f &a, const Vec2f &b, const Vec2f &c)
 {

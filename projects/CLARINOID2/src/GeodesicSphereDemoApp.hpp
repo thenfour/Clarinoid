@@ -39,12 +39,12 @@ struct GeodesicSphereDemoParams
     static constexpr float kImpulseMagnitudeMin = 0.1f;
     static constexpr float kImpulseMagnitudeRange = 0.0f;
     // Maximum angular velocity per axis (radians per frame).
-    static constexpr float kMaxAngularVelocity = 0.5f;
+    static constexpr float kMaxAngularVelocity = 0.4f;
 
     // Face shading parameters: ambient brightness offset, diffuse scale, specular lift, and normal epsilon.
     static constexpr float kFaceBaseBrightness = 8.0f;
-    static constexpr float kFaceDiffuseScale = 180.0f;
-    static constexpr float kFaceSpecularBias = 100.0f;
+    static constexpr float kFaceDiffuseScale = 192.0f;
+    static constexpr float kFaceSpecularBias = 128.0f;
     static constexpr float kFaceNormalEpsilon = 1e-4f;
 
     // Directional light vector components (unitless, normalised internally).
@@ -229,8 +229,7 @@ struct GeodesicSphereSimulation : GeodesicSphereDemoBase
     static constexpr size_t kVertexCount = Base::kVertexCount;
     static constexpr size_t kFaceCount = Base::kFaceCount;
 
-    GeodesicSphereSimulation(IDisplay &display, MusicalStateTask &musicalStateTask)
-        : Base(display, musicalStateTask, 0xC0FEF00Du)
+    GeodesicSphereSimulation(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask)
     {
     }
 

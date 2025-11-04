@@ -93,7 +93,7 @@ struct Harmonizer
             return ret;
         }
         break;
-        case NonDiatonicBehavior::ChromaticFromAbove: {
+        case NonDiatonicBehavior::ChromaticUp: {
             // just express the chromatic adjustment in terms of flats instead of sharps.
             auto ctx = scale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Flat);
             ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
@@ -103,7 +103,7 @@ struct Harmonizer
             return ret;
         }
         break;
-        case NonDiatonicBehavior::ChromaticFromBelow: {
+        case NonDiatonicBehavior::ChromaticDown: {
             ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
             auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot);
             // voiceState.mResult = String("chromatic below ") + ret;

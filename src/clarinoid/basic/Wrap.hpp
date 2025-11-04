@@ -116,4 +116,14 @@ constexpr bool wrapByStepIntoFixedRange(int32_t value, int32_t &out)
     return true;
 }
 
+inline float WrapAngle(float angle)
+{
+    static constexpr float twoPi = 6.28318530718f;
+    if (angle > twoPi || angle < -twoPi)
+    {
+        angle = std::fmod(angle, twoPi);
+    }
+    return angle;
+}
+
 } // namespace clarinoid

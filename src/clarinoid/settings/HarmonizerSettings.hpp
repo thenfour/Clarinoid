@@ -74,10 +74,10 @@ enum class NonDiatonicBehavior : uint8_t
     // implementing the stateless ones.
     NearestDiatonic, // imagines that the source note snaps to the nearest diatonic note, and uses that as basis for the
                      // harmony voice
-    ChromaticFromAbove, // same as NearestDiatonic, but the resulting note gets transposed down the same as the distance
-                        // from the playing note from its next higher diatonic note.
-    ChromaticFromBelow, // same as NearestDiatonic, but the resulting note gets transposed up the same as the distance
-                        // from the playing note from its next lower diatonic note.
+    ChromaticUp,     // same as NearestDiatonic, but the resulting note gets transposed down the same as the distance
+                     // from the playing note from its next higher diatonic note.
+    ChromaticDown,   // same as NearestDiatonic, but the resulting note gets transposed up the same as the distance
+                     // from the playing note from its next lower diatonic note.
     UseScaleFollower, // use the scale follower for an alternate scale; if it's still nondiatonic for that (weird), use
                       // NearestDiatonic behavior.
     Drop,             // just don't play this note.
@@ -87,8 +87,8 @@ enum class NonDiatonicBehavior : uint8_t
 
 EnumItemInfo<NonDiatonicBehavior> gNonDiatonicBehaviorItems[5] = {
     {NonDiatonicBehavior::NearestDiatonic, "NearestDiatonic"},
-    {NonDiatonicBehavior::ChromaticFromAbove, "ChromaticFromAbove"},
-    {NonDiatonicBehavior::ChromaticFromBelow, "ChromaticFromBelow"},
+    {NonDiatonicBehavior::ChromaticUp, "ChromaticUp"},
+    {NonDiatonicBehavior::ChromaticDown, "ChromaticDown"},
     {NonDiatonicBehavior::UseScaleFollower, "UseScaleFollower"},
     {NonDiatonicBehavior::Drop, "Drop"},
 };
@@ -169,7 +169,7 @@ struct HarmVoiceSettings
     uint8_t mMinOutpNote = 0;
     uint8_t mMaxOutpNote = 127;
     NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
-    NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
+    NonDiatonicBehavior mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticUp;
     PitchBendParticipation mPitchBendParticipation = PitchBendParticipation::Same;
 
     String GetMenuDetailString() const
@@ -222,13 +222,13 @@ struct HarmSettings
         p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -5;
-        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticUp;
 
         p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Global;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[1].mSequenceLength = 1;
         p.mVoiceSettings[1].mSequence[0] = -3;
-        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticUp;
     }
 
     static void InitBotanicalHarmPreset(HarmPreset &p)
@@ -244,14 +244,14 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequenceLength = 1;
         p.mVoiceSettings[0].mSequence[0] = -5;
         p.mVoiceSettings[0].mMaxOutpNote = 80;
-        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
+        p.mVoiceSettings[0].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticUp;
 
         p.mVoiceSettings[1].mScaleRef = HarmScaleRefType::Preset;
         p.mVoiceSettings[1].mSynthPresetRef = HarmSynthPresetRefType::Preset2;
         p.mVoiceSettings[1].mSequenceLength = 1;
         p.mVoiceSettings[1].mSequence[0] = -3;
         p.mVoiceSettings[1].mMaxOutpNote = 80;
-        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticFromAbove;
+        p.mVoiceSettings[1].mNonDiatonicBehavior = NonDiatonicBehavior::ChromaticUp;
     }
 
     static void InitCrystalFieldsHarmPreset(HarmPreset &p)

@@ -14,6 +14,11 @@ void UptimeReset()
     gUptimeCurrentOffset = 0;
 }
 
+uint32_t UptimeMicros()
+{
+    return micros();
+}
+
 int64_t UptimeMicros64()
 {
     uint32_t m = micros();

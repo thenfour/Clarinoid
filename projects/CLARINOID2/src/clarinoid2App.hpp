@@ -44,6 +44,7 @@
 
 #include <clarinoid/Gui/GuiPerformanceApp.hpp>
 #include "clarinoid2BigPerfDisplayApp.hpp"
+#include "LoudnessDisplayApp.hpp"
 
 namespace clarinoid
 {
@@ -82,6 +83,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     // CubeDemoApp mCubeDemoApp{mDisplay, mMusicalStateTask};
     // TorusDemoApp mTorusDemoApp{mDisplay, mMusicalStateTask};
     GeodesicSphereDemoApp mSphereDemoApp{mDisplay, mMusicalStateTask, *this};
+    LoudnessDisplayApp mLoudnessDisplayApp{mDisplay, mMusicalStateTask, *this};
     MetronomeSettingsApp mMetronomeSettingsApp;
     // HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
@@ -248,6 +250,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mDebugDisplayApp,
             &mMPR121ConfigApp,
             &mScaleDetectorApp,
+            &mLoudnessDisplayApp,
             &mGoniometerApp,
             //&mDemoApp,
             //&mCubeDemoApp,

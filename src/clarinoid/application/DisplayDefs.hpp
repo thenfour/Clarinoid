@@ -65,6 +65,7 @@ struct IDisplay
     virtual void SetTextLeftMargin(int) = 0;
     virtual void DrawDottedHLine(int16_t left, int16_t width, int16_t y, uint16_t color) = 0;
     virtual void DrawDottedRect(int16_t left, int16_t top, int16_t width, int16_t height, uint16_t color) = 0;
+    virtual void DrawRectOutline1px(const RectI &rc, uint16_t color) = 0;
     virtual void DrawMarchingAntsFilledRect(int AntSize,
                                             int AntMask,
                                             int ySign,

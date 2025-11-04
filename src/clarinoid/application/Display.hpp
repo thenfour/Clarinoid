@@ -617,6 +617,12 @@ struct _CCDisplay : IDisplay
     {
         mDisplay.DrawDottedRect(left, top, width, height, color);
     }
+
+    virtual void DrawRectOutline1px(const RectI &rc, uint16_t color) override
+    {
+        mDisplay.drawRect(rc.x, rc.y, rc.width, rc.height, color);
+    }
+
     virtual void DrawMarchingAntsFilledRect(int AntSize,
                                             int AntMask,
                                             int ySign,

@@ -8,6 +8,7 @@
 #include <clarinoid/basic/Basic.hpp>
 #include <clarinoid/basic/Vec.hpp>
 #include <clarinoid/basic/Rendering3D.hpp>
+#include <clarinoid/basic/Random.hpp>
 #include <clarinoid/application/Display.hpp>
 #include <clarinoid/menu/MenuAppBase.hpp>
 
@@ -27,7 +28,7 @@ struct MeshSimulationBase
 
     IDisplay &mDisplay;
     MusicalStateTask &mMusicalStateTask;
-    uint32_t mRngState;
+    RandomNumberGenerator mRng;
 
     struct FaceRenderInfo
     {
@@ -55,8 +56,8 @@ struct MeshSimulationBase
         uint8_t i3;
     };
 
-    MeshSimulationBase(IDisplay &display, MusicalStateTask &musicalStateTask, uint32_t rngSeed = 0x51F00DF5u)
-        : mDisplay(display), mMusicalStateTask(musicalStateTask), mRngState(rngSeed)
+    MeshSimulationBase(IDisplay &display, MusicalStateTask &musicalStateTask)
+        : mDisplay(display), mMusicalStateTask(musicalStateTask)
     {
     }
 
@@ -218,7 +219,7 @@ struct MeshSimulationBase
 
     virtual Vec3f GenerateImpulseAxis()
     {
-        Vec3f axis{NextRandomSignedFloat(), NextRandomSignedFloat(), NextRandomSignedFloat()};
+        Vec3f axis{mRng.NextFloatN11(), mRng.NextFloatN11(), mRng.NextFloatN11()};
         const float lenSq = LengthSq(axis);
         if (lenSq <= Params::kFaceNormalEpsilon * Params::kFaceNormalEpsilon)
         {
@@ -233,8 +234,7 @@ struct MeshSimulationBase
 
     virtual float GenerateImpulseMagnitude()
     {
-        return Params::kImpulseMagnitudeMin +
-               (static_cast<float>(NextRandomByte()) / 255.0f) * Params::kImpulseMagnitudeRange;
+        return Params::kImpulseMagnitudeMin + mRng.NextFloat01() * Params::kImpulseMagnitudeRange;
     }
 
     virtual void OnPostTransformVertices()
@@ -251,18 +251,6 @@ struct MeshSimulationBase
 
         const float impulseMagnitude = GenerateImpulseMagnitude();
         mAngularVelocity += mBreathAxis * impulseMagnitude; // give it a big push
-    }
-
-    uint8_t NextRandomByte()
-    {
-        mRngState = (mRngState * 1664525u) + 1013904223u;
-        return static_cast<uint8_t>(mRngState >> 24);
-    }
-
-    float NextRandomSignedFloat()
-    {
-        const float unipolar = static_cast<float>(NextRandomByte()) / 255.0f;
-        return (unipolar * 2.0f) - 1.0f;
     }
 
   private:
@@ -306,7 +294,7 @@ struct MeshSimulationBase
         }
 
         mLastNoteOnSerial = currentSerial;
-        for (int i = 0; i < delta; ++i)
+        // for (int i = 0; i < delta; ++i) // it's not useful to stack impulses; just looks messy.
         {
             ApplyNoteImpulse();
         }
@@ -322,9 +310,9 @@ struct MeshSimulationBase
 
     void WrapAngles()
     {
-        mRotationAngles.x = render3d::WrapAngle(mRotationAngles.x);
-        mRotationAngles.y = render3d::WrapAngle(mRotationAngles.y);
-        mRotationAngles.z = render3d::WrapAngle(mRotationAngles.z);
+        mRotationAngles.x = WrapAngle(mRotationAngles.x);
+        mRotationAngles.y = WrapAngle(mRotationAngles.y);
+        mRotationAngles.z = WrapAngle(mRotationAngles.z);
     }
 
     Vec2f ProjectVertex(const Vec3f &vertex, float centreX, float centreY) const
