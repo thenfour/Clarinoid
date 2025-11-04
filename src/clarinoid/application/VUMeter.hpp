@@ -37,12 +37,19 @@ void RenderVUMeterHoriz(IDisplay &display, const AudioAnalysisState &state, cons
 
     auto clampLinear = [&](float value) { return Clamp(value, 0.0f, maxLinear); };
 
+    // nominal values are quite low, so apply a curve to make the meter more responsive at low levels.
+    auto applyMeterCurve = [](float normalized) {
+        normalized = Clamp(normalized, 0.0f, 1.0f);
+        return std::sqrt(normalized);
+    };
+
     auto linearToWidth = [&](float value) -> int {
         float normalized = 0.0f;
         if (maxLinear > 0.0f)
         {
             normalized = clampLinear(value) / maxLinear;
         }
+        normalized = applyMeterCurve(normalized);
         return static_cast<int>(std::roundf(normalized * inner.width));
     };
 
@@ -56,6 +63,7 @@ void RenderVUMeterHoriz(IDisplay &display, const AudioAnalysisState &state, cons
         {
             normalized = clampLinear(value) / maxLinear;
         }
+        normalized = applyMeterCurve(normalized);
         float x = static_cast<float>(inner.x) + normalized * static_cast<float>(inner.width - 1);
         return static_cast<int>(std::roundf(x));
     };
