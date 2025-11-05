@@ -436,10 +436,9 @@ struct DemoApp : DisplayApp
     void UpdateWindPhase()
     {
         mWindPhase += FireParams::kWindPhaseStep;
-        static constexpr float kTwoPi = 6.283185307f;
-        while (mWindPhase > kTwoPi)
+        while (mWindPhase > kTwoPI_f)
         {
-            mWindPhase -= kTwoPi;
+            mWindPhase -= kTwoPI_f;
         }
     }
 

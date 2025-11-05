@@ -135,6 +135,12 @@ template <typename T>
 constexpr T gPI = T(3.1415926535897932385);
 
 template <typename T>
+constexpr T gTwoPI = T(6.2831853071795864769);
+
+constexpr float kPI_f = gPI<float>;
+constexpr float kTwoPI_f = gTwoPI<float>;
+
+template <typename T>
 constexpr T gLog2of10 = T(3.3219280948873622);
 
 constexpr float kSampleRateF = AUDIO_SAMPLE_RATE_EXACT;

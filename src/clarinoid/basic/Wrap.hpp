@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "Math.hpp"
 
 namespace clarinoid
 {
@@ -118,10 +119,9 @@ constexpr bool wrapByStepIntoFixedRange(int32_t value, int32_t &out)
 
 inline float WrapAngle(float angle)
 {
-    static constexpr float twoPi = 6.28318530718f;
-    if (angle > twoPi || angle < -twoPi)
+    if (angle > kTwoPI_f || angle < -kTwoPI_f)
     {
-        angle = std::fmod(angle, twoPi);
+        angle = std::fmod(angle, kTwoPI_f);
     }
     return angle;
 }

@@ -1,15 +1,18 @@
 #pragma once
 #include <cstdint>
 #include <clarinoid/basic/Uptime.hpp>
+// #include <Entropy.h>
 
 namespace clarinoid
 {
+// StaticInit gRandomInit([]() { Entropy.Initialize(); });
 
 struct RandomNumberGenerator
 {
     static constexpr float inv24 = 1.0f / 16777216.0f; // 1 / 2^24
     uint32_t mRngState;
 
+    // explicit RandomNumberGenerator(uint32_t seed = 0) : mRngState(seed ? seed : Entropy.random())
     explicit RandomNumberGenerator(uint32_t seed = 0) : mRngState(seed ? seed : UptimeMicros())
     {
     }

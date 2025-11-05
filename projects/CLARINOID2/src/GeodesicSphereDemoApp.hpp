@@ -10,36 +10,13 @@
 namespace clarinoid
 {
 
+template <size_t TSubdivisionDepth>
 struct GeodesicSphereDemoParams
 {
-    // static constexpr int kViewportWidth = 100;
-    // static constexpr int kViewportHeight = 54;
-
-    // Positive Z offset keeping the sphere in front of the camera (model units).
-    static constexpr float kCameraDistance = 3.1f;
     // Perspective multiplier applied during projection; larger values render a bigger sphere on screen.
     static constexpr float kProjectionScale = 128.0f;
     // Minimum allowed Z value when projecting (model units) to avoid divide-by-zero.
     static constexpr float kNearPlaneEpsilon = 0.12f;
-
-    // Passive angular velocity about X/Y/Z (radians per frame) for idle motion.
-    static constexpr float kAmbientAngularVelocityX = 0.00002f;
-    static constexpr float kAmbientAngularVelocityY = 0.00003f;
-    static constexpr float kAmbientAngularVelocityZ = 0.00004f;
-
-    // RMS-driven angular velocity (rms linear * this = radians per frame).
-    // static constexpr float kRmsAngularVelocityX = 0.0003f;
-    // static constexpr float kRmsAngularVelocityY = 0.0002f;
-    // static constexpr float kRmsAngularVelocityZ = 0.0001f;
-    static constexpr float kBreathAngularVelocityFactor = 0.01f;
-
-    // Exponential decay applied to angular velocity each frame (unitless 0-1).
-    static constexpr float kAngularDamping = 0.985f;
-    // Base and randomised portion of note-triggered impulses (radians per frame).
-    static constexpr float kImpulseMagnitudeMin = 0.1f;
-    static constexpr float kImpulseMagnitudeRange = 0.0f;
-    // Maximum angular velocity per axis (radians per frame).
-    static constexpr float kMaxAngularVelocity = 0.4f;
 
     // Face shading parameters: ambient brightness offset, diffuse scale, specular lift, and normal epsilon.
     static constexpr float kFaceBaseBrightness = 8.0f;
@@ -47,18 +24,16 @@ struct GeodesicSphereDemoParams
     static constexpr float kFaceSpecularBias = 128.0f;
     static constexpr float kFaceNormalEpsilon = 1e-4f;
 
-    // Directional light vector components (unitless, normalised internally).
-    static constexpr float kLightDirX = -0.32f;
-    static constexpr float kLightDirY = 0.74f;
-    static constexpr float kLightDirZ = -0.58f;
-
     // Number of recursive icosahedron subdivisions (0-2 keeps vertex count within uint8_t indices).
-    static constexpr size_t kSubdivisionDepth = 1;
+    static constexpr size_t kSubdivisionDepth = TSubdivisionDepth;
 
     static constexpr size_t kFrequency = size_t{1} << kSubdivisionDepth;
     static constexpr size_t kVertexCount = (10u * kFrequency * kFrequency) + 2u;
     static constexpr size_t kFaceCount = 20u * kFrequency * kFrequency;
     static constexpr size_t kMaxEdgeCount = 30u * kFrequency * kFrequency;
+
+    using ThisT = GeodesicSphereDemoParams<TSubdivisionDepth>;
+    using SimulationBase = MeshSimulationBase<ThisT, kVertexCount, kFaceCount>;
 
     static_assert(
         kVertexCount <= 255u,
@@ -67,19 +42,29 @@ struct GeodesicSphereDemoParams
 
 namespace detail
 {
+template <size_t TSubdivisionDepth>
 struct GeodesicSphereMeshData
 {
-    std::array<Vec3f, GeodesicSphereDemoParams::kVertexCount> vertices{};
-    std::array<std::array<uint32_t, 3>, GeodesicSphereDemoParams::kFaceCount> faces{};
+    static constexpr size_t kVertexCount = GeodesicSphereDemoParams<TSubdivisionDepth>::kVertexCount;
+    static constexpr size_t kFaceCount = GeodesicSphereDemoParams<TSubdivisionDepth>::kFaceCount;
+    using Base = MeshSimulationBase<GeodesicSphereDemoParams<TSubdivisionDepth>, kVertexCount, kFaceCount>;
+    using FaceDesc = typename Base::FaceDesc;
+
+    std::array<Vec3f, kVertexCount> vertices{};
+    std::array<std::array<uint32_t, 3>, kFaceCount> faces{};
+    std::array<FaceDesc, kFaceCount> faceDescs{};
 };
 
-inline GeodesicSphereMeshData GenerateGeodesicSphereMesh()
+template <size_t TSubdivisionDepth>
+inline GeodesicSphereMeshData<TSubdivisionDepth> GenerateGeodesicSphereMesh()
 {
-    GeodesicSphereMeshData mesh{};
+    using TRet = GeodesicSphereMeshData<TSubdivisionDepth>;
+    using Params = GeodesicSphereDemoParams<TSubdivisionDepth>;
+    TRet mesh{};
     auto &verts = mesh.vertices;
     auto &faces = mesh.faces;
 
-    std::array<std::array<uint32_t, 3>, GeodesicSphereDemoParams::kFaceCount> workingFaces{};
+    std::array<std::array<uint32_t, 3>, Params::kFaceCount> workingFaces{};
 
     size_t vertCount = 0;
     size_t faceCount = 0;
@@ -88,14 +73,14 @@ inline GeodesicSphereMeshData GenerateGeodesicSphereMesh()
     const float invLen = 1.0f / std::sqrt(1.0f + (phi * phi));
 
     auto addVertex = [&](float x, float y, float z) {
-        CCASSERT(vertCount < GeodesicSphereDemoParams::kVertexCount);
+        CCASSERT(vertCount < Params::kVertexCount);
         Vec3f v{x * invLen, y * invLen, z * invLen};
-        verts[vertCount++] = Normalize(v, GeodesicSphereDemoParams::kFaceNormalEpsilon);
+        verts[vertCount++] = Normalize(v, Params::kFaceNormalEpsilon);
         return static_cast<uint32_t>(vertCount - 1u);
     };
 
     auto addFace = [&](uint32_t a, uint32_t b, uint32_t c) {
-        CCASSERT(faceCount < GeodesicSphereDemoParams::kFaceCount);
+        CCASSERT(faceCount < Params::kFaceCount);
         workingFaces[faceCount++] = {a, b, c};
     };
 
@@ -135,13 +120,13 @@ inline GeodesicSphereMeshData GenerateGeodesicSphereMesh()
 
     struct EdgeCache
     {
-        std::array<uint64_t, GeodesicSphereDemoParams::kMaxEdgeCount> keys{};
-        std::array<uint32_t, GeodesicSphereDemoParams::kMaxEdgeCount> values{};
+        std::array<uint64_t, Params::kMaxEdgeCount> keys{};
+        std::array<uint32_t, Params::kMaxEdgeCount> values{};
         size_t count = 0;
 
         uint32_t FindOrCreate(uint32_t a,
                               uint32_t b,
-                              std::array<Vec3f, GeodesicSphereDemoParams::kVertexCount> &vertsRef,
+                              std::array<Vec3f, Params::kVertexCount> &vertsRef,
                               size_t &vertCountRef)
         {
             const uint32_t lo = std::min(a, b);
@@ -155,11 +140,11 @@ inline GeodesicSphereMeshData GenerateGeodesicSphereMesh()
                 }
             }
 
-            CCASSERT(count < GeodesicSphereDemoParams::kMaxEdgeCount);
-            CCASSERT(vertCountRef < GeodesicSphereDemoParams::kVertexCount);
+            CCASSERT(count < Params::kMaxEdgeCount);
+            CCASSERT(vertCountRef < Params::kVertexCount);
             Vec3f midpoint = vertsRef[lo] + vertsRef[hi];
             midpoint *= 0.5f;
-            midpoint = Normalize(midpoint, GeodesicSphereDemoParams::kFaceNormalEpsilon);
+            midpoint = Normalize(midpoint, Params::kFaceNormalEpsilon);
 
             const uint32_t index = static_cast<uint32_t>(vertCountRef);
             vertsRef[vertCountRef++] = midpoint;
@@ -171,9 +156,9 @@ inline GeodesicSphereMeshData GenerateGeodesicSphereMesh()
         }
     };
 
-    std::array<std::array<uint32_t, 3>, GeodesicSphereDemoParams::kFaceCount> nextFaces{};
+    std::array<std::array<uint32_t, 3>, Params::kFaceCount> nextFaces{};
 
-    for (size_t iteration = 0; iteration < GeodesicSphereDemoParams::kSubdivisionDepth; ++iteration)
+    for (size_t iteration = 0; iteration < Params::kSubdivisionDepth; ++iteration)
     {
         EdgeCache cache;
         size_t nextFaceCount = 0;
@@ -198,238 +183,81 @@ inline GeodesicSphereMeshData GenerateGeodesicSphereMesh()
         faceCount = nextFaceCount;
     }
 
-    CCASSERT(vertCount == GeodesicSphereDemoParams::kVertexCount);
-    CCASSERT(faceCount == GeodesicSphereDemoParams::kFaceCount);
+    CCASSERT(vertCount == Params::kVertexCount);
+    CCASSERT(faceCount == Params::kFaceCount);
+
+    using FaceDesc = typename TRet::FaceDesc;
 
     for (size_t i = 0; i < faceCount; ++i)
     {
         faces[i] = workingFaces[i];
+
+        mesh.faceDescs[i] = FaceDesc{static_cast<uint8_t>(faces[i][0]),
+                                     static_cast<uint8_t>(faces[i][1]),
+                                     static_cast<uint8_t>(faces[i][2]),
+                                     static_cast<uint8_t>(faces[i][2])};
     }
 
     return mesh;
 }
 
-inline const GeodesicSphereMeshData &GetGeodesicSphereMeshData()
-{
-    static const GeodesicSphereMeshData data = GenerateGeodesicSphereMesh();
-    return data;
-}
+// inline const GeodesicSphereMeshData &GetGeodesicSphereMeshData()
+// {
+//     static const GeodesicSphereMeshData data = GenerateGeodesicSphereMesh();
+//     return data;
+// }
 } // namespace detail
 
-using GeodesicSphereDemoBase = MeshSimulationBase<GeodesicSphereDemoParams,
-                                                  GeodesicSphereDemoParams::kVertexCount,
-                                                  GeodesicSphereDemoParams::kFaceCount>;
+// using GeodesicSphereDemoBase = MeshSimulationBase<GeodesicSphereDemoParams,
+//                                                   GeodesicSphereDemoParams::kVertexCount,
+//                                                   GeodesicSphereDemoParams::kFaceCount>;
 
-struct GeodesicSphereSimulation : GeodesicSphereDemoBase
+template <size_t TSubdivisionDepth>
+struct GeodesicSphereSimulation : GeodesicSphereDemoParams<TSubdivisionDepth>::SimulationBase
 {
-    using Base = GeodesicSphereDemoBase;
+    using Base = typename GeodesicSphereDemoParams<TSubdivisionDepth>::SimulationBase;
     using FaceDesc = typename Base::FaceDesc;
     using FaceRenderInfo = typename Base::FaceRenderInfo;
 
     static constexpr size_t kVertexCount = Base::kVertexCount;
     static constexpr size_t kFaceCount = Base::kFaceCount;
 
+    detail::GeodesicSphereMeshData<TSubdivisionDepth> mMeshData;
+
     GeodesicSphereSimulation(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask)
     {
+        mMeshData = detail::GenerateGeodesicSphereMesh<TSubdivisionDepth>();
     }
 
   protected:
     virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override
     {
-        return detail::GetGeodesicSphereMeshData().vertices;
+        // return detail::GetGeodesicSphereMeshData<TSubdivisionDepth>().vertices;
+        return mMeshData.vertices;
     }
 
     virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const override
     {
-        static const std::array<FaceDesc, kFaceCount> kFaces = []() {
-            std::array<FaceDesc, kFaceCount> faceBuffer{};
-            const auto &mesh = detail::GetGeodesicSphereMeshData();
-            for (size_t i = 0; i < kFaceCount; ++i)
-            {
-                const auto &tri = mesh.faces[i];
-                faceBuffer[i] = FaceDesc{static_cast<uint8_t>(tri[0]),
-                                         static_cast<uint8_t>(tri[1]),
-                                         static_cast<uint8_t>(tri[2]),
-                                         static_cast<uint8_t>(tri[2])};
-            }
-            return faceBuffer;
-        }();
+        // static const std::array<FaceDesc, kFaceCount> kFaces = []() {
+        //     std::array<FaceDesc, kFaceCount> faceBuffer{};
+        //     const auto &mesh = detail::GetGeodesicSphereMeshData();
+        //     for (size_t i = 0; i < kFaceCount; ++i)
+        //     {
+        //         const auto &tri = mesh.faces[i];
+        //         faceBuffer[i] = FaceDesc{static_cast<uint8_t>(tri[0]),
+        //                                  static_cast<uint8_t>(tri[1]),
+        //                                  static_cast<uint8_t>(tri[2]),
+        //                                  static_cast<uint8_t>(tri[2])};
+        //     }
+        //     return faceBuffer;
+        // }();
 
-        return kFaces;
+        // return kFaces;
+        return mMeshData.faceDescs;
     }
 
     virtual void OnFacePrepared(size_t faceIndex, FaceRenderInfo &info) override
     {
-        // const float breath = mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
-        // const float note = mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue();
-        // const float modulation = 1.0f + (0.25f * breath) + (0.15f * note);
-        // const float adjusted = Clamp(static_cast<float>(info.brightness) * modulation, 0.0f, 255.0f);
-        // info.brightness = static_cast<uint8_t>(adjusted);
-
-        // (void)faceIndex;
-    }
-};
-
-struct GeodesicSphereDemoApp : DisplayApp
-{
-    GeodesicSphereSimulation mGeodesicSphereSim;
-    MusicalStateTask &mMusicalStateTask;
-    ISysInfoProvider &mSysInfoProvider;
-
-    GeodesicSphereDemoApp(IDisplay &display,
-                          MusicalStateTask &musicalStateTask,
-                          ISysInfoProvider &sysInfoProvider,
-                          uint32_t rngSeed = 0x51F00DF5u)
-        : DisplayApp(display), mGeodesicSphereSim(display, musicalStateTask), mMusicalStateTask(musicalStateTask),
-          mSysInfoProvider(sysInfoProvider)
-    {
-    }
-
-    virtual void UpdateApp() override
-    {
-        if (mBack.IsNewlyPressed())
-        {
-            GoToFrontPage();
-        }
-    }
-
-    virtual void DisplayAppUpdate() override
-    {
-        DisplayApp::DisplayAppUpdate();
-    }
-
-    virtual const char *DisplayAppGetName() override
-    {
-        return "mesh demo";
-    }
-
-    virtual void RenderApp() override
-    {
-    }
-
-    bool AllowOverlayIndicators() const override
-    {
-        return false;
-    }
-
-    virtual void RenderFrontPage() override
-    {
-        mGeodesicSphereSim.StepMeshSimulation();
-        mGeodesicSphereSim.SetScreenOffsetPixels(13, -17);
-        static constexpr int kSphereWidth = 64;
-        mGeodesicSphereSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
-
-        auto &appSettings = *mMusicalStateTask.mAppSettings;
-        auto &perf = appSettings.GetCurrentPerformancePatch();
-
-        static constexpr int kFingeredNoteRowY = 12;
-        static constexpr int kTextAreaWidth = 72;
-        static constexpr int kPlayingNotesRowWidth = 80;
-        static constexpr int kPlayingNotesRowY = 31;
-        auto kPadding = RectI::Construct(1, 1, 1, 1);
-
-        if (perf.mSynthAEnabled && (perf.mSynthPresetA != -1))
-        {
-            mDisplay.setCursor(1, 1);
-            mDisplay.PrintInvertedText("A", kPadding);
-        }
-
-        if (perf.mSynthBEnabled && (perf.mSynthPresetB != -1))
-        {
-            mDisplay.setCursor(12, 1);
-            mDisplay.PrintInvertedText("B", kPadding);
-        }
-
-        if (perf.mHarmEnabled)
-        {
-            mDisplay.setCursor(24, 1);
-            mDisplay.PrintInvertedText("H", kPadding);
-            // String s = String("H") + perf.mHarmPreset + ":" + perf.mGlobalScale.ToShortString();
-            mDisplay.setCursor(36, 1);
-            mDisplay.PrintInvertedText(perf.mGlobalScale.ToShortString().substring(0, 6),
-                                       kPadding); // ppSettings.GetHarmPatchName(perf.mHarmPreset));
-        }
-
-        if (perf.mTranspose != 0)
-        {
-            mDisplay.setCursor(1, kFingeredNoteRowY);
-            mDisplay.PrintInvertedText(String(perf.mTranspose > 0 ? "+" : "") + perf.mTranspose, kPadding);
-        }
-
-        if (perf.mSynthATranspose != 0)
-        {
-            mDisplay.setCursor(kTextAreaWidth - 14, kFingeredNoteRowY);
-            mDisplay.PrintInvertedText(String(perf.mSynthATranspose > 0 ? "+" : "") + perf.mSynthATranspose, kPadding);
-        }
-        if (perf.mSynthBTranspose != 0)
-        {
-            mDisplay.setCursor(kTextAreaWidth - 14, kFingeredNoteRowY + 9);
-            mDisplay.PrintInvertedText(String(perf.mSynthBTranspose > 0 ? "+" : "") + perf.mSynthBTranspose, kPadding);
-        }
-
-        mDisplay.setTextColor(SSD1306_WHITE); // normal text
-
-        const auto fingeredNote = mMusicalStateTask.mMusicalState.mFingeredNote;
-        auto fingeredNoteName = fingeredNote.ToStringWithOctave();
-        auto fingeredNoteBounds = mDisplay.GetTextBounds(fingeredNoteName);
-        // center in text area
-        mDisplay.setCursor((kTextAreaWidth - fingeredNoteBounds.width * 2) / 2, kFingeredNoteRowY);
-        mDisplay.SetFontScale(2, 2);
-        mDisplay.print(fingeredNoteName);
-        mDisplay.SetFontScale(1, 1);
-
-        // now playing notes.
-        {
-            auto voices = mSysInfoProvider.ISysInfoProvider_GetVoiceState();
-
-            fixed_vector<SynthVoiceState, MAX_SYNTH_VOICES> voiceState;
-            for (auto &v : voices)
-            {
-                if (v.mIsPlaying)
-                {
-                    voiceState.push_back(v);
-                }
-            }
-
-            std::sort(voiceState.begin(),
-                      voiceState.end(), //
-                      [](const SynthVoiceState &a, const SynthVoiceState &b) {
-                          return a.mNote.GetMidiValue() < b.mNote.GetMidiValue();
-                      });
-
-            fixed_vector<MidiNote, MAX_SYNTH_VOICES> chordNotes;
-            fixed_vector<SynthVoiceState, MAX_SYNTH_VOICES> prunedVoiceState; // maintain same indices as chordNotes.
-            MidiNote lastNote{0};
-            for (auto &v : voiceState)
-            {
-                if (v.mNote.GetMidiValue() == lastNote.GetMidiValue())
-                {
-                    continue;
-                }
-                chordNotes.push_back(v.mNote);
-                prunedVoiceState.push_back(v);
-                lastNote = v.mNote;
-            }
-            auto spelledChord = spellChord(chordNotes).notes;
-
-            const auto voiceWidth = std::min(18, kPlayingNotesRowWidth / static_cast<int>(spelledChord.size()));
-
-            for (int i = 0; i < (int)spelledChord.size(); ++i)
-            {
-                auto &tone = spelledChord[i];
-                auto &voiceState = prunedVoiceState[i];
-                const int x = voiceWidth * i;
-                mDisplay.setCursor(x, kPlayingNotesRowY);
-                const bool invertText = voiceState.mVoiceSource == VoiceSource::Live;
-                mDisplay.PrintInvertedText(tone.ToString(false),
-                                           kPadding,
-                                           invertText); // becasue we eliminate duplicates, and they're always sorted
-                                                        // from low to high, not necessary to include octave.
-            }
-        }
-
-        BigPerfDisplayApp::RenderPitchbendBar(
-            mDisplay, mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue(), 51, kTextAreaWidth);
     }
 };
 

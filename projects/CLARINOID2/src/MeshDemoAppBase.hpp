@@ -19,6 +19,31 @@ namespace clarinoid
 
 extern uint32_t gSynthVoiceNoteOnCount;
 
+struct CommonDemoParams
+{
+    static constexpr float kCameraDistance = 3.1f;
+
+    // Passive angular velocity about X/Y/Z (radians per frame) for idle motion.
+    static constexpr float kAmbientAngularVelocityX = 0.00002f;
+    static constexpr float kAmbientAngularVelocityY = 0.00003f;
+    static constexpr float kAmbientAngularVelocityZ = 0.00004f;
+
+    static constexpr float kBreathAngularVelocityFactor = 0.01f;
+
+    // Exponential decay applied to angular velocity each frame (unitless 0-1).
+    static constexpr float kAngularDamping = 0.985f;
+    // Base and randomised portion of note-triggered impulses (radians per frame).
+    static constexpr float kImpulseMagnitudeMin = 0.1f;
+    static constexpr float kImpulseMagnitudeRange = 0.0f;
+    // Maximum angular velocity per axis (radians per frame).
+    static constexpr float kMaxAngularVelocity = 0.4f;
+
+    // Directional light vector components (unitless, normalised internally).
+    static constexpr float kLightDirX = -0.32f;
+    static constexpr float kLightDirY = 0.74f;
+    static constexpr float kLightDirZ = -0.58f;
+};
+
 template <typename ParamsT, size_t TVertexCount, size_t TFaceCount>
 struct MeshSimulationBase
 {
@@ -80,15 +105,15 @@ struct MeshSimulationBase
 
         const float breath01 = mMusicalStateTask.mMusicalState.mCurrentBreath01.GetValue();
 
-        mAngularVelocity.x += breath01 * mBreathAxis.x * Params::kBreathAngularVelocityFactor;
-        mAngularVelocity.y += breath01 * mBreathAxis.y * Params::kBreathAngularVelocityFactor;
-        mAngularVelocity.z += breath01 * mBreathAxis.z * Params::kBreathAngularVelocityFactor;
+        mAngularVelocity.x += breath01 * mBreathAxis.x * CommonDemoParams::kBreathAngularVelocityFactor;
+        mAngularVelocity.y += breath01 * mBreathAxis.y * CommonDemoParams::kBreathAngularVelocityFactor;
+        mAngularVelocity.z += breath01 * mBreathAxis.z * CommonDemoParams::kBreathAngularVelocityFactor;
 
-        mAngularVelocity.x += Params::kAmbientAngularVelocityX;
-        mAngularVelocity.y += Params::kAmbientAngularVelocityY;
-        mAngularVelocity.z += Params::kAmbientAngularVelocityZ;
+        mAngularVelocity.x += CommonDemoParams::kAmbientAngularVelocityX;
+        mAngularVelocity.y += CommonDemoParams::kAmbientAngularVelocityY;
+        mAngularVelocity.z += CommonDemoParams::kAmbientAngularVelocityZ;
 
-        mAngularVelocity *= Params::kAngularDamping;
+        mAngularVelocity *= CommonDemoParams::kAngularDamping;
         ClampAngularVelocity();
 
         mRotationAngles += mAngularVelocity;
@@ -115,26 +140,14 @@ struct MeshSimulationBase
         const float sz = static_cast<float>(fast::sin(mRotationAngles.z));
         const float cz = static_cast<float>(fast::cos(mRotationAngles.z));
 
-        const float m00 = cz * cy;
-        const float m01 = (cz * sy * sx) - (sz * cx);
-        const float m02 = (cz * sy * cx) + (sz * sx);
-        const float m10 = sz * cy;
-        const float m11 = (sz * sy * sx) + (cz * cx);
-        const float m12 = (sz * sy * cx) - (cz * sx);
-        const float m20 = -sy;
-        const float m21 = cy * sx;
-        const float m22 = cy * cx;
+        const Mat3f rotation = Mat3f::RotationXYZFromTrig(sx, cx, sy, cy, sz, cz);
 
         for (size_t i = 0; i < kVertexCount; ++i)
         {
             const Vec3f &v = baseVertices[i];
-            Vec3f rotated{
-                (m00 * v.x) + (m01 * v.y) + (m02 * v.z),
-                (m10 * v.x) + (m11 * v.y) + (m12 * v.z),
-                (m20 * v.x) + (m21 * v.y) + (m22 * v.z),
-            };
+            Vec3f rotated = rotation * v;
 
-            rotated.z += Params::kCameraDistance;
+            rotated.z += CommonDemoParams::kCameraDistance;
             rotated.z = std::max(rotated.z, Params::kNearPlaneEpsilon);
             mTransformedVertices[i] = rotated;
         }
@@ -234,7 +247,7 @@ struct MeshSimulationBase
 
     virtual float GenerateImpulseMagnitude()
     {
-        return Params::kImpulseMagnitudeMin + mRng.NextFloat01() * Params::kImpulseMagnitudeRange;
+        return CommonDemoParams::kImpulseMagnitudeMin + mRng.NextFloat01() * CommonDemoParams::kImpulseMagnitudeRange;
     }
 
     virtual void OnPostTransformVertices()
@@ -261,7 +274,7 @@ struct MeshSimulationBase
             return;
         }
 
-        const Vec3f rawLight{Params::kLightDirX, Params::kLightDirY, Params::kLightDirZ};
+        const Vec3f rawLight{CommonDemoParams::kLightDirX, CommonDemoParams::kLightDirY, CommonDemoParams::kLightDirZ};
         const float lightLenSq = LengthSq(rawLight);
         if (lightLenSq <= Params::kFaceNormalEpsilon * Params::kFaceNormalEpsilon)
         {
@@ -302,7 +315,7 @@ struct MeshSimulationBase
 
     void ClampAngularVelocity()
     {
-        const float maxMag = Params::kMaxAngularVelocity;
+        const float maxMag = CommonDemoParams::kMaxAngularVelocity;
         mAngularVelocity.x = Clamp(mAngularVelocity.x, -maxMag, maxMag);
         mAngularVelocity.y = Clamp(mAngularVelocity.y, -maxMag, maxMag);
         mAngularVelocity.z = Clamp(mAngularVelocity.z, -maxMag, maxMag);
