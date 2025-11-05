@@ -374,7 +374,10 @@ struct ScaleFlavor
     {
         uint8_t nsd = NormalizeScaleDegree(ctx.mScaleDegree, octaveTransposition);
         int8_t chr = (int8_t)mScaleDegreeToChromaticRelNoteLUT[nsd];
-        return RotateIntoRangeByte(chr + ctx.mEnharmonic, 12);
+        int8_t rotationAdjustment = 0;
+        uint8_t ret = RotateIntoRangeByte(chr + ctx.mEnharmonic, 12, rotationAdjustment);
+        octaveTransposition += rotationAdjustment;
+        return ret;
     }
 };
 

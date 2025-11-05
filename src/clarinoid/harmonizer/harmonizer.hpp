@@ -46,12 +46,14 @@ struct Harmonizer
     {
         auto sequenceIndex = sequencePos % voiceSetting.mSequenceLength;
         uint8_t scaleRoot = 0;
-        auto ctx = scale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Sharp);
-        if (ctx.mEnharmonic == 0)
+        auto ctxSharp = scale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Sharp);
+        if (ctxSharp.mEnharmonic == 0)
         {
             // diatonic.
-            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot); // get the harmonized note in the same scale
+            auto diatonicCtx = ctxSharp;
+            diatonicCtx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret =
+                scale.GetMidiNoteFromContext(diatonicCtx, scaleRoot); // get the harmonized note in the same scale
             // voiceState.mResult = String("diatonic ") + ret;
             voiceState.mCurrentMidiNote = ret;
             return ret;
@@ -65,11 +67,13 @@ struct Harmonizer
             // voiceState.mResult = "harm mute";
             return 0; // indicate mute
         case NonDiatonicBehavior::UseScaleFollower: {
-            auto ctx = deducedScale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Sharp);
+            uint8_t followerRoot = 0;
+            auto followerCtx = deducedScale.GetNoteInScaleContext(inputNote, followerRoot, EnharmonicDirection::Sharp);
             // just ignore if it's diatonic here. it would be weird for the deduced scale not to contain the live note.
             // if it's non-diatonic, then it will chromatically adjust anyway.
-            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot); // get the harmonized note in the same scale
+            followerCtx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret =
+                scale.GetMidiNoteFromContext(followerCtx, followerRoot); // get the harmonized note in the same scale
             // voiceState.mResult = String("scalefoll ") + ret;
             voiceState.mCurrentMidiNote = ret;
             return ret;
@@ -80,32 +84,36 @@ struct Harmonizer
             // we already measured in context of sharps; measure as flat.
             uint8_t scaleRootFlat = 0;
             auto ctxFlat = scale.GetNoteInScaleContext(inputNote, scaleRootFlat, EnharmonicDirection::Flat);
-            if (std::abs(ctxFlat.mEnharmonic) < std::abs(ctx.mEnharmonic))
+            auto ctxNearest = ctxSharp;
+            uint8_t nearestRoot = scaleRoot;
+            if (std::abs(ctxFlat.mEnharmonic) < std::abs(ctxSharp.mEnharmonic))
             {
-                ctx = ctxFlat;
+                ctxNearest = ctxFlat;
+                nearestRoot = scaleRootFlat;
             }
             // sharp is nearer (or equal)
-            ctx.mEnharmonic = 0; // erase the chromatic adjustment; we're making it diatonic now.
-            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot);
+            ctxNearest.mEnharmonic = 0; // erase the chromatic adjustment; we're making it diatonic now.
+            ctxNearest.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctxNearest, nearestRoot);
             // voiceState.mResult = String("nearest ") + ret;
             voiceState.mCurrentMidiNote = ret;
             return ret;
         }
         break;
         case NonDiatonicBehavior::ChromaticUp: {
-            // just express the chromatic adjustment in terms of flats instead of sharps.
-            auto ctx = scale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Flat);
-            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot);
+            auto ctxUp = ctxSharp;
+            ctxUp.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctxUp, scaleRoot);
             // voiceState.mResult = String("chromatic above ") + ret;
             voiceState.mCurrentMidiNote = ret;
             return ret;
         }
         break;
         case NonDiatonicBehavior::ChromaticDown: {
-            ctx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctx, scaleRoot);
+            uint8_t scaleRootFlat = 0;
+            auto ctxDown = scale.GetNoteInScaleContext(inputNote, scaleRootFlat, EnharmonicDirection::Flat);
+            ctxDown.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
+            auto ret = scale.GetMidiNoteFromContext(ctxDown, scaleRootFlat);
             // voiceState.mResult = String("chromatic below ") + ret;
             voiceState.mCurrentMidiNote = ret;
             return ret;
