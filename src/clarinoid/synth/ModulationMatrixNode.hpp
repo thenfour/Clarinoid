@@ -569,18 +569,19 @@ struct VoiceModulationMatrixNode : public AudioStream
             ProcessModulation(buffers, modulation);
         }
 
-        float krateFMStrength2To1 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength2To1);
-        float krateFMStrength3To1 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength3To1);
-        float krateFMStrength1To2 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength1To2);
-        float krateFMStrength3To2 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength3To2);
-        float krateFMStrength1To3 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength1To3);
-        float krateFMStrength2To3 = this->mpkRateProvider->IModulationProvider_GetKRateModulationDestinationValueN11(
-            KRateModulationDestination::FMStrength2To3);
+        auto getCurrentKRateDestValue = [&](KRateModulationDestination dest) {
+            size_t idx = static_cast<size_t>(dest);
+            if (idx >= SizeofStaticArray(buffers.kRateDestinationValuesN11))
+                return 0.0f;
+            return buffers.kRateDestinationsFilled[idx] ? buffers.kRateDestinationValuesN11[idx] : 0.0f;
+        };
+
+        float krateFMStrength2To1 = getCurrentKRateDestValue(KRateModulationDestination::FMStrength2To1);
+        float krateFMStrength3To1 = getCurrentKRateDestValue(KRateModulationDestination::FMStrength3To1);
+        float krateFMStrength1To2 = getCurrentKRateDestValue(KRateModulationDestination::FMStrength1To2);
+        float krateFMStrength3To2 = getCurrentKRateDestValue(KRateModulationDestination::FMStrength3To2);
+        float krateFMStrength1To3 = getCurrentKRateDestValue(KRateModulationDestination::FMStrength1To3);
+        float krateFMStrength2To3 = getCurrentKRateDestValue(KRateModulationDestination::FMStrength2To3);
 
         if (!FloatEquals(mSynthPatch->mFMStrength2To1, 0) || !FloatEquals(krateFMStrength2To1, 0))
         {
