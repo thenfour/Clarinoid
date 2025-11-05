@@ -20,19 +20,27 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     // GeodesicSphereSimulation<0> mGeodesicSphereSim0;
     GeodesicSphereSimulation<1> mGeodesicSphereSim1;
-    //GeodesicSphereSimulation<2> mGeodesicSphereSim2;
-    CubeSimulation mCubeSim;
+    // GeodesicSphereSimulation<2> mGeodesicSphereSim2;
+    // CubeSimulation mCubeSim;
     // TorusSimulation<9, 13> mTorusSim1;
     //    TorusSimulation<5, 9> mTorusSim2;
 
-    std::array<IMeshSimulation *, 2> mMeshSims = {
-        //&mGeodesicSphereSim0,
-        &mGeodesicSphereSim1,
-        //&mGeodesicSphereSim2,
-        &mCubeSim,
-        //&mTorusSim1,
-        //&mTorusSim2,
-    };
+    // TetrahedronSimulation mTetrahedronSim;
+    // OctahedronSimulation mOctahedronSim;
+    // DodecahedronSimulation mDodecahedronSim;
+    TessellatedCubeSimulation mTessellatedCubeSim;
+
+    IMeshSimulation *mMeshSims[2] = {//
+                                     //&mGeodesicSphereSim0,
+                                     &mGeodesicSphereSim1,
+                                     //&mGeodesicSphereSim2,
+                                     //&mCubeSim,
+                                     //&mTorusSim1,
+                                     //&mTorusSim2,
+                                     //&mTetrahedronSim,
+                                     //&mOctahedronSim,
+                                     //&mDodecahedronSim,
+                                     &mTessellatedCubeSim};
 
     size_t mCurrentMeshSimIndex = 0;
 
@@ -42,13 +50,17 @@ struct FancyPerformanceDisplayApp : DisplayApp
         : DisplayApp(display),                 //
           mMusicalStateTask(musicalStateTask), //
           mSysInfoProvider(sysInfoProvider),   //
-                                               // mGeodesicSphereSim0(display, musicalStateTask), //
+          // mGeodesicSphereSim0(display, musicalStateTask), //
           mGeodesicSphereSim1(display, musicalStateTask), //
-          //mGeodesicSphereSim2(display, musicalStateTask), //
-          mCubeSim(display, musicalStateTask),            //
-          // mTorusSim1(display, musicalStateTask), //
-          //    mTorusSim2(display, musicalStateTask)//
-          mCurrentMeshSimIndex(0) //
+                                                          //  mGeodesicSphereSim2(display, musicalStateTask), //
+                                                          // mCubeSim(display, musicalStateTask),        //
+                                                          // mTorusSim1(display, musicalStateTask), //
+                                                          //    mTorusSim2(display, musicalStateTask)//
+                                                          // mTetrahedronSim(display, musicalStateTask),  //
+                                                          // mOctahedronSim(display, musicalStateTask),   //
+                                                          // mDodecahedronSim(display, musicalStateTask),    //
+          mTessellatedCubeSim(display, musicalStateTask), //
+          mCurrentMeshSimIndex(0)                         //
     {
     }
 
@@ -64,7 +76,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
     {
         if (mBack.IsNewlyPressed())
         {
-            mCurrentMeshSimIndex = (mCurrentMeshSimIndex + 1) % mMeshSims.size();
+            mCurrentMeshSimIndex = (mCurrentMeshSimIndex + 1) % SizeofStaticArray(mMeshSims);
         }
         DisplayApp::DisplayAppUpdate();
     }

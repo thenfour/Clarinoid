@@ -18,10 +18,13 @@ const char gClarinoidVersion[] = "CLARINOID 2";
 static const size_t MAX_SYNTH_VOICES = 8;
 #define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
 
+// NB: also used as a temporary buffer when precalculating geometry data.
 static const size_t LOOPER_MEMORY_TOTAL_BYTES = 48000; // should be enough right?
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;   // a smaller buffer that's just used for intermediate copy ops
 
-static const size_t GEOM_BUFFER_BYTES = 48000;
+// arena size for geometric data (meshes, etc); once allocated at startup, this is never freed or changed so make it
+// tight.
+static const size_t GEOM_BUFFER_BYTES = 12000;
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
