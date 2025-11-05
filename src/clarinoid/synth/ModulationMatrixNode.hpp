@@ -557,6 +557,11 @@ struct VoiceModulationMatrixNode : public AudioStream
         if (!mSynthPatch)
             return;
 
+        if (mpkRateProvider)
+        {
+            mpkRateProvider->IModulationProvider_BeginKRateFrame();
+        }
+
         Buffers buffers;
 
         for (auto &modulation : mSynthPatch->mModulations)

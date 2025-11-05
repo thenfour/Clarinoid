@@ -7,6 +7,7 @@ namespace clarinoid
 
 struct IModulationKRateProvider
 {
+    virtual void IModulationProvider_BeginKRateFrame() = 0;
     virtual float IModulationProvider_GetKRateModulationSourceValueN11(KRateModulationSource src) = 0;
     // getting a dest value seem unintuitive?
     // the idea is that the synthvoice stores the running values for these k-rate modulations, and this is a way to

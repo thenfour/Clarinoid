@@ -157,6 +157,10 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     {
         return mMusicalStateTask.mSynth.mCurrentPolyphony;
     }
+    virtual PerformancePatch& ISysInfoProvider_GetCurrentPerformancePatch() override
+    {
+        return gpAppSettings->GetCurrentPerformancePatch();
+    }
     virtual float ISysInfoProvider_GetAudioCPUUsage() override
     {
         return AudioProcessorUsage();

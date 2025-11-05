@@ -65,6 +65,9 @@ struct PerformancePatch
     float mReverbSize = 0.6f;
     float mDelayGain = DecibelsToLinear(-3.0f);
 
+    float mDelayModulationDepth = 0.003f; // todo: document what unit this is.
+    float mDelayModulationRateHz = 0.5f;
+
     TimeWithBasis mDelayTime;
 
     float mDelayStereoSep = 30;

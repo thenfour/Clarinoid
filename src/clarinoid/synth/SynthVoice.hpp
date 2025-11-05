@@ -337,6 +337,49 @@ struct Voice : IModulationKRateProvider
     // others. it also may have the benefit of feeling more linear.
     PortamentoCalc mPortamentoCalc[3];
 
+    void ResetKRateDestinationsToDefaults()
+    {
+        mKRateVoiceFilterCutoffN11 = 0;
+        for (auto &v : mKRateFrequencyN11)
+        {
+            v = 0;
+        }
+
+        for (auto &v : mKRateAmplitudeN11)
+        {
+            v = 1;
+        }
+
+        for (auto &v : mKRateOscFMFeedback)
+        {
+            v = 0;
+        }
+
+        for (auto &v : mKRateOscFreqMul)
+        {
+            v = 0;
+        }
+
+        for (auto &v : mKRateOscFreqOffset)
+        {
+            v = 0;
+        }
+
+        mKRateOverallFMStrength = 0;
+        mKRateFMStrength2To1 = 0;
+        mKRateFMStrength3To1 = 0;
+        mKRateFMStrength1To2 = 0;
+        mKRateFMStrength3To2 = 0;
+        mKRateFMStrength1To3 = 0;
+        mKRateFMStrength2To3 = 0;
+        mKRatePatchDetune = 0;
+    }
+
+    virtual void IModulationProvider_BeginKRateFrame() override
+    {
+        ResetKRateDestinationsToDefaults();
+    }
+
     virtual void IModulationProvider_SetKRateModulationDestinationValueN11(KRateModulationDestination d,
                                                                            float val) override
     {
@@ -434,30 +477,7 @@ struct Voice : IModulationKRateProvider
         if (voiceOrPatchChanged || transition.mNeedsNoteOff)
         {
             // reset saved krate mod values, so modulations don't leak across patch changes
-            mKRateVoiceFilterCutoffN11 = 0;
-            for (auto &v : mKRateFrequencyN11)
-            {
-                v = 0;
-            }
-
-            for (auto &v : mKRateAmplitudeN11)
-            {
-                v = 1;
-            }
-
-            for (auto &v : mKRateOscFMFeedback)
-            {
-                v = 0;
-            }
-
-            mKRateOverallFMStrength = 0;
-            mKRateFMStrength2To1 = 0;
-            mKRateFMStrength3To1 = 0;
-            mKRateFMStrength1To2 = 0;
-            mKRateFMStrength3To2 = 0;
-            mKRateFMStrength1To3 = 0;
-            mKRateFMStrength2To3 = 0;
-            mKRatePatchDetune = 0;
+            ResetKRateDestinationsToDefaults();
 
             mModMatrix.SetSynthPatch(mPreset, this);
         }
@@ -677,6 +697,7 @@ struct Voice : IModulationKRateProvider
           mPatchOutVerbLeft(mSplitter, 4, gpSynthGraph->verbInputMixerLeft, vid),
           mPatchOutVerbRight(mSplitter, 5, gpSynthGraph->verbInputMixerLeft, vid)
     {
+        ResetKRateDestinationsToDefaults();
     }
 };
 

@@ -21,7 +21,7 @@
 namespace clarinoid
 {
 
-static constexpr int TOAST_DURATION_MILLIS = 1600;
+static constexpr int TOAST_DURATION_MILLIS = 900;
 
 static DitherMatrix<2> gBayer2x2Matrix{{0, 2, 3, 1}};
 

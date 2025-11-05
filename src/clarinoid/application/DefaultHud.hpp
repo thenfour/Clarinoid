@@ -21,6 +21,7 @@ struct SynthVoiceState
 struct ISysInfoProvider
 {
     virtual uint8_t ISysInfoProvider_GetPolyphony() = 0;
+    virtual PerformancePatch &ISysInfoProvider_GetCurrentPerformancePatch() = 0;
     virtual float ISysInfoProvider_GetAudioCPUUsage() = 0;       // in % (0-100)
     virtual float ISysInfoProvider_GetTaskManagerCPUUsage() = 0; // in % (0-100)
     // virtual float ISysInfoProvider_GetPeak() = 0;                // in amplitude.
@@ -69,16 +70,28 @@ struct DefaultHud : IHudProvider
         mDisplay.SetClipRect(RectI::Construct(0, hudYStart, displayWidth, displayHeight));
         mDisplay.drawFastHLine(0, hudYStart, displayWidth, SSD1306_BLACK);
         mDisplay.drawFastHLine(0, hudYStart + 1, displayWidth, SSD1306_WHITE);
-        mDisplay.setCursor(0, hudYStart + HUD_LINE_SEPARATOR_HEIGHT);
+        const auto textY = hudYStart + HUD_LINE_SEPARATOR_HEIGHT;
+
+        mDisplay.setCursor(0, textY);
         mDisplay.setTextColor(SSD1306_WHITE); // normal text
+        auto &perf = mpInfo->ISysInfoProvider_GetCurrentPerformancePatch();
+        if (perf.mMasterFXEnable)
+        {
+            mDisplay.PrintInvertedText("FX");
+        }
+        else
+        {
+            mDisplay.print("FX");
+        }
 
         String dbpeak = DecibelsToIntString(LinearToDecibels(gAnalysisStateC.heldPeakLinear));
 
         float cpu = mCPUPeakMeter.Update(
             std::max(mpInfo->ISysInfoProvider_GetAudioCPUUsage(), mpInfo->ISysInfoProvider_GetTaskManagerCPUUsage()));
         int icpu = (int)std::ceil(cpu);
-        mDisplay.print(String(mpInfo->ISysInfoProvider_GetPolyphony()) + "v " + icpu + "% " + dbpeak + " " +
-                       mpInfo->ISysInfoProvider_GetNote().ToStringWithOctave());
+        mDisplay.setTextColor(SSD1306_WHITE); // normal text
+        mDisplay.setCursor(25, textY);
+        mDisplay.print(String(icpu) + "% " + dbpeak + " " + mpInfo->ISysInfoProvider_GetNote().ToStringWithOctave());
 
         String bpmStr = String(CHARSTR_QEQ) + (int)std::round(mpInfo->ISysInfoProvider_GetTempo());
         auto rcbpm = mDisplay.GetTextBounds(bpmStr);

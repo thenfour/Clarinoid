@@ -28,21 +28,21 @@ struct FancyPerformanceDisplayApp : DisplayApp
     // TetrahedronSimulation mTetrahedronSim;
     // OctahedronSimulation mOctahedronSim;
     // DodecahedronSimulation mDodecahedronSim;
-    TessellatedCubeSimulation mTessellatedCubeSim;
+    // TessellatedCubeSimulation mTessellatedCubeSim;
 
-    IMeshSimulation *mMeshSims[2] = {//
-                                     //&mGeodesicSphereSim0,
-                                     &mGeodesicSphereSim1,
-                                     //&mGeodesicSphereSim2,
-                                     //&mCubeSim,
-                                     //&mTorusSim1,
-                                     //&mTorusSim2,
-                                     //&mTetrahedronSim,
-                                     //&mOctahedronSim,
-                                     //&mDodecahedronSim,
-                                     &mTessellatedCubeSim};
+    // IMeshSimulation *mMeshSims[2] = {//
+    //                                  //&mGeodesicSphereSim0,
+    //                                  &mGeodesicSphereSim1,
+    //                                  //&mGeodesicSphereSim2,
+    //                                  //&mCubeSim,
+    //                                  //&mTorusSim1,
+    //                                  //&mTorusSim2,
+    //                                  //&mTetrahedronSim,
+    //                                  //&mOctahedronSim,
+    //                                  //&mDodecahedronSim,
+    //                                  &mTessellatedCubeSim};
 
-    size_t mCurrentMeshSimIndex = 0;
+    // size_t mCurrentMeshSimIndex = 0;
 
     FancyPerformanceDisplayApp(IDisplay &display,
                                MusicalStateTask &musicalStateTask,
@@ -51,16 +51,16 @@ struct FancyPerformanceDisplayApp : DisplayApp
           mMusicalStateTask(musicalStateTask), //
           mSysInfoProvider(sysInfoProvider),   //
           // mGeodesicSphereSim0(display, musicalStateTask), //
-          mGeodesicSphereSim1(display, musicalStateTask), //
-                                                          //  mGeodesicSphereSim2(display, musicalStateTask), //
-                                                          // mCubeSim(display, musicalStateTask),        //
-                                                          // mTorusSim1(display, musicalStateTask), //
-                                                          //    mTorusSim2(display, musicalStateTask)//
-                                                          // mTetrahedronSim(display, musicalStateTask),  //
-                                                          // mOctahedronSim(display, musicalStateTask),   //
-                                                          // mDodecahedronSim(display, musicalStateTask),    //
-          mTessellatedCubeSim(display, musicalStateTask), //
-          mCurrentMeshSimIndex(0)                         //
+          mGeodesicSphereSim1(display, musicalStateTask) //
+                                                         //  mGeodesicSphereSim2(display, musicalStateTask), //
+                                                         // mCubeSim(display, musicalStateTask),        //
+                                                         // mTorusSim1(display, musicalStateTask), //
+                                                         //    mTorusSim2(display, musicalStateTask)//
+                                                         // mTetrahedronSim(display, musicalStateTask),  //
+                                                         // mOctahedronSim(display, musicalStateTask),   //
+                                                         // mDodecahedronSim(display, musicalStateTask),    //
+                                                         // mTessellatedCubeSim(display, musicalStateTask), //
+    // mCurrentMeshSimIndex(0)                         //
     {
     }
 
@@ -74,10 +74,10 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     virtual void DisplayAppUpdate() override
     {
-        if (mBack.IsNewlyPressed())
-        {
-            mCurrentMeshSimIndex = (mCurrentMeshSimIndex + 1) % SizeofStaticArray(mMeshSims);
-        }
+        // if (mBack.IsNewlyPressed())
+        // {
+        //     //mCurrentMeshSimIndex = (mCurrentMeshSimIndex + 1) % SizeofStaticArray(mMeshSims);
+        // }
         DisplayApp::DisplayAppUpdate();
     }
 
@@ -88,7 +88,34 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     virtual void RenderApp() override
     {
-        mDisplay.println(String("Mem remaining:") + gGeomArena.GetFreeBytes() + " bytes");
+        auto &appSettings = *mMusicalStateTask.mAppSettings;
+        auto &perf = appSettings.GetCurrentPerformancePatch();
+        // P00:name
+        mDisplay.println(String("P") + appSettings.mCurrentPerformancePatch + ":" + perf.mName);
+        // A00:name
+        // B00:name
+        mDisplay.println(String("A") + perf.mSynthPresetA + ":" + appSettings.GetSynthPatchName(perf.mSynthPresetA));
+        mDisplay.println(String("B") + perf.mSynthPresetB + ":" + appSettings.GetSynthPatchName(perf.mSynthPresetB));
+        // H00:name
+        mDisplay.println(String("H") + perf.mHarmPreset + ":" + appSettings.GetHarmPatchName(perf.mHarmPreset));
+        // scale
+        mDisplay.println(String("chosen: ") + perf.mGlobalScale.ToShortString());
+        // mDisplay.println(String("deduce: ") + perf.mDeducedScale.ToShortString());
+        //  fx on/off
+        // mDisplay.println(String("FX:") + (perf.mMasterFXEnable ? "on" : "off"));
+        //  transpose
+        mDisplay.print(String("Transp: ") + perf.mTranspose + " [");
+        auto printSignedInt = [&](int v) {
+            if (v >= 0)
+                mDisplay.print("+");
+            mDisplay.print(v);
+        };
+        printSignedInt(perf.mSynthATranspose);
+        mDisplay.print(",");
+        printSignedInt(perf.mSynthBTranspose);
+        mDisplay.println("]");
+
+        // mDisplay.println(String("Mem remaining:") + gGeomArena.GetFreeBytes() + " bytes");
     }
 
     bool AllowOverlayIndicators() const override
@@ -98,8 +125,14 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     virtual void RenderFrontPage() override
     {
+        if (mBack.IsPressedState())
         {
-            auto &currentSim = *mMeshSims[mCurrentMeshSimIndex];
+            RenderApp();
+            return;
+        }
+
+        {
+            auto &currentSim = mGeodesicSphereSim1; //*mMeshSims[mCurrentMeshSimIndex];
             currentSim.StepMeshSimulation();
             currentSim.SetScreenOffsetPixels(13, -17);
             static constexpr int kSphereWidth = 64;
@@ -110,6 +143,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
         static constexpr int kFingeredNoteRowY = 12;
         static constexpr int kTextAreaWidth = 72;
+        static constexpr int kPitchBendBarWidth = 80;
         static constexpr int kPlayingNotesRowWidth = 80;
         static constexpr int kPlayingNotesRowY = 31;
         auto kPadding = RectI::Construct(1, 1, 1, 1);
@@ -132,7 +166,8 @@ struct FancyPerformanceDisplayApp : DisplayApp
             mDisplay.PrintInvertedText("H", kPadding);
             // String s = String("H") + perf.mHarmPreset + ":" + perf.mGlobalScale.ToShortString();
             mDisplay.setCursor(36, 1);
-            mDisplay.PrintInvertedText(perf.mGlobalScale.ToShortString().substring(0, 6),
+            // C# MajP
+            mDisplay.PrintInvertedText(perf.mGlobalScale.ToShortString().substring(0, 7),
                                        kPadding); // ppSettings.GetHarmPatchName(perf.mHarmPreset));
         }
 
@@ -215,7 +250,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
         }
 
         BigPerfDisplayApp::RenderPitchbendBar(
-            mDisplay, mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue(), 51, kTextAreaWidth);
+            mDisplay, mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue(), 51, kPitchBendBarWidth);
     }
 };
 
