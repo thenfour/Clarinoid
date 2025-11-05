@@ -399,9 +399,11 @@ struct AppSettings
         p.mSynthPresetB = SynthPresetID_Trumpet;
         p.mSynthBGain = DecibelsToLinear(-3);
 
-        p.mHarmPreset = HarmPresetID_N3N2;
+        p.mHarmPreset = HarmPresetID_FullScale;
         p.mGlobalScaleRef = GlobalScaleRefType::Chosen;
         p.mGlobalScale = Scale{Note::F_, ScaleFlavorIndex::Major};
+
+        p.mHarmGain = DecibelsToLinear(-6);
     }
 
     static void InitWobblyCatPerf(PerformancePatch &p)

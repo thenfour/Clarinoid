@@ -82,10 +82,10 @@ struct MeshSimulationBase : IMeshSimulation
 
     struct FaceDesc
     {
-        uint8_t i0;
-        uint8_t i1;
-        uint8_t i2;
-        uint8_t i3;
+        uint8_t i0; // first vertex of the face, indices wind CCW when viewed from outside.
+        uint8_t i1; // second vertex; renderer forms triangle (i0,i1,i2).
+        uint8_t i2; // third vertex; also sets the quad diagonal used for triangles + lighting.
+        uint8_t i3; // fourth vertex; duplicate i2 when the face is only a triangle.
     };
 
     MeshSimulationBase(IDisplay &display, MusicalStateTask &musicalStateTask)

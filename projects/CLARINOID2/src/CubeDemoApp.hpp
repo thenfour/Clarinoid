@@ -312,7 +312,7 @@ struct DodecahedronSimulation : DodecahedronDemoBase
 struct TessellatedCubeDemoParams
 {
     static constexpr float kHalfEdge = 0.55f;
-    static constexpr float kCentreOffset = 0.18f;
+    static constexpr float kCentreOffset = -0.4f;
     static constexpr float kProjectionScale = 120.0f;
     static constexpr float kNearPlaneEpsilon = 0.12f;
     static constexpr float kFaceBaseBrightness = 48.0f;

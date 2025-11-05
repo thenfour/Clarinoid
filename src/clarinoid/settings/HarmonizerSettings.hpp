@@ -45,6 +45,7 @@ static constexpr size_t HarmPresetID_WorldPeaceGlobal = 0;
 static constexpr size_t HarmPresetID_Quintal = 1;
 static constexpr size_t HarmPresetID_N3N2 = 2;
 static constexpr size_t HarmPresetID_SynthWaveAsBass = 3;
+static constexpr size_t HarmPresetID_FullScale = 4;
 // static constexpr size_t HarmPresetID_SynthWaveAsMelody = 4;
 //  static constexpr size_t HarmPresetID_WorldPeace = HARM_PRESET_COUNT - 1;
 //  static constexpr size_t HarmPresetID_Road = HARM_PRESET_COUNT - 2;
@@ -192,7 +193,7 @@ struct HarmPreset
 {
     String mName = "--";
     bool mEmitLiveNote = true;
-    float mStereoSeparation = 0.1f; // spreads stereo signal of the voices.
+    float mStereoSeparation = 0.4f; // spreads stereo signal of the voices.
     Scale mPresetScale = {0, ScaleFlavorIndex::Chromatic};
     HarmVoiceSettings mVoiceSettings[HARM_VOICES];
     uint32_t mMinRotationTimeMS = 70;
@@ -679,18 +680,6 @@ struct HarmSettings
         p.mVoiceSettings[0].mSequence[0] = 12;
     }
 
-    // void InitColDetSawsPreset(HarmPreset &p)
-    // {
-    //     p.mName = "Thiccc";
-    //     p.mStereoSeparation = 0.5f;
-    //     p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Chromatic;
-    //     p.mVoiceSettings[0].mScaleRef = HarmScaleRefType::Preset;
-    //     p.mVoiceSettings[0].mSynthPresetRef = HarmSynthPresetRefType::Voice;
-    //     p.mVoiceSettings[0].mVoiceSynthPreset = SynthPresetID_HarmDetunedSaws;
-    //     p.mVoiceSettings[0].mSequenceLength = 1;
-    //     p.mVoiceSettings[0].mSequence[0] = 0;
-    // }
-
     void InitSpicePreset(HarmPreset &p)
     {
         p.mName = "Spicy";
@@ -720,7 +709,6 @@ struct HarmSettings
         p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
         p.mSynthPreset3 = SynthPresetID_HarmTri;
 
-        // set up voice ranges from G3 to C5
         for (auto &vs : p.mVoiceSettings)
         {
             vs.mMinOutpNote = MidiNote{3, Note::G}.GetMidiValue();
@@ -757,7 +745,6 @@ struct HarmSettings
         p.mSynthPreset1 = SynthPresetID_SupersawSoft;
         p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
 
-        // set up voice ranges from G3 to C5
         for (auto &vs : p.mVoiceSettings)
         {
             vs.mScaleRef = HarmScaleRefType::Preset;
@@ -789,43 +776,64 @@ struct HarmSettings
         p.mVoiceSettings[2].mSequence[3] = -14;
     }
 
-    // // synthwave effect, live note is assumed to be the bass note.
-    // void IniSynthWaveAsMelodyPreset(HarmPreset &p)
-    // {
-    //     p.mName = "SawAsMelody.235";
-    //     p.mSynthPreset1 = SynthPresetID_Supersaw;
-    //     p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
-    //     p.mSynthPreset3 = SynthPresetID_HarmTri;
+    void InitDiaDrop2(HarmPreset &p)
+    {
+        p.mName = "Dia Drop 2";
+        p.mPresetScale.mRootNoteIndex = Note::C;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Major;
+        p.mStereoSeparation = 0.5f;
+        p.mSynthPreset1 = SynthPresetID_SupersawSoft;
+        p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
 
-    //     // set up voice ranges from G3 to C5
-    //     for (auto &vs : p.mVoiceSettings)
-    //     {
-    //         // vs.mMinOutpNote = MidiNote{3, Note::G}.GetMidiValue();
-    //         // vs.mMaxOutpNote = MidiNote{5, Note::C}.GetMidiValue();
-    //         vs.mScaleRef = HarmScaleRefType::Global;
-    //         vs.mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
-    //         // vs.mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
-    //         vs.mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
-    //     }
+        for (auto &vs : p.mVoiceSettings)
+        {
+            vs.mScaleRef = HarmScaleRefType::Global;
+            vs.mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
+        }
 
-    //     p.mVoiceSettings[0].mSequenceLength = 1;
-    //     p.mVoiceSettings[0].mSequence[0] = -1;
+        p.mVoiceSettings[0].mSequenceLength = 2;
+        p.mVoiceSettings[1].mSequenceLength = 2;
+        p.mVoiceSettings[2].mSequenceLength = 2;
 
-    //     p.mVoiceSettings[1].mSequenceLength = 1;
-    //     p.mVoiceSettings[1].mSequence[0] = -2;
+        p.mVoiceSettings[1].mOctaveTranspose = -1;
 
-    //     p.mVoiceSettings[2].mSequenceLength = 1;
-    //     p.mVoiceSettings[2].mSequence[0] = -3;
+        // E G A [C]
+        p.mVoiceSettings[0].mSequence[0] = -2;
+        p.mVoiceSettings[1].mSequence[0] = -3;
+        p.mVoiceSettings[2].mSequence[0] = -5;
 
-    //     // p.mVoiceSettings[3].mMinOutpNote = MidiNote{6, Note::C}.GetMidiValue();
-    //     // p.mVoiceSettings[3].mMaxOutpNote = MidiNote{8, Note::G}.GetMidiValue();
-    //     // // p.mVoiceSettings[3].mSynthPresetRef = HarmSynthPresetRefType::Preset3;
-    //     // p.mVoiceSettings[3].mSequenceLength = 2;
-    //     // p.mVoiceSettings[3].mOctaveTranspose = 1;
-    //     // p.mVoiceSettings[3].mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
-    //     // p.mVoiceSettings[3].mSequence[0] = 4;
-    //     // p.mVoiceSettings[3].mSequence[1] = 5;
-    // }
+        // D F A [C]
+        p.mVoiceSettings[0].mSequence[1] = -2;
+        p.mVoiceSettings[1].mSequence[1] = -4;
+        p.mVoiceSettings[2].mSequence[1] = -6;
+    }
+
+    void InitFullScalePreset(HarmPreset &p)
+    {
+        p.mName = "Full Scale";
+        p.mPresetScale.mRootNoteIndex = Note::F_;
+        p.mPresetScale.mFlavorIndex = ScaleFlavorIndex::Major;
+        p.mStereoSeparation = 0.5f;
+        p.mSynthPreset1 = SynthPresetID_SupersawSoft;
+        p.mSynthPreset2 = SynthPresetID_HarmDetunedSaws;
+
+        for (auto &vs : p.mVoiceSettings)
+        {
+            vs.mScaleRef = HarmScaleRefType::Global;
+            vs.mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
+        }
+
+        p.mVoiceSettings[0].mSequenceLength = 1;
+        p.mVoiceSettings[1].mSequenceLength = 1;
+        p.mVoiceSettings[2].mSequenceLength = 1;
+
+        // p.mVoiceSettings[1].mOctaveTranspose = -1;
+
+        // D F A [C]
+        p.mVoiceSettings[0].mSequence[0] = -2;
+        p.mVoiceSettings[1].mSequence[0] = -4;
+        p.mVoiceSettings[2].mSequence[0] = -6;
+    }
 
     HarmSettings()
     {
@@ -843,13 +851,15 @@ struct HarmSettings
         CCASSERT(iPreset == HarmPresetID_SynthWaveAsBass);
         IniSynthWaveAsBassPreset(mPresets[iPreset++]);
 
-        // CCASSERT(iPreset == HarmPresetID_SynthWaveAsMelody);
-        // IniSynthWaveAsMelodyPreset(mPresets[iPreset++]);
+        CCASSERT(iPreset == HarmPresetID_FullScale);
+        InitFullScalePreset(mPresets[iPreset++]);
 
         InitQuartQuintHarmPreset(mPresets[iPreset++]);
         InitBigPreset(mPresets[iPreset++]);
         InitFuzionPreset(mPresets[iPreset++]);
         InitMagicForestPreset(mPresets[iPreset++]);
+        InitDiaDrop2(mPresets[iPreset++]);
+
         // InitMin6Preset(mPresets[iPreset++]);
         // InitMajInv2Preset(mPresets[iPreset++]);
         // InitFunky3(mPresets[iPreset++]);
@@ -859,13 +869,13 @@ struct HarmSettings
         // InitColBassPreset(mPresets[iPreset++]);
         InitCol8vaPreset(mPresets[iPreset++]);
 
-        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -3,-1", -3, -1);
-        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -2,-1", -2, -1);
-        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -2,+1", -2, +1);
-        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -1,+1", -1, +1);
-        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -1,+2", -1, +2);
-        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic +1,+2", +1, +2);
-        InitDiatonicPreset(mPresets[iPreset++], "Pentatonic +1,+3", +1, +3);
+        // InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -3,-1", -3, -1);
+        // InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -2,-1", -2, -1);
+        // InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -2,+1", -2, +1);
+        // InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -1,+1", -1, +1);
+        // InitDiatonicPreset(mPresets[iPreset++], "Pentatonic -1,+2", -1, +2);
+        // InitDiatonicPreset(mPresets[iPreset++], "Pentatonic +1,+2", +1, +2);
+        // InitDiatonicPreset(mPresets[iPreset++], "Pentatonic +1,+3", +1, +3);
 
         // InitSpicePreset(mPresets[iPreset++]);
 
