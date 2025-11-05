@@ -19,9 +19,9 @@ struct GeodesicSphereDemoParams
     static constexpr float kNearPlaneEpsilon = 0.12f;
 
     // Face shading parameters: ambient brightness offset, diffuse scale, specular lift, and normal epsilon.
-    static constexpr float kFaceBaseBrightness = 8.0f;
-    static constexpr float kFaceDiffuseScale = 192.0f;
-    static constexpr float kFaceSpecularBias = 128.0f;
+    static constexpr float kFaceBaseBrightness = 16.0f;
+    static constexpr float kFaceDiffuseScale = 212.0f;
+    static constexpr float kFaceSpecularBias = 144.0f;
     static constexpr float kFaceNormalEpsilon = 1e-4f;
 
     // Number of recursive icosahedron subdivisions (0-2 keeps vertex count within uint8_t indices).
@@ -50,21 +50,30 @@ struct GeodesicSphereMeshData
     using Base = MeshSimulationBase<GeodesicSphereDemoParams<TSubdivisionDepth>, kVertexCount, kFaceCount>;
     using FaceDesc = typename Base::FaceDesc;
 
-    std::array<Vec3f, kVertexCount> vertices{};
-    std::array<std::array<uint32_t, 3>, kFaceCount> faces{};
-    std::array<FaceDesc, kFaceCount> faceDescs{};
+    GeodesicSphereMeshData()
+        : mVertices(gGeomArena.instantiate_array<Vec3f, kVertexCount>()),
+          mFaces(gGeomArena.instantiate_array<std::array<uint32_t, 3>, kFaceCount>()),
+          mFaceDescs(gGeomArena.instantiate_array<FaceDesc, kFaceCount>())
+    {
+    }
+
+    array_view<Vec3f, kVertexCount> mVertices;              //{mpVertices};
+    array_view<std::array<uint32_t, 3>, kFaceCount> mFaces; //{mpFaces};
+    array_view<FaceDesc, kFaceCount> mFaceDescs; //{mpFaceDescs}; // converted quads with uint8_t indices for rendering
 };
 
 template <size_t TSubdivisionDepth>
-inline GeodesicSphereMeshData<TSubdivisionDepth> GenerateGeodesicSphereMesh()
+inline void GenerateGeodesicSphereMesh(GeodesicSphereMeshData<TSubdivisionDepth> &mesh)
 {
     using TRet = GeodesicSphereMeshData<TSubdivisionDepth>;
     using Params = GeodesicSphereDemoParams<TSubdivisionDepth>;
-    TRet mesh{};
-    auto &verts = mesh.vertices;
-    auto &faces = mesh.faces;
+    auto &verts = mesh.mVertices;
+    auto &faces = mesh.mFaces;
 
-    std::array<std::array<uint32_t, 3>, Params::kFaceCount> workingFaces{};
+    auto arena = make_memory_arena(gClarinoidDmaMem.gLoopStationBuffer);
+
+    // std::array<std::array<uint32_t, 3>, Params::kFaceCount> workingFaces{};
+    auto workingFaces = arena.instantiate_array<std::array<uint32_t, 3>, Params::kFaceCount>();
 
     size_t vertCount = 0;
     size_t faceCount = 0;
@@ -126,7 +135,7 @@ inline GeodesicSphereMeshData<TSubdivisionDepth> GenerateGeodesicSphereMesh()
 
         uint32_t FindOrCreate(uint32_t a,
                               uint32_t b,
-                              std::array<Vec3f, Params::kVertexCount> &vertsRef,
+                              array_view<Vec3f, Params::kVertexCount> &vertsRef,
                               size_t &vertCountRef)
         {
             const uint32_t lo = std::min(a, b);
@@ -156,11 +165,12 @@ inline GeodesicSphereMeshData<TSubdivisionDepth> GenerateGeodesicSphereMesh()
         }
     };
 
-    std::array<std::array<uint32_t, 3>, Params::kFaceCount> nextFaces{};
+    // std::array<std::array<uint32_t, 3>, Params::kFaceCount> nextFaces{};
+    auto nextFaces = arena.instantiate_array<std::array<uint32_t, 3>, Params::kFaceCount>();
 
     for (size_t iteration = 0; iteration < Params::kSubdivisionDepth; ++iteration)
     {
-        EdgeCache cache;
+        auto cache = arena.instantiate<EdgeCache>();
         size_t nextFaceCount = 0;
         for (size_t faceIndex = 0; faceIndex < faceCount; ++faceIndex)
         {
@@ -169,9 +179,9 @@ inline GeodesicSphereMeshData<TSubdivisionDepth> GenerateGeodesicSphereMesh()
             const uint32_t b = tri[1];
             const uint32_t c = tri[2];
 
-            const uint32_t ab = cache.FindOrCreate(a, b, verts, vertCount);
-            const uint32_t bc = cache.FindOrCreate(b, c, verts, vertCount);
-            const uint32_t ca = cache.FindOrCreate(c, a, verts, vertCount);
+            const uint32_t ab = cache->FindOrCreate(a, b, verts, vertCount);
+            const uint32_t bc = cache->FindOrCreate(b, c, verts, vertCount);
+            const uint32_t ca = cache->FindOrCreate(c, a, verts, vertCount);
 
             nextFaces[nextFaceCount++] = {a, ab, ca};
             nextFaces[nextFaceCount++] = {b, bc, ab};
@@ -181,6 +191,8 @@ inline GeodesicSphereMeshData<TSubdivisionDepth> GenerateGeodesicSphereMesh()
 
         workingFaces = nextFaces;
         faceCount = nextFaceCount;
+
+        arena.free_last(cache);
     }
 
     CCASSERT(vertCount == Params::kVertexCount);
@@ -192,25 +204,17 @@ inline GeodesicSphereMeshData<TSubdivisionDepth> GenerateGeodesicSphereMesh()
     {
         faces[i] = workingFaces[i];
 
-        mesh.faceDescs[i] = FaceDesc{static_cast<uint8_t>(faces[i][0]),
-                                     static_cast<uint8_t>(faces[i][1]),
-                                     static_cast<uint8_t>(faces[i][2]),
-                                     static_cast<uint8_t>(faces[i][2])};
+        mesh.mFaceDescs[i] = FaceDesc{static_cast<uint8_t>(faces[i][0]),
+                                      static_cast<uint8_t>(faces[i][1]),
+                                      static_cast<uint8_t>(faces[i][2]),
+                                      static_cast<uint8_t>(faces[i][2])};
     }
 
-    return mesh;
+    // return mesh;
 }
-
-// inline const GeodesicSphereMeshData &GetGeodesicSphereMeshData()
-// {
-//     static const GeodesicSphereMeshData data = GenerateGeodesicSphereMesh();
-//     return data;
-// }
 } // namespace detail
 
-// using GeodesicSphereDemoBase = MeshSimulationBase<GeodesicSphereDemoParams,
-//                                                   GeodesicSphereDemoParams::kVertexCount,
-//                                                   GeodesicSphereDemoParams::kFaceCount>;
+static constexpr size_t meshdatasizexxx1 = sizeof(detail::GeodesicSphereMeshData<2>);
 
 template <size_t TSubdivisionDepth>
 struct GeodesicSphereSimulation : GeodesicSphereDemoParams<TSubdivisionDepth>::SimulationBase
@@ -226,34 +230,19 @@ struct GeodesicSphereSimulation : GeodesicSphereDemoParams<TSubdivisionDepth>::S
 
     GeodesicSphereSimulation(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask)
     {
-        mMeshData = detail::GenerateGeodesicSphereMesh<TSubdivisionDepth>();
+        detail::GenerateGeodesicSphereMesh<TSubdivisionDepth>(mMeshData);
     }
 
   protected:
-    virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override
+    virtual const array_view<Vec3f, kVertexCount> &GetBaseVertices() const override
     {
         // return detail::GetGeodesicSphereMeshData<TSubdivisionDepth>().vertices;
-        return mMeshData.vertices;
+        return mMeshData.mVertices;
     }
 
-    virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const override
+    virtual const array_view<FaceDesc, kFaceCount> &GetFaces() const override
     {
-        // static const std::array<FaceDesc, kFaceCount> kFaces = []() {
-        //     std::array<FaceDesc, kFaceCount> faceBuffer{};
-        //     const auto &mesh = detail::GetGeodesicSphereMeshData();
-        //     for (size_t i = 0; i < kFaceCount; ++i)
-        //     {
-        //         const auto &tri = mesh.faces[i];
-        //         faceBuffer[i] = FaceDesc{static_cast<uint8_t>(tri[0]),
-        //                                  static_cast<uint8_t>(tri[1]),
-        //                                  static_cast<uint8_t>(tri[2]),
-        //                                  static_cast<uint8_t>(tri[2])};
-        //     }
-        //     return faceBuffer;
-        // }();
-
-        // return kFaces;
-        return mMeshData.faceDescs;
+        return mMeshData.mFaceDescs;
     }
 
     virtual void OnFacePrepared(size_t faceIndex, FaceRenderInfo &info) override

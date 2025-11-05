@@ -41,7 +41,7 @@ struct IDisplay
     virtual void Init(AppSettings *appSettings,
                       InputDelegator *input,
                       IHudProvider *hud,
-                      const array_view<IDisplayApp *> &apps) = 0;
+                      const list_view<IDisplayApp *> &apps) = 0;
 
     virtual AppSettings *GetAppSettings() = 0;
     virtual InputDelegator *GetInput() = 0;

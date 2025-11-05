@@ -97,7 +97,7 @@ struct TaskPlanner
         TimeSpan mTTD;       // negative= this task was overdue. positive = task not due yet.
     };
 
-    array_view<TaskDeadline> mTasks;
+    list_view<TaskDeadline> mTasks;
 
     TimeSpan mTimesliceDuration;
     TimeSpan mPreviousTimeSliceDelayTime;
@@ -106,7 +106,7 @@ struct TaskPlanner
     size_t mTaskCursor = 0; // which task is next to execute.
     Stopwatch mTimesliceTimer;
 
-    TaskPlanner(array_view<TaskDeadline> tasks) : mTasks(tasks)
+    TaskPlanner(list_view<TaskDeadline> tasks) : mTasks(tasks)
     {
         // assert every task in order.
         TimeSpan lastTS = TimeSpan::Zero();

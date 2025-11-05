@@ -44,8 +44,15 @@ struct CommonDemoParams
     static constexpr float kLightDirZ = -0.58f;
 };
 
+struct IMeshSimulation
+{
+    virtual void StepMeshSimulation() = 0;
+    virtual void RenderMeshFrame(const RectI &renderRect) = 0;
+    virtual void SetScreenOffsetPixels(float offsetX, float offsetY) = 0;
+};
+
 template <typename ParamsT, size_t TVertexCount, size_t TFaceCount>
-struct MeshSimulationBase
+struct MeshSimulationBase : IMeshSimulation
 {
     using Params = ParamsT;
     static constexpr size_t kVertexCount = TVertexCount;
@@ -62,8 +69,8 @@ struct MeshSimulationBase
         uint8_t brightness = 0;
     };
 
-    std::array<Vec3f, kVertexCount> mTransformedVertices{};
-    std::array<FaceRenderInfo, kFaceCount> mFaceBuffer{};
+    array_view<Vec3f, kVertexCount> mTransformedVertices;
+    array_view<FaceRenderInfo, kFaceCount> mFaceBuffer;
 
     Vec3f mRotationAngles{};
     Vec3f mAngularVelocity{};
@@ -82,11 +89,15 @@ struct MeshSimulationBase
     };
 
     MeshSimulationBase(IDisplay &display, MusicalStateTask &musicalStateTask)
-        : mDisplay(display), mMusicalStateTask(musicalStateTask)
+        :                    //
+          mDisplay(display), //
+          mMusicalStateTask(musicalStateTask),
+          mTransformedVertices(gGeomArena.instantiate_array<Vec3f, kVertexCount>()),
+          mFaceBuffer(gGeomArena.instantiate_array<FaceRenderInfo, kFaceCount>())
     {
     }
 
-    void SetScreenOffsetPixels(float offsetX, float offsetY)
+    virtual void SetScreenOffsetPixels(float offsetX, float offsetY) override
     {
         mScreenOffsetPixels.x = offsetX;
         mScreenOffsetPixels.y = offsetY;
@@ -97,7 +108,7 @@ struct MeshSimulationBase
         return mScreenOffsetPixels;
     }
 
-    void StepMeshSimulation()
+    virtual void StepMeshSimulation() override
     {
         EnsureMeshInitialized();
 
@@ -120,7 +131,7 @@ struct MeshSimulationBase
         WrapAngles();
     }
 
-    void RenderMeshFrame(const RectI &renderRect)
+    virtual void RenderMeshFrame(const RectI &renderRect) override
     {
         // const RectI clientRect = mDisplay.GetClientRect();
         // const int originX = Params::kViewportX;
@@ -217,8 +228,8 @@ struct MeshSimulationBase
     }
 
   protected:
-    virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const = 0;
-    virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const = 0;
+    virtual const array_view<Vec3f, kVertexCount> &GetBaseVertices() const = 0;
+    virtual const array_view<FaceDesc, kFaceCount> &GetFaces() const = 0;
 
     // breath-controlled angular velocity factors
     Vec3f mBreathAxis{GenerateImpulseAxis()};

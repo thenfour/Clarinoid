@@ -7,22 +7,48 @@
 #include "MeshDemoAppBase.hpp"
 #include "clarinoid2BigPerfDisplayApp.hpp"
 #include "GeodesicSphereDemoApp.hpp"
+#include "CubeDemoApp.hpp"
+#include "TorusDemoApp.hpp"
 
 namespace clarinoid
 {
 
 struct FancyPerformanceDisplayApp : DisplayApp
 {
-    GeodesicSphereSimulation<1> mGeodesicSphereSim;
     MusicalStateTask &mMusicalStateTask;
     ISysInfoProvider &mSysInfoProvider;
 
+    // GeodesicSphereSimulation<0> mGeodesicSphereSim0;
+    GeodesicSphereSimulation<1> mGeodesicSphereSim1;
+    //GeodesicSphereSimulation<2> mGeodesicSphereSim2;
+    CubeSimulation mCubeSim;
+    // TorusSimulation<9, 13> mTorusSim1;
+    //    TorusSimulation<5, 9> mTorusSim2;
+
+    std::array<IMeshSimulation *, 2> mMeshSims = {
+        //&mGeodesicSphereSim0,
+        &mGeodesicSphereSim1,
+        //&mGeodesicSphereSim2,
+        &mCubeSim,
+        //&mTorusSim1,
+        //&mTorusSim2,
+    };
+
+    size_t mCurrentMeshSimIndex = 0;
+
     FancyPerformanceDisplayApp(IDisplay &display,
                                MusicalStateTask &musicalStateTask,
-                               ISysInfoProvider &sysInfoProvider,
-                               uint32_t rngSeed = 0x51F00DF5u)
-        : DisplayApp(display), mGeodesicSphereSim(display, musicalStateTask), mMusicalStateTask(musicalStateTask),
-          mSysInfoProvider(sysInfoProvider)
+                               ISysInfoProvider &sysInfoProvider)
+        : DisplayApp(display),                 //
+          mMusicalStateTask(musicalStateTask), //
+          mSysInfoProvider(sysInfoProvider),   //
+                                               // mGeodesicSphereSim0(display, musicalStateTask), //
+          mGeodesicSphereSim1(display, musicalStateTask), //
+          //mGeodesicSphereSim2(display, musicalStateTask), //
+          mCubeSim(display, musicalStateTask),            //
+          // mTorusSim1(display, musicalStateTask), //
+          //    mTorusSim2(display, musicalStateTask)//
+          mCurrentMeshSimIndex(0) //
     {
     }
 
@@ -36,6 +62,10 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     virtual void DisplayAppUpdate() override
     {
+        if (mBack.IsNewlyPressed())
+        {
+            mCurrentMeshSimIndex = (mCurrentMeshSimIndex + 1) % mMeshSims.size();
+        }
         DisplayApp::DisplayAppUpdate();
     }
 
@@ -46,6 +76,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     virtual void RenderApp() override
     {
+        mDisplay.println(String("Mem remaining:") + gGeomArena.GetFreeBytes() + " bytes");
     }
 
     bool AllowOverlayIndicators() const override
@@ -55,11 +86,13 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     virtual void RenderFrontPage() override
     {
-        mGeodesicSphereSim.StepMeshSimulation();
-        mGeodesicSphereSim.SetScreenOffsetPixels(13, -17);
-        static constexpr int kSphereWidth = 64;
-        mGeodesicSphereSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
-
+        {
+            auto &currentSim = *mMeshSims[mCurrentMeshSimIndex];
+            currentSim.StepMeshSimulation();
+            currentSim.SetScreenOffsetPixels(13, -17);
+            static constexpr int kSphereWidth = 64;
+            currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
+        }
         auto &appSettings = *mMusicalStateTask.mAppSettings;
         auto &perf = appSettings.GetCurrentPerformancePatch();
 
@@ -173,5 +206,10 @@ struct FancyPerformanceDisplayApp : DisplayApp
             mDisplay, mMusicalStateTask.mMusicalState.mCurrentPitchN11.GetValue(), 51, kTextAreaWidth);
     }
 };
+
+static constexpr size_t fancysize = sizeof(FancyPerformanceDisplayApp);
+static constexpr size_t fancysize1 = sizeof(GeodesicSphereSimulation<0>);
+static constexpr size_t fancysize2 = sizeof(GeodesicSphereSimulation<1>);
+static constexpr size_t fancysize3 = sizeof(GeodesicSphereSimulation<2>);
 
 } // namespace clarinoid

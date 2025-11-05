@@ -19,19 +19,19 @@ struct StaticInit
 };
 
 template <typename T>
-struct array_view
+struct list_view
 {
     size_t mSize = 0;
     T *mData = nullptr;
 
-    array_view() = default;
+    list_view() = default;
     size_t size() const
     {
         return mSize;
     }
 
     template <size_t N>
-    array_view(T (&a)[N]) : mSize(N), mData(a)
+    list_view(T (&a)[N]) : mSize(N), mData(a)
     {
     }
 
@@ -43,14 +43,66 @@ struct array_view
 };
 
 template <typename T, size_t N>
-array_view<T> make_array_view(T (&a)[N])
+list_view<T> make_list_view(T (&a)[N])
 {
-    return array_view<T>(a);
+    return list_view<T>(a);
+}
+
+template <typename T, size_t N>
+struct array_view
+{
+    T *mData = nullptr;
+
+    array_view() = default;
+
+    explicit array_view(T *backing) : mData(backing) {};
+
+    array_view(T (&a)[N]) : mData(a)
+    {
+    }
+
+    const T &operator[](size_t i) const
+    {
+        CCASSERT(i < N);
+        return mData[i];
+    }
+
+    T &operator[](size_t i)
+    {
+        CCASSERT(i < N);
+        return mData[i];
+    }
+
+    size_t size() const
+    {
+        return N;
+    }
+
+    T *data() const
+    {
+        return mData;
+    }
+
+    // iterator / begin / end support
+    T *begin()
+    {
+        return mData;
+    }
+    T *end()
+    {
+        return mData + N;
+    }
+};
+
+template <typename T, size_t N>
+array_view<T, N> make_array_view(T (&a)[N])
+{
+    return array_view<T, N>(a);
 }
 
 // https://stackoverflow.com/questions/26351587/how-to-create-stdarray-with-initialization-list-without-providing-size-directl
 template <typename V, typename... T>
-constexpr auto array_of(T &&... t) -> std::array<V, sizeof...(T)>
+constexpr auto array_of(T &&...t) -> std::array<V, sizeof...(T)>
 {
     return {{std::forward<T>(t)...}};
 }

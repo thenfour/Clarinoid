@@ -2,6 +2,7 @@
 #pragma once
 
 #include <clarinoid/basic/Basic.hpp>
+#include <clarinoid/basic/Arena.hpp>
 #include <clarinoid/settings/AppSettings.hpp>
 
 namespace clarinoid
@@ -15,11 +16,19 @@ struct DMAClarinoidMemory
     uint8_t gLoopStationBuffer[LOOPER_MEMORY_TOTAL_BYTES];
     uint8_t gLoopStationTempBuffer[LOOPER_TEMP_BUFFER_BYTES];
     uint8_t gAppSettingsBuffer[sizeof(AppSettings)];
+    uint8_t gGeomBuffer[GEOM_BUFFER_BYTES];
 #ifndef CLARINOID_MODULE_TEST
     audio_block_t gAudioMemory[AUDIO_MEMORY_TO_ALLOCATE];
 #endif // CLARINOID_MODULE_TEST
 };
+
 static DMAMEM DMAClarinoidMemory gClarinoidDmaMem;
+
+// static MemoryArena<GEOM_BUFFER_BYTES> gGeomArena;
+// static auto &gGeomArena = gClarinoidDmaMem.gGeomArena;
+static MemoryArena<GEOM_BUFFER_BYTES> gGeomArena{gClarinoidDmaMem.gGeomBuffer};
+
+static constexpr size_t dmasize = sizeof(DMAClarinoidMemory);
 
 // #define LOOPSTATION_BUFFER (gLoopStationBuffer)
 // #define LOOPSTATION_TEMP_BUFFER (gLoopStationTempBuffer)

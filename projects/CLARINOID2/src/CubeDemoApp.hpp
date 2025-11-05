@@ -16,7 +16,7 @@ struct CubeDemoParams
     static constexpr float kHalfEdge = 0.55f;
 
     // Perspective multiplier applied during projection; larger renders a bigger cube on screen.
-    static constexpr float kProjectionScale = 88.0f;
+    static constexpr float kProjectionScale = 120.0f;
     // Minimum Z distance during projection to avoid division blow-ups (model units).
     static constexpr float kNearPlaneEpsilon = 0.15f;
 
@@ -29,7 +29,7 @@ struct CubeDemoParams
 
 using CubeDemoBase = MeshSimulationBase<CubeDemoParams, 8, 6>;
 
-struct CubeDemoApp : CubeDemoBase
+struct CubeSimulation : CubeDemoBase
 {
     using Base = CubeDemoBase;
     using FaceDesc = typename Base::FaceDesc;
@@ -37,14 +37,21 @@ struct CubeDemoApp : CubeDemoBase
     static constexpr size_t kVertexCount = Base::kVertexCount;
     static constexpr size_t kFaceCount = Base::kFaceCount;
 
-    CubeDemoApp(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask)
+    CubeSimulation(IDisplay &display, MusicalStateTask &musicalStateTask) : Base(display, musicalStateTask)
     {
+        GenerateMesh();
     }
 
   protected:
-    virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override
+    array_view<Vec3f, kVertexCount> mVertices;
+    array_view<FaceDesc, kFaceCount> mFaceDescs;
+
+    void GenerateMesh()
     {
-        static const std::array<Vec3f, kVertexCount> kBaseVertices = {
+        // mVertices = gGeomArena.instantiate_array<Vec3f, kVertexCount>();
+        // mFaceDescs = gGeomArena.instantiate_array<FaceDesc, kFaceCount>();
+
+        mVertices = gGeomArena.instantiate_array<Vec3f, kVertexCount>(
             Vec3f{-CubeDemoParams::kHalfEdge, -CubeDemoParams::kHalfEdge, -CubeDemoParams::kHalfEdge},
             Vec3f{CubeDemoParams::kHalfEdge, -CubeDemoParams::kHalfEdge, -CubeDemoParams::kHalfEdge},
             Vec3f{CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge, -CubeDemoParams::kHalfEdge},
@@ -52,22 +59,24 @@ struct CubeDemoApp : CubeDemoBase
             Vec3f{-CubeDemoParams::kHalfEdge, -CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge},
             Vec3f{CubeDemoParams::kHalfEdge, -CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge},
             Vec3f{CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge},
-            Vec3f{-CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge},
-        };
-        return kBaseVertices;
+            Vec3f{-CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge, CubeDemoParams::kHalfEdge});
+
+        mFaceDescs = gGeomArena.instantiate_array<FaceDesc, kFaceCount>(FaceDesc{0, 3, 2, 1},
+                                                                        FaceDesc{4, 5, 6, 7},
+                                                                        FaceDesc{0, 4, 7, 3},
+                                                                        FaceDesc{1, 2, 6, 5},
+                                                                        FaceDesc{3, 7, 6, 2},
+                                                                        FaceDesc{0, 1, 5, 4});
     }
 
-    virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const override
+    virtual const array_view<Vec3f, kVertexCount> &GetBaseVertices() const override
     {
-        static const std::array<FaceDesc, kFaceCount> kFaces = {
-            FaceDesc{0, 3, 2, 1},
-            FaceDesc{4, 5, 6, 7},
-            FaceDesc{0, 4, 7, 3},
-            FaceDesc{1, 2, 6, 5},
-            FaceDesc{3, 7, 6, 2},
-            FaceDesc{0, 1, 5, 4},
-        };
-        return kFaces;
+        return mVertices;
+    }
+
+    virtual const array_view<FaceDesc, kFaceCount> &GetFaces() const override
+    {
+        return mFaceDescs;
     }
 };
 

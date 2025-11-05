@@ -13,7 +13,7 @@ template <size_t TMajorSegments, size_t TMinorSegments>
 struct TorusDemoParams
 {
     // Perspective multiplier applied during projection; larger values render a bigger torus on screen.
-    static constexpr float kProjectionScale = 112.0f;
+    static constexpr float kProjectionScale = 90.0f;
     // Minimum allowed Z value when projecting (model units) to avoid divide-by-zero.
     static constexpr float kNearPlaneEpsilon = 0.12f;
 
@@ -27,8 +27,8 @@ struct TorusDemoParams
     static constexpr size_t kMajorSegments = TMajorSegments; // 13;
     static constexpr size_t kMinorSegments = TMinorSegments; // 9;
     // Torus radii in model units: distance from center to tube center, and tube radius.
-    static constexpr float kMajorRadius = 1.15f;
-    static constexpr float kMinorRadius = 0.6f;
+    static constexpr float kMajorRadius = 1.f;
+    static constexpr float kMinorRadius = 0.5f;
     static constexpr size_t kTorusVertexCount = TorusDemoParams::kMajorSegments * TorusDemoParams::kMinorSegments;
     static constexpr size_t kTorusFaceCount = TorusDemoParams::kMajorSegments * TorusDemoParams::kMinorSegments;
 
@@ -55,23 +55,26 @@ struct TorusSimulation : TorusDemoParams<TMajorSegments, TMinorSegments>::Simula
     }
 
   protected:
-    std::array<Vec3f, kVertexCount> mVertices;
-    std::array<FaceDesc, kFaceCount> mFaces;
+    array_view<Vec3f, kVertexCount> mVertices;
+    array_view<FaceDesc, kFaceCount> mFaces;
 
     void GenerateMesh()
     {
+        mVertices = gGeomArena.instantiate_array<Vec3f, kVertexCount>();
+        mFaces = gGeomArena.instantiate_array<FaceDesc, kFaceCount>();
+
         // Generate vertices
         for (size_t major = 0; major < Params::kMajorSegments; ++major)
         {
             const float majorTheta = kTwoPI_f * static_cast<float>(major) / static_cast<float>(Params::kMajorSegments);
-            const float cosMajor = std::cos(majorTheta);
-            const float sinMajor = std::sin(majorTheta);
+            const float cosMajor = fast::cos(majorTheta);
+            const float sinMajor = fast::sin(majorTheta);
             for (size_t minor = 0; minor < Params::kMinorSegments; ++minor)
             {
                 const float minorTheta =
                     kTwoPI_f * static_cast<float>(minor) / static_cast<float>(Params::kMinorSegments);
-                const float cosMinor = std::cos(minorTheta);
-                const float sinMinor = std::sin(minorTheta);
+                const float cosMinor = fast::cos(minorTheta);
+                const float sinMinor = fast::sin(minorTheta);
                 const float radial = Params::kMajorRadius + (Params::kMinorRadius * cosMinor);
 
                 mVertices[(major * Params::kMinorSegments) + minor] = Vec3f{
@@ -104,7 +107,7 @@ struct TorusSimulation : TorusDemoParams<TMajorSegments, TMinorSegments>::Simula
         }
     }
 
-    virtual const std::array<Vec3f, kVertexCount> &GetBaseVertices() const override
+    virtual const array_view<Vec3f, kVertexCount> &GetBaseVertices() const override
     {
         // static const std::array<Vec3f, kVertexCount> kVertices = []() {
         //     std::array<Vec3f, kVertexCount> verts{};
@@ -137,7 +140,7 @@ struct TorusSimulation : TorusDemoParams<TMajorSegments, TMinorSegments>::Simula
         return mVertices;
     }
 
-    virtual const std::array<FaceDesc, kFaceCount> &GetFaces() const override
+    virtual const array_view<FaceDesc, kFaceCount> &GetFaces() const override
     {
         return mFaces;
         // static const std::array<FaceDesc, kFaceCount> kFaces = []() {

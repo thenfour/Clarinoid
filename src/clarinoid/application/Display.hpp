@@ -57,7 +57,7 @@ struct _CCDisplay : IDisplay
     bool mIsSetup = false; // used for crash handling to try and setup this if we can
     bool mFirstAppSelected = false;
 
-    array_view<IDisplayApp *> mApps;
+    list_view<IDisplayApp *> mApps;
     int mCurrentAppIndex = 0;
     ScrollbarOverlay mAppSwitchScrollbar{ScrollbarOrientation::Horizontal};
 
@@ -81,7 +81,7 @@ struct _CCDisplay : IDisplay
     {
     }
 
-    void Init(AppSettings *appSettings, InputDelegator *input, IHudProvider *hud, const array_view<IDisplayApp *> &apps)
+    void Init(AppSettings *appSettings, InputDelegator *input, IHudProvider *hud, const list_view<IDisplayApp *> &apps)
     {
         mAppSettings = appSettings;
         mInput = input;
