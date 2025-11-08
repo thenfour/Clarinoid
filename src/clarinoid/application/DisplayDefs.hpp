@@ -38,6 +38,12 @@ struct IDisplayApp
 //////////////////////////////////////////////////////////////////////
 struct IDisplay
 {
+    enum class CircleStrokeMode : uint8_t
+    {
+        Inside,
+        Outside,
+        Centered,
+    };
     virtual void Init(AppSettings *appSettings,
                       InputDelegator *input,
                       IHudProvider *hud,
@@ -120,6 +126,12 @@ struct IDisplay
     virtual void DrawHLineDithered(const PointI &pt, int length, int brightnessQp8) = 0;
     virtual void FillRectWithBrightness(const RectI &rc, int brightnessQp8) = 0;
     virtual void FindFarthestPair(const PointI *points, size_t pointCount, PointI &bestA, PointI &bestB) = 0;
+    virtual void FillPieSliceGradient(const PointF &origin,
+                                      float radius,
+                                      float angleStartRadians,
+                                      float angleSweepRadians, // can be negative.
+                                      int brightnessStartQp8,
+                                      int brightnessEndQp8) = 0;
     virtual void DrawLineWithBrightness(const PointI &pt0, const PointI &pt1, int brightness) = 0;
     virtual void DrawLine(const PointI &pt0, const PointI &pt1) = 0;
     virtual void DrawInfiniteLineClipped(const PointI &pt0,
@@ -127,6 +139,13 @@ struct IDisplay
                                          const RectI &clipRect,
                                          int brightness) = 0;
     virtual void FillCircleWithBrightness(const PointI &c, int r, int brightnessQp8) = 0;
+    virtual void FillCircleWithBrightnessF(const PointF &center, float radius, int brightnessQp8) = 0;
+    virtual void FillCircleWithStrokeF(const PointF &center,
+                                       float radius,
+                                       float strokeWidth,
+                                       int fillBrightnessQp8,
+                                       int strokeBrightnessQp8,
+                                       CircleStrokeMode mode) = 0;
     virtual void SetFontScale(int sx, int sy) = 0;
 
     // from Adafruit_GFX

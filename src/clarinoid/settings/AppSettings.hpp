@@ -11,6 +11,9 @@
 namespace clarinoid
 {
 
+static constexpr int kMaxBeatsPerBar = 8;
+static constexpr int kMaxSubdivisionsPerBeat = 8;
+
 enum class GlobalScaleRefType : uint8_t
 {
     Chosen,
@@ -29,6 +32,8 @@ struct PerformancePatch
     String mName = "--";
 
     float mBPM = 104.0f;
+    int8_t mBeatsPerBar = 4;
+    int8_t mBeatSubdivisions = 2;
 
     GlobalScaleRefType mGlobalScaleRef = GlobalScaleRefType::Chosen;
     Scale mGlobalScale = Scale{Note::C, ScaleFlavorIndex::MajorPentatonic};  // you can set this in menus
@@ -342,6 +347,7 @@ struct AppSettings
         p.mName = "Space Car";
 
         p.mTranspose = 0;
+        p.mBPM = 140;
 
         p.mSynthPresetA = SynthPresetID_Fluvial;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -361,6 +367,7 @@ struct AppSettings
         p.mName = "Ripple Boogie";
 
         p.mTranspose = 3;
+        p.mBPM = 110;
 
         p.mSynthPresetA = SynthPresetID_Funky;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -377,6 +384,7 @@ struct AppSettings
     static void InitCloudsAndStarsPerf(PerformancePatch &p, const char *name, int16_t harmPresetId)
     {
         p.mName = name;
+        p.mBPM = 70;
 
         p.mSynthPresetA = SynthPresetID_SupersawSoft;
         p.mSynthAGain = DecibelsToLinear(-6);
@@ -396,6 +404,7 @@ struct AppSettings
     static void InitFullScalePerf(PerformancePatch &p)
     {
         p.mName = "Full Scale";
+        p.mBPM = 120;
 
         p.mSynthPresetA = SynthPresetID_Fluvial;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -412,6 +421,7 @@ struct AppSettings
     static void InitWobblyCatPerf(PerformancePatch &p)
     {
         p.mName = "Wobbly Cat";
+        p.mBPM = 120;
 
         p.mSynthPresetA = SynthPresetID_WobblyCat;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -431,6 +441,7 @@ struct AppSettings
     static void InitSilkSuspendersPerf(PerformancePatch &p)
     {
         p.mName = "Silk Suspenders";
+        p.mBPM = 110;
 
         p.mTranspose = 12;
 
@@ -485,6 +496,8 @@ struct AppSettings
         p.mName = "Tubular Bell";
         p.mSynthStereoSpread = 0.6f;
         p.mDetuneSemis = 0.15f;
+
+        p.mBPM = 112;
 
         p.mSynthPresetA = SynthPresetID_TubularBell;
         p.mSynthAGain = DecibelsToLinear(-3);

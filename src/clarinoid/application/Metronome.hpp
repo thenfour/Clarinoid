@@ -32,11 +32,13 @@ struct Metronome : IMetronome
         mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM;
     }
 
+    // counts from 0, beat serial.
     uint32_t GetBeatInt() const override
     {
         return (uint32_t)floorf(GetBeatFloat());
     }
 
+    // [0..1) fraction within the current beat.
     float GetBeatFrac() const override
     {
         return Frac(GetBeatFloat());

@@ -137,8 +137,16 @@ constexpr T gPI = T(3.1415926535897932385);
 template <typename T>
 constexpr T gTwoPI = T(6.2831853071795864769);
 
+template <typename T>
+constexpr T gHalfPI = T(1.5707963267948966192);
+
+template <typename T>
+constexpr T gQuarterPI = T(0.7853981633974483096);
+
 constexpr float kPI_f = gPI<float>;
 constexpr float kTwoPI_f = gTwoPI<float>;
+constexpr float kHalfPI_f = gHalfPI<float>;
+constexpr float kQuarterPI_f = gQuarterPI<float>;
 
 template <typename T>
 constexpr T gLog2of10 = T(3.3219280948873622);
@@ -278,6 +286,55 @@ inline void BufferOffsetInPlace(float *buf, float offset)
 // inline void BufferClampInPlace(float* buf, float valMin, float valMax) {
 //     arm_clip_f32(buf, buf, valMin, valMax); <-- not defined?
 // }
+
+static inline float atanf(float x)
+{
+    float ax = fabsf(x);
+    // Rajan et al. 3rd-order atan approximation on [-1, 1]
+    return kQuarterPI_f * x - x * (ax - 1.0f) * (0.2447f + 0.0663f * ax);
+}
+
+// Fast atan2 approximation
+static inline float atan2f(float y, float x)
+{
+    if (x == 0.0f && y == 0.0f)
+        return 0.0f; // define as needed
+
+    if (x >= 0.0f)
+    {
+        if (y >= 0.0f)
+        {
+            if (y <= x)
+                return atanf(y / x);
+            else
+                return kHalfPI_f - atanf(x / y);
+        }
+        else
+        {
+            if (-y <= x)
+                return atanf(y / x);
+            else
+                return -kHalfPI_f - atanf(x / y);
+        }
+    }
+    else
+    {
+        if (y >= 0.0f)
+        {
+            if (y <= -x)
+                return atanf(y / x) + kPI_f;
+            else
+                return kHalfPI_f - atanf(x / y);
+        }
+        else
+        {
+            if (-y <= -x)
+                return atanf(y / x) - kPI_f;
+            else
+                return -kHalfPI_f - atanf(x / y);
+        }
+    }
+}
 
 } // namespace fast
 
@@ -909,6 +966,13 @@ PieData fillPie(float x0, float y0, float r, float a0, float a1, T &&drawPixel) 
         }
     }
     return ret;
+}
+
+inline static PointF PolarToCartesian(const PointF &center, float radius, float angle)
+{
+    float x = center.x + radius * fast::cos(angle);
+    float y = center.y + radius * fast::sin(angle);
+    return PointF{x, y};
 }
 
 } // namespace clarinoid

@@ -5,6 +5,7 @@
 #include "NumericSettingItem.hpp"
 #include "EnumSettingItem.hpp"
 #include "BoolSettingItem.hpp"
+#include <clarinoid/application/MetronomeVis.hpp>
 #include <clarinoid/application/Metronome.hpp>
 
 namespace clarinoid
@@ -19,6 +20,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
 
     Metronome *mpMetronome;
     AppSettings *mpAppSettings;
+    MetronomeVis mMetronomeVis;
 
     MetronomeSettingsApp(Metronome *pm, AppSettings *pas, IDisplay &d)
         : SettingsMenuApp(d), mpMetronome(pm), mpAppSettings(pas)
@@ -43,13 +45,144 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                                  auto *pThis = (MetronomeSettingsApp *)cap;
                                                  return pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM;
                                              },
-                                             [](void *cap, const float &v) {
+                                             [](void *cap, const float &v) FLASHMEM {
                                                  auto *pThis = (MetronomeSettingsApp *)cap;
                                                  pThis->mpAppSettings->GetCurrentPerformancePatch().mBPM = v;
                                                  pThis->mpMetronome->OnBPMChanged();
                                              },
                                              this},
                              AlwaysEnabled};
+
+    // beats per bar
+    IntSettingItem mBeatsPerBar = {
+        "Beats per bar",
+        NumericEditRangeSpec<int>{1, kMaxBeatsPerBar},
+        Property<int>{[](void *cap) FLASHMEM {
+                          auto *pThis = (MetronomeSettingsApp *)cap;
+                          return (int)pThis->mpAppSettings->GetCurrentPerformancePatch().mBeatsPerBar;
+                      },
+                      [](void *cap, const int &v) FLASHMEM {
+                          auto *pThis = (MetronomeSettingsApp *)cap;
+                          pThis->mpAppSettings->GetCurrentPerformancePatch().mBeatsPerBar = v;
+                      },
+                      this},
+        AlwaysEnabled};
+
+    IntSettingItem mBeatSubdivisions = {
+        "Beat subdivs",
+        NumericEditRangeSpec<int>{1, kMaxSubdivisionsPerBeat},
+        Property<int>{[](void *cap) FLASHMEM {
+                          auto *pThis = (MetronomeSettingsApp *)cap;
+                          return (int)pThis->mpAppSettings->GetCurrentPerformancePatch().mBeatSubdivisions;
+                      },
+                      [](void *cap, const int &v) FLASHMEM {
+                          auto *pThis = (MetronomeSettingsApp *)cap;
+                          pThis->mpAppSettings->GetCurrentPerformancePatch().mBeatSubdivisions = v;
+                      },
+                      this},
+        AlwaysEnabled};
+
+    // MetronomeVis::kRadius
+    FloatSettingItem mRadius = {"Radius",
+                                NumericEditRangeSpec{1.0f, 50.0f},
+                                Property<float>{[](void *cap) FLASHMEM {
+                                                    // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                    return MetronomeVis::kRadius;
+                                                },
+                                                [](void *cap, const float &v) {
+                                                    MetronomeVis::kRadius = v;
+                                                    MetronomeVis::SettingsChangedTrigger = true;
+                                                },
+                                                this},
+                                AlwaysEnabled};
+
+    // MetronomeVis::kSubdivisionRadius
+    FloatSettingItem mSubdivisionRadius = {"SubdivRadius",
+                                           NumericEditRangeSpec{1.0f, 20.0f},
+                                           Property<float>{[](void *cap) FLASHMEM {
+                                                               // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                               return MetronomeVis::kSubdivisionRadius;
+                                                           },
+                                                           [](void *cap, const float &v) {
+                                                               MetronomeVis::kSubdivisionRadius = v;
+                                                               MetronomeVis::SettingsChangedTrigger = true;
+                                                           },
+                                                           this},
+                                           AlwaysEnabled};
+
+    // kMainFlashHoldMs
+    IntSettingItem mFlashHoldMs = {"MainHold",
+                                   NumericEditRangeSpec<int>{1, 1000},
+                                   Property<int>{[](void *cap) FLASHMEM {
+                                                     // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                     return (int)MetronomeVis::kMainFlashHoldMs;
+                                                 },
+                                                 [](void *cap, const int &v) FLASHMEM {
+                                                     // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                     MetronomeVis::kMainFlashHoldMs = v;
+                                                     MetronomeVis::SettingsChangedTrigger = true;
+                                                 },
+                                                 this},
+                                   AlwaysEnabled};
+
+    // kMainFlashDecayMs
+    IntSettingItem mFlashDecayMs = {"MainDecay",
+                                    NumericEditRangeSpec<int>{1, 5000},
+                                    Property<int>{[](void *cap) FLASHMEM {
+                                                      // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                      return (int)MetronomeVis::kMainFlashDecayMs;
+                                                  },
+                                                  [](void *cap, const int &v) FLASHMEM {
+                                                      // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                      MetronomeVis::kMainFlashDecayMs = v;
+                                                      MetronomeVis::SettingsChangedTrigger = true;
+                                                  },
+                                                  this},
+                                    AlwaysEnabled};
+
+    // subdiv hold
+    IntSettingItem mSubdivisionFlashHoldMs = {"SubdivHold",
+                                              NumericEditRangeSpec<int>{1, 1000},
+                                              Property<int>{[](void *cap) FLASHMEM {
+                                                                // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                return (int)MetronomeVis::kSubdivisionFlashHoldMs;
+                                                            },
+                                                            [](void *cap, const int &v) FLASHMEM {
+                                                                // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                MetronomeVis::kSubdivisionFlashHoldMs = v;
+                                                                MetronomeVis::SettingsChangedTrigger = true;
+                                                            },
+                                                            this},
+                                              AlwaysEnabled};
+
+    // subdiv decay
+    IntSettingItem mSubdivisionFlashDecayMs = {"SubdivDecay",
+                                               NumericEditRangeSpec<int>{1, 5000},
+                                               Property<int>{[](void *cap) FLASHMEM {
+                                                                 // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                 return (int)MetronomeVis::kSubdivisionFlashDecayMs;
+                                                             },
+                                                             [](void *cap, const int &v) FLASHMEM {
+                                                                 // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                 MetronomeVis::kSubdivisionFlashDecayMs = v;
+                                                                 MetronomeVis::SettingsChangedTrigger = true;
+                                                             },
+                                                             this},
+                                               AlwaysEnabled};
+
+    // sweep radians
+    FloatSettingItem mSweepWidthRadians = {"SweepWidth",
+                                           NumericEditRangeSpec{0.0f, kTwoPI_f},
+                                           Property<float>{[](void *cap) FLASHMEM {
+                                                               // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                               return MetronomeVis::kSweepWidthRadians;
+                                                           },
+                                                           [](void *cap, const float &v) {
+                                                               MetronomeVis::kSweepWidthRadians = v;
+                                                               MetronomeVis::SettingsChangedTrigger = true;
+                                                           },
+                                                           this},
+                                           AlwaysEnabled};
 
     BoolSettingItem mSoundEnable = {"SoundEnable",
                                     "On",
@@ -58,7 +191,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                                        auto *pThis = (MetronomeSettingsApp *)cap;
                                                        return pThis->mpAppSettings->mMetronomeSoundOn;
                                                    },
-                                                   [](void *cap, const bool &v) {
+                                                   [](void *cap, const bool &v) FLASHMEM {
                                                        auto *pThis = (MetronomeSettingsApp *)cap;
                                                        pThis->mpAppSettings->mMetronomeSoundOn = v;
                                                    },
@@ -72,7 +205,7 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                                      auto *pThis = (MetronomeSettingsApp *)cap;
                                                      return pThis->mpAppSettings->mMetronomeLED;
                                                  },
-                                                 [](void *cap, const bool &v) {
+                                                 [](void *cap, const bool &v) FLASHMEM {
                                                      auto *pThis = (MetronomeSettingsApp *)cap;
                                                      pThis->mpAppSettings->mMetronomeLED = v;
                                                  },
@@ -144,8 +277,19 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                            this},
                              EnabledIfSoundOn};
 
-    ISettingItem *mArray[12] = {
+    ISettingItem *mArray[21] = {
         &mBPM, //
+
+        &mBeatsPerBar, //
+        &mBeatSubdivisions,
+        &mRadius,                 //
+        &mSubdivisionRadius,      //
+        &mFlashHoldMs,            //
+        &mFlashDecayMs,           //
+        &mSubdivisionFlashHoldMs, //
+        &mSubdivisionFlashDecayMs,
+        &mSweepWidthRadians, //
+
         &mGain,
         &mSoundEnable, //
         &mLEDEnable,
@@ -168,34 +312,39 @@ struct MetronomeSettingsApp : public SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        float beatFloat = mpMetronome->GetBeatFloat();
-        float beatFrac = beatFloat - floor(beatFloat);
-        int beatInt = (int)floor(beatFloat);
-        bool altBeat = (beatInt & 1) != 0;
 
-        bool highlight = beatFrac < 0.1;
+        mMetronomeVis.Render(*mpMetronome, mDisplay, *mpAppSettings, {});
 
-        mDisplay.ClearState();
-        if (highlight)
-        {
-            mDisplay.fillScreen(WHITE);
-        }
-        mDisplay.setTextColor(highlight ? BLACK : WHITE);
+        // float beatFloat = mpMetronome->GetBeatFloat();
+        // float beatFrac = beatFloat - floor(beatFloat);
+        // int beatInt = (int)floor(beatFloat);
+        // bool altBeat = (beatInt & 1) != 0;
+
+        // bool highlight = beatFrac < 0.1;
+
+        // mDisplay.ClearState();
+        // if (highlight)
+        // {
+        //     mDisplay.fillScreen(WHITE);
+        // }
+        // mDisplay.setTextColor(highlight ? BLACK : WHITE);
 
         mDisplay.println(String("METRONOME"));
-        mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");
-        mDisplay.print(" ");
-        mDisplay.println(mpAppSettings->mMetronomeSoundOn ? "LEDOn" : "LEDOff");
-        mDisplay.println(String(" bpm=") + mpAppSettings->GetCurrentPerformancePatch().mBPM);
+        // mDisplay.print(mpAppSettings->mMetronomeSoundOn ? "SoundOn" : "SoundOff");
+        // mDisplay.print(" ");
+        // mDisplay.println(mpAppSettings->mMetronomeSoundOn ? "LEDOn" : "LEDOff");
+        mDisplay.println(String("bpm ") + (int)std::round(mpAppSettings->GetCurrentPerformancePatch().mBPM));
+        mDisplay.println(String("n   ") + mpAppSettings->GetCurrentPerformancePatch().mBeatsPerBar);
+        mDisplay.println(String("sub ") + mpAppSettings->GetCurrentPerformancePatch().mBeatSubdivisions);
 
-        const int r = 4;
-        int x = beatFrac * (MAX_DISPLAY_WIDTH - r * 2);
-        if (altBeat)
-            x = mDisplay.width() - x;
-        mDisplay.fillCircle(x, mDisplay.getCursorY() + r, r, highlight ? BLACK : WHITE);
+        // const int r = 4;
+        // int x = beatFrac * (MAX_DISPLAY_WIDTH - r * 2);
+        // if (altBeat)
+        //     x = mDisplay.width() - x;
+        // mDisplay.fillCircle(x, mDisplay.getCursorY() + r, r, highlight ? BLACK : WHITE);
 
-        mDisplay.println(String(""));
-        mDisplay.println(String("                  -->"));
+        // mDisplay.println(String(""));
+        // mDisplay.println(String("                  -->"));
 
         SettingsMenuApp::RenderFrontPage();
     }

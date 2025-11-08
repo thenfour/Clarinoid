@@ -61,6 +61,15 @@ struct PointF
 {
     float x;
     float y;
+    PointF(float x_, float y_) : x(x_), y(y_)
+    {
+    }
+    PointF() : x(0.0f), y(0.0f)
+    {
+    }
+    explicit PointF(const PointI &p) : x((float)p.x), y((float)p.y)
+    {
+    }
     static PointF Construct(float x_, float y_)
     {
         PointF ret;
@@ -75,6 +84,11 @@ struct PointF
     PointF Add(const PointI &rhs) const
     {
         return PointF::Construct(x + rhs.x, y + rhs.y);
+    }
+
+    PointI Round() const
+    {
+        return PointI::Construct((int)floorf(x + 0.5f), (int)floorf(y + 0.5f));
     }
 };
 
@@ -102,8 +116,14 @@ struct RectI
     int y;
     int width;
     int height;
-    int left() const { return x; }
-    int top() const { return y; }
+    int left() const
+    {
+        return x;
+    }
+    int top() const
+    {
+        return y;
+    }
     int right() const
     {
         return x + width;
@@ -179,12 +199,12 @@ struct BitmapSpec
     }
 };
 
-
-    struct IMetronome {
-        virtual uint32_t GetBeatInt() const = 0;
-        virtual float GetBeatFrac() const = 0;
-        virtual float GetBeatFloat() const = 0;
-        virtual void OnBPMChanged() = 0;
-    };
+struct IMetronome
+{
+    virtual uint32_t GetBeatInt() const = 0;
+    virtual float GetBeatFrac() const = 0;
+    virtual float GetBeatFloat() const = 0;
+    virtual void OnBPMChanged() = 0;
+};
 
 } // namespace clarinoid

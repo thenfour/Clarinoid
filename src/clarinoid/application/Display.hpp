@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 
 #include <clarinoid/basic/Basic.hpp>
@@ -738,6 +739,132 @@ struct _CCDisplay : IDisplay
         }
     }
 
+    // Fills the circular sector rooted at origin with radius measured in pixels and confined between
+    // [angleStartRadians, angleStartRadians + angleSweepRadians]. Angles follow the standard screen-space
+    // convention: 0 rad aligns with +X, positive values rotate counter-clockwise, and a negative sweep draws
+    // clockwise. brightnessStartQp8 and brightnessEndQp8 (0-255 fixed-point) define a linear gradient along the
+    // angular axis: pixels touching the leading edge at angleStartRadians receive brightnessStartQp8, pixels on the
+    // trailing edge at angleStartRadians + angleSweepRadians receive brightnessEndQp8, and interior pixels
+    // interpolate based on their clamped angular position before dithering. Pixels outside the active clip rect or
+    // beyond the given radius are ignored.
+    virtual void FillPieSliceGradient(const PointF &origin,
+                                      float radius,
+                                      float angleStartRadians,
+                                      float angleSweepRadians, // can be negative.
+                                      int brightnessStartQp8,
+                                      int brightnessEndQp8) override
+    {
+        if (radius <= 0.0f)
+        {
+            return;
+        }
+
+        float sweep = angleSweepRadians;
+        if (fabsf(sweep) <= 1e-6f)
+        {
+            return;
+        }
+
+        float radiusSq = radius * radius;
+        float sweepAbs = fabsf(sweep);
+        bool sweepPositive = sweep > 0.0f;
+
+        int startBrightness = ClampInclusive(brightnessStartQp8, 0, 255);
+        int endBrightness = ClampInclusive(brightnessEndQp8, 0, 255);
+
+        float normStart = WrapAnglePos(angleStartRadians);
+
+        int minX = (int)floorf(origin.x - radius);
+        int maxX = (int)ceilf(origin.x + radius);
+        int minY = (int)floorf(origin.y - radius);
+        int maxY = (int)ceilf(origin.y + radius);
+
+        auto clamp01 = [](float v) {
+            if (v < 0.0f)
+            {
+                return 0.0f;
+            }
+            if (v > 1.0f)
+            {
+                return 1.0f;
+            }
+            return v;
+        };
+
+        for (int y = minY; y <= maxY; ++y)
+        {
+            for (int x = minX; x <= maxX; ++x)
+            {
+                PointI pt{x, y};
+                if (!IsInBounds(pt))
+                {
+                    continue;
+                }
+
+                float sampleX = (float)x + 0.5f;
+                float sampleY = (float)y + 0.5f;
+                float dx = sampleX - origin.x;
+                float dy = sampleY - origin.y;
+                float distSq = dx * dx + dy * dy;
+                if (distSq > radiusSq)
+                {
+                    continue;
+                }
+
+                float angle = WrapAnglePos(fast::atan2f(dy, dx));
+                bool inside = false;
+                float t = 0.0f;
+
+                if (sweepPositive)
+                {
+                    if (sweepAbs >= kTwoPI_f - 1e-6f)
+                    {
+                        inside = true;
+                        float delta = WrapAnglePos(angle - normStart);
+                        t = clamp01(delta / sweepAbs);
+                    }
+                    else
+                    {
+                        float delta = WrapAnglePos(angle - normStart);
+                        if (delta <= sweepAbs + 1e-6f)
+                        {
+                            inside = true;
+                            t = clamp01(delta / sweepAbs);
+                        }
+                    }
+                }
+                else
+                {
+                    if (sweepAbs >= kTwoPI_f - 1e-6f)
+                    {
+                        inside = true;
+                        float delta = WrapAnglePos(normStart - angle);
+                        t = clamp01(delta / sweepAbs);
+                    }
+                    else
+                    {
+                        float delta = WrapAnglePos(normStart - angle);
+                        if (delta <= sweepAbs + 1e-6f)
+                        {
+                            inside = true;
+                            t = clamp01(delta / sweepAbs);
+                        }
+                    }
+                }
+
+                if (!inside)
+                {
+                    continue;
+                }
+
+                float interp = (1.0f - t) * (float)startBrightness + t * (float)endBrightness;
+                int brightness = (int)(interp + 0.5f);
+                brightness = ClampInclusive(brightness, 0, 255);
+                SetPixelShaded(pt, brightness);
+            }
+        }
+    }
+
     /// <summary>
     /// Draws a line from (x0, y0) to (x1, y1) with simulated brightness using
     /// the given DitherMatrix for Bayer dithering (purely in fixed-point).
@@ -956,6 +1083,169 @@ struct _CCDisplay : IDisplay
                 {
                     DrawHLineDithered({c.x - y, c.y - x}, (2 * y + 1), brightnessQp8);
                 }
+            }
+        }
+    }
+
+    virtual void FillCircleWithBrightnessF(const PointF &center, float radius, int brightnessQp8) override
+    {
+        if (radius <= 0.0f)
+        {
+            return;
+        }
+
+        float radiusClamped = std::max(radius, 0.0f);
+        float radiusSq = radiusClamped * radiusClamped;
+
+        int minX = (int)floorf(center.x - radiusClamped);
+        int maxX = (int)ceilf(center.x + radiusClamped);
+        int minY = (int)floorf(center.y - radiusClamped);
+        int maxY = (int)ceilf(center.y + radiusClamped);
+
+        const int sampleCount = (int)SizeofStaticArray(gSubpixelSampleOffsets);
+
+        for (int y = minY; y < maxY; ++y)
+        {
+            for (int x = minX; x < maxX; ++x)
+            {
+                PointI pixel{x, y};
+                if (!IsInBounds(pixel))
+                {
+                    continue;
+                }
+
+                float sampleSum = 0.0f;
+                for (const auto &offset : gSubpixelSampleOffsets)
+                {
+                    float sampleX = (float)x + offset[0];
+                    float sampleY = (float)y + offset[1];
+                    float dx = sampleX - center.x;
+                    float dy = sampleY - center.y;
+                    float distSq = dx * dx + dy * dy;
+                    if (distSq <= radiusSq)
+                    {
+                        sampleSum += (float)brightnessQp8;
+                    }
+                }
+
+                if (sampleSum <= 0.0f)
+                {
+                    continue;
+                }
+
+                int finalBrightness = (int)(sampleSum / (float)sampleCount + 0.5f);
+                finalBrightness = ClampInclusive(finalBrightness, 0, 255);
+                if (finalBrightness <= 0)
+                {
+                    continue;
+                }
+
+                SetPixelShaded(pixel, finalBrightness);
+            }
+        }
+    }
+
+    virtual void FillCircleWithStrokeF(const PointF &center,
+                                       float radius,
+                                       float strokeWidth,
+                                       int fillBrightnessQp8,
+                                       int strokeBrightnessQp8,
+                                       IDisplay::CircleStrokeMode mode) override
+    {
+        float radiusClamped = std::max(radius, 0.0f);
+        float strokeWidthClamped = std::max(strokeWidth, 0.0f);
+
+        bool hasFill = radiusClamped > 0.0f;          // && fillBrightnessQp8 > 0;
+        bool hasStroke = (strokeWidthClamped > 0.0f); // && (strokeBrightnessQp8 > 0);
+
+        if (!hasFill && !hasStroke)
+        {
+            return;
+        }
+
+        if (hasFill && !hasStroke)
+        {
+            FillCircleWithBrightnessF(center, radiusClamped, fillBrightnessQp8);
+            return;
+        }
+
+        float strokeInnerRadius = radiusClamped;
+        float strokeOuterRadius = radiusClamped;
+
+        switch (mode)
+        {
+        case IDisplay::CircleStrokeMode::Inside:
+            strokeOuterRadius = radiusClamped;
+            strokeInnerRadius = std::max(radiusClamped - strokeWidthClamped, 0.0f);
+            break;
+        case IDisplay::CircleStrokeMode::Outside:
+            strokeInnerRadius = radiusClamped;
+            strokeOuterRadius = radiusClamped + strokeWidthClamped;
+            break;
+        case IDisplay::CircleStrokeMode::Centered:
+        default:
+            strokeInnerRadius = std::max(radiusClamped - strokeWidthClamped * 0.5f, 0.0f);
+            strokeOuterRadius = radiusClamped + strokeWidthClamped * 0.5f;
+            break;
+        }
+
+        float outerExtent = std::max(radiusClamped, strokeOuterRadius);
+        float fillRadiusSq = radiusClamped * radiusClamped;
+        float strokeInnerSq = strokeInnerRadius * strokeInnerRadius;
+        float strokeOuterSq = strokeOuterRadius * strokeOuterRadius;
+
+        int minX = (int)floorf(center.x - outerExtent);
+        int maxX = (int)ceilf(center.x + outerExtent);
+        int minY = (int)floorf(center.y - outerExtent);
+        int maxY = (int)ceilf(center.y + outerExtent);
+
+        const int sampleCount = (int)SizeofStaticArray(gSubpixelSampleOffsets);
+
+        for (int y = minY; y < maxY; ++y)
+        {
+            for (int x = minX; x < maxX; ++x)
+            {
+                PointI pixel{x, y};
+                if (!IsInBounds(pixel))
+                {
+                    continue;
+                }
+
+                float sampleSum = 0.0f;
+                for (const auto &offset : gSubpixelSampleOffsets)
+                {
+                    float sampleX = (float)x + offset[0];
+                    float sampleY = (float)y + offset[1];
+                    float dx = sampleX - center.x;
+                    float dy = sampleY - center.y;
+                    float distSq = dx * dx + dy * dy;
+
+                    bool inStrokeBand = (distSq >= strokeInnerSq) && (distSq <= strokeOuterSq);
+                    bool inFill = hasFill && (distSq <= fillRadiusSq);
+
+                    if (inStrokeBand)
+                    {
+                        sampleSum += (float)strokeBrightnessQp8;
+                    }
+                    else if (inFill)
+                    {
+                        sampleSum += (float)fillBrightnessQp8;
+                    }
+                }
+
+                if (sampleSum <= 0.0f)
+                {
+                    continue;
+                }
+
+                int finalBrightness = (int)(sampleSum / (float)sampleCount + 0.5f);
+                finalBrightness = ClampInclusive(finalBrightness, 0, 255);
+                if (finalBrightness <= 0)
+                {
+                    continue;
+                }
+
+                SetPixelShaded(pixel, finalBrightness);
             }
         }
     }
