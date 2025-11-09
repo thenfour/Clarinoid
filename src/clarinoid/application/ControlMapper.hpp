@@ -221,13 +221,15 @@ struct PerfPresetMappableFunction : FunctionHandler
 {
     IInputSource *mInputSrc = nullptr;
     AppSettings *mAppSettings = nullptr;
+    IMetronome *mpMetronome;
 
-    void Init(AppSettings *appSettings, IInputSource *psrc)
+    void Init(AppSettings *appSettings, IInputSource *psrc, IMetronome *pMetronome)
     {
         CCASSERT(!!psrc);
         CCASSERT(!!appSettings);
         mInputSrc = psrc;
         mAppSettings = appSettings;
+        mpMetronome = pMetronome;
     }
 
     virtual void FunctionHandler_Update(const ControlValue &v) override
@@ -241,6 +243,8 @@ struct PerfPresetMappableFunction : FunctionHandler
             auto name = mAppSettings->GetPerfPatchName(nv);
             mInputSrc->InputSource_ShowToast(String("Perf: ") + nv + " (" + (nv - old) + ")\r\n" + name);
             mAppSettings->mCurrentPerformancePatch = nv;
+
+            mpMetronome->OnBPMChanged();
         }
     }
     virtual ControlValue FunctionHandler_GetCurrentValue() const override
@@ -444,7 +448,7 @@ struct InputDelegator
         mTransposeFn.Init(appSettings, psrc);
         mTransposeAFn.Init(appSettings, psrc);
         mTransposeBFn.Init(appSettings, psrc);
-        mPerfPresetFn.Init(appSettings, psrc);
+        mPerfPresetFn.Init(appSettings, psrc, pMetronome);
         mGlobalKeyRoot.Init(appSettings, psrc);
         mGlobalKeyFlavor.Init(appSettings, psrc);
         mGlobalTempo.Init(appSettings, psrc, pMetronome);

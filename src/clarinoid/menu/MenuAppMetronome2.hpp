@@ -397,6 +397,12 @@ struct MetronomeSettings2App : public SettingsMenuApp
 
         SettingsMenuApp::RenderFrontPage();
     }
+
+    virtual void DisplayAppOnSelected() override
+    {
+        SettingsMenuApp::DisplayAppOnSelected();
+        MetronomeVis2::SettingsChangedTrigger = true;
+    }
 };
 
 static constexpr size_t MetronomeSettings2AppSize = sizeof(MetronomeSettings2App);

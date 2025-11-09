@@ -78,6 +78,20 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
                                                           this},
                                             AlwaysEnabled};
 
+    EnumSettingItem<PerfDisplayStyle> mPerfDisplayStyle = {
+        "Display style",
+        gPerfDisplayStyleInfo,
+        Property<PerfDisplayStyle>{[](void *cap) FLASHMEM {
+                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                       return pThis->GetBinding().mPerfDisplayStyle;
+                                   },
+                                   [](void *cap, const PerfDisplayStyle &v) {
+                                       auto *pThis = (PerformancePatchSettingsApp *)cap;
+                                       pThis->GetBinding().mPerfDisplayStyle = v;
+                                   },
+                                   this},
+        AlwaysEnabled};
+
     FloatSettingItem mDetune = {"Detune",
                                 StandardRangeSpecs::gFloat_0_1_Fine,
                                 Property<float>{[](void *cap) FLASHMEM {
@@ -404,13 +418,11 @@ struct PerformancePatchSettingsApp : public SettingsMenuApp
 
     SubmenuSettingItem mScaleSubmenu = {"Scale", &mScaleList, AlwaysEnabled};
 
-    // uint8_t tempBuffer[200] = {0};
-
-    ISettingItem *mArray[14] = {
+    ISettingItem *mArray[15] = {
         &mMasterGain,
         &mTranspose,
         &mDetune,
-
+        &mPerfDisplayStyle,
         &mSynthPatchATranspose,
         &mSynthPatchBTranspose,
         &mSelectedSynthPatchA,

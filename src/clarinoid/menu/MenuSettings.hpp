@@ -594,4 +594,7 @@ struct SettingsMenuApp : DisplayApp, ISettingItemEditorActions
     }
 };
 
+static constexpr size_t rchiprcihirpc = sizeof(SettingsMenuApp);
+static constexpr size_t rchipr8cihirpc = sizeof(DisplayApp);
+
 } // namespace clarinoid

@@ -14,6 +14,19 @@ namespace clarinoid
 static constexpr int kMaxBeatsPerBar = 8;
 static constexpr int kMaxSubdivisionsPerBeat = 8;
 
+enum class PerfDisplayStyle : uint8_t
+{
+    Demo,
+    Metronome,
+};
+
+EnumItemInfo<PerfDisplayStyle> gPerfDisplayStyleItems[2] = {
+    {PerfDisplayStyle::Demo, "Demo"},
+    {PerfDisplayStyle::Metronome, "Metronome"},
+};
+
+EnumInfo<PerfDisplayStyle> gPerfDisplayStyleInfo("PerfDisplayStyle", gPerfDisplayStyleItems);
+
 enum class GlobalScaleRefType : uint8_t
 {
     Chosen,
@@ -30,6 +43,8 @@ EnumInfo<GlobalScaleRefType> gGlobalScaleRefTypeInfo("GlobalScaleRefType", gGlob
 struct PerformancePatch
 {
     String mName = "--";
+
+    PerfDisplayStyle mPerfDisplayStyle = PerfDisplayStyle::Demo;
 
     float mBPM = 104.0f;
     int8_t mBeatsPerBar = 4;
@@ -387,6 +402,7 @@ struct AppSettings
         p.mBPM = 70;
         p.mBeatsPerBar = 2;
         p.mBeatSubdivisions = 3;
+        p.mPerfDisplayStyle = PerfDisplayStyle::Metronome;
 
         p.mSynthPresetA = SynthPresetID_SupersawSoft;
         p.mSynthAGain = DecibelsToLinear(-6);

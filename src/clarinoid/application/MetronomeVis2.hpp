@@ -30,10 +30,17 @@ struct MetronomeVis2
         int subdivisionsPerBeat = perf.mBeatSubdivisions;
         const int totalSubdivisions = beatsPerBar * subdivisionsPerBeat;
 
-        if (SettingsChangedTrigger)
+        // if settings changed that affect viz, reset.
+        if (SettingsChangedTrigger || Metronome::SettingsChangedForViz ||
+            mLastPerfPatchIndex != appSettings.mCurrentPerformancePatch || mLastBeatsPerBar != beatsPerBar ||
+            mLastSubdivisionsPerBeat != subdivisionsPerBeat || mLastBPM != perf.mBPM)
         {
+            mLastPerfPatchIndex = appSettings.mCurrentPerformancePatch;
+            mLastBeatsPerBar = beatsPerBar;
+            mLastSubdivisionsPerBeat = subdivisionsPerBeat;
+            mLastBPM = perf.mBPM;
             SettingsChangedTrigger = false;
-
+            Metronome::SettingsChangedForViz = false;
             Reset(perf);
         }
 
@@ -166,6 +173,12 @@ struct MetronomeVis2
     // ModCurveRow mpModCurveMinorFlash = nullptr;
     // ModCurveRow mpModCurveSweep = nullptr;
     float mAnglePerDivision = 0;
+
+    // detect when we need to reset.
+    int mLastPerfPatchIndex = -1;
+    int mLastBeatsPerBar = -1;
+    int mLastSubdivisionsPerBeat = -1;
+    float mLastBPM = -1.0f;
 
     // call when configuration or settings change
     void Reset(const PerformancePatch &perf)

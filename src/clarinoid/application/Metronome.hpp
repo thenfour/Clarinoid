@@ -15,6 +15,8 @@ struct Metronome : IMetronome
     TimeSpan mRootTime;
     float mBPM; // important that we store this here, during bpm changes to know previous / new.
 
+    static bool SettingsChangedForViz;
+
     Metronome(AppSettings &appSettings) : mAppSettings(appSettings)
     {
         mBPM = mAppSettings.GetCurrentPerformancePatch().mBPM;
@@ -23,6 +25,9 @@ struct Metronome : IMetronome
 
     void OnBPMChanged() override
     {
+        // tell vis to reset.
+        SettingsChangedForViz = true;
+
         // make it smoothly modulated; "now" should finish out the current beat.
         // so, make the new root time (now - current beat fraction * new bpm)
         // this is required in order to make BPM changes and not cause total chaos with regards to sequencer timing.
@@ -50,5 +55,7 @@ struct Metronome : IMetronome
         return absTime.ElapsedBeats(mBPM);
     }
 };
+
+bool Metronome::SettingsChangedForViz = true;
 
 } // namespace clarinoid

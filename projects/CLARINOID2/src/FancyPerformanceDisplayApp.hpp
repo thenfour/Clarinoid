@@ -9,6 +9,7 @@
 #include "GeodesicSphereDemoApp.hpp"
 #include "CubeDemoApp.hpp"
 #include "TorusDemoApp.hpp"
+#include <clarinoid/application/MetronomeVis2.hpp>
 
 namespace clarinoid
 {
@@ -20,6 +21,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     // GeodesicSphereSimulation<0> mGeodesicSphereSim0;
     GeodesicSphereSimulation<1> mGeodesicSphereSim1;
+    MetronomeVis2 mMetronomeVis;
     // GeodesicSphereSimulation<2> mGeodesicSphereSim2;
     // CubeSimulation mCubeSim;
     // TorusSimulation<9, 13> mTorusSim1;
@@ -131,15 +133,25 @@ struct FancyPerformanceDisplayApp : DisplayApp
             return;
         }
 
+        auto &appSettings = *mMusicalStateTask.mAppSettings;
+        auto &perf = appSettings.GetCurrentPerformancePatch();
+
+        switch (perf.mPerfDisplayStyle)
         {
+        default:
+        case PerfDisplayStyle::Demo: {
             auto &currentSim = mGeodesicSphereSim1; //*mMeshSims[mCurrentMeshSimIndex];
             currentSim.StepMeshSimulation();
             currentSim.SetScreenOffsetPixels(13, -17);
             static constexpr int kSphereWidth = 64;
             currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
         }
-        auto &appSettings = *mMusicalStateTask.mAppSettings;
-        auto &perf = appSettings.GetCurrentPerformancePatch();
+        break;
+        case PerfDisplayStyle::Metronome:
+            mMetronomeVis.Render(
+                mMusicalStateTask.mMetronome, mDisplay, appSettings, {100, 27}, RectI::Construct(0, 0, 50, 50));
+            break;
+        }
 
         static constexpr int kFingeredNoteRowY = 12;
         static constexpr int kTextAreaWidth = 72;
