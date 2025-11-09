@@ -22,6 +22,18 @@ struct MetronomeSettings2App : public SettingsMenuApp
     AppSettings *mpAppSettings;
     MetronomeVis2 mMetronomeVis;
 
+    Property<bool> EnabledIfSoundOn = Property<bool>{[](void *cap) FLASHMEM {
+                                                         auto *pThis = (MetronomeSettings2App *)cap;
+                                                         return pThis->mpAppSettings->mMetronomeSoundOn;
+                                                     },
+                                                     this};
+
+    Property<bool> EnabledIfLEDOn = Property<bool>{[](void *cap) FLASHMEM {
+                                                       auto *pThis = (MetronomeSettings2App *)cap;
+                                                       return pThis->mpAppSettings->mMetronomeLED;
+                                                   },
+                                                   this};
+
     MetronomeSettings2App(Metronome *pm, AppSettings *pas, IDisplay &d)
         : SettingsMenuApp(d), mpMetronome(pm), mpAppSettings(pas)
     {
@@ -73,104 +85,104 @@ struct MetronomeSettings2App : public SettingsMenuApp
                       this},
         AlwaysEnabled};
 
-    // MetronomeVis2::kOuterRadius
-    FloatSettingItem mOuterRadius = {"OuterRadius",
-                                     NumericEditRangeSpec{10.0f, 50.0f},
-                                     Property<float>{[](void *cap) FLASHMEM {
-                                                         // auto *pThis = (MetronomeSettings2App *)cap;
-                                                         return MetronomeVis2::kOuterRadius;
-                                                     },
-                                                     [](void *cap, const float &v) {
-                                                         MetronomeVis2::kOuterRadius = v;
-                                                         MetronomeVis2::SettingsChangedTrigger = true;
-                                                     },
-                                                     this},
-                                     AlwaysEnabled};
+    // // MetronomeVis2::kOuterRadius
+    // FloatSettingItem mOuterRadius = {"OuterRadius",
+    //                                  NumericEditRangeSpec{10.0f, 50.0f},
+    //                                  Property<float>{[](void *cap) FLASHMEM {
+    //                                                      // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                      return MetronomeVis2::kOuterRadius;
+    //                                                  },
+    //                                                  [](void *cap, const float &v) {
+    //                                                      MetronomeVis2::kOuterRadius = v;
+    //                                                      MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                  },
+    //                                                  this},
+    //                                  AlwaysEnabled};
 
-    // MetronomeVis2::kBigFlashBrightnessQp8
-    IntSettingItem mBigFlashBrightnessQp8 = {"BigFlashBright",
-                                             NumericEditRangeSpec<int>{0, 255},
-                                             Property<int>{[](void *cap) FLASHMEM {
-                                                               // auto *pThis = (MetronomeSettings2App *)cap;
-                                                               return (int)MetronomeVis2::kBigFlashBrightnessQp8;
-                                                           },
-                                                           [](void *cap, const int &v) FLASHMEM {
-                                                               // auto *pThis = (MetronomeSettings2App *)cap;
-                                                               MetronomeVis2::kBigFlashBrightnessQp8 = v;
-                                                               MetronomeVis2::SettingsChangedTrigger = true;
-                                                           },
-                                                           this},
-                                             AlwaysEnabled};
-    // MetronomeVis2::kBigFlashHoldMs
-    IntSettingItem mBigFlashHoldMs = {"BigFlashHold",
-                                      NumericEditRangeSpec<int>{1, 1000},
-                                      Property<int>{[](void *cap) FLASHMEM {
-                                                        // auto *pThis = (MetronomeSettings2App *)cap;
-                                                        return (int)MetronomeVis2::kBigFlashHoldMs;
-                                                    },
-                                                    [](void *cap, const int &v) FLASHMEM {
-                                                        // auto *pThis = (MetronomeSettings2App *)cap;
-                                                        MetronomeVis2::kBigFlashHoldMs = v;
-                                                        MetronomeVis2::SettingsChangedTrigger = true;
-                                                    },
-                                                    this},
-                                      AlwaysEnabled};
+    // // MetronomeVis2::kBigFlashBrightnessQp8
+    // IntSettingItem mBigFlashBrightnessQp8 = {"BigFlashBright",
+    //                                          NumericEditRangeSpec<int>{0, 255},
+    //                                          Property<int>{[](void *cap) FLASHMEM {
+    //                                                            // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                            return (int)MetronomeVis2::kBigFlashBrightnessQp8;
+    //                                                        },
+    //                                                        [](void *cap, const int &v) FLASHMEM {
+    //                                                            // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                            MetronomeVis2::kBigFlashBrightnessQp8 = v;
+    //                                                            MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                        },
+    //                                                        this},
+    //                                          AlwaysEnabled};
+    // // MetronomeVis2::kBigFlashHoldMs
+    // IntSettingItem mBigFlashHoldMs = {"BigFlashHold",
+    //                                   NumericEditRangeSpec<int>{1, 1000},
+    //                                   Property<int>{[](void *cap) FLASHMEM {
+    //                                                     // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                     return (int)MetronomeVis2::kBigFlashHoldMs;
+    //                                                 },
+    //                                                 [](void *cap, const int &v) FLASHMEM {
+    //                                                     // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                     MetronomeVis2::kBigFlashHoldMs = v;
+    //                                                     MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                 },
+    //                                                 this},
+    //                                   AlwaysEnabled};
 
-    // MetronomeVis2::kBigFlashDecayMs
-    IntSettingItem mBigFlashDecayMs = {"BigFlashDecay",
-                                       NumericEditRangeSpec<int>{1, 1000},
-                                       Property<int>{[](void *cap) FLASHMEM {
-                                                         // auto *pThis = (MetronomeSettings2App *)cap;
-                                                         return (int)MetronomeVis2::kBigFlashDecayMs;
-                                                     },
-                                                     [](void *cap, const int &v) FLASHMEM {
-                                                         // auto *pThis = (MetronomeSettings2App *)cap;
-                                                         MetronomeVis2::kBigFlashDecayMs = v;
-                                                         MetronomeVis2::SettingsChangedTrigger = true;
-                                                     },
-                                                     this},
-                                       AlwaysEnabled};
-    // MetronomeVis2::kBigFlashCurveN11
-    FloatSettingItem mBigFlashCurveN11 = {"BigFlashCurve",
-                                          StandardRangeSpecs::gFloat_N1_1,
-                                          Property<float>{[](void *cap) FLASHMEM {
-                                                              // auto *pThis = (MetronomeSettings2App *)cap;
-                                                              return MetronomeVis2::kBigFlashCurveN11;
-                                                          },
-                                                          [](void *cap, const float &v) {
-                                                              MetronomeVis2::kBigFlashCurveN11 = v;
-                                                              MetronomeVis2::SettingsChangedTrigger = true;
-                                                          },
-                                                          this},
-                                          AlwaysEnabled};
+    // // MetronomeVis2::kBigFlashDecayMs
+    // IntSettingItem mBigFlashDecayMs = {"BigFlashDecay",
+    //                                    NumericEditRangeSpec<int>{1, 1000},
+    //                                    Property<int>{[](void *cap) FLASHMEM {
+    //                                                      // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                      return (int)MetronomeVis2::kBigFlashDecayMs;
+    //                                                  },
+    //                                                  [](void *cap, const int &v) FLASHMEM {
+    //                                                      // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                      MetronomeVis2::kBigFlashDecayMs = v;
+    //                                                      MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                  },
+    //                                                  this},
+    //                                    AlwaysEnabled};
+    // // MetronomeVis2::kBigFlashCurveN11
+    // FloatSettingItem mBigFlashCurveN11 = {"BigFlashCurve",
+    //                                       StandardRangeSpecs::gFloat_N1_1,
+    //                                       Property<float>{[](void *cap) FLASHMEM {
+    //                                                           // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                           return MetronomeVis2::kBigFlashCurveN11;
+    //                                                       },
+    //                                                       [](void *cap, const float &v) {
+    //                                                           MetronomeVis2::kBigFlashCurveN11 = v;
+    //                                                           MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                       },
+    //                                                       this},
+    //                                       AlwaysEnabled};
 
-    // kBigFlashRadius
-    FloatSettingItem mBigFlashRadius = {"BigFlashRadius",
-                                        NumericEditRangeSpec{1.0f, 50.0f},
-                                        Property<float>{[](void *cap) FLASHMEM {
-                                                            // auto *pThis = (MetronomeSettings2App *)cap;
-                                                            return MetronomeVis2::kBigFlashRadius;
-                                                        },
-                                                        [](void *cap, const float &v) {
-                                                            MetronomeVis2::kBigFlashRadius = v;
-                                                            MetronomeVis2::SettingsChangedTrigger = true;
-                                                        },
-                                                        this},
-                                        AlwaysEnabled};
+    // // kBigFlashRadius
+    // FloatSettingItem mBigFlashRadius = {"BigFlashRadius",
+    //                                     NumericEditRangeSpec{1.0f, 50.0f},
+    //                                     Property<float>{[](void *cap) FLASHMEM {
+    //                                                         // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                         return MetronomeVis2::kBigFlashRadius;
+    //                                                     },
+    //                                                     [](void *cap, const float &v) {
+    //                                                         MetronomeVis2::kBigFlashRadius = v;
+    //                                                         MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                     },
+    //                                                     this},
+    //                                     AlwaysEnabled};
 
-    // MetronomeVis2::kMinorInnerRadius
-    FloatSettingItem mMinorInnerRadius = {"MinorInnerRadius",
-                                          NumericEditRangeSpec{1.0f, 50.0f},
-                                          Property<float>{[](void *cap) FLASHMEM {
-                                                              // auto *pThis = (MetronomeSettings2App *)cap;
-                                                              return MetronomeVis2::kMinorInnerRadius;
-                                                          },
-                                                          [](void *cap, const float &v) {
-                                                              MetronomeVis2::kMinorInnerRadius = v;
-                                                              MetronomeVis2::SettingsChangedTrigger = true;
-                                                          },
-                                                          this},
-                                          AlwaysEnabled};
+    // // MetronomeVis2::kMinorInnerRadius
+    // FloatSettingItem mMinorInnerRadius = {"MinorInnerRadius",
+    //                                       NumericEditRangeSpec{1.0f, 50.0f},
+    //                                       Property<float>{[](void *cap) FLASHMEM {
+    //                                                           // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                           return MetronomeVis2::kMinorInnerRadius;
+    //                                                       },
+    //                                                       [](void *cap, const float &v) {
+    //                                                           MetronomeVis2::kMinorInnerRadius = v;
+    //                                                           MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                       },
+    //                                                       this},
+    //                                       AlwaysEnabled};
     // // MetronomeVis2::kMinorBrightnessQp8
     // IntSettingItem mMinorBrightnessQp8 = {"MinorBright",
     //                                       NumericEditRangeSpec<int>{0, 255},
@@ -227,19 +239,19 @@ struct MetronomeSettings2App : public SettingsMenuApp
     //                                                    this},
     //                                    AlwaysEnabled};
 
-    // MetronomeVis2::kMajorInnerRadius
-    FloatSettingItem mMajorInnerRadius = {"MajorInnerRadius",
-                                          NumericEditRangeSpec{1.0f, 50.0f},
-                                          Property<float>{[](void *cap) FLASHMEM {
-                                                              // auto *pThis = (MetronomeSettings2App *)cap;
-                                                              return MetronomeVis2::kMajorInnerRadius;
-                                                          },
-                                                          [](void *cap, const float &v) {
-                                                              MetronomeVis2::kMajorInnerRadius = v;
-                                                              MetronomeVis2::SettingsChangedTrigger = true;
-                                                          },
-                                                          this},
-                                          AlwaysEnabled};
+    // // MetronomeVis2::kMajorInnerRadius
+    // FloatSettingItem mMajorInnerRadius = {"MajorInnerRadius",
+    //                                       NumericEditRangeSpec{1.0f, 50.0f},
+    //                                       Property<float>{[](void *cap) FLASHMEM {
+    //                                                           // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                           return MetronomeVis2::kMajorInnerRadius;
+    //                                                       },
+    //                                                       [](void *cap, const float &v) {
+    //                                                           MetronomeVis2::kMajorInnerRadius = v;
+    //                                                           MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                       },
+    //                                                       this},
+    //                                       AlwaysEnabled};
     // // MetronomeVis2::kMajorBrightnessQp8
     // IntSettingItem mMajorBrightnessQp8 = {"MajorBright",
     //                                       NumericEditRangeSpec<int>{0, 255},
@@ -296,33 +308,33 @@ struct MetronomeSettings2App : public SettingsMenuApp
     //                                                    this},
     //                                    AlwaysEnabled};
 
-    // MetronomeVis2::kSweepSizeRadians
-    FloatSettingItem mSweepSizeRadians = {"SweepSize",
-                                          NumericEditRangeSpec{0.0f, kTwoPI_f},
-                                          Property<float>{[](void *cap) FLASHMEM {
-                                                              // auto *pThis = (MetronomeSettings2App *)cap;
-                                                              return MetronomeVis2::kSweepSizeRadians;
-                                                          },
-                                                          [](void *cap, const float &v) {
-                                                              MetronomeVis2::kSweepSizeRadians = v;
-                                                              MetronomeVis2::SettingsChangedTrigger = true;
-                                                          },
-                                                          this},
-                                          AlwaysEnabled};
-    // MetronomeVis2::kSweepBrightnessQp8
-    IntSettingItem mSweepBrightnessQp8 = {"SweepBright",
-                                          NumericEditRangeSpec<int>{0, 255},
-                                          Property<int>{[](void *cap) FLASHMEM {
-                                                            // auto *pThis = (MetronomeSettings2App *)cap;
-                                                            return (int)MetronomeVis2::kSweepBrightnessQp8;
-                                                        },
-                                                        [](void *cap, const int &v) FLASHMEM {
-                                                            // auto *pThis = (MetronomeSettings2App *)cap;
-                                                            MetronomeVis2::kSweepBrightnessQp8 = v;
-                                                            MetronomeVis2::SettingsChangedTrigger = true;
-                                                        },
-                                                        this},
-                                          AlwaysEnabled};
+    // // MetronomeVis2::kSweepSizeRadians
+    // FloatSettingItem mSweepSizeRadians = {"SweepSize",
+    //                                       NumericEditRangeSpec{0.0f, kTwoPI_f},
+    //                                       Property<float>{[](void *cap) FLASHMEM {
+    //                                                           // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                           return MetronomeVis2::kSweepSizeRadians;
+    //                                                       },
+    //                                                       [](void *cap, const float &v) {
+    //                                                           MetronomeVis2::kSweepSizeRadians = v;
+    //                                                           MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                       },
+    //                                                       this},
+    //                                       AlwaysEnabled};
+    // // MetronomeVis2::kSweepBrightnessQp8
+    // IntSettingItem mSweepBrightnessQp8 = {"SweepBright",
+    //                                       NumericEditRangeSpec<int>{0, 255},
+    //                                       Property<int>{[](void *cap) FLASHMEM {
+    //                                                         // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                         return (int)MetronomeVis2::kSweepBrightnessQp8;
+    //                                                     },
+    //                                                     [](void *cap, const int &v) FLASHMEM {
+    //                                                         // auto *pThis = (MetronomeSettings2App *)cap;
+    //                                                         MetronomeVis2::kSweepBrightnessQp8 = v;
+    //                                                         MetronomeVis2::SettingsChangedTrigger = true;
+    //                                                     },
+    //                                                     this},
+    //                                       AlwaysEnabled};
     // MetronomeVis2::kSweepCurveN11
     // FloatSettingItem mSweepCurveN11 = {"SweepCurve",
     //                                    StandardRangeSpecs::gFloat_N1_1,
@@ -337,46 +349,111 @@ struct MetronomeSettings2App : public SettingsMenuApp
     //                                                    this},
     //                                    AlwaysEnabled};
 
-    ISettingItem *mArray[13] = {
+    BoolSettingItem mSoundEnable = {"SoundEnable",
+                                    "On",
+                                    "Off",
+                                    Property<bool>{[](void *cap) FLASHMEM {
+                                                       auto *pThis = (MetronomeSettings2App *)cap;
+                                                       return pThis->mpAppSettings->mMetronomeSoundOn;
+                                                   },
+                                                   [](void *cap, const bool &v) FLASHMEM {
+                                                       auto *pThis = (MetronomeSettings2App *)cap;
+                                                       pThis->mpAppSettings->mMetronomeSoundOn = v;
+                                                   },
+                                                   this},
+                                    AlwaysEnabled};
+
+    BoolSettingItem mLEDEnable = {"LED enable",
+                                  "On",
+                                  "Off",
+                                  Property<bool>{[](void *cap) FLASHMEM {
+                                                     auto *pThis = (MetronomeSettings2App *)cap;
+                                                     return pThis->mpAppSettings->mMetronomeLED;
+                                                 },
+                                                 [](void *cap, const bool &v) FLASHMEM {
+                                                     auto *pThis = (MetronomeSettings2App *)cap;
+                                                     pThis->mpAppSettings->mMetronomeLED = v;
+                                                 },
+                                                 this},
+                                  AlwaysEnabled};
+
+    FloatSettingItem mLEDDecay = {"LED decay",
+                                  StandardRangeSpecs::gFloat_0_1,
+                                  Property<float>{[](void *cap) FLASHMEM {
+                                                      auto *pThis = (MetronomeSettings2App *)cap;
+                                                      return pThis->mpAppSettings->mMetronomeLEDDecay;
+                                                  },
+                                                  [](void *cap, const float &v) {
+                                                      auto *pThis = (MetronomeSettings2App *)cap;
+                                                      pThis->mpAppSettings->mMetronomeLEDDecay = v;
+                                                  },
+                                                  this},
+                                  AlwaysEnabled};
+
+    IntSettingItem mLEDBrightness = {"LED brightness",
+                                     NumericEditRangeSpec<int>{1, 255},
+                                     Property<int>{[](void *cap) FLASHMEM {
+                                                       auto *pThis = (MetronomeSettings2App *)cap;
+                                                       return pThis->mpAppSettings->mMetronomeBrightness;
+                                                   },
+                                                   [](void *cap, const int &v) {
+                                                       auto *pThis = (MetronomeSettings2App *)cap;
+                                                       pThis->mpAppSettings->mMetronomeBrightness = v;
+                                                   },
+                                                   this},
+                                     AlwaysEnabled};
+
+    FloatSettingItem mGain = {"Gain",
+                              StandardRangeSpecs::gFloat_0_1,
+                              Property<float>{[](void *cap) FLASHMEM {
+                                                  auto *pThis = (MetronomeSettings2App *)cap;
+                                                  return pThis->mpAppSettings->mMetronomeGain;
+                                              },
+                                              [](void *cap, const float &v) {
+                                                  auto *pThis = (MetronomeSettings2App *)cap;
+                                                  pThis->mpAppSettings->mMetronomeGain = v;
+                                              },
+                                              this},
+                              EnabledIfSoundOn};
+
+    IntSettingItem mNote = {"Note",
+                            StandardRangeSpecs::gMetronomeNoteRange,
+                            Property<int>{[](void *cap) FLASHMEM {
+                                              auto *pThis = (MetronomeSettings2App *)cap;
+                                              return pThis->mpAppSettings->mMetronomeNote;
+                                          },
+                                          [](void *cap, const int &v) {
+                                              auto *pThis = (MetronomeSettings2App *)cap;
+                                              pThis->mpAppSettings->mMetronomeNote = v;
+                                          },
+                                          this},
+                            EnabledIfSoundOn};
+
+    IntSettingItem mDecay = {"Decay",
+                             StandardRangeSpecs::gMetronomeDecayRange,
+                             Property<int>{[](void *cap) FLASHMEM {
+                                               auto *pThis = (MetronomeSettings2App *)cap;
+                                               return pThis->mpAppSettings->mMetronomeDecayMS;
+                                           },
+                                           [](void *cap, const int &v) {
+                                               auto *pThis = (MetronomeSettings2App *)cap;
+                                               pThis->mpAppSettings->mMetronomeDecayMS = v;
+                                           },
+                                           this},
+                             EnabledIfSoundOn};
+
+    ISettingItem *mArray[10] = {
         &mBPM,         //
         &mBeatsPerBar, //
         &mBeatSubdivisions,
 
-        &mOuterRadius,           //
-        &mBigFlashBrightnessQp8, //
-        &mBigFlashHoldMs,        //
-        &mBigFlashDecayMs,       //
-        &mBigFlashCurveN11,      //
-        &mBigFlashRadius,
-
-        &mMinorInnerRadius, //
-        // &mMinorBrightnessQp8, //
-        // &mMinorHoldMs,        //
-        // &mMinorDecayMs,       //
-        // &mMinorCurveN11,      //
-
-        &mMajorInnerRadius, //
-        // &mMajorBrightnessQp8, //
-        // &mMajorHoldMs,        //
-        // &mMajorDecayMs,       //
-        // &mMajorCurveN11,      //
-
-        &mSweepSizeRadians,   //
-        &mSweepBrightnessQp8, //
-        //&mSweepCurveN11,      //
-
-        // &mRadius,                 //
-        // &mSubdivisionRadius,      //
-        // &mFlashHoldMs,            //
-        // &mFlashDecayMs,           //
-        // &mSubdivisionFlashHoldMs, //
-        // &mSubdivisionFlashDecayMs,
-        // &mSweepWidthRadians, //
-        // &mSweepMaxBrightnessQp8,
-        // &mSubdivFlashMaxBrightnessQp8,
-        // &mBeatFlashMaxBrightnessQp8,
-        // &mBigFlashMaxBrightnessQp8,
-
+        &mSoundEnable, //
+        &mGain,
+        &mNote,
+        &mDecay, //
+        &mLEDEnable,
+        &mLEDDecay, //
+        &mLEDBrightness,
     };
     SettingsList mRootList = {mArray};
 
@@ -387,7 +464,7 @@ struct MetronomeSettings2App : public SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        mMetronomeVis.Render(*mpMetronome, mDisplay, *mpAppSettings, {100, 27}, RectI::Construct(0, 0, 50, 50));
+        mMetronomeVis.Render(*mpMetronome, mDisplay, *mpAppSettings);
 
         mDisplay.println(String("METRONOM2"));
 

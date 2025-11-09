@@ -22,8 +22,11 @@ struct MetronomeVis2
         bool mIsMajor = false;
     };
 
-    void Render(IMetronome &metronome, IDisplay &display, AppSettings &appSettings, PointF centerF, RectI flashRect)
+    void Render(IMetronome &metronome, IDisplay &display, AppSettings &appSettings)
     {
+        const PointF kCenterF = PointF::Construct(100, 27);
+        const RectI kFlashRectI = RectI::Construct(0, 0, 64, 64);
+
         constexpr float kRadianOffset = -kPI_f / 2.0f; // rotate everything so 0 is at top.
         const auto &perf = appSettings.GetCurrentPerformancePatch();
         int beatsPerBar = perf.mBeatsPerBar;
@@ -72,25 +75,29 @@ struct MetronomeVis2
         {
             float s = mBigFlash.Sample01();
             float flash01 = gModCurveLUT.Transfer32(s, mpModCurveBigFlash);
-            int mainFlashBrightnessQp8 = flash01 * kBigFlashBrightnessQp8;
-            display.FillRectWithBrightness(flashRect, mainFlashBrightnessQp8);
-            // draw center circle (major beat flash)
-            display.FillCircleWithBrightnessF(centerF, kBigFlashRadius, mainFlashBrightnessQp8);
+            // int mainFlashBrightnessQp8 = flash01 * kBigFlashBrightnessQp8;
+            if (flash01 > 0.5f)
+            {
+                display.fillRect(kFlashRectI.x, kFlashRectI.y, kFlashRectI.width, kFlashRectI.height, SSD1306_WHITE);
+                display.fillCircle(kCenterF.x, kCenterF.y, (int)kBigFlashRadius, SSD1306_WHITE);
+                // display.FillRectWithBrightness(flashRect, mainFlashBrightnessQp8);
+                // display.FillCircleWithBrightnessF(centerF, kBigFlashRadius, mainFlashBrightnessQp8);
+            }
         }
 
         // draw sweep (brightness from 0 to 255 at the main line)
         {
-            float sweepStart = radarPosRadians + kRadianOffset - kSweepSizeRadians;
+            // float sweepStart = radarPosRadians + kRadianOffset - kSweepSizeRadians;
 
-            display.FillDonutSliceGradient(
-                centerF, 0, kMinorInnerRadius, sweepStart, kSweepSizeRadians, 0, kSweepBrightnessQp8, nullptr);
+            // display.FillDonutSliceGradient(
+            //     centerF, 0, kMinorInnerRadius, sweepStart, kSweepSizeRadians, 0, kSweepBrightnessQp8, nullptr);
         }
 
         // draw main animated line
         {
-            auto lineStart = PolarToCartesian(centerF, kBigFlashRadius, radarPosRadians + kRadianOffset);
-            auto lineEnd = PolarToCartesian(centerF, kMajorInnerRadius, radarPosRadians + kRadianOffset);
-            display.DrawLine(lineStart.Round(), lineEnd.Round());
+            // auto lineStart = PolarToCartesian(centerF, kBigFlashRadius, radarPosRadians + kRadianOffset);
+            auto lineEnd = PolarToCartesian(kCenterF, kMajorInnerRadius, radarPosRadians + kRadianOffset);
+            display.DrawLine(kCenterF.Round(), lineEnd.Round());
         }
 
         // draw divisions.
@@ -102,9 +109,11 @@ struct MetronomeVis2
 
             bool isThis = markerIndex == divisionIndex;
             int brightnessQp8 = isThis ? 255 : 0;
+            if (brightnessQp8 == 0)
+                continue;
 
             float innerRadius = division.mIsMajor ? kMajorInnerRadius : kMinorInnerRadius;
-            display.FillDonutSliceGradient(centerF,
+            display.FillDonutSliceGradient(kCenterF,
                                            innerRadius,
                                            kOuterRadius,
                                            mBeginAngleRadians + kRadianOffset,
@@ -122,13 +131,13 @@ struct MetronomeVis2
                 float beatFrac = (float)beatIndex / beatsPerBar;
                 float beatAngle = kTwoPI_f * beatFrac;
 
-                auto lineEnd = PolarToCartesian(centerF, kMajorInnerRadius, beatAngle + kRadianOffset);
-                display.DrawLine(centerF.Round(), lineEnd.Round());
+                auto lineEnd = PolarToCartesian(kCenterF, kMajorInnerRadius, beatAngle + kRadianOffset);
+                display.DrawLine(kCenterF.Round(), lineEnd.Round());
             }
         }
 
         // draw division bounds
-        display.DrawCircleStroke1px(centerF, kOuterRadius, IDisplay::StrokeMode::Inside);
+        display.DrawCircleStroke1px(kCenterF, kOuterRadius, IDisplay::StrokeMode::Inside);
 
         // for each division,
         for (int divisionIndex = 0; divisionIndex < totalSubdivisions; ++divisionIndex)
@@ -138,19 +147,19 @@ struct MetronomeVis2
             float mBeginAngleRadians = mAnglePerDivision * (float)divisionIndex;
             float lineAngleRadians = mBeginAngleRadians + kRadianOffset;
             float innerRadius = division.mIsMajor ? kMajorInnerRadius : kMinorInnerRadius;
-            auto lineStart = PolarToCartesian(centerF, innerRadius, lineAngleRadians);
-            auto lineEnd = PolarToCartesian(centerF, kOuterRadius, lineAngleRadians);
+            auto lineStart = PolarToCartesian(kCenterF, innerRadius, lineAngleRadians);
+            auto lineEnd = PolarToCartesian(kCenterF, kOuterRadius, lineAngleRadians);
             display.DrawLine(lineStart.Round(), lineEnd.Round());
 
             // end angle line.
             float mEndAngleRadians = mBeginAngleRadians + mAnglePerDivision;
             float lineEndAngleRadians = mEndAngleRadians + kRadianOffset;
-            auto lineEndStart = PolarToCartesian(centerF, innerRadius, lineEndAngleRadians);
-            auto lineEndEnd = PolarToCartesian(centerF, kOuterRadius, lineEndAngleRadians);
+            auto lineEndStart = PolarToCartesian(kCenterF, innerRadius, lineEndAngleRadians);
+            auto lineEndEnd = PolarToCartesian(kCenterF, kOuterRadius, lineEndAngleRadians);
             display.DrawLine(lineEndStart.Round(), lineEndEnd.Round());
 
             // arc at inner radius
-            display.DrawArcStroke1px(centerF,
+            display.DrawArcStroke1px(kCenterF,
                                      innerRadius,
                                      mBeginAngleRadians + kRadianOffset,
                                      mAnglePerDivision,
@@ -232,56 +241,29 @@ struct MetronomeVis2
     }
 
   public:
-    static /*constexpr*/ float kOuterRadius;
+    // static /*constexpr*/ float kOuterRadius;
+    // static /*constexpr*/ int kBigFlashBrightnessQp8;
+    // static /*constexpr*/ int kBigFlashHoldMs;
+    // static /*constexpr*/ int kBigFlashDecayMs;
+    // static /*constexpr*/ float kBigFlashCurveN11;
+    // static /*constexpr*/ float kBigFlashRadius;
+    // static /*constexpr*/ float kMinorInnerRadius;
+    // static /*constexpr*/ float kMajorInnerRadius;
+    // static /*constexpr*/ float kSweepSizeRadians;
+    // static /*constexpr*/ int kSweepBrightnessQp8;
 
-    static /*constexpr*/ int kBigFlashBrightnessQp8;
-    static /*constexpr*/ int kBigFlashHoldMs;
-    static /*constexpr*/ int kBigFlashDecayMs;
-    static /*constexpr*/ float kBigFlashCurveN11;
-
-    static /*constexpr*/ float kBigFlashRadius;
-
-    static /*constexpr*/ float kMinorInnerRadius;
-    // static /*constexpr*/ int kMinorBrightnessQp8;
-    // static /*constexpr*/ int kMinorHoldMs;
-    // static /*constexpr*/ int kMinorDecayMs;
-    // static /*constexpr*/ float kMinorCurveN11;
-
-    static /*constexpr*/ float kMajorInnerRadius;
-    // static /*constexpr*/ int kMajorBrightnessQp8;
-    // static /*constexpr*/ int kMajorHoldMs;
-    // static /*constexpr*/ int kMajorDecayMs;
-    // static /*constexpr*/ float kMajorCurveN11;
-
-    static /*constexpr*/ float kSweepSizeRadians;
-    static /*constexpr*/ int kSweepBrightnessQp8;
-    // static /*constexpr*/ float kSweepCurveN11;
+    static constexpr float kOuterRadius = 27.0f;
+    static constexpr int kBigFlashBrightnessQp8 = 255;
+    static constexpr int kBigFlashHoldMs = 30;
+    static constexpr int kBigFlashDecayMs = 160;
+    static constexpr float kBigFlashCurveN11 = -0.5f;
+    static constexpr float kBigFlashRadius = 12.0f;
+    static constexpr float kMinorInnerRadius = 18.0f;
+    static constexpr float kMajorInnerRadius = 12.0f;
+    static constexpr float kSweepSizeRadians = 0.6f;
+    static constexpr int kSweepBrightnessQp8 = 96;
 };
 
 bool MetronomeVis2::SettingsChangedTrigger = true;
-
-float MetronomeVis2::kOuterRadius = 27.0f;
-
-int MetronomeVis2::kBigFlashBrightnessQp8 = 255;
-int MetronomeVis2::kBigFlashHoldMs = 30;
-int MetronomeVis2::kBigFlashDecayMs = 160;
-float MetronomeVis2::kBigFlashCurveN11 = -0.5f;
-float MetronomeVis2::kBigFlashRadius = 12.0f;
-
-float MetronomeVis2::kMinorInnerRadius = 18.0f;
-// int MetronomeVis2::kMinorBrightnessQp8 = 255;
-// int MetronomeVis2::kMinorHoldMs = 20;
-// int MetronomeVis2::kMinorDecayMs = 100;
-// float MetronomeVis2::kMinorCurveN11 = 0;
-
-float MetronomeVis2::kMajorInnerRadius = 12.0f;
-// int MetronomeVis2::kMajorBrightnessQp8 = 255;
-// int MetronomeVis2::kMajorHoldMs = 20;
-// int MetronomeVis2::kMajorDecayMs = 100;
-// float MetronomeVis2::kMajorCurveN11 = 0;
-
-float MetronomeVis2::kSweepSizeRadians = 0.6f;
-int MetronomeVis2::kSweepBrightnessQp8 = 96;
-// float MetronomeVis2::kSweepCurveN11 = 0;
 
 } // namespace clarinoid

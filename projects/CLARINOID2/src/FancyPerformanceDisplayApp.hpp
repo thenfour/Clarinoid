@@ -148,8 +148,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
         }
         break;
         case PerfDisplayStyle::Metronome:
-            mMetronomeVis.Render(
-                mMusicalStateTask.mMetronome, mDisplay, appSettings, {100, 27}, RectI::Construct(0, 0, 50, 50));
+            mMetronomeVis.Render(mMusicalStateTask.mMetronome, mDisplay, appSettings);
             break;
         }
 
