@@ -701,7 +701,7 @@ struct Voice : IModulationKRateProvider
     }
 };
 
-Voice gVoices[MAX_SYNTH_VOICES] = {VOICE_INITIALIZER};
+DMAMEM Voice gVoices[MAX_SYNTH_VOICES] = {VOICE_INITIALIZER};
 
 struct SynthGraphControl
 {
@@ -786,5 +786,9 @@ struct SynthGraphControl
 };
 
 SynthGraphControl gSynthGraphControl;
+
+static constexpr size_t voicessize = sizeof(gVoices);
+static constexpr size_t synthgraphsize = sizeof(SynthGraph);
+static constexpr size_t synthgraphcontrolsize = sizeof(SynthGraphControl);
 
 } // namespace clarinoid

@@ -20,7 +20,7 @@ struct MetronomeSettings2App : public SettingsMenuApp
 
     Metronome *mpMetronome;
     AppSettings *mpAppSettings;
-    MetronomeVis2 mMetronomeVis;
+    // MetronomeVis2 mMetronomeVis;
 
     Property<bool> EnabledIfSoundOn = Property<bool>{[](void *cap) FLASHMEM {
                                                          auto *pThis = (MetronomeSettings2App *)cap;
@@ -464,7 +464,7 @@ struct MetronomeSettings2App : public SettingsMenuApp
 
     virtual void RenderFrontPage()
     {
-        mMetronomeVis.Render(*mpMetronome, mDisplay, *mpAppSettings);
+        gMetronomeVis.Render(*mpMetronome, mDisplay, *mpAppSettings);
 
         mDisplay.println(String("METRONOM2"));
 

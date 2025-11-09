@@ -244,7 +244,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mGuiPerformanceApp,
             //&mDisplayTestApp,
 
-            &mPerformanceApp, // nice to have this as front page to know if things are running healthy.
+            &mPerformanceApp,
             &mPerfPatchApp,
             &mHarmPatchApp,
             &mSynthPatchApp,

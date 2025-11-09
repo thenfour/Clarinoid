@@ -15,11 +15,11 @@ namespace clarinoid
 
 const char gClarinoidVersion[] = "CLARINOID 2";
 
-static const size_t MAX_SYNTH_VOICES = 8;
+static constexpr size_t MAX_SYNTH_VOICES = 8;
 #define VOICE_INITIALIZER {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
 
 // NB: also used as a temporary buffer when precalculating geometry data.
-static const size_t LOOPER_MEMORY_TOTAL_BYTES = 48000; // should be enough right?
+static const size_t LOOPER_MEMORY_TOTAL_BYTES = 32000; // should be enough right?
 static const size_t LOOPER_TEMP_BUFFER_BYTES = 4096;   // a smaller buffer that's just used for intermediate copy ops
 
 // arena size for geometric data (meshes, etc); once allocated at startup, this is never freed or changed so make it
@@ -28,7 +28,7 @@ static const size_t GEOM_BUFFER_BYTES = 12000;
 
 // check the memory usage menu to see what the value for this should be. it's NOT just 1 per voice or so; it's based on
 // how the graph is processed i believe so just check the value.
-static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 700;
+static constexpr size_t AUDIO_MEMORY_TO_ALLOCATE = 500;
 static constexpr float MAX_DELAY_MS = 500;
 
 static constexpr size_t MUSICALSTATE_TIMESLICE_PERIOD_MICROS = 2800;
@@ -36,7 +36,7 @@ static constexpr size_t BREATH_SIGNAL_SMOOTHING_PERIOD_MICROS = 12000;
 static constexpr size_t BREATH_SIGNAL_SMOOTHING_FRAMES =
     (BREATH_SIGNAL_SMOOTHING_PERIOD_MICROS / MUSICALSTATE_TIMESLICE_PERIOD_MICROS);
 
-static const size_t HARM_PRESET_COUNT = 32;
+static const size_t HARM_PRESET_COUNT = 24;
 static const size_t HARM_VOICES = 6;
 static const size_t HARM_SEQUENCE_LEN = 8;
 

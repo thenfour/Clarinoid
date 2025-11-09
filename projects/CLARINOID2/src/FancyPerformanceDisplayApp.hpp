@@ -21,7 +21,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
 
     // GeodesicSphereSimulation<0> mGeodesicSphereSim0;
     GeodesicSphereSimulation<1> mGeodesicSphereSim1;
-    MetronomeVis2 mMetronomeVis;
+    //MetronomeVis2 mMetronomeVis;
     // GeodesicSphereSimulation<2> mGeodesicSphereSim2;
     // CubeSimulation mCubeSim;
     // TorusSimulation<9, 13> mTorusSim1;
@@ -148,7 +148,7 @@ struct FancyPerformanceDisplayApp : DisplayApp
         }
         break;
         case PerfDisplayStyle::Metronome:
-            mMetronomeVis.Render(mMusicalStateTask.mMetronome, mDisplay, appSettings);
+            gMetronomeVis.Render(mMusicalStateTask.mMetronome, mDisplay, appSettings);
             break;
         }
 

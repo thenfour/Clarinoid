@@ -163,6 +163,10 @@ enum class HarmVoiceIntervalMode : uint8_t
     // you specify a chromatic interval. the resulting note may be nondiatonic.
     Chromatic,
 
+    // you specify a chromatic interval. if the resulting note is nondiatonic (out-of-scale), mute it.
+    ChromaticOOSMute,
+
+    // you specify a chromatic interval. if the resulting note is nondiatonic (out-of-scale), mute it.
     // you specify a chromatic interval.
     // when resulting note is nondiatonic, select the next diatonic note in the downward direction.
     ChromaticDown,
@@ -172,9 +176,10 @@ enum class HarmVoiceIntervalMode : uint8_t
     ChromaticUp,
 };
 
-EnumItemInfo<HarmVoiceIntervalMode> gHarmVoiceIntervalModeItems[4] = {
+EnumItemInfo<HarmVoiceIntervalMode> gHarmVoiceIntervalModeItems[5] = {
     {HarmVoiceIntervalMode::ScaleDegrees, "ScaleDegrees"},
     {HarmVoiceIntervalMode::Chromatic, "Chromatic"},
+    {HarmVoiceIntervalMode::ChromaticOOSMute, "ChromaticOOSMute"},
     {HarmVoiceIntervalMode::ChromaticDown, "ChromaticDown"},
     {HarmVoiceIntervalMode::ChromaticUp, "ChromaticUp"},
 };
@@ -187,16 +192,17 @@ struct HarmVoiceSettings
     HarmVoiceIntervalMode mIntervalMode = HarmVoiceIntervalMode::ScaleDegrees;
 
     // when interval mode = ScaleDegrees, these are scale degree offsets.
-    // when interval mode = MusicalInterval, these are enum ChromaticInterval, with a sign indicating direction.
+    // when interval mode is chromatic, these represent semitone offsets (cast from ChromaticInterval for clarity).
     int8_t mSequence[HARM_SEQUENCE_LEN] = {0};
+    uint16_t mVoiceSynthPreset = 0;
+
     uint8_t mSequenceLength = 0;
+    int8_t mOctaveTranspose = 0;
 
     HarmSynthPresetRefType mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
-    uint16_t mVoiceSynthPreset = 0;
 
     HarmScaleRefType mScaleRef = HarmScaleRefType::Global;
     Scale mLocalScale = {0, ScaleFlavorIndex::Chromatic};
-    int8_t mOctaveTranspose = 0;
     uint8_t mMinOutpNote = 0;
     uint8_t mMaxOutpNote = 127;
     NoteOOBBehavior mNoteOOBBehavior = NoteOOBBehavior::RotateIntoRange;
@@ -851,7 +857,7 @@ struct HarmSettings
         {
             vs.mScaleRef = HarmScaleRefType::Global;
             vs.mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
-            vs.mIntervalMode = HarmVoiceIntervalMode::ChromaticDown;
+            vs.mIntervalMode = HarmVoiceIntervalMode::ChromaticOOSMute;
             vs.mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
         }
 
@@ -932,6 +938,6 @@ struct HarmSettings
     }
 };
 
-// static constexpr auto harmsettingssize = sizeof(HarmSettings);
+static constexpr auto harmsettingssize = sizeof(HarmSettings);
 
 } // namespace clarinoid

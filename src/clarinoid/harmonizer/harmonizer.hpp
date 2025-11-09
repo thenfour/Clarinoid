@@ -35,6 +35,125 @@ struct Harmonizer
     Stopwatch mRotationTriggerTimer;
     VoiceState mVoiceStates[HARM_VOICES];
 
+    static bool MidiNoteIsDiatonic(uint8_t midiNote, Scale &scale)
+    {
+        uint8_t root = 0;
+        auto ctx = scale.GetNoteInScaleContext(midiNote, root, EnharmonicDirection::Sharp);
+        if (ctx.mEnharmonic == 0)
+        {
+            return true;
+        }
+        ctx = scale.GetNoteInScaleContext(midiNote, root, EnharmonicDirection::Flat);
+        return ctx.mEnharmonic == 0;
+    }
+
+    static uint8_t FindNextDiatonic(uint8_t midiNote, Scale &scale, int direction)
+    {
+        CCASSERT(direction != 0);
+        int current = midiNote;
+        while (true)
+        {
+            current += direction;
+            if (current < 0)
+            {
+                NoteInScaleFlavorContext tempCtx;
+                uint8_t tempRoot = 0;
+                uint8_t tempMidi = 0;
+                ResolveNearestDiatonic(0, scale, tempCtx, tempRoot, tempMidi);
+                return tempMidi;
+            }
+            if (current > 127)
+            {
+                NoteInScaleFlavorContext tempCtx;
+                uint8_t tempRoot = 0;
+                uint8_t tempMidi = 0;
+                ResolveNearestDiatonic(127, scale, tempCtx, tempRoot, tempMidi);
+                return tempMidi;
+            }
+            if (MidiNoteIsDiatonic((uint8_t)current, scale))
+            {
+                return (uint8_t)current;
+            }
+        }
+    }
+
+    static void ResolveNearestDiatonic(uint8_t referenceNote,
+                                       Scale &scale,
+                                       NoteInScaleFlavorContext &ctxOut,
+                                       uint8_t &rootOut,
+                                       uint8_t &midiOut)
+    {
+        uint8_t rootSharp = 0;
+        auto ctxSharp = scale.GetNoteInScaleContext(referenceNote, rootSharp, EnharmonicDirection::Sharp);
+        auto candSharp = ctxSharp;
+        candSharp.mEnharmonic = 0;
+        uint8_t midiSharp = scale.GetMidiNoteFromContext(candSharp, rootSharp);
+        int distSharp = std::abs(int(midiSharp) - int(referenceNote));
+
+        uint8_t rootFlat = 0;
+        auto ctxFlat = scale.GetNoteInScaleContext(referenceNote, rootFlat, EnharmonicDirection::Flat);
+        auto candFlat = ctxFlat;
+        candFlat.mEnharmonic = 0;
+        uint8_t midiFlat = scale.GetMidiNoteFromContext(candFlat, rootFlat);
+        int distFlat = std::abs(int(midiFlat) - int(referenceNote));
+
+        if (distFlat < distSharp)
+        {
+            ctxOut = candFlat;
+            rootOut = rootFlat;
+            midiOut = midiFlat;
+        }
+        else
+        {
+            ctxOut = candSharp;
+            rootOut = rootSharp;
+            midiOut = midiSharp;
+        }
+    }
+
+    static bool ResolveDiatonicAnchor(uint8_t inputNote,
+                                      Scale &scale,
+                                      Scale &deducedScale,
+                                      const HarmVoiceSettings &voiceSetting,
+                                      NoteInScaleFlavorContext &ctxOut,
+                                      uint8_t &rootOut,
+                                      uint8_t &midiOut)
+    {
+        if (MidiNoteIsDiatonic(inputNote, scale))
+        {
+            ResolveNearestDiatonic(inputNote, scale, ctxOut, rootOut, midiOut);
+            return true;
+        }
+
+        switch (voiceSetting.mNonDiatonicBehavior)
+        {
+        case NonDiatonicBehavior::Drop:
+            return false;
+        case NonDiatonicBehavior::ChromaticUp: {
+            uint8_t next = FindNextDiatonic(inputNote, scale, +1);
+            ResolveNearestDiatonic(next, scale, ctxOut, rootOut, midiOut);
+            return true;
+        }
+        case NonDiatonicBehavior::ChromaticDown: {
+            uint8_t prev = FindNextDiatonic(inputNote, scale, -1);
+            ResolveNearestDiatonic(prev, scale, ctxOut, rootOut, midiOut);
+            return true;
+        }
+        case NonDiatonicBehavior::UseScaleFollower: {
+            uint8_t followerRoot = 0;
+            auto followerCtx = deducedScale.GetNoteInScaleContext(inputNote, followerRoot, EnharmonicDirection::Sharp);
+            uint8_t followerMidi = deducedScale.GetMidiNoteFromContext(followerCtx, followerRoot);
+            ResolveNearestDiatonic(followerMidi, scale, ctxOut, rootOut, midiOut);
+            return true;
+        }
+        default:
+            break;
+        }
+
+        ResolveNearestDiatonic(inputNote, scale, ctxOut, rootOut, midiOut);
+        return true;
+    }
+
     // accepts input note + voice settings, returns harmonized note
     static uint8_t GetHarmonizedNote(uint8_t inputNote,
                                      Scale &scale,
@@ -45,81 +164,67 @@ struct Harmonizer
                                      VoiceState &voiceState)
     {
         auto sequenceIndex = sequencePos % voiceSetting.mSequenceLength;
-        uint8_t scaleRoot = 0;
-        auto ctxSharp = scale.GetNoteInScaleContext(inputNote, scaleRoot, EnharmonicDirection::Sharp);
-        if (ctxSharp.mEnharmonic == 0)
+        NoteInScaleFlavorContext anchorCtx;
+        uint8_t anchorRoot = 0;
+        uint8_t anchorMidi = 0;
+        if (!ResolveDiatonicAnchor(inputNote, scale, deducedScale, voiceSetting, anchorCtx, anchorRoot, anchorMidi))
         {
-            // diatonic.
-            auto diatonicCtx = ctxSharp;
-            diatonicCtx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret =
-                scale.GetMidiNoteFromContext(diatonicCtx, scaleRoot); // get the harmonized note in the same scale
-            // voiceState.mResult = String("diatonic ") + ret;
-            voiceState.mCurrentMidiNote = ret;
-            return ret;
+            voiceState.mCurrentMidiNote = 0;
+            return 0;
         }
 
-        // deal with non-diatonic cases
-        switch (voiceSetting.mNonDiatonicBehavior)
+        int8_t intervalValue = voiceSetting.mSequence[sequenceIndex];
+        uint8_t ret = 0;
+
+        if (voiceSetting.mIntervalMode == HarmVoiceIntervalMode::ScaleDegrees)
         {
-        default:
-        case NonDiatonicBehavior::Drop:
-            // voiceState.mResult = "harm mute";
-            return 0; // indicate mute
-        case NonDiatonicBehavior::UseScaleFollower: {
-            uint8_t followerRoot = 0;
-            auto followerCtx = deducedScale.GetNoteInScaleContext(inputNote, followerRoot, EnharmonicDirection::Sharp);
-            // just ignore if it's diatonic here. it would be weird for the deduced scale not to contain the live note.
-            // if it's non-diatonic, then it will chromatically adjust anyway.
-            followerCtx.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret =
-                scale.GetMidiNoteFromContext(followerCtx, followerRoot); // get the harmonized note in the same scale
-            // voiceState.mResult = String("scalefoll ") + ret;
-            voiceState.mCurrentMidiNote = ret;
-            return ret;
+            auto ctx = anchorCtx;
+            ctx.mScaleDegree += intervalValue;
+            ret = scale.GetMidiNoteFromContext(ctx, anchorRoot);
         }
-        break;
-        case NonDiatonicBehavior::NearestDiatonic: {
-            // the input note is non-diatonic; adjust it to the nearest diatonic note and harmonize from that.
-            // we already measured in context of sharps; measure as flat.
-            uint8_t scaleRootFlat = 0;
-            auto ctxFlat = scale.GetNoteInScaleContext(inputNote, scaleRootFlat, EnharmonicDirection::Flat);
-            auto ctxNearest = ctxSharp;
-            uint8_t nearestRoot = scaleRoot;
-            if (std::abs(ctxFlat.mEnharmonic) < std::abs(ctxSharp.mEnharmonic))
+        else
+        {
+            int target = int(anchorMidi) + int(intervalValue);
+            if (target < 0)
             {
-                ctxNearest = ctxFlat;
-                nearestRoot = scaleRootFlat;
+                target = 0;
             }
-            // sharp is nearer (or equal)
-            ctxNearest.mEnharmonic = 0; // erase the chromatic adjustment; we're making it diatonic now.
-            ctxNearest.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctxNearest, nearestRoot);
-            // voiceState.mResult = String("nearest ") + ret;
-            voiceState.mCurrentMidiNote = ret;
-            return ret;
+            else if (target > 127)
+            {
+                target = 127;
+            }
+            ret = (uint8_t)target;
+
+            switch (voiceSetting.mIntervalMode)
+            {
+            case HarmVoiceIntervalMode::Chromatic:
+                break;
+            case HarmVoiceIntervalMode::ChromaticOOSMute:
+                if (!MidiNoteIsDiatonic(ret, scale))
+                {
+                    voiceState.mCurrentMidiNote = 0;
+                    return 0;
+                }
+                break;
+            case HarmVoiceIntervalMode::ChromaticDown:
+                if (!MidiNoteIsDiatonic(ret, scale))
+                {
+                    ret = FindNextDiatonic(ret, scale, -1);
+                }
+                break;
+            case HarmVoiceIntervalMode::ChromaticUp:
+                if (!MidiNoteIsDiatonic(ret, scale))
+                {
+                    ret = FindNextDiatonic(ret, scale, +1);
+                }
+                break;
+            default:
+                break;
+            }
         }
-        break;
-        case NonDiatonicBehavior::ChromaticUp: {
-            auto ctxUp = ctxSharp;
-            ctxUp.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctxUp, scaleRoot);
-            // voiceState.mResult = String("chromatic above ") + ret;
-            voiceState.mCurrentMidiNote = ret;
-            return ret;
-        }
-        break;
-        case NonDiatonicBehavior::ChromaticDown: {
-            uint8_t scaleRootFlat = 0;
-            auto ctxDown = scale.GetNoteInScaleContext(inputNote, scaleRootFlat, EnharmonicDirection::Flat);
-            ctxDown.mScaleDegree += voiceSetting.mSequence[sequenceIndex];
-            auto ret = scale.GetMidiNoteFromContext(ctxDown, scaleRootFlat);
-            // voiceState.mResult = String("chromatic below ") + ret;
-            voiceState.mCurrentMidiNote = ret;
-            return ret;
-        }
-        break;
-        }
+
+        voiceState.mCurrentMidiNote = ret;
+        return ret;
     }
 
     static uint8_t EnsureHarmonizedNoteBounds(uint8_t note, uint8_t liveNote, HarmVoiceSettings &voiceSetting)

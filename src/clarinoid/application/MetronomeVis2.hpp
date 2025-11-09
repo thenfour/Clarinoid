@@ -266,4 +266,6 @@ struct MetronomeVis2
 
 bool MetronomeVis2::SettingsChangedTrigger = true;
 
+MetronomeVis2 gMetronomeVis;
+
 } // namespace clarinoid
