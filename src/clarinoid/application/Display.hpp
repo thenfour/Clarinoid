@@ -748,6 +748,8 @@ struct _CCDisplay : IDisplay
                                    int brightnessEndQp8,
                                    q15_t *brightnessCurve)
     {
+        constexpr float kFullCircleTolerance = 1e-6f;
+
         float outerRadiusClamped = std::max(outerRadius, 0.0f);
         float innerRadiusClamped = Clamp(std::max(innerRadius, 0.0f), 0.0f, outerRadiusClamped);
         if (outerRadiusClamped <= 0.0f)
@@ -760,13 +762,14 @@ struct _CCDisplay : IDisplay
         }
 
         float sweep = angleSweepRadians;
-        if (fabsf(sweep) <= 1e-6f)
+        if (fabsf(sweep) <= kFullCircleTolerance)
         {
             return;
         }
 
         float sweepAbs = fabsf(sweep);
         bool sweepPositive = sweep > 0.0f;
+        bool coversFullCircle = sweepAbs >= (kTwoPI_f - kFullCircleTolerance);
 
         int startBrightness = ClampInclusive(brightnessStartQp8, 0, 255);
         int endBrightness = ClampInclusive(brightnessEndQp8, 0, 255);
@@ -775,10 +778,10 @@ struct _CCDisplay : IDisplay
         float outerRadiusSq = outerRadiusClamped * outerRadiusClamped;
         float innerRadiusSq = innerRadiusClamped * innerRadiusClamped;
 
-        int minX = (int)floorf(origin.x - outerRadiusClamped);
-        int maxX = (int)ceilf(origin.x + outerRadiusClamped);
-        int minY = (int)floorf(origin.y - outerRadiusClamped);
-        int maxY = (int)ceilf(origin.y + outerRadiusClamped);
+        int minX = (int)floorf(origin.x - outerRadiusClamped - 1.0f);
+        int maxX = (int)ceilf(origin.x + outerRadiusClamped + 1.0f);
+        int minY = (int)floorf(origin.y - outerRadiusClamped - 1.0f);
+        int maxY = (int)ceilf(origin.y + outerRadiusClamped + 1.0f);
 
         auto clamp01 = [](float v) {
             if (v < 0.0f)
@@ -790,6 +793,16 @@ struct _CCDisplay : IDisplay
                 return 1.0f;
             }
             return v;
+        };
+
+        auto isAngleInside = [&](float angle, float &deltaOut) {
+            float delta = sweepPositive ? WrapAnglePos(angle - normStart) : WrapAnglePos(normStart - angle);
+            deltaOut = delta;
+            if (coversFullCircle)
+            {
+                return true;
+            }
+            return delta <= (sweepAbs + kFullCircleTolerance);
         };
 
         for (int y = minY; y <= maxY; ++y)
@@ -811,59 +824,21 @@ struct _CCDisplay : IDisplay
                 {
                     continue;
                 }
-                if (innerRadiusClamped > 0.0f && distSq < innerRadiusSq)
+                if (distSq < innerRadiusSq)
                 {
                     continue;
                 }
 
                 float angle = WrapAnglePos(fast::atan2f(dy, dx));
-                bool inside = false;
-                float t = 0.0f;
-
-                if (sweepPositive)
-                {
-                    if (sweepAbs >= kTwoPI_f - 1e-6f)
-                    {
-                        inside = true;
-                        float delta = WrapAnglePos(angle - normStart);
-                        t = clamp01(delta / sweepAbs);
-                    }
-                    else
-                    {
-                        float delta = WrapAnglePos(angle - normStart);
-                        if (delta <= sweepAbs + 1e-6f)
-                        {
-                            inside = true;
-                            t = clamp01(delta / sweepAbs);
-                        }
-                    }
-                }
-                else
-                {
-                    if (sweepAbs >= kTwoPI_f - 1e-6f)
-                    {
-                        inside = true;
-                        float delta = WrapAnglePos(normStart - angle);
-                        t = clamp01(delta / sweepAbs);
-                    }
-                    else
-                    {
-                        float delta = WrapAnglePos(normStart - angle);
-                        if (delta <= sweepAbs + 1e-6f)
-                        {
-                            inside = true;
-                            t = clamp01(delta / sweepAbs);
-                        }
-                    }
-                }
-
-                if (!inside)
+                float delta = 0.0f;
+                if (!isAngleInside(angle, delta))
                 {
                     continue;
                 }
 
+                float t = clamp01(delta / sweepAbs);
                 float interp = (1.0f - t) * (float)startBrightness + t * (float)endBrightness;
-                int brightness = (int)(interp + 0.5f);
+                int brightness = (int)std::round(interp);
                 brightness = ClampInclusive(brightness, 0, 255);
                 if (brightnessCurve)
                 {
@@ -952,23 +927,22 @@ struct _CCDisplay : IDisplay
             return;
         }
 
-        const float strokeWidth = 1.0f;
-        float innerRadius = 0.0f;
         float outerRadius = 0.0f;
+        float innerRadius = 0.0f;
         switch (mode)
         {
         case StrokeMode::Inside:
             outerRadius = baseRadius;
-            innerRadius = std::max(baseRadius - strokeWidth, 0.0f);
+            innerRadius = std::max(baseRadius - 1.0f, 0.0f);
             break;
         case StrokeMode::Outside:
             innerRadius = baseRadius;
-            outerRadius = baseRadius + strokeWidth;
+            outerRadius = baseRadius + 1.0f;
             break;
         case StrokeMode::Centered:
         default:
-            innerRadius = std::max(baseRadius - strokeWidth * 0.5f, 0.0f);
-            outerRadius = baseRadius + strokeWidth * 0.5f;
+            innerRadius = std::max(baseRadius - 0.5f, 0.0f);
+            outerRadius = baseRadius + 0.5f;
             break;
         }
 
@@ -985,6 +959,7 @@ struct _CCDisplay : IDisplay
 
         float sweepAbs = fabsf(sweep);
         bool sweepPositive = sweep > 0.0f;
+        bool coversFullCircle = sweepAbs >= (kTwoPI_f - 1e-6f);
         float normStart = WrapAnglePos(startAngleRadians);
 
         float innerRadiusSq = innerRadiusClamped * innerRadiusClamped;
@@ -996,7 +971,7 @@ struct _CCDisplay : IDisplay
         int maxY = (int)ceilf(center.y + outerRadiusClamped + 1.0f);
 
         auto angleInside = [&](float angle) {
-            if (sweepAbs >= kTwoPI_f - 1e-6f)
+            if (coversFullCircle)
             {
                 return true;
             }
@@ -1009,9 +984,6 @@ struct _CCDisplay : IDisplay
             return delta <= sweepAbs + 1e-6f;
         };
 
-        const int sampleCount = (int)SizeofStaticArray(gSubpixelSampleOffsets);
-        const float sampleContribution = 255.0f / (float)sampleCount;
-
         for (int y = minY; y <= maxY; ++y)
         {
             for (int x = minX; x <= maxX; ++x)
@@ -1022,41 +994,24 @@ struct _CCDisplay : IDisplay
                     continue;
                 }
 
-                float coverageSamples = 0.0f;
-                for (const auto &offset : gSubpixelSampleOffsets)
-                {
-                    float sampleX = (float)x + offset[0];
-                    float sampleY = (float)y + offset[1];
-                    float dx = sampleX - center.x;
-                    float dy = sampleY - center.y;
-                    float distSq = dx * dx + dy * dy;
-                    if (distSq < innerRadiusSq || distSq > outerRadiusSq)
-                    {
-                        continue;
-                    }
+                float sampleX = (float)x + 0.5f;
+                float sampleY = (float)y + 0.5f;
+                float dx = sampleX - center.x;
+                float dy = sampleY - center.y;
+                float distSq = dx * dx + dy * dy;
 
-                    float angle = WrapAnglePos(fast::atan2f(dy, dx));
-                    if (!angleInside(angle))
-                    {
-                        continue;
-                    }
-
-                    coverageSamples += 1.0f;
-                }
-
-                if (coverageSamples <= 0.0f)
+                if (distSq < innerRadiusSq || distSq > outerRadiusSq)
                 {
                     continue;
                 }
 
-                int brightness = (int)(coverageSamples * sampleContribution + 0.5f);
-                brightness = ClampInclusive(brightness, 0, 255);
-                if (brightness <= 0)
+                float angle = WrapAnglePos(fast::atan2f(dy, dx));
+                if (!angleInside(angle))
                 {
                     continue;
                 }
 
-                SetPixelShaded(pt, brightness);
+                SetPixel(pt, SSD1306_WHITE);
             }
         }
     }
