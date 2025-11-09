@@ -26,7 +26,14 @@ make -j6
 Best to just analyze the elf itself.
 
 ```
+
+Symbols sorted by size
+
 "C:\Users\carl\.platformio\packages\toolchain-gccarmnoneeabi-teensy\bin\arm-none-eabi-nm.exe" --print-size --size-sort --radix=d "C:\root\git\thenfour\Clarinoid\projects\CLARINOID2\.pio\build\teensy\firmware.elf"
+
+All section info including virtual address
+
+"C:\Users\carl\.platformio\packages\toolchain-gccarmnoneeabi-teensy\bin\arm-none-eabi-objdump" -h "C:\root\git\thenfour\Clarinoid\projects\CLARINOID2\.pio\build\teensy\firmware.elf"
 ```
 
 https://www.pjrc.com/store/teensy40.html
