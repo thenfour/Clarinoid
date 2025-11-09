@@ -75,12 +75,12 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     MusicalStateTask mMusicalStateTask;
 
     PerformanceApp mPerformanceApp;
-    DebugDisplayApp mDebugDisplayApp;
+    // DebugDisplayApp mDebugDisplayApp;
     SystemSettingsApp mSystemSettingsApp;
     PerformancePatchSettingsApp mPerfPatchApp;
     SynthPatchMenuApp mSynthPatchApp;
     // AudioMonitorApp mAudioMonitorApp;
-    DisplayTestApp mDisplayTestApp;
+    // DisplayTestApp mDisplayTestApp;
     // DemoApp mDemoApp{mDisplay, mMusicalStateTask};
     // CubeDemoApp mCubeDemoApp{mDisplay, mMusicalStateTask};
     // TorusDemoApp mTorusDemoApp{mDisplay, mMusicalStateTask};
@@ -101,9 +101,9 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
     TaskPlanner *mTaskPlanner = nullptr; // set after initializing it, late in the startup process.
 
-    SimpleMovingAverage<30> mCPUUsage;
-    // PeakMeterUtility<2000, 300> mPeakMeter;
-    //  static constexpr size_t kpeakmetersize = sizeof(mPeakMeter);
+    // SimpleMovingAverage<30> mCPUUsage;
+    //  PeakMeterUtility<2000, 300> mPeakMeter;
+    //   static constexpr size_t kpeakmetersize = sizeof(mPeakMeter);
 
     Clarinoid2App()
         : mLed(this),                                                                                    //
@@ -111,7 +111,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
           mHud(mDisplay, this),                                                                          //
           mMusicalStateTask(&mDisplay, gpAppSettings, &mInputDelegator, &mControlMapper),                //
           mPerformanceApp(mDisplay, &mMusicalStateTask, &mControlMapper, &mMusicalStateTask.mMetronome), //
-          mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),                                 //
+          // mDebugDisplayApp(mDisplay, mControlMapper, mMusicalStateTask),                                 //
           mSystemSettingsApp(
               mDisplay,
               breathMappingIndex,
@@ -129,7 +129,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
               &mMusicalStateTask.mMetronome),
           mPerfPatchApp(mDisplay),  //
           mSynthPatchApp(mDisplay), //
-          mDisplayTestApp(mDisplay),
+          // mDisplayTestApp(mDisplay),
           // mAudioMonitorApp(mDisplay), //
           // mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, gpAppSettings, mDisplay),
           mMetronomeSettingsApp2(&mMusicalStateTask.mMetronome, gpAppSettings, mDisplay),
@@ -256,7 +256,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
             &mSystemSettingsApp,
             //&mAudioMonitorApp,
 
-            &mDebugDisplayApp,
+            //&mDebugDisplayApp,
             &mMPR121ConfigApp,
             &mScaleDetectorApp,
             &mLoudnessDisplayApp,

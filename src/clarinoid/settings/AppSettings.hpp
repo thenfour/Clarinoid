@@ -385,6 +385,8 @@ struct AppSettings
     {
         p.mName = name;
         p.mBPM = 70;
+        p.mBeatsPerBar = 2;
+        p.mBeatSubdivisions = 3;
 
         p.mSynthPresetA = SynthPresetID_SupersawSoft;
         p.mSynthAGain = DecibelsToLinear(-6);

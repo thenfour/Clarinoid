@@ -929,6 +929,138 @@ struct _CCDisplay : IDisplay
                                   brightnessCurve);
     }
 
+    virtual void DrawCircleStroke1px(const PointF &center, float radius, StrokeMode mode) override
+    {
+        DrawArcStroke1px(center, radius, 0.0f, kTwoPI_f, mode);
+    }
+
+    virtual void DrawArcStroke1px(const PointF &center,
+                                  float radius,
+                                  float startAngleRadians,
+                                  float sweepAngleRadians,
+                                  StrokeMode mode) override
+    {
+        float baseRadius = std::max(radius, 0.0f);
+        if (baseRadius <= 0.0f)
+        {
+            return;
+        }
+
+        float sweep = sweepAngleRadians;
+        if (fabsf(sweep) <= 1e-6f)
+        {
+            return;
+        }
+
+        const float strokeWidth = 1.0f;
+        float innerRadius = 0.0f;
+        float outerRadius = 0.0f;
+        switch (mode)
+        {
+        case StrokeMode::Inside:
+            outerRadius = baseRadius;
+            innerRadius = std::max(baseRadius - strokeWidth, 0.0f);
+            break;
+        case StrokeMode::Outside:
+            innerRadius = baseRadius;
+            outerRadius = baseRadius + strokeWidth;
+            break;
+        case StrokeMode::Centered:
+        default:
+            innerRadius = std::max(baseRadius - strokeWidth * 0.5f, 0.0f);
+            outerRadius = baseRadius + strokeWidth * 0.5f;
+            break;
+        }
+
+        float outerRadiusClamped = std::max(outerRadius, 0.0f);
+        float innerRadiusClamped = Clamp(innerRadius, 0.0f, outerRadiusClamped);
+        if (outerRadiusClamped <= 0.0f)
+        {
+            return;
+        }
+        if (innerRadiusClamped >= outerRadiusClamped)
+        {
+            return;
+        }
+
+        float sweepAbs = fabsf(sweep);
+        bool sweepPositive = sweep > 0.0f;
+        float normStart = WrapAnglePos(startAngleRadians);
+
+        float innerRadiusSq = innerRadiusClamped * innerRadiusClamped;
+        float outerRadiusSq = outerRadiusClamped * outerRadiusClamped;
+
+        int minX = (int)floorf(center.x - outerRadiusClamped - 1.0f);
+        int maxX = (int)ceilf(center.x + outerRadiusClamped + 1.0f);
+        int minY = (int)floorf(center.y - outerRadiusClamped - 1.0f);
+        int maxY = (int)ceilf(center.y + outerRadiusClamped + 1.0f);
+
+        auto angleInside = [&](float angle) {
+            if (sweepAbs >= kTwoPI_f - 1e-6f)
+            {
+                return true;
+            }
+            if (sweepPositive)
+            {
+                float delta = WrapAnglePos(angle - normStart);
+                return delta <= sweepAbs + 1e-6f;
+            }
+            float delta = WrapAnglePos(normStart - angle);
+            return delta <= sweepAbs + 1e-6f;
+        };
+
+        const int sampleCount = (int)SizeofStaticArray(gSubpixelSampleOffsets);
+        const float sampleContribution = 255.0f / (float)sampleCount;
+
+        for (int y = minY; y <= maxY; ++y)
+        {
+            for (int x = minX; x <= maxX; ++x)
+            {
+                PointI pt{x, y};
+                if (!IsInBounds(pt))
+                {
+                    continue;
+                }
+
+                float coverageSamples = 0.0f;
+                for (const auto &offset : gSubpixelSampleOffsets)
+                {
+                    float sampleX = (float)x + offset[0];
+                    float sampleY = (float)y + offset[1];
+                    float dx = sampleX - center.x;
+                    float dy = sampleY - center.y;
+                    float distSq = dx * dx + dy * dy;
+                    if (distSq < innerRadiusSq || distSq > outerRadiusSq)
+                    {
+                        continue;
+                    }
+
+                    float angle = WrapAnglePos(fast::atan2f(dy, dx));
+                    if (!angleInside(angle))
+                    {
+                        continue;
+                    }
+
+                    coverageSamples += 1.0f;
+                }
+
+                if (coverageSamples <= 0.0f)
+                {
+                    continue;
+                }
+
+                int brightness = (int)(coverageSamples * sampleContribution + 0.5f);
+                brightness = ClampInclusive(brightness, 0, 255);
+                if (brightness <= 0)
+                {
+                    continue;
+                }
+
+                SetPixelShaded(pt, brightness);
+            }
+        }
+    }
+
     /// <summary>
     /// Draws a line from (x0, y0) to (x1, y1) with simulated brightness using
     /// the given DitherMatrix for Bayer dithering (purely in fixed-point).
