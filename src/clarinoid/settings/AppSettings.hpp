@@ -16,12 +16,20 @@ static constexpr int kMaxSubdivisionsPerBeat = 8;
 
 enum class PerfDisplayStyle : uint8_t
 {
-    Demo,
+    Cube,
+    CubeTessellated,
+    Tetrahedron,
+    Icosahedron,
+    Geodesic,
     Metronome,
 };
 
-EnumItemInfo<PerfDisplayStyle> gPerfDisplayStyleItems[2] = {
-    {PerfDisplayStyle::Demo, "Demo"},
+EnumItemInfo<PerfDisplayStyle> gPerfDisplayStyleItems[6] = {
+    {PerfDisplayStyle::Cube, "Cube"},
+    {PerfDisplayStyle::CubeTessellated, "Tessellated Cube"},
+    {PerfDisplayStyle::Tetrahedron, "Tetrahedron"},
+    {PerfDisplayStyle::Icosahedron, "Icosahedron"},
+    {PerfDisplayStyle::Geodesic, "Geodesic"},
     {PerfDisplayStyle::Metronome, "Metronome"},
 };
 
@@ -44,7 +52,7 @@ struct PerformancePatch
 {
     String mName = "--";
 
-    PerfDisplayStyle mPerfDisplayStyle = PerfDisplayStyle::Demo;
+    PerfDisplayStyle mPerfDisplayStyle = PerfDisplayStyle::Geodesic;
 
     float mBPM = 104.0f;
     int8_t mBeatsPerBar = 4;
@@ -360,6 +368,7 @@ struct AppSettings
     static void InitSpaceCarPerf(PerformancePatch &p)
     {
         p.mName = "Space Car";
+        p.mPerfDisplayStyle = PerfDisplayStyle::Cube;
 
         p.mTranspose = 0;
         p.mBPM = 140;
@@ -380,6 +389,7 @@ struct AppSettings
     static void InitRippleBoogiePerf(PerformancePatch &p)
     {
         p.mName = "Ripple Boogie";
+        p.mPerfDisplayStyle = PerfDisplayStyle::CubeTessellated;
 
         p.mTranspose = 3;
         p.mBPM = 110;
@@ -423,6 +433,7 @@ struct AppSettings
     {
         p.mName = "Full Scale";
         p.mBPM = 120;
+        p.mPerfDisplayStyle = PerfDisplayStyle::Icosahedron;
 
         p.mSynthPresetA = SynthPresetID_Fluvial;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -440,6 +451,7 @@ struct AppSettings
     {
         p.mName = "Wobbly Cat";
         p.mBPM = 120;
+        p.mPerfDisplayStyle = PerfDisplayStyle::Tetrahedron;
 
         p.mSynthPresetA = SynthPresetID_WobblyCat;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -460,6 +472,7 @@ struct AppSettings
     {
         p.mName = "Silk Suspenders";
         p.mBPM = 110;
+        p.mPerfDisplayStyle = PerfDisplayStyle::Geodesic;
 
         p.mTranspose = 12;
 
@@ -514,7 +527,7 @@ struct AppSettings
         p.mName = "Tubular Bell";
         p.mSynthStereoSpread = 0.6f;
         p.mDetuneSemis = 0.15f;
-
+        p.mPerfDisplayStyle = PerfDisplayStyle::Geodesic;
         p.mBPM = 112;
 
         p.mSynthPresetA = SynthPresetID_TubularBell;

@@ -36,3 +36,9 @@ https://www.pjrc.com/store/teensy40.html
 
 I never managed to get it to work.
 
+
+## identified areas of improved memory usage
+
+* the geom mesh simulations are template heavy and cause a lot of bloat. consider just removing the template params.
+
+
