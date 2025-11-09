@@ -184,6 +184,66 @@ struct MetronomeSettingsApp : public SettingsMenuApp
                                                            this},
                                            AlwaysEnabled};
 
+    // kSweepMaxBrightnessQp8
+    IntSettingItem mSweepMaxBrightnessQp8 = {"SweepQp8",
+                                             NumericEditRangeSpec<int>{1, 255},
+                                             Property<int>{[](void *cap) FLASHMEM {
+                                                               // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                               return MetronomeVis::kSweepMaxBrightnessQp8;
+                                                           },
+                                                           [](void *cap, const int &v) FLASHMEM {
+                                                               // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                               MetronomeVis::kSweepMaxBrightnessQp8 = v;
+                                                               MetronomeVis::SettingsChangedTrigger = true;
+                                                           },
+                                                           this},
+                                             AlwaysEnabled};
+
+    // kSubdivFlashMaxBrightnessQp8
+    IntSettingItem mSubdivFlashMaxBrightnessQp8 = {"SubdivQp8",
+                                                   NumericEditRangeSpec<int>{1, 255},
+                                                   Property<int>{[](void *cap) FLASHMEM {
+                                                                     // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                     return MetronomeVis::kSubdivFlashMaxBrightnessQp8;
+                                                                 },
+                                                                 [](void *cap, const int &v) FLASHMEM {
+                                                                     // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                     MetronomeVis::kSubdivFlashMaxBrightnessQp8 = v;
+                                                                     MetronomeVis::SettingsChangedTrigger = true;
+                                                                 },
+                                                                 this},
+                                                   AlwaysEnabled};
+
+    // kBeatFlashMaxBrightnessQp8
+    IntSettingItem mBeatFlashMaxBrightnessQp8 = {"BeatQp8",
+                                                 NumericEditRangeSpec<int>{1, 255},
+                                                 Property<int>{[](void *cap) FLASHMEM {
+                                                                   // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                   return MetronomeVis::kBeatFlashMaxBrightnessQp8;
+                                                               },
+                                                               [](void *cap, const int &v) FLASHMEM {
+                                                                   // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                   MetronomeVis::kBeatFlashMaxBrightnessQp8 = v;
+                                                                   MetronomeVis::SettingsChangedTrigger = true;
+                                                               },
+                                                               this},
+                                                 AlwaysEnabled};
+
+    // kBigFlashMaxBrightnessQp8
+    IntSettingItem mBigFlashMaxBrightnessQp8 = {"BigQp8",
+                                                NumericEditRangeSpec<int>{1, 255},
+                                                Property<int>{[](void *cap) FLASHMEM {
+                                                                  // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                  return MetronomeVis::kBigFlashMaxBrightnessQp8;
+                                                              },
+                                                              [](void *cap, const int &v) FLASHMEM {
+                                                                  // auto *pThis = (MetronomeSettingsApp *)cap;
+                                                                  MetronomeVis::kBigFlashMaxBrightnessQp8 = v;
+                                                                  MetronomeVis::SettingsChangedTrigger = true;
+                                                              },
+                                                              this},
+                                                AlwaysEnabled};
+
     BoolSettingItem mSoundEnable = {"SoundEnable",
                                     "On",
                                     "Off",
@@ -289,6 +349,10 @@ struct MetronomeSettingsApp : public SettingsMenuApp
         &mSubdivisionFlashHoldMs, //
         &mSubdivisionFlashDecayMs,
         &mSweepWidthRadians, //
+        &mSweepMaxBrightnessQp8,
+        &mSubdivFlashMaxBrightnessQp8,
+        &mBeatFlashMaxBrightnessQp8,
+        &mBigFlashMaxBrightnessQp8,
 
         &mGain,
         &mSoundEnable, //
@@ -298,10 +362,6 @@ struct MetronomeSettingsApp : public SettingsMenuApp
         &mNote,
         &mDecay, //
 
-        &mDecay, //
-        &mDecay, //
-        &mDecay, //
-        &mDecay, //
     };
     SettingsList mRootList = {mArray};
 

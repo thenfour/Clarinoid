@@ -10,14 +10,14 @@ struct FlashEnvelope
     StopwatchLight mTimer;
     int mHoldMs = 0;
     int mDecayMs = 1;
-    int mPeakValue = 0;
+    // int mPeakValue = 0;
     bool mActive = false;
 
-    void Configure(int holdMs, int decayMs, int peakValue)
+    void Configure(int holdMs, int decayMs)
     {
         mHoldMs = std::max(holdMs, 0);
         mDecayMs = std::max(decayMs, 1);
-        mPeakValue = peakValue;
+        // mPeakValue = peakValue;
         mActive = false;
     }
 
@@ -32,7 +32,8 @@ struct FlashEnvelope
         mActive = false;
     }
 
-    int Sample()
+    // return 0-1 amplitude
+    float Sample01()
     {
         if (!mActive)
         {
@@ -42,7 +43,7 @@ struct FlashEnvelope
         int elapsedMs = (int)mTimer.ElapsedTime().ElapsedMillisI();
         if (elapsedMs <= mHoldMs)
         {
-            return mPeakValue;
+            return 1.0f;
         }
 
         int msPastHold = elapsedMs - mHoldMs;
@@ -52,14 +53,18 @@ struct FlashEnvelope
             return 0;
         }
 
-        int remaining = mDecayMs - msPastHold;
-        int brightness = (mPeakValue * remaining) / mDecayMs;
-        brightness = ClampInclusive(brightness, 0, mPeakValue);
-        if (brightness == 0)
-        {
-            mActive = false;
-        }
-        return brightness;
+        float remaining = (float)(mDecayMs - msPastHold);
+        float amp = remaining / (float)mDecayMs;
+        return amp;
+
+        // int remaining = mDecayMs - msPastHold;
+        // int brightness = (mPeakValue * remaining) / mDecayMs;
+        // brightness = ClampInclusive(brightness, 0, mPeakValue);
+        // if (brightness == 0)
+        // {
+        //     mActive = false;
+        // }
+        // return brightness;
     }
 };
 

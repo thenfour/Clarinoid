@@ -14,6 +14,7 @@ namespace clarinoid
 struct MetronomeVisConfig
 {
     PointF mCenter = {100, 27};
+    RectI mFlashRect = RectI::Construct(0, 0, 64, 64);
 };
 
 struct MetronomeVis
@@ -65,33 +66,39 @@ struct MetronomeVis
             mSubdivisionEnvelopes[markerIndex].Trigger();
         }
 
-        // render main circle radar
-        int mainFlashBrightnessQp8 = mBeatFlash.Sample();
-        display.FillRectWithBrightness(display.GetClientRect(), mainFlashBrightnessQp8);
-
+        // render main radar circle
         display.FillCircleWithStrokeF(centerF, kRadius, 1, 0, 255, IDisplay::CircleStrokeMode::Inside);
+
+        // big flash on beat
+        int mainFlashBrightnessQp8 = mBeatFlash.Sample01() * kBigFlashMaxBrightnessQp8;
+        display.FillRectWithBrightness(config.mFlashRect, mainFlashBrightnessQp8);
 
         const float beatsPerMeasure = (float)beatsPerBar;
         float measureProgress01 = Frac(totalBeatFloat / beatsPerMeasure);
-
         float radarPosRadians = kTwoPI_f * measureProgress01;
 
         // draw sweep (brightness from 0 to 255 at the main line)
         {
             float sweepStart = radarPosRadians + kRadianOffset - kSweepWidthRadians;
-            display.FillPieSliceGradient(centerF, kRadius, sweepStart, kSweepWidthRadians, 0, 255);
+            display.FillPieSliceGradient(centerF, kRadius, sweepStart, kSweepWidthRadians, 0, kSweepMaxBrightnessQp8);
         }
 
-        // float sweepHalfWidth = gPI<float> / 2.0f; // / 15.0f;
-        // float sweepStart = sweepCenter + sweepHalfWidth;
-        // float sweepSizeRadians = -2.0f * sweepHalfWidth;
-        // display.FillPieSliceGradient(
-        //     centerF, kRadius, sweepStart, sweepSizeRadians, sweepStartBrightness, sweepEndBrightness);
-
-        // draw main line
+        // draw main animated line
         {
             auto lineEnd = PolarToCartesian(centerF, kRadius, radarPosRadians + kRadianOffset);
             display.DrawLine(centerF.Round(), lineEnd.Round());
+        }
+
+        for (int marker = 0; marker < totalSubdivisions; ++marker)
+        {
+            float markerFrac = (float)marker / totalSubdivisions;
+            float markerAngle = kTwoPI_f * markerFrac;
+            PointF markerPos = PolarToCartesian(centerF, kRadius, markerAngle + kRadianOffset);
+
+            int brightness = mSubdivisionEnvelopes[marker].Sample01() * kSubdivFlashMaxBrightnessQp8;
+
+            // draw line for subdiv
+            display.DrawLineWithBrightness(centerF.Round(), markerPos.Round(), brightness);
         }
 
         // draw beat lines
@@ -104,24 +111,21 @@ struct MetronomeVis
             display.DrawLine(centerF.Round(), lineEnd.Round());
         }
 
-        const float bubbleRadiusF = std::max(1.0f, kSubdivisionRadius);
         for (int marker = 0; marker < totalSubdivisions; ++marker)
         {
             float markerFrac = (float)marker / totalSubdivisions;
             float markerAngle = kTwoPI_f * markerFrac;
             PointF markerPos = PolarToCartesian(centerF, kRadius, markerAngle + kRadianOffset);
 
-            int brightness = mSubdivisionEnvelopes[marker].Sample();
-
-            // draw line for subdiv
-            display.DrawLineWithBrightness(centerF.Round(), markerPos.Round(), brightness);
+            int brightness = mSubdivisionEnvelopes[marker].Sample01() * kSubdivFlashMaxBrightnessQp8;
 
             display.FillCircleWithStrokeF(
-                PointF{markerPos.Round()}, bubbleRadiusF, 1, brightness, 255, IDisplay::CircleStrokeMode::Inside);
+                PointF{markerPos.Round()}, kSubdivisionRadius, 1, brightness, 255, IDisplay::CircleStrokeMode::Inside);
         }
     }
 
     static /*constexpr*/ float kRadius;
+    static /*constexpr*/ float kBeatRadius;
     static /*constexpr*/ float kSubdivisionRadius;
 
     static /*constexpr*/ int kMainFlashHoldMs;  // = 33;
@@ -131,6 +135,11 @@ struct MetronomeVis
     static /*constexpr*/ int kSubdivisionFlashDecayMs; // = 220;
 
     static /*constexpr*/ float kSweepWidthRadians;
+
+    static /*constexpr*/ int kSweepMaxBrightnessQp8;
+    static /*constexpr*/ int kSubdivFlashMaxBrightnessQp8; // for subdivisions
+    static /*constexpr*/ int kBeatFlashMaxBrightnessQp8;   // for major beats
+    static /*constexpr*/ int kBigFlashMaxBrightnessQp8;    // for flood fill beat flash
 
     static bool SettingsChangedTrigger;
 
@@ -165,10 +174,10 @@ struct MetronomeVis
 
     void ConfigureEnvelopes()
     {
-        mBeatFlash.Configure(kMainFlashHoldMs, kMainFlashDecayMs, 255);
+        mBeatFlash.Configure(kMainFlashHoldMs, kMainFlashDecayMs);
         for (auto &env : mSubdivisionEnvelopes)
         {
-            env.Configure(kMainFlashHoldMs, kMainFlashDecayMs, 255);
+            env.Configure(kSubdivisionFlashHoldMs, kSubdivisionFlashDecayMs);
         }
     }
 
@@ -194,11 +203,15 @@ struct MetronomeVis
 
 float MetronomeVis::kRadius = 23.0f;
 float MetronomeVis::kSubdivisionRadius = 5.f;
-int MetronomeVis::kMainFlashHoldMs = 40;
-int MetronomeVis::kMainFlashDecayMs = 120;
-int MetronomeVis::kSubdivisionFlashHoldMs = 40;
-int MetronomeVis::kSubdivisionFlashDecayMs = 120;
+int MetronomeVis::kMainFlashHoldMs = 20;
+int MetronomeVis::kMainFlashDecayMs = 100;
+int MetronomeVis::kSubdivisionFlashHoldMs = 20;
+int MetronomeVis::kSubdivisionFlashDecayMs = 200;
 bool MetronomeVis::SettingsChangedTrigger = false;
-float MetronomeVis::kSweepWidthRadians = 0.5f;
+float MetronomeVis::kSweepWidthRadians = 0.6f;
+int MetronomeVis::kSweepMaxBrightnessQp8 = 96;
+int MetronomeVis::kSubdivFlashMaxBrightnessQp8 = 255;
+int MetronomeVis::kBeatFlashMaxBrightnessQp8 = 255;
+int MetronomeVis::kBigFlashMaxBrightnessQp8 = 255;
 
 } // namespace clarinoid
