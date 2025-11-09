@@ -145,7 +145,8 @@ enum class ScaleFlavorIndex : uint8_t // match index to gScaleFlavors
     WholeHalfDiminished,
     Altered,
     Blues,
-    Unison, // used by scale follower when there's no info
+    MajorNo4th, // major scale minus 4th
+    Unison,     // used by scale follower when there's no info
     Power,
     ScaleFlavorCount
     // unisono
@@ -168,6 +169,7 @@ EnumItemInfo<ScaleFlavorIndex> gScaleFlavorIndexItems[ScaleFlavorCount] = {
     {ScaleFlavorIndex::WholeHalfDiminished, "WHDim"},
     {ScaleFlavorIndex::Altered, "Alt"},
     {ScaleFlavorIndex::Blues, "Blues"},
+    {ScaleFlavorIndex::MajorNo4th, "MajNo4"},
     {ScaleFlavorIndex::Unison, "Unison"},
     {ScaleFlavorIndex::Power, "Power"},
 };
@@ -402,7 +404,7 @@ struct HowCommonClasses
 
 // always make sure the scale spans 1 octave exactly.
 // !! NB: match indices to ScaleFlavorIndex!
-const ScaleFlavor gScaleFlavors[14] = {
+const ScaleFlavor gScaleFlavors[ScaleFlavorCount] = {
     {ScaleFlavorIndex::Chromatic,
      "Chrom",
      "Chromatic",
@@ -683,6 +685,30 @@ const ScaleFlavor gScaleFlavors[14] = {
          PitchFitnessClass::NotInScale_Agnostic,  // A
          PitchFitnessClass::InScale,              // A#
          PitchFitnessClass::NotInScale_Agnostic,  // B
+     }},
+
+    // major scale minus 4th
+    {ScaleFlavorIndex::MajorNo4th,
+     "Omit4",
+     "Maj No4",
+     ScaleFlavorOptions::AllowInMenus,
+     12,
+     {2, 2, 3, 2, 2, 1},
+     {2, 1, 2, 2, 3, 1}, // characteristic strengths (not used anymore)
+     HowCommonClasses::Novelty,
+     {
+         PitchFitnessClass::InScale,          // C
+         PitchFitnessClass::NotInScale_Unfit, // C#
+         PitchFitnessClass::InScale,          // D
+         PitchFitnessClass::NotInScale_Unfit, // D#
+         PitchFitnessClass::Strong,           // E
+         PitchFitnessClass::NotInScale_Unfit, // F
+         PitchFitnessClass::NotInScale_Unfit, // F#
+         PitchFitnessClass::InScale,          // G
+         PitchFitnessClass::NotInScale_Unfit, // G#
+         PitchFitnessClass::InScale,          // A
+         PitchFitnessClass::NotInScale_Unfit, // A#
+         PitchFitnessClass::InScale,          // B
      }},
 
     {ScaleFlavorIndex::Unison,
