@@ -271,21 +271,35 @@ struct HarmVoiceSettingsApp
         },
         AlwaysEnabled};
 
-    ISettingItem *mArray[13] = {
-        &mSynthPresetRef,
-        &mOwnSynthPatch,
-        &mSequenceLength,
-        &mSequence,
-        &mOctaveTranspose,
-        &mMinOutpNote,
-        &mMaxOutpNote,
-        &mOOBBehavior,
-        &mPitchbendBehav,
-        &mScaleRefType,
-        &mLocalScaleNote,
-        &mLocalScaleFlavor,
-        &mNonDiatonicBehavior,
-    };
+    EnumSettingItem<HarmVoiceIntervalMode> mIntervalMode = {"Interval Mode",
+                                                            gHarmVoiceIntervalModeInfo,
+                                                            Property<HarmVoiceIntervalMode>{
+                                                                [](void *cap) FLASHMEM {
+                                                                    auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                                                    return pThis->EditingVoice().mIntervalMode;
+                                                                }, // getter
+                                                                [](void *cap, const HarmVoiceIntervalMode &val) {
+                                                                    auto *pThis = (HarmVoiceSettingsApp *)cap;
+                                                                    pThis->EditingVoice().mIntervalMode = val;
+                                                                },   // setter
+                                                                this // capture val
+                                                            },
+                                                            AlwaysEnabled};
+
+    ISettingItem *mArray[14] = {&mSynthPresetRef,
+                                &mOwnSynthPatch,
+                                &mSequenceLength,
+                                &mSequence,
+                                &mOctaveTranspose,
+                                &mMinOutpNote,
+                                &mMaxOutpNote,
+                                &mOOBBehavior,
+                                &mPitchbendBehav,
+                                &mScaleRefType,
+                                &mLocalScaleNote,
+                                &mLocalScaleFlavor,
+                                &mNonDiatonicBehavior,
+                                &mIntervalMode};
     SettingsList mRootList = {mArray};
 }; // namespace clarinoid
 

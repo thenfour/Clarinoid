@@ -431,7 +431,7 @@ struct AppSettings
 
         p.mHarmPreset = HarmPresetID_FullScale;
         p.mGlobalScaleRef = GlobalScaleRefType::Chosen;
-        p.mGlobalScale = Scale{Note::F_, ScaleFlavorIndex::Major};
+        p.mGlobalScale = Scale{Note::F_, ScaleFlavorIndex::MajorNo4th};
 
         p.mHarmGain = DecibelsToLinear(-6);
     }

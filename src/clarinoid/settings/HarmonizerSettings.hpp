@@ -156,8 +156,38 @@ EnumItemInfo<PitchBendParticipation> gPitchBendParticipationItems[3] = {
 EnumInfo<PitchBendParticipation> gPitchBendParticipationInfo("PitchBendParticipation", gPitchBendParticipationItems);
 
 ////////////////////////////////////////////////////
+enum class HarmVoiceIntervalMode : uint8_t
+{
+    ScaleDegrees,
+
+    // you specify a chromatic interval. the resulting note may be nondiatonic.
+    Chromatic,
+
+    // you specify a chromatic interval.
+    // when resulting note is nondiatonic, select the next diatonic note in the downward direction.
+    ChromaticDown,
+
+    // you specify a chromatic interval.
+    // when resulting note is nondiatonic, select the next diatonic note in the upward direction.
+    ChromaticUp,
+};
+
+EnumItemInfo<HarmVoiceIntervalMode> gHarmVoiceIntervalModeItems[4] = {
+    {HarmVoiceIntervalMode::ScaleDegrees, "ScaleDegrees"},
+    {HarmVoiceIntervalMode::Chromatic, "Chromatic"},
+    {HarmVoiceIntervalMode::ChromaticDown, "ChromaticDown"},
+    {HarmVoiceIntervalMode::ChromaticUp, "ChromaticUp"},
+};
+
+EnumInfo<HarmVoiceIntervalMode> gHarmVoiceIntervalModeInfo("HarmVoiceIntervalMode", gHarmVoiceIntervalModeItems);
+
+////////////////////////////////////////////////////
 struct HarmVoiceSettings
 {
+    HarmVoiceIntervalMode mIntervalMode = HarmVoiceIntervalMode::ScaleDegrees;
+
+    // when interval mode = ScaleDegrees, these are scale degree offsets.
+    // when interval mode = MusicalInterval, these are enum ChromaticInterval, with a sign indicating direction.
     int8_t mSequence[HARM_SEQUENCE_LEN] = {0};
     uint8_t mSequenceLength = 0;
 
@@ -821,6 +851,8 @@ struct HarmSettings
         {
             vs.mScaleRef = HarmScaleRefType::Global;
             vs.mSynthPresetRef = HarmSynthPresetRefType::GlobalA;
+            vs.mIntervalMode = HarmVoiceIntervalMode::ChromaticDown;
+            vs.mNonDiatonicBehavior = NonDiatonicBehavior::NearestDiatonic;
         }
 
         p.mVoiceSettings[0].mSequenceLength = 1;
@@ -829,10 +861,11 @@ struct HarmSettings
 
         // p.mVoiceSettings[1].mOctaveTranspose = -1;
 
+        // no 4th (Bb)
         // D F A [C]
-        p.mVoiceSettings[0].mSequence[0] = -2;
-        p.mVoiceSettings[1].mSequence[0] = -4;
-        p.mVoiceSettings[2].mSequence[0] = -6;
+        p.mVoiceSettings[0].mSequence[0] = -((int8_t)ChromaticInterval::Minor3rd);
+        p.mVoiceSettings[1].mSequence[0] = -((int8_t)ChromaticInterval::Perfect5th);
+        p.mVoiceSettings[2].mSequence[0] = -((int8_t)ChromaticInterval::Minor7th);
     }
 
     HarmSettings()

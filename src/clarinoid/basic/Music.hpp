@@ -74,6 +74,44 @@ EnumItemInfo<Note> gNoteItems[12] = {
 EnumInfo<Note> gNoteInfo("Note", gNoteItems);
 
 ////////////////////////////////////////////////////
+// in theory, we can make distinction between for example aug 2nd and minor 3rd.
+// but for the sake of simplicity let's treat all chromatic intervals distinctly,
+// so we can just use the values as chromatics instead of having to interpret as
+// interval + accidental.
+enum class ChromaticInterval : uint8_t
+{
+    Unison = 0,
+    Minor2nd = 1,
+    Major2nd = 2,
+    Minor3rd = 3,
+    Major3rd = 4,
+    Perfect4th = 5,
+    Tritone = 6,
+    Perfect5th = 7,
+    Minor6th = 8,
+    Major6th = 9,
+    Minor7th = 10,
+    Major7th = 11,
+};
+
+EnumItemInfo<ChromaticInterval> gChromaticIntervalItems[12] = {
+    {ChromaticInterval::Unison, "Unison"},
+    {ChromaticInterval::Minor2nd, "m2"},
+    {ChromaticInterval::Major2nd, "M2"},
+    {ChromaticInterval::Minor3rd, "m3"},
+    {ChromaticInterval::Major3rd, "M3"},
+    {ChromaticInterval::Perfect4th, "P4"},
+    {ChromaticInterval::Tritone, "Tritone"},
+    {ChromaticInterval::Perfect5th, "P5"},
+    {ChromaticInterval::Minor6th, "m6"},
+    {ChromaticInterval::Major6th, "M6"},
+    {ChromaticInterval::Minor7th, "m7"},
+    {ChromaticInterval::Major7th, "M7"},
+};
+
+EnumInfo<ChromaticInterval> gChromaticIntervalInfo("ChromaticInterval", gChromaticIntervalItems);
+
+////////////////////////////////////////////////////
 class MidiNote
 {
     uint8_t mValue = 0;     // 0-127 midi note value
@@ -689,7 +727,7 @@ const ScaleFlavor gScaleFlavors[ScaleFlavorCount] = {
 
     // major scale minus 4th
     {ScaleFlavorIndex::MajorNo4th,
-     "Omit4",
+     "MNo4",
      "Maj No4",
      ScaleFlavorOptions::AllowInMenus,
      12,
