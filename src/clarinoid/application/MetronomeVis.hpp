@@ -67,7 +67,7 @@ struct MetronomeVis
         }
 
         // render main radar circle
-        display.FillCircleWithStrokeF(centerF, kRadius, 1, 0, 255, IDisplay::CircleStrokeMode::Inside);
+        display.FillCircleWithStrokeF(centerF, kRadius, 1, 0, 255, IDisplay::StrokeMode::Inside);
 
         // big flash on beat
         int mainFlashBrightnessQp8 = mBeatFlash.Sample01() * kBigFlashMaxBrightnessQp8;
@@ -120,7 +120,7 @@ struct MetronomeVis
             int brightness = mSubdivisionEnvelopes[marker].Sample01() * kSubdivFlashMaxBrightnessQp8;
 
             display.FillCircleWithStrokeF(
-                PointF{markerPos.Round()}, kSubdivisionRadius, 1, brightness, 255, IDisplay::CircleStrokeMode::Inside);
+                PointF{markerPos.Round()}, kSubdivisionRadius, 1, brightness, 255, IDisplay::StrokeMode::Inside);
         }
     }
 

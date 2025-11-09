@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Stopwatch.hpp"
 #include "Math.hpp"
 
@@ -32,7 +34,7 @@ struct FlashEnvelope
         mActive = false;
     }
 
-    // return 0-1 amplitude
+    // return 0-1 amplitude. non-const because this also updates whether the env is active or not.
     float Sample01()
     {
         if (!mActive)

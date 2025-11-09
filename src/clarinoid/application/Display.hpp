@@ -739,22 +739,22 @@ struct _CCDisplay : IDisplay
         }
     }
 
-    // Fills the circular sector rooted at origin with radius measured in pixels and confined between
-    // [angleStartRadians, angleStartRadians + angleSweepRadians]. Angles follow the standard screen-space
-    // convention: 0 rad aligns with +X, positive values rotate counter-clockwise, and a negative sweep draws
-    // clockwise. brightnessStartQp8 and brightnessEndQp8 (0-255 fixed-point) define a linear gradient along the
-    // angular axis: pixels touching the leading edge at angleStartRadians receive brightnessStartQp8, pixels on the
-    // trailing edge at angleStartRadians + angleSweepRadians receive brightnessEndQp8, and interior pixels
-    // interpolate based on their clamped angular position before dithering. Pixels outside the active clip rect or
-    // beyond the given radius are ignored.
-    virtual void FillPieSliceGradient(const PointF &origin,
-                                      float radius,
-                                      float angleStartRadians,
-                                      float angleSweepRadians, // can be negative.
-                                      int brightnessStartQp8,
-                                      int brightnessEndQp8) override
+    void FillAngularSectorGradient(const PointF &origin,
+                                   float innerRadius,
+                                   float outerRadius,
+                                   float angleStartRadians,
+                                   float angleSweepRadians,
+                                   int brightnessStartQp8,
+                                   int brightnessEndQp8,
+                                   q15_t *brightnessCurve)
     {
-        if (radius <= 0.0f)
+        float outerRadiusClamped = std::max(outerRadius, 0.0f);
+        float innerRadiusClamped = Clamp(std::max(innerRadius, 0.0f), 0.0f, outerRadiusClamped);
+        if (outerRadiusClamped <= 0.0f)
+        {
+            return;
+        }
+        if (innerRadiusClamped >= outerRadiusClamped)
         {
             return;
         }
@@ -765,7 +765,6 @@ struct _CCDisplay : IDisplay
             return;
         }
 
-        float radiusSq = radius * radius;
         float sweepAbs = fabsf(sweep);
         bool sweepPositive = sweep > 0.0f;
 
@@ -773,11 +772,13 @@ struct _CCDisplay : IDisplay
         int endBrightness = ClampInclusive(brightnessEndQp8, 0, 255);
 
         float normStart = WrapAnglePos(angleStartRadians);
+        float outerRadiusSq = outerRadiusClamped * outerRadiusClamped;
+        float innerRadiusSq = innerRadiusClamped * innerRadiusClamped;
 
-        int minX = (int)floorf(origin.x - radius);
-        int maxX = (int)ceilf(origin.x + radius);
-        int minY = (int)floorf(origin.y - radius);
-        int maxY = (int)ceilf(origin.y + radius);
+        int minX = (int)floorf(origin.x - outerRadiusClamped);
+        int maxX = (int)ceilf(origin.x + outerRadiusClamped);
+        int minY = (int)floorf(origin.y - outerRadiusClamped);
+        int maxY = (int)ceilf(origin.y + outerRadiusClamped);
 
         auto clamp01 = [](float v) {
             if (v < 0.0f)
@@ -806,7 +807,11 @@ struct _CCDisplay : IDisplay
                 float dx = sampleX - origin.x;
                 float dy = sampleY - origin.y;
                 float distSq = dx * dx + dy * dy;
-                if (distSq > radiusSq)
+                if (distSq > outerRadiusSq)
+                {
+                    continue;
+                }
+                if (innerRadiusClamped > 0.0f && distSq < innerRadiusSq)
                 {
                     continue;
                 }
@@ -860,9 +865,68 @@ struct _CCDisplay : IDisplay
                 float interp = (1.0f - t) * (float)startBrightness + t * (float)endBrightness;
                 int brightness = (int)(interp + 0.5f);
                 brightness = ClampInclusive(brightness, 0, 255);
+                if (brightnessCurve)
+                {
+                    brightness = gModCurveLUT.TransferQp8(static_cast<uint8_t>(brightness), brightnessCurve);
+                }
                 SetPixelShaded(pt, brightness);
             }
         }
+    }
+
+    // Fills the circular sector rooted at origin with radius measured in pixels and confined between
+    // [angleStartRadians, angleStartRadians + angleSweepRadians]. Angles follow the standard screen-space
+    // convention: 0 rad aligns with +X, positive values rotate counter-clockwise, and a negative sweep draws
+    // clockwise. brightnessStartQp8 and brightnessEndQp8 (0-255 fixed-point) define a linear gradient along the
+    // angular axis. Pass a brightnessCurve obtained from gModCurveLUT.BeginLookup* to reshape the gradient.
+    virtual void FillPieSliceGradient(const PointF &origin,
+                                      float radius,
+                                      float angleStartRadians,
+                                      float angleSweepRadians, // can be negative.
+                                      int brightnessStartQp8,
+                                      int brightnessEndQp8) override
+    {
+        FillAngularSectorGradient(
+            origin, 0.0f, radius, angleStartRadians, angleSweepRadians, brightnessStartQp8, brightnessEndQp8, nullptr);
+    }
+
+    virtual void FillPieSliceGradient(const PointF &origin,
+                                      float radius,
+                                      float angleStartRadians,
+                                      float angleSweepRadians, // can be negative.
+                                      int brightnessStartQp8,
+                                      int brightnessEndQp8,
+                                      q15_t *brightnessCurve // uses gModCurveLUT to curve brightness
+                                      ) override
+    {
+        FillAngularSectorGradient(origin,
+                                  0.0f,
+                                  radius,
+                                  angleStartRadians,
+                                  angleSweepRadians,
+                                  brightnessStartQp8,
+                                  brightnessEndQp8,
+                                  brightnessCurve);
+    }
+
+    virtual void FillDonutSliceGradient(const PointF &origin,
+                                        float innerRadius,
+                                        float outerRadius,
+                                        float angleStartRadians,
+                                        float angleSweepRadians, // can be negative.
+                                        int brightnessStartQp8,
+                                        int brightnessEndQp8,
+                                        q15_t *brightnessCurve //  // uses gModCurveLUT to curve brightness
+                                        ) override
+    {
+        FillAngularSectorGradient(origin,
+                                  innerRadius,
+                                  outerRadius,
+                                  angleStartRadians,
+                                  angleSweepRadians,
+                                  brightnessStartQp8,
+                                  brightnessEndQp8,
+                                  brightnessCurve);
     }
 
     /// <summary>
@@ -1150,7 +1214,7 @@ struct _CCDisplay : IDisplay
                                        float strokeWidth,
                                        int fillBrightnessQp8,
                                        int strokeBrightnessQp8,
-                                       IDisplay::CircleStrokeMode mode) override
+                                       IDisplay::StrokeMode mode) override
     {
         float radiusClamped = std::max(radius, 0.0f);
         float strokeWidthClamped = std::max(strokeWidth, 0.0f);
@@ -1174,15 +1238,15 @@ struct _CCDisplay : IDisplay
 
         switch (mode)
         {
-        case IDisplay::CircleStrokeMode::Inside:
+        case IDisplay::StrokeMode::Inside:
             strokeOuterRadius = radiusClamped;
             strokeInnerRadius = std::max(radiusClamped - strokeWidthClamped, 0.0f);
             break;
-        case IDisplay::CircleStrokeMode::Outside:
+        case IDisplay::StrokeMode::Outside:
             strokeInnerRadius = radiusClamped;
             strokeOuterRadius = radiusClamped + strokeWidthClamped;
             break;
-        case IDisplay::CircleStrokeMode::Centered:
+        case IDisplay::StrokeMode::Centered:
         default:
             strokeInnerRadius = std::max(radiusClamped - strokeWidthClamped * 0.5f, 0.0f);
             strokeOuterRadius = radiusClamped + strokeWidthClamped * 0.5f;

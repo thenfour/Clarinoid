@@ -3,6 +3,8 @@
 
 namespace clarinoid
 {
+using ModCurveRow = int16_t *;
+
 namespace ModCurve
 {
 
@@ -110,7 +112,8 @@ struct ModulationCurveLUT
 
     int16_t *mpLut = nullptr;
 
-    void setLUTData(int16_t *plut) {
+    void setLUTData(int16_t *plut)
+    {
         mpLut = plut;
     }
 
@@ -167,6 +170,17 @@ struct ModulationCurveLUT
         return (numerator << 16) / denominator;
     }
 
+    static int16_t Qp8ToQ15(uint8_t value)
+    {
+        return static_cast<int16_t>(int32_t(value) * 257 - 32768);
+    }
+
+    static uint8_t Q15ToQp8(int16_t value)
+    {
+        int32_t shifted = int32_t(value) + 32768;
+        return static_cast<uint8_t>((shifted + 128) / 257);
+    }
+
     // version of To12p20, but specialized when denominator can be represented as a right shift
     // this actually works very well and is very efficient, but unfortunately it can't support the "perfect 0"
     // behavior of using an actual divide. But the perf loss is pretty minor, just 1 divide instead of shift.
@@ -176,13 +190,13 @@ struct ModulationCurveLUT
     //  return ((numerator << IntegralPartHeadroomBits) >> denominatorShift) << (20 - IntegralPartHeadroomBits);
     //}
 
-    inline q15_t *BeginLookupF(float kN11)
+    inline ModCurveRow BeginLookupF(float kN11)
     {
         int32_t lutY = (kN11 * .5 + .5) * LutSizeY;
         return BeginLookupI(lutY);
     }
 
-    inline q15_t *BeginLookupI(int32_t lutY)
+    inline ModCurveRow BeginLookupI(int32_t lutY)
     {
         if (lutY >= LutSizeY)
             lutY = LutSizeY - 1; // for kN11 == 1.
@@ -194,19 +208,29 @@ struct ModulationCurveLUT
         return ret;
     }
 
-    inline int16_t Transfer16(int16_t inpVal, q15_t *pLutRow)
+    inline int16_t Transfer16(int16_t inpVal, ModCurveRow pLutRow)
     {
         if (!pLutRow)
             return inpVal;
         int32_t lutX12p20 = To16p16(int32_t(inpVal) + ValueScale, TransferDenominator);
         return arm_linear_interp_q15(pLutRow, lutX12p20);
     }
-    inline float Transfer32(float inpVal, q15_t *pLutRow)
+    inline float Transfer32(float inpVal, ModCurveRow pLutRow)
     {
         if (!pLutRow)
             return inpVal;
         int32_t lutX12p20 = To16p16(int32_t(fast::Sample32To16(inpVal)) + ValueScale, TransferDenominator);
         return fast::Sample16To32(arm_linear_interp_q15(pLutRow, lutX12p20));
+    }
+
+    inline uint8_t TransferQp8(uint8_t inpVal, ModCurveRow pLutRow)
+    {
+        if (!pLutRow)
+            return inpVal;
+        // Map 0..255 into the bipolar Q15 domain, run the curve, then map back.
+        int16_t q15Value = Qp8ToQ15(inpVal);
+        int16_t curved = Transfer16(q15Value, pLutRow);
+        return Q15ToQp8(curved);
     }
 };
 
@@ -217,16 +241,15 @@ struct ModulationCurveLUT
 
 namespace clarinoid
 {
-    static int16_t *gModCurveLUTData = nullptr;
-    static ModCurve::ModulationCurveLUT<7, 7, 15> gModCurveLUT(gModCurveLUTData);
+static int16_t *gModCurveLUTData = nullptr;
+static ModCurve::ModulationCurveLUT<7, 7, 15> gModCurveLUT(gModCurveLUTData);
 
-    StaticInit __initModCurveLUT([](){
-        gModCurveLUTData = new int16_t[SizeofStaticArray(gModCurveLUTData_PROGMEM)];
-        for (size_t i = 0; i < SizeofStaticArray(gModCurveLUTData_PROGMEM); ++ i){
-            gModCurveLUTData[i] = gModCurveLUTData_PROGMEM[i];
-        }
-        gModCurveLUT.setLUTData(gModCurveLUTData);
-    });
-}
-
-
+StaticInit __initModCurveLUT([]() {
+    gModCurveLUTData = new int16_t[SizeofStaticArray(gModCurveLUTData_PROGMEM)];
+    for (size_t i = 0; i < SizeofStaticArray(gModCurveLUTData_PROGMEM); ++i)
+    {
+        gModCurveLUTData[i] = gModCurveLUTData_PROGMEM[i];
+    }
+    gModCurveLUT.setLUTData(gModCurveLUTData);
+});
+} // namespace clarinoid

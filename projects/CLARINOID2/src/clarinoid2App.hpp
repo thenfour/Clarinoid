@@ -38,7 +38,8 @@
 #include "GeodesicSphereDemoApp.hpp"
 #include "clarinoid2RhythmGoniometer.hpp"
 #include <clarinoid/menu/MenuAppSynthSettings.hpp>
-#include <clarinoid/menu/MenuAppMetronome.hpp>
+// #include <clarinoid/menu/MenuAppMetronome.hpp>
+#include <clarinoid/menu/MenuAppMetronome2.hpp>
 #include <clarinoid/menu/MenuAppHarmonizerSettings.hpp>
 #include <clarinoid/menu/MenuAppPerformanceSettings.hpp>
 
@@ -85,7 +86,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     // TorusDemoApp mTorusDemoApp{mDisplay, mMusicalStateTask};
     FancyPerformanceDisplayApp mFancyPerfApp{mDisplay, mMusicalStateTask, *this};
     LoudnessDisplayApp mLoudnessDisplayApp{mDisplay, mMusicalStateTask, *this};
-    MetronomeSettingsApp mMetronomeSettingsApp;
+    // MetronomeSettingsApp mMetronomeSettingsApp;
+    MetronomeSettings2App mMetronomeSettingsApp2;
     // HarmSettingsApp mHarmVoiceSettingsApp;
     HarmPatchSettingsApp mHarmPatchApp;
 
@@ -129,7 +131,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
           mSynthPatchApp(mDisplay), //
           mDisplayTestApp(mDisplay),
           // mAudioMonitorApp(mDisplay), //
-          mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, gpAppSettings, mDisplay),
+          // mMetronomeSettingsApp(&mMusicalStateTask.mMetronome, gpAppSettings, mDisplay),
+          mMetronomeSettingsApp2(&mMusicalStateTask.mMetronome, gpAppSettings, mDisplay),
           // mHarmVoiceSettingsApp(mDisplay, mMusicalStateTask.mMusicalState.mLooper.mHarmonizer), //
           mHarmPatchApp(mDisplay),                                       //
           mGuiPerformanceApp(mDisplay, mMusicalStateTask.mMetronome),    //
@@ -157,7 +160,7 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
     {
         return mMusicalStateTask.mSynth.mCurrentPolyphony;
     }
-    virtual PerformancePatch& ISysInfoProvider_GetCurrentPerformancePatch() override
+    virtual PerformancePatch &ISysInfoProvider_GetCurrentPerformancePatch() override
     {
         return gpAppSettings->GetCurrentPerformancePatch();
     }
@@ -248,7 +251,8 @@ struct Clarinoid2App : ILEDDataProvider, ISysInfoProvider
 
             //&mHarmVoiceSettingsApp,
 
-            &mMetronomeSettingsApp,
+            //&mMetronomeSettingsApp,
+            &mMetronomeSettingsApp2,
             &mSystemSettingsApp,
             //&mAudioMonitorApp,
 

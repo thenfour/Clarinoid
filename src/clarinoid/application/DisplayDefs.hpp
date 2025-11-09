@@ -38,7 +38,7 @@ struct IDisplayApp
 //////////////////////////////////////////////////////////////////////
 struct IDisplay
 {
-    enum class CircleStrokeMode : uint8_t
+    enum class StrokeMode : uint8_t
     {
         Inside,
         Outside,
@@ -132,6 +132,23 @@ struct IDisplay
                                       float angleSweepRadians, // can be negative.
                                       int brightnessStartQp8,
                                       int brightnessEndQp8) = 0;
+    virtual void FillPieSliceGradient(const PointF &origin,
+                                      float radius,
+                                      float angleStartRadians,
+                                      float angleSweepRadians, // can be negative.
+                                      int brightnessStartQp8,
+                                      int brightnessEndQp8,
+                                      q15_t *brightnessCurve // uses gModCurveLUT to curve brightness
+                                      ) = 0;
+    virtual void FillDonutSliceGradient(const PointF &origin,
+                                        float innerRadius,
+                                        float outerRadius,
+                                        float angleStartRadians,
+                                        float angleSweepRadians, // can be negative.
+                                        int brightnessStartQp8,
+                                        int brightnessEndQp8,
+                                        q15_t *brightnessCurve //  // uses gModCurveLUT to curve brightness
+                                        ) = 0;
     virtual void DrawLineWithBrightness(const PointI &pt0, const PointI &pt1, int brightness) = 0;
     virtual void DrawLine(const PointI &pt0, const PointI &pt1) = 0;
     virtual void DrawInfiniteLineClipped(const PointI &pt0,
@@ -145,8 +162,17 @@ struct IDisplay
                                        float strokeWidth,
                                        int fillBrightnessQp8,
                                        int strokeBrightnessQp8,
-                                       CircleStrokeMode mode) = 0;
+                                       StrokeMode mode) = 0;
     virtual void SetFontScale(int sx, int sy) = 0;
+
+    // accepts float metrics, but will render as a true 1 pixel outline
+    virtual void DrawCircleStroke1px(const PointF &center, float radius, StrokeMode mode) = 0;
+    // accepts float metrics, but will render as a true 1 pixel outline
+    virtual void DrawArcStroke1px(const PointF &center,
+                                  float radius,
+                                  float startAngleRadians,
+                                  float sweepAngleRadians,
+                                  StrokeMode mode) = 0;
 
     // from Adafruit_GFX
     virtual int16_t width() const = 0;
