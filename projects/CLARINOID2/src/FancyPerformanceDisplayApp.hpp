@@ -19,18 +19,18 @@ struct FancyPerformanceDisplayApp : DisplayApp
     MusicalStateTask &mMusicalStateTask;
     ISysInfoProvider &mSysInfoProvider;
 
-    GeodesicSphereSimulation<0> mGeodesicSphereSim0;
-    GeodesicSphereSimulation<1> mGeodesicSphereSim1;
-    // MetronomeVis2 mMetronomeVis;
-    //  GeodesicSphereSimulation<2> mGeodesicSphereSim2;
-    CubeSimulation mCubeSim;
-    //  TorusSimulation<9, 13> mTorusSim1;
-    //     TorusSimulation<5, 9> mTorusSim2;
+    GeodesicSphereSimulation mGeodesicSphereSim0;
+    // GeodesicSphereSimulation<1> mGeodesicSphereSim1;
+    //  MetronomeVis2 mMetronomeVis;
+    //   GeodesicSphereSimulation<2> mGeodesicSphereSim2;
+    // CubeSimulation mCubeSim;
+    //   TorusSimulation<9, 13> mTorusSim1;
+    //      TorusSimulation<5, 9> mTorusSim2;
 
-    TetrahedronSimulation mTetrahedronSim;
-    // OctahedronSimulation mOctahedronSim;
-    // DodecahedronSimulation mDodecahedronSim;
-    //TessellatedCubeSimulation mTessellatedCubeSim;
+    // TetrahedronSimulation mTetrahedronSim;
+    //  OctahedronSimulation mOctahedronSim;
+    //  DodecahedronSimulation mDodecahedronSim;
+    // TessellatedCubeSimulation mTessellatedCubeSim;
 
     // IMeshSimulation *mMeshSims[2] = {//
     //                                  //&mGeodesicSphereSim0,
@@ -49,19 +49,19 @@ struct FancyPerformanceDisplayApp : DisplayApp
     FancyPerformanceDisplayApp(IDisplay &display,
                                MusicalStateTask &musicalStateTask,
                                ISysInfoProvider &sysInfoProvider)
-        : DisplayApp(display),                            //
-          mMusicalStateTask(musicalStateTask),            //
-          mSysInfoProvider(sysInfoProvider),              //
-          mGeodesicSphereSim0(display, musicalStateTask), //
-          mGeodesicSphereSim1(display, musicalStateTask), //
-                                                          //  mGeodesicSphereSim2(display, musicalStateTask), //
-          mCubeSim(display, musicalStateTask),            //
-          // mTorusSim1(display, musicalStateTask), //
-          //    mTorusSim2(display, musicalStateTask)//
-          mTetrahedronSim(display, musicalStateTask)//, //
-          // mOctahedronSim(display, musicalStateTask),   //
-          // mDodecahedronSim(display, musicalStateTask),    //
-          //mTessellatedCubeSim(display, musicalStateTask) //
+        : DisplayApp(display),                           //
+          mMusicalStateTask(musicalStateTask),           //
+          mSysInfoProvider(sysInfoProvider),             //
+          mGeodesicSphereSim0(display, musicalStateTask) //
+                                                         // mGeodesicSphereSim1(display, musicalStateTask), //
+    //   mGeodesicSphereSim2(display, musicalStateTask), //
+    // mCubeSim(display, musicalStateTask),            //
+    //  mTorusSim1(display, musicalStateTask), //
+    //     mTorusSim2(display, musicalStateTask)//
+    // mTetrahedronSim(display, musicalStateTask)//, //
+    //  mOctahedronSim(display, musicalStateTask),   //
+    //  mDodecahedronSim(display, musicalStateTask),    //
+    // mTessellatedCubeSim(display, musicalStateTask) //
     // mCurrentMeshSimIndex(0)                         //
     {
     }
@@ -139,23 +139,24 @@ struct FancyPerformanceDisplayApp : DisplayApp
         switch (perf.mPerfDisplayStyle)
         {
         default:
-        case PerfDisplayStyle::Icosahedron: {
-            auto &currentSim = mGeodesicSphereSim0; //*mMeshSims[mCurrentMeshSimIndex];
-            currentSim.StepMeshSimulation();
-            currentSim.SetScreenOffsetPixels(13, -17);
-            static constexpr int kSphereWidth = 64;
-            currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
-        }
-        break;
+            // case PerfDisplayStyle::Icosahedron: {
+            {
+                auto &currentSim = mGeodesicSphereSim0; //*mMeshSims[mCurrentMeshSimIndex];
+                currentSim.StepMeshSimulation();
+                currentSim.SetScreenOffsetPixels(13, -17);
+                static constexpr int kSphereWidth = 64;
+                currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
+            }
+            break;
 
-        case PerfDisplayStyle::Cube: {
-            auto &currentSim = mCubeSim; //*mMeshSims[mCurrentMeshSimIndex];
-            currentSim.StepMeshSimulation();
-            currentSim.SetScreenOffsetPixels(13, -17);
-            static constexpr int kCubeWidth = 64;
-            currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kCubeWidth - 1, 0, kCubeWidth, kCubeWidth});
-        }
-        break;
+        // case PerfDisplayStyle::Cube: {
+        //     auto &currentSim = mCubeSim; //*mMeshSims[mCurrentMeshSimIndex];
+        //     currentSim.StepMeshSimulation();
+        //     currentSim.SetScreenOffsetPixels(13, -17);
+        //     static constexpr int kCubeWidth = 64;
+        //     currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kCubeWidth - 1, 0, kCubeWidth, kCubeWidth});
+        // }
+        // break;
 
         // case PerfDisplayStyle::CubeTessellated: {
         //     auto &currentSim = mTessellatedCubeSim; //*mMeshSims[mCurrentMeshSimIndex];
@@ -166,23 +167,23 @@ struct FancyPerformanceDisplayApp : DisplayApp
         // }
         // break;
 
-        case PerfDisplayStyle::Tetrahedron: {
-            auto &currentSim = mTetrahedronSim; //*mMeshSims[mCurrentMeshSimIndex];
-            currentSim.StepMeshSimulation();
-            currentSim.SetScreenOffsetPixels(13, -17);
-            static constexpr int kTetraWidth = 64;
-            currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kTetraWidth - 1, 0, kTetraWidth, kTetraWidth});
-        }
-        break;
+        // case PerfDisplayStyle::Tetrahedron: {
+        //     auto &currentSim = mTetrahedronSim; //*mMeshSims[mCurrentMeshSimIndex];
+        //     currentSim.StepMeshSimulation();
+        //     currentSim.SetScreenOffsetPixels(13, -17);
+        //     static constexpr int kTetraWidth = 64;
+        //     currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kTetraWidth - 1, 0, kTetraWidth, kTetraWidth});
+        // }
+        // break;
 
-        case PerfDisplayStyle::Geodesic: {
-            auto &currentSim = mGeodesicSphereSim1; //*mMeshSims[mCurrentMeshSimIndex];
-            currentSim.StepMeshSimulation();
-            currentSim.SetScreenOffsetPixels(13, -17);
-            static constexpr int kSphereWidth = 64;
-            currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
-        }
-        break;
+        // case PerfDisplayStyle::Geodesic: {
+        //     auto &currentSim = mGeodesicSphereSim1; //*mMeshSims[mCurrentMeshSimIndex];
+        //     currentSim.StepMeshSimulation();
+        //     currentSim.SetScreenOffsetPixels(13, -17);
+        //     static constexpr int kSphereWidth = 64;
+        //     currentSim.RenderMeshFrame({MAX_DISPLAY_WIDTH - kSphereWidth - 1, 0, kSphereWidth, kSphereWidth});
+        // }
+        // break;
         case PerfDisplayStyle::Metronome:
             gMetronomeVis.Render(mMusicalStateTask.mMetronome, mDisplay, appSettings);
             break;
@@ -302,8 +303,5 @@ struct FancyPerformanceDisplayApp : DisplayApp
 };
 
 static constexpr size_t fancysize = sizeof(FancyPerformanceDisplayApp);
-static constexpr size_t fancysize1 = sizeof(GeodesicSphereSimulation<0>);
-static constexpr size_t fancysize2 = sizeof(GeodesicSphereSimulation<1>);
-static constexpr size_t fancysize3 = sizeof(GeodesicSphereSimulation<2>);
 
 } // namespace clarinoid
