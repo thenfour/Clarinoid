@@ -31,35 +31,38 @@ struct SynthGraph
 
     */
     // GUItool: begin automatically generated code
+    AudioSynthWaveformSine metronomeOsc; // xy=956,990
+    AudioEffectEnvelope metronomeEnv;    // xy=1157,992
+    AudioMixer4 postMixerLeft;           // xy=1411,775
+    AudioMixer4 postMixerRight;          // xy=1413,858
+    AudioAmplifier ampLeft;              // xy=1573,776
+    AudioAmplifier ampRight;             // xy=1576,857
+    AudioOutputI2S i2s1;                 // xy=1758,809
+    AnalysisStream analysisL;            // xy=1820,600
+    AnalysisStream analysisR;            // xy=1820,600
+
     AudioAmplifier delayFeedbackAmpLeft;  // xy=535,170
     AudioEffectDelay delayRight;          // xy=536,478
     AudioEffectDelay delayLeft;           // xy=537,261
     AudioAmplifier delayFeedbackAmpRight; // xy=537,390
     AudioAmplifier delayWetAmpLeft;       // xy=781,234
     AudioAmplifier delayWetAmpRight;      // xy=802,469
-    AudioMixer4 verbInputMixer;           // xy=920,561
-    AudioSynthWaveformSine metronomeOsc;  // xy=956,990
-    AudioEffectFreeverbStereo verb;       // xy=1070,567
-    AudioEffectEnvelope metronomeEnv;     // xy=1157,992
-    AudioAmplifier verbWetAmpLeft;        // xy=1229,548
-    AudioAmplifier verbWetAmpRight;       // xy=1236,586
-    AudioMixer4 postMixerLeft;            // xy=1411,775
-    AudioMixer4 postMixerRight;           // xy=1413,858
-    AudioAmplifier ampLeft;               // xy=1573,776
-    AudioAmplifier ampRight;              // xy=1576,857
-    AudioOutputI2S i2s1;                  // xy=1758,809
-    AnalysisStream analysisL;             // xy=1820,600
-    AnalysisStream analysisR;             // xy=1820,600
     AudioConnection patchCord1 = {delayWetAmpLeft, 0, postMixerLeft, 1};
     AudioConnection patchCord2 = {delayWetAmpRight, 0, postMixerRight, 1};
+
+    AudioMixer4 verbInputMixer;     // xy=920,561
+    AudioEffectFreeverbStereo verb; // xy=1070,567
+    AudioAmplifier verbWetAmpLeft;  // xy=1229,548
+    AudioAmplifier verbWetAmpRight; // xy=1236,586
     AudioConnection patchCord3 = {verbInputMixer, verb};
-    AudioConnection patchCord4 = {metronomeOsc, metronomeEnv};
     AudioConnection patchCord5 = {verb, 0, verbWetAmpLeft, 0};
     AudioConnection patchCord6 = {verb, 1, verbWetAmpRight, 0};
-    AudioConnection patchCord7 = {metronomeEnv, 0, postMixerRight, 3};
-    AudioConnection patchCord8 = {metronomeEnv, 0, postMixerLeft, 3};
     AudioConnection patchCord9 = {verbWetAmpLeft, 0, postMixerLeft, 2};
     AudioConnection patchCord10 = {verbWetAmpRight, 0, postMixerRight, 2};
+
+    AudioConnection patchCord4 = {metronomeOsc, metronomeEnv};
+    AudioConnection patchCord7 = {metronomeEnv, 0, postMixerRight, 3};
+    AudioConnection patchCord8 = {metronomeEnv, 0, postMixerLeft, 3};
     AudioConnection patchCord11 = {postMixerLeft, ampLeft};
     AudioConnection patchCord12 = {postMixerRight, ampRight};
     AudioConnection patchCord13 = {ampLeft, 0, analysisL, 0};

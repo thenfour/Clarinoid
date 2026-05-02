@@ -368,6 +368,7 @@ struct AppSettings
     static void InitSpaceCarPerf(PerformancePatch &p)
     {
         p.mName = "Space Car";
+        p.mMasterFXEnable = false;
         p.mPerfDisplayStyle = PerfDisplayStyle::Cube;
 
         p.mTranspose = 0;
@@ -390,6 +391,8 @@ struct AppSettings
     {
         p.mName = "Ripple Boogie";
         p.mPerfDisplayStyle = PerfDisplayStyle::CubeTessellated;
+        p.mMasterFXEnable = false;
+        p.mMasterFXGain = DecibelsToLinear(-2);
 
         p.mTranspose = 3;
         p.mBPM = 110;
@@ -409,6 +412,8 @@ struct AppSettings
     static void InitCloudsAndStarsPerf(PerformancePatch &p, const char *name, int16_t harmPresetId)
     {
         p.mName = name;
+        p.mMasterGain = DecibelsToLinear(+2);
+        p.mMasterFXEnable = false;
         p.mBPM = 70;
         p.mBeatsPerBar = 2;
         p.mBeatSubdivisions = 3;
@@ -434,6 +439,7 @@ struct AppSettings
         p.mName = "Full Scale";
         p.mBPM = 120;
         p.mPerfDisplayStyle = PerfDisplayStyle::Icosahedron;
+        p.mMasterFXEnable = false;
 
         p.mSynthPresetA = SynthPresetID_Fluvial;
         p.mSynthAGain = DecibelsToLinear(-3);
@@ -451,6 +457,7 @@ struct AppSettings
     {
         p.mName = "Wobbly Cat";
         p.mBPM = 120;
+        p.mMasterFXEnable = false;
         p.mPerfDisplayStyle = PerfDisplayStyle::Tetrahedron;
 
         p.mSynthPresetA = SynthPresetID_WobblyCat;
@@ -472,6 +479,7 @@ struct AppSettings
     {
         p.mName = "Silk Suspenders";
         p.mBPM = 110;
+        p.mMasterFXEnable = false;
         p.mPerfDisplayStyle = PerfDisplayStyle::Geodesic;
 
         p.mTranspose = 12;
@@ -529,6 +537,7 @@ struct AppSettings
         p.mDetuneSemis = 0.15f;
         p.mPerfDisplayStyle = PerfDisplayStyle::Geodesic;
         p.mBPM = 112;
+        p.mMasterFXEnable = false;
 
         p.mSynthPresetA = SynthPresetID_TubularBell;
         p.mSynthAGain = DecibelsToLinear(-3);

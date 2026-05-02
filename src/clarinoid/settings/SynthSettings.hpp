@@ -1372,7 +1372,7 @@ struct SynthSettings
         p.mStereoSpread = 0.7f;
         p.mFilterQ = 0;
         p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        p.mFilterMaxFreq = 11000.0f;
+        p.mFilterMaxFreq = 15000.0f;
 
         p.mVerbSend = DecibelsToLinear(-12.0f);
         p.mDelaySend = DecibelsToLinear(-12.0f);
@@ -1397,10 +1397,12 @@ struct SynthSettings
         p.mSync = false;
         p.mDetune = 0.0f;
         // p.mStereoSpread = 0.0f;
-        // p.mFilterQ = 0.0f;
-        // p.mFilterSaturation = 0.0f;
-        // p.mFilterType = ClarinoidFilterType::LP_Moog4;
-        // p.mFilterMaxFreq = 22000.0f;
+        p.mFilterQ = 0.0f;
+        p.mFilterSaturation = 0.0f;
+        p.mFilterType = ClarinoidFilterType::LP_Moog2;
+        p.mFilterMaxFreq = 12000.0f;
+
+        p.mOverallFMStrength = 0.5f;
 
         p.mVerbSend = DecibelsToLinear(-10.0f);
         p.mDelaySend = DecibelsToLinear(-10.0f);
